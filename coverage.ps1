@@ -18,7 +18,7 @@ try {
 
     if (-not $SkipBuild) {
         Write-Host "Building solution (configuration: $Configuration)..."
-        dotnet build "src/moonsharp.sln" -c $Configuration | Out-Null
+        dotnet build "src/MoonSharp.sln" -c $Configuration | Out-Null
     }
 
     $runnerProject = "src/tests/TestRunners/DotNetCoreTestRunner/DotNetCoreTestRunner.csproj"

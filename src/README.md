@@ -16,7 +16,7 @@
 | Unity | Unity projects are put here. As now, mainly a test runner. |
 | packages | NuGet packages of used libraries |
 | | |
-| moonsharp.sln | The solution containing everything |
+| MoonSharp.sln | The solution containing everything |
 | deploy_release.cmd | A batch file to help deploy a release in reasonable time. |
 | README.md | This file |
 | readme.txt | A file which will be stored in release packages. |

@@ -9,8 +9,8 @@
 
 ## Build, Test, and Development Commands
 - Run `dotnet tool restore` once per checkout to install local CLI tools such as CSharpier.
-- Build all targets with `dotnet build src\moonsharp.sln -c Release` for a full verification pass.
-- Legacy environments can use `msbuild src\moonsharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
+- Build all targets with `dotnet build src\MoonSharp.sln -c Release` for a full verification pass.
+- Legacy environments can use `msbuild src\MoonSharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
 - Execute interpreter tests with `dotnet test src\tests\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release`.
 - Iterate quickly on the interpreter via `dotnet build src\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj`.
 

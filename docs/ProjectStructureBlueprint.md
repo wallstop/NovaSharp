@@ -66,7 +66,7 @@ Key principles:
 2. **Project Updates**
    - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `MoonSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter complete; debugger projects still pending.
    - Rename `tooling/MoonSharp/MoonSharp.csproj` to `MoonSharp.Cli.csproj` (update assembly + namespace) once consumers are ready.
-   - Update `moonsharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
+   - Update `MoonSharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
 
 3. **Namespace + Usings Sweep**
    - After moves, fix namespaces to reflect the new folder structure (enforced by `.editorconfig`).

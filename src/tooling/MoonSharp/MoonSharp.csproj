@@ -10,7 +10,7 @@
         <ProjectReference Include="..\MoonSharp.Hardwire\MoonSharp.Hardwire.csproj" />
         <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
         <ProjectReference Include="..\..\debuggers\MoonSharp.RemoteDebugger\MoonSharp.RemoteDebugger.csproj" />
-        <ProjectReference Include="..\..\debuggers\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.csproj" />
+        <ProjectReference Include="..\..\debuggers\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="moonsharp.ico" />

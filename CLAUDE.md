@@ -17,13 +17,13 @@ dotnet tool restore
 ### Building
 ```bash
 # Full release build of all targets
-dotnet build src\moonsharp.sln -c Release
+dotnet build src\MoonSharp.sln -c Release
 
 # Quick iteration on interpreter core
 dotnet build src\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj
 
 # Legacy MSBuild option (if Visual Studio tooling preferred)
-msbuild src\moonsharp.sln /p:Configuration=Release
+msbuild src\MoonSharp.sln /p:Configuration=Release
 ```
 
 ### Testing
