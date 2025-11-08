@@ -172,3 +172,6 @@ $RECYCLE.BIN/
 .DS_Store
 
 BenchmarkDotNet.Artifacts/
+
+PLAN.md
+PLAN.md.meta
