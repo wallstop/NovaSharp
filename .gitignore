@@ -172,6 +172,10 @@ $RECYCLE.BIN/
 .DS_Store
 
 BenchmarkDotNet.Artifacts/
+artifacts/
+
+docs/coverage/latest/
+!docs/coverage/README.md
 
 PLAN.md
 PLAN.md.meta

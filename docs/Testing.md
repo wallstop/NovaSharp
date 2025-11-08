@@ -17,19 +17,29 @@ dotnet run -c Release -- --ci
 - `--ci` suppresses interactive prompts and writes `moonsharp_tests.log` to the repository root.
 - The GitHub Actions workflow mirrors this command on every push to `master` and on all pull requests.
 
+## Generating Coverage
+```powershell
+.\coverage.ps1
+```
+- Restores local tools, builds the solution in Release, and drives the DotNetCoreTestRunner via coverlet.
+- Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage` (ignored by Git).
+- Produces an HTML dashboard in `docs/coverage/latest`; open `index.html` for the full drill-down.
+- Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
+
 ## Pass/Fail Policy
 - Two Lua TAP suites (`TestMore_308_io`, `TestMore_309_os`) remain skipped because they require raw filesystem/OS access. Enable them manually only on trusted machines.
 - Failures write a detailed stack trace to `moonsharp_tests.log`; the CI pipeline publishes the log as a build artefact.
 
 ## Coverage Snapshot
+- **Baseline (Release via `coverage.ps1`)**: 62.2 % line, 61.4 % branch, 62.7 % method coverage.
 - **Fixtures**: 39 `[TestFixture]` types, 627 active tests, 2 intentional skips.
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 - **Gaps**: Visual Studio Code/remote debugger integration still lacks automated smoke tests; CLI tooling and dev utilities remain manual.
 
 ## Expanding Coverage
-1. Share fixtures between the runner and the archived `MoonSharp.Interpreter.Tests` tree to avoid drift.
-2. Add coverlet-driven coverage reporting once the suite migrates to `dotnet test`.
-3. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection).
-4. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments.
+1. Deepen unit coverage across parser error paths, metatable resolution, and CLI tooling to raise the interpreter namespace above 70 % line coverage.
+2. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
+3. Share fixtures between the runner and archived `MoonSharp.Interpreter.Tests` tree to avoid drift and simplify regeneration.
+4. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.
