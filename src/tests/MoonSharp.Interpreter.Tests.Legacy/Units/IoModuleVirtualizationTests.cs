@@ -128,7 +128,7 @@ namespace MoonSharp.Interpreter.Tests.Units
         {
             var script = new Script(CoreModules.Preset_Complete);
 
-            script.DoString("io.write('first'); io.write('second');");
+            script.DoString("io.write('first'); io.write('second'); io.flush();");
 
             Assert.That(_platform.GetStdOutText(), Is.EqualTo("firstsecond"));
             Assert.That(_platform.GetStdErrText(), Is.Empty);

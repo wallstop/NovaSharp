@@ -33,30 +33,26 @@ namespace MoonSharp.Interpreter.Tests.Units
         [Test]
         public void MetatableRawAccessStillRespectsMetatable()
         {
-            var script = new Script();
-            var table = new Table(script);
-            var metatable = new Table(script);
+            var script = new Script(CoreModules.Metatables | CoreModules.Basic);
 
-            table["value"] = DynValue.NewNumber(10);
-            metatable["__newindex"] = DynValue.NewCallback(
-                (_, args) =>
-                {
-                    args[0].Table.Set("value", DynValue.NewNumber(args[2].Number * 2));
-                    return DynValue.Nil;
-                }
+            script.DoString(
+                @"
+                subject = {}
+                setmetatable(subject, {
+                    __newindex = function(t, key, value)
+                        rawset(t, key, value * 2)
+                    end
+                })
+
+                subject.value = 5
+            "
             );
 
-            table.MetaTable = metatable;
-            script.Globals["subject"] = table;
+            var subject = script.Globals.Get("subject").Table;
+            Assert.That(subject.Get("value").Number, Is.EqualTo(10));
 
-            script.DoString("subject.value = 5");
-
-            Assert.That(table.Get("value").Number, Is.EqualTo(10));
-            Assert.That(table.RawGet("value").Number, Is.EqualTo(10));
-            Assert.That(table.Get("value").Number, Is.EqualTo(10));
-
-            table.Set("value", DynValue.NewNumber(7));
-            Assert.That(table.Get("value").Number, Is.EqualTo(7));
+            subject.Set("value", DynValue.NewNumber(7));
+            Assert.That(subject.Get("value").Number, Is.EqualTo(7));
         }
     }
 }

@@ -11,6 +11,9 @@ namespace MoonSharp.Interpreter.Tests.Units
         {
             var script = new Script(CoreModules.Preset_Complete);
             script.DoString(
+                "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
+            );
+            script.DoString(
                 @"
                 value = {
                     answer = 42,
@@ -30,6 +33,9 @@ namespace MoonSharp.Interpreter.Tests.Units
         public void DecodeBuildsLuaTable()
         {
             var script = new Script(CoreModules.Preset_Complete);
+            script.DoString(
+                "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
+            );
             var result = script.DoString(
                 @"
                 local data = json.decode('{""name"":""nova"",""values"":[10,20]}')

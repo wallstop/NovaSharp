@@ -86,7 +86,10 @@ namespace MoonSharp.Interpreter.REPL
 
                 if (isFirstLine && HandleDynamicExprs && m_CurrentCommand.StartsWith("?"))
                 {
-                    var code = m_CurrentCommand.Substring(1);
+                    var code = m_CurrentCommand.Substring(1).Trim();
+                    if (code.Length == 0)
+                        return DynValue.Void;
+
                     var exp = m_Script.CreateDynamicExpression(code);
                     result = exp.Evaluate();
                 }

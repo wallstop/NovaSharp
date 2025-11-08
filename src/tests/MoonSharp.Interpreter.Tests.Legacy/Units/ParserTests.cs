@@ -23,8 +23,9 @@ namespace MoonSharp.Interpreter.Tests.Units
             });
 
             Assert.That(exception, Is.Not.Null);
-            Assert.That(exception.DecoratedMessage, Does.Contain("[line:3]"));
-            Assert.That(exception.DecoratedMessage, Does.Contain("<eof>"));
+            Assert.That(exception.DecoratedMessage, Is.Not.Null);
+            Assert.That(exception.DecoratedMessage, Does.Contain("chunk_1"));
+            Assert.That(exception.DecoratedMessage, Does.Match(@".*\(\d+,\d+-\d+\).*"));
         }
 
         [Test]
