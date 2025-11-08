@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE;EMBEDTEST</DefineConstants>
+        <AssemblyName>DotNetCoreTestRunner</AssemblyName>
+        <OutputType>Exe</OutputType>
+        <PackageId>DotNetCoreTestRunner</PackageId>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
+        <ProjectReference Include="..\..\..\debuggers\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="TestMore\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+</Project>

@@ -20,7 +20,7 @@ dotnet tool restore
 dotnet build src\moonsharp.sln -c Release
 
 # Quick iteration on interpreter core
-dotnet build src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj
+dotnet build src\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj
 
 # Legacy MSBuild option (if Visual Studio tooling preferred)
 msbuild src\moonsharp.sln /p:Configuration=Release
@@ -29,7 +29,7 @@ msbuild src\moonsharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release
+dotnet test src\tests\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release
 ```
 
 ### Code Formatting
@@ -51,20 +51,20 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 2. Core Subsystems
 
-**Tree (Parsing & AST)** - `src/MoonSharp.Interpreter/Tree/`
+**Tree (Parsing & AST)** - `src/runtime/MoonSharp.Interpreter/Tree/`
 - Converts source code to Abstract Syntax Tree
 - Each AST node implements its own `Compile(ByteCode)` method
 - Key classes: `Lexer`, `Parser`, `Statement`, `Expression`
 - Loader_Fast.cs orchestrates the parse-compile sequence
 
-**Execution/VM (Bytecode & Runtime)** - `src/MoonSharp.Interpreter/Execution/`
+**Execution/VM (Bytecode & Runtime)** - `src/runtime/MoonSharp.Interpreter/Execution/`
 - `Processor` class implements stack-based virtual machine
 - 52 opcodes (ADD, MUL, CALL, JF, etc.)
 - Uses `FastStack<T>` for value stack and execution stack
 - Each `Instruction` contains opcode, operands, and source location
 - Supports tail call optimization for Lua compatibility
 
-**Interop (C# ↔ Lua Bridge)** - `src/MoonSharp.Interpreter/Interop/`
+**Interop (C# ↔ Lua Bridge)** - `src/runtime/MoonSharp.Interpreter/Interop/`
 - Bidirectional conversion between C# objects and Lua values
 - Uses descriptor pattern via `IUserDataDescriptor`
 - Global `TypeDescriptorRegistry` caches type metadata
@@ -134,7 +134,7 @@ Script.DoString("return x + 1")
 - **Framework**: NUnit 2.6 (`[TestFixture]`, `[Test]` attributes)
 - **Organization**: Group tests under `Units/`, `EndToEnd/`, or `TestMore/` based on scope
 - **Naming**: `<Feature>Tests.cs` pattern, store Lua fixtures alongside test classes
-- **Dual Coverage**: Update both `MoonSharp.Interpreter.Tests` and `DotNetCoreTestRunner` when interpreter behavior changes
+- **Dual Coverage**: Update both `tests/MoonSharp.Interpreter.Tests.Legacy` and `tests/TestRunners/DotNetCoreTestRunner` when interpreter behavior changes
 - **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
 
 ## Commit & Pull Request Guidelines
@@ -148,12 +148,12 @@ Script.DoString("return x + 1")
 
 ## Module Organization
 
-- **Runtime Code**: All under `src/`, interpreter in `src/MoonSharp.Interpreter/`
-- **Packaging**: `src/MoonSharp/`, debugger wrappers in `src/MoonSharp.VsCodeDebugger/` and `src/MoonSharp.RemoteDebugger/`
-- **Developer Tools**: `src/DevTools/` for utilities, `src/Tutorial/` for samples
-- **Test Runners**: `src/TestRunners/DotNetCoreTestRunner/` for modern .NET Core tests
-- **Legacy Tests**: `src/MoonSharp.Interpreter.Tests/` maintains NUnit coverage
-- **Platform Targets**: Unity projects in `src/Unity/`, Xamarin in `src/Xamarin/`
+  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/MoonSharp.Interpreter/`
+  - **Debuggers**: `src/debuggers/MoonSharp.VsCodeDebugger/`, `src/debuggers/MoonSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
+  - **Tooling**: `src/tooling/` for the CLI (`MoonSharp`), hardwire generator, benchmarks, and perf comparisons
+  - **Samples**: `src/samples/` for tutorials and examples
+  - **Tests**: `src/tests/TestRunners/DotNetCoreTestRunner/` for modern runs; legacy NUnit in `src/tests/MoonSharp.Interpreter.Tests.Legacy/`
+  - **Legacy Assets**: Archived clients and scripts under `src/legacy/`
 
 ## Important Implementation Notes
 

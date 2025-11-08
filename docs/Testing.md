@@ -7,12 +7,12 @@ MoonSharp ships with a comprehensive test suite that blends historical Lua fixtu
 - **End-to-end suites**: C# driven NUnit scenarios cover userdata interop, debugger contracts, serialization, hardwire generation, and coroutine pipelines.
 - **Units**: Focused checks for low-level structures (stacks, instruction decoding, binary dump/load).
 
-The fixtures originate from the legacy `MoonSharp.Interpreter.Tests` tree and are compiled directly into the modern `.NET 8` runner.
+The fixtures originate from the legacy `tests/MoonSharp.Interpreter.Tests.Legacy` tree and are compiled directly into the modern `.NET 8` runner.
 
 ## Running the Tests Locally
 ```bash
 dotnet run -c Release -- --ci
-# from: src/TestRunners/DotNetCoreTestRunner
+# from: src/tests/TestRunners/DotNetCoreTestRunner
 ```
 - `--ci` suppresses interactive prompts and writes `moonsharp_tests.log` to the repository root.
 - The GitHub Actions workflow mirrors this command on every push to `master` and on all pull requests.
@@ -39,7 +39,7 @@ dotnet run -c Release -- --ci
 ## Expanding Coverage
 1. Deepen unit coverage across parser error paths, metatable resolution, and CLI tooling to raise the interpreter namespace above 70 % line coverage.
 2. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
-3. Share fixtures between the runner and archived `MoonSharp.Interpreter.Tests` tree to avoid drift and simplify regeneration.
+3. Share fixtures between the runner and archived `tests/MoonSharp.Interpreter.Tests.Legacy` tree to avoid drift and simplify regeneration.
 4. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.

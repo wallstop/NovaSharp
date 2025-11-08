@@ -1,18 +1,18 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- All runtime code lives under `src`, with the interpreter in `src/MoonSharp.Interpreter`.
-- Packaging and debugger wrappers reside in `src/MoonSharp`, `src/MoonSharp.VsCodeDebugger`, and `src/MoonSharp.RemoteDebugger`.
-- Developer tools, samples, and utilities are grouped under `src/DevTools`, `src/Tutorial`, and `src/TestRunners`.
-- Legacy NUnit coverage is maintained in `src/MoonSharp.Interpreter.Tests`; modern .NET Core execution lives in `src/TestRunners/DotNetCoreTestRunner`.
+- All runtime code lives under `src/runtime`, with the interpreter in `src/runtime/MoonSharp.Interpreter`.
+- Packaging and debugger wrappers reside in `src/tooling/MoonSharp`, `src/debuggers/MoonSharp.VsCodeDebugger`, and `src/debuggers/MoonSharp.RemoteDebugger`.
+- Tooling, samples, and utilities are grouped under `src/tooling`, `src/samples`, and `src/tests`.
+- Legacy NUnit coverage is maintained in `src/tests/MoonSharp.Interpreter.Tests.Legacy`; modern .NET Core execution lives in `src/tests/TestRunners/DotNetCoreTestRunner`.
 - When adding modules, mirror existing folder placement so docs, tests, and build scripts stay aligned.
 
 ## Build, Test, and Development Commands
 - Run `dotnet tool restore` once per checkout to install local CLI tools such as CSharpier.
 - Build all targets with `dotnet build src\moonsharp.sln -c Release` for a full verification pass.
 - Legacy environments can use `msbuild src\moonsharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
-- Execute interpreter tests with `dotnet test src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release`.
-- Iterate quickly on the interpreter via `dotnet build src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj`.
+- Execute interpreter tests with `dotnet test src\tests\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release`.
+- Iterate quickly on the interpreter via `dotnet build src\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj`.
 
 ## Coding Style & Naming Conventions
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
@@ -25,7 +25,7 @@
 - NUnit 2.6 attributes (`[TestFixture]`, `[Test]`) drive coverage across interpreter and end-to-end suites.
 - Organize new cases under `Units`, `EndToEnd`, or `TestMore` to match the scope being verified.
 - Name test classes `<Feature>Tests.cs` and store Lua fixtures alongside the scenario they exercise.
-- Extend both `MoonSharp.Interpreter.Tests` and `DotNetCoreTestRunner` when interpreter behavior changes to keep builds in sync.
+- Extend both `tests/MoonSharp.Interpreter.Tests.Legacy` and `tests/TestRunners/DotNetCoreTestRunner` when interpreter behavior changes to keep builds in sync.
 - Use `Assert.Ignore` only with a linked tracking issue and add coverage for new opcodes, metatables, and debugger paths.
 
 ## Commit & Pull Request Guidelines

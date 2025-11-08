@@ -1,14 +1,18 @@
 | File/Dir | Contents |
 | -------- | -------- |
-| Flash | Sources for the Flex/Flash embedded debugger. |
-| MoonSharp.Debugger | Sources for the bytecode debugger (not the remote user-friendly one!). This is an internal tool. |
-| MoonSharp.Documentation | Documentation project for SandCastle |
-| MoonSharp.Interpreter | The core project - the interpreter engine is here. |
-| MoonSharp.Interpreter.Tests | Test suite, mostly end to end tests of various kinds |
-| MoonSharp.RemoteDebugger | The C# project for the remote debugger |
-| MoonSharp | Sources for the REPL interpreter |
-| MoonSharpTests | Tests runner to run the tests suite outside of Visual Studio (mainly, to test in Mono). |
-| PerformanceComparison | Small project acting as performance testbed and benchmark against similar projects. Code is almost always in bad state here. |
+| runtime/MoonSharp.Interpreter | The core interpreter engine (Lua 5.2). |
+| debuggers/MoonSharp.RemoteDebugger | Remote debugger backend. |
+| debuggers/MoonSharp.VsCodeDebugger | VS Code debugger backend. |
+| debuggers/vscode-extension | VS Code extension sources (TypeScript). |
+| tooling/MoonSharp | Console REPL / CLI shell. |
+| tooling/MoonSharp.Hardwire | Hardwire generator tooling. |
+| tooling/Benchmarks | BenchmarkDotNet harnesses. |
+| tooling/PerformanceComparison | Performance comparison harness. |
+| tests/TestRunners/DotNetCoreTestRunner | Modern .NET test runner (executes TAP + NUnit suites). |
+| tests/MoonSharp.Interpreter.Tests.Legacy | Legacy NUnit 2.6 suite (historical coverage). |
+| samples/Tutorial | Tutorial snippets and sample scripts. |
+| docs/manual/MoonSharp.Documentation | Legacy Sandcastle documentation project. |
+| legacy/* | Archived assets (Flash client, old tooling, etc.). |
 | Unity | Unity projects are put here. As now, mainly a test runner. |
 | packages | NuGet packages of used libraries |
 | | |

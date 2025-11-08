@@ -21,8 +21,8 @@ try {
         dotnet build "src/moonsharp.sln" -c $Configuration | Out-Null
     }
 
-    $runnerProject = "src/TestRunners/DotNetCoreTestRunner/DotNetCoreTestRunner.csproj"
-    $runnerOutput = Join-Path $repoRoot "src/TestRunners/DotNetCoreTestRunner/bin/$Configuration/net8.0/DotNetCoreTestRunner.dll"
+    $runnerProject = "src/tests/TestRunners/DotNetCoreTestRunner/DotNetCoreTestRunner.csproj"
+    $runnerOutput = Join-Path $repoRoot "src/tests/TestRunners/DotNetCoreTestRunner/bin/$Configuration/net8.0/DotNetCoreTestRunner.dll"
     if (-not (Test-Path $runnerOutput)) {
         throw "Runner output not found at '$runnerOutput'. Build the runner or rerun without -SkipBuild."
     }
