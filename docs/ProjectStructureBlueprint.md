@@ -10,7 +10,7 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/debuggers/MoonSharp.RemoteDebugger` | Remote debugger assemblies | Path aligned, no structural changes needed. |
 | `src/debuggers/MoonSharp.VsCodeDebugger` | VS Code debugger backend | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed. |
 | `src/debuggers/vscode-extension` | VS Code extension (TypeScript) | Now grouped under debuggers. |
-| `src/tooling/MoonSharp.Cli` | CLI shell (`MoonSharp.Cli.csproj`) | Renamed; update packaging/docs to reflect new CLI name. |
+| `src/tooling/MoonSharp.Cli` | CLI shell (`MoonSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); update packaging/docs to reflect new CLI name. |
 | `src/tooling/MoonSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
 | `src/tooling/Benchmarks`, `src/tooling/PerformanceComparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
 | `src/tests/TestRunners/DotNetCoreTestRunner` | Net8 runner (active) | Drives modern coverage pipeline. |

@@ -63,7 +63,7 @@
   - ✅ Folded the VS Code debugger `_Projects` mirror into the primary `MoonSharp.VsCodeDebugger.csproj` (netstandard2.1 + net8.0) and refreshed downstream project references.
   - ✅ Renamed the CLI shell to `tooling/MoonSharp.Cli/MoonSharp.Cli.csproj` and adjusted tests/solution/docs to point at the new path.
   - ⏳ Audit packaging (NuGet metadata, release notes, scripts) for the CLI rename and update any hard-coded paths.
-  - ⏳ Replace all checked-in binary dependencies (e.g., `packages/*` DLLs) with NuGet-managed references; remove local package folders once projects restore the latest compatible published versions.
+  - ✅ Replaced CLI `packages/*` binaries with NuGet-managed references; ensure remaining legacy tooling cleans up any straggler DLL drops.
 - **Milestone C – Namespace & Using Enforcement**  
   Introduce Roslyn analyzers or custom scripts to ensure namespaces mirror the physical path + project root (`MoonSharp.Interpreter.Debugging` style), and require `using` directives to live inside namespaces. Provide migration scripts to batch-update existing files, codify exceptions for generated/bundled code, and document rules in `docs/Contributing.md`.
 - **Milestone D – EditorConfig Adoption + Lua Exceptions**  
@@ -84,7 +84,8 @@
    - ✅ VS Code debugger `_Projects` mirror removed; project now multi-targets `netstandard2.1;net8.0`.
    - ✅ CLI rename complete (`tooling/MoonSharp.Cli`).
    - ⏳ Audit packaging/scripts for the new CLI name (NuGet spec, release docs, tooling installers).
-   - ⏳ Switch remaining local dependency DLLs to NuGet package references; delete `src/tooling/MoonSharp.Cli/packages` once restore uses latest compatible published versions.
+   - ✅ CLI now restores solely via NuGet (no checked-in packages).
+   - ⏳ Audit the `src/legacy` tree for lingering native DLL drops (e.g., `lua52.dll`) and decide whether to vendor via packages or formally quarantine.
    - Update automation/scripts (`rsync_projects.sh`, CI workflows) and documentation with new directory paths (partial).
    - Coordinate with owners of legacy assets under `src/legacy` to confirm deletion/archive strategy.
 3. **Namespace & Formatting Enforcement**
