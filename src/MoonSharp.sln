@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoonSharp.RemoteDebugger", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoonSharp.Hardwire", "tooling\MoonSharp.Hardwire\MoonSharp.Hardwire.csproj", "{665224FE-1EBE-4A4F-9FAF-15957BBEAA34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoonSharp", "tooling\MoonSharp\MoonSharp.csproj", "{76082315-74AE-4C1E-B096-1C4E1B67BEF2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoonSharp.Cli", "tooling\MoonSharp.Cli\MoonSharp.Cli.csproj", "{76082315-74AE-4C1E-B096-1C4E1B67BEF2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C3DA6200-0D27-289C-2E9A-E177ECE5D4BD}"
 EndProject

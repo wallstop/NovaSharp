@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - All runtime code lives under `src/runtime`, with the interpreter in `src/runtime/MoonSharp.Interpreter`.
-- Packaging and debugger wrappers reside in `src/tooling/MoonSharp`, `src/debuggers/MoonSharp.VsCodeDebugger`, and `src/debuggers/MoonSharp.RemoteDebugger`.
+- Packaging and debugger wrappers reside in `src/tooling/MoonSharp.Cli`, `src/debuggers/MoonSharp.VsCodeDebugger`, and `src/debuggers/MoonSharp.RemoteDebugger`.
 - Tooling, samples, and utilities are grouped under `src/tooling`, `src/samples`, and `src/tests`.
 - Legacy NUnit coverage is maintained in `src/tests/MoonSharp.Interpreter.Tests.Legacy`; modern .NET Core execution lives in `src/tests/TestRunners/DotNetCoreTestRunner`.
 - When adding modules, mirror existing folder placement so docs, tests, and build scripts stay aligned.

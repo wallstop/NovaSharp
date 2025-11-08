@@ -10,7 +10,7 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/debuggers/MoonSharp.RemoteDebugger` | Remote debugger assemblies | Path aligned, no structural changes needed. |
 | `src/debuggers/MoonSharp.VsCodeDebugger` | VS Code debugger backend | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed. |
 | `src/debuggers/vscode-extension` | VS Code extension (TypeScript) | Now grouped under debuggers. |
-| `src/tooling/MoonSharp` | CLI shell (`MoonSharp.csproj`) | Consider renaming project to `MoonSharp.Cli` for clarity. |
+| `src/tooling/MoonSharp.Cli` | CLI shell (`MoonSharp.Cli.csproj`) | Renamed; update packaging/docs to reflect new CLI name. |
 | `src/tooling/MoonSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
 | `src/tooling/Benchmarks`, `src/tooling/PerformanceComparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
 | `src/tests/TestRunners/DotNetCoreTestRunner` | Net8 runner (active) | Drives modern coverage pipeline. |
@@ -65,7 +65,7 @@ Key principles:
 
 2. **Project Updates**
    - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `MoonSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
-   - Rename `tooling/MoonSharp/MoonSharp.csproj` to `MoonSharp.Cli.csproj` (update assembly + namespace) once consumers are ready.
+   - ✅ Renamed `tooling/MoonSharp/MoonSharp.csproj` to `tooling/MoonSharp.Cli/MoonSharp.Cli.csproj` and relocated CLI assets accordingly.
    - Update `MoonSharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
 
 3. **Namespace + Usings Sweep**

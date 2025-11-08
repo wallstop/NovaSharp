@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MoonSharp")]
+[assembly: AssemblyTitle("MoonSharp.Cli")]
 [assembly: AssemblyDescription("REPL Interpreter for the MoonSharp language")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("http://www.moonsharp.org")]
-[assembly: AssemblyProduct("MoonSharp")]
+[assembly: AssemblyProduct("MoonSharp.Cli")]
 [assembly: AssemblyCopyright("Copyright © 2014-2015, Marco Mastropaolo")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

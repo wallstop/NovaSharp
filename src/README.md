@@ -4,7 +4,7 @@
 | debuggers/MoonSharp.RemoteDebugger | Remote debugger backend. |
 | debuggers/MoonSharp.VsCodeDebugger | VS Code debugger backend. |
 | debuggers/vscode-extension | VS Code extension sources (TypeScript). |
-| tooling/MoonSharp | Console REPL / CLI shell. |
+| tooling/MoonSharp.Cli | Console REPL / CLI shell. |
 | tooling/MoonSharp.Hardwire | Hardwire generator tooling. |
 | tooling/Benchmarks | BenchmarkDotNet harnesses. |
 | tooling/PerformanceComparison | Performance comparison harness. |
