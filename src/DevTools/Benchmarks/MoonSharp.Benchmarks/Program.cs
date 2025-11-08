@@ -1,8 +1,7 @@
-#if NET8_0_OR_GREATER
 using BenchmarkDotNet.Running;
 using MoonSharp.Benchmarking;
 
-namespace MoonSharp.PerformanceComparison;
+namespace MoonSharp.Benchmarks;
 
 internal static class Program
 {
@@ -10,9 +9,10 @@ internal static class Program
     {
         var summaries = BenchmarkSwitcher
             .FromAssembly(typeof(Program).Assembly)
-            .Run(args, BenchmarkConfig.Create());
+            .Run(args, DefaultConfigFactory.Create());
 
-        PerformanceReportWriter.Write("Interpreter vs NLua", summaries);
+#if NET8_0_OR_GREATER
+        PerformanceReportWriter.Write("MoonSharp Benchmarks", summaries);
+#endif
     }
 }
-#endif

@@ -171,5 +171,4 @@ $RECYCLE.BIN/
 # Mac desktop service store files
 .DS_Store
 
-PLAN.md
-PLAN.md.meta
+BenchmarkDotNet.Artifacts/

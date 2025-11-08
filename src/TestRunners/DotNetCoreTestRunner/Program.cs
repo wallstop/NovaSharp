@@ -19,6 +19,8 @@ namespace DotNetCoreTestRunner
 {
     class Program
     {
+        private static bool s_isCi;
+
         public const string RESTRICT_TEST = null; //"VInterop_ConstructorAndConcatMethodSemicolon_None";
         public const string LOG_ON_FILE = "moonsharp_tests.log";
 
@@ -98,6 +100,19 @@ namespace DotNetCoreTestRunner
 
         static int Main(string[] args)
         {
+            s_isCi =
+                args.Any(a => string.Equals(a, "--ci", StringComparison.OrdinalIgnoreCase))
+                || string.Equals(
+                    Environment.GetEnvironmentVariable("CI"),
+                    "true",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            if (s_isCi)
+            {
+                return TestMain(args);
+            }
+
             Console.WriteLine("1 - Unit tests");
             Console.WriteLine("2 - Debugger");
 
@@ -127,7 +142,7 @@ namespace DotNetCoreTestRunner
                 System.Threading.Tasks.Task.Delay(100).Wait();
             }
 
-            Console.ReadKey();
+            WaitForKeypress();
         }
 
         static int TestMain(string[] args)
@@ -177,18 +192,18 @@ namespace DotNetCoreTestRunner
                 if (Debugger.IsAttached)
                 {
                     Console.WriteLine("Press any key...");
-                    Console.ReadKey();
+                    WaitForKeypress();
                 }
 
                 //OnTestEnded();
-                Console.ReadKey();
+                WaitForKeypress();
 
                 return T.Fail;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                Console.ReadKey();
+                WaitForKeypress();
                 return 999;
             }
         }
@@ -244,6 +259,14 @@ namespace DotNetCoreTestRunner
             {
                 File.AppendAllText(LOG_ON_FILE, txt);
                 File.AppendAllText(LOG_ON_FILE, "\n\n");
+            }
+        }
+
+        private static void WaitForKeypress()
+        {
+            if (!s_isCi && !Console.IsInputRedirected)
+            {
+                Console.ReadKey();
             }
         }
     }

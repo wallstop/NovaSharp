@@ -4,15 +4,15 @@
     <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
     <AssemblyTitle>MoonSharp.VsCodeDebugger</AssemblyTitle>
     <VersionPrefix>2.0.0</VersionPrefix>
-    <TargetFramework>netstandard1.6</TargetFramework>
-    <DefineConstants>$(DefineConstants);DOTNET_CORE;NETFX_CORE</DefineConstants>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
     <AssemblyName>MoonSharp.VsCodeDebugger</AssemblyName>
     <PackageId>MoonSharp.VsCodeDebugger.netcore</PackageId>
-    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <LangVersion>latest</LangVersion>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
