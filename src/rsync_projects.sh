@@ -12,11 +12,7 @@ mkdir ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Interpreter
 mkdir ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Debugger
 
 echo ... .NET Core
-rm -R ./runtime/MoonSharp.Interpreter/_Projects/MoonSharp.Interpreter.netcore/src
-rm -R ./debuggers/MoonSharp.VsCodeDebugger/_Projects/MoonSharp.VsCodeDebugger.netcore/src
 rm -R ./tests/TestRunners/DotNetCoreTestRunner/src
-mkdir ./runtime/MoonSharp.Interpreter/_Projects/MoonSharp.Interpreter.netcore/src
-mkdir ./debuggers/MoonSharp.VsCodeDebugger/_Projects/MoonSharp.VsCodeDebugger.netcore/src
 mkdir ./tests/TestRunners/DotNetCoreTestRunner/src
 
 echo
@@ -31,17 +27,6 @@ rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include
 
 echo ... Unity - unit tests...
 rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/tests/MoonSharp.Interpreter.Tests.Legacy/ ./Unity/MoonSharp/Assets/Tests
-
-echo ... Unity - cleaning cruft...
-rm -R ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Interpreter/_Projects
-rm -R ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Debugger/_Projects
-
-
-echo ... .NET Core - interpreter
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/runtime/MoonSharp.Interpreter/ ./runtime/MoonSharp.Interpreter/_Projects/MoonSharp.Interpreter.netcore/src/
-
-echo ... .NET Core - vscode debugger...
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/debuggers/MoonSharp.VsCodeDebugger/ ./debuggers/MoonSharp.VsCodeDebugger/_Projects/MoonSharp.VsCodeDebugger.netcore/src
 
 echo ... .NET Core - unit tests...
 rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/tests/MoonSharp.Interpreter.Tests.Legacy/ ./tests/TestRunners/DotNetCoreTestRunner/src

@@ -22,10 +22,10 @@ namespace MoonSharp.Interpreter.Interop
 
         object m_Lock = new object();
         MultiDictionary<object, Closure> m_Callbacks = new MultiDictionary<object, Closure>(
-            new ReferenceEqualityComparer()
+            new MoonSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
         );
         Dictionary<object, Delegate> m_Delegates = new Dictionary<object, Delegate>(
-            new ReferenceEqualityComparer()
+            new MoonSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
         );
 
         /// <summary>

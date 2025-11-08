@@ -34,8 +34,8 @@
     <CppCommentsFixup>False</CppCommentsFixup>
     <CleanIntermediates>True</CleanIntermediates>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\bin\Release\netstandard2.1\MoonSharp.Interpreter.dll" />
-      <DocumentationSource sourceFile="..\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\bin\Release\netstandard2.1\MoonSharp.Interpreter.xml" />
+      <DocumentationSource sourceFile="..\..\..\src\runtime\MoonSharp.Interpreter\bin\Release\netstandard2.1\MoonSharp.Interpreter.dll" />
+      <DocumentationSource sourceFile="..\..\..\src\runtime\MoonSharp.Interpreter\bin\Release\netstandard2.1\MoonSharp.Interpreter.xml" />
     </DocumentationSources>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>

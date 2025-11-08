@@ -16,7 +16,7 @@
         <PackageReference Include="NLua" Version="1.7.5" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
+        <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
         <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />

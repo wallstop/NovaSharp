@@ -9,7 +9,7 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\..\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
+        <ProjectReference Include="..\..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />

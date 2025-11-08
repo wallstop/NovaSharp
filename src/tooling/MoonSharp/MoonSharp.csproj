@@ -8,7 +8,7 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\MoonSharp.Hardwire\MoonSharp.Hardwire.csproj" />
-        <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
+        <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
         <ProjectReference Include="..\..\debuggers\MoonSharp.RemoteDebugger\MoonSharp.RemoteDebugger.csproj" />
         <ProjectReference Include="..\..\debuggers\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.csproj" />
     </ItemGroup>

@@ -15,6 +15,6 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj" />
+        <ProjectReference Include="..\..\..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
     </ItemGroup>
 </Project>

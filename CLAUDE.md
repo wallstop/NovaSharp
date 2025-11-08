@@ -20,7 +20,7 @@ dotnet tool restore
 dotnet build src\moonsharp.sln -c Release
 
 # Quick iteration on interpreter core
-dotnet build src\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj
+dotnet build src\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj
 
 # Legacy MSBuild option (if Visual Studio tooling preferred)
 msbuild src\moonsharp.sln /p:Configuration=Release

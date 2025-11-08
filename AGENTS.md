@@ -12,7 +12,7 @@
 - Build all targets with `dotnet build src\moonsharp.sln -c Release` for a full verification pass.
 - Legacy environments can use `msbuild src\moonsharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
 - Execute interpreter tests with `dotnet test src\tests\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release`.
-- Iterate quickly on the interpreter via `dotnet build src\runtime\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.csproj`.
+- Iterate quickly on the interpreter via `dotnet build src\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj`.
 
 ## Coding Style & Naming Conventions
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
