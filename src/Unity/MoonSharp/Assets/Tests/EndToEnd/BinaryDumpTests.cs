@@ -7,77 +7,79 @@ using NUnit.Framework;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class BinaryDumpTests
-	{
-		private DynValue Script_RunString(string script)
-		{
-			Script s1 = new Script();
-			DynValue v1 = s1.LoadString(script);
+    [TestFixture]
+    public class BinaryDumpTests
+    {
+        private DynValue Script_RunString(string script)
+        {
+            Script s1 = new Script();
+            DynValue v1 = s1.LoadString(script);
 
-			using (MemoryStream ms = new MemoryStream())
-			{
-				s1.Dump(v1, ms);
-				ms.Seek(0, SeekOrigin.Begin);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                s1.Dump(v1, ms);
+                ms.Seek(0, SeekOrigin.Begin);
 
-				Script s2 = new Script();
-				DynValue func = s2.LoadStream(ms);
-				return func.Function.Call();
-			}
-		}
+                Script s2 = new Script();
+                DynValue func = s2.LoadStream(ms);
+                return func.Function.Call();
+            }
+        }
 
-		private DynValue Script_LoadFunc(string script, string funcname)
-		{
-			Script s1 = new Script();
-			DynValue v1 = s1.DoString(script);
-			DynValue func = s1.Globals.Get(funcname);
+        private DynValue Script_LoadFunc(string script, string funcname)
+        {
+            Script s1 = new Script();
+            DynValue v1 = s1.DoString(script);
+            DynValue func = s1.Globals.Get(funcname);
 
-			using (MemoryStream ms = new MemoryStream())
-			{
-				s1.Dump(func, ms);
-				ms.Seek(0, SeekOrigin.Begin);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                s1.Dump(func, ms);
+                ms.Seek(0, SeekOrigin.Begin);
 
-				Script s2 = new Script();
-				return s2.LoadStream(ms);
-			}
-		}
+                Script s2 = new Script();
+                return s2.LoadStream(ms);
+            }
+        }
 
-
-		[Test]
-		public void BinDump_ChunkDump()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_ChunkDump()
+        {
+            string script =
+                @"
 				local chunk = load('return 81;');
 				local str = string.dump(chunk);
 				local fn = load(str);
 				return fn(9);
 			";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(81, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(81, res.Number);
+        }
 
-		[Test]
-		public void BinDump_StringDump()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_StringDump()
+        {
+            string script =
+                @"
 				local str = string.dump(function(n) return n * n; end);
 				local fn = load(str);
 				return fn(9);
 			";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(81, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(81, res.Number);
+        }
 
-		[Test]
-		public void BinDump_StandardDumpFunc()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_StandardDumpFunc()
+        {
+            string script =
+                @"
 				function fact(n)
 					return n * 24;
 				end
@@ -86,37 +88,37 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				
 			";
 
-			DynValue fact = Script_LoadFunc(script, "fact");
-			DynValue res = fact.Function.Call(5);
+            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue res = fact.Function.Call(5);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(120, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(120, res.Number);
+        }
 
-
-
-		[Test]
-		public void BinDump_FactorialDumpFunc()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_FactorialDumpFunc()
+        {
+            string script =
+                @"
 				function fact(n)
 					if (n == 0) then return 1; end
 					return fact(n - 1) * n;
 				end
 			";
 
-			DynValue fact = Script_LoadFunc(script, "fact");
-			fact.Function.OwnerScript.Globals.Set("fact", fact);
-			DynValue res = fact.Function.Call(5);
+            DynValue fact = Script_LoadFunc(script, "fact");
+            fact.Function.OwnerScript.Globals.Set("fact", fact);
+            DynValue res = fact.Function.Call(5);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(120, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(120, res.Number);
+        }
 
-		[Test]
-		public void BinDump_FactorialDumpFuncGlobal()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_FactorialDumpFuncGlobal()
+        {
+            string script =
+                @"
 				x = 0
 
 				function fact(n)
@@ -125,21 +127,21 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-			DynValue fact = Script_LoadFunc(script, "fact");
-			fact.Function.OwnerScript.Globals.Set("fact", fact);
-			fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
-			DynValue res = fact.Function.Call(5);
+            DynValue fact = Script_LoadFunc(script, "fact");
+            fact.Function.OwnerScript.Globals.Set("fact", fact);
+            fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
+            DynValue res = fact.Function.Call(5);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(120, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(120, res.Number);
+        }
 
-
-		[Test]
-		[ExpectedException(typeof(ArgumentException))]
-		public void BinDump_FactorialDumpFuncUpvalue()
-		{
-			string script = @"
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void BinDump_FactorialDumpFuncUpvalue()
+        {
+            string script =
+                @"
 				local x = 0
 
 				function fact(n)
@@ -148,41 +150,20 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-			DynValue fact = Script_LoadFunc(script, "fact");
-			fact.Function.OwnerScript.Globals.Set("fact", fact);
-			fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
-			DynValue res = fact.Function.Call(5);
+            DynValue fact = Script_LoadFunc(script, "fact");
+            fact.Function.OwnerScript.Globals.Set("fact", fact);
+            fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
+            DynValue res = fact.Function.Call(5);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(120, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(120, res.Number);
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		[Test]
-		public void BinDump_FactorialClosure()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_FactorialClosure()
+        {
+            string script =
+                @"
 local x = 5;
 
 function fact(n)
@@ -201,16 +182,17 @@ y = y + fact(5);
 return y;
 ";
 
-			DynValue res = Script_RunString(script);
+            DynValue res = Script_RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(140, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(140, res.Number);
+        }
 
-		[Test]
-		public void BinDump_ClosureOnParam()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_ClosureOnParam()
+        {
+            string script =
+                @"
 				local function g (z)
 				  local function f(a)
 					return a + z;
@@ -220,16 +202,17 @@ return y;
 
 				return (g(3)(2));";
 
-			DynValue res = Script_RunString(script);
+            DynValue res = Script_RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(5, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(5, res.Number);
+        }
 
-		[Test]
-		public void BinDump_NestedUpvalues()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_NestedUpvalues()
+        {
+            string script =
+                @"
 	local y = y;
 
 	local x = 0;
@@ -248,17 +231,17 @@ return y;
 	return 10 * m.t.dojob();
 								";
 
-			DynValue res = Script_RunString(script);
+            DynValue res = Script_RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(10, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(10, res.Number);
+        }
 
-
-		[Test]
-		public void BinDump_NestedOutOfScopeUpvalues()
-		{
-			string script = @"
+        [Test]
+        public void BinDump_NestedOutOfScopeUpvalues()
+        {
+            string script =
+                @"
 
 	function X()
 		local y = y;
@@ -284,19 +267,19 @@ return y;
 	return 10 * Q.t.dojob();
 								";
 
-			DynValue res = Script_RunString(script);
+            DynValue res = Script_RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(10, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(10, res.Number);
+        }
 
+        [Test]
+        public void Load_ChangeEnvWithDebugSetUpvalue()
+        {
+            List<Table> list = new List<Table>();
 
-		[Test]
-		public void Load_ChangeEnvWithDebugSetUpvalue()
-		{
-			List<Table> list = new List<Table>();
-
-			string script = @"
+            string script =
+                @"
 				function print_env()
 				  print(_ENV)
 				end
@@ -318,18 +301,18 @@ return y;
 
 				sandbox()";
 
-			Script S = new Script(CoreModules.Preset_Complete);
+            Script S = new Script(CoreModules.Preset_Complete);
 
-			S.Globals["print"] = (Action<Table>)(t => list.Add(t));
+            S.Globals["print"] = (Action<Table>)(t => list.Add(t));
 
-			S.DoString(script);
+            S.DoString(script);
 
-			Assert.AreEqual(6, list.Count);
+            Assert.AreEqual(6, list.Count);
 
-			int[] eqs = new int[] { 0, 1, 1, 0, 1, 1 };
+            int[] eqs = new int[] { 0, 1, 1, 0, 1, 1 };
 
-			for (int i = 0; i < 6; i++)
-				Assert.AreEqual(list[eqs[i]], list[i]);
-		}
-	}
+            for (int i = 0; i < 6; i++)
+                Assert.AreEqual(list[eqs[i]], list[i]);
+        }
+    }
 }

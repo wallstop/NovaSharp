@@ -1,21 +1,23 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
-using System.Threading;
-using MoonSharp.Interpreter.Tests;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Loaders;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Interop;
-using System;
 using MoonSharp.Interpreter.Interop.RegistrationPolicies;
+using MoonSharp.Interpreter.Loaders;
+using MoonSharp.Interpreter.Tests;
+using UnityEngine;
 
 public class TestRunner : MonoBehaviour
 {
-
     public class HardwireAndLogPolicy : IRegistrationPolicy
     {
-        public IUserDataDescriptor HandleRegistration(IUserDataDescriptor newDescriptor, IUserDataDescriptor oldDescriptor)
+        public IUserDataDescriptor HandleRegistration(
+            IUserDataDescriptor newDescriptor,
+            IUserDataDescriptor oldDescriptor
+        )
         {
             if (oldDescriptor == null && newDescriptor != null)
             {
@@ -29,21 +31,19 @@ public class TestRunner : MonoBehaviour
         {
             return false;
         }
-
     }
 
-
-	string m_Text = "";
-	object m_Lock = new object();
-	bool m_LastWasLine = true;
+    string m_Text = "";
+    object m_Lock = new object();
+    bool m_LastWasLine = true;
 
     Dictionary<string, string> ReadAllScripts()
     {
-        Dictionary<string, string> scripts = new  Dictionary<string, string>();
+        Dictionary<string, string> scripts = new Dictionary<string, string>();
 
         object[] result = Resources.LoadAll("MoonSharp/Scripts", typeof(TextAsset));
 
-        foreach(TextAsset ta in result.OfType<TextAsset>())
+        foreach (TextAsset ta in result.OfType<TextAsset>())
         {
             scripts.Add(ta.name, ta.text);
         }
@@ -51,26 +51,24 @@ public class TestRunner : MonoBehaviour
         return scripts;
     }
 
-	// Use this for initialization
-	void Start()
-	{
-        Script.DefaultOptions.ScriptLoader = new MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader(ReadAllScripts());
+    // Use this for initialization
+    void Start()
+    {
+        Script.DefaultOptions.ScriptLoader =
+            new MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader(ReadAllScripts());
 
-		Debug.Log("STARTED!");
-		StartCoroutine(DoTests());
-	}
+        Debug.Log("STARTED!");
+        StartCoroutine(DoTests());
+    }
 
+    // Update is called once per frame
+    void Update() { }
 
-	// Update is called once per frame
-	void Update()
-	{
-
-	}
     // Tests skipped on all platforms
     static List<string> SKIPLIST = new List<string>()
     {
-        "TestMore_308_io",  // avoid interactions with low level system
-        "TestMore_309_os",  // avoid interactions with low level system
+        "TestMore_308_io", // avoid interactions with low level system
+        "TestMore_309_os", // avoid interactions with low level system
     };
 
     static List<string> HARDWIRE_SKIPLIST = new List<string>()
@@ -83,7 +81,6 @@ public class TestRunner : MonoBehaviour
         "Interop_Event_DetachAndDeregister",
         "Interop_SEvent_DetachAndDeregister",
         "Interop_SEvent_DetachAndReregister",
-
         // tests dependent on type dereg
         "Interop_ListMethod_None",
         "Interop_ListMethod_Lazy",
@@ -91,11 +88,9 @@ public class TestRunner : MonoBehaviour
         "VInterop_ListMethod_None",
         "VInterop_ListMethod_Lazy",
         "VInterop_ListMethod_Precomputed",
-
         // private members
         "Interop_NestedTypes_Private_Ref",
         "Interop_NestedTypes_Private_Val",
-
         // value type property setters
         "VInterop_IntPropertySetter_None",
         "VInterop_IntPropertySetter_Lazy",
@@ -119,16 +114,15 @@ public class TestRunner : MonoBehaviour
         "VInterop_IntFieldSetterWithSimplifiedSyntax",
     };
 
-
     // Tests skipped on AOT platforms - known not workings :(
     static List<string> AOT_SKIPLIST = new List<string>()
     {
-        //"RegCollGen_List_ExtMeth_Last", 
-        //"VInterop_NIntPropertySetter_None",   
-        //"VInterop_NIntPropertySetter_Lazy",   
-        //"VInterop_NIntPropertySetter_Precomputed",    
-        //"VInterop_Overloads_NumDowncast", 
-        //"VInterop_Overloads_NilSelectsNonOptional",   
+        //"RegCollGen_List_ExtMeth_Last",
+        //"VInterop_NIntPropertySetter_None",
+        //"VInterop_NIntPropertySetter_Lazy",
+        //"VInterop_NIntPropertySetter_Precomputed",
+        //"VInterop_Overloads_NumDowncast",
+        //"VInterop_Overloads_NilSelectsNonOptional",
         //"VInterop_Overloads_FullDecl",
         //"VInterop_Overloads_Static2",
         //"VInterop_Overloads_Cache1",
@@ -144,83 +138,71 @@ public class TestRunner : MonoBehaviour
         //"VInterop_ConstructorAndConcatMethodSemicolon_Precomputed",
     };
 
-
-
-	IEnumerator DoTests()
-	{
+    IEnumerator DoTests()
+    {
         MyNamespace.MyClass.Initialize();
         SKIPLIST.AddRange(HARDWIRE_SKIPLIST);
         UserData.RegistrationPolicy = new HardwireAndLogPolicy();
 
-
-
-		MoonSharp.Interpreter.Tests.TestRunner tr = new MoonSharp.Interpreter.Tests.TestRunner(Log);
+        MoonSharp.Interpreter.Tests.TestRunner tr = new MoonSharp.Interpreter.Tests.TestRunner(Log);
 
         foreach (var r in tr.IterateOnTests(null, SKIPLIST.ToArray()))
-		{
-			Log(r);
-			yield return null;
-		}
-	}
+        {
+            Log(r);
+            yield return null;
+        }
+    }
 
-	void Log(TestResult r)
-	{
-		if (r.Type == TestResultType.Fail)
-		{
+    void Log(TestResult r)
+    {
+        if (r.Type == TestResultType.Fail)
+        {
             Console_WriteLine("[FAIL] | {0} - {1} - {2}", r.TestName, r.Message, ""); // r.Exception);
-		}
-		else if (r.Type == TestResultType.Ok)
-		{
-			Console_Write(".");
-		}
-		else if (r.Type == TestResultType.Skipped)
-		{
-			Console_Write("s");
-		}
-		else
-		{
-			//Console_WriteLine("{0}", r.Message);
-		}
-	}
+        }
+        else if (r.Type == TestResultType.Ok)
+        {
+            Console_Write(".");
+        }
+        else if (r.Type == TestResultType.Skipped)
+        {
+            Console_Write("s");
+        }
+        else
+        {
+            //Console_WriteLine("{0}", r.Message);
+        }
+    }
 
+    private void Console_Write(string message)
+    {
+        lock (m_Lock)
+        {
+            m_Text = m_Text + message;
+            m_LastWasLine = false;
+        }
+    }
 
-	private void Console_Write(string message)
-	{
-		lock (m_Lock)
-		{
-			m_Text = m_Text + message;
-			m_LastWasLine = false;
-		}
-	}
+    private void Console_WriteLine(string message, params object[] args)
+    {
+        lock (m_Lock)
+        {
+            if (!m_LastWasLine)
+            {
+                m_Text = m_Text + "\n";
+                m_LastWasLine = true;
+            }
 
-	private void Console_WriteLine(string message, params object[] args)
-	{
-		lock (m_Lock)
-		{
-			if (!m_LastWasLine)
-			{
-				m_Text = m_Text + "\n";
-				m_LastWasLine = true;
-			}
+            m_Text = m_Text + string.Format(message, args) + "\n";
+        }
+    }
 
-			m_Text = m_Text + string.Format(message, args) + "\n";
-		}
-	}
+    void OnGUI()
+    {
+        string text = "";
+        lock (m_Lock)
+            text = m_Text;
 
-
-
-	void OnGUI()
-	{
-		string text = "";
-		lock (m_Lock)
-			text = m_Text;
-
-		GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "MoonSharp Test Runner");
-		GUI.TextArea(new Rect(0, 30, Screen.width, Screen.height - 30), text);
-	}
-
-
-
-
-
+        GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "MoonSharp Test Runner");
+        GUI.TextArea(new Rect(0, 30, Screen.width, Screen.height - 30), text);
+    }
 }

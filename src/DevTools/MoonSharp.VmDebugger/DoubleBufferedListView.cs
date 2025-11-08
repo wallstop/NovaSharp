@@ -5,12 +5,12 @@ using System.Text;
 
 namespace MoonSharp.Debugger
 {
-	class DoubleBufferedListView : System.Windows.Forms.ListView
-	{
-		public DoubleBufferedListView()
-			: base()
-		{
-			this.DoubleBuffered = true;
-		}
-	}
+    class DoubleBufferedListView : System.Windows.Forms.ListView
+    {
+        public DoubleBufferedListView()
+            : base()
+        {
+            this.DoubleBuffered = true;
+        }
+    }
 }

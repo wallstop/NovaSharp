@@ -5,7 +5,5 @@ using System.Text;
 
 namespace NUnit.Framework
 {
-	class _NUnitWrapper
-	{
-	}
+    class _NUnitWrapper { }
 }

@@ -1,38 +1,38 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using MoonSharp.Interpreter.CoreLib;
 using MoonSharp.Interpreter.Execution;
 using NUnit.Framework;
-using MoonSharp.Interpreter.CoreLib;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class TableTests
-	{
-		[Test]
-		public void TableAccessAndEmptyCtor()
-		{
-			string script = @"
+    [TestFixture]
+    public class TableTests
+    {
+        [Test]
+        public void TableAccessAndEmptyCtor()
+        {
+            string script =
+                @"
 						a = { }
 						
 						a[1] = 1;
 
 						return a[1]";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1, res.Number);
+        }
 
-
-
-		[Test]
-		public void TableAccessAndCtor()
-		{
-			string script = @"
+        [Test]
+        public void TableAccessAndCtor()
+        {
+            string script =
+                @"
 						a = { 55, 2, 3, aurevoir=6, [false] = 7 }
 						
 						a[1] = 1;
@@ -41,30 +41,31 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return a[1], a[2], a[3], a['ciao'], a.hello, a.aurevoir, a[false]";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(7, res.Tuple.Length);
-			Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[2].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[3].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[4].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[5].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[6].Type);
-			Assert.AreEqual(1, res.Tuple[0].Number);
-			Assert.AreEqual(2, res.Tuple[1].Number);
-			Assert.AreEqual(3, res.Tuple[2].Number);
-			Assert.AreEqual(4, res.Tuple[3].Number);
-			Assert.AreEqual(5, res.Tuple[4].Number);
-			Assert.AreEqual(6, res.Tuple[5].Number);
-			Assert.AreEqual(7, res.Tuple[6].Number);
-		}
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(7, res.Tuple.Length);
+            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[2].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[3].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[4].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[5].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[6].Type);
+            Assert.AreEqual(1, res.Tuple[0].Number);
+            Assert.AreEqual(2, res.Tuple[1].Number);
+            Assert.AreEqual(3, res.Tuple[2].Number);
+            Assert.AreEqual(4, res.Tuple[3].Number);
+            Assert.AreEqual(5, res.Tuple[4].Number);
+            Assert.AreEqual(6, res.Tuple[5].Number);
+            Assert.AreEqual(7, res.Tuple[6].Number);
+        }
 
-		[Test]
-		public void TableMethod1()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod1()
+        {
+            string script =
+                @"
 						x = 0
 	
 						a = 
@@ -80,16 +81,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return x";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1994, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1994, res.Number);
+        }
 
-		[Test]
-		public void TableMethod2()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod2()
+        {
+            string script =
+                @"
 						x = 0
 	
 						a = 
@@ -105,16 +107,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return x";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1994, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1994, res.Number);
+        }
 
-		[Test]
-		public void TableMethod3()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod3()
+        {
+            string script =
+                @"
 						x = 0
 	
 						a = 
@@ -130,17 +133,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return x";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1994, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1994, res.Number);
+        }
 
-
-		[Test]
-		public void TableMethod4()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod4()
+        {
+            string script =
+                @"
 						x = 0
 	
 						local a = 
@@ -156,16 +159,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return x";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1994, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1994, res.Number);
+        }
 
-		[Test]
-		public void TableMethod5()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod5()
+        {
+            string script =
+                @"
 						x = 0
 
 						a = 
@@ -184,33 +188,34 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 						return x";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(1994, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(1994, res.Number);
+        }
 
-		
-		[Test]
-		public void TableMethod6()
-		{
-			string script = @"
+        [Test]
+        public void TableMethod6()
+        {
+            string script =
+                @"
 						do
 						  local a = {x=0}
 						  function a:add (x) self.x, a.y = self.x+x, 20; return self end
 						  return (a:add(10):add(20):add(30).x == 60 and a.y == 20)
 						end";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Boolean, res.Type);
-			Assert.AreEqual(true, res.CastToBool());
-		}
+            Assert.AreEqual(DataType.Boolean, res.Type);
+            Assert.AreEqual(true, res.CastToBool());
+        }
 
-		[Test]
-		public void TableNextWithChangeInCollection()
-		{
-			string script = @"
+        [Test]
+        public void TableNextWithChangeInCollection()
+        {
+            string script =
+                @"
 				x = { }
 
 				function copy(k, v)
@@ -247,17 +252,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 				return s;";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.String, res.Type);
-			Assert.AreEqual("1|2|3|4|5", res.String);
-		}
+            Assert.AreEqual(DataType.String, res.Type);
+            Assert.AreEqual("1|2|3|4|5", res.String);
+        }
 
-
-		[Test]
-		public void TablePairsWithoutMetatable()
-		{
-			string script = @"
+        [Test]
+        public void TablePairsWithoutMetatable()
+        {
+            string script =
+                @"
 				V = 0
 				K = ''
 
@@ -277,19 +282,20 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 				return K, V;";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-			Assert.AreEqual(5, res.Tuple[0].String.Length);
-			Assert.AreEqual(15, res.Tuple[1].Number);
-		}
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
+            Assert.AreEqual(5, res.Tuple[0].String.Length);
+            Assert.AreEqual(15, res.Tuple[1].Number);
+        }
 
-		[Test]
-		public void TableIPairsWithoutMetatable()
-		{
-			string script = @"    
+        [Test]
+        public void TableIPairsWithoutMetatable()
+        {
+            string script =
+                @"    
 				x = 0
 				y = 0
 
@@ -306,20 +312,21 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
     
 				return x, y";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(2, res.Tuple.Length);
-			Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-			Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-			Assert.AreEqual(6, res.Tuple[0].Number);
-			Assert.AreEqual(12, res.Tuple[1].Number);
-		}
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(2, res.Tuple.Length);
+            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
+            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
+            Assert.AreEqual(6, res.Tuple[0].Number);
+            Assert.AreEqual(12, res.Tuple[1].Number);
+        }
 
-		[Test]
-		public void TestLoadSyntaxError()
-		{
-			string script = @"    
+        [Test]
+        public void TestLoadSyntaxError()
+        {
+            string script =
+                @"    
 			function reader ()
 				i = i + 1
 				return t[i]
@@ -333,19 +340,19 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 			return f, msg;
 		";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(2, res.Tuple.Length);
-			Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
-			Assert.AreEqual(DataType.String, res.Tuple[1].Type);
-		}
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(2, res.Tuple.Length);
+            Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
+            Assert.AreEqual(DataType.String, res.Tuple[1].Type);
+        }
 
-
-		[Test]
-		public void TableSimplifiedAccess1()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess1()
+        {
+            string script =
+                @"    
 			t = {
 				ciao = 'hello'
 			}
@@ -353,16 +360,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-			Script s = new Script();
-			DynValue t = s.DoString(script);
+            Script s = new Script();
+            DynValue t = s.DoString(script);
 
-			Assert.AreEqual("hello", t.Table["ciao"]);
-		}
+            Assert.AreEqual("hello", t.Table["ciao"]);
+        }
 
-		[Test]
-		public void TableSimplifiedAccess2()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess2()
+        {
+            string script =
+                @"    
 			t = {
 				ciao = x
 			}
@@ -370,84 +378,87 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-			Script s = new Script();
-			s.Globals["x"] = "hello";
-			DynValue t = s.DoString(script);
+            Script s = new Script();
+            s.Globals["x"] = "hello";
+            DynValue t = s.DoString(script);
 
-			Assert.AreEqual("hello", t.Table["ciao"]);
-		}
+            Assert.AreEqual("hello", t.Table["ciao"]);
+        }
 
-		[Test]
-		public void TableSimplifiedAccess3()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess3()
+        {
+            string script =
+                @"    
 			t = {
 			}
 
 			return t;
 		";
 
-			Script s = new Script();
-			DynValue t = s.DoString(script);
+            Script s = new Script();
+            DynValue t = s.DoString(script);
 
-			s.Globals["t", "ciao"] = "hello";
+            s.Globals["t", "ciao"] = "hello";
 
-			Assert.AreEqual("hello", t.Table["ciao"]);
-		}
+            Assert.AreEqual("hello", t.Table["ciao"]);
+        }
 
-		[Test]
-		public void TableSimplifiedAccess4()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess4()
+        {
+            string script =
+                @"    
 			t = {
 			}
 		";
 
-			Script s = new Script();
-			s.DoString(script);
+            Script s = new Script();
+            s.DoString(script);
 
-			s.Globals["t", "ciao"] = "hello";
+            s.Globals["t", "ciao"] = "hello";
 
-			Assert.AreEqual("hello", s.Globals["t", "ciao"]);
-		}
+            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
+        }
 
-
-		[Test]
-		public void TableSimplifiedAccess5()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess5()
+        {
+            string script =
+                @"    
 			t = {
 				ciao = 'hello'
 			}
 		";
 
-			Script s = new Script();
-			s.DoString(script);
+            Script s = new Script();
+            s.DoString(script);
 
-			Assert.AreEqual("hello", s.Globals["t", "ciao"]);
-		}
+            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
+        }
 
-		[Test]
-		public void TableSimplifiedAccess6()
-		{
-			string script = @"    
+        [Test]
+        public void TableSimplifiedAccess6()
+        {
+            string script =
+                @"    
 			t = {
 				ciao = 
 				{	'hello' }
 			}
 		";
 
-			Script s = new Script(CoreModules.None);
-			s.DoString(script);
+            Script s = new Script(CoreModules.None);
+            s.DoString(script);
 
-			Assert.AreEqual("hello", s.Globals["t", "ciao", 1]);
-		}
+            Assert.AreEqual("hello", s.Globals["t", "ciao", 1]);
+        }
 
-
-		[Test]
-		public void TestNilRemovesEntryForPairs()
-		{
-			string script = @"
+        [Test]
+        public void TestNilRemovesEntryForPairs()
+        {
+            string script =
+                @"
 				str = ''
 
 				function showTable(t)
@@ -469,99 +480,98 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return str
 			";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.String, res.Type);
-			Assert.AreEqual("id$$", res.String);
-		}
+            Assert.AreEqual(DataType.String, res.Type);
+            Assert.AreEqual("id$$", res.String);
+        }
 
-		[Test]
-		public void TestUnpack()
-		{
-			string script = @"
+        [Test]
+        public void TestUnpack()
+        {
+            string script =
+                @"
 				return unpack({3,4})
 			";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(2, res.Tuple.Length);
-			Assert.AreEqual(3, res.Tuple[0].Number);
-			Assert.AreEqual(4, res.Tuple[1].Number);
-		}
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(2, res.Tuple.Length);
+            Assert.AreEqual(3, res.Tuple[0].Number);
+            Assert.AreEqual(4, res.Tuple[1].Number);
+        }
 
-		[Test]
-		public void PrimeTable_1()
-		{
-			string script = @"    
+        [Test]
+        public void PrimeTable_1()
+        {
+            string script =
+                @"    
 			t = ${
 				ciao = 'hello'
 			}
 		";
 
-			Script s = new Script();
-			s.DoString(script);
+            Script s = new Script();
+            s.DoString(script);
 
-			Assert.AreEqual("hello", s.Globals["t", "ciao"]);
-			Assert.IsTrue(s.Globals.Get("t").Table.OwnerScript == null);
-		}
+            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
+            Assert.IsTrue(s.Globals.Get("t").Table.OwnerScript == null);
+        }
 
-
-		[Test]
-		[ExpectedException(typeof(ScriptRuntimeException))]
-		public void PrimeTable_2()
-		{
-			string script = @"    
+        [Test]
+        [ExpectedException(typeof(ScriptRuntimeException))]
+        public void PrimeTable_2()
+        {
+            string script =
+                @"    
 			t = ${
 				ciao = function() end
 			}
 		";
 
-			Script s = new Script();
-			s.DoString(script);
+            Script s = new Script();
+            s.DoString(script);
 
-			Assert.Fail();
-		}
+            Assert.Fail();
+        }
 
+        [Test]
+        public void Table_Length_Calculations()
+        {
+            Table T = new Table(null);
 
-		[Test]
-		public void Table_Length_Calculations()
-		{
-			Table T = new Table(null);
+            Assert.AreEqual(0, T.Length, "A");
 
-			Assert.AreEqual(0, T.Length, "A");
+            T.Set(1, DynValue.True);
 
-			T.Set(1, DynValue.True);
+            Assert.AreEqual(1, T.Length, "B");
 
-			Assert.AreEqual(1, T.Length, "B");
+            T.Set(2, DynValue.True);
+            T.Set(3, DynValue.True);
+            T.Set(4, DynValue.True);
 
-			T.Set(2, DynValue.True);
-			T.Set(3, DynValue.True);
-			T.Set(4, DynValue.True);
+            Assert.AreEqual(4, T.Length, "C");
 
-			Assert.AreEqual(4, T.Length, "C");
+            T.Set(3, DynValue.Nil);
 
-			T.Set(3, DynValue.Nil);
+            Assert.AreEqual(2, T.Length, "D");
 
-			Assert.AreEqual(2, T.Length, "D");
+            T.Set(3, DynValue.True);
 
-			T.Set(3, DynValue.True);
+            Assert.AreEqual(4, T.Length, "E");
 
-			Assert.AreEqual(4, T.Length, "E");
+            T.Set(3, DynValue.Nil);
 
-			T.Set(3, DynValue.Nil);
+            Assert.AreEqual(2, T.Length, "F");
 
-			Assert.AreEqual(2, T.Length, "F");
+            T.Append(DynValue.True);
 
-			T.Append(DynValue.True);
+            Assert.AreEqual(4, T.Length, "G");
 
-			Assert.AreEqual(4, T.Length, "G");
+            T.Append(DynValue.True);
 
-			T.Append(DynValue.True);
-
-			Assert.AreEqual(5, T.Length, "H");
-
-		}
-
-	}
+            Assert.AreEqual(5, T.Length, "H");
+        }
+    }
 }

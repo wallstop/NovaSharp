@@ -5,11 +5,11 @@ using System.Text;
 
 namespace MoonSharp.Commands
 {
-	interface ICommand
-	{
-		string Name { get; }
-		void DisplayShortHelp();
-		void DisplayLongHelp();
-		void Execute(ShellContext context, string argument);
-	}
+    interface ICommand
+    {
+        string Name { get; }
+        void DisplayShortHelp();
+        void DisplayLongHelp();
+        void Execute(ShellContext context, string argument);
+    }
 }

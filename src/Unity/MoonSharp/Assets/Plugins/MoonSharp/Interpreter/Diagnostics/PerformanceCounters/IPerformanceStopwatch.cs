@@ -2,9 +2,9 @@
 
 namespace MoonSharp.Interpreter.Diagnostics.PerformanceCounters
 {
-	internal interface IPerformanceStopwatch
-	{
-		IDisposable Start();
-		PerformanceResult GetResult();
-	}
+    internal interface IPerformanceStopwatch
+    {
+        IDisposable Start();
+        PerformanceResult GetResult();
+    }
 }

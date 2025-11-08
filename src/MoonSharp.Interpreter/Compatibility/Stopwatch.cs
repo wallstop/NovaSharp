@@ -6,36 +6,32 @@ using System.Text;
 
 namespace System.Diagnostics
 {
-	internal class Stopwatch
-	{
-		DateTime startTime, stopTime;
+    internal class Stopwatch
+    {
+        DateTime startTime,
+            stopTime;
 
-		public void Start() 
-		{
-			startTime = DateTime.UtcNow;
-		}
-		
-		public void Stop() 
-		{
-			stopTime = DateTime.UtcNow;
-		}
+        public void Start()
+        {
+            startTime = DateTime.UtcNow;
+        }
 
-		public static Stopwatch StartNew()
-		{
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			return sw;
-		}
+        public void Stop()
+        {
+            stopTime = DateTime.UtcNow;
+        }
 
-		public long ElapsedMilliseconds
-		{
-			get
-			{
-				return (long)((stopTime - startTime).TotalMilliseconds);
-			}
-		}
+        public static Stopwatch StartNew()
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            return sw;
+        }
 
-
-	}
+        public long ElapsedMilliseconds
+        {
+            get { return (long)((stopTime - startTime).TotalMilliseconds); }
+        }
+    }
 }
 #endif

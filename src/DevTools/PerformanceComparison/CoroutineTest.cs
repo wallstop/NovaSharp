@@ -8,11 +8,12 @@ using MoonSharp.Interpreter;
 
 namespace PerformanceComparison
 {
-	class CoroutineTest
-	{
-		public static void xMain()
-		{
-			string code = @"
+    class CoroutineTest
+    {
+        public static void xMain()
+        {
+            string code =
+                @"
 				return function()
 					local x = 0
 					while true do
@@ -22,25 +23,25 @@ namespace PerformanceComparison
 				end
 				";
 
-			// Load the code and get the returned function
-			Script script = new Script();
-			DynValue function = script.DoString(code);
+            // Load the code and get the returned function
+            Script script = new Script();
+            DynValue function = script.DoString(code);
 
-			// Create the coroutine in C#
-			DynValue coroutine = script.CreateCoroutine(function);
+            // Create the coroutine in C#
+            DynValue coroutine = script.CreateCoroutine(function);
 
-			// Resume the coroutine forever and ever..
-			while (true)
-			{
-				DynValue x = coroutine.Coroutine.Resume();
-				Console.WriteLine("{0}", x);
-			}
-		}
+            // Resume the coroutine forever and ever..
+            while (true)
+            {
+                DynValue x = coroutine.Coroutine.Resume();
+                Console.WriteLine("{0}", x);
+            }
+        }
 
-
-		public static void xxMain()
-		{
-			string code = @"
+        public static void xxMain()
+        {
+            string code =
+                @"
 				function a()
 					callback(b)
 				end
@@ -54,27 +55,19 @@ namespace PerformanceComparison
 				return coroutine.resume(c);		
 				";
 
-			// Load the code and get the returned function
-			Script script = new Script();
+            // Load the code and get the returned function
+            Script script = new Script();
 
-			script.Globals["callback"] = DynValue.NewCallback(
-				(ctx, args) => args[0].Function.Call()
-				);
+            script.Globals["callback"] = DynValue.NewCallback(
+                (ctx, args) => args[0].Function.Call()
+            );
 
-			DynValue ret = script.DoString(code);
+            DynValue ret = script.DoString(code);
 
-			// false, "attempt to yield from outside a coroutine"
-			Console.WriteLine(ret);
+            // false, "attempt to yield from outside a coroutine"
+            Console.WriteLine(ret);
 
-			
-
-			Console.ReadKey();
-		}
-
-
-
-
-
-
-	}
+            Console.ReadKey();
+        }
+    }
 }

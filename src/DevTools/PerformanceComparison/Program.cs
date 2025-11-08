@@ -7,26 +7,27 @@
 
 using System;
 using System.Collections.Generic;
-using MoonSharp.Interpreter.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.Diagnostics;
 using MoonSharp.Interpreter.Execution;
 using NLua;
-using System.Diagnostics;
 
 namespace PerformanceComparison
 {
-	class Program
-	{
+    class Program
+    {
 #if PROFILER
-		const int ITERATIONS = 10;
+        const int ITERATIONS = 10;
 #else
-		const int ITERATIONS = 1;
+        const int ITERATIONS = 1;
 #endif
 
-		static  string scriptText = @"
+        static string scriptText =
+            @"
 			function move(n, src, dst, via)
 				if n > 0 then
 					move(n - 1, src, via, dst)
@@ -39,7 +40,8 @@ namespace PerformanceComparison
 				move(4, 1, 2, 3)
 			end
 			";
-		static  string scriptText22 = @"
+        static string scriptText22 =
+            @"
 N = 8
  
 board = {}
@@ -88,110 +90,109 @@ else
 end
   
 			";
-		static StringBuilder g_MoonSharpStr = new StringBuilder();
-		static StringBuilder g_NLuaStr = new StringBuilder();
+        static StringBuilder g_MoonSharpStr = new StringBuilder();
+        static StringBuilder g_NLuaStr = new StringBuilder();
 
-		public static DynValue Check(ScriptExecutionContext executionContext, CallbackArguments values)
-		{
-			//foreach (var val in values.GetArray())
-			//{
-			//	g_MoonSharpStr.Append(val.ToPrintString());
-			//}
+        public static DynValue Check(
+            ScriptExecutionContext executionContext,
+            CallbackArguments values
+        )
+        {
+            //foreach (var val in values.GetArray())
+            //{
+            //	g_MoonSharpStr.Append(val.ToPrintString());
+            //}
 
-			//g_MoonSharpStr.AppendLine();
-			return DynValue.Nil;
-		}
+            //g_MoonSharpStr.AppendLine();
+            return DynValue.Nil;
+        }
 
+        public static void NCheck(params object[] values)
+        {
+            //foreach (var val in values)
+            //{
+            //	g_NLuaStr.Append(val.ToString());
+            //}
+            //g_NLuaStr.AppendLine();
+        }
 
-		public static void NCheck(params object[] values)
-		{
-			//foreach (var val in values)
-			//{
-			//	g_NLuaStr.Append(val.ToString());
-			//}
-			//g_NLuaStr.AppendLine();
-		}
+        public static void XCheck(int from, string mid, int to)
+        {
+            g_MoonSharpStr.Append(from);
+            g_MoonSharpStr.Append(mid);
+            g_MoonSharpStr.Append(to);
+            g_MoonSharpStr.AppendLine();
+        }
 
-		public static void XCheck(int from, string mid, int to)
-		{
-			g_MoonSharpStr.Append(from);
-			g_MoonSharpStr.Append(mid);
-			g_MoonSharpStr.Append(to);
-			g_MoonSharpStr.AppendLine();
-		}
+        static Lua lua = new Lua();
+        static string testString = "world";
 
-		static Lua lua = new Lua();
-		static string testString = "world";
+        static void Main(string[] args)
+        {
+            Script.WarmUp();
 
-		static void Main(string[] args)
-		{
-			Script.WarmUp();
+            Stopwatch sw;
 
-			Stopwatch sw;
+            sw = Stopwatch.StartNew();
 
-			sw = Stopwatch.StartNew();
+            var _s = new Script();
+            _s.LoadString(scriptText);
 
-			var _s = new Script();
-			_s.LoadString(scriptText);
+            sw.Stop();
 
-			sw.Stop();
+            Console.WriteLine("Build : {0} ms", sw.ElapsedMilliseconds);
 
-			Console.WriteLine("Build : {0} ms", sw.ElapsedMilliseconds);
+            sw = Stopwatch.StartNew();
 
-			sw = Stopwatch.StartNew();
+            var script = new Script();
+            script.Globals.Set("check", DynValue.NewCallback(new CallbackFunction(Check)));
+            CallbackFunction.DefaultAccessMode = InteropAccessMode.Preoptimized;
 
-			var script = new Script();
-			script.Globals.Set("check", DynValue.NewCallback(new CallbackFunction(Check)));
-			CallbackFunction.DefaultAccessMode = InteropAccessMode.Preoptimized;
+            //script.Globals["print"] = (Action<int, string, int>)PrintX;
 
-			//script.Globals["print"] = (Action<int, string, int>)PrintX;
+            DynValue func = script.LoadString(scriptText);
 
+            sw.Stop();
 
-			DynValue func = script.LoadString(scriptText);
+            Console.WriteLine("Build 2: {0} ms", sw.ElapsedMilliseconds);
 
-			sw.Stop();
+            sw = Stopwatch.StartNew();
+            for (int i = 0; i < ITERATIONS; i++)
+            {
+                script.Call(func);
+            }
+            sw.Stop();
 
-			Console.WriteLine("Build 2: {0} ms", sw.ElapsedMilliseconds);
+            Console.WriteLine("MoonSharp : {0} ms", sw.ElapsedMilliseconds);
 
+            lua.RegisterFunction("check", typeof(Program).GetMethod("NCheck"));
 
-			sw = Stopwatch.StartNew();
-			for (int i = 0; i < ITERATIONS; i++)
-			{
-				script.Call(func);
-			}
-			sw.Stop();
-
-			Console.WriteLine("MoonSharp : {0} ms", sw.ElapsedMilliseconds);
-
-
-			lua.RegisterFunction("check", typeof(Program).GetMethod("NCheck"));
-
-			File.WriteAllText(@"c:\temp\hanoi.lua", scriptText);
+            File.WriteAllText(@"c:\temp\hanoi.lua", scriptText);
 
 #if !PROFILER
 
-			var fn = lua.LoadFile(@"c:\temp\hanoi.lua");
+            var fn = lua.LoadFile(@"c:\temp\hanoi.lua");
 
-			sw = Stopwatch.StartNew();
-			for (int i = 0; i < ITERATIONS; i++)
-			{
-				fn.Call();
-			}
-			sw.Stop();
+            sw = Stopwatch.StartNew();
+            for (int i = 0; i < ITERATIONS; i++)
+            {
+                fn.Call();
+            }
+            sw.Stop();
 
 #endif
 
-			Console.WriteLine("NLua  : {0} ms", sw.ElapsedMilliseconds);
+            Console.WriteLine("NLua  : {0} ms", sw.ElapsedMilliseconds);
 
-			Console.WriteLine("M# == NL ? {0}", g_MoonSharpStr.ToString() == g_NLuaStr.ToString());
+            Console.WriteLine("M# == NL ? {0}", g_MoonSharpStr.ToString() == g_NLuaStr.ToString());
 
-			Console.WriteLine("=== MoonSharp ===");
-			//Console.WriteLine(g_MoonSharpStr.ToString());
-			Console.WriteLine("");
-			Console.WriteLine("=== NLua  ===");
-			//Console.WriteLine(g_NLuaStr.ToString());
+            Console.WriteLine("=== MoonSharp ===");
+            //Console.WriteLine(g_MoonSharpStr.ToString());
+            Console.WriteLine("");
+            Console.WriteLine("=== NLua  ===");
+            //Console.WriteLine(g_NLuaStr.ToString());
 
-			Console.ReadKey();
-		}
-	}
+            Console.ReadKey();
+        }
+    }
 }

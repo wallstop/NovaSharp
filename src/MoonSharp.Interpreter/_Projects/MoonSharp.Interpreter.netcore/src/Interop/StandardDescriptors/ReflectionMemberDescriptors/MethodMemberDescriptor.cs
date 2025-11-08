@@ -11,309 +11,351 @@ using MoonSharp.Interpreter.Interop.BasicDescriptors;
 
 namespace MoonSharp.Interpreter.Interop
 {
-	/// <summary>
-	/// Class providing easier marshalling of CLR functions
-	/// </summary>
-	public class MethodMemberDescriptor : FunctionMemberDescriptorBase, IOptimizableDescriptor, IWireableDescriptor
-	{
-		/// <summary>
-		/// Gets the method information (can be a MethodInfo or ConstructorInfo)
-		/// </summary>
-		public MethodBase MethodInfo { get; private set; }
-		/// <summary>
-		/// Gets the access mode used for interop
-		/// </summary>
-		public InteropAccessMode AccessMode { get; private set; }
-		/// <summary>
-		/// Gets a value indicating whether the described method is a constructor
-		/// </summary>
-		public bool IsConstructor { get; private set; }
+    /// <summary>
+    /// Class providing easier marshalling of CLR functions
+    /// </summary>
+    public class MethodMemberDescriptor
+        : FunctionMemberDescriptorBase,
+            IOptimizableDescriptor,
+            IWireableDescriptor
+    {
+        /// <summary>
+        /// Gets the method information (can be a MethodInfo or ConstructorInfo)
+        /// </summary>
+        public MethodBase MethodInfo { get; private set; }
 
+        /// <summary>
+        /// Gets the access mode used for interop
+        /// </summary>
+        public InteropAccessMode AccessMode { get; private set; }
 
-		private Func<object, object[], object> m_OptimizedFunc = null;
-		private Action<object, object[]> m_OptimizedAction = null;
-		private bool m_IsAction = false;
-		private bool m_IsArrayCtor = false;
+        /// <summary>
+        /// Gets a value indicating whether the described method is a constructor
+        /// </summary>
+        public bool IsConstructor { get; private set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="MethodMemberDescriptor"/> class.
-		/// </summary>
-		/// <param name="methodBase">The MethodBase (MethodInfo or ConstructorInfo) got through reflection.</param>
-		/// <param name="accessMode">The interop access mode.</param>
-		/// <exception cref="System.ArgumentException">Invalid accessMode</exception>
-		public MethodMemberDescriptor(MethodBase methodBase, InteropAccessMode accessMode = InteropAccessMode.Default)
-		{
-			CheckMethodIsCompatible(methodBase, true);
+        private Func<object, object[], object> m_OptimizedFunc = null;
+        private Action<object, object[]> m_OptimizedAction = null;
+        private bool m_IsAction = false;
+        private bool m_IsArrayCtor = false;
 
-			IsConstructor = (methodBase is ConstructorInfo);
-			this.MethodInfo = methodBase;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MethodMemberDescriptor"/> class.
+        /// </summary>
+        /// <param name="methodBase">The MethodBase (MethodInfo or ConstructorInfo) got through reflection.</param>
+        /// <param name="accessMode">The interop access mode.</param>
+        /// <exception cref="System.ArgumentException">Invalid accessMode</exception>
+        public MethodMemberDescriptor(
+            MethodBase methodBase,
+            InteropAccessMode accessMode = InteropAccessMode.Default
+        )
+        {
+            CheckMethodIsCompatible(methodBase, true);
 
-			bool isStatic = methodBase.IsStatic || IsConstructor;
+            IsConstructor = (methodBase is ConstructorInfo);
+            this.MethodInfo = methodBase;
 
-			if (IsConstructor)
-				m_IsAction = false;
-			else
-				m_IsAction = ((MethodInfo)methodBase).ReturnType == typeof(void);
+            bool isStatic = methodBase.IsStatic || IsConstructor;
 
-			ParameterInfo[] reflectionParams = methodBase.GetParameters();
-			ParameterDescriptor[] parameters;
-			
-			if (this.MethodInfo.DeclaringType.IsArray)
-			{
-				m_IsArrayCtor = true;
+            if (IsConstructor)
+                m_IsAction = false;
+            else
+                m_IsAction = ((MethodInfo)methodBase).ReturnType == typeof(void);
 
-				int rank = this.MethodInfo.DeclaringType.GetArrayRank();
+            ParameterInfo[] reflectionParams = methodBase.GetParameters();
+            ParameterDescriptor[] parameters;
 
-				parameters = new ParameterDescriptor[rank];
+            if (this.MethodInfo.DeclaringType.IsArray)
+            {
+                m_IsArrayCtor = true;
 
-				for (int i = 0; i < rank; i++)
-					parameters[i] = new ParameterDescriptor("idx" + i.ToString(), typeof(int));
-			}
-			else
-			{
-				parameters = reflectionParams.Select(pi => new ParameterDescriptor(pi)).ToArray();
-			}
-		
-			
-			bool isExtensionMethod = (methodBase.IsStatic && parameters.Length > 0 && methodBase.GetCustomAttributes(typeof(ExtensionAttribute), false).Any());
+                int rank = this.MethodInfo.DeclaringType.GetArrayRank();
 
-			base.Initialize(methodBase.Name, isStatic, parameters, isExtensionMethod);
+                parameters = new ParameterDescriptor[rank];
 
-			// adjust access mode
-			if (Script.GlobalOptions.Platform.IsRunningOnAOT())
-				accessMode = InteropAccessMode.Reflection;
+                for (int i = 0; i < rank; i++)
+                    parameters[i] = new ParameterDescriptor("idx" + i.ToString(), typeof(int));
+            }
+            else
+            {
+                parameters = reflectionParams.Select(pi => new ParameterDescriptor(pi)).ToArray();
+            }
 
-			if (accessMode == InteropAccessMode.Default)
-				accessMode = UserData.DefaultAccessMode;
+            bool isExtensionMethod = (
+                methodBase.IsStatic
+                && parameters.Length > 0
+                && methodBase.GetCustomAttributes(typeof(ExtensionAttribute), false).Any()
+            );
 
-			if (accessMode == InteropAccessMode.HideMembers)
-				throw new ArgumentException("Invalid accessMode");
+            base.Initialize(methodBase.Name, isStatic, parameters, isExtensionMethod);
 
-			if (parameters.Any(p => p.Type.IsByRef))
-				accessMode = InteropAccessMode.Reflection;
+            // adjust access mode
+            if (Script.GlobalOptions.Platform.IsRunningOnAOT())
+                accessMode = InteropAccessMode.Reflection;
 
-			this.AccessMode = accessMode;
+            if (accessMode == InteropAccessMode.Default)
+                accessMode = UserData.DefaultAccessMode;
 
-			if (AccessMode == InteropAccessMode.Preoptimized)
-				((IOptimizableDescriptor)this).Optimize();
-		}
+            if (accessMode == InteropAccessMode.HideMembers)
+                throw new ArgumentException("Invalid accessMode");
 
-		/// <summary>
-		/// Tries to create a new MethodMemberDescriptor, returning 
-		/// <c>null</c> in case the method is not
-		/// visible to script code.
-		/// </summary>
-		/// <param name="methodBase">The MethodBase.</param>
-		/// <param name="accessMode">The <see cref="InteropAccessMode" /></param>
-		/// <param name="forceVisibility">if set to <c>true</c> forces visibility.</param>
-		/// <returns>
-		/// A new MethodMemberDescriptor or null.
-		/// </returns>
-		public static MethodMemberDescriptor TryCreateIfVisible(MethodBase methodBase, InteropAccessMode accessMode, bool forceVisibility = false)
-		{
-			if (!CheckMethodIsCompatible(methodBase, false))
-				return null;
+            if (parameters.Any(p => p.Type.IsByRef))
+                accessMode = InteropAccessMode.Reflection;
 
-			if (forceVisibility || (methodBase.GetVisibilityFromAttributes() ?? methodBase.IsPublic))
-				return new MethodMemberDescriptor(methodBase, accessMode);
+            this.AccessMode = accessMode;
 
-			return null;
-		}
+            if (AccessMode == InteropAccessMode.Preoptimized)
+                ((IOptimizableDescriptor)this).Optimize();
+        }
 
-		/// <summary>
-		/// Checks if the method is compatible with a standard descriptor
-		/// </summary>
-		/// <param name="methodBase">The MethodBase.</param>
-		/// <param name="throwException">if set to <c>true</c> an exception with the proper error message is thrown if not compatible.</param>
-		/// <returns></returns>
-		/// <exception cref="System.ArgumentException">
-		/// Thrown if throwException is <c>true</c> and one of this applies:
-		/// The method contains unresolved generic parameters, or has an unresolved generic return type
-		/// or
-		/// The method contains pointer parameters, or has a pointer return type
-		/// </exception>
-		public static bool CheckMethodIsCompatible(MethodBase methodBase, bool throwException)
-		{
-			if (methodBase.ContainsGenericParameters)
-			{
-				if (throwException) throw new ArgumentException("Method cannot contain unresolved generic parameters");
-				return false;
-			}
+        /// <summary>
+        /// Tries to create a new MethodMemberDescriptor, returning
+        /// <c>null</c> in case the method is not
+        /// visible to script code.
+        /// </summary>
+        /// <param name="methodBase">The MethodBase.</param>
+        /// <param name="accessMode">The <see cref="InteropAccessMode" /></param>
+        /// <param name="forceVisibility">if set to <c>true</c> forces visibility.</param>
+        /// <returns>
+        /// A new MethodMemberDescriptor or null.
+        /// </returns>
+        public static MethodMemberDescriptor TryCreateIfVisible(
+            MethodBase methodBase,
+            InteropAccessMode accessMode,
+            bool forceVisibility = false
+        )
+        {
+            if (!CheckMethodIsCompatible(methodBase, false))
+                return null;
 
-			if (methodBase.GetParameters().Any(p => p.ParameterType.IsPointer))
-			{
-				if (throwException) throw new ArgumentException("Method cannot contain pointer parameters");
-				return false;
-			}
+            if (
+                forceVisibility || (methodBase.GetVisibilityFromAttributes() ?? methodBase.IsPublic)
+            )
+                return new MethodMemberDescriptor(methodBase, accessMode);
 
-			MethodInfo mi = methodBase as MethodInfo;
+            return null;
+        }
 
-			if (mi != null)
-			{
-				if (mi.ReturnType.IsPointer)
-				{
-					if (throwException) throw new ArgumentException("Method cannot have a pointer return type");
-					return false;
-				}
+        /// <summary>
+        /// Checks if the method is compatible with a standard descriptor
+        /// </summary>
+        /// <param name="methodBase">The MethodBase.</param>
+        /// <param name="throwException">if set to <c>true</c> an exception with the proper error message is thrown if not compatible.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown if throwException is <c>true</c> and one of this applies:
+        /// The method contains unresolved generic parameters, or has an unresolved generic return type
+        /// or
+        /// The method contains pointer parameters, or has a pointer return type
+        /// </exception>
+        public static bool CheckMethodIsCompatible(MethodBase methodBase, bool throwException)
+        {
+            if (methodBase.ContainsGenericParameters)
+            {
+                if (throwException)
+                    throw new ArgumentException(
+                        "Method cannot contain unresolved generic parameters"
+                    );
+                return false;
+            }
 
-				if (Framework.Do.IsGenericTypeDefinition(mi.ReturnType))
-				{
-					if (throwException) throw new ArgumentException("Method cannot have an unresolved generic return type");
-					return false;
-				}
-			}
+            if (methodBase.GetParameters().Any(p => p.ParameterType.IsPointer))
+            {
+                if (throwException)
+                    throw new ArgumentException("Method cannot contain pointer parameters");
+                return false;
+            }
 
-			return true;
-		}
+            MethodInfo mi = methodBase as MethodInfo;
 
-		/// <summary>
-		/// The internal callback which actually executes the method
-		/// </summary>
-		/// <param name="script">The script.</param>
-		/// <param name="obj">The object.</param>
-		/// <param name="context">The context.</param>
-		/// <param name="args">The arguments.</param>
-		/// <returns></returns>
-		public override DynValue Execute(Script script, object obj, ScriptExecutionContext context, CallbackArguments args)
-		{
-			this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
+            if (mi != null)
+            {
+                if (mi.ReturnType.IsPointer)
+                {
+                    if (throwException)
+                        throw new ArgumentException("Method cannot have a pointer return type");
+                    return false;
+                }
 
-			if (AccessMode == InteropAccessMode.LazyOptimized &&
-				m_OptimizedFunc == null && m_OptimizedAction == null)
-				((IOptimizableDescriptor)this).Optimize();
+                if (Framework.Do.IsGenericTypeDefinition(mi.ReturnType))
+                {
+                    if (throwException)
+                        throw new ArgumentException(
+                            "Method cannot have an unresolved generic return type"
+                        );
+                    return false;
+                }
+            }
 
-			List<int> outParams = null;
-			object[] pars = base.BuildArgumentList(script, obj, context, args, out outParams);
-			object retv = null;
+            return true;
+        }
 
-			if (m_OptimizedFunc != null)
-			{
-				retv = m_OptimizedFunc(obj, pars);
-			}
-			else if (m_OptimizedAction != null)
-			{
-				m_OptimizedAction(obj, pars);
-				retv = DynValue.Void;
-			}
-			else if (m_IsAction)
-			{
-				MethodInfo.Invoke(obj, pars);
-				retv = DynValue.Void;
-			}
-			else
-			{
-				if (IsConstructor)
-					retv = ((ConstructorInfo)MethodInfo).Invoke(pars);
-				else
-					retv = MethodInfo.Invoke(obj, pars);
-			}
+        /// <summary>
+        /// The internal callback which actually executes the method
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="obj">The object.</param>
+        /// <param name="context">The context.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        public override DynValue Execute(
+            Script script,
+            object obj,
+            ScriptExecutionContext context,
+            CallbackArguments args
+        )
+        {
+            this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
 
-			return BuildReturnValue(script, outParams, pars, retv);
-		}
+            if (
+                AccessMode == InteropAccessMode.LazyOptimized
+                && m_OptimizedFunc == null
+                && m_OptimizedAction == null
+            )
+                ((IOptimizableDescriptor)this).Optimize();
 
-		/// <summary>
-		/// Called by standard descriptors when background optimization or preoptimization needs to be performed.
-		/// </summary>
-		/// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
-		void IOptimizableDescriptor.Optimize()
-		{
-			ParameterDescriptor[] parameters = Parameters;
+            List<int> outParams = null;
+            object[] pars = base.BuildArgumentList(script, obj, context, args, out outParams);
+            object retv = null;
 
-			if (AccessMode == InteropAccessMode.Reflection)
-				return;
+            if (m_OptimizedFunc != null)
+            {
+                retv = m_OptimizedFunc(obj, pars);
+            }
+            else if (m_OptimizedAction != null)
+            {
+                m_OptimizedAction(obj, pars);
+                retv = DynValue.Void;
+            }
+            else if (m_IsAction)
+            {
+                MethodInfo.Invoke(obj, pars);
+                retv = DynValue.Void;
+            }
+            else
+            {
+                if (IsConstructor)
+                    retv = ((ConstructorInfo)MethodInfo).Invoke(pars);
+                else
+                    retv = MethodInfo.Invoke(obj, pars);
+            }
 
-			MethodInfo methodInfo = this.MethodInfo as MethodInfo;
+            return BuildReturnValue(script, outParams, pars, retv);
+        }
 
-			if (methodInfo == null)
-				return;
+        /// <summary>
+        /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
+        /// </summary>
+        /// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
+        void IOptimizableDescriptor.Optimize()
+        {
+            ParameterDescriptor[] parameters = Parameters;
 
-			using (PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation))
-			{
-				var ep = Expression.Parameter(typeof(object[]), "pars");
-				var objinst = Expression.Parameter(typeof(object), "instance");
-				var inst = Expression.Convert(objinst, MethodInfo.DeclaringType);
+            if (AccessMode == InteropAccessMode.Reflection)
+                return;
 
-				Expression[] args = new Expression[parameters.Length];
+            MethodInfo methodInfo = this.MethodInfo as MethodInfo;
 
-				for (int i = 0; i < parameters.Length; i++)
-				{
-					if (parameters[i].OriginalType.IsByRef)
-					{
-						throw new InternalErrorException("Out/Ref params cannot be precompiled.");
-					}
-					else
-					{
-						var x = Expression.ArrayIndex(ep, Expression.Constant(i));
-						args[i] = Expression.Convert(x, parameters[i].OriginalType);
-					}
-				}
+            if (methodInfo == null)
+                return;
 
-				Expression fn;
+            using (
+                PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
+            )
+            {
+                var ep = Expression.Parameter(typeof(object[]), "pars");
+                var objinst = Expression.Parameter(typeof(object), "instance");
+                var inst = Expression.Convert(objinst, MethodInfo.DeclaringType);
 
-				if (IsStatic)
-				{
-					fn = Expression.Call(methodInfo, args);
-				}
-				else
-				{
-					fn = Expression.Call(inst, methodInfo, args);
-				}
+                Expression[] args = new Expression[parameters.Length];
 
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (parameters[i].OriginalType.IsByRef)
+                    {
+                        throw new InternalErrorException("Out/Ref params cannot be precompiled.");
+                    }
+                    else
+                    {
+                        var x = Expression.ArrayIndex(ep, Expression.Constant(i));
+                        args[i] = Expression.Convert(x, parameters[i].OriginalType);
+                    }
+                }
 
-				if (this.m_IsAction)
-				{
-					var lambda = Expression.Lambda<Action<object, object[]>>(fn, objinst, ep);
-					Interlocked.Exchange(ref m_OptimizedAction, lambda.Compile());
-				}
-				else
-				{
-					var fnc = Expression.Convert(fn, typeof(object));
-					var lambda = Expression.Lambda<Func<object, object[], object>>(fnc, objinst, ep);
-					Interlocked.Exchange(ref m_OptimizedFunc, lambda.Compile());
-				}
-			}
-		}
+                Expression fn;
 
+                if (IsStatic)
+                {
+                    fn = Expression.Call(methodInfo, args);
+                }
+                else
+                {
+                    fn = Expression.Call(inst, methodInfo, args);
+                }
 
-		/// <summary>
-		/// Prepares the descriptor for hard-wiring.
-		/// The descriptor fills the passed table with all the needed data for hardwire generators to generate the appropriate code.
-		/// </summary>
-		/// <param name="t">The table to be filled</param>
-		public void PrepareForWiring(Table t)
-		{
-			t.Set("class", DynValue.NewString(this.GetType().FullName));
-			t.Set("name", DynValue.NewString(this.Name));
-			t.Set("ctor", DynValue.NewBoolean(this.IsConstructor));
-			t.Set("special", DynValue.NewBoolean(this.MethodInfo.IsSpecialName));
-			t.Set("visibility", DynValue.NewString(this.MethodInfo.GetClrVisibility()));
+                if (this.m_IsAction)
+                {
+                    var lambda = Expression.Lambda<Action<object, object[]>>(fn, objinst, ep);
+                    Interlocked.Exchange(ref m_OptimizedAction, lambda.Compile());
+                }
+                else
+                {
+                    var fnc = Expression.Convert(fn, typeof(object));
+                    var lambda = Expression.Lambda<Func<object, object[], object>>(
+                        fnc,
+                        objinst,
+                        ep
+                    );
+                    Interlocked.Exchange(ref m_OptimizedFunc, lambda.Compile());
+                }
+            }
+        }
 
-			if (this.IsConstructor)
-				t.Set("ret", DynValue.NewString(((ConstructorInfo)this.MethodInfo).DeclaringType.FullName));
-			else
-				t.Set("ret", DynValue.NewString(((MethodInfo)this.MethodInfo).ReturnType.FullName));
+        /// <summary>
+        /// Prepares the descriptor for hard-wiring.
+        /// The descriptor fills the passed table with all the needed data for hardwire generators to generate the appropriate code.
+        /// </summary>
+        /// <param name="t">The table to be filled</param>
+        public void PrepareForWiring(Table t)
+        {
+            t.Set("class", DynValue.NewString(this.GetType().FullName));
+            t.Set("name", DynValue.NewString(this.Name));
+            t.Set("ctor", DynValue.NewBoolean(this.IsConstructor));
+            t.Set("special", DynValue.NewBoolean(this.MethodInfo.IsSpecialName));
+            t.Set("visibility", DynValue.NewString(this.MethodInfo.GetClrVisibility()));
 
-			if (m_IsArrayCtor)
-			{
-				t.Set("arraytype", DynValue.NewString(this.MethodInfo.DeclaringType.GetElementType().FullName));
-			}
+            if (this.IsConstructor)
+                t.Set(
+                    "ret",
+                    DynValue.NewString(((ConstructorInfo)this.MethodInfo).DeclaringType.FullName)
+                );
+            else
+                t.Set("ret", DynValue.NewString(((MethodInfo)this.MethodInfo).ReturnType.FullName));
 
-			t.Set("decltype", DynValue.NewString(this.MethodInfo.DeclaringType.FullName));
-			t.Set("static", DynValue.NewBoolean(this.IsStatic));
-			t.Set("extension", DynValue.NewBoolean(this.ExtensionMethodType != null));
+            if (m_IsArrayCtor)
+            {
+                t.Set(
+                    "arraytype",
+                    DynValue.NewString(this.MethodInfo.DeclaringType.GetElementType().FullName)
+                );
+            }
 
-			var pars = DynValue.NewPrimeTable();
+            t.Set("decltype", DynValue.NewString(this.MethodInfo.DeclaringType.FullName));
+            t.Set("static", DynValue.NewBoolean(this.IsStatic));
+            t.Set("extension", DynValue.NewBoolean(this.ExtensionMethodType != null));
 
-			t.Set("params", pars);
+            var pars = DynValue.NewPrimeTable();
 
-			int i = 0; 
+            t.Set("params", pars);
 
-			foreach (var p in Parameters)
-			{
-				DynValue pt = DynValue.NewPrimeTable();
-				pars.Table.Set(++i, pt);
-				p.PrepareForWiring(pt.Table);
-			}
-		}
-	}
+            int i = 0;
+
+            foreach (var p in Parameters)
+            {
+                DynValue pt = DynValue.NewPrimeTable();
+                pars.Table.Set(++i, pt);
+                p.PrepareForWiring(pt.Table);
+            }
+        }
+    }
 }

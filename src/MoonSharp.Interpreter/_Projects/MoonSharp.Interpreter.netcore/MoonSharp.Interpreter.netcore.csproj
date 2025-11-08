@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <Description>http://www.moonsharp.org</Description>
     <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
@@ -15,5 +14,4 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
   </PropertyGroup>
-
 </Project>

@@ -8,112 +8,81 @@ using MoonSharp.Interpreter.Debugging;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class X1
-	{
-		public class MyException : Exception
-		{
+    [Tutorial]
+    static class X1
+    {
+        public class MyException : Exception { }
 
-		}
+        class BreakAfterManyInstructionsDebugger : IDebugger
+        {
+            int m_InstructionCounter = 0;
+            List<DynamicExpression> m_Dynamics = new List<DynamicExpression>();
 
-		class BreakAfterManyInstructionsDebugger : IDebugger
-		{
-			int m_InstructionCounter = 0;
-			List<DynamicExpression> m_Dynamics = new List<DynamicExpression>();
+            public void SetSourceCode(SourceCode sourceCode) { }
 
-			public void SetSourceCode(SourceCode sourceCode)
-			{
-			}
+            public void SetByteCode(string[] byteCode) { }
 
-			public void SetByteCode(string[] byteCode)
-			{
-			}
+            public DebuggerCaps GetDebuggerCaps()
+            {
+                return 0;
+            }
 
-			public DebuggerCaps GetDebuggerCaps()
-			{
-				return 0;
-			}
+            public bool IsPauseRequested()
+            {
+                return true;
+            }
 
+            public bool SignalRuntimeException(ScriptRuntimeException ex)
+            {
+                return false;
+            }
 
-			public bool IsPauseRequested()
-			{
-				return true;
-			}
+            public DebuggerAction GetAction(int ip, SourceRef sourceref)
+            {
+                m_InstructionCounter += 1;
 
-			public bool SignalRuntimeException(ScriptRuntimeException ex)
-			{
-				return false;
-			}
+                if ((m_InstructionCounter % 1000) == 0)
+                    Console.Write(".");
 
-			public DebuggerAction GetAction(int ip, SourceRef sourceref)
-			{
-				m_InstructionCounter += 1;
+                if (m_InstructionCounter > 50000)
+                    throw new MyException();
 
-				if ((m_InstructionCounter % 1000) == 0)
-					Console.Write(".");
+                return new DebuggerAction() { Action = DebuggerAction.ActionType.StepIn };
+            }
 
-				if (m_InstructionCounter > 50000)
-					throw new MyException();
+            public void SignalExecutionEnded() { }
 
-				return new DebuggerAction()
-				{
-					Action = DebuggerAction.ActionType.StepIn,
-				};
-			}
+            public void Update(WatchType watchType, IEnumerable<WatchItem> items) { }
 
-			public void SignalExecutionEnded()
-			{
-			}
+            public List<DynamicExpression> GetWatchItems()
+            {
+                return m_Dynamics;
+            }
 
-			public void Update(WatchType watchType, IEnumerable<WatchItem> items)
-			{
-			}
+            public void RefreshBreakpoints(IEnumerable<SourceRef> refs) { }
 
-			public List<DynamicExpression> GetWatchItems()
-			{
-				return m_Dynamics;
-			}
+            public void SetDebugService(DebugService debugService) { }
+        }
 
-			public void RefreshBreakpoints(IEnumerable<SourceRef> refs)
-			{
-			}
+        [Tutorial]
+        static void BreakAfterManyInstructions()
+        {
+            Script script = new Script();
+            try
+            {
+                script.AttachDebugger(new BreakAfterManyInstructionsDebugger());
 
-			public void SetDebugService(DebugService debugService)
-			{
-
-			}
-		}
-
-
-
-
-
-
-
-		[Tutorial]
-		static void BreakAfterManyInstructions()
-		{
-			Script script = new Script();
-			try
-			{
-				script.AttachDebugger(new BreakAfterManyInstructionsDebugger());
-
-				script.DoString(@"
+                script.DoString(
+                    @"
 				x = 0;
 				while true do x = x + 1; end;
-				");
-
-			}
-			catch (MyException)
-			{
-				Console.WriteLine("Done. x = {0}", script.Globals["x"]);
-
-			}
-
-
-		}
-
-
-
-	}
+				"
+                );
+            }
+            catch (MyException)
+            {
+                Console.WriteLine("Done. x = {0}", script.Globals["x"]);
+            }
+        }
+    }
 }

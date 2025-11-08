@@ -6,16 +6,14 @@ using System.Text;
 
 namespace System.Reflection
 {
-	internal class ComVisibleAttribute : Attribute
-	{
-		public ComVisibleAttribute(bool dummy)
-		{ }
-	}
-	internal class GuidAttribute : Attribute
-	{
-		public GuidAttribute(string dummy)
-		{ }
-	}
+    internal class ComVisibleAttribute : Attribute
+    {
+        public ComVisibleAttribute(bool dummy) { }
+    }
+
+    internal class GuidAttribute : Attribute
+    {
+        public GuidAttribute(string dummy) { }
+    }
 }
 #endif
-

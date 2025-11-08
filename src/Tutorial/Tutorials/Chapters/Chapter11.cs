@@ -12,36 +12,36 @@ using MoonSharp.RemoteDebugger;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter11
-	{
-		static RemoteDebuggerService remoteDebugger;
+    [Tutorial]
+    static class Chapter11
+    {
+        static RemoteDebuggerService remoteDebugger;
 
-		static void ActivateRemoteDebugger(Script script)
-		{
-			if (remoteDebugger == null)
-			{
-				remoteDebugger = new RemoteDebuggerService();
+        static void ActivateRemoteDebugger(Script script)
+        {
+            if (remoteDebugger == null)
+            {
+                remoteDebugger = new RemoteDebuggerService();
 
-				// the last boolean is to specify if the script is free to run 
-				// after attachment, defaults to false
-				remoteDebugger.Attach(script, "Description of the script", false);
-			}
+                // the last boolean is to specify if the script is free to run
+                // after attachment, defaults to false
+                remoteDebugger.Attach(script, "Description of the script", false);
+            }
 
-			// start the web-browser at the correct url. Replace this or just
-			// pass the url to the user in some way.
-			Process.Start(remoteDebugger.HttpUrlStringLocalHost);
-		}
+            // start the web-browser at the correct url. Replace this or just
+            // pass the url to the user in some way.
+            Process.Start(remoteDebugger.HttpUrlStringLocalHost);
+        }
 
+        [Tutorial]
+        static void DebuggerDemo()
+        {
+            Script script = new Script();
 
-		[Tutorial]
-		static void DebuggerDemo()
-		{
-			Script script = new Script();
+            ActivateRemoteDebugger(script);
 
-			ActivateRemoteDebugger(script);
-
-			script.DoString(@"
+            script.DoString(
+                @"
 
 				function accum(n, f)
 					if (n == 0) then
@@ -58,12 +58,10 @@ namespace Tutorials.Chapters
 					-- let's use a lambda to spice things up
 					sum = sum + accum(i, | x | x - 1);
 				end
-				");
+				"
+            );
 
-			Console.WriteLine("The script has ended..");
-
-		}
-
-
-	}
+            Console.WriteLine("The script has ended..");
+        }
+    }
 }

@@ -7,29 +7,30 @@ using MoonSharp.Interpreter;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter05
-	{
-		static StringBuilder GetString()
-		{
-			return new StringBuilder("myString!");
-		}
+    [Tutorial]
+    static class Chapter05
+    {
+        static StringBuilder GetString()
+        {
+            return new StringBuilder("myString!");
+        }
 
-		[Tutorial]
-		public static void StringBuilderCustomConverter()
-		{
-			Script script = new Script();
+        [Tutorial]
+        public static void StringBuilderCustomConverter()
+        {
+            Script script = new Script();
 
-			script.Globals["getstr"] = (Func<StringBuilder>)GetString;
+            script.Globals["getstr"] = (Func<StringBuilder>)GetString;
 
-			DynValue fn = script.LoadString("print(getstr())");
+            DynValue fn = script.LoadString("print(getstr())");
 
-			fn.Function.Call();
+            fn.Function.Call();
 
-			Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-				v => DynValue.NewString(v.ToString().ToUpper()));
+            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(v =>
+                DynValue.NewString(v.ToString().ToUpper())
+            );
 
-			fn.Function.Call();
-		}
-	}
+            fn.Function.Call();
+        }
+    }
 }

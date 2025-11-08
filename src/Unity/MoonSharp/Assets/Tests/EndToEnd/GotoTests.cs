@@ -6,13 +6,14 @@ using NUnit.Framework;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class GotoTests
-	{
-		[Test]
-		public void Goto_Simple_Fwd()
-		{
-			string script = @"
+    [TestFixture]
+    public class GotoTests
+    {
+        [Test]
+        public void Goto_Simple_Fwd()
+        {
+            string script =
+                @"
 				function test()
 					x = 3
 					goto skip	
@@ -24,16 +25,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return test();
 				";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-		[Test]
-		public void Goto_Simple_Bwd()
-		{
-			string script = @"
+        [Test]
+        public void Goto_Simple_Bwd()
+        {
+            string script =
+                @"
 				function test()
 					x = 5;
 	
@@ -50,52 +52,56 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return test();
 				";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-		[Test]
-		[ExpectedException(typeof(SyntaxErrorException))]
-		public void Goto_UndefinedLabel()
-		{
-			string script = @"
+        [Test]
+        [ExpectedException(typeof(SyntaxErrorException))]
+        public void Goto_UndefinedLabel()
+        {
+            string script =
+                @"
 				goto there
 				";
 
-			Script.RunString(script);
-		}
+            Script.RunString(script);
+        }
 
-		[Test]
-		[ExpectedException(typeof(SyntaxErrorException))]
-		public void Goto_DoubleDefinedLabel()
-		{
-			string script = @"
+        [Test]
+        [ExpectedException(typeof(SyntaxErrorException))]
+        public void Goto_DoubleDefinedLabel()
+        {
+            string script =
+                @"
 				::label::
 				::label::
 				";
 
-			Script.RunString(script);
-		}
+            Script.RunString(script);
+        }
 
-		[Test]
-		public void Goto_RedefinedLabel()
-		{
-			string script = @"
+        [Test]
+        public void Goto_RedefinedLabel()
+        {
+            string script =
+                @"
 				::label::
 				do
 					::label::
 				end
 				";
 
-			Script.RunString(script);
-		}
+            Script.RunString(script);
+        }
 
-		[Test]
-		public void Goto_RedefinedLabel_Goto()
-		{
-			string script = @"
+        [Test]
+        public void Goto_RedefinedLabel_Goto()
+        {
+            string script =
+                @"
 				::label::
 				do
 					goto label
@@ -105,17 +111,18 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				end
 				";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-		[Test]
-		[ExpectedException(typeof(SyntaxErrorException))]
-		public void Goto_UndefinedLabel_2()
-		{
-			string script = @"
+        [Test]
+        [ExpectedException(typeof(SyntaxErrorException))]
+        public void Goto_UndefinedLabel_2()
+        {
+            string script =
+                @"
 				goto label
 				do
 					do return 5 end
@@ -124,33 +131,34 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				end
 				";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-		[Test]
-		[ExpectedException(typeof(SyntaxErrorException))]
-		public void Goto_VarInScope()
-		{
-			string script = @"
+        [Test]
+        [ExpectedException(typeof(SyntaxErrorException))]
+        public void Goto_VarInScope()
+        {
+            string script =
+                @"
 				goto f
 				local x
 				::f::
 				";
 
-			DynValue res = Script.RunString(script);
+            DynValue res = Script.RunString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-
-		[Test]
-		public void Goto_JumpOutOfBlocks()
-		{
-			string script = @"
+        [Test]
+        public void Goto_JumpOutOfBlocks()
+        {
+            string script =
+                @"
 				local u = 4
 
 				do
@@ -174,15 +182,16 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return 3
 			";
 
-			DynValue res = Script.RunString(script);
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(3, res.Number);
-		}
+            DynValue res = Script.RunString(script);
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(3, res.Number);
+        }
 
-		[Test]
-		public void Goto_JumpOutOfScopes()
-		{
-			string script = @"
+        [Test]
+        public void Goto_JumpOutOfScopes()
+        {
+            string script =
+                @"
 				local u = 4
 
 				do
@@ -212,9 +221,9 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 			";
 
-			DynValue res = Script.RunString(script);
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(67, res.Number);
-		}
-	}
+            DynValue res = Script.RunString(script);
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(67, res.Number);
+        }
+    }
 }

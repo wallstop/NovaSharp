@@ -5,17 +5,17 @@ using System.Text;
 
 namespace MoonSharp.RemoteDebugger.Network
 {
-	public enum HttpResourceType
-	{
-		PlainText,
-		Html,
-		Xml,
-		Json,
-		Jpeg,
-		Png,
-		Binary,
-		Callback,
-		Css,
-		Javascript
-	}
+    public enum HttpResourceType
+    {
+        PlainText,
+        Html,
+        Xml,
+        Json,
+        Jpeg,
+        Png,
+        Binary,
+        Callback,
+        Css,
+        Javascript,
+    }
 }

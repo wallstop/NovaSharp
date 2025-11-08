@@ -1,21 +1,23 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
-using System.Threading;
-using MoonSharp.Interpreter.Tests;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Loaders;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Interop;
-using System;
 using MoonSharp.Interpreter.Interop.RegistrationPolicies;
+using MoonSharp.Interpreter.Loaders;
+using MoonSharp.Interpreter.Tests;
+using UnityEngine;
 
 public class TestRunnerBehaviour : MonoBehaviour
 {
-
     public class HardwireAndLogPolicy : IRegistrationPolicy
     {
-        public IUserDataDescriptor HandleRegistration(IUserDataDescriptor newDescriptor, IUserDataDescriptor oldDescriptor)
+        public IUserDataDescriptor HandleRegistration(
+            IUserDataDescriptor newDescriptor,
+            IUserDataDescriptor oldDescriptor
+        )
         {
             if (oldDescriptor == null && newDescriptor != null)
             {
@@ -29,9 +31,7 @@ public class TestRunnerBehaviour : MonoBehaviour
         {
             return false;
         }
-
     }
-
 
     string m_Text = "";
     object m_Lock = new object();
@@ -39,38 +39,36 @@ public class TestRunnerBehaviour : MonoBehaviour
 
     Dictionary<string, string> ReadAllScripts()
     {
-        Dictionary<string, string> scripts = new  Dictionary<string, string>();
+        Dictionary<string, string> scripts = new Dictionary<string, string>();
 
         object[] result = Resources.LoadAll("MoonSharp/Scripts", typeof(TextAsset));
 
-        foreach(TextAsset ta in result.OfType<TextAsset>())
+        foreach (TextAsset ta in result.OfType<TextAsset>())
         {
             scripts.Add(ta.name, ta.text);
         }
 
         return scripts;
     }
-     
+
     // Use this for initialization
     void Start()
     {
-        Script.DefaultOptions.ScriptLoader = new MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader(ReadAllScripts());
+        Script.DefaultOptions.ScriptLoader =
+            new MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader(ReadAllScripts());
 
         Debug.Log("STARTED!");
         StartCoroutine(DoTests());
     }
 
-
     // Update is called once per frame
-    void Update()
-    {
+    void Update() { }
 
-    }
     // Tests skipped on all platforms
     static List<string> SKIPLIST = new List<string>()
     {
-        "TestMore_308_io",  // avoid interactions with low level system
-        "TestMore_309_os",  // avoid interactions with low level system
+        "TestMore_308_io", // avoid interactions with low level system
+        "TestMore_309_os", // avoid interactions with low level system
     };
 
     static List<string> HARDWIRE_SKIPLIST = new List<string>()
@@ -83,7 +81,6 @@ public class TestRunnerBehaviour : MonoBehaviour
         "Interop_Event_DetachAndDeregister",
         "Interop_SEvent_DetachAndDeregister",
         "Interop_SEvent_DetachAndReregister",
-
         // tests dependent on type dereg
         "Interop_ListMethod_None",
         "Interop_ListMethod_Lazy",
@@ -91,11 +88,9 @@ public class TestRunnerBehaviour : MonoBehaviour
         "VInterop_ListMethod_None",
         "VInterop_ListMethod_Lazy",
         "VInterop_ListMethod_Precomputed",
-
         // private members
         "Interop_NestedTypes_Private_Ref",
         "Interop_NestedTypes_Private_Val",
-
         // value type property setters
         "VInterop_IntPropertySetter_None",
         "VInterop_IntPropertySetter_Lazy",
@@ -119,16 +114,15 @@ public class TestRunnerBehaviour : MonoBehaviour
         "VInterop_IntFieldSetterWithSimplifiedSyntax",
     };
 
-
     // Tests skipped on AOT platforms - known not workings :(
     static List<string> AOT_SKIPLIST = new List<string>()
     {
-        //"RegCollGen_List_ExtMeth_Last", 
-        //"VInterop_NIntPropertySetter_None",   
-        //"VInterop_NIntPropertySetter_Lazy",   
-        //"VInterop_NIntPropertySetter_Precomputed",    
-        //"VInterop_Overloads_NumDowncast", 
-        //"VInterop_Overloads_NilSelectsNonOptional",   
+        //"RegCollGen_List_ExtMeth_Last",
+        //"VInterop_NIntPropertySetter_None",
+        //"VInterop_NIntPropertySetter_Lazy",
+        //"VInterop_NIntPropertySetter_Precomputed",
+        //"VInterop_Overloads_NumDowncast",
+        //"VInterop_Overloads_NilSelectsNonOptional",
         //"VInterop_Overloads_FullDecl",
         //"VInterop_Overloads_Static2",
         //"VInterop_Overloads_Cache1",
@@ -144,14 +138,13 @@ public class TestRunnerBehaviour : MonoBehaviour
         //"VInterop_ConstructorAndConcatMethodSemicolon_Precomputed",
     };
 
-
-
     IEnumerator DoTests()
     {
         SKIPLIST.AddRange(HARDWIRE_SKIPLIST);
         UserData.RegistrationPolicy = new HardwireAndLogPolicy();
 
-        Type[] testFixtures = new Type[] {
+        Type[] testFixtures = new Type[]
+        {
             typeof(MoonSharp.Interpreter.Tests.EndToEnd.BinaryDumpTests),
             typeof(MoonSharp.Interpreter.Tests.EndToEnd.ClosureTests),
             typeof(MoonSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests),
@@ -193,8 +186,6 @@ public class TestRunnerBehaviour : MonoBehaviour
             typeof(MoonSharp.Interpreter.Tests.Units.InteropTests),
         };
 
-
-
         MoonSharp.Interpreter.Tests.TestRunner tr = new MoonSharp.Interpreter.Tests.TestRunner(Log);
 
         foreach (var r in tr.IterateOnTests(null, SKIPLIST.ToArray(), testFixtures))
@@ -226,7 +217,6 @@ public class TestRunnerBehaviour : MonoBehaviour
         }
     }
 
-
     private void Console_Write(string message)
     {
         lock (m_Lock)
@@ -250,22 +240,19 @@ public class TestRunnerBehaviour : MonoBehaviour
         }
     }
 
-
-
     void OnGUI()
     {
         string text = "";
         lock (m_Lock)
             text = m_Text;
 
-        string banner = string.Format("MoonSharp Test Runner {0} [{1}]", Script.VERSION, Script.GlobalOptions.Platform.GetPlatformName());
+        string banner = string.Format(
+            "MoonSharp Test Runner {0} [{1}]",
+            Script.VERSION,
+            Script.GlobalOptions.Platform.GetPlatformName()
+        );
 
         GUI.Box(new Rect(0, 0, Screen.width, Screen.height), banner);
         GUI.TextArea(new Rect(0, 30, Screen.width, Screen.height - 30), text);
     }
-
-
-
-
-
 }

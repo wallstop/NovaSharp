@@ -6,15 +6,15 @@ using NUnit.Framework;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class VarargsTupleTests
-	{
+    [TestFixture]
+    public class VarargsTupleTests
+    {
+        private void DoTest(string code, string expectedResult)
+        {
+            Script S = new Script();
 
-		private void DoTest(string code, string expectedResult)
-		{
-			Script S = new Script();
-			
-			S.DoString(@"
+            S.DoString(
+                @"
 function f(a,b)
 	local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
 	return debug
@@ -43,54 +43,56 @@ end
 function i(...)
 	return g('extra', ...)
 end
-");
-			DynValue res = S.DoString("return " + code);
+"
+            );
+            DynValue res = S.DoString("return " + code);
 
-			Assert.AreEqual(res.Type, DataType.String);
-			Assert.AreEqual(expectedResult, res.String);
-		}
+            Assert.AreEqual(res.Type, DataType.String);
+            Assert.AreEqual(expectedResult, res.String);
+        }
 
-		[Test]
-		public void VarArgsTuple_Basic()
-		{
-			DoTest("f(3)", "a: 3 b: nil");
-			DoTest("f(3,4)", "a: 3 b: 4");
-			DoTest("f(3,4,5)", "a: 3 b: 4");
-			DoTest("f(r(),10)", "a: 1 b: 10");
-			DoTest("f(r())", "a: 1 b: 2");
-		}
+        [Test]
+        public void VarArgsTuple_Basic()
+        {
+            DoTest("f(3)", "a: 3 b: nil");
+            DoTest("f(3,4)", "a: 3 b: 4");
+            DoTest("f(3,4,5)", "a: 3 b: 4");
+            DoTest("f(r(),10)", "a: 1 b: 10");
+            DoTest("f(r())", "a: 1 b: 2");
+        }
 
-		[Test]
-		public void VarArgsTuple_Intermediate()
-		{
-			DoTest("g(3)      	", "a: 3 b: nil arg: {}");
-			DoTest("g(3,4)    	", "a: 3 b: 4 arg: {}");
-			DoTest("g(3,4,5,8)	", "a: 3 b: 4 arg: {5, 8, }");
-			DoTest("g(5,r())  	", "a: 5 b: 1 arg: {2, 3, }");
-		}
+        [Test]
+        public void VarArgsTuple_Intermediate()
+        {
+            DoTest("g(3)      	", "a: 3 b: nil arg: {}");
+            DoTest("g(3,4)    	", "a: 3 b: 4 arg: {}");
+            DoTest("g(3,4,5,8)	", "a: 3 b: 4 arg: {5, 8, }");
+            DoTest("g(5,r())  	", "a: 5 b: 1 arg: {2, 3, }");
+        }
 
-		[Test]
-		public void VarArgsTuple_Advanced()
-		{
-			//DoTest("h(3)      	", "a: 3 b: nil arg: {}");
-			//DoTest("h(3,4)    	", "a: 3 b: 4 arg: {}");
-			//DoTest("h(3,4,5,8)	", "a: 3 b: 4 arg: {5, }");
-			DoTest("h(5,r())  	", "a: 5 b: 1 arg: {2, 3, }");
-		}
+        [Test]
+        public void VarArgsTuple_Advanced()
+        {
+            //DoTest("h(3)      	", "a: 3 b: nil arg: {}");
+            //DoTest("h(3,4)    	", "a: 3 b: 4 arg: {}");
+            //DoTest("h(3,4,5,8)	", "a: 3 b: 4 arg: {5, }");
+            DoTest("h(5,r())  	", "a: 5 b: 1 arg: {2, 3, }");
+        }
 
-		[Test]
-		public void VarArgsTuple_Advanced2()
-		{
-			DoTest("i(3)      	", "a: extra b: 3 arg: {}");
-			DoTest("i(3,4)    	", "a: extra b: 3 arg: {4, }");
-			DoTest("i(3,4,5,8)	", "a: extra b: 3 arg: {4, 5, 8, }");
-			DoTest("i(5,r())  	", "a: extra b: 5 arg: {1, 2, 3, }");
-		}
+        [Test]
+        public void VarArgsTuple_Advanced2()
+        {
+            DoTest("i(3)      	", "a: extra b: 3 arg: {}");
+            DoTest("i(3,4)    	", "a: extra b: 3 arg: {4, }");
+            DoTest("i(3,4,5,8)	", "a: extra b: 3 arg: {4, 5, 8, }");
+            DoTest("i(5,r())  	", "a: extra b: 5 arg: {1, 2, 3, }");
+        }
 
-		[Test]
-		public void VarArgsTuple_DontCrash()
-		{
-			string script = @"
+        [Test]
+        public void VarArgsTuple_DontCrash()
+        {
+            string script =
+                @"
 				function Obj(...)
 					do
 						local args = { ... }
@@ -99,11 +101,9 @@ end
 				Obj(1)
 			";
 
-			Script S = new Script(CoreModules.None);
-				
-			S.DoString(script);
+            Script S = new Script(CoreModules.None);
 
-		}
-
-	}
+            S.DoString(script);
+        }
+    }
 }

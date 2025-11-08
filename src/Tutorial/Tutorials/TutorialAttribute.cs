@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tutorials
 {
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-	public sealed class TutorialAttribute : Attribute
-	{
-		
-	}
+    [AttributeUsage(
+        AttributeTargets.Method | AttributeTargets.Class,
+        Inherited = false,
+        AllowMultiple = false
+    )]
+    public sealed class TutorialAttribute : Attribute { }
 }

@@ -8,13 +8,14 @@ using NUnit.Framework;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class MetatableTests
-	{
-		[Test]
-		public void TableIPairsWithMetatable()
-		{
-			string script = @"    
+    [TestFixture]
+    public class MetatableTests
+    {
+        [Test]
+        public void TableIPairsWithMetatable()
+        {
+            string script =
+                @"    
 				test = { 2, 4, 6 }
 
 				meta = { }
@@ -40,16 +41,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-			DynValue res = (new Script()).DoString(script);
+            DynValue res = (new Script()).DoString(script);
 
-			Assert.AreEqual(DataType.String, res.Type);
-			Assert.AreEqual("321", res.String);
-		}
+            Assert.AreEqual(DataType.String, res.Type);
+            Assert.AreEqual("321", res.String);
+        }
 
-		[Test]
-		public void TableAddWithMetatable()
-		{
-			string script = @"    
+        [Test]
+        public void TableAddWithMetatable()
+        {
+            string script =
+                @"    
 				v1 = { 'aaaa' }
 				v2 = { 'aaaaaa' } 
 
@@ -68,22 +70,23 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 
 				return(v1 + v2);";
 
-			var S = new Script();
-			Table globalCtx = S.Globals;
+            var S = new Script();
+            Table globalCtx = S.Globals;
 
-			globalCtx.RegisterModuleType<TableIteratorsModule>();
-			globalCtx.RegisterModuleType<MetaTableModule>();
+            globalCtx.RegisterModuleType<TableIteratorsModule>();
+            globalCtx.RegisterModuleType<MetaTableModule>();
 
-			DynValue res = S.DoString(script);
+            DynValue res = S.DoString(script);
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(24, res.Number);
-		}
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(24, res.Number);
+        }
 
-		[Test]
-		public void MetatableEquality()
-		{
-			string script = @"    
+        [Test]
+        public void MetatableEquality()
+        {
+            string script =
+                @"    
 				t1a = {}
 				t1b = {}
 				t2  = {}
@@ -97,18 +100,18 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return ( t1a == t1b ), ( t1a == t2 ) 
 				";
 
-			DynValue res = (new Script()).DoString(script);
+            DynValue res = (new Script()).DoString(script);
 
-			Assert.AreEqual(DataType.Tuple, res.Type);
-			Assert.AreEqual(true, res.Tuple[0].Boolean);
-			Assert.AreEqual(false, res.Tuple[1].Boolean);
+            Assert.AreEqual(DataType.Tuple, res.Type);
+            Assert.AreEqual(true, res.Tuple[0].Boolean);
+            Assert.AreEqual(false, res.Tuple[1].Boolean);
+        }
 
-		}
-
-		[Test]
-		public void MetatableCall2()
-		{
-			string script = @"    
+        [Test]
+        public void MetatableCall2()
+        {
+            string script =
+                @"    
 					t = { }
 					meta = { }
 
@@ -124,21 +127,20 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 					return t;
 				";
 
-			Script S = new Script();
+            Script S = new Script();
 
-			DynValue tbl = S.DoString(script);
-			DynValue res = S.Call(tbl, 3);
+            DynValue tbl = S.DoString(script);
+            DynValue res = S.Call(tbl, 3);
 
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(468, res.Number);
+        }
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(468, res.Number);
-
-		}
-
-		[Test]
-		public void MetatableCall()
-		{
-			string script = @"    
+        [Test]
+        public void MetatableCall()
+        {
+            string script =
+                @"    
 					t = { }
 					meta = { }
 
@@ -154,18 +156,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 					return x;
 				";
 
-			DynValue res = (new Script()).DoString(script);
+            DynValue res = (new Script()).DoString(script);
 
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(468, res.Number);
+        }
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(468, res.Number);
-
-		}
-
-		[Test]
-		public void MetatableIndexAndSetIndexFuncs()
-		{
-			string script = @"    
+        [Test]
+        public void MetatableIndexAndSetIndexFuncs()
+        {
+            string script =
+                @"    
 					T = { a = 'a', b = 'b', c = 'c' };
 
 					t = { };
@@ -194,17 +195,17 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 					return(s);
 				";
 
-			DynValue res = (new Script()).DoString(script);
+            DynValue res = (new Script()).DoString(script);
 
+            Assert.AreEqual(DataType.String, res.Type);
+            Assert.AreEqual("abc!bc", res.String);
+        }
 
-			Assert.AreEqual(DataType.String, res.Type);
-			Assert.AreEqual("abc!bc", res.String);
-		}
-
-		[Test]
-		public void MetatableIndexAndSetIndexBounce()
-		{
-			string script = @"    
+        [Test]
+        public void MetatableIndexAndSetIndexBounce()
+        {
+            string script =
+                @"    
 					T = { a = 'a', b = 'b', c = 'c' };
 
 					t = { };
@@ -224,26 +225,25 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 					return(s);
 				";
 
-			DynValue res = (new Script()).DoString(script);
+            DynValue res = (new Script()).DoString(script);
 
+            Assert.AreEqual(DataType.String, res.Type);
+            Assert.AreEqual("abc!bc", res.String);
+        }
 
-			Assert.AreEqual(DataType.String, res.Type);
-			Assert.AreEqual("abc!bc", res.String);
-		}
+        public class MyObject
+        {
+            public int GetSomething()
+            {
+                return 10;
+            }
+        }
 
-
-		public class MyObject
-		{
-			public int GetSomething()
-			{
-				return 10;
-			}
-		}
-
-		[Test]
-		public void MetatableExtensibleObjectSample()
-		{
-			string code = @"    
+        [Test]
+        public void MetatableExtensibleObjectSample()
+        {
+            string code =
+                @"    
 
 				--declare this once for all
 				extensibleObjectMeta = {
@@ -262,20 +262,21 @@ namespace MoonSharp.Interpreter.Tests.EndToEnd
 				return myobj.extended() * myobj.getSomething();
 				";
 
-			Script script = new Script();
-			UserData.RegisterType<MyObject>();
-			script.Globals["o"] = new MyObject();
-			
-			DynValue res = script.DoString(code);
+            Script script = new Script();
+            UserData.RegisterType<MyObject>();
+            script.Globals["o"] = new MyObject();
 
-			Assert.AreEqual(DataType.Number, res.Type);
-			Assert.AreEqual(120, res.Number);
-		}
+            DynValue res = script.DoString(code);
 
-		[Test]
-		public void IndexSetDoesNotWrackStack()
-		{
-			string scriptCode = @"
+            Assert.AreEqual(DataType.Number, res.Type);
+            Assert.AreEqual(120, res.Number);
+        }
+
+        [Test]
+        public void IndexSetDoesNotWrackStack()
+        {
+            string scriptCode =
+                @"
 
 local aClass = {}
 setmetatable(aClass, {__newindex = function() end, __index = function() end })
@@ -289,13 +290,14 @@ end
 
 ";
 
-			Script script = new Script(CoreModules.Basic | CoreModules.Table | CoreModules.TableIterators | CoreModules.Metatables);
+            Script script = new Script(
+                CoreModules.Basic
+                    | CoreModules.Table
+                    | CoreModules.TableIterators
+                    | CoreModules.Metatables
+            );
 
-			DynValue res = script.DoString(scriptCode);
-		}
-
-
-
-
-	}
+            DynValue res = script.DoString(scriptCode);
+        }
+    }
 }

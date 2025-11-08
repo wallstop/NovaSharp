@@ -10,27 +10,25 @@ using MoonSharp.Interpreter.Platforms;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter10
-	{
-		[Tutorial]
-		static void OverriddenPrint()
-		{
-			// redefine print to print in lowercase, for all new scripts
-			Script.DefaultOptions.DebugPrint = s => Console.WriteLine(s.ToLower());
-				
-			Script script = new Script();
+    [Tutorial]
+    static class Chapter10
+    {
+        [Tutorial]
+        static void OverriddenPrint()
+        {
+            // redefine print to print in lowercase, for all new scripts
+            Script.DefaultOptions.DebugPrint = s => Console.WriteLine(s.ToLower());
 
-			DynValue fn = script.LoadString("print 'Hello, World!'");
+            Script script = new Script();
 
-			fn.Function.Call(); // this prints "hello, world!"
+            DynValue fn = script.LoadString("print 'Hello, World!'");
 
-			// redefine print to print in UPPERCASE, for this script only
-			script.Options.DebugPrint = s => Console.WriteLine(s.ToUpper());
-			
-			fn.Function.Call(); // this prints "HELLO, WORLD!"
-		}
+            fn.Function.Call(); // this prints "hello, world!"
 
+            // redefine print to print in UPPERCASE, for this script only
+            script.Options.DebugPrint = s => Console.WriteLine(s.ToUpper());
 
-	}
+            fn.Function.Call(); // this prints "HELLO, WORLD!"
+        }
+    }
 }

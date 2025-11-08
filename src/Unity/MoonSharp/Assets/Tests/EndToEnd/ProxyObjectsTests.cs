@@ -7,41 +7,51 @@ using NUnit.Framework;
 
 namespace MoonSharp.Interpreter.Tests.EndToEnd
 {
-	[TestFixture]
-	public class ProxyObjectsTests
-	{
-		public class Proxy
-		{
-			[MoonSharpVisible(false)]
-			public Random random;
+    [TestFixture]
+    public class ProxyObjectsTests
+    {
+        public class Proxy
+        {
+            [MoonSharpVisible(false)]
+            public Random random;
 
-			[MoonSharpVisible(false)]
-			public Proxy(Random r)
-			{
-				random = r;
-			}
+            [MoonSharpVisible(false)]
+            public Proxy(Random r)
+            {
+                random = r;
+            }
 
-			public int GetValue() { return 3; }
-		}
+            public int GetValue()
+            {
+                return 3;
+            }
+        }
 
-		[Test]
-		public void ProxyTest()
-		{
-			UserData.RegisterProxyType<Proxy, Random>(r => new Proxy(r));
+        [Test]
+        public void ProxyTest()
+        {
+            UserData.RegisterProxyType<Proxy, Random>(r => new Proxy(r));
 
-			Script S = new Script();
+            Script S = new Script();
 
-			S.Globals["R"] = new Random();
-			S.Globals["func"] = (Action<Random>)(r => { Assert.IsNotNull(r); Assert.IsTrue(r is Random); });
+            S.Globals["R"] = new Random();
+            S.Globals["func"] =
+                (Action<Random>)(
+                    r =>
+                    {
+                        Assert.IsNotNull(r);
+                        Assert.IsTrue(r is Random);
+                    }
+                );
 
-			S.DoString(@"
+            S.DoString(
+                @"
 				x = R.GetValue();
 				func(R);
-			");
+			"
+            );
 
-			Assert.AreEqual(3.0, S.Globals.Get("x").Number);
-		}
-
-
-	}
+            Assert.AreEqual(3.0, S.Globals.Get("x").Number);
+        }
+    }
 }

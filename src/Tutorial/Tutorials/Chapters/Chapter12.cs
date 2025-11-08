@@ -12,13 +12,14 @@ using MoonSharp.RemoteDebugger;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter12
-	{
-		[Tutorial]
-		static void CoroutinesFromCSharp()
-		{
-			string code = @"
+    [Tutorial]
+    static class Chapter12
+    {
+        [Tutorial]
+        static void CoroutinesFromCSharp()
+        {
+            string code =
+                @"
 				return function()
 					local x = 0
 					while true do
@@ -28,25 +29,26 @@ namespace Tutorials.Chapters
 				end
 				";
 
-			// Load the code and get the returned function
-			Script script = new Script();
-			DynValue function = script.DoString(code);
+            // Load the code and get the returned function
+            Script script = new Script();
+            DynValue function = script.DoString(code);
 
-			// Create the coroutine in C#
-			DynValue coroutine = script.CreateCoroutine(function);
+            // Create the coroutine in C#
+            DynValue coroutine = script.CreateCoroutine(function);
 
-			// Resume the coroutine forever and ever.. 
-			while (true)
-			{
-				DynValue x = coroutine.Coroutine.Resume();
-				Console.WriteLine("{0}", x);
-			}
-		}
+            // Resume the coroutine forever and ever..
+            while (true)
+            {
+                DynValue x = coroutine.Coroutine.Resume();
+                Console.WriteLine("{0}", x);
+            }
+        }
 
-		[Tutorial]
-		static void CoroutinesAsCSharpIterator()
-		{
-			string code = @"
+        [Tutorial]
+        static void CoroutinesAsCSharpIterator()
+        {
+            string code =
+                @"
 				return function()
 					local x = 0
 					while true do
@@ -59,23 +61,22 @@ namespace Tutorials.Chapters
 				end
 				";
 
-			// Load the code and get the returned function
-			Script script = new Script();
-			DynValue function = script.DoString(code);
+            // Load the code and get the returned function
+            Script script = new Script();
+            DynValue function = script.DoString(code);
 
-			// Create the coroutine in C#
-			DynValue coroutine = script.CreateCoroutine(function);
+            // Create the coroutine in C#
+            DynValue coroutine = script.CreateCoroutine(function);
 
-			// Loop the coroutine 
-			string ret = "";
+            // Loop the coroutine
+            string ret = "";
 
-			foreach (DynValue x in coroutine.Coroutine.AsTypedEnumerable())
-			{
-				ret = ret + x.ToString();
-			}
+            foreach (DynValue x in coroutine.Coroutine.AsTypedEnumerable())
+            {
+                ret = ret + x.ToString();
+            }
 
-			Console.WriteLine(ret);
-		}
-
-	}
+            Console.WriteLine(ret);
+        }
+    }
 }

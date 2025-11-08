@@ -9,11 +9,5 @@ using MoonSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
 namespace MoonSharp.Hardwire.Utils
 {
-	public class GeneratorUtilities
-	{
-
-
-
-
-	}
+    public class GeneratorUtilities { }
 }

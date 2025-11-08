@@ -7,25 +7,26 @@ using MoonSharp.Interpreter;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter04
-	{
-		#region TableTest1
+    [Tutorial]
+    static class Chapter04
+    {
+        #region TableTest1
 
-		private static List<int> GetNumberList()
-		{
-			List<int> lst = new List<int>();
+        private static List<int> GetNumberList()
+        {
+            List<int> lst = new List<int>();
 
-			for (int i = 1; i <= 10; i++)
-				lst.Add(i);
+            for (int i = 1; i <= 10; i++)
+                lst.Add(i);
 
-			return lst;
-		}
+            return lst;
+        }
 
-		[Tutorial]
-		public static double TableTest1()
-		{
-			string scriptCode = @"    
+        [Tutorial]
+        public static double TableTest1()
+        {
+            string scriptCode =
+                @"    
 				total = 0;
 
 				tbl = getNumbers()
@@ -37,34 +38,35 @@ namespace Tutorials.Chapters
 				return total;
 			";
 
-			Script script = new Script();
+            Script script = new Script();
 
-			script.Globals["getNumbers"] = (Func<List<int>>)GetNumberList;
+            script.Globals["getNumbers"] = (Func<List<int>>)GetNumberList;
 
-			DynValue res = script.DoString(scriptCode);
+            DynValue res = script.DoString(scriptCode);
 
-			return res.Number;
-		}
+            return res.Number;
+        }
 
-		#endregion
+        #endregion
 
 
-		#region TableTest2
+        #region TableTest2
 
-		private static Table GetNumberTable(Script script)
-		{
-			Table tbl = new Table(script);
+        private static Table GetNumberTable(Script script)
+        {
+            Table tbl = new Table(script);
 
-			for (int i = 1; i <= 10; i++)
-				tbl[i] = i;
+            for (int i = 1; i <= 10; i++)
+                tbl[i] = i;
 
-			return tbl;
-		}
+            return tbl;
+        }
 
-		[Tutorial]
-		public static double TableTest2()
-		{
-			string scriptCode = @"    
+        [Tutorial]
+        public static double TableTest2()
+        {
+            string scriptCode =
+                @"    
 				total = 0;
 
 				tbl = getNumbers()
@@ -76,90 +78,88 @@ namespace Tutorials.Chapters
 				return total;
 			";
 
-			Script script = new Script();
+            Script script = new Script();
 
-			script.Globals["getNumbers"] = (Func<Script, Table>)(GetNumberTable);
+            script.Globals["getNumbers"] = (Func<Script, Table>)(GetNumberTable);
 
-			DynValue res = script.DoString(scriptCode);
+            DynValue res = script.DoString(scriptCode);
 
-			return res.Number;
-		}
+            return res.Number;
+        }
 
-		#endregion
+        #endregion
 
 
-		#region TableTestReverse
+        #region TableTestReverse
 
-		[Tutorial]
-		public static double TableTestReverse()
-		{
-			string scriptCode = @"    
+        [Tutorial]
+        public static double TableTestReverse()
+        {
+            string scriptCode =
+                @"    
 				return dosum { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
 			";
 
-			Script script = new Script();
+            Script script = new Script();
 
-			script.Globals["dosum"] = (Func<List<int>, int>)(l => l.Sum());
+            script.Globals["dosum"] = (Func<List<int>, int>)(l => l.Sum());
 
-			DynValue res = script.DoString(scriptCode);
+            DynValue res = script.DoString(scriptCode);
 
-			return res.Number;
-		}
+            return res.Number;
+        }
 
-		#endregion
+        #endregion
 
 
-		#region TableTestReverseSafer
+        #region TableTestReverseSafer
 
-		[Tutorial]
-		public static double TableTestReverseSafer()
-		{
-			string scriptCode = @"    
+        [Tutorial]
+        public static double TableTestReverseSafer()
+        {
+            string scriptCode =
+                @"    
 				return dosum { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
 			";
 
-			Script script = new Script();
+            Script script = new Script();
 
-			script.Globals["dosum"] = (Func<List<object>, int>)(l => l.OfType<int>().Sum());
+            script.Globals["dosum"] = (Func<List<object>, int>)(l => l.OfType<int>().Sum());
 
-			DynValue res = script.DoString(scriptCode);
+            DynValue res = script.DoString(scriptCode);
 
-			return res.Number;
-		}
+            return res.Number;
+        }
 
-		#endregion
-
-
-		#region TableTestReverseWithTable
-
-		static double Sum(Table t)
-		{
-			var nums = from v in t.Values
-					   where v.Type == DataType.Number
-					   select v.Number;
-
-			return nums.Sum();
-		}
+        #endregion
 
 
-		[Tutorial]
-		public static double TableTestReverseWithTable()
-		{
-			string scriptCode = @"    
+        #region TableTestReverseWithTable
+
+        static double Sum(Table t)
+        {
+            var nums = from v in t.Values where v.Type == DataType.Number select v.Number;
+
+            return nums.Sum();
+        }
+
+        [Tutorial]
+        public static double TableTestReverseWithTable()
+        {
+            string scriptCode =
+                @"    
 					return dosum { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
 				";
 
-			Script script = new Script();
+            Script script = new Script();
 
-			script.Globals["dosum"] = (Func<Table, double>)Sum;
+            script.Globals["dosum"] = (Func<Table, double>)Sum;
 
-			DynValue res = script.DoString(scriptCode);
+            DynValue res = script.DoString(scriptCode);
 
-			return res.Number;
-		}
+            return res.Number;
+        }
 
-		#endregion
-
-
-	}
+        #endregion
+    }
 }

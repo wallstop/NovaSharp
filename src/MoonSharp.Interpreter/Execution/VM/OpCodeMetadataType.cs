@@ -5,9 +5,9 @@ using System.Text;
 
 namespace MoonSharp.Interpreter.Execution.VM
 {
-	public enum OpCodeMetadataType
-	{
-		ChunkEntrypoint,
-		FunctionEntrypoint,
-	}
+    public enum OpCodeMetadataType
+    {
+        ChunkEntrypoint,
+        FunctionEntrypoint,
+    }
 }

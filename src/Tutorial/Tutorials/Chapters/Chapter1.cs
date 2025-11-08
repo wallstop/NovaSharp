@@ -7,13 +7,14 @@ using MoonSharp.Interpreter;
 
 namespace Tutorials.Chapters
 {
-	[Tutorial]
-	static class Chapter01
-	{
-		[Tutorial]
-		public static double MoonSharpFactorial()
-		{
-			string script = @"    
+    [Tutorial]
+    static class Chapter01
+    {
+        [Tutorial]
+        public static double MoonSharpFactorial()
+        {
+            string script =
+                @"    
 				-- defines a factorial function
 				function fact (n)
 					if (n == 0) then
@@ -25,11 +26,8 @@ namespace Tutorials.Chapters
 
 				return fact(5)";
 
-			DynValue res = Script.RunString(script);
-			return res.Number;
-		}
-
-
-
-	}
+            DynValue res = Script.RunString(script);
+            return res.Number;
+        }
+    }
 }

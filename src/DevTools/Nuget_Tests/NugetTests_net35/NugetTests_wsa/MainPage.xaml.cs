@@ -23,10 +23,11 @@ namespace NugetTests_wsa
     /// </summary>
     public sealed partial class MainPage : Page
     {
-		string EXPECTEDVERSION = VERSION.NUMB;
-		string EXPECTEDPLATF = "limited.dotnet.portable.clr4";
+        string EXPECTEDVERSION = VERSION.NUMB;
+        string EXPECTEDPLATF = "limited.dotnet.portable.clr4";
 
-		string BASICSCRIPT = @"
+        string BASICSCRIPT =
+            @"
 function dodo(x, y, z)
 	return tostring((x + y) * z);
 end
@@ -39,26 +40,30 @@ return dodo;
             this.InitializeComponent();
         }
 
-		private void Page_Loaded(object sender, RoutedEventArgs e)
-		{
-			CheckString(lblVersion, EXPECTEDVERSION, Script.VERSION);
-			CheckString(lblPlatform, EXPECTEDPLATF, Script.GlobalOptions.Platform.GetPlatformName());
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            CheckString(lblVersion, EXPECTEDVERSION, Script.VERSION);
+            CheckString(
+                lblPlatform,
+                EXPECTEDPLATF,
+                Script.GlobalOptions.Platform.GetPlatformName()
+            );
 
-			Script S = new Script();
-			DynValue fn = S.DoString(BASICSCRIPT);
-			string res = fn.Function.Call(2, 3, 4).String;
+            Script S = new Script();
+            DynValue fn = S.DoString(BASICSCRIPT);
+            string res = fn.Function.Call(2, 3, 4).String;
 
-			CheckString(lblTestResult, "20", res);
-		}
+            CheckString(lblTestResult, "20", res);
+        }
 
-		private void CheckString(TextBlock label, string expected, string actual)
-		{
-			label.Text = actual;
+        private void CheckString(TextBlock label, string expected, string actual)
+        {
+            label.Text = actual;
 
-			if (actual != expected)
-				label.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 0, 0));
-			else
-				label.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 200, 0));
-		}
+            if (actual != expected)
+                label.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 0, 0));
+            else
+                label.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 200, 0));
+        }
     }
 }

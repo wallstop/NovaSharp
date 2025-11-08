@@ -2,25 +2,18 @@
 
 namespace MoonSharp.Interpreter
 {
-	/// <summary>
-	/// Exception thrown when an inconsistent state is reached in the interpreter
-	/// </summary>
+    /// <summary>
+    /// Exception thrown when an inconsistent state is reached in the interpreter
+    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
-	[Serializable]
+    [Serializable]
 #endif
-	public class InternalErrorException : InterpreterException
-	{
-		internal InternalErrorException(string message)
-			: base(message)
-		{
+    public class InternalErrorException : InterpreterException
+    {
+        internal InternalErrorException(string message)
+            : base(message) { }
 
-		}
-
-		internal InternalErrorException(string format, params object[] args)
-			: base(format, args)
-		{
-
-		}
-	}
-
+        internal InternalErrorException(string format, params object[] args)
+            : base(format, args) { }
+    }
 }
