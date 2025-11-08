@@ -197,30 +197,7 @@ namespace MoonSharp
 
         private static void ExecuteCommand(ShellContext shellContext, string cmdline)
         {
-            StringBuilder cmd = new StringBuilder();
-            StringBuilder args = new StringBuilder();
-            StringBuilder dest = cmd;
-
-            for (int i = 0; i < cmdline.Length; i++)
-            {
-                if (dest == cmd && cmdline[i] == ' ')
-                {
-                    dest = args;
-                    continue;
-                }
-
-                dest.Append(cmdline[i]);
-            }
-
-            string scmd = cmd.ToString().Trim();
-            string sargs = args.ToString().Trim();
-
-            ICommand C = CommandManager.Find(scmd);
-
-            if (C == null)
-                Console.WriteLine("Invalid command '{0}'.", scmd);
-            else
-                C.Execute(shellContext, sargs);
+            CommandManager.Execute(shellContext, cmdline);
         }
     }
 }

@@ -85,6 +85,65 @@ namespace MoonSharp.Interpreter.Tests.Units
             Assert.That(_platform.FileExists("temp.txt"), Is.False);
         }
 
+        [Test]
+        public void OsTmpNameGeneratesUniqueVirtualNames()
+        {
+            var script = new Script(CoreModules.Preset_Complete);
+
+            DynValue firstValue = script.DoString("return os.tmpname()");
+            DynValue secondValue = script.DoString("return os.tmpname()");
+
+            Assert.That(firstValue.Type, Is.EqualTo(DataType.String));
+            Assert.That(secondValue.Type, Is.EqualTo(DataType.String));
+
+            string first = firstValue.String;
+            string second = secondValue.String;
+
+            StringAssert.StartsWith("temp_", first);
+            StringAssert.StartsWith("temp_", second);
+            StringAssert.EndsWith(".lua", first);
+            StringAssert.EndsWith(".lua", second);
+            Assert.That(first, Is.Not.EqualTo(second));
+            Assert.That(_platform.FileExists(first), Is.False);
+            Assert.That(_platform.FileExists(second), Is.False);
+        }
+
+        [Test]
+        public void OsRenameMovesVirtualFileContents()
+        {
+            var script = new Script(CoreModules.Preset_Complete);
+            script.DoString("local f = io.open('old.txt', 'w'); f:write('payload'); f:close()");
+
+            var result = script.DoString("return os.rename('old.txt', 'new.txt')");
+
+            Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(result.Boolean, Is.True);
+            Assert.That(_platform.FileExists("old.txt"), Is.False);
+            Assert.That(_platform.ReadAllText("new.txt"), Is.EqualTo("payload"));
+        }
+
+        [Test]
+        public void IoWriteTargetsVirtualStdOut()
+        {
+            var script = new Script(CoreModules.Preset_Complete);
+
+            script.DoString("io.write('first'); io.write('second');");
+
+            Assert.That(_platform.GetStdOutText(), Is.EqualTo("firstsecond"));
+            Assert.That(_platform.GetStdErrText(), Is.Empty);
+        }
+
+        [Test]
+        public void IoStdErrWriteCapturesVirtualStdErr()
+        {
+            var script = new Script(CoreModules.Preset_Complete);
+
+            script.DoString("io.stderr:write('failure');");
+
+            Assert.That(_platform.GetStdErrText(), Is.EqualTo("failure"));
+            Assert.That(_platform.GetStdOutText(), Is.Empty);
+        }
+
         private sealed class InMemoryPlatformAccessor : PlatformAccessorBase
         {
             private readonly ConcurrentDictionary<string, byte[]> _files = new ConcurrentDictionary<
@@ -176,6 +235,8 @@ namespace MoonSharp.Interpreter.Tests.Units
 
             public override bool OS_FileExists(string file) => _files.ContainsKey(file);
 
+            public override CoreModules FilterSupportedCoreModules(CoreModules module) => module;
+
             public override void OS_FileDelete(string file)
             {
                 _files.TryRemove(file, out _);
@@ -208,6 +269,11 @@ namespace MoonSharp.Interpreter.Tests.Units
             public string GetStdOutText()
             {
                 return Encoding.UTF8.GetString(_stdout.ToArray());
+            }
+
+            public string GetStdErrText()
+            {
+                return Encoding.UTF8.GetString(_stderr.ToArray());
             }
 
             private sealed class TrackingStream : Stream

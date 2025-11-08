@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MoonSharp.Commands
 {
-    interface ICommand
+    public interface ICommand
     {
         string Name { get; }
         void DisplayShortHelp();
