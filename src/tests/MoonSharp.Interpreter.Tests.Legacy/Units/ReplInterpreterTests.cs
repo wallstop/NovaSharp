@@ -10,7 +10,7 @@ namespace MoonSharp.Interpreter.Tests.Units
         [Test]
         public void ClassicPromptReflectsPendingState()
         {
-            var interpreter = new ReplInterpreter(new Script());
+            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete));
             Assert.That(interpreter.ClassicPrompt, Is.EqualTo(">"));
 
             interpreter.Evaluate("function foo()");
@@ -21,7 +21,10 @@ namespace MoonSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateSupportsClassicExpressionSyntax()
         {
-            var interpreter = new ReplInterpreter(new Script()) { HandleClassicExprsSyntax = true };
+            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete))
+            {
+                HandleClassicExprsSyntax = true,
+            };
 
             DynValue result = interpreter.Evaluate("=1 + 41");
             Assert.That(result.Type, Is.EqualTo(DataType.Number));
@@ -31,7 +34,10 @@ namespace MoonSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateSupportsDynamicExpressionSyntax()
         {
-            var interpreter = new ReplInterpreter(new Script()) { HandleDynamicExprs = true };
+            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete))
+            {
+                HandleDynamicExprs = true,
+            };
 
             interpreter.Evaluate("x = 10");
             interpreter.Evaluate("");
@@ -44,7 +50,7 @@ namespace MoonSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateReturnsNullWhenAwaitingMoreInput()
         {
-            var interpreter = new ReplInterpreter(new Script());
+            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete));
 
             DynValue first = interpreter.Evaluate("function foo()");
             Assert.That(first, Is.Null);

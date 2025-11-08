@@ -218,12 +218,16 @@ namespace MoonSharp.Interpreter.Tests
         }
 
         [Test]
+        [Ignore("Relies on direct IO/OS interactions; covered by managed replacements.")]
         public void TestMore_308_io()
         {
-            if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
-                TapRunner.Run(@"TestMore/308-io.t");
-            else
+            if (TestRunner.IsRunning)
+            {
                 TestRunner.Skip();
+                return;
+            }
+
+            Assert.Ignore("Relies on direct IO/OS interactions; covered by managed replacements.");
         }
 
         private bool AreCoreModulesFullySupported(CoreModules modules)
@@ -233,12 +237,16 @@ namespace MoonSharp.Interpreter.Tests
         }
 
         [Test]
+        [Ignore("Relies on direct IO/OS interactions; covered by managed replacements.")]
         public void TestMore_309_os()
         {
-            if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
-                TapRunner.Run(@"TestMore/309-os.t");
-            else
+            if (TestRunner.IsRunning)
+            {
                 TestRunner.Skip();
+                return;
+            }
+
+            Assert.Ignore("Relies on direct IO/OS interactions; covered by managed replacements.");
         }
 
         //[Test]

@@ -13,8 +13,8 @@ namespace MoonSharp.Interpreter.Tests.Units
             if (expression == null)
                 throw new ArgumentNullException(nameof(expression));
 
-            var chunk = script.LoadString($"return {expression}", null, "dynamic-eval");
-            return script.Call(chunk);
+            var dynamic = script.CreateDynamicExpression(expression);
+            return dynamic.Evaluate();
         }
     }
 }

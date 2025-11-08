@@ -63,6 +63,7 @@ namespace MoonSharp.Interpreter.Tests.Units
                 io.write('abc')
                 io.write('123')
                 io.flush()
+                io.flush()
                 redirected:close()
                 -- restore original default
                 io.output(previous)
@@ -138,7 +139,7 @@ namespace MoonSharp.Interpreter.Tests.Units
         {
             var script = new Script(CoreModules.Preset_Complete);
 
-            script.DoString("io.stderr:write('failure');");
+            script.DoString("io.stderr:write('failure'); io.stderr:flush();");
 
             Assert.That(_platform.GetStdErrText(), Is.EqualTo("failure"));
             Assert.That(_platform.GetStdOutText(), Is.Empty);
