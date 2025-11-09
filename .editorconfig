@@ -19,6 +19,7 @@ csharp_style_var_when_type_is_apparent = false:error
 csharp_using_directive_placement = inside_namespace:error
 dotnet_style_namespace_match_folder = true:warning
 dotnet_diagnostic.IDE0130.severity = warning
+dotnet_diagnostic.CA1852.severity = error
 dotnet_naming_rule.event_rule.import_to_resharper = True
 dotnet_naming_rule.event_rule.resharper_description = Events
 dotnet_naming_rule.event_rule.resharper_guid = 0c4c6401-2a1f-4db1-a21f-562f51542cf8
