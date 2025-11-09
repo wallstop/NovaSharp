@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Description>http://www.NovaSharp.org</Description>
         <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
@@ -14,6 +14,9 @@
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
+    <ItemGroup>
+        <None Remove="keypair.snk" />
+    </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
     </ItemGroup>

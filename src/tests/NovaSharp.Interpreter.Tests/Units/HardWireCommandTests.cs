@@ -5,7 +5,6 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp;
     using NovaSharp.Commands.Implementations;
     using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter;
     using NUnit.Framework;
 
     [TestFixture]
@@ -281,6 +280,63 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
                     Assert.That(generated, Does.Contain("Class GeneratedTypes"));
+                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                });
+            }
+            finally
+            {
+                File.Delete(dumpPath);
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
+        [Test]
+        public void GenerateWithInternalsAllowedSuppressesWarning()
+        {
+            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
+
+            HardWireCommand.DumpLoader = _ =>
+            {
+                Script script = new(CoreModules.None);
+                return CreateDescriptorTable(script, "internal");
+            };
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+            string output = string.Empty;
+
+            try
+            {
+                HardWireCommand.Generate(
+                    "cs",
+                    dumpPath,
+                    destPath,
+                    true,
+                    "GeneratedTypes",
+                    "GeneratedNamespace"
+                );
+            }
+            finally
+            {
+                Console.SetOut(_originalOut);
+                output = writer.ToString();
+            }
+
+            try
+            {
+                Assert.That(
+                    File.Exists(destPath),
+                    Is.True,
+                    $"Console output:{Environment.NewLine}{output}"
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(output, Does.Not.Contain("visibility is 'internal'"));
                     Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
                 });
             }

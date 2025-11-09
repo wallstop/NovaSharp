@@ -3,7 +3,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using Commands;
+    using Commands.Implementations;
     using NovaSharp;
+    using NovaSharp.Interpreter;
     using NUnit.Framework;
 
     [TestFixture]
@@ -134,9 +136,78 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void CheckArgsHardwireFlagGeneratesDescriptors()
+        {
+            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
+
+            Func<string, Table> originalLoader = HardWireCommand.DumpLoader;
+            HardWireCommand.DumpLoader = _ =>
+            {
+                Script script = new(CoreModules.None);
+                return CreateDescriptorTable(script, "internal");
+            };
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            try
+            {
+                bool handled = Program.CheckArgs(
+                    new[]
+                    {
+                        "-W",
+                        dumpPath,
+                        destPath,
+                        "--internals",
+                        "--vb",
+                        "--class:GeneratedTypes",
+                        "--namespace:GeneratedNamespace",
+                    },
+                    NewShellContext()
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(handled, Is.True);
+                    Assert.That(writer.ToString(), Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(File.Exists(destPath), Is.True);
+                    string generated = File.ReadAllText(destPath);
+                    Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
+                    Assert.That(generated, Does.Contain("Class GeneratedTypes"));
+                });
+            }
+            finally
+            {
+                HardWireCommand.DumpLoader = originalLoader;
+
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
         private static ShellContext NewShellContext()
         {
             return new ShellContext(new Interpreter.Script());
+        }
+
+        private static Table CreateDescriptorTable(Script script, string visibility)
+        {
+            Table descriptor = new(script);
+            descriptor.Set(
+                "class",
+                DynValue.NewString("NovaSharp.Interpreter.Interop.StandardUserDataDescriptor")
+            );
+            descriptor.Set("visibility", DynValue.NewString(visibility));
+            descriptor.Set("members", DynValue.NewTable(script));
+            descriptor.Set("metamembers", DynValue.NewTable(script));
+
+            Table root = new(script);
+            root.Set("Sample", DynValue.NewTable(descriptor));
+            return root;
         }
     }
 }

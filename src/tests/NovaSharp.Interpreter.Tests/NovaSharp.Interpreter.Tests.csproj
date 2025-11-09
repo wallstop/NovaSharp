@@ -9,6 +9,9 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <ItemGroup>
+        <None Remove=".editorconfig" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
         <ProjectReference Include="..\..\tooling\NovaSharp.Cli\NovaSharp.Cli.csproj" />
     </ItemGroup>
@@ -27,5 +30,11 @@
         <None Update="TestMore\**\*.mak">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+    <ItemGroup>
+        <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
+    </ItemGroup>
+    <ItemGroup>
+        <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
     </ItemGroup>
 </Project>
