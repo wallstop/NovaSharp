@@ -5,10 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-        <AssemblyName>PerformanceComparison</AssemblyName>
-        <RootNamespace>NovaSharp.PerformanceComparison</RootNamespace>
+        <AssemblyName>NovaSharp.Comparison</AssemblyName>
+        <RootNamespace>NovaSharp.Comparison</RootNamespace>
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="KeraLua" Version="1.4.4" />

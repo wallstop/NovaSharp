@@ -29,7 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSharp.Benchmarks", "tooling\Benchmarks\NovaSharp.Benchmarks\NovaSharp.Benchmarks.csproj", "{EB477F10-A633-481C-8A14-788FBA2A53F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceComparison", "tooling\PerformanceComparison\PerformanceComparison.csproj", "{75950EC4-2C65-470A-8A78-C516592B8107}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSharp.Comparison", "tooling\NovaSharp.Comparison\NovaSharp.Comparison.csproj", "{75950EC4-2C65-470A-8A78-C516592B8107}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

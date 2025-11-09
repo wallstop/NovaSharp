@@ -7,9 +7,11 @@ internal static class Program
 {
     public static void Main(string[] args)
     {
+        var effectiveArgs = args.Length > 0 ? args : new[] { "--filter", "*" };
+
         var summaries = BenchmarkSwitcher
             .FromAssembly(typeof(Program).Assembly)
-            .Run(args, DefaultConfigFactory.Create());
+            .Run(effectiveArgs, DefaultConfigFactory.Create());
 
 #if NET8_0_OR_GREATER
         PerformanceReportWriter.Write("NovaSharp Benchmarks", summaries);

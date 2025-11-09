@@ -7,7 +7,7 @@
 | tooling/NovaSharp.Cli | Console REPL / CLI shell. |
 | tooling/NovaSharp.Hardwire | Hardwire generator tooling. |
 | tooling/Benchmarks | BenchmarkDotNet harnesses. |
-| tooling/PerformanceComparison | Performance comparison harness. |
+| tooling/NovaSharp.Comparison | Performance comparison harness. |
 | tests/TestRunners/DotNetCoreTestRunner | Modern .NET test runner (executes TAP + NUnit suites). |
 | tests/NovaSharp.Interpreter.Tests.Legacy | Legacy NUnit 2.6 suite (historical coverage). |
 | samples/Tutorial | Tutorial snippets and sample scripts. |

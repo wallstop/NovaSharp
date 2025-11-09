@@ -4,7 +4,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 
-namespace NovaSharp.PerformanceComparison;
+namespace NovaSharp.Comparison;
 
 internal static class BenchmarkConfig
 {
@@ -19,6 +19,6 @@ internal static class BenchmarkConfig
             .AddJob(ComparisonJob)
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddColumnProvider(DefaultColumnProviders.Instance)
-            .AddColumn(StatisticColumn.P95);
+            .AddColumn(StatisticColumn.P95, RankColumn.Arabic);
 }
 #endif

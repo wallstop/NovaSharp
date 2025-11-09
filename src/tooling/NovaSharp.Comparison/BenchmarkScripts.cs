@@ -1,4 +1,4 @@
-namespace NovaSharp.PerformanceComparison;
+namespace NovaSharp.Comparison;
 
 internal static class BenchmarkScripts
 {

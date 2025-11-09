@@ -19,7 +19,7 @@
   - Restores and builds `src/NovaSharp.sln` in Release.
   - Runs the dotnet runner.
   - Uploads `NovaSharp_tests.log` as an artefact for every PR/push to `master`.
-- Benchmarks (`NovaSharp.Benchmarks`, `PerformanceComparison`) compile but never run in CI; they must be invoked manually to update `docs/Performance.md`.
+- Benchmarks (`NovaSharp.Benchmarks`, `NovaSharp.Comparison`) compile but never run in CI; they must be invoked manually to update `docs/Performance.md`.
 
 ## Coverage Strengths
 - Lua semantics, coroutine scheduling, binary dump/load, JSON, interop policy, and hardwire regeneration paths have broad regression protection.
@@ -38,6 +38,8 @@
 - ✅ Scope audit: `rg` confirmed zero `MoonSharp` identifiers remain in tracked source/docs; 612 residual artifacts still carry the legacy name (coverage HTML exports, benchmark logs, cached VS metadata). Directories flagged for rename: `src\.vs\moonsharp`, `src\legacy\moonsharp_netcore`, `src\tests\TestRunners\DotNetCoreTestRunner\src\_Projects\MoonSharp.Interpreter.Tests.Embeddable.portable40`. Acceptance: documented rename queue covering files, folders, and generated outputs.
 - ✅ File & folder renames: Renamed lingering filesystem entries (`NovaSharp.Interpreter` attribute source files, VS Code debugger scaffolding, `_Projects` mirror, JetBrains `.DotSettings`, legacy `novasharp_netcore`, `.vs/novasharp` cache, Flash project metadata, `.gitignore` helpers) so tracked assets now ship with `NovaSharp` branding.
 - ✅ Resource sync: Rebranded embedded assets (e.g., `Resources/NovaSharpdbg.png`) to unblock `NovaSharp.RemoteDebugger` and `NovaSharp.Cli` builds referencing the new resource names.
+- ✅ Benchmark harness rename: `tooling/NovaSharp.Comparison` replaces `PerformanceComparison` with updated namespaces, net8.0 executable output, and auto-run BenchmarkDotNet wiring.
+- ✅ Benchmark defaults: `NovaSharp.Benchmarks` and `NovaSharp.Comparison` now run all suites automatically when invoked (inject `--filter *`) while keeping shared `PerformanceReportWriter` reporting.
 - ✅ Build sanity check: `dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj` passes after renames, confirming compiler parity.
 - ⏳ Artifact regeneration: Regenerate coverage + benchmark outputs so generated filenames mirror `NovaSharp.*`; purge outdated MoonSharp-labelled artefacts under `docs/coverage/latest` and `BenchmarkDotNet.Artifacts`.
 - ⏳ Automation guardrails: Extend CI or lint checks to fail on reintroducing `MoonSharp` identifiers (text, filenames, assemblies) to keep branding consistent.
@@ -74,7 +76,7 @@
   - ✅ Replaced CLI `packages/*` binaries with NuGet-managed references; ensure remaining legacy tooling cleans up any straggler DLL drops.
 - **Milestone C – Namespace & Using Enforcement**  
   Introduce Roslyn analyzers or custom scripts to ensure namespaces mirror the physical path + project root (`NovaSharp.Interpreter.Debugging` style), and require `using` directives to live inside namespaces. Provide migration scripts to batch-update existing files, codify exceptions for generated/bundled code, and document rules in `docs/Contributing.md`.
-  - ✅ Added `tools/NamespaceAudit/namespace_audit.py` to surface directory/namespace mismatches (current hot spots: CLI/Hardwire/PerformanceComparison).
+  - ✅ Added `tools/NamespaceAudit/namespace_audit.py` to surface directory/namespace mismatches (current hot spots: CLI/Hardwire/NovaSharp.Comparison).
 - **Milestone D – EditorConfig Adoption + Lua Exceptions**  
   Import `.editorconfig` from `D:/Code/DxMessaging-Unity/Packages/com.wallstop-studios.unity-helpers`, strip BOM (`charset = utf-8`), and align with repo conventions (CRLF is acceptable). Add sub-directory `.editorconfig` under Lua fixture folders to keep Lua-specific indentation/whitespace expectations. Document formatting commands and exception rationale in `docs/Testing.md` + PR template.
 - **Milestone E – Solution Organization & Naming (Current Sprint)**  
@@ -86,6 +88,7 @@
 ## Near-Term Priorities (ordered)
 1. **MoonSharp ➜ NovaSharp finalization**
    - ✅ Cleared the filesystem rename queue (`NovaSharp.Interpreter` attribute files, VS Code debugger scaffolding, `_Projects` mirror, JetBrains `.DotSettings`, legacy cache folders).
+   - ✅ Rebranded the comparison benchmark harness (`tooling/NovaSharp.Comparison`) with default BenchmarkDotNet config and VS run target output.
    - ⏳ Refresh generated artefacts (coverage, benchmarks) under the NovaSharp name and clean stale MoonSharp results.
    - ⏳ Add guardrail automation (CI grep or analyzer) blocking `MoonSharp` regressions across code, docs, and assets.
 2. **Coverage Push (>90%)**

@@ -3,7 +3,7 @@ using BenchmarkDotNet.Attributes;
 using NovaSharp.Interpreter;
 using NLua;
 
-namespace NovaSharp.PerformanceComparison;
+namespace NovaSharp.Comparison;
 
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]

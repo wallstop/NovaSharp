@@ -12,7 +12,7 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/debuggers/vscode-extension` | VS Code extension (TypeScript) | Now grouped under debuggers. |
 | `src/tooling/NovaSharp.Cli` | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); update packaging/docs to reflect new CLI name. |
 | `src/tooling/NovaSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
-| `src/tooling/Benchmarks`, `src/tooling/PerformanceComparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
+| `src/tooling/Benchmarks`, `src/tooling/NovaSharp.Comparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
 | `src/tests/TestRunners/DotNetCoreTestRunner` | Net8 runner (active) | Drives modern coverage pipeline. |
 | `src/tests/NovaSharp.Interpreter.Tests.Legacy` | Legacy NUnit 2.6 tree | Ready for gradual migration or archival. |
 | `src/samples/Tutorial` | Tutorial snippets | Under dedicated samples hierarchy. |
@@ -33,7 +33,7 @@ src/
     NovaSharp.Cli/
     NovaSharp.Hardwire/
     Benchmarks/
-    PerformanceComparison/
+    NovaSharp.Comparison/
   tests/
     TestRunners/DotNetCoreTestRunner/
     fixtures/                              (Lua TAP assets shared by tests)
