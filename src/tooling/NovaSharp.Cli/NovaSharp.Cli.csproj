@@ -13,6 +13,6 @@
         <ProjectReference Include="..\..\debuggers\NovaSharp.VsCodeDebugger\NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <Content Include="NovaSharp.ico" />
+        <None Remove="moonsharp.ico" />
     </ItemGroup>
 </Project>

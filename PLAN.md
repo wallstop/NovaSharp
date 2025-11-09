@@ -40,6 +40,7 @@
 - ✅ Resource sync: Rebranded embedded assets (e.g., `Resources/NovaSharpdbg.png`) to unblock `NovaSharp.RemoteDebugger` and `NovaSharp.Cli` builds referencing the new resource names.
 - ✅ Benchmark harness rename: `tooling/NovaSharp.Comparison` replaces `PerformanceComparison` with updated namespaces, net8.0 executable output, and auto-run BenchmarkDotNet wiring.
 - ✅ Benchmark defaults: `NovaSharp.Benchmarks` and `NovaSharp.Comparison` now run all suites automatically when invoked (inject `--filter *`) while keeping shared `PerformanceReportWriter` reporting.
+- ⏳ Project hygiene: Audit `.csproj` metadata and purge references to missing/irrelevant assets (icons, logs, keypairs) so IDE surfacing stays clean.
 - ✅ Build sanity check: `dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj` passes after renames, confirming compiler parity.
 - ⏳ Artifact regeneration: Regenerate coverage + benchmark outputs so generated filenames mirror `NovaSharp.*`; purge outdated MoonSharp-labelled artefacts under `docs/coverage/latest` and `BenchmarkDotNet.Artifacts`.
 - ⏳ Automation guardrails: Extend CI or lint checks to fail on reintroducing `MoonSharp` identifiers (text, filenames, assemblies) to keep branding consistent.
@@ -89,6 +90,7 @@
 1. **MoonSharp ➜ NovaSharp finalization**
    - ✅ Cleared the filesystem rename queue (`NovaSharp.Interpreter` attribute files, VS Code debugger scaffolding, `_Projects` mirror, JetBrains `.DotSettings`, legacy cache folders).
    - ✅ Rebranded the comparison benchmark harness (`tooling/NovaSharp.Comparison`) with default BenchmarkDotNet config and VS run target output.
+   - ⏳ Scrub `.csproj` entries referencing missing/irrelevant assets (icons, logs, keypairs) to keep IDE surfaces clean.
    - ⏳ Refresh generated artefacts (coverage, benchmarks) under the NovaSharp name and clean stale MoonSharp results.
    - ⏳ Add guardrail automation (CI grep or analyzer) blocking `MoonSharp` regressions across code, docs, and assets.
 2. **Coverage Push (>90%)**

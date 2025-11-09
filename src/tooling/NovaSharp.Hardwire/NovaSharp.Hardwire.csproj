@@ -10,6 +10,9 @@
         <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup>
+        <None Remove="keypair.snk" />
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="System.CodeDom" Version="7.0.0" />
     </ItemGroup>
 </Project>
