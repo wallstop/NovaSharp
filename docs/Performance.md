@@ -4,7 +4,7 @@ This document captures benchmark snapshots across supported operating systems. E
 
 ## Windows
 
-_Last updated: 2025-11-08 12:02:37 -08:00_
+_Last updated: 2025-11-08 16:36:59 -08:00_
 
 **Environment**
 - OS: Microsoft Windows 10.0.26200
@@ -12,6 +12,57 @@ _Last updated: 2025-11-08 12:02:37 -08:00_
 - Runtime: .NET 8.0.21 (8.0.2125.47513)
 - Approx. RAM: 195,968 MB
 - Suite: NovaSharp Benchmarks
+
+### NovaSharp.Benchmarks.RuntimeBenchmarks-20251108-163349
+
+```
+
+BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
+Unknown processor
+.NET SDK 9.0.306
+  [Host]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+  ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+
+Job=ShortRun  IterationCount=10  LaunchCount=1  
+WarmupCount=2  
+
+```
+| Method               | Scenario          | Mean       | Error     | StdDev    | P95        | Rank | Gen0   | Gen1   | Allocated |
+|--------------------- |------------------ |-----------:|----------:|----------:|-----------:|-----:|-------:|-------:|----------:|
+| **&#39;Scenario Execution&#39;** | **NumericLoops**      |   **173.7 ns** |   **8.79 ns** |   **5.81 ns** |   **182.1 ns** |    **1** | **0.0491** |      **-** |     **928 B** |
+| **&#39;Scenario Execution&#39;** | **TableMutation**     | **3,408.4 ns** | **215.25 ns** | **142.37 ns** | **3,618.1 ns** |    **4** | **1.6441** | **0.1488** |   **30968 B** |
+| **&#39;Scenario Execution&#39;** | **CoroutinePipeline** |   **212.1 ns** |   **5.25 ns** |   **3.12 ns** |   **215.4 ns** |    **2** | **0.0598** |      **-** |    **1128 B** |
+| **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **285.9 ns** |   **9.23 ns** |   **6.10 ns** |   **295.0 ns** |    **3** | **0.0720** |      **-** |    **1360 B** |
+
+
+### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251108-163439
+
+```
+
+BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
+Unknown processor
+.NET SDK 9.0.306
+  [Host]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+  ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+
+Job=ShortRun  IterationCount=10  LaunchCount=1  
+WarmupCount=2  
+
+```
+| Method                | Complexity | Mean              | Error             | StdDev            | P95               | Rank | Gen0        | Gen1      | Gen2     | Allocated    |
+|---------------------- |----------- |------------------:|------------------:|------------------:|------------------:|-----:|------------:|----------:|---------:|-------------:|
+| **&#39;Compile + Execute&#39;**   | **Tiny**       |   **1,356,833.77 ns** |    **166,430.291 ns** |    **110,083.333 ns** |   **1,467,525.71 ns** |    **3** |    **248.0469** |  **242.1875** | **236.3281** |    **2446449 B** |
+| &#39;Compile Only&#39;        | Tiny       |   1,384,870.88 ns |    193,808.043 ns |    128,192.021 ns |   1,531,258.63 ns |    3 |    248.0469 |  240.2344 | 236.3281 |    2445812 B |
+| &#39;Execute Precompiled&#39; | Tiny       |          86.08 ns |          2.433 ns |          1.272 ns |          87.65 ns |    1 |      0.0284 |         - |        - |        536 B |
+| **&#39;Compile + Execute&#39;**   | **Small**      |   **1,473,076.70 ns** |    **232,335.125 ns** |    **153,675.300 ns** |   **1,682,584.49 ns** |    **3** |    **261.7188** |  **255.8594** | **250.0000** |    **2475100 B** |
+| &#39;Compile Only&#39;        | Small      |   1,397,566.54 ns |    206,067.592 ns |    122,627.519 ns |   1,573,979.61 ns |    3 |    236.3281 |  232.4219 | 224.6094 |    2453091 B |
+| &#39;Execute Precompiled&#39; | Small      |       6,183.95 ns |        108.998 ns |         72.096 ns |       6,292.04 ns |    2 |      1.0147 |         - |        - |      19176 B |
+| **&#39;Compile + Execute&#39;**   | **Medium**     |  **41,016,701.82 ns** |  **5,297,432.757 ns** |  **3,503,923.773 ns** |  **45,649,889.55 ns** |    **7** |   **8181.8182** |  **818.1818** | **363.6364** |  **150401378 B** |
+| &#39;Compile Only&#39;        | Medium     |   1,817,840.12 ns |    293,991.499 ns |    194,457.173 ns |   2,060,786.55 ns |    4 |    242.1875 |  232.4219 | 222.6563 |    2601363 B |
+| &#39;Execute Precompiled&#39; | Medium     |  33,677,739.38 ns |  1,469,138.605 ns |    971,744.224 ns |  34,820,317.50 ns |    6 |   7812.5000 |         - |        - |  147707361 B |
+| **&#39;Compile + Execute&#39;**   | **Large**      | **704,081,088.89 ns** | **17,920,401.728 ns** | **10,664,143.621 ns** | **717,652,360.00 ns** |    **8** | **163000.0000** | **1000.0000** |        **-** | **3072062728 B** |
+| &#39;Compile Only&#39;        | Large      |   2,697,265.78 ns |    342,248.271 ns |    203,666.457 ns |   2,939,429.80 ns |    5 |    308.5938 |  296.8750 | 273.4375 |    2937088 B |
+| &#39;Execute Precompiled&#39; | Large      | 689,928,655.56 ns | 28,924,227.120 ns | 17,212,343.609 ns | 714,486,840.00 ns |    8 | 163000.0000 |         - |        - | 3069038760 B |
 
 ### NovaSharp.Benchmarks.RuntimeBenchmarks-20251108-115938
 
