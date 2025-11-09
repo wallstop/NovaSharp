@@ -131,5 +131,78 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(final.String, Is.EqualTo("done"));
             });
         }
+
+        [Test]
+        public void ResumeFlattensResultsAndReportsSuccess()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function generator()
+                    coroutine.yield('yielded', 42)
+                    return 7, 8
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("generator"));
+
+            DynValue first = script.Call(resumeFunc, coroutineValue);
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(first.Tuple.Length, Is.EqualTo(3));
+                Assert.That(first.Tuple[0].Boolean, Is.True);
+                Assert.That(first.Tuple[1].String, Is.EqualTo("yielded"));
+                Assert.That(first.Tuple[2].Number, Is.EqualTo(42));
+            });
+
+            DynValue second = script.Call(resumeFunc, coroutineValue);
+            Assert.Multiple(() =>
+            {
+                Assert.That(second.Tuple[0].Boolean, Is.True);
+                Assert.That(second.Tuple[1].Number, Is.EqualTo(7));
+                Assert.That(second.Tuple[2].Number, Is.EqualTo(8));
+            });
+        }
+
+        [Test]
+        public void ResumeReportsErrorsAsFalseWithMessage()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function explode()
+                    error('boom', 0)
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("explode"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(result.Tuple[1].String, Does.Contain("boom"));
+            });
+        }
+
+        [Test]
+        public void ResumeRequiresThreadArgument()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+
+            Assert.That(
+                () => script.Call(resumeFunc, DynValue.NewString("oops")),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("bad argument #1 to 'resume'")
+            );
+        }
     }
 }
