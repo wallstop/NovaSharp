@@ -36,4 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion(NovaSharp.Interpreter.Script.VERSION)]
 
 // Give
-[assembly: InternalsVisibleTo("DotNetCoreTestRunner")]
+[assembly: InternalsVisibleTo("NovaSharp.Interpreter.Tests")]

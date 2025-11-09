@@ -1,0 +1,142 @@
+namespace NovaSharp.Interpreter.Tests.Units
+{
+    using System;
+    using System.IO;
+    using Commands;
+    using NovaSharp;
+    using NUnit.Framework;
+
+    [TestFixture]
+    public sealed class ProgramTests
+    {
+        private TextWriter _originalOut = null!;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            if (CommandManager.Find("help") == null)
+            {
+                CommandManager.Initialize();
+            }
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            _originalOut = Console.Out;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Console.SetOut(_originalOut);
+        }
+
+        [Test]
+        public void CheckArgs_NoArguments_ReturnsFalse()
+        {
+            bool handled = Program.CheckArgs(Array.Empty<string>(), NewShellContext());
+            Assert.That(handled, Is.False);
+        }
+
+        [Test]
+        public void CheckArgs_HelpFlag_WritesUsageAndReturnsTrue()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            bool handled = Program.CheckArgs(new[] { "-H" }, NewShellContext());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(writer.ToString(), Does.Contain("usage: NovaSharp"));
+            });
+        }
+
+        [Test]
+        public void CheckArgs_ExecuteCommandFlag_RunsRequestedCommand()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            bool handled = Program.CheckArgs(new[] { "-X", "help" }, NewShellContext());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(writer.ToString(), Does.Contain("Commands:"));
+            });
+        }
+
+        [Test]
+        public void CheckArgs_ExecuteCommandFlag_WithMissingArgument_ShowsSyntax()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            bool handled = Program.CheckArgs(new[] { "-X" }, NewShellContext());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+            });
+        }
+
+        [Test]
+        public void CheckArgs_ExecuteCommandFlag_WithUnknownCommand_ReportsError()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            bool handled = Program.CheckArgs(new[] { "-X", "nope" }, NewShellContext());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(writer.ToString(), Does.Contain("Invalid command 'nope'."));
+            });
+        }
+
+        [Test]
+        public void CheckArgs_RunScript_ExecutesFile()
+        {
+            string scriptPath = Path.Combine(Path.GetTempPath(), $"sample_{Guid.NewGuid():N}.lua");
+            File.WriteAllText(scriptPath, "return 42");
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            try
+            {
+                bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+                Assert.That(handled, Is.True);
+            }
+            finally
+            {
+                File.Delete(scriptPath);
+            }
+        }
+
+        [Test]
+        public void CheckArgs_HardwireFlag_WithMissingArguments_ShowsSyntax()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            bool handled = Program.CheckArgs(new[] { "-W" }, NewShellContext());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+            });
+        }
+
+        private static ShellContext NewShellContext()
+        {
+            return new ShellContext(new Interpreter.Script());
+        }
+    }
+}

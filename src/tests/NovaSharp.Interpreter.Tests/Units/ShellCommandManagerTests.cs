@@ -82,6 +82,36 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(output, Does.Contain("Invalid command 'nope'."));
         }
 
+        [Test]
+        public void NullContextThrowsArgumentNullException()
+        {
+            Assert.That(
+                () => CommandManager.Execute(null!, "help"),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("context")
+            );
+        }
+
+        [Test]
+        public void NullCommandLineThrowsArgumentNullException()
+        {
+            Assert.That(
+                () => CommandManager.Execute(_context, null!),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("commandLine")
+            );
+        }
+
+        [Test]
+        public void EmptyCommandLineReportsInvalidCommand()
+        {
+            string output = Execute("     ");
+
+            Assert.That(output, Does.Contain("Invalid command ''."));
+        }
+
         private string Execute(string commandLine)
         {
             CommandManager.Execute(_context, commandLine);

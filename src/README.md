@@ -8,8 +8,7 @@
 | tooling/NovaSharp.Hardwire | Hardwire generator tooling. |
 | tooling/Benchmarks | BenchmarkDotNet harnesses. |
 | tooling/NovaSharp.Comparison | Performance comparison harness. |
-| tests/TestRunners/DotNetCoreTestRunner | Modern .NET test runner (executes TAP + NUnit suites). |
-| tests/NovaSharp.Interpreter.Tests.Legacy | Legacy NUnit 2.6 suite (historical coverage). |
+| tests/NovaSharp.Interpreter.Tests | Consolidated NUnit suite (Lua TAP fixtures + .NET coverage). |
 | samples/Tutorial | Tutorial snippets and sample scripts. |
 | docs/manual/NovaSharp.Documentation | Legacy Sandcastle documentation project. |
 | legacy/* | Archived assets (Flash client, old tooling, etc.). |

@@ -95,7 +95,7 @@ namespace NovaSharp
             Console.WriteLine("Welcome.\n");
         }
 
-        private static bool CheckArgs(string[] args, ShellContext shellContext)
+        internal static bool CheckArgs(string[] args, ShellContext shellContext)
         {
             if (args.Length == 0)
             {

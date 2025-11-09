@@ -29,7 +29,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\tests\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.csproj -c Release
+dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release
 ```
 
 ### Code Formatting
@@ -132,9 +132,10 @@ Script.DoString("return x + 1")
 ## Testing Guidelines
 
 - **Framework**: NUnit 2.6 (`[TestFixture]`, `[Test]` attributes)
-- **Organization**: Group tests under `Units/`, `EndToEnd/`, or `TestMore/` based on scope
+- **Organization**: Place tests in descriptive folders (e.g., `Units`, `EndToEnd`, feature-specific) with clear class names
 - **Naming**: `<Feature>Tests.cs` pattern, store Lua fixtures alongside test classes
-- **Dual Coverage**: Update both `tests/NovaSharp.Interpreter.Tests.Legacy` and `tests/TestRunners/DotNetCoreTestRunner` when interpreter behavior changes
+- **Method Names**: Use PascalCase without underscores for `[Test]` methods; rename legacy cases when modifying them
+- **Suite Maintenance**: Update `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes; the consolidated project runs under NUnit and feeds CI coverage
 - **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
 
 ## Commit & Pull Request Guidelines
@@ -152,7 +153,7 @@ Script.DoString("return x + 1")
   - **Debuggers**: `src/debuggers/NovaSharp.VsCodeDebugger/`, `src/debuggers/NovaSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
   - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
-  - **Tests**: `src/tests/TestRunners/DotNetCoreTestRunner/` for modern runs; legacy NUnit in `src/tests/NovaSharp.Interpreter.Tests.Legacy/`
+  - **Tests**: `src/tests/NovaSharp.Interpreter.Tests/` (NUnit-based suite powering local + CI execution)
   - **Legacy Assets**: Archived clients and scripts under `src/legacy/`
 
 ## Important Implementation Notes

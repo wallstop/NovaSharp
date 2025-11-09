@@ -14,8 +14,9 @@ Contents:
  - /remotedebugger -> The DLL for the remote debugger facilities (plus the interpreter DLL itself). 
                       Use this if you want to embed the intepreter in your application with remote debugging enabled.
                       
- - /repl           -> The REPL interpreter. It's not really meant for production as much as to quickly test scripts,
-                      or to compile bytecode, or for hardwiring.
+ - /cli           -> The NovaSharp CLI (`NovaSharp.Cli`) used for REPL exploration, bytecode compilation,
+                     and hardwire authoring. This replaces the former `repl` drop and ships both CLI binaries
+                     and supporting resources.
 
  - /unity          -> This contains a unity package you can use in your project. It includes interpreter and vscodedebugger.
                       

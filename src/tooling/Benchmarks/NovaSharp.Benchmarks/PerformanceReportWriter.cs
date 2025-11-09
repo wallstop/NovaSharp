@@ -13,6 +13,7 @@ namespace NovaSharp.Benchmarking
     using BenchmarkDotNet.Loggers;
     using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
+    using Microsoft.Win32;
     using Perfolizer.Models;
 
 #nullable enable
@@ -89,18 +90,99 @@ namespace NovaSharp.Benchmarking
 
         private static string GetFriendlyOsDescription()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Version version = Environment.OSVersion.Version;
-                bool isWindows11 = version.Build >= 22000;
-
-                string familyName = isWindows11 ? "Windows 11" : "Windows 10";
-                string buildInfo = $"{version.Major}.{version.Minor}.{version.Build}";
-
-                return $"{familyName} (build {version.Build}, {buildInfo})";
+                return RuntimeInformation.OSDescription;
             }
 
-            return RuntimeInformation.OSDescription;
+            try
+            {
+                using RegistryKey? currentVersion = Registry.LocalMachine.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+                );
+
+                if (currentVersion != null)
+                {
+                    string? productName = currentVersion.GetValue("ProductName") as string;
+                    string? displayVersion = currentVersion.GetValue("DisplayVersion") as string;
+                    string? releaseId = currentVersion.GetValue("ReleaseId") as string;
+                    string? currentBuild = currentVersion.GetValue("CurrentBuild") as string;
+                    string? editionId = currentVersion.GetValue("EditionID") as string;
+                    object? ubrValue = currentVersion.GetValue("UBR");
+
+                    string? buildNumber = null;
+                    if (!string.IsNullOrWhiteSpace(currentBuild))
+                    {
+                        string revision = ubrValue switch
+                        {
+                            int ubrInt => ubrInt.ToString(CultureInfo.InvariantCulture),
+                            uint ubrUint => ubrUint.ToString(CultureInfo.InvariantCulture),
+                            long ubrLong => ubrLong.ToString(CultureInfo.InvariantCulture),
+                            string ubrString when !string.IsNullOrWhiteSpace(ubrString) =>
+                                ubrString,
+                            _ => string.Empty,
+                        };
+
+                        buildNumber = string.IsNullOrWhiteSpace(revision)
+                            ? currentBuild
+                            : $"{currentBuild}.{revision}";
+                    }
+
+                    string versionLabel =
+                        !string.IsNullOrWhiteSpace(displayVersion) ? displayVersion
+                        : !string.IsNullOrWhiteSpace(releaseId) ? releaseId
+                        : string.Empty;
+
+                    Version osVersion = Environment.OSVersion.Version;
+                    string kernelVersion = $"{osVersion.Major}.{osVersion.Minor}.{osVersion.Build}";
+                    string familyLabel = osVersion.Build >= 22000 ? "Windows 11" : "Windows 10";
+                    string editionLabel = DeriveEditionLabel(productName, editionId);
+
+                    StringBuilder description = new();
+                    description.Append(familyLabel);
+
+                    if (!string.IsNullOrWhiteSpace(editionLabel))
+                    {
+                        description.Append(' ');
+                        description.Append(editionLabel);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(versionLabel))
+                    {
+                        description.Append(' ');
+                        description.Append(versionLabel);
+                    }
+
+                    description.Append(" (build ");
+                    description.Append(
+                        string.IsNullOrWhiteSpace(buildNumber)
+                            ? osVersion.Build.ToString(CultureInfo.InvariantCulture)
+                            : buildNumber
+                    );
+
+                    if (!string.IsNullOrWhiteSpace(kernelVersion))
+                    {
+                        description.Append(", ");
+                        description.Append(kernelVersion);
+                    }
+
+                    description.Append(')');
+
+                    return description.ToString();
+                }
+            }
+            catch
+            {
+                // If registry access fails, fall back to the version-based heuristic below.
+            }
+
+            Version fallbackVersion = Environment.OSVersion.Version;
+            bool isWindows11 = fallbackVersion.Build >= 22000;
+            string familyName = isWindows11 ? "Windows 11" : "Windows 10";
+            string buildInfo =
+                $"{fallbackVersion.Major}.{fallbackVersion.Minor}.{fallbackVersion.Build}";
+
+            return $"{familyName} (build {fallbackVersion.Build}, {buildInfo})";
         }
 
         private static string LocatePerformanceDocument()
@@ -912,6 +994,59 @@ namespace NovaSharp.Benchmarking
             }
 
             return string.Format(CultureInfo.InvariantCulture, "{0:+0.##;-0.##;0}%", percentage);
+        }
+
+        private static string DeriveEditionLabel(string? productName, string? editionId)
+        {
+            string? edition = null;
+
+            if (!string.IsNullOrWhiteSpace(productName))
+            {
+                string trimmed = Regex.Replace(
+                    productName,
+                    @"^\s*Windows\s+\d+\s*",
+                    string.Empty,
+                    RegexOptions.IgnoreCase
+                );
+                trimmed = Regex.Replace(
+                    trimmed,
+                    @"^\s*Windows\s*",
+                    string.Empty,
+                    RegexOptions.IgnoreCase
+                );
+
+                edition = trimmed.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(edition) && !string.IsNullOrWhiteSpace(editionId))
+            {
+                edition = editionId switch
+                {
+                    "Professional" => "Pro",
+                    "ProfessionalEducation" => "Pro Education",
+                    "ProfessionalSingleLanguage" => "Pro Single Language",
+                    "ProfessionalCountrySpecific" => "Pro Country Specific",
+                    "ProfessionalWorkstation" => "Pro for Workstations",
+                    "Enterprise" => "Enterprise",
+                    "EnterpriseN" => "Enterprise N",
+                    "Education" => "Education",
+                    "EducationN" => "Education N",
+                    "Core" => "Home",
+                    "CoreN" => "Home N",
+                    "CoreCountrySpecific" => "Home Country Specific",
+                    "CoreSingleLanguage" => "Home Single Language",
+                    "ServerStandard" => "Server Standard",
+                    "ServerDatacenter" => "Server Datacenter",
+                    _ => Regex.Replace(
+                        editionId,
+                        "(?<=[A-Za-z])(?=[A-Z])",
+                        " ",
+                        RegexOptions.Compiled
+                    ),
+                };
+            }
+
+            return string.IsNullOrWhiteSpace(edition) ? string.Empty : edition;
         }
 
         private static double GetTotalSystemMemoryInMegabytes()

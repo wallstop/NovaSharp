@@ -7,39 +7,40 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 - **End-to-end suites**: C# driven NUnit scenarios cover userdata interop, debugger contracts, serialization, hardwire generation, and coroutine pipelines.
 - **Units**: Focused checks for low-level structures (stacks, instruction decoding, binary dump/load).
 
-The fixtures originate from the legacy `tests/NovaSharp.Interpreter.Tests.Legacy` tree and are compiled directly into the modern `.NET 8` runner.
-
 ## Running the Tests Locally
 ```bash
-dotnet run -c Release -- --ci
-# from: src/tests/TestRunners/DotNetCoreTestRunner
+dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --logger "trx;LogFileName=NovaSharpTests.trx"
 ```
-- `--ci` suppresses interactive prompts and writes `NovaSharp_tests.log` to the repository root.
-- The GitHub Actions workflow mirrors this command on every push to `master` and on all pull requests.
+- Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
+- Mirrors the execution that now powers CI, ensuring branch/line coverage is captured with the same runner configuration.
 
 ## Generating Coverage
 ```powershell
 .\coverage.ps1
 ```
-- Restores local tools, builds the solution in Release, and drives the DotNetCoreTestRunner via coverlet.
-- Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage` (ignored by Git).
-- Produces an HTML dashboard in `docs/coverage/latest`; open `index.html` for the full drill-down.
+- Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
+- Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
+- Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
+
+### Coverage in CI
+- `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `./coverage.ps1` after the primary test job.
+- The job appends the Markdown summary to the GitHub Action run, posts a PR comment with line/branch/method coverage, and uploads raw + HTML artefacts for inspection.
+- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise.
 
 ## Pass/Fail Policy
 - Two Lua TAP suites (`TestMore_308_io`, `TestMore_309_os`) remain skipped because they require raw filesystem/OS access. Enable them manually only on trusted machines.
-- Failures write a detailed stack trace to `NovaSharp_tests.log`; the CI pipeline publishes the log as a build artefact.
+- Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-## Coverage Snapshot
-- **Baseline (Release via `coverage.ps1`)**: 62.2 % line, 61.4 % branch, 62.7 % method coverage.
-- **Fixtures**: 39 `[TestFixture]` types, 627 active tests, 2 intentional skips.
+- **Baseline (Release via `coverage.ps1`)**: 56.4 % line, 58.8 % branch, 58.8 % method coverage.
+- **Fixtures**: 39 `[TestFixture]` types, 657 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 - **Gaps**: Visual Studio Code/remote debugger integration still lacks automated smoke tests; CLI tooling and dev utilities remain manual.
 
 ## Expanding Coverage
 1. Deepen unit coverage across parser error paths, metatable resolution, and CLI tooling to raise the interpreter namespace above 70 % line coverage.
 2. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
-3. Share fixtures between the runner and archived `tests/NovaSharp.Interpreter.Tests.Legacy` tree to avoid drift and simplify regeneration.
+3. Keep Lua fixtures under version control in `tests/NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
 4. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.

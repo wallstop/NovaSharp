@@ -10,11 +10,10 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/debuggers/NovaSharp.RemoteDebugger` | Remote debugger assemblies | Path aligned, no structural changes needed. |
 | `src/debuggers/NovaSharp.VsCodeDebugger` | VS Code debugger backend | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed. |
 | `src/debuggers/vscode-extension` | VS Code extension (TypeScript) | Now grouped under debuggers. |
-| `src/tooling/NovaSharp.Cli` | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); update packaging/docs to reflect new CLI name. |
+| `src/tooling/NovaSharp.Cli` | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); release docs now reference the `cli` drop (formerly `repl`). |
 | `src/tooling/NovaSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
 | `src/tooling/Benchmarks`, `src/tooling/NovaSharp.Comparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
-| `src/tests/TestRunners/DotNetCoreTestRunner` | Net8 runner (active) | Drives modern coverage pipeline. |
-| `src/tests/NovaSharp.Interpreter.Tests.Legacy` | Legacy NUnit 2.6 tree | Ready for gradual migration or archival. |
+| `src/tests/NovaSharp.Interpreter.Tests` | Consolidated NUnit suite | Powers local + CI execution; hosts Lua TAP fixtures. |
 | `src/samples/Tutorial` | Tutorial snippets | Under dedicated samples hierarchy. |
 | `src/legacy/*` (`Flash`, `NovaSharpPreGen`, `Tools`, `NovaSharp_netcore`) | Archived assets | Confirm safe to delete or retain as read-only history. |
 | `docs/manual/NovaSharp.Documentation` | Historical documentation | Lives under docs tree; evaluate for migration to markdown. |
@@ -35,8 +34,7 @@ src/
     Benchmarks/
     NovaSharp.Comparison/
   tests/
-    TestRunners/DotNetCoreTestRunner/
-    fixtures/                              (Lua TAP assets shared by tests)
+    NovaSharp.Interpreter.Tests/          (NUnit suite + Lua TAP fixtures)
   samples/
     Tutorial/
   docs/
