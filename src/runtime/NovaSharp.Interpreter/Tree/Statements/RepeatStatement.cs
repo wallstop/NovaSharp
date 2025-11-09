@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
-            Loop L = new Loop() { Scope = m_StackFrame };
+            Loop L = new() { Scope = m_StackFrame };
 
             bc.PushSourceRef(m_Repeat);
 
@@ -57,7 +57,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
             foreach (Instruction i in L.BreakJumps)
+            {
                 i.NumVal = exitpoint;
+            }
 
             bc.PopSourceRef();
         }

@@ -54,7 +54,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     double? d = v.CastToNumber();
 
                     if (d.HasValue)
+                    {
                         return DynValue.NewNumber(-d.Value);
+                    }
 
                     throw new DynamicExpressionException(
                         "Attempt to perform arithmetic on non-numbers."

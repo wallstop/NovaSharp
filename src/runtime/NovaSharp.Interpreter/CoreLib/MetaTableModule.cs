@@ -59,11 +59,17 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             if (meta == null)
+            {
                 return DynValue.Nil;
+            }
             else if (meta.RawGet("__metatable") != null)
+            {
                 return meta.Get("__metatable");
+            }
             else
+            {
                 return DynValue.NewTable(meta);
+            }
         }
 
         // rawget (table, index)

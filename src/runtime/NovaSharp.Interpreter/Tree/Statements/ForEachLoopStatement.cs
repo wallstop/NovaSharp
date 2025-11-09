@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             //	for namelist in explist do block end |
 
-            List<string> names = new List<string>();
+            List<string> names = new();
             names.Add(firstNameToken.Text);
 
             while (lcontext.Lexer.Current.Type == TokenType.Comma)
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             bc.PushSourceRef(m_RefFor);
 
-            Loop L = new Loop() { Scope = m_StackFrame };
+            Loop L = new() { Scope = m_StackFrame };
             bc.LoopTracker.Loops.Push(L);
 
             // get iterator tuple
@@ -88,7 +88,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             // perform assignment of iteration result- stack : iterator-tuple, iteration result
             for (int i = 0; i < m_NameExps.Length; i++)
+            {
                 m_NameExps[i].CompileAssignment(bc, 0, i);
+            }
 
             // pops  - stack : iterator-tuple
             bc.Emit_Pop();
@@ -100,7 +102,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.Emit_IterUpd();
 
             // checks head, jumps if nil - stack : iterator-tuple, main-iterator-var
-            var endjump = bc.Emit_Jump(OpCode.JNil, -1);
+            Instruction endjump = bc.Emit_Jump(OpCode.JNil, -1);
 
             // executes the stuff - stack : iterator-tuple
             m_Block.Compile(bc);
@@ -122,7 +124,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.Emit_Pop();
 
             foreach (Instruction i in L.BreakJumps)
+            {
                 i.NumVal = exitpointBreaks;
+            }
 
             endjump.NumVal = exitpointLoopExit;
 

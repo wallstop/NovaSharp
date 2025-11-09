@@ -9,8 +9,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TailRecursionHandlesThousandsOfFrames()
         {
-            var script = new Script();
-            var result = script.DoString(
+            Script script = new();
+            DynValue? result = script.DoString(
                 @"
                 local function accumulate(n, acc)
                     if n == 0 then
@@ -30,8 +30,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TailCallPreservesMultipleReturnValues()
         {
-            var script = new Script();
-            var result = script.DoString(
+            Script script = new();
+            DynValue? result = script.DoString(
                 @"
                 local function id(a, b, c)
                     return a, b, c

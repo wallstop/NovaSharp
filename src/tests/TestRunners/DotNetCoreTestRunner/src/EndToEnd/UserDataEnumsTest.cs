@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -64,9 +61,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected)
         {
-            Script S = new Script();
+            Script S = new();
 
-            EnumOverloadsTestClass obj = new EnumOverloadsTestClass();
+            EnumOverloadsTestClass obj = new();
 
             UserData.RegisterType<EnumOverloadsTestClass>(InteropAccessMode.Reflection);
 

@@ -31,13 +31,17 @@ namespace NovaSharp.Interpreter.Diagnostics
                 if (value && !m_Enabled)
                 {
                     if (m_GlobalStopwatches[(int)PerformanceCounter.AdaptersCompilation] == null)
+                    {
                         m_GlobalStopwatches[(int)PerformanceCounter.AdaptersCompilation] =
                             new GlobalPerformanceStopwatch(PerformanceCounter.AdaptersCompilation);
+                    }
 
                     for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
+                    {
                         m_Stopwatches[i] =
                             m_GlobalStopwatches[i]
                             ?? new PerformanceStopwatch((PerformanceCounter)i);
+                    }
                 }
                 else if (!value && m_Enabled)
                 {
@@ -58,7 +62,7 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <returns></returns>
         public PerformanceResult GetPerformanceCounterResult(PerformanceCounter pc)
         {
-            var pco = m_Stopwatches[(int)pc];
+            IPerformanceStopwatch pco = m_Stopwatches[(int)pc];
             return (pco != null) ? pco.GetResult() : null;
         }
 
@@ -68,7 +72,7 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <returns></returns>
         internal IDisposable StartStopwatch(PerformanceCounter pc)
         {
-            var pco = m_Stopwatches[(int)pc];
+            IPerformanceStopwatch pco = m_Stopwatches[(int)pc];
             return (pco != null) ? pco.Start() : null;
         }
 
@@ -78,7 +82,7 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <returns></returns>
         internal static IDisposable StartGlobalStopwatch(PerformanceCounter pc)
         {
-            var pco = m_GlobalStopwatches[(int)pc];
+            IPerformanceStopwatch pco = m_GlobalStopwatches[(int)pc];
             return (pco != null) ? pco.Start() : null;
         }
 
@@ -88,13 +92,15 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <returns></returns>
         public string GetPerformanceLog()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
             {
-                var res = this.GetPerformanceCounterResult((PerformanceCounter)i);
+                PerformanceResult res = this.GetPerformanceCounterResult((PerformanceCounter)i);
                 if (res != null)
+                {
                     sb.AppendLine(res.ToString());
+                }
             }
 
             return sb.ToString();

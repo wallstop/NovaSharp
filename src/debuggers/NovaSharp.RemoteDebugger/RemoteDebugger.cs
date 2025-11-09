@@ -13,9 +13,9 @@ namespace NovaSharp.RemoteDebugger
         DebugWebHost m_HttpServer;
         string m_JumpPage;
         int m_RpcPortMax;
-        List<DebugServer> m_DebugServers = new List<DebugServer>();
+        List<DebugServer> m_DebugServers = new();
 
-        object m_Lock = new object();
+        object m_Lock = new();
 
         public RemoteDebuggerService()
             : this(RemoteDebuggerOptions.Default) { }
@@ -74,7 +74,7 @@ namespace NovaSharp.RemoteDebugger
         {
             lock (m_Lock)
             {
-                DebugServer d = new DebugServer(
+                DebugServer d = new(
                     scriptName,
                     S,
                     m_RpcPortMax,
@@ -88,7 +88,7 @@ namespace NovaSharp.RemoteDebugger
 
         public string GetJumpHtmlFragment()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             lock (m_Lock)
             {
                 foreach (DebugServer d in m_DebugServers)

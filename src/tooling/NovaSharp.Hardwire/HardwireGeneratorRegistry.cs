@@ -1,17 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using NovaSharp.Hardwire.Generators;
-using NovaSharp.Interpreter;
 
 namespace NovaSharp.Hardwire
 {
     public static class HardwireGeneratorRegistry
     {
-        static Dictionary<string, IHardwireGenerator> m_Generators =
-            new Dictionary<string, IHardwireGenerator>();
+        static Dictionary<string, IHardwireGenerator> m_Generators = new();
 
         public static void Register(IHardwireGenerator g)
         {
@@ -21,9 +15,13 @@ namespace NovaSharp.Hardwire
         public static IHardwireGenerator GetGenerator(string type)
         {
             if (m_Generators.ContainsKey(type))
+            {
                 return m_Generators[type];
+            }
             else
+            {
                 return new NullGenerator(type);
+            }
         }
 
         public static void RegisterPredefined()
@@ -34,7 +32,9 @@ namespace NovaSharp.Hardwire
         public static void DiscoverFromAssembly(Assembly asm = null)
         {
             if (asm == null)
+            {
                 asm = Assembly.GetCallingAssembly();
+            }
 
             foreach (
                 Type type in asm.GetTypes()

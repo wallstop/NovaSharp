@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             UserData.RegisterType<FileUserDataBase>(InteropAccessMode.Default, "file");
 
-            Table meta = new Table(ioTable.OwnerScript);
+            Table meta = new(ioTable.OwnerScript);
             DynValue __index = DynValue.NewCallback(
                 new CallbackFunction(__index_callback, "__index_callback")
             );
@@ -54,13 +54,21 @@ namespace NovaSharp.Interpreter.CoreLib
             string name = args[1].CastToString();
 
             if (name == "stdin")
+            {
                 return GetStandardFile(executionContext.GetScript(), StandardFileType.StdIn);
+            }
             else if (name == "stdout")
+            {
                 return GetStandardFile(executionContext.GetScript(), StandardFileType.StdOut);
+            }
             else if (name == "stderr")
+            {
                 return GetStandardFile(executionContext.GetScript(), StandardFileType.StdErr);
+            }
             else
+            {
                 return DynValue.Nil;
+            }
         }
 
         private static DynValue GetStandardFile(Script S, StandardFileType file)
@@ -81,9 +89,13 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase udb = null;
 
             if (file == StandardFileType.StdIn)
+            {
                 udb = StandardIOFileUserDataBase.CreateInputStream(optionsStream);
+            }
             else
+            {
                 udb = StandardIOFileUserDataBase.CreateOutputStream(optionsStream);
+            }
 
             R.Set("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString(), UserData.Create(udb));
         }
@@ -132,9 +144,13 @@ namespace NovaSharp.Interpreter.CoreLib
         public static void SetDefaultFile(Script script, StandardFileType file, Stream stream)
         {
             if (file == StandardFileType.StdIn)
+            {
                 SetDefaultFile(script, file, StandardIOFileUserDataBase.CreateInputStream(stream));
+            }
             else
+            {
                 SetDefaultFile(script, file, StandardIOFileUserDataBase.CreateOutputStream(stream));
+            }
         }
 
         [NovaSharpModuleMethod]
@@ -188,7 +204,7 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             if (args.Count == 0 || args[0].IsNil())
             {
-                var file = GetDefaultFile(executionContext, defaultFiles);
+                FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
                 return UserData.Create(file);
             }
 
@@ -233,10 +249,10 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                List<DynValue> readLines = new List<DynValue>();
+                List<DynValue> readLines = new();
 
                 using (
-                    var stream = Script.GlobalOptions.Platform.IO_OpenFile(
+                    Stream stream = Script.GlobalOptions.Platform.IO_OpenFile(
                         executionContext.GetScript(),
                         filename,
                         null,
@@ -244,7 +260,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     )
                 )
                 {
-                    using (var reader = new System.IO.StreamReader(stream))
+                    using (StreamReader reader = new(stream))
                     {
                         while (!reader.EndOfStream)
                         {
@@ -281,7 +297,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 .Replace("t", "");
 
             if (invalidChars.Length > 0)
+            {
                 throw ScriptRuntimeException.BadArgument(1, "open", "invalid mode");
+            }
 
             try
             {
@@ -300,16 +318,22 @@ namespace NovaSharp.Interpreter.CoreLib
                 else if (encoding == null)
                 {
                     if (!isBinary)
+                    {
                         e = GetUTF8Encoding();
+                    }
                     else
+                    {
                         e = new BinaryEncoding();
+                    }
                 }
                 else
                 {
                     if (isBinary)
+                    {
                         throw new ScriptRuntimeException(
                             "Can't specify encodings other than nil or 'binary' for binary streams."
                         );
+                    }
 
                     e = Encoding.GetEncoding(encoding);
                 }
@@ -328,25 +352,37 @@ namespace NovaSharp.Interpreter.CoreLib
         public static string IoExceptionToLuaMessage(Exception ex, string filename)
         {
             if (ex is System.IO.FileNotFoundException)
+            {
                 return string.Format("{0}: No such file or directory", filename);
+            }
             else
+            {
                 return ex.Message;
+            }
         }
 
         [NovaSharpModuleMethod]
         public static DynValue type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args[0].Type != DataType.UserData)
+            {
                 return DynValue.Nil;
+            }
 
             FileUserDataBase file = args[0].UserData.Object as FileUserDataBase;
 
             if (file == null)
+            {
                 return DynValue.Nil;
+            }
             else if (file.isopen())
+            {
                 return DynValue.NewString("file");
+            }
             else
+            {
                 return DynValue.NewString("closed file");
+            }
         }
 
         [NovaSharpModuleMethod]

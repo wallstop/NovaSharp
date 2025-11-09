@@ -335,10 +335,14 @@ namespace NovaSharp.Interpreter
         public static DynValue NewTuple(params DynValue[] values)
         {
             if (values.Length == 0)
+            {
                 return DynValue.NewNil();
+            }
 
             if (values.Length == 1)
+            {
                 return values[0];
+            }
 
             return new DynValue() { m_Object = values, m_Type = DataType.Tuple };
         }
@@ -349,19 +353,27 @@ namespace NovaSharp.Interpreter
         public static DynValue NewTupleNested(params DynValue[] values)
         {
             if (!values.Any(v => v.Type == DataType.Tuple))
+            {
                 return NewTuple(values);
+            }
 
             if (values.Length == 1)
+            {
                 return values[0];
+            }
 
-            List<DynValue> vals = new List<DynValue>();
+            List<DynValue> vals = new();
 
-            foreach (var v in values)
+            foreach (DynValue v in values)
             {
                 if (v.Type == DataType.Tuple)
+                {
                     vals.AddRange(v.Tuple);
+                }
                 else
+                {
                     vals.Add(v);
+                }
             }
 
             return new DynValue() { m_Object = vals.ToArray(), m_Type = DataType.Tuple };
@@ -381,7 +393,9 @@ namespace NovaSharp.Interpreter
         public DynValue AsReadOnly()
         {
             if (ReadOnly)
+            {
                 return this;
+            }
             else
             {
                 return Clone(true);
@@ -404,7 +418,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue Clone(bool readOnly)
         {
-            DynValue v = new DynValue();
+            DynValue v = new();
             v.m_Object = this.m_Object;
             v.m_Number = this.m_Number;
             v.m_HashCode = this.m_HashCode;
@@ -466,7 +480,9 @@ namespace NovaSharp.Interpreter
                     UserData ud = (UserData)m_Object;
                     string str = ud.Descriptor.AsString(ud.Object);
                     if (str != null)
+                    {
                         return str;
+                    }
                 }
 
                 return refid.FormatTypeString(typeString);
@@ -503,7 +519,9 @@ namespace NovaSharp.Interpreter
                     UserData ud = (UserData)m_Object;
                     string str = ud.Descriptor.AsString(ud.Object);
                     if (str != null)
+                    {
                         return str;
+                    }
                 }
 
                 return refid.FormatTypeString(typeString);
@@ -572,7 +590,9 @@ namespace NovaSharp.Interpreter
         public override int GetHashCode()
         {
             if (m_HashCode != -1)
+            {
                 return m_HashCode;
+            }
 
             int baseValue = ((int)(Type)) << 27;
 
@@ -626,16 +646,22 @@ namespace NovaSharp.Interpreter
             DynValue other = obj as DynValue;
 
             if (other == null)
+            {
                 return false;
+            }
 
             if (
                 (other.Type == DataType.Nil && this.Type == DataType.Void)
                 || (other.Type == DataType.Void && this.Type == DataType.Nil)
             )
+            {
                 return true;
+            }
 
             if (other.Type != this.Type)
+            {
                 return false;
+            }
 
             switch (Type)
             {
@@ -665,16 +691,24 @@ namespace NovaSharp.Interpreter
                     UserData ud2 = other.UserData;
 
                     if (ud1 == null || ud2 == null)
+                    {
                         return false;
+                    }
 
                     if (ud1.Descriptor != ud2.Descriptor)
+                    {
                         return false;
+                    }
 
                     if (ud1.Object == null && ud2.Object == null)
+                    {
                         return true;
+                    }
 
                     if (ud1.Object != null && ud2.Object != null)
+                    {
                         return ud1.Object.Equals(ud2.Object);
+                    }
 
                     return false;
                 }
@@ -723,7 +757,9 @@ namespace NovaSharp.Interpreter
                         out num
                     )
                 )
+                {
                     return num;
+                }
             }
             return null;
         }
@@ -736,9 +772,13 @@ namespace NovaSharp.Interpreter
         {
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Boolean)
+            {
                 return rv.Boolean;
+            }
             else
+            {
                 return (rv.Type != DataType.Nil && rv.Type != DataType.Void);
+            }
         }
 
         /// <summary>
@@ -757,10 +797,14 @@ namespace NovaSharp.Interpreter
         public DynValue ToScalar()
         {
             if (Type != DataType.Tuple)
+            {
                 return this;
+            }
 
             if (Tuple.Length == 0)
+            {
                 return DynValue.Void;
+            }
 
             return Tuple[0].ToScalar();
         }
@@ -773,7 +817,9 @@ namespace NovaSharp.Interpreter
         public void Assign(DynValue value)
         {
             if (this.ReadOnly)
+            {
                 throw new ScriptRuntimeException("Assigning on r-value");
+            }
 
             this.m_Number = value.m_Number;
             this.m_Object = value.m_Object;
@@ -789,9 +835,14 @@ namespace NovaSharp.Interpreter
         public DynValue GetLength()
         {
             if (this.Type == DataType.Table)
+            {
                 return DynValue.NewNumber(this.Table.Length);
+            }
+
             if (this.Type == DataType.String)
+            {
                 return DynValue.NewNumber(this.String.Length);
+            }
 
             throw new ScriptRuntimeException("Can't get length of type {0}", this.Type);
         }
@@ -844,10 +895,14 @@ namespace NovaSharp.Interpreter
         internal void AssignNumber(double num)
         {
             if (this.ReadOnly)
+            {
                 throw new InternalErrorException(null, "Writing on r-value");
+            }
 
             if (this.Type != DataType.Number)
+            {
                 throw new InternalErrorException("Can't assign number to type {0}", this.Type);
+            }
 
             this.m_Number = num;
         }
@@ -937,37 +992,49 @@ namespace NovaSharp.Interpreter
         )
         {
             if (this.Type == desiredType)
+            {
                 return this;
+            }
 
             bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
 
             if (allowNil && this.IsNil())
+            {
                 return this;
+            }
 
             bool autoConvert = ((int)(flags & TypeValidationFlags.AutoConvert) != 0);
 
             if (autoConvert)
             {
                 if (desiredType == DataType.Boolean)
+                {
                     return DynValue.NewBoolean(this.CastToBool());
+                }
 
                 if (desiredType == DataType.Number)
                 {
                     double? v = this.CastToNumber();
                     if (v.HasValue)
+                    {
                         return DynValue.NewNumber(v.Value);
+                    }
                 }
 
                 if (desiredType == DataType.String)
                 {
                     string v = this.CastToString();
                     if (v != null)
+                    {
                         return DynValue.NewString(v);
+                    }
                 }
             }
 
             if (this.IsVoid())
+            {
                 throw ScriptRuntimeException.BadArgumentNoValue(argNum, funcName, desiredType);
+            }
 
             throw ScriptRuntimeException.BadArgument(
                 argNum,
@@ -996,11 +1063,15 @@ namespace NovaSharp.Interpreter
             bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
 
             if (v.IsNil())
+            {
                 return default(T);
+            }
 
             object o = v.UserData.Object;
             if (o != null && o is T)
+            {
                 return (T)o;
+            }
 
             throw ScriptRuntimeException.BadArgumentUserData(
                 argNum,

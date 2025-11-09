@@ -14,20 +14,20 @@ namespace NovaSharp.RemoteDebugger
 {
     public class DebugServer : IDebugger, IDisposable
     {
-        List<DynamicExpression> m_Watches = new List<DynamicExpression>();
-        HashSet<string> m_WatchesChanging = new HashSet<string>();
+        List<DynamicExpression> m_Watches = new();
+        HashSet<string> m_WatchesChanging = new();
         Utf8TcpServer m_Server;
         Script m_Script;
         string m_AppName;
-        object m_Lock = new object();
-        BlockingQueue<DebuggerAction> m_QueuedActions = new BlockingQueue<DebuggerAction>();
+        object m_Lock = new();
+        BlockingQueue<DebuggerAction> m_QueuedActions = new();
         SourceRef m_LastSentSourceRef = null;
         bool m_InGetActionLoop = false;
         bool m_HostBusySent = false;
         private bool m_RequestPause = false;
         string[] m_CachedWatches = new string[(int)WatchType.MaxValue];
         bool m_FreeRunAfterAttach;
-        Regex m_ErrorRegEx = new Regex(@"\A.*\Z");
+        Regex m_ErrorRegEx = new(@"\A.*\Z");
 
         public DebugServer(
             string appName,
@@ -58,11 +58,17 @@ namespace NovaSharp.RemoteDebugger
         public string GetState()
         {
             if (m_HostBusySent)
+            {
                 return "Busy";
+            }
             else if (m_InGetActionLoop)
+            {
                 return "Waiting debugger";
+            }
             else
+            {
                 return "Unknown";
+            }
         }
 
         public int ConnectedClients()
@@ -81,7 +87,9 @@ namespace NovaSharp.RemoteDebugger
                     xw.Attribute("id", sourceCode.SourceID).Attribute("name", sourceCode.Name);
 
                     foreach (string line in sourceCode.Lines)
+                    {
                         xw.ElementCData("l", EpurateNewLines(line));
+                    }
                 }
             });
         }
@@ -93,7 +101,7 @@ namespace NovaSharp.RemoteDebugger
 
         private void Send(Action<XmlWriter> a)
         {
-            XmlWriterSettings xs = new XmlWriterSettings()
+            XmlWriterSettings xs = new()
             {
                 CheckCharacters = true,
                 CloseOutput = true,
@@ -102,7 +110,7 @@ namespace NovaSharp.RemoteDebugger
                 Indent = false,
             };
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             XmlWriter xw = XmlWriter.Create(sb, xs);
 
             a(xw);
@@ -133,7 +141,9 @@ namespace NovaSharp.RemoteDebugger
         public void Update(WatchType watchType, IEnumerable<WatchItem> items)
         {
             if (watchType != WatchType.CallStack && watchType != WatchType.Watches)
+            {
                 return;
+            }
 
             int watchIdx = (int)watchType;
 
@@ -248,7 +258,7 @@ namespace NovaSharp.RemoteDebugger
                     {
                         lock (m_Lock)
                         {
-                            HashSet<string> existing = new HashSet<string>();
+                            HashSet<string> existing = new();
 
                             // remove all not present anymore
                             m_Watches.RemoveAll(de =>
@@ -273,10 +283,14 @@ namespace NovaSharp.RemoteDebugger
                         || da.Action == DebuggerAction.ActionType.SetBreakpoint
                         || da.Action == DebuggerAction.ActionType.ClearBreakpoint
                     )
+                    {
                         return da;
+                    }
 
                     if (da.Age < TimeSpan.FromMilliseconds(100))
+                    {
                         return da;
+                    }
                 }
             }
             finally
@@ -315,7 +329,7 @@ namespace NovaSharp.RemoteDebugger
 
         void m_Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
-            XmlDocument xdoc = new XmlDocument();
+            XmlDocument xdoc = new();
             xdoc.LoadXml(e.Message);
 
             if (xdoc.DocumentElement.Name == "policy-file-request")
@@ -345,7 +359,10 @@ namespace NovaSharp.RemoteDebugger
                         SendWelcome();
 
                         for (int i = 0; i < m_Script.SourceCodeCount; i++)
+                        {
                             SetSourceCode(m_Script.GetSourceCode(i));
+                        }
+
                         break;
                     case "stepin":
                         QueueAction(
@@ -356,7 +373,9 @@ namespace NovaSharp.RemoteDebugger
                         lock (m_Lock)
                         {
                             for (int i = 0; i < (int)WatchType.MaxValue; i++)
+                            {
                                 m_CachedWatches[i] = null;
+                            }
                         }
                         QueueRefresh();
                         break;
@@ -384,23 +403,27 @@ namespace NovaSharp.RemoteDebugger
                         break;
                     case "addwatch":
                         lock (m_Lock)
+                        {
                             m_WatchesChanging.UnionWith(
                                 arg.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                                     .Select(s => s.Trim())
                             );
+                        }
 
                         QueueRefresh();
                         break;
                     case "delwatch":
                         lock (m_Lock)
                         {
-                            var args = arg.Split(
+                            string[] args = arg.Split(
                                 new char[] { ',' },
                                 StringSplitOptions.RemoveEmptyEntries
                             );
 
-                            foreach (var a in args)
+                            foreach (string a in args)
+                            {
                                 m_WatchesChanging.Remove(a);
+                            }
                         }
                         QueueRefresh();
                         break;
@@ -410,9 +433,13 @@ namespace NovaSharp.RemoteDebugger
                             .ToggleBreakpoint;
 
                         if (arg == "set")
+                        {
                             action = DebuggerAction.ActionType.SetBreakpoint;
+                        }
                         else if (arg == "clear")
+                        {
                             action = DebuggerAction.ActionType.ClearBreakpoint;
+                        }
 
                         QueueAction(
                             new DebuggerAction()
@@ -479,8 +506,10 @@ namespace NovaSharp.RemoteDebugger
             {
                 using (xw.Element("breakpoints"))
                 {
-                    foreach (var rf in refs)
+                    foreach (SourceRef rf in refs)
+                    {
                         SendSourceRef(xw, rf);
+                    }
                 }
             });
         }

@@ -1,14 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Execution;
 using NovaSharp.Interpreter.Loaders;
-using NovaSharp.Interpreter.Platforms;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests
@@ -53,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests
 
         public void Run()
         {
-            Script S = new Script();
+            Script S = new();
 
             S.Options.DebugPrint = Print;
 
@@ -82,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests
 
         public static void Run(string filename)
         {
-            TapRunner t = new TapRunner(filename);
+            TapRunner t = new(filename);
             t.Run();
         }
     }

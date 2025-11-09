@@ -71,7 +71,9 @@ namespace NovaSharp.Interpreter.REPL
             m_CurrentCommand += input;
 
             if (m_CurrentCommand.Length == 0)
+            {
                 return DynValue.Void;
+            }
 
             m_CurrentCommand += "\n";
 
@@ -86,16 +88,18 @@ namespace NovaSharp.Interpreter.REPL
 
                 if (isFirstLine && HandleDynamicExprs && m_CurrentCommand.StartsWith("?"))
                 {
-                    var code = m_CurrentCommand.Substring(1).Trim();
+                    string code = m_CurrentCommand.Substring(1).Trim();
                     if (code.Length == 0)
+                    {
                         return DynValue.Void;
+                    }
 
-                    var exp = m_Script.CreateDynamicExpression(code);
+                    DynamicExpression exp = m_Script.CreateDynamicExpression(code);
                     result = exp.Evaluate();
                 }
                 else
                 {
-                    var v = m_Script.LoadString(m_CurrentCommand, null, "stdin");
+                    DynValue v = m_Script.LoadString(m_CurrentCommand, null, "stdin");
                     result = m_Script.Call(v);
                 }
 

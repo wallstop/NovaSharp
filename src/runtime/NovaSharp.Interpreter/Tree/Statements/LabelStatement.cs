@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         internal int DefinedVarsCount { get; private set; }
         internal string LastDefinedVarName { get; private set; }
 
-        List<GotoStatement> m_Gotos = new List<GotoStatement>();
+        List<GotoStatement> m_Gotos = new();
         RuntimeScopeBlock m_StackFrame;
 
         public LabelStatement(ScriptLoadingContext lcontext)
@@ -47,8 +47,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             Address = bc.GetJumpPointForLastInstruction();
 
-            foreach (var gotostat in m_Gotos)
+            foreach (GotoStatement gotostat in m_Gotos)
+            {
                 gotostat.SetAddress(this.Address);
+            }
         }
 
         internal void SetScope(RuntimeScopeBlock runtimeScopeBlock)

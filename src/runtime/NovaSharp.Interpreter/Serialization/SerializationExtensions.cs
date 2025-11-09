@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Serialization
     /// </summary>
     public static class SerializationExtensions
     {
-        static HashSet<string> LUAKEYWORDS = new HashSet<string>()
+        static HashSet<string> LUAKEYWORDS = new()
         {
             "and",
             "break",
@@ -38,15 +38,19 @@ namespace NovaSharp.Interpreter.Serialization
         public static string Serialize(this Table table, bool prefixReturn = false, int tabs = 0)
         {
             if (table.OwnerScript != null)
+            {
                 throw new ScriptRuntimeException("Table is not a prime table.");
+            }
 
-            string tabstr = new string('\t', tabs);
-            StringBuilder sb = new StringBuilder();
+            string tabstr = new('\t', tabs);
+            StringBuilder sb = new();
 
             //sb.Append(tabstr);
 
             if (prefixReturn)
+            {
                 sb.Append("return ");
+            }
 
             if (!table.Values.Any())
             {
@@ -71,7 +75,9 @@ namespace NovaSharp.Interpreter.Serialization
             sb.Append("}");
 
             if (tabs == 0)
+            {
                 sb.AppendLine();
+            }
 
             return sb.ToString();
         }
@@ -79,21 +85,31 @@ namespace NovaSharp.Interpreter.Serialization
         private static bool IsStringIdentifierValid(DynValue dynValue)
         {
             if (dynValue.Type != DataType.String)
+            {
                 return false;
+            }
 
             if (dynValue.String.Length == 0)
+            {
                 return false;
+            }
 
             if (LUAKEYWORDS.Contains(dynValue.String))
+            {
                 return false;
+            }
 
             if (!char.IsLetter(dynValue.String[0]) && (dynValue.String[0] != '_'))
+            {
                 return false;
+            }
 
             foreach (char c in dynValue.String)
             {
                 if (!char.IsLetterOrDigit(c) && c != '_')
+                {
                     return false;
+                }
             }
 
             return true;
@@ -102,21 +118,35 @@ namespace NovaSharp.Interpreter.Serialization
         public static string SerializeValue(this DynValue dynValue, int tabs = 0)
         {
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
+            {
                 return "nil";
+            }
             else if (dynValue.Type == DataType.Tuple)
+            {
                 return (dynValue.Tuple.Any() ? SerializeValue(dynValue.Tuple[0], tabs) : "nil");
+            }
             else if (dynValue.Type == DataType.Number)
+            {
                 return dynValue.Number.ToString("r");
+            }
             else if (dynValue.Type == DataType.Boolean)
+            {
                 return dynValue.Boolean ? "true" : "false";
+            }
             else if (dynValue.Type == DataType.String)
+            {
                 return EscapeString(dynValue.String ?? "");
+            }
             else if (dynValue.Type == DataType.Table && dynValue.Table.OwnerScript == null)
+            {
                 return Serialize(dynValue.Table, false, tabs);
+            }
             else
+            {
                 throw new ScriptRuntimeException(
                     "Value is not a primitive value or a prime table."
                 );
+            }
         }
 
         private static string EscapeString(string s)

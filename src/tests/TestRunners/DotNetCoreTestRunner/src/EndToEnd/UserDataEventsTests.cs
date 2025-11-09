@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -44,9 +41,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            var obj = new SomeClass();
+            SomeClass obj = new();
             s.Globals["myobj"] = obj;
             s.Globals["ext"] = DynValue.NewCallback(
                 (c, a) =>
@@ -78,10 +75,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            var obj = new SomeClass();
-            var obj2 = new SomeClass();
+            SomeClass obj = new();
+            SomeClass obj2 = new();
             s.Globals["myobj"] = obj;
             s.Globals["myobj2"] = obj2;
             s.Globals["ext"] = DynValue.NewCallback(
@@ -115,9 +112,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            var obj = new SomeClass();
+            SomeClass obj = new();
             s.Globals["myobj"] = obj;
             s.Globals["ext"] = DynValue.NewCallback(
                 (c, a) =>
@@ -150,9 +147,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            var obj = new SomeClass();
+            SomeClass obj = new();
             s.Globals["myobj"] = obj;
             s.Globals["ext"] = DynValue.NewCallback(
                 (c, a) =>
@@ -186,9 +183,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            var obj = new SomeClass();
+            SomeClass obj = new();
             s.Globals["myobj"] = obj;
             s.Globals["ext"] = DynValue.NewCallback(
                 (c, a) =>
@@ -224,7 +221,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
             s.Globals["myobj"] = typeof(SomeClass);
             s.Globals["ext"] = DynValue.NewCallback(
@@ -261,7 +258,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
             s.Globals["myobj"] = typeof(SomeClass);
             s.Globals["ext"] = DynValue.NewCallback(

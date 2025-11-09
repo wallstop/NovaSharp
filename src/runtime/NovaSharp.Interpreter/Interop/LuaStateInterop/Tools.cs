@@ -97,29 +97,64 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             Type t = Value.GetType();
 
             if (t == typeof(sbyte))
+            {
                 return (ZeroIsPositive ? (sbyte)Value >= 0 : (sbyte)Value > 0);
+            }
+
             if (t == typeof(short))
+            {
                 return (ZeroIsPositive ? (short)Value >= 0 : (short)Value > 0);
+            }
+
             if (t == typeof(int))
+            {
                 return (ZeroIsPositive ? (int)Value >= 0 : (int)Value > 0);
+            }
+
             if (t == typeof(long))
+            {
                 return (ZeroIsPositive ? (long)Value >= 0 : (long)Value > 0);
+            }
+
             if (t == typeof(byte))
+            {
                 return (ZeroIsPositive ? true : (byte)Value > 0);
+            }
+
             if (t == typeof(ushort))
+            {
                 return (ZeroIsPositive ? true : (ushort)Value > 0);
+            }
+
             if (t == typeof(uint))
+            {
                 return (ZeroIsPositive ? true : (uint)Value > 0);
+            }
+
             if (t == typeof(ulong))
+            {
                 return (ZeroIsPositive ? true : (ulong)Value > 0);
+            }
+
             if (t == typeof(float))
+            {
                 return (ZeroIsPositive ? (float)Value >= 0 : (float)Value > 0);
+            }
+
             if (t == typeof(double))
+            {
                 return (ZeroIsPositive ? (double)Value >= 0 : (double)Value > 0);
+            }
+
             if (t == typeof(decimal))
+            {
                 return (ZeroIsPositive ? (decimal)Value >= 0 : (decimal)Value > 0);
+            }
+
             if (t == typeof(char))
+            {
                 return (ZeroIsPositive ? true : (char)Value != '\0');
+            }
 
             return ZeroIsPositive;
         }
@@ -136,27 +171,59 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             Type t = Value.GetType();
 
             if (t == typeof(sbyte))
+            {
                 return (byte)((sbyte)Value);
+            }
+
             if (t == typeof(short))
+            {
                 return (ushort)((short)Value);
+            }
+
             if (t == typeof(int))
+            {
                 return (uint)((int)Value);
+            }
+
             if (t == typeof(long))
+            {
                 return (ulong)((long)Value);
+            }
+
             if (t == typeof(byte))
+            {
                 return Value;
+            }
+
             if (t == typeof(ushort))
+            {
                 return Value;
+            }
+
             if (t == typeof(uint))
+            {
                 return Value;
+            }
+
             if (t == typeof(ulong))
+            {
                 return Value;
+            }
+
             if (t == typeof(float))
+            {
                 return (uint)((float)Value);
+            }
+
             if (t == typeof(double))
+            {
                 return (ulong)((double)Value);
+            }
+
             if (t == typeof(decimal))
+            {
                 return (ulong)((decimal)Value);
+            }
 
             return null;
         }
@@ -176,27 +243,59 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             Type t = Value.GetType();
 
             if (t == typeof(sbyte))
+            {
                 return Value;
+            }
+
             if (t == typeof(short))
+            {
                 return Value;
+            }
+
             if (t == typeof(int))
+            {
                 return Value;
+            }
+
             if (t == typeof(long))
+            {
                 return Value;
+            }
+
             if (t == typeof(byte))
+            {
                 return Value;
+            }
+
             if (t == typeof(ushort))
+            {
                 return Value;
+            }
+
             if (t == typeof(uint))
+            {
                 return Value;
+            }
+
             if (t == typeof(ulong))
+            {
                 return Value;
+            }
+
             if (t == typeof(float))
+            {
                 return (Round ? (int)Math.Round((float)Value) : (int)((float)Value));
+            }
+
             if (t == typeof(double))
+            {
                 return (Round ? (long)Math.Round((double)Value) : (long)((double)Value));
+            }
+
             if (t == typeof(decimal))
+            {
                 return (Round ? Math.Round((decimal)Value) : (decimal)Value);
+            }
 
             return null;
         }
@@ -207,27 +306,59 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             Type t = Value.GetType();
 
             if (t == typeof(sbyte))
+            {
                 return (long)((sbyte)Value);
+            }
+
             if (t == typeof(short))
+            {
                 return (long)((short)Value);
+            }
+
             if (t == typeof(int))
+            {
                 return (long)((int)Value);
+            }
+
             if (t == typeof(long))
+            {
                 return (long)Value;
+            }
+
             if (t == typeof(byte))
+            {
                 return (long)((byte)Value);
+            }
+
             if (t == typeof(ushort))
+            {
                 return (long)((ushort)Value);
+            }
+
             if (t == typeof(uint))
+            {
                 return (long)((uint)Value);
+            }
+
             if (t == typeof(ulong))
+            {
                 return (long)((ulong)Value);
+            }
+
             if (t == typeof(float))
+            {
                 return (Round ? (long)Math.Round((float)Value) : (long)((float)Value));
+            }
+
             if (t == typeof(double))
+            {
                 return (Round ? (long)Math.Round((double)Value) : (long)((double)Value));
+            }
+
             if (t == typeof(decimal))
+            {
                 return (Round ? (long)Math.Round((decimal)Value) : (long)((decimal)Value));
+            }
 
             return 0;
         }
@@ -252,7 +383,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             // convert octal quotes (like \040)
             if (m.Groups[2].Length == 3)
+            {
                 return Convert.ToChar(Convert.ToByte(m.Groups[2].Value, 8)).ToString();
+            }
             else
             {
                 // convert all other special meta characters
@@ -295,14 +428,14 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         #endregion
         #region sprintf
-        internal static Regex r = new Regex(
+        internal static Regex r = new(
             @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
         public static string sprintf(string Format, params object[] Parameters)
         {
             #region Variables
-            StringBuilder f = new StringBuilder();
+            StringBuilder f = new();
             //Regex r = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );
             //"%[parameter][flags][width][.precision][length]type"
             Match m = null;
@@ -361,7 +494,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                     // positive + indicator overrides a
                     // positive space character
                     if (flagPositiveSign && flagPositiveSpace)
+                    {
                         flagPositiveSpace = false;
+                    }
                 }
                 #endregion
 
@@ -378,7 +513,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 #endregion
 
                 if (flagZeroPadding)
+                {
                     paddingCharacter = '0';
+                }
 
                 // left2right allignment overrides zero padding
                 if (flagLeft2Right && flagZeroPadding)
@@ -391,21 +528,30 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 // extract field precision
                 fieldPrecision = int.MinValue;
                 if (m.Groups[4] != null && m.Groups[4].Value.Length > 0)
+                {
                     fieldPrecision = Convert.ToInt32(m.Groups[4].Value);
+                }
+
                 #endregion
 
                 #region short / long indicator
                 // extract short / long indicator
                 shortLongIndicator = Char.MinValue;
                 if (m.Groups[5] != null && m.Groups[5].Value.Length > 0)
+                {
                     shortLongIndicator = m.Groups[5].Value[0];
+                }
+
                 #endregion
 
                 #region format specifier
                 // extract format
                 formatSpecifier = Char.MinValue;
                 if (m.Groups[6] != null && m.Groups[6].Value.Length > 0)
+                {
                     formatSpecifier = m.Groups[6].Value[0];
+                }
+
                 #endregion
 
                 // default precision is 6 digits if none is specified except
@@ -416,12 +562,16 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                     && Char.ToUpper(formatSpecifier) != 'X'
                     && formatSpecifier != 'o'
                 )
+                {
                     fieldPrecision = 6;
+                }
 
                 #region get next value parameter
                 // get next value parameter and convert value parameter depending on short / long indicator
                 if (Parameters == null || paramIx >= Parameters.Length)
+                {
                     o = null;
+                }
                 else
                 {
                     o = Parameters[paramIx];
@@ -429,24 +579,40 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                     if (shortLongIndicator == 'h')
                     {
                         if (o is int)
+                        {
                             o = (short)((int)o);
+                        }
                         else if (o is long)
+                        {
                             o = (short)((long)o);
+                        }
                         else if (o is uint)
+                        {
                             o = (ushort)((uint)o);
+                        }
                         else if (o is ulong)
+                        {
                             o = (ushort)((ulong)o);
+                        }
                     }
                     else if (shortLongIndicator == 'l')
                     {
                         if (o is short)
+                        {
                             o = (long)((short)o);
+                        }
                         else if (o is int)
+                        {
                             o = (long)((int)o);
+                        }
                         else if (o is ushort)
+                        {
                             o = (ulong)((ushort)o);
+                        }
                         else if (o is uint)
+                        {
                             o = (ulong)((uint)o);
+                        }
                     }
                 }
                 #endregion
@@ -541,11 +707,18 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                     #region c - character
                     case 'c': // character
                         if (IsNumericType(o))
+                        {
                             w = Convert.ToChar(o).ToString();
+                        }
                         else if (o is char)
+                        {
                             w = ((char)o).ToString();
+                        }
                         else if (o is string && ((string)o).Length > 0)
+                        {
                             w = ((string)o)[0].ToString();
+                        }
+
                         defaultParamIx++;
                         break;
                     #endregion
@@ -554,13 +727,22 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                         //string t = "{0" + ( fieldLength != int.MinValue ? "," + ( flagLeft2Right ? "-" : String.Empty ) + fieldLength.ToString() : String.Empty ) + ":s}";
                         w = o.ToString();
                         if (fieldPrecision >= 0)
+                        {
                             w = w.Substring(0, fieldPrecision);
+                        }
 
                         if (fieldLength != int.MinValue)
+                        {
                             if (flagLeft2Right)
+                            {
                                 w = w.PadRight(fieldLength, paddingCharacter);
+                            }
                             else
+                            {
                                 w = w.PadLeft(fieldLength, paddingCharacter);
+                            }
+                        }
+
                         defaultParamIx++;
                         break;
                     #endregion
@@ -650,7 +832,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 #if PCL || ENABLE_DOTNET
                             w = ((IntPtr)o).ToString();
 #else
+                        {
                             w = "0x" + ((IntPtr)o).ToString("x");
+                        }
 #endif
                         defaultParamIx++;
                         break;
@@ -720,15 +904,23 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 if (Left2Right || Padding == ' ')
                 {
                     if (Alternate && w != "0")
+                    {
                         w = "0" + w;
+                    }
+
                     w = String.Format(lengthFormat, w);
                 }
                 else
                 {
                     if (FieldLength != int.MinValue)
+                    {
                         w = w.PadLeft(FieldLength - (Alternate && w != "0" ? 1 : 0), Padding);
+                    }
+
                     if (Alternate && w != "0")
+                    {
                         w = "0" + w;
+                    }
                 }
             }
 
@@ -768,15 +960,23 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 if (Left2Right || Padding == ' ')
                 {
                     if (Alternate)
+                    {
                         w = (NativeFormat == "x" ? "0x" : "0X") + w;
+                    }
+
                     w = String.Format(lengthFormat, w);
                 }
                 else
                 {
                     if (FieldLength != int.MinValue)
+                    {
                         w = w.PadLeft(FieldLength - (Alternate ? 2 : 0), Padding);
+                    }
+
                     if (Alternate)
+                    {
                         w = (NativeFormat == "x" ? "0x" : "0X") + w;
+                    }
                 }
             }
 
@@ -818,22 +1018,39 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 if (Left2Right || Padding == ' ')
                 {
                     if (IsPositive(Value, true))
+                    {
                         w = (PositiveSign ? "+" : (PositiveSpace ? " " : String.Empty)) + w;
+                    }
+
                     w = String.Format(lengthFormat, w);
                 }
                 else
                 {
                     if (w.StartsWith("-"))
+                    {
                         w = w.Substring(1);
+                    }
+
                     if (FieldLength != int.MinValue)
+                    {
                         if (PositiveSign) // xan - change here
+                        {
                             w = w.PadLeft(FieldLength - 1, Padding);
+                        }
                         else
+                        {
                             w = w.PadLeft(FieldLength, Padding);
+                        }
+                    }
+
                     if (IsPositive(Value, true))
+                    {
                         w = (PositiveSign ? "+" : "") + w; // xan - change here
+                    }
                     else
+                    {
                         w = "-" + w;
+                    }
                 }
             }
 

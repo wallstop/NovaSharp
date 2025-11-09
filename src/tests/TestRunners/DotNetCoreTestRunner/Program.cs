@@ -25,13 +25,13 @@ namespace DotNetCoreTestRunner
         public const string LOG_ON_FILE = "NovaSharp_tests.log";
 
         // Tests skipped on all platforms
-        static List<string> SKIPLIST = new List<string>()
+        static List<string> SKIPLIST = new()
         {
             "TestMore_308_io", // avoid interactions with low level system
             "TestMore_309_os", // avoid interactions with low level system
         };
 
-        static List<string> HARDWIRE_SKIPLIST = new List<string>()
+        static List<string> HARDWIRE_SKIPLIST = new()
         {
             // events
             "Interop_Event_Simple",
@@ -75,7 +75,7 @@ namespace DotNetCoreTestRunner
         };
 
         // Tests skipped on AOT platforms - known not workings :(
-        static List<string> AOT_SKIPLIST = new List<string>()
+        static List<string> AOT_SKIPLIST = new()
         {
             //"RegCollGen_List_ExtMeth_Last",
             //"VInterop_NIntPropertySetter_None",
@@ -119,18 +119,22 @@ namespace DotNetCoreTestRunner
             while (true)
             {
                 Console.Write(" ? ");
-                var key = Console.ReadKey();
+                ConsoleKeyInfo key = Console.ReadKey();
                 if (key.Key == ConsoleKey.D1)
+                {
                     TestMain(args);
+                }
                 else if (key.Key == ConsoleKey.D2)
+                {
                     DebuggerMain(args);
+                }
             }
         }
 
         private static void DebuggerMain(string[] args)
         {
             NovaSharpVsCodeDebugServer server = new NovaSharpVsCodeDebugServer().Start();
-            Script s = new Script();
+            Script s = new();
 
             server.AttachToScript(s, "xxx");
 
@@ -168,10 +172,12 @@ namespace DotNetCoreTestRunner
 
             try
             {
-                TestRunner T = new TestRunner(Log);
+                TestRunner T = new(Log);
 
                 if (LOG_ON_FILE != null)
+                {
                     File.WriteAllText(LOG_ON_FILE, "");
+                }
 
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine(
@@ -225,9 +231,14 @@ namespace DotNetCoreTestRunner
 
                 Console.WriteLine();
                 if (r.Exception != null)
+                {
                     Console_WriteLine("{0} - {1}", r.TestName, r.Exception);
+                }
                 else
+                {
                     Console_WriteLine("{0} - {1}", r.TestName, r.Message);
+                }
+
                 Console.WriteLine();
 
                 HARDWIRE_SKIPLIST.Add(r.TestName);

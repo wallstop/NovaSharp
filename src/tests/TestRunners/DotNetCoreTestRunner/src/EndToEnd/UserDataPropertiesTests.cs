@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter.Interop;
 using NUnit.Framework;
 
@@ -48,7 +45,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 get
                 {
                     for (int i = 1; i <= 4; i++)
+                    {
                         yield return i;
+                    }
                 }
             }
         }
@@ -60,9 +59,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.IntProp;
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass() { IntProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -83,10 +82,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				y = myobj2.NIntProp;
 				return x,y;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj1 = new SomeClass() { NIntProp = 321 };
-            SomeClass obj2 = new SomeClass() { NIntProp = null };
+            SomeClass obj1 = new() { NIntProp = 321 };
+            SomeClass obj2 = new() { NIntProp = null };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -111,10 +110,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				z = myobj2.ObjProp.ObjProp;
 				return x,y,z;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj1 = new SomeClass() { ObjProp = "ciao" };
-            SomeClass obj2 = new SomeClass() { ObjProp = obj1 };
+            SomeClass obj1 = new() { ObjProp = "ciao" };
+            SomeClass obj2 = new() { ObjProp = obj1 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -139,9 +138,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = 19;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass() { IntProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -162,10 +161,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj1.NIntProp = nil;
 				myobj2.NIntProp = 19;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj1 = new SomeClass() { NIntProp = 321 };
-            SomeClass obj2 = new SomeClass() { NIntProp = null };
+            SomeClass obj1 = new() { NIntProp = 321 };
+            SomeClass obj2 = new() { NIntProp = null };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -189,10 +188,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj1.ObjProp = myobj2;
 				myobj2.ObjProp = 'hello';";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj1 = new SomeClass() { ObjProp = "ciao" };
-            SomeClass obj2 = new SomeClass() { ObjProp = obj1 };
+            SomeClass obj1 = new() { ObjProp = "ciao" };
+            SomeClass obj2 = new() { ObjProp = obj1 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -215,9 +214,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = '19';";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass() { IntProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -237,7 +236,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				static.StaticProp = 'asdasd' .. static.StaticProp;";
 
-            Script S = new Script();
+            Script S = new();
 
             SomeClass.StaticProp = "qweqwe";
 
@@ -264,9 +263,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -286,9 +285,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.RoIntProp;
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -308,9 +307,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.RoIntProp2;
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -333,9 +332,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.RoIntProp;
 			";
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeClass obj = new SomeClass();
+                SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -362,9 +361,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.RoIntProp2;
 			";
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeClass obj = new SomeClass();
+                SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -388,9 +387,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj.WoIntProp = 19;
 			";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -409,9 +408,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj.WoIntProp2 = 19;
 			";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -432,9 +431,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.WoIntProp;
 				return x;";
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeClass obj = new SomeClass();
+                SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -463,9 +462,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.WoIntProp2;
 				return x;";
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeClass obj = new SomeClass();
+                SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -487,7 +486,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public void Test_PropertyAccessOverrides(InteropAccessMode opt)
         {
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             try
             {
@@ -497,7 +496,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.AccessOverrProp;
 			";
 
-                Script S = new Script();
+                Script S = new();
 
                 obj.AccessOverrProp = 13;
 
@@ -851,9 +850,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = 19;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass() { IntProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>();
@@ -871,9 +870,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_OutOfRangeNumber()
         {
-            Script s = new Script();
+            Script s = new();
             long big = long.MaxValue;
-            var v = DynValue.FromObject(s, big);
+            DynValue v = DynValue.FromObject(s, big);
             Assert.IsNotNull(v);
         }
     }

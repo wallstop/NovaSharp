@@ -46,7 +46,7 @@ public class LuaPerformanceBenchmarks
     [Benchmark(Description = "NovaSharp Compile")]
     public DynValue NovaSharpCompile()
     {
-        var script = new Script(CoreModules.Preset_Complete);
+        Script script = new(CoreModules.Preset_Complete);
         return script.LoadString(_source, null, $"compile_{Scenario}");
     }
 
@@ -68,7 +68,7 @@ public class LuaPerformanceBenchmarks
         }
 
         object? result = null;
-        foreach (var value in _nLuaFunction.Call())
+        foreach (object? value in _nLuaFunction.Call())
         {
             result = value;
         }

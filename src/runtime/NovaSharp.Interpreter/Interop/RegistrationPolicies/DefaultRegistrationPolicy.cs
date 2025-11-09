@@ -1,5 +1,4 @@
 using System;
-using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
@@ -24,9 +23,13 @@ namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
         )
         {
             if (newDescriptor == null)
+            {
                 return null;
+            }
             else
+            {
                 return oldDescriptor ?? newDescriptor;
+            }
         }
 
         /// <summary>

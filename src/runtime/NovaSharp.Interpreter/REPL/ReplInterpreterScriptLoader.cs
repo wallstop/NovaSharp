@@ -26,20 +26,26 @@ namespace NovaSharp.Interpreter.REPL
         {
             string env = Environment.GetEnvironmentVariable("NovaSharp_PATH");
             if (!string.IsNullOrEmpty(env))
+            {
                 ModulePaths = UnpackStringPaths(env);
+            }
 
             if (ModulePaths == null)
             {
                 env = Environment.GetEnvironmentVariable("LUA_PATH_5_2");
                 if (!string.IsNullOrEmpty(env))
+                {
                     ModulePaths = UnpackStringPaths(env);
+                }
             }
 
             if (ModulePaths == null)
             {
                 env = Environment.GetEnvironmentVariable("LUA_PATH");
                 if (!string.IsNullOrEmpty(env))
+                {
                     ModulePaths = UnpackStringPaths(env);
+                }
             }
 
             if (ModulePaths == null)
@@ -62,9 +68,13 @@ namespace NovaSharp.Interpreter.REPL
             DynValue s = globalContext.RawGet("LUA_PATH");
 
             if (s != null && s.Type == DataType.String)
+            {
                 return ResolveModuleName(modname, UnpackStringPaths(s.String));
+            }
             else
+            {
                 return base.ResolveModuleName(modname, globalContext);
+            }
         }
     }
 }

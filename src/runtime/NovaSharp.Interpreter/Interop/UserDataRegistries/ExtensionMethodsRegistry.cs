@@ -14,20 +14,19 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     /// </summary>
     internal class ExtensionMethodsRegistry
     {
-        private static object s_Lock = new object();
-        private static MultiDictionary<string, IOverloadableMemberDescriptor> s_Registry =
-            new MultiDictionary<string, IOverloadableMemberDescriptor>();
+        private static object s_Lock = new();
+        private static MultiDictionary<string, IOverloadableMemberDescriptor> s_Registry = new();
         private static MultiDictionary<
             string,
             UnresolvedGenericMethod
-        > s_UnresolvedGenericsRegistry = new MultiDictionary<string, UnresolvedGenericMethod>();
+        > s_UnresolvedGenericsRegistry = new();
         private static int s_ExtensionMethodChangeVersion = 0;
 
         private class UnresolvedGenericMethod
         {
             public readonly MethodInfo Method;
             public readonly InteropAccessMode AccessMode;
-            public readonly HashSet<Type> AlreadyAddedTypes = new HashSet<Type>();
+            public readonly HashSet<Type> AlreadyAddedTypes = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)
             {
@@ -53,7 +52,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 foreach (MethodInfo mi in Framework.Do.GetMethods(type).Where(_mi => _mi.IsStatic))
                 {
                     if (mi.GetCustomAttributes(typeof(ExtensionAttribute), false).Count() == 0)
+                    {
                         continue;
+                    }
 
                     if (mi.ContainsGenericParameters)
                     {
@@ -66,16 +67,20 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     }
 
                     if (!MethodMemberDescriptor.CheckMethodIsCompatible(mi, false))
+                    {
                         continue;
+                    }
 
-                    var desc = new MethodMemberDescriptor(mi, mode);
+                    MethodMemberDescriptor desc = new(mi, mode);
 
                     s_Registry.Add(mi.Name, desc);
                     changesDone = true;
                 }
 
                 if (changesDone)
+                {
                     ++s_ExtensionMethodChangeVersion;
+                }
             }
         }
 
@@ -94,7 +99,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         )
         {
             lock (s_Lock)
+            {
                 return new List<IOverloadableMemberDescriptor>(s_Registry.Find(name));
+            }
         }
 
         /// <summary>
@@ -129,7 +136,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             {
                 ParameterInfo[] args = ugm.Method.GetParameters();
                 if (args.Length == 0)
+                {
                     continue;
+                }
+
                 Type extensionType = args[0].ParameterType;
 
                 Type genericType = GetGenericMatch(extensionType, extendedType);
@@ -147,9 +157,11 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                         if (mi != null)
                         {
                             if (!MethodMemberDescriptor.CheckMethodIsCompatible(mi, false))
+                            {
                                 continue;
+                            }
 
-                            var desc = new MethodMemberDescriptor(mi, ugm.AccessMode);
+                            MethodMemberDescriptor desc = new(mi, ugm.AccessMode);
 
                             s_Registry.Add(ugm.Method.Name, desc);
                             ++s_ExtensionMethodChangeVersion;

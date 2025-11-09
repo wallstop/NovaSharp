@@ -26,10 +26,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             int count = pars.Length;
 
             for (int i = 0; i < pars.Length; i++)
+            {
                 if (Parameters[i].HasDefaultValue && (pars[i] is DefaultValue))
                 {
                     count -= 1;
                 }
+            }
 
             return count;
         }

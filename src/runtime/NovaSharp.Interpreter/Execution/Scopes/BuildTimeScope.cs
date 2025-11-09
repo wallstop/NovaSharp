@@ -7,8 +7,8 @@ namespace NovaSharp.Interpreter.Execution
 {
     internal class BuildTimeScope
     {
-        List<BuildTimeScopeFrame> m_Frames = new List<BuildTimeScopeFrame>();
-        List<IClosureBuilder> m_ClosureBuilders = new List<IClosureBuilder>();
+        List<BuildTimeScopeFrame> m_Frames = new();
+        List<IClosureBuilder> m_ClosureBuilders = new();
 
         public void PushFunction(IClosureBuilder closureBuilder, bool hasVarArgs)
         {
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Execution
 
         public RuntimeScopeFrame PopFunction()
         {
-            var last = m_Frames.Last();
+            BuildTimeScopeFrame last = m_Frames.Last();
             last.ResolveLRefs();
             m_Frames.RemoveAt(m_Frames.Count - 1);
 
@@ -42,7 +42,9 @@ namespace NovaSharp.Interpreter.Execution
             SymbolRef local = m_Frames.Last().Find(name);
 
             if (local != null)
+            {
                 return local;
+            }
 
             for (int i = m_Frames.Count - 2; i >= 0; i--)
             {
@@ -53,7 +55,9 @@ namespace NovaSharp.Interpreter.Execution
                     symb = CreateUpValue(this, symb, i, m_Frames.Count - 2);
 
                     if (symb != null)
+                    {
                         return symb;
+                    }
                 }
             }
 
@@ -63,7 +67,9 @@ namespace NovaSharp.Interpreter.Execution
         public SymbolRef CreateGlobalReference(string name)
         {
             if (name == WellKnownSymbols.ENV)
+            {
                 throw new InternalErrorException("_ENV passed in CreateGlobalReference");
+            }
 
             SymbolRef env = Find(WellKnownSymbols.ENV);
             return SymbolRef.Global(name, env);
@@ -83,7 +89,9 @@ namespace NovaSharp.Interpreter.Execution
         {
             // it's a 0-level upvalue. Just create it and we're done.
             if (closuredFrame == currentFrame)
+            {
                 return m_ClosureBuilders[currentFrame + 1].CreateUpvalue(this, symb);
+            }
 
             SymbolRef upvalue = CreateUpValue(
                 buildTimeScope,

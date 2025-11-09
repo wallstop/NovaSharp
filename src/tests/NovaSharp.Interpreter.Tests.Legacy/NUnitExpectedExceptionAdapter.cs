@@ -1,4 +1,3 @@
-using System;
 using System.Reflection;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -63,7 +62,9 @@ namespace NovaSharp.Interpreter.Tests
             private static Exception Unwrap(Exception exception)
             {
                 if (exception is NUnitException || exception is TargetInvocationException)
+                {
                     return exception.InnerException ?? exception;
+                }
 
                 return exception;
             }

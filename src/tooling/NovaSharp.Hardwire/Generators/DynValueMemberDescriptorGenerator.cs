@@ -1,8 +1,4 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Serialization;
@@ -31,7 +27,7 @@ namespace NovaSharp.Hardwire.Generators
             string type = (vtype.Type == DataType.String) ? vtype.String : null;
             string staticType = (vstaticType.Type == DataType.String) ? vstaticType.String : null;
 
-            CodeTypeDeclaration classCode = new CodeTypeDeclaration(className);
+            CodeTypeDeclaration classCode = new(className);
 
             classCode.TypeAttributes =
                 System.Reflection.TypeAttributes.NestedPrivate
@@ -39,13 +35,13 @@ namespace NovaSharp.Hardwire.Generators
 
             classCode.BaseTypes.Add(typeof(DynValueMemberDescriptor));
 
-            CodeConstructor ctor = new CodeConstructor();
+            CodeConstructor ctor = new();
             ctor.Attributes = MemberAttributes.Assembly;
             classCode.Members.Add(ctor);
 
             if (type == null)
             {
-                Table tbl = new Table(null);
+                Table tbl = new(null);
                 tbl.Set(1, kval);
                 string str = tbl.Serialize();
 
@@ -56,7 +52,7 @@ namespace NovaSharp.Hardwire.Generators
             {
                 ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(table.Get("name").String));
 
-                CodeMemberProperty p = new CodeMemberProperty();
+                CodeMemberProperty p = new();
                 p.Name = "Value";
                 p.Type = new CodeTypeReference(typeof(DynValue));
                 p.Attributes = MemberAttributes.Override | MemberAttributes.Public;

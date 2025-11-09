@@ -15,18 +15,24 @@ namespace NovaSharp.Interpreter.IO
         public BinDumpBinaryReader(Stream s, Encoding e)
             : base(s, e) { }
 
-        List<string> m_Strings = new List<string>();
+        List<string> m_Strings = new();
 
         public override int ReadInt32()
         {
             sbyte b = base.ReadSByte();
 
             if (b == 0x7F)
+            {
                 return (int)base.ReadInt16();
+            }
             else if (b == 0x7E)
+            {
                 return (int)base.ReadInt32();
+            }
             else
+            {
                 return (int)b;
+            }
         }
 
         public override uint ReadUInt32()
@@ -34,11 +40,17 @@ namespace NovaSharp.Interpreter.IO
             byte b = base.ReadByte();
 
             if (b == 0x7F)
+            {
                 return (uint)base.ReadUInt16();
+            }
             else if (b == 0x7E)
+            {
                 return (uint)base.ReadUInt32();
+            }
             else
+            {
                 return (uint)b;
+            }
         }
 
         public override string ReadString()

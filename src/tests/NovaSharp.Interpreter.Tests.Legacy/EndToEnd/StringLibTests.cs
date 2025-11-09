@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -166,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
             string printed = null;
 
-            Script S = new Script();
+            Script S = new();
             DynValue main = S.LoadString(script);
 
             S.Options.DebugPrint = s =>
@@ -197,7 +193,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
             string printed = null;
 
-            Script S = new Script();
+            Script S = new();
             DynValue main = S.LoadString(script);
 
             S.Options.DebugPrint = s =>
@@ -240,7 +236,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void String_GSub_3()
         {
-            Script S = new Script();
+            Script S = new();
             S.Globals["a"] =
                 @"                  'C:\temp\test.lua:68: bad argument #1 to 'date' (invalid conversion specifier '%Ja')'
     doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'";
@@ -263,7 +259,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void TestMatch(string s, string p, bool expected)
         {
-            Script S = new Script(CoreModules.String);
+            Script S = new(CoreModules.String);
             S.Globals["s"] = s;
             S.Globals["p"] = p;
             DynValue res = S.DoString("return string.match(s, p)");

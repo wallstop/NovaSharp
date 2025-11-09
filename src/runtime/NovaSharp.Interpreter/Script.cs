@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter
 
         Processor m_MainProcessor = null;
         ByteCode m_ByteCode;
-        List<SourceCode> m_Sources = new List<SourceCode>();
+        List<SourceCode> m_Sources = new();
         Table m_GlobalTable;
         IDebugger m_Debugger;
         Table[] m_TypeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
@@ -133,7 +133,7 @@ namespace NovaSharp.Interpreter
                 funcFriendlyName ?? m_Sources.Count.ToString()
             );
 
-            SourceCode source = new SourceCode(chunkName, code, m_Sources.Count, this);
+            SourceCode source = new(chunkName, code, m_Sources.Count, this);
 
             m_Sources.Add(source);
 
@@ -187,8 +187,10 @@ namespace NovaSharp.Interpreter
             {
                 code = code.Substring(StringModule.BASE64_DUMP_HEADER.Length);
                 byte[] data = Convert.FromBase64String(code);
-                using (MemoryStream ms = new MemoryStream(data))
+                using (MemoryStream ms = new(data))
+                {
                     return LoadStream(ms, globalTable, codeFriendlyName);
+                }
             }
 
             string chunkName = string.Format(
@@ -196,12 +198,7 @@ namespace NovaSharp.Interpreter
                 codeFriendlyName ?? "chunk_" + m_Sources.Count.ToString()
             );
 
-            SourceCode source = new SourceCode(
-                codeFriendlyName ?? chunkName,
-                code,
-                m_Sources.Count,
-                this
-            );
+            SourceCode source = new(codeFriendlyName ?? chunkName, code, m_Sources.Count, this);
 
             m_Sources.Add(source);
 
@@ -234,7 +231,7 @@ namespace NovaSharp.Interpreter
 
             if (!Processor.IsDumpStream(codeStream))
             {
-                using (StreamReader sr = new StreamReader(codeStream))
+                using (StreamReader sr = new(codeStream))
                 {
                     string scriptCode = sr.ReadToEnd();
                     return LoadString(scriptCode, globalTable, codeFriendlyName);
@@ -247,7 +244,7 @@ namespace NovaSharp.Interpreter
                     codeFriendlyName ?? "dump_" + m_Sources.Count.ToString()
                 );
 
-                SourceCode source = new SourceCode(
+                SourceCode source = new(
                     codeFriendlyName ?? chunkName,
                     string.Format(
                         "-- This script was decoded from a binary dump - dump_{0}",
@@ -271,9 +268,13 @@ namespace NovaSharp.Interpreter
                 SignalByteCodeChange();
 
                 if (hasUpvalues)
+                {
                     return MakeClosure(address, globalTable ?? m_GlobalTable);
+                }
                 else
+                {
                     return MakeClosure(address);
+                }
             }
         }
 
@@ -294,17 +295,23 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(function);
 
             if (function.Type != DataType.Function)
+            {
                 throw new ArgumentException("function arg is not a function!");
+            }
 
             if (!stream.CanWrite)
+            {
                 throw new ArgumentException("stream is readonly!");
+            }
 
             Closure.UpvaluesType upvaluesType = function.Function.GetUpvaluesType();
 
             if (upvaluesType == Closure.UpvaluesType.Closure)
+            {
                 throw new ArgumentException("function arg has upvalues other than _ENV");
+            }
 
-            UndisposableStream outStream = new UndisposableStream(stream);
+            UndisposableStream outStream = new(stream);
             m_MainProcessor.Dump(
                 outStream,
                 function.Function.EntryPointByteCodeLocation,
@@ -344,8 +351,10 @@ namespace NovaSharp.Interpreter
             }
             else if (code is byte[])
             {
-                using (MemoryStream ms = new MemoryStream((byte[])code))
+                using (MemoryStream ms = new((byte[])code))
+                {
                     return LoadStream(ms, globalContext, friendlyFilename ?? filename);
+                }
             }
             else if (code is Stream)
             {
@@ -361,14 +370,18 @@ namespace NovaSharp.Interpreter
             else
             {
                 if (code == null)
+                {
                     throw new InvalidCastException("Unexpected null from IScriptLoader.LoadFile");
+                }
                 else
+                {
                     throw new InvalidCastException(
                         string.Format(
                             "Unsupported return type from IScriptLoader.LoadFile : {0}",
                             code.GetType()
                         )
                     );
+                }
             }
         }
 
@@ -436,7 +449,7 @@ namespace NovaSharp.Interpreter
         /// A DynValue containing the result of the processing of the executed script.
         public static DynValue RunFile(string filename)
         {
-            Script S = new Script();
+            Script S = new();
             return S.DoFile(filename);
         }
 
@@ -447,7 +460,7 @@ namespace NovaSharp.Interpreter
         /// A DynValue containing the result of the processing of the executed script.
         public static DynValue RunString(string code)
         {
-            Script S = new Script();
+            Script S = new();
             return S.DoString(code);
         }
 
@@ -483,9 +496,9 @@ namespace NovaSharp.Interpreter
             }
             else
             {
-                var syms = new SymbolRef[]
+                SymbolRef[] syms = new SymbolRef[]
                 {
-                    new SymbolRef()
+                    new()
                     {
                         i_Env = null,
                         i_Index = 0,
@@ -494,7 +507,7 @@ namespace NovaSharp.Interpreter
                     },
                 };
 
-                var vals = new DynValue[] { DynValue.NewTable(envTable) };
+                DynValue[] vals = new DynValue[] { DynValue.NewTable(envTable) };
 
                 c = new Closure(this, address, syms, vals);
             }
@@ -538,7 +551,9 @@ namespace NovaSharp.Interpreter
                     DynValue[] metaargs = new DynValue[args.Length + 1];
                     metaargs[0] = function;
                     for (int i = 0; i < args.Length; i++)
+                    {
                         metaargs[i + 1] = args[i];
+                    }
 
                     function = metafunction;
                     args = metaargs;
@@ -575,7 +590,9 @@ namespace NovaSharp.Interpreter
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)
+            {
                 dargs[i] = DynValue.FromObject(this, args[i]);
+            }
 
             return Call(function, dargs);
         }
@@ -616,13 +633,19 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(function);
 
             if (function.Type == DataType.Function)
+            {
                 return m_MainProcessor.Coroutine_Create(function.Function);
+            }
             else if (function.Type == DataType.ClrFunction)
+            {
                 return DynValue.NewCoroutine(new Coroutine(function.Callback));
+            }
             else
+            {
                 throw new ArgumentException(
                     "function is not of DataType.Function or DataType.ClrFunction"
                 );
+            }
         }
 
         /// <summary>
@@ -639,13 +662,21 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(function);
 
             if (coroutine == null || coroutine.Type != Coroutine.CoroutineType.Coroutine)
+            {
                 throw new InvalidOperationException("coroutine is not CoroutineType.Coroutine");
+            }
+
             if (function == null || function.Type != DataType.Function)
+            {
                 throw new InvalidOperationException("function is not DataType.Function");
+            }
+
             if (coroutine.State != CoroutineState.Dead)
+            {
                 throw new InvalidOperationException(
                     "coroutine's state must be CoroutineState.Dead to recycle"
                 );
+            }
 
             return coroutine.Recycle(m_MainProcessor, function.Function);
         }
@@ -687,7 +718,9 @@ namespace NovaSharp.Interpreter
             m_MainProcessor.AttachDebugger(debugger);
 
             foreach (SourceCode src in m_Sources)
+            {
                 SignalSourceCodeChange(src);
+            }
 
             SignalByteCodeChange();
         }
@@ -728,7 +761,9 @@ namespace NovaSharp.Interpreter
             string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
 
             if (filename == null)
+            {
                 throw new ScriptRuntimeException("module '{0}' not found", modname);
+            }
 
             DynValue func = LoadFile(filename, globalContext, filename);
             return func;
@@ -744,7 +779,9 @@ namespace NovaSharp.Interpreter
             int t = (int)type;
 
             if (t >= 0 && t < m_TypeMetatables.Length)
+            {
                 return m_TypeMetatables[t];
+            }
 
             return null;
         }
@@ -762,9 +799,13 @@ namespace NovaSharp.Interpreter
             int t = (int)type;
 
             if (t >= 0 && t < m_TypeMetatables.Length)
+            {
                 m_TypeMetatables[t] = metatable;
+            }
             else
+            {
                 throw new ArgumentException("Specified type not supported : " + type.ToString());
+            }
         }
 
         /// <summary>
@@ -772,7 +813,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static void WarmUp()
         {
-            Script s = new Script(CoreModules.Basic);
+            Script s = new(CoreModules.Basic);
             s.LoadString("return 1;");
         }
 
@@ -830,7 +871,7 @@ namespace NovaSharp.Interpreter
         {
             subproduct = (subproduct != null) ? (subproduct + " ") : "";
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine(
                 string.Format(
                     "NovaSharp {0}{1} [{2}]",

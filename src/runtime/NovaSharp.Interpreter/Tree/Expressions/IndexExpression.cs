@@ -76,9 +76,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     : DynValue.NewString(m_Name);
 
             if (b.Type != DataType.Table)
+            {
                 throw new DynamicExpressionException("Attempt to index non-table.");
+            }
             else if (i.IsNilOrNan())
+            {
                 throw new DynamicExpressionException("Attempt to index with nil or nan key.");
+            }
+
             return b.Table.Get(i) ?? DynValue.Nil;
         }
     }

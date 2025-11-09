@@ -8,6 +8,8 @@ using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using Interop.RegistrationPolicies;
+
     [TestFixture]
     public class VtUserDataMethodsTests
     {
@@ -36,7 +38,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public static StringBuilder SetComplexRecursive(List<int[]> intList)
             {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
 
                 foreach (int[] arr in intList)
                 {
@@ -55,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 int[] intarray
             )
             {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
@@ -103,17 +105,29 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p4);
 
                 p7.Append("|");
-                foreach (var o in p5)
+                foreach (object o in p5)
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p6)
+                foreach (object o in p6)
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
+                foreach (object o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
+                foreach (object o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
 
                 p7.Append(p9);
@@ -152,9 +166,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public List<int> MkList(int from, int to)
             {
-                List<int> l = new List<int>();
+                List<int> l = new();
                 for (int i = from; i <= to; i++)
+                {
                     l.Add(i);
+                }
+
                 return l;
             }
 
@@ -189,7 +206,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public static StringBuilder SetComplexRecursive(List<int[]> intList)
             {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
 
                 foreach (int[] arr in intList)
                 {
@@ -208,7 +225,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 int[] intarray
             )
             {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
@@ -256,17 +273,29 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p4);
 
                 p7.Append("|");
-                foreach (var o in p5)
+                foreach (object o in p5)
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p6)
+                foreach (object o in p6)
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
+                foreach (object o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
-                foreach (var o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
+                foreach (object o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
+                {
                     p7.Append(o);
+                }
+
                 p7.Append("|");
 
                 p7.Append(p9);
@@ -305,9 +334,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public List<int> MkList(int from, int to)
             {
-                List<int> l = new List<int>();
+                List<int> l = new();
                 for (int i = from; i <= to; i++)
+                {
                     l.Add(i);
+                }
+
                 return l;
             }
 
@@ -425,9 +457,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 			return myobj.format('{0}.{1}@{2}:{3}', 1, 2, 'ciao', true);";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -456,9 +488,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeClass obj = new SomeClass();
+                SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -518,9 +550,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -549,9 +581,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -574,9 +606,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x, y, z = myobj:manipulateString('CiAo', 'hello');
 				return x, y, z;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -606,9 +638,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = static.ConcatS(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -635,9 +667,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -663,9 +695,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj:ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -692,7 +724,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj:ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -718,9 +750,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = static.ConcatS(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -746,9 +778,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = concat(1, 2);
 				return x;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             S.Globals["concat"] = CallbackFunction.FromDelegate(
                 S,
@@ -775,9 +807,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return sum;";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass_NoRegister obj = new SomeClass_NoRegister();
+            SomeClass_NoRegister obj = new();
 
             S.Globals["mklist"] = CallbackFunction.FromDelegate(
                 S,
@@ -1010,7 +1042,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_TestAutoregisterPolicy()
         {
-            var oldPolicy = UserData.RegistrationPolicy;
+            IRegistrationPolicy? oldPolicy = UserData.RegistrationPolicy;
 
             try
             {
@@ -1018,9 +1050,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
 
-                Script S = new Script();
+                Script S = new();
 
-                SomeOtherClass obj = new SomeOtherClass();
+                SomeOtherClass obj = new();
 
                 S.Globals.Set("myobj", UserData.Create(obj));
 
@@ -1040,14 +1072,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = @"return myobj:Test1() .. myobj:Test2()";
 
-            Script S = new Script();
+            Script S = new();
 
             UserData.UnregisterType<Interface1>();
             UserData.UnregisterType<Interface2>();
             UserData.RegisterType<Interface1>();
             UserData.RegisterType<Interface2>();
 
-            SomeOtherClassWithDualInterfaces obj = new SomeOtherClassWithDualInterfaces();
+            SomeOtherClassWithDualInterfaces obj = new();
 
             S.Globals.Set("myobj", UserData.Create(obj));
 
@@ -1072,9 +1104,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c + d;
 			";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeClass obj = new SomeClass();
+            SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>();
@@ -1101,9 +1133,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c;
 			";
 
-            Script S = new Script();
+            Script S = new();
 
-            SelfDescribingClass obj = new SelfDescribingClass();
+            SelfDescribingClass obj = new();
 
             UserData.UnregisterType<SelfDescribingClass>();
             UserData.RegisterType<SelfDescribingClass>();
@@ -1130,9 +1162,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c;
 			";
 
-            Script S = new Script();
+            Script S = new();
 
-            SomeOtherClassCustomDescriptor obj = new SomeOtherClassCustomDescriptor();
+            SomeOtherClassCustomDescriptor obj = new();
 
             UserData.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
 

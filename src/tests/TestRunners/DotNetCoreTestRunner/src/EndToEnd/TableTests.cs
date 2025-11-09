@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Execution;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -360,7 +354,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-            Script s = new Script();
+            Script s = new();
             DynValue t = s.DoString(script);
 
             Assert.AreEqual("hello", t.Table["ciao"]);
@@ -378,7 +372,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-            Script s = new Script();
+            Script s = new();
             s.Globals["x"] = "hello";
             DynValue t = s.DoString(script);
 
@@ -396,7 +390,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-            Script s = new Script();
+            Script s = new();
             DynValue t = s.DoString(script);
 
             s.Globals["t", "ciao"] = "hello";
@@ -413,7 +407,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new Script();
+            Script s = new();
             s.DoString(script);
 
             s.Globals["t", "ciao"] = "hello";
@@ -431,7 +425,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new Script();
+            Script s = new();
             s.DoString(script);
 
             Assert.AreEqual("hello", s.Globals["t", "ciao"]);
@@ -448,7 +442,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
             s.DoString(script);
 
             Assert.AreEqual("hello", s.Globals["t", "ciao", 1]);
@@ -512,7 +506,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new Script();
+            Script s = new();
             s.DoString(script);
 
             Assert.AreEqual("hello", s.Globals["t", "ciao"]);
@@ -530,7 +524,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new Script();
+            Script s = new();
             s.DoString(script);
 
             Assert.Fail();
@@ -539,7 +533,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Table_Length_Calculations()
         {
-            Table T = new Table(null);
+            Table T = new(null);
 
             Assert.AreEqual(0, T.Length, "A");
 

@@ -94,9 +94,8 @@ namespace NovaSharp.Interpreter.Interop
     public class PropertyTableAssigner : IPropertyTableAssigner
     {
         Type m_Type;
-        Dictionary<string, PropertyInfo> m_PropertyMap = new Dictionary<string, PropertyInfo>();
-        Dictionary<Type, IPropertyTableAssigner> m_SubAssigners =
-            new Dictionary<Type, IPropertyTableAssigner>();
+        Dictionary<string, PropertyInfo> m_PropertyMap = new();
+        Dictionary<Type, IPropertyTableAssigner> m_SubAssigners = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyTableAssigner"/> class.
@@ -111,7 +110,9 @@ namespace NovaSharp.Interpreter.Interop
             m_Type = type;
 
             if (Framework.Do.IsValueType(m_Type))
+            {
                 throw new ArgumentException("Type cannot be a value type.");
+            }
 
             foreach (string property in expectedMissingProperties)
             {
@@ -166,7 +167,7 @@ namespace NovaSharp.Interpreter.Interop
 
                     if (value.Type == DataType.Table && m_SubAssigners.ContainsKey(pi.PropertyType))
                     {
-                        var subassigner = m_SubAssigners[pi.PropertyType];
+                        IPropertyTableAssigner subassigner = m_SubAssigners[pi.PropertyType];
                         o = Activator.CreateInstance(pi.PropertyType);
                         subassigner.AssignObjectUnchecked(o, value.Table);
                     }
@@ -192,7 +193,10 @@ namespace NovaSharp.Interpreter.Interop
         private void AssignProperty(object obj, string name, DynValue value)
         {
             if (TryAssignProperty(obj, name, value))
+            {
                 return;
+            }
+
             if (
                 (
                     Script.GlobalOptions.FuzzySymbolMatching
@@ -200,13 +204,19 @@ namespace NovaSharp.Interpreter.Interop
                 ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
                 && TryAssignProperty(obj, DescriptorHelpers.UpperFirstLetter(name), value)
             )
+            {
                 return;
+            }
+
             if (
                 (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.Camelify)
                     == FuzzySymbolMatchingBehavior.Camelify
                 && TryAssignProperty(obj, DescriptorHelpers.Camelify(name), value)
             )
+            {
                 return;
+            }
+
             if (
                 (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.PascalCase)
                     == FuzzySymbolMatchingBehavior.PascalCase
@@ -216,7 +226,9 @@ namespace NovaSharp.Interpreter.Interop
                     value
                 )
             )
+            {
                 return;
+            }
 
             throw new ScriptRuntimeException("Invalid property {0}", name);
         }
@@ -232,9 +244,12 @@ namespace NovaSharp.Interpreter.Interop
         public void AssignObject(object obj, Table data)
         {
             if (obj == null)
+            {
                 throw new ArgumentNullException("Object is null");
+            }
 
             if (!Framework.Do.IsInstanceOfType(m_Type, obj))
+            {
                 throw new ArgumentException(
                     string.Format(
                         "Invalid type of object : got '{0}', expected {1}",
@@ -242,8 +257,9 @@ namespace NovaSharp.Interpreter.Interop
                         m_Type.FullName
                     )
                 );
+            }
 
-            foreach (var pair in data.Pairs)
+            foreach (TablePair pair in data.Pairs)
             {
                 if (pair.Key.Type != DataType.String)
                 {

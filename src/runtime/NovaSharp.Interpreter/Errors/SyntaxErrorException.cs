@@ -71,7 +71,9 @@ namespace NovaSharp.Interpreter
         public override void Rethrow()
         {
             if (Script.GlobalOptions.RethrowExceptionNested)
+            {
                 throw new SyntaxErrorException(this);
+            }
         }
     }
 }

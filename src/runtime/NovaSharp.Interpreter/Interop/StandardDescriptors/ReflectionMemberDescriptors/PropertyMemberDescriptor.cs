@@ -111,9 +111,13 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (getter == null && setter == null)
+            {
                 return null;
+            }
             else
+            {
                 return new PropertyMemberDescriptor(pi, accessMode, getter, setter);
+            }
         }
 
         /// <summary>
@@ -141,10 +145,14 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (getter == null && setter == null)
+            {
                 throw new ArgumentNullException("getter and setter cannot both be null");
+            }
 
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
+            {
                 accessMode = InteropAccessMode.Reflection;
+            }
 
             this.PropertyInfo = pi;
             this.AccessMode = accessMode;
@@ -173,21 +181,29 @@ namespace NovaSharp.Interpreter.Interop
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
 
             if (m_Getter == null)
+            {
                 throw new ScriptRuntimeException(
                     "userdata property '{0}.{1}' cannot be read from.",
                     this.PropertyInfo.DeclaringType.Name,
                     this.Name
                 );
+            }
 
             if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
+            {
                 OptimizeGetter();
+            }
 
             object result = null;
 
             if (m_OptimizedGetter != null)
+            {
                 result = m_OptimizedGetter(obj);
+            }
             else
+            {
                 result = m_Getter.Invoke(IsStatic ? null : obj, null); // convoluted workaround for --full-aot Mono execution
+            }
 
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
@@ -202,28 +218,38 @@ namespace NovaSharp.Interpreter.Interop
                 {
                     if (IsStatic)
                     {
-                        var paramExp = Expression.Parameter(typeof(object), "dummy");
-                        var propAccess = Expression.Property(null, PropertyInfo);
-                        var castPropAccess = Expression.Convert(propAccess, typeof(object));
-                        var lambda = Expression.Lambda<Func<object, object>>(
-                            castPropAccess,
-                            paramExp
+                        ParameterExpression paramExp = Expression.Parameter(
+                            typeof(object),
+                            "dummy"
                         );
+                        MemberExpression propAccess = Expression.Property(null, PropertyInfo);
+                        UnaryExpression castPropAccess = Expression.Convert(
+                            propAccess,
+                            typeof(object)
+                        );
+                        Expression<Func<object, object>> lambda = Expression.Lambda<
+                            Func<object, object>
+                        >(castPropAccess, paramExp);
                         Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
                     }
                     else
                     {
-                        var paramExp = Expression.Parameter(typeof(object), "obj");
-                        var castParamExp = Expression.Convert(
+                        ParameterExpression paramExp = Expression.Parameter(typeof(object), "obj");
+                        UnaryExpression castParamExp = Expression.Convert(
                             paramExp,
                             this.PropertyInfo.DeclaringType
                         );
-                        var propAccess = Expression.Property(castParamExp, PropertyInfo);
-                        var castPropAccess = Expression.Convert(propAccess, typeof(object));
-                        var lambda = Expression.Lambda<Func<object, object>>(
-                            castPropAccess,
-                            paramExp
+                        MemberExpression propAccess = Expression.Property(
+                            castParamExp,
+                            PropertyInfo
                         );
+                        UnaryExpression castPropAccess = Expression.Convert(
+                            propAccess,
+                            typeof(object)
+                        );
+                        Expression<Func<object, object>> lambda = Expression.Lambda<
+                            Func<object, object>
+                        >(castPropAccess, paramExp);
                         Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
                     }
                 }
@@ -242,42 +268,50 @@ namespace NovaSharp.Interpreter.Interop
 
                     if (IsStatic)
                     {
-                        var paramExp = Expression.Parameter(typeof(object), "dummy");
-                        var paramValExp = Expression.Parameter(typeof(object), "val");
-                        var castParamValExp = Expression.Convert(
+                        ParameterExpression paramExp = Expression.Parameter(
+                            typeof(object),
+                            "dummy"
+                        );
+                        ParameterExpression paramValExp = Expression.Parameter(
+                            typeof(object),
+                            "val"
+                        );
+                        UnaryExpression castParamValExp = Expression.Convert(
                             paramValExp,
                             this.PropertyInfo.PropertyType
                         );
-                        var callExpression = Expression.Call(setterMethod, castParamValExp);
-                        var lambda = Expression.Lambda<Action<object, object>>(
-                            callExpression,
-                            paramExp,
-                            paramValExp
+                        MethodCallExpression callExpression = Expression.Call(
+                            setterMethod,
+                            castParamValExp
                         );
+                        Expression<Action<object, object>> lambda = Expression.Lambda<
+                            Action<object, object>
+                        >(callExpression, paramExp, paramValExp);
                         Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
                     }
                     else
                     {
-                        var paramExp = Expression.Parameter(typeof(object), "obj");
-                        var paramValExp = Expression.Parameter(typeof(object), "val");
-                        var castParamExp = Expression.Convert(
+                        ParameterExpression paramExp = Expression.Parameter(typeof(object), "obj");
+                        ParameterExpression paramValExp = Expression.Parameter(
+                            typeof(object),
+                            "val"
+                        );
+                        UnaryExpression castParamExp = Expression.Convert(
                             paramExp,
                             this.PropertyInfo.DeclaringType
                         );
-                        var castParamValExp = Expression.Convert(
+                        UnaryExpression castParamValExp = Expression.Convert(
                             paramValExp,
                             this.PropertyInfo.PropertyType
                         );
-                        var callExpression = Expression.Call(
+                        MethodCallExpression callExpression = Expression.Call(
                             castParamExp,
                             setterMethod,
                             castParamValExp
                         );
-                        var lambda = Expression.Lambda<Action<object, object>>(
-                            callExpression,
-                            paramExp,
-                            paramValExp
-                        );
+                        Expression<Action<object, object>> lambda = Expression.Lambda<
+                            Action<object, object>
+                        >(callExpression, paramExp, paramValExp);
                         Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
                     }
                 }
@@ -295,11 +329,13 @@ namespace NovaSharp.Interpreter.Interop
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (m_Setter == null)
+            {
                 throw new ScriptRuntimeException(
                     "userdata property '{0}.{1}' cannot be written to.",
                     this.PropertyInfo.DeclaringType.Name,
                     this.Name
                 );
+            }
 
             object value = ScriptToClrConversions.DynValueToObjectOfType(
                 v,
@@ -311,13 +347,17 @@ namespace NovaSharp.Interpreter.Interop
             try
             {
                 if (value is double)
+                {
                     value = NumericConversions.DoubleToType(
                         PropertyInfo.PropertyType,
                         (double)value
                     );
+                }
 
                 if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedSetter == null)
+                {
                     OptimizeSetter();
+                }
 
                 if (m_OptimizedSetter != null)
                 {
@@ -356,9 +396,14 @@ namespace NovaSharp.Interpreter.Interop
                 MemberDescriptorAccess access = 0;
 
                 if (m_Setter != null)
+                {
                     access |= MemberDescriptorAccess.CanWrite;
+                }
+
                 if (m_Getter != null)
+                {
                     access |= MemberDescriptorAccess.CanRead;
+                }
 
                 return access;
             }

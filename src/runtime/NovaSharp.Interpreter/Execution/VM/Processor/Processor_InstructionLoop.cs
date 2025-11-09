@@ -66,62 +66,98 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.Add:
                             instructionPtr = ExecAdd(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Concat:
                             instructionPtr = ExecConcat(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Neg:
                             instructionPtr = ExecNeg(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Sub:
                             instructionPtr = ExecSub(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Mul:
                             instructionPtr = ExecMul(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Div:
                             instructionPtr = ExecDiv(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Mod:
                             instructionPtr = ExecMod(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Power:
                             instructionPtr = ExecPower(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Eq:
                             instructionPtr = ExecEq(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.LessEq:
                             instructionPtr = ExecLessEq(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Less:
                             instructionPtr = ExecLess(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Len:
                             instructionPtr = ExecLen(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Call:
                         case OpCode.ThisCall:
@@ -134,7 +170,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                                 i.Name
                             );
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Scalar:
                             m_ValueStack.Push(m_ValueStack.Pop().ToScalar());
@@ -149,27 +188,41 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.JtOrPop:
                             instructionPtr = ExecShortCircuitingOperator(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.JNil:
                             {
                                 DynValue v = m_ValueStack.Pop().ToScalar();
 
                                 if (v.Type == DataType.Nil || v.Type == DataType.Void)
+                                {
                                     instructionPtr = i.NumVal;
+                                }
                             }
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Jf:
                             instructionPtr = JumpBool(i, false, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Jump:
                             instructionPtr = i.NumVal;
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.MkTuple:
                             ExecMkTuple(i);
@@ -194,9 +247,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.Ret:
                             instructionPtr = ExecRet(i);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             if (instructionPtr < 0)
+                            {
                                 goto return_to_native_code;
+                            }
+
                             break;
                         case OpCode.Incr:
                             ExecIncr(i);
@@ -207,13 +266,21 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.JFor:
                             instructionPtr = ExecJFor(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.NewTable:
                             if (i.NumVal == 0)
+                            {
                                 m_ValueStack.Push(DynValue.NewTable(this.m_Script));
+                            }
                             else
+                            {
                                 m_ValueStack.Push(DynValue.NewPrimeTable());
+                            }
+
                             break;
                         case OpCode.IterPrep:
                             ExecIterPrep(i);
@@ -225,8 +292,8 @@ namespace NovaSharp.Interpreter.Execution.VM
                             ExecExpTuple(i);
                             break;
                         case OpCode.Local:
-                            var scope = m_ExecutionStack.Peek().LocalScope;
-                            var index = i.Symbol.i_Index;
+                            DynValue[] scope = m_ExecutionStack.Peek().LocalScope;
+                            int index = i.Symbol.i_Index;
                             m_ValueStack.Push(scope[index].AsReadOnly());
                             break;
                         case OpCode.Upvalue:
@@ -251,14 +318,20 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.IndexL:
                             instructionPtr = ExecIndex(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.IndexSet:
                         case OpCode.IndexSetN:
                         case OpCode.IndexSetL:
                             instructionPtr = ExecIndexSet(i, instructionPtr);
                             if (instructionPtr == YIELD_SPECIAL_TRAP)
+                            {
                                 goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.Invalid:
                             throw new NotImplementedException(
@@ -276,11 +349,17 @@ namespace NovaSharp.Interpreter.Execution.VM
                 DynValue yieldRequest = m_ValueStack.Pop().ToScalar();
 
                 if (m_CanYield)
+                {
                     return yieldRequest;
+                }
                 else if (this.State == CoroutineState.Main)
+                {
                     throw ScriptRuntimeException.CannotYieldMain();
+                }
                 else
+                {
                     throw ScriptRuntimeException.CannotYield();
+                }
             }
             catch (InterpreterException ex)
             {
@@ -305,14 +384,16 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 for (int i = 0; i < m_ExecutionStack.Count; i++)
                 {
-                    var c = m_ExecutionStack.Peek(i);
+                    CallStackItem c = m_ExecutionStack.Peek(i);
 
                     if (c.ErrorHandlerBeforeUnwind != null)
+                    {
                         ex.DecoratedMessage = PerformMessageDecorationBeforeUnwind(
                             c.ErrorHandlerBeforeUnwind,
                             ex.DecoratedMessage,
                             GetCurrentSourceRef(instructionPtr)
                         );
+                    }
                 }
 
                 while (m_ExecutionStack.Count > 0)
@@ -325,11 +406,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                         if (csi.ClrFunction == null)
                         {
-                            var argscnt = (int)(m_ValueStack.Pop().Number);
+                            int argscnt = (int)(m_ValueStack.Pop().Number);
                             m_ValueStack.RemoveLast(argscnt + 1);
                         }
 
-                        var cbargs = new DynValue[] { DynValue.NewString(ex.DecoratedMessage) };
+                        DynValue[] cbargs = new DynValue[]
+                        {
+                            DynValue.NewString(ex.DecoratedMessage),
+                        };
 
                         DynValue handled = csi.ErrorHandler.Invoke(
                             new ScriptExecutionContext(
@@ -376,11 +460,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 }
                 else if (messageHandler.Type == DataType.ClrFunction)
                 {
-                    ScriptExecutionContext ctx = new ScriptExecutionContext(
-                        this,
-                        messageHandler.Callback,
-                        sourceRef
-                    );
+                    ScriptExecutionContext ctx = new(this, messageHandler.Callback, sourceRef);
                     ret = messageHandler.Callback.Invoke(ctx, args);
                 }
                 else
@@ -390,7 +470,9 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 string newmsg = ret.ToPrintString();
                 if (newmsg != null)
+                {
                     return newmsg;
+                }
             }
             catch (ScriptRuntimeException innerEx)
             {
@@ -402,11 +484,13 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private void AssignLocal(SymbolRef symref, DynValue value)
         {
-            var stackframe = m_ExecutionStack.Peek();
+            CallStackItem stackframe = m_ExecutionStack.Peek();
 
             DynValue v = stackframe.LocalScope[symref.i_Index];
             if (v == null)
+            {
                 stackframe.LocalScope[symref.i_Index] = v = DynValue.NewNil();
+            }
 
             v.Assign(value);
         }
@@ -424,11 +508,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue value = GetStoreValue(i);
             SymbolRef symref = i.Symbol;
 
-            var stackframe = m_ExecutionStack.Peek();
+            CallStackItem stackframe = m_ExecutionStack.Peek();
 
             DynValue v = stackframe.ClosureScope[symref.i_Index];
             if (v == null)
+            {
                 stackframe.ClosureScope[symref.i_Index] = v = DynValue.NewNil();
+            }
 
             v.Assign(value);
         }
@@ -461,7 +547,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private void ExecClosure(Instruction i)
         {
-            Closure c = new Closure(
+            Closure c = new(
                 this.m_Script,
                 i.NumVal,
                 i.SymbolList,
@@ -474,23 +560,29 @@ namespace NovaSharp.Interpreter.Execution.VM
         private DynValue GetUpvalueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
+            {
                 return m_ExecutionStack.Peek().LocalScope[s.i_Index];
+            }
             else if (s.Type == SymbolRefType.Upvalue)
+            {
                 return m_ExecutionStack.Peek().ClosureScope[s.i_Index];
+            }
             else
+            {
                 throw new Exception("unsupported symbol type");
+            }
         }
 
         private void ExecMkTuple(Instruction i)
         {
-            Slice<DynValue> slice = new Slice<DynValue>(
+            Slice<DynValue> slice = new(
                 m_ValueStack,
                 m_ValueStack.Count - i.NumVal,
                 i.NumVal,
                 false
             );
 
-            var v = Internal_AdjustTuple(slice);
+            DynValue[] v = Internal_AdjustTuple(slice);
 
             m_ValueStack.RemoveLast(i.NumVal);
 
@@ -501,9 +593,13 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             double? v = m_ValueStack.Pop().ToScalar().CastToNumber();
             if (v.HasValue)
+            {
                 m_ValueStack.Push(DynValue.NewNumber(v.Value));
+            }
             else
+            {
                 throw ScriptRuntimeException.ConvertToNumberFailed(i.NumVal);
+            }
         }
 
         private void ExecIterUpd(Instruction i)
@@ -520,7 +616,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             if (t.Type == DataType.Tuple)
             {
                 for (int idx = 0; idx < t.Tuple.Length; idx++)
+                {
                     m_ValueStack.Push(t.Tuple[idx]);
+                }
             }
             else
             {
@@ -552,9 +650,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                 if (meta != null && !meta.IsNil())
                 {
                     if (meta.Type != DataType.Tuple)
+                    {
                         v = this.GetScript().Call(meta, f, s, var);
+                    }
                     else
+                    {
                         v = meta;
+                    }
 
                     f = v.Tuple.Length >= 1 ? v.Tuple[0] : DynValue.Nil;
                     s = v.Tuple.Length >= 2 ? v.Tuple[1] : DynValue.Nil;
@@ -587,9 +689,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             bool whileCond = (step > 0) ? val <= stop : val >= stop;
 
             if (!whileCond)
+            {
                 return i.NumVal;
+            }
             else
+            {
                 return instructionPtr;
+            }
         }
 
         private void ExecIncr(Instruction i)
@@ -602,7 +708,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 m_ValueStack.Pop();
 
                 if (top.ReadOnly)
+                {
                     top = top.CloneAsWritable();
+                }
 
                 m_ValueStack.Push(top);
             }
@@ -616,12 +724,18 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue not = m_ValueStack.Pop().ToScalar();
 
             if (not.Type != DataType.Boolean)
+            {
                 throw new InternalErrorException("CNOT had non-bool arg");
+            }
 
             if (not.CastToBool())
+            {
                 m_ValueStack.Push(DynValue.NewBoolean(!(v.CastToBool())));
+            }
             else
+            {
                 m_ValueStack.Push(DynValue.NewBoolean(v.CastToBool()));
+            }
         }
 
         private void ExecNot(Instruction i)
@@ -642,17 +756,22 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private CallStackItem PopToBasePointer()
         {
-            var csi = m_ExecutionStack.Pop();
+            CallStackItem csi = m_ExecutionStack.Pop();
             if (csi.BasePointer >= 0)
+            {
                 m_ValueStack.CropAtCount(csi.BasePointer);
+            }
+
             return csi;
         }
 
         private int PopExecStackAndCheckVStack(int vstackguard)
         {
-            var xs = m_ExecutionStack.Pop();
+            CallStackItem xs = m_ExecutionStack.Pop();
             if (vstackguard != xs.BasePointer)
+            {
                 throw new InternalErrorException("StackGuard violation");
+            }
 
             return xs.ReturnAddress;
         }
@@ -660,19 +779,25 @@ namespace NovaSharp.Interpreter.Execution.VM
         private IList<DynValue> CreateArgsListForFunctionCall(int numargs, int offsFromTop)
         {
             if (numargs == 0)
+            {
                 return new DynValue[0];
+            }
 
             DynValue lastParam = m_ValueStack.Peek(offsFromTop);
 
             if (lastParam.Type == DataType.Tuple && lastParam.Tuple.Length > 1)
             {
-                List<DynValue> values = new List<DynValue>();
+                List<DynValue> values = new();
 
                 for (int idx = 0; idx < numargs - 1; idx++)
+                {
                     values.Add(m_ValueStack.Peek(numargs - idx - 1 + offsFromTop));
+                }
 
                 for (int idx = 0; idx < lastParam.Tuple.Length; idx++)
+                {
                     values.Add(lastParam.Tuple[idx]);
+                }
 
                 return values;
             }
@@ -692,7 +817,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             int numargs = (int)m_ValueStack.Peek(0).Number;
 
             // unpacks last tuple arguments to simplify a lot of code down under
-            var argsList = CreateArgsListForFunctionCall(numargs, 1);
+            IList<DynValue> argsList = CreateArgsListForFunctionCall(numargs, 1);
 
             for (int i = 0; i < I.SymbolList.Length; i++)
             {
@@ -805,7 +930,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     }
                 );
 
-                var ret = fn.Callback.Invoke(
+                DynValue ret = fn.Callback.Invoke(
                     new ScriptExecutionContext(this, fn.Callback, sref),
                     args,
                     isMethodCall: thisCall
@@ -838,18 +963,22 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             // fallback to __call metamethod
-            var m = GetMetamethod(fn, "__call");
+            DynValue m = GetMetamethod(fn, "__call");
 
             if (m != null && m.IsNotNil())
             {
                 DynValue[] tmp = new DynValue[argsCount + 1];
                 for (int i = 0; i < argsCount + 1; i++)
+                {
                     tmp[i] = m_ValueStack.Pop();
+                }
 
                 m_ValueStack.Push(m);
 
                 for (int i = argsCount; i >= 0; i--)
+                {
                     m_ValueStack.Push(tmp[i]);
+                }
 
                 return Internal_ExecCall(argsCount + 1, instructionPtr, handler, continuation);
             }
@@ -863,17 +992,21 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             // Remove all cur args and func ptr
             for (int i = 0; i <= argsCount; i++)
+            {
                 args[i] = m_ValueStack.Pop();
+            }
 
             // perform a fake RET
             CallStackItem csi = PopToBasePointer();
             int retpoint = csi.ReturnAddress;
-            var argscnt = (int)(m_ValueStack.Pop().Number);
+            int argscnt = (int)(m_ValueStack.Pop().Number);
             m_ValueStack.RemoveLast(argscnt + 1);
 
             // Re-push all cur args and func ptr
             for (int i = argsCount; i >= 0; i--)
+            {
                 m_ValueStack.Push(args[i]);
+            }
 
             return retpoint;
         }
@@ -887,16 +1020,16 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 csi = PopToBasePointer();
                 retpoint = csi.ReturnAddress;
-                var argscnt = (int)(m_ValueStack.Pop().Number);
+                int argscnt = (int)(m_ValueStack.Pop().Number);
                 m_ValueStack.RemoveLast(argscnt + 1);
                 m_ValueStack.Push(DynValue.Void);
             }
             else if (i.NumVal == 1)
             {
-                var retval = m_ValueStack.Pop();
+                DynValue retval = m_ValueStack.Pop();
                 csi = PopToBasePointer();
                 retpoint = csi.ReturnAddress;
-                var argscnt = (int)(m_ValueStack.Pop().Number);
+                int argscnt = (int)(m_ValueStack.Pop().Number);
                 m_ValueStack.RemoveLast(argscnt + 1);
                 m_ValueStack.Push(retval);
                 retpoint = Internal_CheckForTailRequests(i, retpoint);
@@ -907,12 +1040,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             if (csi.Continuation != null)
+            {
                 m_ValueStack.Push(
                     csi.Continuation.Invoke(
                         new ScriptExecutionContext(this, csi.Continuation, i.SourceCodeRef),
                         new DynValue[1] { m_ValueStack.Pop() }
                     )
                 );
+            }
 
             return retpoint;
         }
@@ -930,7 +1065,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 m_ValueStack.Push(tcd.Function);
 
                 for (int ii = 0; ii < tcd.Args.Length; ii++)
+                {
                     m_ValueStack.Push(tcd.Args[ii]);
+                }
 
                 return Internal_ExecCall(
                     tcd.Args.Length,
@@ -956,7 +1093,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue op = m_ValueStack.Pop().ToScalar();
 
             if (op.CastToBool() == expectedValueForJump)
+            {
                 return i.NumVal;
+            }
 
             return instructionPtr;
         }
@@ -995,9 +1134,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__add", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1018,9 +1161,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__sub", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1041,9 +1188,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__mul", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1059,7 +1210,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 double mod = Math.IEEERemainder(ln.Value, rn.Value);
                 if (mod < 0)
+                {
                     mod += rn.Value;
+                }
+
                 m_ValueStack.Push(DynValue.NewNumber(mod));
                 return instructionPtr;
             }
@@ -1067,9 +1221,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__mod", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1090,9 +1248,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__div", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1113,9 +1275,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__pow", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
             }
         }
 
@@ -1133,9 +1299,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeUnaryMetaMethod(r, "__unm", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(r);
+                }
             }
         }
 
@@ -1156,7 +1326,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
             }
 
             // then if types are different, ret false
@@ -1166,9 +1338,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                     (l.Type == DataType.Nil && r.Type == DataType.Void)
                     || (l.Type == DataType.Void && r.Type == DataType.Nil)
                 )
+                {
                     m_ValueStack.Push(DynValue.True);
+                }
                 else
+                {
                     m_ValueStack.Push(DynValue.False);
+                }
 
                 return instructionPtr;
             }
@@ -1182,7 +1358,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
             }
 
             // else perform standard comparison
@@ -1207,9 +1385,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__lt", instructionPtr);
                 if (ip < 0)
+                {
                     throw ScriptRuntimeException.CompareInvalidType(l, r);
+                }
                 else
+                {
                     return ip;
+                }
             }
 
             return instructionPtr;
@@ -1250,12 +1432,18 @@ namespace NovaSharp.Interpreter.Execution.VM
                     );
 
                     if (ip < 0)
+                    {
                         throw ScriptRuntimeException.CompareInvalidType(l, r);
+                    }
                     else
+                    {
                         return ip;
+                    }
                 }
                 else
+                {
                     return ip;
+                }
             }
 
             return instructionPtr;
@@ -1266,16 +1454,24 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue r = m_ValueStack.Pop().ToScalar();
 
             if (r.Type == DataType.String)
+            {
                 m_ValueStack.Push(DynValue.NewNumber(r.String.Length));
+            }
             else
             {
                 int ip = Internal_InvokeUnaryMetaMethod(r, "__len", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else if (r.Type == DataType.Table)
+                {
                     m_ValueStack.Push(DynValue.NewNumber(r.Table.Length));
+                }
                 else
+                {
                     throw ScriptRuntimeException.LenOnInvalidType(r);
+                }
             }
 
             return instructionPtr;
@@ -1298,9 +1494,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 int ip = Internal_InvokeBinaryMetaMethod(l, r, "__concat", instructionPtr);
                 if (ip >= 0)
+                {
                     return ip;
+                }
                 else
+                {
                     throw ScriptRuntimeException.ConcatOnNonString(l, r);
+                }
             }
         }
 
@@ -1311,7 +1511,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue tbl = m_ValueStack.Peek();
 
             if (tbl.Type != DataType.Table)
+            {
                 throw new InternalErrorException("Unexpected type in table ctor : {0}", tbl);
+            }
 
             tbl.Table.InitNextArrayKeys(val, i.NumVal != 0);
         }
@@ -1324,7 +1526,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue tbl = m_ValueStack.Peek();
 
             if (tbl.Type != DataType.Table)
+            {
                 throw new InternalErrorException("Unexpected type in table ctor : {0}", tbl);
+            }
 
             tbl.Table.Set(key, val.ToScalar());
         }
@@ -1340,7 +1544,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue originalIdx = i.Value ?? m_ValueStack.Pop();
             DynValue idx = originalIdx.ToScalar();
             DynValue obj = m_ValueStack.Pop().ToScalar();
-            var value = GetStoreValue(i);
+            DynValue value = GetStoreValue(i);
             DynValue h = null;
 
             while (nestedMetaOps > 0)
@@ -1363,9 +1567,11 @@ namespace NovaSharp.Interpreter.Execution.VM
                     if (h == null || h.IsNil())
                     {
                         if (isMultiIndex)
+                        {
                             throw new ScriptRuntimeException(
                                 "cannot multi-index a table. userdata expected"
                             );
+                        }
 
                         obj.Table.Set(idx, value);
                         return instructionPtr;
@@ -1398,15 +1604,20 @@ namespace NovaSharp.Interpreter.Execution.VM
                     h = GetMetamethodRaw(obj, "__newindex");
 
                     if (h == null || h.IsNil())
+                    {
                         throw ScriptRuntimeException.IndexType(obj);
+                    }
                 }
 
                 if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
                 {
                     if (isMultiIndex)
+                    {
                         throw new ScriptRuntimeException(
                             "cannot multi-index through metamethods. userdata expected"
                         );
+                    }
+
                     m_ValueStack.Pop(); // burn extra value ?
 
                     m_ValueStack.Push(h);
@@ -1447,7 +1658,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 {
                     if (!isMultiIndex)
                     {
-                        var v = obj.Table.Get(idx);
+                        DynValue v = obj.Table.Get(idx);
 
                         if (!v.IsNil())
                         {
@@ -1461,9 +1672,11 @@ namespace NovaSharp.Interpreter.Execution.VM
                     if (h == null || h.IsNil())
                     {
                         if (isMultiIndex)
+                        {
                             throw new ScriptRuntimeException(
                                 "cannot multi-index a table. userdata expected"
                             );
+                        }
 
                         m_ValueStack.Push(DynValue.Nil);
                         return instructionPtr;
@@ -1473,7 +1686,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 {
                     UserData ud = obj.UserData;
 
-                    var v = ud.Descriptor.Index(
+                    DynValue v = ud.Descriptor.Index(
                         this.GetScript(),
                         ud.Object,
                         originalIdx,
@@ -1496,15 +1709,20 @@ namespace NovaSharp.Interpreter.Execution.VM
                     h = GetMetamethodRaw(obj, "__index");
 
                     if (h == null || h.IsNil())
+                    {
                         throw ScriptRuntimeException.IndexType(obj);
+                    }
                 }
 
                 if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
                 {
                     if (isMultiIndex)
+                    {
                         throw new ScriptRuntimeException(
                             "cannot multi-index through metamethods. userdata expected"
                         );
+                    }
+
                     m_ValueStack.Push(h);
                     m_ValueStack.Push(obj);
                     m_ValueStack.Push(idx);

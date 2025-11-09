@@ -100,15 +100,25 @@ namespace NovaSharp.Interpreter.Platforms
             mode = mode.Replace("b", "");
 
             if (mode == "r")
+            {
                 return FileAccess.Read;
+            }
             else if (mode == "r+")
+            {
                 return FileAccess.ReadWrite;
+            }
             else if (mode == "w")
+            {
                 return FileAccess.Write;
+            }
             else if (mode == "w+")
+            {
                 return FileAccess.ReadWrite;
+            }
             else
+            {
                 return FileAccess.ReadWrite;
+            }
         }
 
         /// <summary>
@@ -121,15 +131,25 @@ namespace NovaSharp.Interpreter.Platforms
             mode = mode.Replace("b", "");
 
             if (mode == "r")
+            {
                 return FileMode.Open;
+            }
             else if (mode == "r+")
+            {
                 return FileMode.OpenOrCreate;
+            }
             else if (mode == "w")
+            {
                 return FileMode.Create;
+            }
             else if (mode == "w+")
+            {
                 return FileMode.Truncate;
+            }
             else
+            {
                 return FileMode.Append;
+            }
         }
 
         /// <summary>
@@ -266,10 +286,7 @@ namespace NovaSharp.Interpreter.Platforms
         public override int OS_Execute(string cmdline)
         {
             // This is windows only!
-            ProcessStartInfo psi = new ProcessStartInfo(
-                "cmd.exe",
-                string.Format("/C {0}", cmdline)
-            );
+            ProcessStartInfo psi = new("cmd.exe", string.Format("/C {0}", cmdline));
             psi.ErrorDialog = false;
 
             Process proc = Process.Start(psi);

@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
-using NovaSharp.Interpreter;
 
 namespace NovaSharp.RemoteDebugger.Network
 {
@@ -17,9 +12,9 @@ namespace NovaSharp.RemoteDebugger.Network
     public class HttpServer : IDisposable
     {
         Utf8TcpServer m_Server;
-        Dictionary<string, List<string>> m_HttpData = new Dictionary<string, List<string>>();
-        Dictionary<string, HttpResource> m_Resources = new Dictionary<string, HttpResource>();
-        object m_Lock = new object();
+        Dictionary<string, List<string>> m_HttpData = new();
+        Dictionary<string, HttpResource> m_Resources = new();
+        object m_Lock = new();
 
         const string ERROR_TEMPLATE =
             "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>{0}</title></head><body><h1>{0}</h1>{1}<hr><address>NovaSharp Remote Debugger / {2}</address></body></html><!-- This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. -->";
@@ -114,7 +109,9 @@ namespace NovaSharp.RemoteDebugger.Network
             peer.Send("Cache-Control: max-age=0, no-cache");
 
             foreach (string h in extraHeaders)
+            {
                 peer.Send(h);
+            }
 
             peer.Send("");
             peer.SendBinary(data);
@@ -188,17 +185,23 @@ namespace NovaSharp.RemoteDebugger.Network
             );
 
             if (parts.Length < 3)
+            {
                 return;
+            }
 
             if (parts[1] != "Basic")
+            {
                 return;
+            }
 
             byte[] credentialBytes = Convert.FromBase64String(parts[2]);
             string credentialString = Encoding.UTF8.GetString(credentialBytes);
             string[] credentials = credentialString.Split(new char[] { ':' }, 2);
 
             if (credentials.Length != 2)
+            {
                 return;
+            }
 
             user = credentials[0];
             password = credentials[1];
@@ -212,10 +215,14 @@ namespace NovaSharp.RemoteDebugger.Network
             );
 
             if (parts.Length < 2)
+            {
                 return null;
+            }
 
             if (parts[0] != "GET")
+            {
                 return null;
+            }
 
             string uri = parts[1];
 
@@ -230,7 +237,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 string[] tuples = macroparts[1]
                     .Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
 
-                Dictionary<string, string> args = new Dictionary<string, string>();
+                Dictionary<string, string> args = new();
                 foreach (string t in tuples)
                 {
                     ParseArgument(t, args);
@@ -245,15 +252,21 @@ namespace NovaSharp.RemoteDebugger.Network
             string[] parts = t.Split(new char[] { '=' }, 2);
 
             if (parts.Length == 2)
+            {
                 args.Add(parts[0], parts[1]);
+            }
             else
+            {
                 args.Add(t, null);
+            }
         }
 
         private HttpResource GetResourceFromUri(string uri, Dictionary<string, string> args)
         {
             if (uri != "/")
+            {
                 uri = uri.TrimEnd('/');
+            }
 
             HttpResource ret;
             if (m_Resources.TryGetValue(uri, out ret))
@@ -261,7 +274,10 @@ namespace NovaSharp.RemoteDebugger.Network
                 if (ret.Type == HttpResourceType.Callback)
                 {
                     if (args == null)
+                    {
                         args = new Dictionary<string, string>();
+                    }
+
                     args.Add("?", uri);
                     return ret.Callback(args);
                 }
@@ -279,7 +295,9 @@ namespace NovaSharp.RemoteDebugger.Network
             lock (m_Lock)
             {
                 if (m_HttpData.ContainsKey(e.Peer.Id))
+                {
                     m_HttpData.Remove(e.Peer.Id);
+                }
             }
         }
 

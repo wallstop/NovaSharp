@@ -54,7 +54,9 @@ namespace NovaSharp.Interpreter.Tests
         public void Test(string whichTest = null, string[] testsToSkip = null)
         {
             foreach (TestResult tr in IterateOnTests(whichTest, testsToSkip))
+            {
                 loggerAction(tr);
+            }
         }
 
         public IEnumerable<TestResult> IterateOnTests(
@@ -63,10 +65,12 @@ namespace NovaSharp.Interpreter.Tests
             Type[] types = null
         )
         {
-            HashSet<string> skipList = new HashSet<string>();
+            HashSet<string> skipList = new();
 
             if (testsToSkip != null)
+            {
                 skipList.UnionWith(testsToSkip);
+            }
 
             Assembly asm = Framework.Do.GetAssembly(typeof(TestRunner));
 
@@ -98,12 +102,14 @@ namespace NovaSharp.Interpreter.Tests
                 foreach (MethodInfo mi in tests)
                 {
                     if (whichTest != null && mi.Name != whichTest)
+                    {
                         continue;
+                    }
 
                     if (skipList.Contains(mi.Name))
                     {
                         ++Skipped;
-                        TestResult trs = new TestResult()
+                        TestResult trs = new()
                         {
                             TestName = mi.Name,
                             Message = "skipped (skip-list)",
@@ -118,11 +124,17 @@ namespace NovaSharp.Interpreter.Tests
                     if (tr.Type != TestResultType.Message)
                     {
                         if (tr.Type == TestResultType.Fail)
+                        {
                             ++Fail;
+                        }
                         else if (tr.Type == TestResultType.Ok)
+                        {
                             ++Ok;
+                        }
                         else
+                        {
                             ++Skipped;
+                        }
 
                         ++Total;
                     }
@@ -239,7 +251,7 @@ namespace NovaSharp.Interpreter.Tests
 
         private static string BuildExceptionMessage(Exception ex)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (Exception e = ex; e != null; e = e.InnerException)
             {
@@ -253,7 +265,9 @@ namespace NovaSharp.Interpreter.Tests
         internal static void Skip()
         {
             if (TestRunner.IsRunning)
+            {
                 throw new SkipThisTestException();
+            }
         }
     }
 }

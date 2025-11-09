@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -82,9 +77,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<Transform>();
             UserData.RegisterType<Vector3>();
 
-            Script S = new Script();
+            Script S = new();
 
-            Transform T = new Transform();
+            Transform T = new();
 
             T.position.X = 3;
 

@@ -31,7 +31,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue[] a = new DynValue[args.Count - 1];
 
             for (int i = 1; i < args.Count; i++)
+            {
                 a[i - 1] = args[i];
+            }
 
             if (args[0].Type == DataType.ClrFunction)
             {
@@ -44,10 +46,12 @@ namespace NovaSharp.Interpreter.CoreLib
                             ret.TailCallData.Continuation != null
                             || ret.TailCallData.ErrorHandler != null
                         )
+                        {
                             throw new ScriptRuntimeException(
                                 "the function passed to {0} cannot be called directly by {0}. wrap in a script function instead.",
                                 funcName
                             );
+                        }
 
                         return DynValue.NewTailCallReq(
                             new TailCallData()
@@ -108,7 +112,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue[] rets = new DynValue[args.Count + 1];
 
             for (int i = 0; i < args.Count; i++)
+            {
                 rets[i + 1] = args[i];
+            }
 
             rets[0] = DynValue.NewBoolean(retstatus);
 
@@ -137,12 +143,14 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            List<DynValue> a = new List<DynValue>();
+            List<DynValue> a = new();
 
             for (int i = 0; i < args.Count; i++)
             {
                 if (i != 1)
+                {
                     a.Add(args[i]);
+                }
             }
 
             DynValue handler = null;

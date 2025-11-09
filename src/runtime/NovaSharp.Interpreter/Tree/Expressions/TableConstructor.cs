@@ -6,9 +6,8 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     class TableConstructor : Expression
     {
         bool m_Shared = false;
-        List<Expression> m_PositionalValues = new List<Expression>();
-        List<KeyValuePair<Expression, Expression>> m_CtorArgs =
-            new List<KeyValuePair<Expression, Expression>>();
+        List<Expression> m_PositionalValues = new();
+        List<KeyValuePair<Expression, Expression>> m_CtorArgs = new();
 
         public TableConstructor(ScriptLoadingContext lcontext, bool shared)
             : base(lcontext)
@@ -27,9 +26,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                             Token assign = lcontext.Lexer.PeekNext();
 
                             if (assign.Type == TokenType.Op_Assignment)
+                            {
                                 StructField(lcontext);
+                            }
                             else
+                            {
                                 ArrayField(lcontext);
+                            }
                         }
                         break;
                     case TokenType.Brk_Open_Square:
@@ -95,7 +98,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             bc.Emit_NewTable(m_Shared);
 
-            foreach (var kvp in m_CtorArgs)
+            foreach (KeyValuePair<Expression, Expression> kvp in m_CtorArgs)
             {
                 kvp.Key.Compile(bc);
                 kvp.Value.Compile(bc);

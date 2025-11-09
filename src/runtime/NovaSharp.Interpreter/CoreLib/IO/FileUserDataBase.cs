@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     {
         public DynValue lines(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            List<DynValue> readLines = new List<DynValue>();
+            List<DynValue> readLines = new();
 
             DynValue readValue = null;
 
@@ -32,14 +32,16 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 string str = ReadLine();
 
                 if (str == null)
+                {
                     return DynValue.Nil;
+                }
 
                 str = str.TrimEnd('\n', '\r');
                 return DynValue.NewString(str);
             }
             else
             {
-                List<DynValue> rets = new List<DynValue>();
+                List<DynValue> rets = new();
 
                 for (int i = 0; i < args.Count; i++)
                 {
@@ -48,7 +50,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     if (args[i].Type == DataType.Number)
                     {
                         if (Eof())
+                        {
                             return DynValue.Nil;
+                        }
 
                         int howmany = (int)args[i].Number;
 
@@ -68,9 +72,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                             double? d = ReadNumber();
 
                             if (d.HasValue)
+                            {
                                 v = DynValue.NewNumber(d.Value);
+                            }
                             else
+                            {
                                 v = DynValue.Nil;
+                            }
                         }
                         else if (opt.StartsWith("*a"))
                         {
@@ -134,9 +142,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 string msg = Close();
                 if (msg == null)
+                {
                     return DynValue.True;
+                }
                 else
+                {
                     return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(msg));
+                }
             }
             catch (ScriptRuntimeException)
             {
@@ -165,7 +177,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     chr += c;
                 }
                 else
+                {
                     break;
+                }
             }
 
             double d;
@@ -183,19 +197,27 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         private bool IsNumericChar(char c, string numAsFar)
         {
             if (char.IsDigit(c))
+            {
                 return true;
+            }
 
             if (c == '-')
+            {
                 return numAsFar.Length == 0;
+            }
 
             if (c == '.')
+            {
                 return !Framework.Do.StringContainsChar(numAsFar, '.');
+            }
 
             if (c == 'E' || c == 'e')
+            {
                 return !(
                     Framework.Do.StringContainsChar(numAsFar, 'E')
                     || Framework.Do.StringContainsChar(numAsFar, 'e')
                 );
+            }
 
             return false;
         }
@@ -217,9 +239,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         public override string ToString()
         {
             if (isopen())
+            {
                 return string.Format("file ({0:X8})", base.ReferenceID);
+            }
             else
+            {
                 return "file (closed)";
+            }
         }
     }
 }

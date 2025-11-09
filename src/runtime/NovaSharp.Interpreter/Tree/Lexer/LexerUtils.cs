@@ -13,7 +13,9 @@ namespace NovaSharp.Interpreter.Tree
             string txt = T.Text;
             double res;
             if (!double.TryParse(txt, NumberStyles.Float, CultureInfo.InvariantCulture, out res))
+            {
                 throw new SyntaxErrorException(T, "malformed number near '{0}'", txt);
+            }
 
             return res;
         }
@@ -22,10 +24,12 @@ namespace NovaSharp.Interpreter.Tree
         {
             string txt = T.Text;
             if ((txt.Length < 2) || (txt[0] != '0' && (char.ToUpper(txt[1]) != 'X')))
+            {
                 throw new InternalErrorException(
                     "hex numbers must start with '0x' near '{0}'.",
                     txt
                 );
+            }
 
             ulong res;
 
@@ -37,7 +41,9 @@ namespace NovaSharp.Interpreter.Tree
                     out res
                 )
             )
+            {
                 throw new SyntaxErrorException(T, "malformed number near '{0}'", txt);
+            }
 
             return (double)res;
         }
@@ -73,10 +79,12 @@ namespace NovaSharp.Interpreter.Tree
             try
             {
                 if ((s.Length < 2) || (s[0] != '0' && (char.ToUpper(s[1]) != 'X')))
+                {
                     throw new InternalErrorException(
                         "hex float must start with '0x' near '{0}'",
                         s
                     );
+                }
 
                 s = s.Substring(2);
 
@@ -97,7 +105,9 @@ namespace NovaSharp.Interpreter.Tree
                 if (s.Length > 0 && char.ToUpper(s[0]) == 'P')
                 {
                     if (s.Length == 1)
+                    {
                         throw new SyntaxErrorException(T, "invalid hex float format near '{0}'", s);
+                    }
 
                     s = s.Substring(s[1] == '+' ? 2 : 1);
 
@@ -118,13 +128,21 @@ namespace NovaSharp.Interpreter.Tree
         public static int HexDigit2Value(char c)
         {
             if (c >= '0' && c <= '9')
+            {
                 return c - '0';
+            }
             else if (c >= 'A' && c <= 'F')
+            {
                 return 10 + (c - 'A');
+            }
             else if (c >= 'a' && c <= 'f')
+            {
                 return 10 + (c - 'a');
+            }
             else
+            {
                 throw new InternalErrorException("invalid hex digit near '{0}'", c);
+            }
         }
 
         public static bool CharIsDigit(char c)
@@ -152,9 +170,13 @@ namespace NovaSharp.Interpreter.Tree
         public static string AdjustLuaLongString(string str)
         {
             if (str.StartsWith("\r\n"))
+            {
                 str = str.Substring(2);
+            }
             else if (str.StartsWith("\n"))
+            {
                 str = str.Substring(1);
+            }
 
             return str;
         }
@@ -162,9 +184,11 @@ namespace NovaSharp.Interpreter.Tree
         public static string UnescapeLuaString(Token token, string str)
         {
             if (!Framework.Do.StringContainsChar(str, '\\'))
+            {
                 return str;
+            }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             bool escape = false;
             bool hex = false;
@@ -276,18 +300,22 @@ namespace NovaSharp.Interpreter.Tree
                             val = val + c;
                         }
                         else
+                        {
                             throw new SyntaxErrorException(
                                 token,
                                 "invalid escape sequence near '\\{0}'",
                                 c
                             );
+                        }
                     }
                     else
                     {
                         if (unicode_state == 1)
                         {
                             if (c != '{')
+                            {
                                 throw new SyntaxErrorException(token, "'{' expected near '\\u'");
+                            }
 
                             unicode_state = 2;
                         }
@@ -357,11 +385,13 @@ namespace NovaSharp.Interpreter.Tree
                                 int i = int.Parse(val, CultureInfo.InvariantCulture);
 
                                 if (i > 255)
+                                {
                                     throw new SyntaxErrorException(
                                         token,
                                         "decimal escape too large near '\\{0}'",
                                         val
                                     );
+                                }
 
                                 sb.Append(ConvertUtf32ToChar(i));
 
@@ -369,7 +399,9 @@ namespace NovaSharp.Interpreter.Tree
                                 escape = false;
 
                                 if (!CharIsDigit(c))
+                                {
                                     goto redo;
+                                }
                             }
                         }
                     }

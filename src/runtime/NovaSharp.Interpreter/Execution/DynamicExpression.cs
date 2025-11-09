@@ -41,7 +41,9 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(context.GetScript());
 
             if (m_Constant != null)
+            {
                 return m_Constant;
+            }
 
             return m_Exp.Eval(context);
         }
@@ -56,9 +58,13 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(context.GetScript());
 
             if (m_Exp != null)
+            {
                 return m_Exp.FindDynamic(context);
+            }
             else
+            {
                 return null;
+            }
         }
 
         /// <summary>
@@ -101,7 +107,9 @@ namespace NovaSharp.Interpreter
             DynamicExpression o = obj as DynamicExpression;
 
             if (o == null)
+            {
                 return false;
+            }
 
             return o.ExpressionCode == this.ExpressionCode;
         }

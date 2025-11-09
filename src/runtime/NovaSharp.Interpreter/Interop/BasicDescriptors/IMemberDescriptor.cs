@@ -120,10 +120,14 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         )
         {
             if (desc == null)
+            {
                 return null;
+            }
 
             if (desc.MemberAccess.HasAllFlags(access))
+            {
                 return desc;
+            }
 
             return null;
         }
@@ -143,25 +147,33 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         )
         {
             if (!desc.IsStatic && obj == null)
+            {
                 throw ScriptRuntimeException.AccessInstanceMemberOnStatics(desc);
+            }
 
             if (access.HasAllFlags(MemberDescriptorAccess.CanExecute) && !desc.CanExecute())
+            {
                 throw new ScriptRuntimeException(
                     "userdata member {0} cannot be called.",
                     desc.Name
                 );
+            }
 
             if (access.HasAllFlags(MemberDescriptorAccess.CanWrite) && !desc.CanWrite())
+            {
                 throw new ScriptRuntimeException(
                     "userdata member {0} cannot be assigned to.",
                     desc.Name
                 );
+            }
 
             if (access.HasAllFlags(MemberDescriptorAccess.CanRead) && !desc.CanRead())
+            {
                 throw new ScriptRuntimeException(
                     "userdata member {0} cannot be read from.",
                     desc.Name
                 );
+            }
         }
     }
 }

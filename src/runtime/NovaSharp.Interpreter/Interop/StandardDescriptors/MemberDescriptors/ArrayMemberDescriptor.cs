@@ -66,13 +66,13 @@ namespace NovaSharp.Interpreter.Interop
 
             if (this.Parameters != null)
             {
-                var pars = DynValue.NewPrimeTable();
+                DynValue pars = DynValue.NewPrimeTable();
 
                 t.Set("params", pars);
 
                 int i = 0;
 
-                foreach (var p in Parameters)
+                foreach (ParameterDescriptor p in Parameters)
                 {
                     DynValue pt = DynValue.NewPrimeTable();
                     pars.Table.Set(++i, pt);
@@ -86,7 +86,9 @@ namespace NovaSharp.Interpreter.Interop
             int[] indices = new int[count];
 
             for (int i = 0; i < count; i++)
+            {
                 indices[i] = args.AsInt(i, "userdata_array_indexer");
+            }
 
             return indices;
         }

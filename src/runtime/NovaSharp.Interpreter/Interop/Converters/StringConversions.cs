@@ -16,13 +16,21 @@ namespace NovaSharp.Interpreter.Interop.Converters
         internal static StringSubtype GetStringSubtype(Type desiredType)
         {
             if (desiredType == typeof(string))
+            {
                 return StringSubtype.String;
+            }
             else if (desiredType == typeof(StringBuilder))
+            {
                 return StringSubtype.StringBuilder;
+            }
             else if (desiredType == typeof(char))
+            {
                 return StringSubtype.Char;
+            }
             else
+            {
                 return StringSubtype.None;
+            }
         }
 
         internal static object ConvertString(
@@ -40,7 +48,10 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     return new StringBuilder(str);
                 case StringSubtype.Char:
                     if (!string.IsNullOrEmpty(str))
+                    {
                         return str[0];
+                    }
+
                     break;
                 case StringSubtype.None:
                 default:

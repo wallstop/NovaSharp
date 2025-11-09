@@ -51,7 +51,9 @@ namespace NovaSharp.Interpreter.CoreLib
             int exitCode = 0;
 
             if (v_exitCode.IsNotNil())
+            {
                 exitCode = (int)v_exitCode.Number;
+            }
 
             Script.GlobalOptions.Platform.OS_ExitFast(exitCode);
 
@@ -69,9 +71,13 @@ namespace NovaSharp.Interpreter.CoreLib
             string val = Script.GlobalOptions.Platform.GetEnvironmentVariable(varName.String);
 
             if (val == null)
+            {
                 return DynValue.Nil;
+            }
             else
+            {
                 return DynValue.NewString(val);
+            }
         }
 
         [NovaSharpModuleMethod]

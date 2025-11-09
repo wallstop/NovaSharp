@@ -25,7 +25,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             m_Stack = new List<DynValue>(16);
 
             for (int i = 0; i < args.Count; i++)
+            {
                 m_Stack.Add(args[i]);
+            }
 
             FunctionName = functionName;
         }
@@ -38,10 +40,14 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         public DynValue At(int pos)
         {
             if (pos < 0)
+            {
                 pos = m_Stack.Count + pos + 1;
+            }
 
             if (pos > m_Stack.Count)
+            {
                 return DynValue.Void;
+            }
 
             return m_Stack[pos - 1];
         }
@@ -58,7 +64,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         public DynValue Pop()
         {
-            var v = Top();
+            DynValue v = Top();
             m_Stack.RemoveAt(m_Stack.Count - 1);
             return v;
         }
@@ -68,7 +74,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             DynValue[] rets = new DynValue[num];
 
             for (int i = 0; i < num; i++)
+            {
                 rets[num - i - 1] = Top(i);
+            }
 
             return rets;
         }
@@ -76,9 +84,13 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         public DynValue GetReturnValue(int retvals)
         {
             if (retvals == 0)
+            {
                 return DynValue.Nil;
+            }
             else if (retvals == 1)
+            {
                 return Top();
+            }
             else
             {
                 DynValue[] rets = GetTopArray(retvals);
@@ -89,7 +101,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         public void Discard(int nargs)
         {
             for (int i = 0; i < nargs; i++)
+            {
                 m_Stack.RemoveAt(m_Stack.Count - 1);
+            }
         }
     }
 }

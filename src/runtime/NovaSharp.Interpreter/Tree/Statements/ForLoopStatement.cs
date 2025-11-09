@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             bc.PushSourceRef(m_RefFor);
 
-            Loop L = new Loop() { Scope = m_StackFrame };
+            Loop L = new() { Scope = m_StackFrame };
 
             bc.LoopTracker.Loops.Push(L);
 
@@ -66,7 +66,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.Emit_ToNum(1);
 
             int start = bc.GetJumpPointForNextInstruction();
-            var jumpend = bc.Emit_Jump(OpCode.JFor, -1);
+            Instruction jumpend = bc.Emit_Jump(OpCode.JFor, -1);
             bc.Emit_Enter(m_StackFrame);
             //bc.Emit_SymStorN(m_VarName);
 
@@ -87,7 +87,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
             foreach (Instruction i in L.BreakJumps)
+            {
                 i.NumVal = exitpoint;
+            }
 
             jumpend.NumVal = exitpoint;
             bc.Emit_Pop(3);

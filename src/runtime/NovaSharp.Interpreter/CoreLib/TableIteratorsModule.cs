@@ -77,9 +77,13 @@ namespace NovaSharp.Interpreter.CoreLib
             TablePair? pair = table.Table.NextKey(index);
 
             if (pair.HasValue)
+            {
                 return DynValue.NewTuple(pair.Value.Key, pair.Value.Value);
+            }
             else
+            {
                 throw new ScriptRuntimeException("invalid key to 'next'");
+            }
         }
 
         // __next_i (table [, index])

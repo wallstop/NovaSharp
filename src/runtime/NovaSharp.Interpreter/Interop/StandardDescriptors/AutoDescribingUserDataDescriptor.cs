@@ -52,7 +52,9 @@ namespace NovaSharp.Interpreter
             IUserDataType u = obj as IUserDataType;
 
             if (u != null)
+            {
                 return u.Index(script, index, isDirectIndexing);
+            }
 
             return null;
         }
@@ -77,7 +79,9 @@ namespace NovaSharp.Interpreter
             IUserDataType u = obj as IUserDataType;
 
             if (u != null)
+            {
                 return u.SetIndex(script, index, value, isDirectIndexing);
+            }
 
             return false;
         }
@@ -90,9 +94,13 @@ namespace NovaSharp.Interpreter
         public string AsString(object obj)
         {
             if (obj != null)
+            {
                 return obj.ToString();
+            }
             else
+            {
                 return null;
+            }
         }
 
         /// <summary>
@@ -114,7 +122,9 @@ namespace NovaSharp.Interpreter
             IUserDataType u = obj as IUserDataType;
 
             if (u != null)
+            {
                 return u.MetaIndex(script, metaname);
+            }
 
             return null;
         }

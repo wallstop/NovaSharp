@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             public static void UnCalled()
             {
-                var otc = new OverloadsTestClass();
+                OverloadsTestClass otc = new();
                 otc.Method1();
                 OverloadsTestClass.Method1(false);
             }
@@ -94,9 +94,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected, bool tupleExpected = false)
         {
-            Script S = new Script();
+            Script S = new();
 
-            OverloadsTestClass obj = new OverloadsTestClass();
+            OverloadsTestClass obj = new();
 
             UserData.RegisterType<OverloadsTestClass>();
 

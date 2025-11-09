@@ -7,7 +7,9 @@ namespace NovaSharp.Interpreter.Execution.VM
         private DynValue[] Internal_AdjustTuple(IList<DynValue> values)
         {
             if (values == null || values.Count == 0)
+            {
                 return new DynValue[0];
+            }
 
             if (values[values.Count - 1].Type == DataType.Tuple)
             {
@@ -25,9 +27,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                 }
 
                 if (result[result.Length - 1].Type == DataType.Tuple)
+                {
                     return Internal_AdjustTuple(result);
+                }
                 else
+                {
                     return result;
+                }
             }
             else
             {
@@ -57,13 +63,15 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (m == null)
             {
-                var op1_MetaTable = GetMetatable(op1);
+                Table op1_MetaTable = GetMetatable(op1);
 
                 if (op1_MetaTable != null)
                 {
                     DynValue meta1 = op1_MetaTable.RawGet(eventName);
                     if (meta1 != null && meta1.IsNotNil())
+                    {
                         m = meta1;
+                    }
                 }
             }
 
@@ -87,12 +95,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue extraPush = null
         )
         {
-            var m = GetBinaryMetamethod(l, r, eventName);
+            DynValue m = GetBinaryMetamethod(l, r, eventName);
 
             if (m != null)
             {
                 if (extraPush != null)
+                {
                     m_ValueStack.Push(extraPush);
+                }
 
                 m_ValueStack.Push(m);
                 m_ValueStack.Push(l);

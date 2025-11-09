@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -22,13 +18,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class RegCollMethods
         {
-            List<RegCollItem> m_Items = new List<RegCollItem>()
+            List<RegCollItem> m_Items = new()
             {
                 new RegCollItem(7),
                 new RegCollItem(8),
                 new RegCollItem(9),
             };
-            List<int> m_List = new List<int>() { 1, 2, 3 };
+            List<int> m_List = new() { 1, 2, 3 };
             int[] m_Array = new int[3] { 2, 4, 6 };
             int[,] m_MultiArray = new int[2, 3]
             {
@@ -78,9 +74,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 UserData.RegisterType<int[]>();
                 UserData.RegisterType<int[,]>();
 
-                Script s = new Script();
+                Script s = new();
 
-                var obj = new RegCollMethods();
+                RegCollMethods obj = new();
                 s.Globals["o"] = obj;
                 s.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
 

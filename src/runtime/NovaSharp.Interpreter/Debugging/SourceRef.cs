@@ -101,18 +101,26 @@ namespace NovaSharp.Interpreter.Debugging
             const int PER_LINE_FACTOR = 1600; // we avoid computing real lines length and approximate with heuristics..
 
             if (sourceIdx != SourceIdx)
+            {
                 return int.MaxValue;
+            }
 
             if (FromLine == ToLine)
             {
                 if (line == FromLine)
                 {
                     if (col >= FromChar && col <= ToChar)
+                    {
                         return 0;
+                    }
                     else if (col < FromChar)
+                    {
                         return FromChar - col;
+                    }
                     else
+                    {
                         return col - ToChar;
+                    }
                 }
                 else
                 {
@@ -122,16 +130,24 @@ namespace NovaSharp.Interpreter.Debugging
             else if (line == FromLine)
             {
                 if (col < FromChar)
+                {
                     return FromChar - col;
+                }
                 else
+                {
                     return 0;
+                }
             }
             else if (line == ToLine)
             {
                 if (col > ToChar)
+                {
                     return col - ToChar;
+                }
                 else
+                {
                     return 0;
+                }
             }
             else if (line > FromLine && line < ToLine)
             {
@@ -157,14 +173,24 @@ namespace NovaSharp.Interpreter.Debugging
         public bool IncludesLocation(int sourceIdx, int line, int col)
         {
             if (sourceIdx != SourceIdx || line < FromLine || line > ToLine)
+            {
                 return false;
+            }
 
             if (FromLine == ToLine)
+            {
                 return col >= FromChar && col <= ToChar;
+            }
+
             if (line == FromLine)
+            {
                 return col >= FromChar;
+            }
+
             if (line == ToLine)
+            {
                 return col <= ToChar;
+            }
 
             return true;
         }
@@ -190,7 +216,9 @@ namespace NovaSharp.Interpreter.Debugging
             SourceCode sc = script.GetSourceCode(this.SourceIdx);
 
             if (this.IsClrLocation)
+            {
                 return "[clr]";
+            }
 
             if (script.Options.UseLuaErrorLocations || forceClassicFormat)
             {

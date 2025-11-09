@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.IO
     /// </summary>
     public class BinDumpBinaryWriter : BinaryWriter
     {
-        Dictionary<string, int> m_StringMap = new Dictionary<string, int>();
+        Dictionary<string, int> m_StringMap = new();
 
         public BinDumpBinaryWriter(Stream s)
             : base(s) { }

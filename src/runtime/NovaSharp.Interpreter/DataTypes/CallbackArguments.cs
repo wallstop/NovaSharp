@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter
 
             if (m_Args.Count > 0)
             {
-                var last = m_Args[m_Args.Count - 1];
+                DynValue last = m_Args[m_Args.Count - 1];
 
                 if (last.Type == DataType.Tuple)
                 {
@@ -79,19 +79,29 @@ namespace NovaSharp.Interpreter
             DynValue v;
 
             if (index >= m_Count)
+            {
                 return null;
+            }
 
             if (!m_LastIsTuple || index < m_Args.Count - 1)
+            {
                 v = m_Args[index];
+            }
             else
+            {
                 v = m_Args[m_Args.Count - 1].Tuple[index - (m_Args.Count - 1)];
+            }
 
             if (v.Type == DataType.Tuple)
             {
                 if (v.Tuple.Length > 0)
+                {
                     v = v.Tuple[0];
+                }
                 else
+                {
                     v = DynValue.Nil;
+                }
             }
 
             if (translateVoids && v.Type == DataType.Void)
@@ -110,12 +120,16 @@ namespace NovaSharp.Interpreter
         public DynValue[] GetArray(int skip = 0)
         {
             if (skip >= m_Count)
+            {
                 return new DynValue[0];
+            }
 
             DynValue[] vals = new DynValue[m_Count - skip];
 
             for (int i = skip; i < m_Count; i++)
+            {
                 vals[i - skip] = this[i];
+            }
 
             return vals;
         }
@@ -208,15 +222,17 @@ namespace NovaSharp.Interpreter
                 && (this[argNum].Table.MetaTable.RawGet("__tostring") != null)
             )
             {
-                var v = executionContext
+                DynValue v = executionContext
                     .GetScript()
                     .Call(this[argNum].Table.MetaTable.RawGet("__tostring"), this[argNum]);
 
                 if (v.Type != DataType.String)
+                {
                     throw new ScriptRuntimeException(
                         "'tostring' must return a string to '{0}'",
                         funcName
                     );
+                }
 
                 return v.ToPrintString();
             }
@@ -235,11 +251,13 @@ namespace NovaSharp.Interpreter
         {
             if (this.IsMethodCall)
             {
-                Slice<DynValue> slice = new Slice<DynValue>(m_Args, 1, m_Args.Count - 1, false);
+                Slice<DynValue> slice = new(m_Args, 1, m_Args.Count - 1, false);
                 return new CallbackArguments(slice, false);
             }
             else
+            {
                 return this;
+            }
         }
     }
 }

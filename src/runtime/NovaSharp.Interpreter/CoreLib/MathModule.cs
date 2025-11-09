@@ -90,9 +90,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 DynValue arg = args.AsType(i, funcName, DataType.Number, false);
 
                 if (i == 0)
+                {
                     accum = arg.Number;
+                }
                 else
+                {
                     accum = func(accum, arg.Number);
+                }
             }
 
             return DynValue.NewNumber(accum);
@@ -234,7 +238,9 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             if (negative)
+            {
                 m = -m;
+            }
 
             return DynValue.NewTuple(DynValue.NewNumber(m), DynValue.NewNumber(e));
         }
@@ -309,9 +315,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 int b = (int)m.Number;
 
                 if (a < b)
+                {
                     d = R.Next(a, b + 1);
+                }
                 else
+                {
                     d = R.Next(b, a + 1);
+                }
             }
 
             return DynValue.NewNumber(d);
@@ -324,7 +334,7 @@ namespace NovaSharp.Interpreter.CoreLib
         )
         {
             DynValue arg = args.AsType(0, "randomseed", DataType.Number, false);
-            var script = executionContext.GetScript();
+            Script script = executionContext.GetScript();
             SetRandom(script, new Random((int)arg.Number));
             return DynValue.Nil;
         }

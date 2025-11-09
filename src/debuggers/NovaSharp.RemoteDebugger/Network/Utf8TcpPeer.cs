@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 
 namespace NovaSharp.RemoteDebugger.Network
 {
@@ -89,6 +83,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 } while (dataReceived);
 
                 if (m_Socket.Connected)
+                {
                     m_Socket.BeginReceive(
                         m_RecvBuffer,
                         m_PrevSize,
@@ -97,6 +92,7 @@ namespace NovaSharp.RemoteDebugger.Network
                         OnDataReceived,
                         null
                     );
+                }
             }
             catch (SocketException ex)
             {

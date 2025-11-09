@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Debugging
         {
             Refs = new List<SourceRef>();
 
-            List<string> lines = new List<string>();
+            List<string> lines = new();
 
             Name = name;
             Code = code;
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Debugging
                 return Lines[sourceCodeRef.FromLine].Substring(from, to - from);
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (int i = sourceCodeRef.FromLine; i <= sourceCodeRef.ToLine; i++)
             {

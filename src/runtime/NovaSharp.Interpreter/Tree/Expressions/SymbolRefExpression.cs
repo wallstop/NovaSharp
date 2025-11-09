@@ -17,17 +17,23 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 m_Ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
 
                 if (!lcontext.Scope.CurrentFunctionHasVarArgs())
+                {
                     throw new SyntaxErrorException(T, "cannot use '...' outside a vararg function");
+                }
 
                 if (lcontext.IsDynamicExpression)
+                {
                     throw new DynamicExpressionException(
                         "cannot use '...' in a dynamic expression."
                     );
+                }
             }
             else
             {
                 if (!lcontext.IsDynamicExpression)
+                {
                     m_Ref = lcontext.Scope.Find(m_VarName);
+                }
             }
 
             lcontext.Lexer.Next();

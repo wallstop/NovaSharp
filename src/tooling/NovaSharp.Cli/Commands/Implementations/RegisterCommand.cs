@@ -33,13 +33,17 @@ namespace NovaSharp.Commands.Implementations
             {
                 Type t = Type.GetType(argument);
                 if (t == null)
+                {
                     Console.WriteLine("Type {0} not found.", argument);
+                }
                 else
+                {
                     UserData.RegisterType(t);
+                }
             }
             else
             {
-                foreach (var type in UserData.GetRegisteredTypes())
+                foreach (Type? type in UserData.GetRegisteredTypes())
                 {
                     Console.WriteLine(type.FullName);
                 }

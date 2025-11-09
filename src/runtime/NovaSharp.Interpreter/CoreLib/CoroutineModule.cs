@@ -18,7 +18,9 @@ namespace NovaSharp.Interpreter.CoreLib
         )
         {
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
+            {
                 args.AsType(0, "create", DataType.Function); // this throws
+            }
 
             return executionContext.GetScript().CreateCoroutine(args[0]);
         }
@@ -27,7 +29,9 @@ namespace NovaSharp.Interpreter.CoreLib
         public static DynValue wrap(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
+            {
                 args.AsType(0, "wrap", DataType.Function); // this throws
+            }
 
             DynValue v = create(executionContext, args);
             DynValue c = DynValue.NewCallback(__wrap_wrapper);
@@ -56,14 +60,14 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 DynValue ret = handle.Coroutine.Resume(args.GetArray(1));
 
-                List<DynValue> retval = new List<DynValue>();
+                List<DynValue> retval = new();
                 retval.Add(DynValue.True);
 
                 if (ret.Type == DataType.Tuple)
                 {
                     for (int i = 0; i < ret.Tuple.Length; i++)
                     {
-                        var v = ret.Tuple[i];
+                        DynValue v = ret.Tuple[i];
 
                         if ((i == ret.Tuple.Length - 1) && (v.Type == DataType.Tuple))
                         {

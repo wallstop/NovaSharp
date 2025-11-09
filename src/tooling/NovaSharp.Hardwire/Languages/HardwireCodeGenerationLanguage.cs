@@ -1,10 +1,5 @@
-using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace NovaSharp.Hardwire.Languages
 {
@@ -40,7 +35,7 @@ namespace NovaSharp.Hardwire.Languages
 
         protected string ExpressionToString(CodeExpression exp)
         {
-            using (StringWriter sourceWriter = new StringWriter())
+            using (StringWriter sourceWriter = new())
             {
                 CodeDomProvider.GenerateCodeFromExpression(
                     exp,

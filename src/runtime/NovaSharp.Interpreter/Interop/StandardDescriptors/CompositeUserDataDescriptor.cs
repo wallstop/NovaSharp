@@ -66,7 +66,9 @@ namespace NovaSharp.Interpreter.Interop
                 DynValue v = dd.Index(script, obj, index, isNameIndex);
 
                 if (v != null)
+                {
                     return v;
+                }
             }
             return null;
         }
@@ -91,7 +93,9 @@ namespace NovaSharp.Interpreter.Interop
             foreach (IUserDataDescriptor dd in m_Descriptors)
             {
                 if (dd.SetIndex(script, obj, index, value, isNameIndex))
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -127,7 +131,9 @@ namespace NovaSharp.Interpreter.Interop
                 DynValue v = dd.MetaIndex(script, obj, metaname);
 
                 if (v != null)
+                {
                     return v;
+                }
             }
             return null;
         }

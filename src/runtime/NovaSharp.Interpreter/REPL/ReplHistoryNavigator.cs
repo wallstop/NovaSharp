@@ -43,12 +43,19 @@ namespace NovaSharp.Interpreter.REPL
         public string HistoryPrev()
         {
             if (m_Navi == -1)
+            {
                 m_Navi = m_Last;
+            }
             else
+            {
                 m_Navi = ((m_Navi - 1) + m_History.Length) % m_History.Length;
+            }
 
             if (m_Navi >= 0)
+            {
                 return m_History[m_Navi];
+            }
+
             return null;
         }
 
@@ -58,12 +65,19 @@ namespace NovaSharp.Interpreter.REPL
         public string HistoryNext()
         {
             if (m_Navi == -1)
+            {
                 return null;
+            }
             else
+            {
                 m_Navi = (m_Navi + 1) % m_History.Length;
+            }
 
             if (m_Navi >= 0)
+            {
                 return m_History[m_Navi];
+            }
+
             return null;
         }
     }

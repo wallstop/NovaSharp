@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -11,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class IndexerTestClass
         {
-            Dictionary<int, int> mymap = new Dictionary<int, int>();
+            Dictionary<int, int> mymap = new();
 
             public int this[int idx]
             {
@@ -36,9 +32,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void IndexerTest(string code, int expected)
         {
-            Script S = new Script();
+            Script S = new();
 
-            IndexerTestClass obj = new IndexerTestClass();
+            IndexerTestClass obj = new();
 
             UserData.RegisterType<IndexerTestClass>();
 

@@ -34,15 +34,18 @@ namespace NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         internal static object DynValueToObject(DynValue value)
         {
-            var converter = Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
-                value.Type,
-                typeof(System.Object)
-            );
+            Func<DynValue, object> converter =
+                Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
+                    value.Type,
+                    typeof(System.Object)
+                );
             if (converter != null)
             {
-                var v = converter(value);
+                object v = converter(value);
                 if (v != null)
+                {
                     return v;
+                }
             }
 
             switch (value.Type)
@@ -64,11 +67,17 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     return value.Tuple;
                 case DataType.UserData:
                     if (value.UserData.Object != null)
+                    {
                         return value.UserData.Object;
+                    }
                     else if (value.UserData.Descriptor != null)
+                    {
                         return value.UserData.Descriptor.Type;
+                    }
                     else
+                    {
                         return null;
+                    }
                 case DataType.ClrFunction:
                     return value.Callback;
                 default:
@@ -87,24 +96,33 @@ namespace NovaSharp.Interpreter.Interop.Converters
         )
         {
             if (desiredType.IsByRef)
+            {
                 desiredType = desiredType.GetElementType();
+            }
 
-            var converter = Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
-                value.Type,
-                desiredType
-            );
+            Func<DynValue, object> converter =
+                Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
+                    value.Type,
+                    desiredType
+                );
             if (converter != null)
             {
-                var v = converter(value);
+                object v = converter(value);
                 if (v != null)
+                {
                     return v;
+                }
             }
 
             if (desiredType == typeof(DynValue))
+            {
                 return value;
+            }
 
             if (desiredType == typeof(object))
+            {
                 return DynValueToObject(value);
+            }
 
             StringConversions.StringSubtype stringSubType = StringConversions.GetStringSubtype(
                 desiredType
@@ -124,18 +142,27 @@ namespace NovaSharp.Interpreter.Interop.Converters
             {
                 case DataType.Void:
                     if (isOptional)
+                    {
                         return defaultValue;
+                    }
                     else if ((!Framework.Do.IsValueType(desiredType)) || (nullableType != null))
+                    {
                         return null;
+                    }
+
                     break;
                 case DataType.Nil:
                     if (Framework.Do.IsValueType(desiredType))
                     {
                         if (nullableType != null)
+                        {
                             return null;
+                        }
 
                         if (isOptional)
+                        {
                             return defaultValue;
+                        }
                     }
                     else
                     {
@@ -144,9 +171,15 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     break;
                 case DataType.Boolean:
                     if (desiredType == typeof(bool))
+                    {
                         return value.Boolean;
+                    }
+
                     if (stringSubType != StringConversions.StringSubtype.None)
+                    {
                         str = value.Boolean.ToString();
+                    }
+
                     break;
                 case DataType.Number:
                     if (Framework.Do.IsEnum(desiredType))
@@ -158,42 +191,65 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     {
                         object d = NumericConversions.DoubleToType(desiredType, value.Number);
                         if (d.GetType() == desiredType)
+                        {
                             return d;
+                        }
+
                         break;
                     }
                     if (stringSubType != StringConversions.StringSubtype.None)
+                    {
                         str = value.Number.ToString(CultureInfo.InvariantCulture);
+                    }
+
                     break;
                 case DataType.String:
                     if (stringSubType != StringConversions.StringSubtype.None)
+                    {
                         str = value.String;
+                    }
+
                     break;
                 case DataType.Function:
                     if (desiredType == typeof(Closure))
+                    {
                         return value.Function;
+                    }
                     else if (desiredType == typeof(ScriptFunctionDelegate))
+                    {
                         return value.Function.GetDelegate();
+                    }
+
                     break;
                 case DataType.ClrFunction:
                     if (desiredType == typeof(CallbackFunction))
+                    {
                         return value.Callback;
+                    }
                     else if (
                         desiredType
                         == typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
                     )
+                    {
                         return value.Callback.ClrCallback;
+                    }
+
                     break;
                 case DataType.UserData:
                     if (value.UserData.Object != null)
                     {
-                        var udObj = value.UserData.Object;
-                        var udDesc = value.UserData.Descriptor;
+                        object udObj = value.UserData.Object;
+                        IUserDataDescriptor udDesc = value.UserData.Descriptor;
 
                         if (udDesc.IsTypeCompatible(desiredType, udObj))
+                        {
                             return udObj;
+                        }
 
                         if (stringSubType != StringConversions.StringSubtype.None)
+                        {
                             str = udDesc.AsString(udObj);
+                        }
                     }
                     break;
                 case DataType.Table:
@@ -201,12 +257,16 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         desiredType == typeof(Table)
                         || Framework.Do.IsAssignableFrom(desiredType, typeof(Table))
                     )
+                    {
                         return value.Table;
+                    }
                     else
                     {
                         object o = TableConversions.ConvertTableToType(value.Table, desiredType);
                         if (o != null)
+                        {
                             return o;
+                        }
                     }
                     break;
                 case DataType.Tuple:
@@ -214,7 +274,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             }
 
             if (stringSubType != StringConversions.StringSubtype.None && str != null)
+            {
                 return StringConversions.ConvertString(stringSubType, str, desiredType, value.Type);
+            }
 
             throw ScriptRuntimeException.ConvertObjectFailed(value.Type, desiredType);
         }
@@ -231,21 +293,29 @@ namespace NovaSharp.Interpreter.Interop.Converters
         )
         {
             if (desiredType.IsByRef)
+            {
                 desiredType = desiredType.GetElementType();
+            }
 
-            var customConverter =
+            Func<DynValue, object> customConverter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
                     value.Type,
                     desiredType
                 );
             if (customConverter != null)
+            {
                 return WEIGHT_CUSTOM_CONVERTER_MATCH;
+            }
 
             if (desiredType == typeof(DynValue))
+            {
                 return WEIGHT_EXACT_MATCH;
+            }
 
             if (desiredType == typeof(object))
+            {
                 return WEIGHT_EXACT_MATCH;
+            }
 
             StringConversions.StringSubtype stringSubType = StringConversions.GetStringSubtype(
                 desiredType
@@ -264,18 +334,27 @@ namespace NovaSharp.Interpreter.Interop.Converters
             {
                 case DataType.Void:
                     if (isOptional)
+                    {
                         return WEIGHT_VOID_WITH_DEFAULT;
+                    }
                     else if ((!Framework.Do.IsValueType(desiredType)) || (nullableType != null))
+                    {
                         return WEIGHT_VOID_WITHOUT_DEFAULT;
+                    }
+
                     break;
                 case DataType.Nil:
                     if (Framework.Do.IsValueType(desiredType))
                     {
                         if (nullableType != null)
+                        {
                             return WEIGHT_NIL_TO_NULLABLE;
+                        }
 
                         if (isOptional)
+                        {
                             return WEIGHT_NIL_WITH_DEFAULT;
+                        }
                     }
                     else
                     {
@@ -284,9 +363,15 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     break;
                 case DataType.Boolean:
                     if (desiredType == typeof(bool))
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
+
                     if (stringSubType != StringConversions.StringSubtype.None)
+                    {
                         return WEIGHT_BOOL_TO_STRING;
+                    }
+
                     break;
                 case DataType.Number:
                     if (Framework.Do.IsEnum(desiredType))
@@ -294,44 +379,71 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         return WEIGHT_NUMBER_TO_ENUM;
                     }
                     if (NumericConversions.NumericTypes.Contains(desiredType))
+                    {
                         return GetNumericTypeWeight(desiredType);
+                    }
+
                     if (stringSubType != StringConversions.StringSubtype.None)
+                    {
                         return WEIGHT_NUMBER_TO_STRING;
+                    }
+
                     break;
                 case DataType.String:
                     if (stringSubType == StringConversions.StringSubtype.String)
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
                     else if (stringSubType == StringConversions.StringSubtype.StringBuilder)
+                    {
                         return WEIGHT_STRING_TO_STRINGBUILDER;
+                    }
                     else if (stringSubType == StringConversions.StringSubtype.Char)
+                    {
                         return WEIGHT_STRING_TO_CHAR;
+                    }
+
                     break;
                 case DataType.Function:
                     if (desiredType == typeof(Closure))
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
                     else if (desiredType == typeof(ScriptFunctionDelegate))
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
+
                     break;
                 case DataType.ClrFunction:
                     if (desiredType == typeof(CallbackFunction))
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
                     else if (
                         desiredType
                         == typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
                     )
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
+
                     break;
                 case DataType.UserData:
                     if (value.UserData.Object != null)
                     {
-                        var udObj = value.UserData.Object;
-                        var udDesc = value.UserData.Descriptor;
+                        object udObj = value.UserData.Object;
+                        IUserDataDescriptor udDesc = value.UserData.Descriptor;
 
                         if (udDesc.IsTypeCompatible(desiredType, udObj))
+                        {
                             return WEIGHT_EXACT_MATCH;
+                        }
 
                         if (stringSubType != StringConversions.StringSubtype.None)
+                        {
                             return WEIGHT_USERDATA_TO_STRING;
+                        }
                     }
                     break;
                 case DataType.Table:
@@ -339,9 +451,14 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         desiredType == typeof(Table)
                         || Framework.Do.IsAssignableFrom(desiredType, typeof(Table))
                     )
+                    {
                         return WEIGHT_EXACT_MATCH;
+                    }
                     else if (TableConversions.CanConvertTableToType(value.Table, desiredType))
+                    {
                         return WEIGHT_TABLE_CONVERSION;
+                    }
+
                     break;
                 case DataType.Tuple:
                     break;
@@ -353,9 +470,13 @@ namespace NovaSharp.Interpreter.Interop.Converters
         private static int GetNumericTypeWeight(Type desiredType)
         {
             if (desiredType == typeof(double) || desiredType == typeof(decimal))
+            {
                 return WEIGHT_EXACT_MATCH;
+            }
             else
+            {
                 return WEIGHT_NUMBER_DOWNCAST;
+            }
         }
     }
 }

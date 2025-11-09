@@ -1,4 +1,3 @@
-using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.REPL;
 using NUnit.Framework;
 
@@ -10,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ClassicPromptReflectsPendingState()
         {
-            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete));
+            ReplInterpreter interpreter = new(new Script(CoreModules.Preset_Complete));
             Assert.That(interpreter.ClassicPrompt, Is.EqualTo(">"));
 
             interpreter.Evaluate("function foo()");
@@ -21,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateSupportsClassicExpressionSyntax()
         {
-            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete))
+            ReplInterpreter interpreter = new(new Script(CoreModules.Preset_Complete))
             {
                 HandleClassicExprsSyntax = true,
             };
@@ -34,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateSupportsDynamicExpressionSyntax()
         {
-            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete))
+            ReplInterpreter interpreter = new(new Script(CoreModules.Preset_Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -50,7 +49,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateReturnsNullWhenAwaitingMoreInput()
         {
-            var interpreter = new ReplInterpreter(new Script(CoreModules.Preset_Complete));
+            ReplInterpreter interpreter = new(new Script(CoreModules.Preset_Complete));
 
             DynValue first = interpreter.Evaluate("function foo()");
             Assert.That(first, Is.Null);

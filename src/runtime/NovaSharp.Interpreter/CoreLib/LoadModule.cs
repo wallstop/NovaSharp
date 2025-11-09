@@ -85,14 +85,20 @@ namespace NovaSharp.Interpreter.CoreLib
                     {
                         DynValue ret = executionContext.GetScript().Call(ld);
                         if (ret.Type == DataType.String && ret.String.Length > 0)
+                        {
                             script += ret.String;
+                        }
                         else if (ret.IsNil())
+                        {
                             break;
+                        }
                         else
+                        {
                             return DynValue.NewTuple(
                                 DynValue.Nil,
                                 DynValue.NewString("reader function must return a string")
                             );
+                        }
                     }
                 }
                 else if (ld.Type == DataType.String)
@@ -180,7 +186,9 @@ namespace NovaSharp.Interpreter.CoreLib
             Table env = executionContext.CurrentGlobalEnv;
 
             if (env == null)
+            {
                 throw new ScriptRuntimeException("current environment cannot be backtracked.");
+            }
 
             return env;
         }

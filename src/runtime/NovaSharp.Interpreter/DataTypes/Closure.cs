@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Shortcut for an empty closure
         /// </summary>
-        private static ClosureContext emptyClosure = new ClosureContext();
+        private static ClosureContext emptyClosure = new();
 
         /// <summary>
         /// The current closure context
@@ -68,9 +68,13 @@ namespace NovaSharp.Interpreter
             EntryPointByteCodeLocation = idx;
 
             if (symbols.Length > 0)
+            {
                 ClosureContext = new ClosureContext(symbols, resolvedLocals);
+            }
             else
+            {
                 ClosureContext = emptyClosure;
+            }
         }
 
         /// <summary>
@@ -162,11 +166,17 @@ namespace NovaSharp.Interpreter
             int count = GetUpvaluesCount();
 
             if (count == 0)
+            {
                 return UpvaluesType.None;
+            }
             else if (count == 1 && GetUpvalueName(0) == WellKnownSymbols.ENV)
+            {
                 return UpvaluesType.Environment;
+            }
             else
+            {
                 return UpvaluesType.Closure;
+            }
         }
     }
 }

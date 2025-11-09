@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Execution;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -26,8 +21,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				
 				return recsum(10, 0)";
 
-            Script S = new Script();
-            var res = S.DoString(script);
+            Script S = new();
+            DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
             Assert.AreEqual(55, res.Number);
@@ -50,8 +45,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				
 				return recsum(70000, 0)";
 
-            Script S = new Script();
-            var res = S.DoString(script);
+            Script S = new();
+            DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
             Assert.AreEqual(2450035000.0, res.Number);
@@ -68,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return clrtail(9)";
 
-            Script S = new Script();
+            Script S = new();
 
             S.Globals.Set(
                 "clrtail",
@@ -83,7 +78,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            var res = S.DoString(script);
+            DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
             Assert.AreEqual(468, res.Number);
@@ -96,8 +91,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"
 				return tostring(9)";
 
-            Script S = new Script(CoreModules.Basic);
-            var res = S.DoString(script);
+            Script S = new(CoreModules.Basic);
+            DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.String, res.Type);
             Assert.AreEqual("9", res.String);
@@ -120,8 +115,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return (s);";
 
-            Script S = new Script();
-            var res = S.DoString(script);
+            Script S = new();
+            DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.String, res.Type);
             Assert.AreEqual("ciao", res.String);

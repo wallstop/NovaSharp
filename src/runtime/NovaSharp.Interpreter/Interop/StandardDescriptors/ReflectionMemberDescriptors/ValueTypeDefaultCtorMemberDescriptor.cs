@@ -71,7 +71,9 @@ namespace NovaSharp.Interpreter.Interop
         public ValueTypeDefaultCtorMemberDescriptor(Type valueType)
         {
             if (!Framework.Do.IsValueType(valueType))
+            {
                 throw new ArgumentException("valueType is not a value type");
+            }
 
             this.Name = "__new";
             this.Parameters = new ParameterDescriptor[0];

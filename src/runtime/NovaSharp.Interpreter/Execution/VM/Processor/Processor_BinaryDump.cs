@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (stream.Length >= 8)
             {
-                using (BinaryReader br = new BinaryReader(stream, Encoding.UTF8))
+                using (BinaryReader br = new(stream, Encoding.UTF8))
                 {
                     ulong magic = br.ReadUInt64();
                     stream.Seek(-8, SeekOrigin.Current);
@@ -31,12 +31,14 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             using (BinaryWriter bw = new BinDumpBinaryWriter(stream, Encoding.UTF8))
             {
-                Dictionary<SymbolRef, int> symbolMap = new Dictionary<SymbolRef, int>();
+                Dictionary<SymbolRef, int> symbolMap = new();
 
                 Instruction meta = FindMeta(ref baseAddress);
 
                 if (meta == null)
+                {
                     throw new ArgumentException("baseAddress");
+                }
 
                 bw.Write(DUMP_CHUNK_MAGIC);
                 bw.Write(DUMP_CHUNK_VERSION);
@@ -53,17 +55,25 @@ namespace NovaSharp.Interpreter.Execution.VM
                         .GetSymbolReferences(out symbolList, out symbol);
 
                     if (symbol != null)
+                    {
                         AddSymbolToMap(symbolMap, symbol);
+                    }
 
                     if (symbolList != null)
-                        foreach (var s in symbolList)
+                    {
+                        foreach (SymbolRef s in symbolList)
+                        {
                             AddSymbolToMap(symbolMap, s);
+                        }
+                    }
                 }
 
                 foreach (SymbolRef sr in symbolMap.Keys.ToArray())
                 {
                     if (sr.i_Env != null)
+                    {
                         AddSymbolToMap(symbolMap, sr.i_Env);
+                    }
                 }
 
                 SymbolRef[] allSymbols = new SymbolRef[symbolMap.Count];
@@ -76,13 +86,19 @@ namespace NovaSharp.Interpreter.Execution.VM
                 bw.Write(symbolMap.Count);
 
                 foreach (SymbolRef sym in allSymbols)
+                {
                     sym.WriteBinary(bw);
+                }
 
                 foreach (SymbolRef sym in allSymbols)
+                {
                     sym.WriteBinaryEnv(bw, symbolMap);
+                }
 
                 for (int i = 0; i <= meta.NumVal; i++)
+                {
                     m_RootChunk.Code[baseAddress + i].WriteBinary(bw, baseAddress, symbolMap);
+                }
 
                 return meta.NumVal + baseAddress + 1;
             }
@@ -91,25 +107,31 @@ namespace NovaSharp.Interpreter.Execution.VM
         private void AddSymbolToMap(Dictionary<SymbolRef, int> symbolMap, SymbolRef s)
         {
             if (!symbolMap.ContainsKey(s))
+            {
                 symbolMap.Add(s, symbolMap.Count);
+            }
         }
 
         internal int Undump(Stream stream, int sourceID, Table envTable, out bool hasUpvalues)
         {
             int baseAddress = m_RootChunk.Code.Count;
-            SourceRef sourceRef = new SourceRef(sourceID, 0, 0, 0, 0, false);
+            SourceRef sourceRef = new(sourceID, 0, 0, 0, 0, false);
 
             using (BinaryReader br = new BinDumpBinaryReader(stream, Encoding.UTF8))
             {
                 ulong headerMark = br.ReadUInt64();
 
                 if (headerMark != DUMP_CHUNK_MAGIC)
+                {
                     throw new ArgumentException("Not a NovaSharp chunk");
+                }
 
                 int version = br.ReadInt32();
 
                 if (version != DUMP_CHUNK_VERSION)
+                {
                     throw new ArgumentException("Invalid version");
+                }
 
                 hasUpvalues = br.ReadBoolean();
 
@@ -119,10 +141,14 @@ namespace NovaSharp.Interpreter.Execution.VM
                 SymbolRef[] allSymbs = new SymbolRef[numSymbs];
 
                 for (int i = 0; i < numSymbs; i++)
+                {
                     allSymbs[i] = SymbolRef.ReadBinary(br);
+                }
 
                 for (int i = 0; i < numSymbs; i++)
+                {
                     allSymbs[i].ReadBinaryEnv(br, allSymbs);
+                }
 
                 for (int i = 0; i <= len; i++)
                 {

@@ -5,6 +5,8 @@ using NovaSharp.Interpreter.Interop.RegistrationPolicies;
 
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System.Collections;
+
     internal static class ClrToScriptConversions
     {
         /// <summary>
@@ -15,24 +17,36 @@ namespace NovaSharp.Interpreter.Interop.Converters
         internal static DynValue TryObjectToTrivialDynValue(Script script, object obj)
         {
             if (obj == null)
+            {
                 return DynValue.Nil;
+            }
 
             if (obj is DynValue)
+            {
                 return (DynValue)obj;
+            }
 
             Type t = obj.GetType();
 
             if (obj is bool)
+            {
                 return DynValue.NewBoolean((bool)obj);
+            }
 
             if (obj is string || obj is StringBuilder || obj is char)
+            {
                 return DynValue.NewString(obj.ToString());
+            }
 
             if (NumericConversions.NumericTypes.Contains(t))
+            {
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+            }
 
             if (obj is Table)
+            {
                 return DynValue.NewTable((Table)obj);
+            }
 
             return null;
         }
@@ -44,40 +58,57 @@ namespace NovaSharp.Interpreter.Interop.Converters
         internal static DynValue TryObjectToSimpleDynValue(Script script, object obj)
         {
             if (obj == null)
+            {
                 return DynValue.Nil;
+            }
 
             if (obj is DynValue)
+            {
                 return (DynValue)obj;
+            }
 
-            var converter = Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(
-                obj.GetType()
-            );
+            Func<Script, object, DynValue> converter =
+                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(obj.GetType());
             if (converter != null)
             {
-                var v = converter(script, obj);
+                DynValue v = converter(script, obj);
                 if (v != null)
+                {
                     return v;
+                }
             }
 
             Type t = obj.GetType();
 
             if (obj is bool)
+            {
                 return DynValue.NewBoolean((bool)obj);
+            }
 
             if (obj is string || obj is StringBuilder || obj is char)
+            {
                 return DynValue.NewString(obj.ToString());
+            }
 
             if (obj is Closure)
+            {
                 return DynValue.NewClosure((Closure)obj);
+            }
 
             if (NumericConversions.NumericTypes.Contains(t))
+            {
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+            }
 
             if (obj is Table)
+            {
                 return DynValue.NewTable((Table)obj);
+            }
 
             if (obj is CallbackFunction)
+            {
                 return DynValue.NewCallback((CallbackFunction)obj);
+            }
 
             if (obj is Delegate)
             {
@@ -90,9 +121,11 @@ namespace NovaSharp.Interpreter.Interop.Converters
 #endif
 
                 if (CallbackFunction.CheckCallbackSignature(mi, false))
+                {
                     return DynValue.NewCallback(
                         (Func<ScriptExecutionContext, CallbackArguments, DynValue>)d
                     );
+                }
             }
 
             return null;
@@ -106,26 +139,38 @@ namespace NovaSharp.Interpreter.Interop.Converters
             DynValue v = TryObjectToSimpleDynValue(script, obj);
 
             if (v != null)
+            {
                 return v;
+            }
 
             v = UserData.Create(obj);
             if (v != null)
+            {
                 return v;
+            }
 
             if (obj is Type)
+            {
                 v = UserData.CreateStatic(obj as Type);
+            }
 
             // unregistered enums go as integers
             if (obj is Enum)
+            {
                 return DynValue.NewNumber(
                     NumericConversions.TypeToDouble(Enum.GetUnderlyingType(obj.GetType()), obj)
                 );
+            }
 
             if (v != null)
+            {
                 return v;
+            }
 
             if (obj is Delegate)
+            {
                 return DynValue.NewCallback(CallbackFunction.FromDelegate(script, (Delegate)obj));
+            }
 
             if (obj is MethodInfo)
             {
@@ -155,9 +200,11 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewTable(t);
             }
 
-            var enumerator = EnumerationToDynValue(script, obj);
+            DynValue enumerator = EnumerationToDynValue(script, obj);
             if (enumerator != null)
+            {
                 return enumerator;
+            }
 
             throw ScriptRuntimeException.ConvertObjectFailed(obj);
         }
@@ -172,13 +219,13 @@ namespace NovaSharp.Interpreter.Interop.Converters
         {
             if (obj is System.Collections.IEnumerable)
             {
-                var enumer = (System.Collections.IEnumerable)obj;
+                IEnumerable enumer = (System.Collections.IEnumerable)obj;
                 return EnumerableWrapper.ConvertIterator(script, enumer.GetEnumerator());
             }
 
             if (obj is System.Collections.IEnumerator)
             {
-                var enumer = (System.Collections.IEnumerator)obj;
+                IEnumerator enumer = (System.Collections.IEnumerator)obj;
                 return EnumerableWrapper.ConvertIterator(script, enumer);
             }
 

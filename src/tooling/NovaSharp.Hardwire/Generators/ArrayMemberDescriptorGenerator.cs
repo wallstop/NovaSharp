@@ -1,13 +1,8 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Hardwire.Utils;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Serialization;
 
 namespace NovaSharp.Hardwire.Generators
 {
@@ -28,7 +23,7 @@ namespace NovaSharp.Hardwire.Generators
             string name = table.Get("name").String;
             bool setter = table.Get("setter").Boolean;
 
-            CodeTypeDeclaration classCode = new CodeTypeDeclaration(className);
+            CodeTypeDeclaration classCode = new(className);
 
             classCode.TypeAttributes =
                 System.Reflection.TypeAttributes.NestedPrivate
@@ -36,7 +31,7 @@ namespace NovaSharp.Hardwire.Generators
 
             classCode.BaseTypes.Add(typeof(ArrayMemberDescriptor));
 
-            CodeConstructor ctor = new CodeConstructor();
+            CodeConstructor ctor = new();
             ctor.Attributes = MemberAttributes.Assembly;
             classCode.Members.Add(ctor);
 

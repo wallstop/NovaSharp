@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Execution;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -70,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return(v1 + v2);";
 
-            var S = new Script();
+            Script S = new();
             Table globalCtx = S.Globals;
 
             globalCtx.RegisterModuleType<TableIteratorsModule>();
@@ -127,7 +122,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 					return t;
 				";
 
-            Script S = new Script();
+            Script S = new();
 
             DynValue tbl = S.DoString(script);
             DynValue res = S.Call(tbl, 3);
@@ -262,7 +257,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.extended() * myobj.getSomething();
 				";
 
-            Script script = new Script();
+            Script script = new();
             UserData.RegisterType<MyObject>();
             script.Globals["o"] = new MyObject();
 
@@ -290,7 +285,7 @@ end
 
 ";
 
-            Script script = new Script(
+            Script script = new(
                 CoreModules.Basic
                     | CoreModules.Table
                     | CoreModules.TableIterators

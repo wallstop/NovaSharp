@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public DynValue Coroutine_Create(Closure closure)
         {
             // create a processor instance
-            Processor P = new Processor(this);
+            Processor P = new(this);
 
             // Put the closure as first value on the stack, for future reference
             P.m_ValueStack.Push(DynValue.NewClosure(closure));
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             this.m_ExecutionStack.ClearUsed();
 
             // Create a new processor instance, recycling this one
-            Processor P = new Processor(mainProcessor, this);
+            Processor P = new(mainProcessor, this);
 
             // Put the closure as first value on the stack, for future reference
             P.m_ValueStack.Push(DynValue.NewClosure(closure));
@@ -54,7 +54,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                     && m_State != CoroutineState.Suspended
                     && m_State != CoroutineState.ForceSuspended
                 )
+                {
                     throw ScriptRuntimeException.CannotResumeNotSuspended(m_State);
+                }
 
                 if (m_State == CoroutineState.NotStarted)
                 {
@@ -72,9 +74,11 @@ namespace NovaSharp.Interpreter.Execution.VM
                 else if (m_State == CoroutineState.ForceSuspended)
                 {
                     if (args != null && args.Length > 0)
+                    {
                         throw new ArgumentException(
                             "When resuming a force-suspended coroutine, args must be empty."
                         );
+                    }
 
                     entrypoint = m_SavedInstructionPtr;
                 }

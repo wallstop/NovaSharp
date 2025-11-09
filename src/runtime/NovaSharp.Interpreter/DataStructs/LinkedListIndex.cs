@@ -32,10 +32,14 @@ namespace NovaSharp.Interpreter.DataStructs
             LinkedListNode<TValue> node;
 
             if (m_Map == null)
+            {
                 return null;
+            }
 
             if (m_Map.TryGetValue(key, out node))
+            {
                 return node;
+            }
 
             return null;
         }
@@ -70,10 +74,12 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="value">The value.</param>
         public void Add(TKey key, TValue value)
         {
-            var node = m_LinkedList.AddLast(value);
+            LinkedListNode<TValue> node = m_LinkedList.AddLast(value);
 
             if (m_Map == null)
+            {
                 m_Map = new Dictionary<TKey, LinkedListNode<TValue>>();
+            }
 
             m_Map.Add(key, node);
         }
@@ -102,7 +108,9 @@ namespace NovaSharp.Interpreter.DataStructs
         public bool ContainsKey(TKey key)
         {
             if (m_Map == null)
+            {
                 return false;
+            }
 
             return m_Map.ContainsKey(key);
         }
@@ -113,7 +121,9 @@ namespace NovaSharp.Interpreter.DataStructs
         public void Clear()
         {
             if (m_Map != null)
+            {
                 m_Map.Clear();
+            }
         }
     }
 }

@@ -57,21 +57,29 @@ namespace NovaSharp.Interpreter
         public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r = null)
         {
             if (l.Type != DataType.Number && l.Type != DataType.String)
+            {
                 return new ScriptRuntimeException(
                     "attempt to perform arithmetic on a {0} value",
                     l.Type.ToLuaTypeString()
                 );
+            }
             else if (r != null && r.Type != DataType.Number && r.Type != DataType.String)
+            {
                 return new ScriptRuntimeException(
                     "attempt to perform arithmetic on a {0} value",
                     r.Type.ToLuaTypeString()
                 );
+            }
             else if (l.Type == DataType.String || (r != null && r.Type == DataType.String))
+            {
                 return new ScriptRuntimeException(
                     "attempt to perform arithmetic on a string value"
                 );
+            }
             else
+            {
                 throw new InternalErrorException("ArithmeticOnNonNumber - both are numbers");
+            }
         }
 
         /// <summary>
@@ -85,17 +93,23 @@ namespace NovaSharp.Interpreter
         public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
         {
             if (l.Type != DataType.Number && l.Type != DataType.String)
+            {
                 return new ScriptRuntimeException(
                     "attempt to concatenate a {0} value",
                     l.Type.ToLuaTypeString()
                 );
+            }
             else if (r != null && r.Type != DataType.Number && r.Type != DataType.String)
+            {
                 return new ScriptRuntimeException(
                     "attempt to concatenate a {0} value",
                     r.Type.ToLuaTypeString()
                 );
+            }
             else
+            {
                 throw new InternalErrorException("ConcatOnNonString - both are numbers/strings");
+            }
         }
 
         /// <summary>
@@ -122,16 +136,20 @@ namespace NovaSharp.Interpreter
         public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
         {
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
+            {
                 return new ScriptRuntimeException(
                     "attempt to compare two {0} values",
                     l.Type.ToLuaTypeString()
                 );
+            }
             else
+            {
                 return new ScriptRuntimeException(
                     "attempt to compare {0} with {1}",
                     l.Type.ToLuaTypeString(),
                     r.Type.ToLuaTypeString()
                 );
+            }
         }
 
         /// <summary>
@@ -530,9 +548,13 @@ namespace NovaSharp.Interpreter
         public static ScriptRuntimeException CannotResumeNotSuspended(CoroutineState state)
         {
             if (state == CoroutineState.Dead)
+            {
                 return new ScriptRuntimeException("cannot resume dead coroutine");
+            }
             else
+            {
                 return new ScriptRuntimeException("cannot resume non-suspended coroutine");
+            }
         }
 
         /// <summary>
@@ -574,13 +596,17 @@ namespace NovaSharp.Interpreter
             string functype = type.ToErrorTypeString();
 
             if (debugText != null)
+            {
                 return new ScriptRuntimeException(
                     "attempt to call a {0} value near '{1}'",
                     functype,
                     debugText
                 );
+            }
             else
+            {
                 return new ScriptRuntimeException("attempt to call a {0} value", functype);
+            }
         }
 
         /// <summary>
@@ -622,7 +648,9 @@ namespace NovaSharp.Interpreter
         public override void Rethrow()
         {
             if (Script.GlobalOptions.RethrowExceptionNested)
+            {
                 throw new ScriptRuntimeException(this);
+            }
         }
     }
 }

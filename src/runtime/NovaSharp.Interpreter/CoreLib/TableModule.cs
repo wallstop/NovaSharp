@@ -32,7 +32,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
             int tidx = 0;
             for (int i = ii; i <= ij; i++)
+            {
                 v[tidx++] = t.Get(i);
+            }
 
             return DynValue.NewTuple(v);
         }
@@ -40,11 +42,13 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod]
         public static DynValue pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            Table t = new Table(executionContext.GetScript());
+            Table t = new(executionContext.GetScript());
             DynValue v = DynValue.NewTable(t);
 
             for (int i = 0; i < args.Count; i++)
+            {
                 t.Set(i + 1, args[i]);
+            }
 
             t.Set("n", DynValue.NewNumber(args.Count));
 
@@ -58,14 +62,18 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue lt = args[1];
 
             if (lt.Type != DataType.Function && lt.Type != DataType.ClrFunction && lt.IsNotNil())
+            {
                 args.AsType(1, "sort", DataType.Function, true); // this throws
+            }
 
             int end = GetTableLength(executionContext, vlist);
 
-            List<DynValue> values = new List<DynValue>();
+            List<DynValue> values = new();
 
             for (int i = 1; i <= end; i++)
+            {
                 values.Add(vlist.Table.Get(i));
+            }
 
             try
             {
@@ -74,7 +82,9 @@ namespace NovaSharp.Interpreter.CoreLib
             catch (InvalidOperationException ex)
             {
                 if (ex.InnerException is ScriptRuntimeException)
+                {
                     throw ex.InnerException;
+                }
             }
 
             for (int i = 0; i < values.Count; i++)
@@ -99,9 +109,14 @@ namespace NovaSharp.Interpreter.CoreLib
                 if (lt == null || lt.IsNil())
                 {
                     if (a.Type == DataType.Number && b.Type == DataType.Number)
+                    {
                         return a.Number.CompareTo(b.Number);
+                    }
+
                     if (a.Type == DataType.String && b.Type == DataType.String)
+                    {
                         return a.String.CompareTo(b.String);
+                    }
 
                     throw ScriptRuntimeException.CompareInvalidType(a, b);
                 }
@@ -128,12 +143,19 @@ namespace NovaSharp.Interpreter.CoreLib
             bool v2 = dynValue2.CastToBool();
 
             if (v1 && !v2)
+            {
                 return -1;
+            }
+
             if (v2 && !v1)
+            {
                 return 1;
+            }
 
             if (v1 || v2)
+            {
                 throw new ScriptRuntimeException("invalid order function for sorting");
+            }
 
             return 0;
         }
@@ -149,7 +171,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue vvalue = args[2];
 
             if (args.Count > 3)
+            {
                 throw new ScriptRuntimeException("wrong number of arguments to 'insert'");
+            }
 
             int len = GetTableLength(executionContext, vlist);
             Table list = vlist.Table;
@@ -161,6 +185,7 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             if (vpos.Type != DataType.Number)
+            {
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "table.insert",
@@ -168,13 +193,16 @@ namespace NovaSharp.Interpreter.CoreLib
                     vpos.Type,
                     false
                 );
+            }
 
             int pos = (int)vpos.Number;
 
             if (pos > len + 1 || pos < 1)
+            {
                 throw new ScriptRuntimeException(
                     "bad argument #2 to 'insert' (position out of bounds)"
                 );
+            }
 
             for (int i = len; i >= pos; i--)
             {
@@ -197,7 +225,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue ret = DynValue.Nil;
 
             if (args.Count > 2)
+            {
                 throw new ScriptRuntimeException("wrong number of arguments to 'remove'");
+            }
 
             int len = GetTableLength(executionContext, vlist);
             Table list = vlist.Table;
@@ -205,14 +235,18 @@ namespace NovaSharp.Interpreter.CoreLib
             int pos = vpos.IsNil() ? len : (int)vpos.Number;
 
             if (pos >= len + 1 || (pos < 1 && len > 0))
+            {
                 throw new ScriptRuntimeException(
                     "bad argument #1 to 'remove' (position out of bounds)"
                 );
+            }
 
             for (int i = pos; i <= len; i++)
             {
                 if (i == pos)
+                {
                     ret = list.Get(i);
+                }
 
                 list.Set(i, list.Get(i + 1));
             }
@@ -250,25 +284,31 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             if (end < start)
+            {
                 return DynValue.NewString(string.Empty);
+            }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (int i = start; i <= end; i++)
             {
                 DynValue v = list.Get(i);
 
                 if (v.Type != DataType.Number && v.Type != DataType.String)
+                {
                     throw new ScriptRuntimeException(
                         "invalid value ({1}) at index {0} in table for 'concat'",
                         i,
                         v.Type.ToLuaTypeString()
                     );
+                }
 
                 string s = v.ToPrintString();
 
                 if (i != start)
+                {
                     sb.Append(sep);
+                }
 
                 sb.Append(s);
             }
@@ -287,7 +327,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 double? len = lenv.CastToNumber();
 
                 if (len == null)
+                {
                     throw new ScriptRuntimeException("object length is not a number");
+                }
 
                 return (int)len;
             }

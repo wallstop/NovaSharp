@@ -20,11 +20,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public const int MAX_ARGS_IN_DELEGATE = 16;
 
-        object m_Lock = new object();
-        MultiDictionary<object, Closure> m_Callbacks = new MultiDictionary<object, Closure>(
+        object m_Lock = new();
+        MultiDictionary<object, Closure> m_Callbacks = new(
             new NovaSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
         );
-        Dictionary<object, Delegate> m_Delegates = new Dictionary<object, Delegate>(
+        Dictionary<object, Delegate> m_Delegates = new(
             new NovaSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
         );
 
@@ -41,7 +41,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (!CheckEventIsCompatible(ei, false))
+            {
                 return null;
+            }
 
             MethodInfo addm = Framework.Do.GetAddMethod(ei);
             MethodInfo remm = Framework.Do.GetRemoveMethod(ei);
@@ -50,7 +52,9 @@ namespace NovaSharp.Interpreter.Interop
                 ei.GetVisibilityFromAttributes()
                 ?? ((remm != null && remm.IsPublic) && (addm != null && addm.IsPublic))
             )
+            {
                 return new EventMemberDescriptor(ei, accessMode);
+            }
 
             return null;
         }
@@ -82,7 +86,10 @@ namespace NovaSharp.Interpreter.Interop
             if (Framework.Do.IsValueType(ei.DeclaringType))
             {
                 if (throwException)
+                {
                     throw new ArgumentException("Events are not supported on value types");
+                }
+
                 return false;
             }
 
@@ -92,7 +99,10 @@ namespace NovaSharp.Interpreter.Interop
             )
             {
                 if (throwException)
+                {
                     throw new ArgumentException("Event must have add and remove methods");
+                }
+
                 return false;
             }
 
@@ -101,17 +111,25 @@ namespace NovaSharp.Interpreter.Interop
             if (invoke == null)
             {
                 if (throwException)
+                {
                     throw new ArgumentException("Event handler type doesn't seem to be a delegate");
+                }
+
                 return false;
             }
 
             if (!MethodMemberDescriptor.CheckMethodIsCompatible(invoke, throwException))
+            {
                 return false;
+            }
 
             if (invoke.ReturnType != typeof(void))
             {
                 if (throwException)
+                {
                     throw new ArgumentException("Event handler cannot have a return type");
+                }
+
                 return false;
             }
 
@@ -120,12 +138,15 @@ namespace NovaSharp.Interpreter.Interop
             if (pars.Length > MAX_ARGS_IN_DELEGATE)
             {
                 if (throwException)
+                {
                     throw new ArgumentException(
                         string.Format(
                             "Event handler cannot have more than {0} parameters",
                             MAX_ARGS_IN_DELEGATE
                         )
                     );
+                }
+
                 return false;
             }
 
@@ -134,17 +155,23 @@ namespace NovaSharp.Interpreter.Interop
                 if (Framework.Do.IsValueType(pi.ParameterType))
                 {
                     if (throwException)
+                    {
                         throw new ArgumentException(
                             "Event handler cannot have value type parameters"
                         );
+                    }
+
                     return false;
                 }
                 else if (pi.ParameterType.IsByRef)
                 {
                     if (throwException)
+                    {
                         throw new ArgumentException(
                             "Event handler cannot have by-ref type parameters"
                         );
+                    }
+
                     return false;
                 }
             }
@@ -193,7 +220,9 @@ namespace NovaSharp.Interpreter.Interop
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
 
             if (IsStatic)
+            {
                 obj = this;
+            }
 
             return UserData.Create(new EventFacade(this, obj));
         }
@@ -214,7 +243,9 @@ namespace NovaSharp.Interpreter.Interop
                 ).Function;
 
                 if (m_Callbacks.Add(o, closure))
+                {
                     RegisterCallback(o);
+                }
 
                 return DynValue.Void;
             }
@@ -240,7 +271,9 @@ namespace NovaSharp.Interpreter.Interop
                 ).Function;
 
                 if (m_Callbacks.RemoveValue(o, closure))
+                {
                     UnregisterCallback(o);
+                }
 
                 return DynValue.Void;
             }
@@ -274,7 +307,9 @@ namespace NovaSharp.Interpreter.Interop
             Delegate handler = m_Delegates.GetOrDefault(o);
 
             if (handler == null)
+            {
                 throw new InternalErrorException("can't unregister null delegate");
+            }
 
             m_Delegates.Remove(o);
             m_Remove.Invoke(o, new object[] { handler });

@@ -13,6 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Enforce NovaSharp branding
+        run: |
+          set -euo pipefail
+          if git ls-files -- '*MoonSharp*' | grep -q .; then
+            echo 'MoonSharp-branded files detected:'
+            git ls-files -- '*MoonSharp*'
+            exit 1
+          fi
+          if git grep -n --color=never -e 'MoonSharp'; then
+            echo 'MoonSharp identifier detected in tracked content. Replace with NovaSharp.'
+            exit 1
+          fi
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

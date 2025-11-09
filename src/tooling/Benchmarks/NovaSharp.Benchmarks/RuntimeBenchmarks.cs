@@ -54,7 +54,7 @@ public class RuntimeBenchmarks
 
     private double RunTableScenario()
     {
-        var table = new Table(_script);
+        Table table = new(_script);
         for (int i = 1; i <= LuaRuntimeSuites.TableEntryCount; i++)
         {
             table.Set(i, DynValue.NewNumber(i * 1.5));

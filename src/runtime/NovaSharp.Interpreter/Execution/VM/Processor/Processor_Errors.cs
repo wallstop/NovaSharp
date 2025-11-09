@@ -17,9 +17,13 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             // adjust IP
             if (ip == YIELD_SPECIAL_TRAP)
+            {
                 ip = m_SavedInstructionPtr;
+            }
             else
+            {
                 ip -= 1;
+            }
 
             ex.InstructionPtr = ip;
 

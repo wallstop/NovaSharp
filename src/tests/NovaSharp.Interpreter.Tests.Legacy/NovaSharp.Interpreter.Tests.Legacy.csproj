@@ -3,7 +3,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <IsPackable>false</IsPackable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <IsTestProject>true</IsTestProject>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <DefineConstants>$(DefineConstants);DOTNET_CORE;EMBEDTEST</DefineConstants>

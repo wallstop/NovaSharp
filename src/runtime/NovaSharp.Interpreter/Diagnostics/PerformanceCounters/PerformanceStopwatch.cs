@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
     /// </summary>
     internal class PerformanceStopwatch : IDisposable, IPerformanceStopwatch
     {
-        Stopwatch m_Stopwatch = new Stopwatch();
+        Stopwatch m_Stopwatch = new();
         int m_Count = 0;
         int m_Reentrant = 0;
         PerformanceCounter m_Counter;

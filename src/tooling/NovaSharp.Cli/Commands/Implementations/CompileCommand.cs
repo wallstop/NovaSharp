@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 
 namespace NovaSharp.Commands.Implementations
@@ -30,14 +25,16 @@ namespace NovaSharp.Commands.Implementations
         {
             string targetFileName = p + "-compiled";
 
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue chunk = S.LoadFile(p);
 
             using (
                 Stream stream = new FileStream(targetFileName, FileMode.Create, FileAccess.Write)
             )
+            {
                 S.Dump(chunk, stream);
+            }
         }
     }
 }

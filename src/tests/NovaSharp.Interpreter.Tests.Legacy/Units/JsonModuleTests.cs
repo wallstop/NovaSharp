@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EncodeProducesCanonicalObject()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            var jsonString = script.Globals.Get("jsonString").String;
+            string? jsonString = script.Globals.Get("jsonString").String;
             Assert.That(jsonString, Does.Contain("\"answer\":42"));
             Assert.That(jsonString, Does.Contain("\"enabled\":true"));
         }
@@ -32,11 +32,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DecodeBuildsLuaTable()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
-            var result = script.DoString(
+            DynValue? result = script.DoString(
                 @"
                 local data = json.decode('{""name"":""nova"",""values"":[10,20]}')
                 return data.name, data.values[1], data.values[2]

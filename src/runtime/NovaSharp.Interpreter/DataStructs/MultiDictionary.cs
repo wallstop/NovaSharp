@@ -61,9 +61,13 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             List<V> list;
             if (m_Map.TryGetValue(key, out list))
+            {
                 return list;
+            }
             else
+            {
                 return m_DefaultRet;
+            }
         }
 
         /// <summary>

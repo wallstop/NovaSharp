@@ -9,9 +9,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void __IndexMetatableResolvesMissingKeys()
         {
-            var script = new Script();
-            var table = new Table(script);
-            var metatable = new Table(script);
+            Script script = new();
+            Table table = new(script);
+            Table metatable = new(script);
 
             metatable["__index"] = DynValue.NewCallback(
                 (_, args) =>
@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void MetatableRawAccessStillRespectsMetatable()
         {
-            var script = new Script(CoreModules.Metatables | CoreModules.Basic);
+            Script script = new(CoreModules.Metatables | CoreModules.Basic);
 
             script.DoString(
                 @"
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            var subject = script.Globals.Get("subject").Table;
+            Table? subject = script.Globals.Get("subject").Table;
             Assert.That(subject.Get("value").Number, Is.EqualTo(10));
 
             subject.Set("value", DynValue.NewNumber(7));

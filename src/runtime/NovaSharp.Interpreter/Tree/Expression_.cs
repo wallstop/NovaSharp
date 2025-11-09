@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tree
             Expression expr1
         )
         {
-            List<Expression> exps = new List<Expression>();
+            List<Expression> exps = new();
 
             exps.Add(expr1);
 
@@ -41,14 +41,16 @@ namespace NovaSharp.Interpreter.Tree
 
         internal static List<Expression> ExprList(ScriptLoadingContext lcontext)
         {
-            List<Expression> exps = new List<Expression>();
+            List<Expression> exps = new();
 
             while (true)
             {
                 exps.Add(Expr(lcontext));
 
                 if (lcontext.Lexer.Current.Type != TokenType.Comma)
+                {
                     break;
+                }
 
                 lcontext.Lexer.Next();
             }
@@ -78,7 +80,7 @@ namespace NovaSharp.Interpreter.Tree
 
                 if (isPrimary && T.Type == TokenType.Op_Pwr)
                 {
-                    List<Expression> powerChain = new List<Expression>();
+                    List<Expression> powerChain = new();
                     powerChain.Add(e);
 
                     while (isPrimary && T.Type == TokenType.Op_Pwr)
@@ -195,7 +197,7 @@ namespace NovaSharp.Interpreter.Tree
                             // support NovaSharp multiple indexers for userdata
                             if (lcontext.Lexer.Current.Type == TokenType.Comma)
                             {
-                                var explist = ExprListAfterFirstExpr(lcontext, index);
+                                List<Expression> explist = ExprListAfterFirstExpr(lcontext, index);
                                 index = new ExprListExpression(explist, lcontext);
                             }
 

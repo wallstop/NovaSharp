@@ -1,8 +1,4 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -22,7 +18,7 @@ namespace NovaSharp.Hardwire.Generators
             CodeTypeMemberCollection members
         )
         {
-            List<CodeExpression> initializers = new List<CodeExpression>();
+            List<CodeExpression> initializers = new();
 
             generator.DispatchTablePairs(
                 table.Get("overloads").Table,
@@ -33,10 +29,10 @@ namespace NovaSharp.Hardwire.Generators
                 }
             );
 
-            var name = new CodePrimitiveExpression((table["name"] as string));
-            var type = new CodeTypeOfExpression(table["decltype"] as string);
+            CodePrimitiveExpression name = new((table["name"] as string));
+            CodeTypeOfExpression type = new(table["decltype"] as string);
 
-            var array = new CodeArrayCreateExpression(
+            CodeArrayCreateExpression array = new(
                 typeof(IOverloadableMemberDescriptor),
                 initializers.ToArray()
             );

@@ -244,9 +244,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public StackTraceResponseBody(List<StackFrame> frames = null)
         {
             if (frames == null)
+            {
                 stackFrames = new StackFrame[0];
+            }
             else
+            {
                 stackFrames = frames.ToArray<StackFrame>();
+            }
         }
     }
 
@@ -257,9 +261,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public ScopesResponseBody(List<Scope> scps = null)
         {
             if (scps == null)
+            {
                 scopes = new Scope[0];
+            }
             else
+            {
                 scopes = scps.ToArray<Scope>();
+            }
         }
     }
 
@@ -270,9 +278,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public VariablesResponseBody(List<Variable> vars = null)
         {
             if (vars == null)
+            {
                 variables = new Variable[0];
+            }
             else
+            {
                 variables = vars.ToArray<Variable>();
+            }
         }
     }
 
@@ -283,9 +295,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public ThreadsResponseBody(List<Thread> vars = null)
         {
             if (vars == null)
+            {
                 threads = new Thread[0];
+            }
             else
+            {
                 threads = vars.ToArray<Thread>();
+            }
         }
     }
 
@@ -309,9 +325,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public SetBreakpointsResponseBody(List<Breakpoint> bpts = null)
         {
             if (bpts == null)
+            {
                 breakpoints = new Breakpoint[0];
+            }
             else
+            {
                 breakpoints = bpts.ToArray<Breakpoint>();
+            }
         }
     }
 
@@ -348,8 +368,8 @@ namespace NovaSharp.VsCodeDebugger.SDK
             bool telemetry = false
         )
         {
-            var msg = new Message(id, format, arguments, user, telemetry);
-            var message = Utilities.ExpandVariables(msg.format, msg.variables);
+            Message msg = new(id, format, arguments, user, telemetry);
+            string message = Utilities.ExpandVariables(msg.format, msg.variables);
             response.SetErrorBody(message, new ErrorResponseBody(msg));
             SendMessage(response);
         }
@@ -368,9 +388,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     case "initialize":
 
                         if (args["linesStartAt1"] != null)
+                        {
                             _clientLinesStartAt1 = args.Get("linesStartAt1").ToObject<bool>();
+                        }
 
-                        var pathFormat = args.Get("pathFormat").ToObject<string>();
+                        string pathFormat = args.Get("pathFormat").ToObject<string>();
                         if (pathFormat != null)
                         {
                             switch (pathFormat)
@@ -563,7 +585,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 }
                 else
                 {
-                    Uri uri = new Uri(path);
+                    Uri uri = new(path);
                     return uri.LocalPath;
                 }
             }
@@ -573,7 +595,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 {
                     try
                     {
-                        var uri = new System.Uri(path);
+                        Uri uri = new(path);
                         return uri.AbsoluteUri;
                     }
                     catch
@@ -603,7 +625,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 }
                 else
                 {
-                    var uri = new System.Uri(clientPath);
+                    Uri uri = new(clientPath);
                     return uri.AbsoluteUri;
                 }
             }
@@ -613,7 +635,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 {
                     if (Uri.IsWellFormedUriString(clientPath, UriKind.Absolute))
                     {
-                        Uri uri = new Uri(clientPath);
+                        Uri uri = new(clientPath);
                         return uri.LocalPath;
                     }
                     Console.Error.WriteLine("path not well formed: '{0}'", clientPath);

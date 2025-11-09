@@ -1,5 +1,3 @@
-using System;
-using NovaSharp.Interpreter.Execution;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd

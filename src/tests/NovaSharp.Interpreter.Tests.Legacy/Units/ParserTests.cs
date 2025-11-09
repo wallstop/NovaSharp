@@ -10,8 +10,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SyntaxErrorsIncludeLineInformation()
         {
-            var script = new Script();
-            var exception = Assert.Throws<SyntaxErrorException>(() =>
+            Script script = new();
+            SyntaxErrorException? exception = Assert.Throws<SyntaxErrorException>(() =>
             {
                 script.DoString(
                     @"
@@ -31,11 +31,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void LoadStringReportsFriendlyChunkName()
         {
-            var script = new Script();
-            var loader = (ScriptLoaderBase)script.Options.ScriptLoader;
+            Script script = new();
+            ScriptLoaderBase? loader = (ScriptLoaderBase)script.Options.ScriptLoader;
             loader.IgnoreLuaPathGlobal = true;
 
-            var exception = Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException? exception = Assert.Throws<SyntaxErrorException>(() =>
             {
                 script.LoadString("local = 1", null, "tests/parser/chunk");
             });

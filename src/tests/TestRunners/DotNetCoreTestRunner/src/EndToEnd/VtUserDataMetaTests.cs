@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -124,10 +122,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public override bool Equals(object obj)
             {
                 if (obj is double)
+                {
                     return ((double)obj) == Value;
+                }
 
                 if (!(obj is ArithmOperatorsTestClass))
+                {
                     return false;
+                }
 
                 ArithmOperatorsTestClass other = (ArithmOperatorsTestClass)obj;
                 return Value == other.Value;
@@ -141,10 +143,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public int CompareTo(object obj)
             {
                 if (obj is double)
+                {
                     return Value.CompareTo((int)(double)obj);
+                }
 
                 if (!(obj is ArithmOperatorsTestClass))
+                {
                     return 1;
+                }
 
                 ArithmOperatorsTestClass other = (ArithmOperatorsTestClass)obj;
                 return Value.CompareTo(other.Value);
@@ -179,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_Pairs()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
             S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
@@ -199,7 +205,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_IPairs()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
             S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
@@ -219,7 +225,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_Iterator()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
             S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
@@ -239,7 +245,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_Op_Len()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
             UserData.RegisterType<ClassWithCount>();
             UserData.RegisterType<ClassWithLength>();
@@ -257,7 +263,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_Equality()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
 
             S.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
@@ -279,7 +285,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_Meta_Comparisons()
         {
-            Script S = new Script();
+            Script S = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
 
             S.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
@@ -307,9 +313,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void OperatorTest(string code, int input, int output)
         {
-            Script S = new Script();
+            Script S = new();
 
-            ArithmOperatorsTestClass obj = new ArithmOperatorsTestClass(input);
+            ArithmOperatorsTestClass obj = new(input);
 
             UserData.RegisterType<ArithmOperatorsTestClass>();
 

@@ -39,7 +39,7 @@ internal static class LuaScriptCorpus
 
     private static string BuildScript(int functionCount, int loopIterations)
     {
-        var builder = new StringBuilder();
+        StringBuilder builder = new();
 
         builder.AppendLine("local total = 0");
         builder.AppendLine("local mt = { __index = function(tbl, key) return key * 2 end }");

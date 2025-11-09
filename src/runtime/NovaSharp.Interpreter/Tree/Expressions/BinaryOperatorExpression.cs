@@ -69,14 +69,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public static void AddExpressionToChain(object chain, Expression exp)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new Node() { Expr = exp };
+            Node node = new() { Expr = exp };
             AddNode(list, node);
         }
 
         public static void AddOperatorToChain(object chain, Token op)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new Node() { Op = ParseBinaryOperator(op) };
+            Node node = new() { Op = ParseBinaryOperator(op) };
             AddNode(list, node);
         }
 
@@ -120,30 +120,49 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Node nodes = list.Nodes;
 
             if ((opfound & POWER) != 0)
+            {
                 nodes = PrioritizeRightAssociative(nodes, lcontext, POWER);
+            }
 
             if ((opfound & MUL_DIV_MOD) != 0)
+            {
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, MUL_DIV_MOD);
+            }
 
             if ((opfound & ADD_SUB) != 0)
+            {
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, ADD_SUB);
+            }
 
             if ((opfound & STRCAT) != 0)
+            {
                 nodes = PrioritizeRightAssociative(nodes, lcontext, STRCAT);
+            }
 
             if ((opfound & COMPARES) != 0)
+            {
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, COMPARES);
+            }
 
             if ((opfound & LOGIC_AND) != 0)
+            {
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_AND);
+            }
 
             if ((opfound & LOGIC_OR) != 0)
+            {
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_OR);
+            }
 
             if (nodes.Next != null || nodes.Prev != null)
+            {
                 throw new InternalErrorException("Expression reduction didn't work! - 1");
+            }
+
             if (nodes.Expr == null)
+            {
                 throw new InternalErrorException("Expression reduction didn't work! - 2");
+            }
 
             return nodes.Expr;
         }
@@ -166,12 +185,18 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     N.Next = N.Next.Next;
 
                     if (N.Next != null)
+                    {
                         N.Next.Prev = N;
+                    }
 
                     if (N.Prev != null)
+                    {
                         N.Prev.Next = N;
+                    }
                     else
+                    {
                         nodes = N;
+                    }
                 }
             }
 
@@ -199,12 +224,18 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     N.Next = N.Next.Next;
 
                     if (N.Next != null)
+                    {
                         N.Next.Prev = N;
+                    }
 
                     if (N.Prev != null)
+                    {
                         N.Prev.Next = N;
+                    }
                     else
+                    {
                         nodes = N;
+                    }
                 }
             }
 
@@ -337,7 +368,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bc.Emit_Operator(OperatorToOpCode(m_Operator));
 
             if (ShouldInvertBoolean(m_Operator))
+            {
                 bc.Emit_Operator(OpCode.Not);
+            }
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
@@ -347,17 +380,25 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             if (m_Operator == Operator.Or)
             {
                 if (v1.CastToBool())
+                {
                     return v1;
+                }
                 else
+                {
                     return m_Exp2.Eval(context).ToScalar();
+                }
             }
 
             if (m_Operator == Operator.And)
             {
                 if (!v1.CastToBool())
+                {
                     return v1;
+                }
                 else
+                {
                     return m_Exp2.Eval(context).ToScalar();
+                }
             }
 
             DynValue v2 = m_Exp2.Eval(context).ToScalar();
@@ -372,9 +413,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 string s2 = v2.CastToString();
 
                 if (s1 == null || s2 == null)
+                {
                     throw new DynamicExpressionException(
                         "Attempt to perform concatenation on non-strings."
                     );
+                }
 
                 return DynValue.NewString(s1 + s2);
             }
@@ -390,9 +433,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             double? nd2 = v2.CastToNumber();
 
             if (nd1 == null || nd2 == null)
+            {
                 throw new DynamicExpressionException(
                     "Attempt to perform arithmetic on non-numbers."
                 );
+            }
 
             double d1 = nd1.Value;
             double d2 = nd2.Value;
@@ -411,7 +456,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 {
                     double mod = Math.IEEERemainder(d1, d2);
                     if (mod < 0)
+                    {
                         mod += d2;
+                    }
+
                     return mod;
                 }
                 default:
@@ -464,9 +512,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                             (l.Type == DataType.Nil && r.Type == DataType.Void)
                             || (l.Type == DataType.Void && r.Type == DataType.Nil)
                         )
+                        {
                             return true;
+                        }
                         else
+                        {
                             return false;
+                        }
                     }
                     else
                     {

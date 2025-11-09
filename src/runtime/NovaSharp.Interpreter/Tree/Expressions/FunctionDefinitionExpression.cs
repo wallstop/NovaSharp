@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         SymbolRef[] m_ParamNames = null;
         Statement m_Statement;
         RuntimeScopeFrame m_StackFrame;
-        List<SymbolRef> m_Closure = new List<SymbolRef>();
+        List<SymbolRef> m_Closure = new();
         bool m_HasVarArgs = false;
         Instruction m_ClosureInstruction = null;
 
@@ -41,7 +41,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             : base(lcontext)
         {
             if (m_UsesGlobalEnv = usesGlobalEnv)
+            {
                 CheckTokenType(lcontext, TokenType.Function);
+            }
 
             // here lexer should be at the '(' or at the '|'
             Token openRound = CheckTokenType(
@@ -69,9 +71,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             m_ParamNames = DefineArguments(paramnames, lcontext);
 
             if (isLambda)
+            {
                 m_Statement = CreateLambdaBody(lcontext);
+            }
             else
+            {
                 m_Statement = CreateBody(lcontext);
+            }
 
             m_StackFrame = lcontext.Scope.PopFunction();
 
@@ -94,6 +100,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Statement s = new CompositeStatement(lcontext);
 
             if (lcontext.Lexer.Current.Type != TokenType.End)
+            {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
                     "'end' expected near '{0}'",
@@ -102,6 +109,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 {
                     IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
                 };
+            }
 
             m_End = lcontext.Lexer.Current.GetSourceRef();
 
@@ -118,11 +126,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.Brk_Close_Round;
 
-            List<string> paramnames = new List<string>();
+            List<string> paramnames = new();
 
             // method decls with ':' must push an implicit 'self' param
             if (pushSelfParam)
+            {
                 paramnames.Add("self");
+            }
 
             while (lcontext.Lexer.Current.Type != closeToken)
             {
@@ -138,7 +148,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     paramnames.Add(WellKnownSymbols.VARARGS);
                 }
                 else
+                {
                     UnexpectedTokenType(t);
+                }
 
                 lcontext.Lexer.Next();
 
@@ -156,21 +168,25 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
 
             if (lcontext.Lexer.Current.Type == closeToken)
+            {
                 lcontext.Lexer.Next();
+            }
 
             return paramnames;
         }
 
         private SymbolRef[] DefineArguments(List<string> paramnames, ScriptLoadingContext lcontext)
         {
-            HashSet<string> names = new HashSet<string>();
+            HashSet<string> names = new();
 
             SymbolRef[] ret = new SymbolRef[paramnames.Count];
 
             for (int i = paramnames.Count - 1; i >= 0; i--)
             {
                 if (!names.Add(paramnames[i]))
+                {
                     paramnames[i] = paramnames[i] + "@" + i.ToString();
+                }
 
                 ret[i] = lcontext.Scope.DefineLocal(paramnames[i]);
             }
@@ -231,7 +247,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
 
             if (m_ParamNames.Length > 0)
+            {
                 bc.Emit_Args(m_ParamNames);
+            }
 
             m_Statement.Compile(bc);
 

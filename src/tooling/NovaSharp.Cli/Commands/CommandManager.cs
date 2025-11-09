@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace NovaSharp.Commands
 {
     public static class CommandManager
     {
-        static Dictionary<string, ICommand> m_Registry = new Dictionary<string, ICommand>();
+        static Dictionary<string, ICommand> m_Registry = new();
 
         public static void Initialize()
         {
@@ -29,10 +25,14 @@ namespace NovaSharp.Commands
         public static void Execute(ShellContext context, string commandLine)
         {
             if (context == null)
+            {
                 throw new ArgumentNullException(nameof(context));
+            }
 
             if (commandLine == null)
+            {
                 throw new ArgumentNullException(nameof(commandLine));
+            }
 
             string trimmed = commandLine.Trim();
 
@@ -45,7 +45,9 @@ namespace NovaSharp.Commands
             int separatorIndex = 0;
 
             while (separatorIndex < trimmed.Length && !char.IsWhiteSpace(trimmed[separatorIndex]))
+            {
                 separatorIndex++;
+            }
 
             string command = trimmed.Substring(0, separatorIndex);
             string arguments =
@@ -81,7 +83,9 @@ namespace NovaSharp.Commands
         public static ICommand Find(string cmd)
         {
             if (m_Registry.ContainsKey(cmd))
+            {
                 return m_Registry[cmd];
+            }
 
             return null;
         }

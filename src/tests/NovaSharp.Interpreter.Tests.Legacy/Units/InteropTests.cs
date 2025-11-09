@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void Converter_FromObject_CoversPrimitiveAndNullableCases()
         {
-            var script = new Script();
+            Script script = new();
 
             DynValue directNumber = DynValue.FromObject(script, 42);
             Assert.That(directNumber.Type, Is.EqualTo(DataType.Number));
@@ -30,8 +30,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void Converter_FromObject_MarshalsDictionariesToLuaTables()
         {
-            var script = new Script();
-            var dictionary = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
+            Script script = new();
+            Dictionary<string, int> dictionary = new() { ["a"] = 1, ["b"] = 2 };
 
             DynValue dyn = DynValue.FromObject(script, dictionary);
 
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TableArguments_AreConvertedToClrDictionaryParameters()
         {
-            var script = new Script();
+            Script script = new();
             script.Globals["sum"] = (System.Func<IDictionary<string, int>, int>)(
                 dict => dict["x"] + dict["y"]
             );
@@ -58,8 +58,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ObjectRoundTrip_TableToClrObjectAndBack()
         {
-            var script = new Script();
-            var payload = DynValue.FromObject(
+            Script script = new();
+            DynValue? payload = DynValue.FromObject(
                 script,
                 new Dictionary<string, string> { ["name"] = "nova", ["role"] = "tester" }
             );

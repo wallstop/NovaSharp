@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -11,7 +7,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public static void DynAssert(DynValue result, params object[] args)
         {
             if (args == null)
+            {
                 args = new object[1] { DataType.Void };
+            }
 
             if (args.Length == 1)
             {
@@ -23,7 +21,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 Assert.AreEqual(args.Length, result.Tuple.Length);
 
                 for (int i = 0; i < args.Length; i++)
+                {
                     DynAssertValue(args[i], result.Tuple[i]);
+                }
             }
         }
 

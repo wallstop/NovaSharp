@@ -1,10 +1,7 @@
 #if DOTNET_CORE
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.IO;
-using System.Diagnostics;
 
 namespace NovaSharp.Interpreter.Platforms
 {
@@ -23,15 +20,25 @@ namespace NovaSharp.Interpreter.Platforms
             mode = mode.Replace("b", "");
 
             if (mode == "r")
+            {
                 return FileAccess.Read;
+            }
             else if (mode == "r+")
+            {
                 return FileAccess.ReadWrite;
+            }
             else if (mode == "w")
+            {
                 return FileAccess.Write;
+            }
             else if (mode == "w+")
+            {
                 return FileAccess.ReadWrite;
+            }
             else
+            {
                 return FileAccess.ReadWrite;
+            }
         }
 
         /// <summary>
@@ -44,15 +51,25 @@ namespace NovaSharp.Interpreter.Platforms
             mode = mode.Replace("b", "");
 
             if (mode == "r")
+            {
                 return FileMode.Open;
+            }
             else if (mode == "r+")
+            {
                 return FileMode.OpenOrCreate;
+            }
             else if (mode == "w")
+            {
                 return FileMode.Create;
+            }
             else if (mode == "w+")
+            {
                 return FileMode.Truncate;
+            }
             else
+            {
                 return FileMode.Append;
+            }
         }
 
         /// <summary>

@@ -11,12 +11,12 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     internal class ByteCode : RefIdObject
     {
-        public List<Instruction> Code = new List<Instruction>();
+        public List<Instruction> Code = new();
         public Script Script { get; private set; }
-        private List<SourceRef> m_SourceRefStack = new List<SourceRef>();
+        private List<SourceRef> m_SourceRefStack = new();
         private SourceRef m_CurrentSourceRef = null;
 
-        internal LoopTracker LoopTracker = new LoopTracker();
+        internal LoopTracker LoopTracker = new();
 
         public ByteCode(Script script)
         {
@@ -60,14 +60,18 @@ namespace NovaSharp.Interpreter.Execution.VM
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
         public void Dump(string file)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (int i = 0; i < Code.Count; i++)
             {
                 if (Code[i].OpCode == OpCode.Debug)
+                {
                     sb.AppendFormat("    {0}\n", Code[i]);
+                }
                 else
+                {
                     sb.AppendFormat("{0:X8}  {1}\n", i, Code[i]);
+                }
             }
 
             File.WriteAllText(file, sb.ToString());
@@ -168,13 +172,19 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public Instruction Emit_Operator(OpCode opcode)
         {
-            var i = AppendInstruction(new Instruction(m_CurrentSourceRef) { OpCode = opcode });
+            Instruction i = AppendInstruction(
+                new Instruction(m_CurrentSourceRef) { OpCode = opcode }
+            );
 
             if (opcode == OpCode.LessEq)
+            {
                 AppendInstruction(new Instruction(m_CurrentSourceRef) { OpCode = OpCode.CNot });
+            }
 
             if (opcode == OpCode.Eq || opcode == OpCode.Less)
+            {
                 AppendInstruction(new Instruction(m_CurrentSourceRef) { OpCode = OpCode.ToBool });
+            }
 
             return i;
         }
@@ -455,11 +465,17 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             OpCode o;
             if (isNameIndex)
+            {
                 o = OpCode.IndexN;
+            }
             else if (isExpList)
+            {
                 o = OpCode.IndexL;
+            }
             else
+            {
                 o = OpCode.Index;
+            }
 
             return AppendInstruction(
                 new Instruction(m_CurrentSourceRef) { OpCode = o, Value = index }
@@ -476,11 +492,17 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             OpCode o;
             if (isNameIndex)
+            {
                 o = OpCode.IndexSetN;
+            }
             else if (isExpList)
+            {
                 o = OpCode.IndexSetL;
+            }
             else
+            {
                 o = OpCode.IndexSet;
+            }
 
             return AppendInstruction(
                 new Instruction(m_CurrentSourceRef)

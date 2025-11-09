@@ -23,7 +23,9 @@ namespace NovaSharp.Interpreter.CoreLib
         public static DynValue type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args.Count < 1)
+            {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "type");
+            }
 
             DynValue v = args[0];
             return DynValue.NewString(v.Type.ToLuaTypeString());
@@ -45,9 +47,13 @@ namespace NovaSharp.Interpreter.CoreLib
             if (!v.CastToBool())
             {
                 if (message.IsNil())
+                {
                     throw new ScriptRuntimeException("assertion failed!"); // { DoNotDecorateMessage = true };
+                }
                 else
+                {
                     throw new ScriptRuntimeException(message.ToPrintString()); // { DoNotDecorateMessage = true };
+                }
             }
 
             return DynValue.NewTupleNested(args.GetArray());
@@ -99,7 +105,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             WatchItem[] stacktrace = cor.GetStackTrace(0, executionContext.CallingLocation);
 
-            var e = new ScriptRuntimeException(message.String);
+            ScriptRuntimeException e = new(message.String);
 
             if (level.IsNil())
             {
@@ -136,13 +142,17 @@ namespace NovaSharp.Interpreter.CoreLib
         )
         {
             if (args.Count < 1)
+            {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
+            }
 
             DynValue v = args[0];
             DynValue tail = executionContext.GetMetamethodTailCall(v, "__tostring", v);
 
             if (tail == null || tail.IsNil())
+            {
                 return DynValue.NewString(v.ToPrintString());
+            }
 
             tail.TailCallData.Continuation = new CallbackFunction(
                 __tostring_continuation,
@@ -160,10 +170,14 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue b = args[0].ToScalar();
 
             if (b.IsNil())
+            {
                 return b;
+            }
 
             if (b.Type != DataType.String)
+            {
                 throw new ScriptRuntimeException("'tostring' must return a string");
+            }
 
             return b;
         }
@@ -194,22 +208,28 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue v_num = args.AsType(0, "select", DataType.Number, false);
             int num = (int)v_num.Number;
 
-            List<DynValue> values = new List<DynValue>();
+            List<DynValue> values = new();
 
             if (num > 0)
             {
                 for (int i = num; i < args.Count; i++)
+                {
                     values.Add(args[i]);
+                }
             }
             else if (num < 0)
             {
                 num = args.Count + num;
 
                 if (num < 1)
+                {
                     throw ScriptRuntimeException.BadArgumentIndexOutOfRange("select", 0);
+                }
 
                 for (int i = num; i < args.Count; i++)
+                {
                     values.Add(args[i]);
+                }
             }
             else
             {
@@ -236,7 +256,9 @@ namespace NovaSharp.Interpreter.CoreLib
         )
         {
             if (args.Count < 1)
+            {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");
+            }
 
             DynValue e = args[0];
             DynValue b = args.AsType(1, "tonumber", DataType.Number, true);
@@ -244,10 +266,14 @@ namespace NovaSharp.Interpreter.CoreLib
             if (b.IsNil())
             {
                 if (e.Type == DataType.Number)
+                {
                     return e;
+                }
 
                 if (e.Type != DataType.String)
+                {
                     return DynValue.Nil;
+                }
 
                 double d;
                 if (
@@ -265,9 +291,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 DynValue ee;
 
                 if (args[0].Type != DataType.Number)
+                {
                     ee = args.AsType(0, "tonumber", DataType.String, false);
+                }
                 else
+                {
                     ee = DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
+                }
                 ;
 
                 int bb = (int)b.Number;
@@ -309,15 +339,19 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             for (int i = 0; i < args.Count; i++)
             {
                 if (args[i].IsVoid())
+                {
                     break;
+                }
 
                 if (i != 0)
+                {
                     sb.Append('\t');
+                }
 
                 sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
             }

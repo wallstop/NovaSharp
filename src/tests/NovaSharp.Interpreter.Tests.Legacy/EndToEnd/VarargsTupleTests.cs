@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -11,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         private void DoTest(string code, string expectedResult)
         {
-            Script S = new Script();
+            Script S = new();
 
             S.DoString(
                 @"
@@ -101,7 +97,7 @@ end
 				Obj(1)
 			";
 
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             S.DoString(script);
         }

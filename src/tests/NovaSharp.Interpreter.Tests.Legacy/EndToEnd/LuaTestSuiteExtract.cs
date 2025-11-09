@@ -16,12 +16,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         void RunTest(string script)
         {
-            HashSet<string> failedTests = new HashSet<string>();
+            HashSet<string> failedTests = new();
             int i = 0;
 
-            Script S = new Script();
+            Script S = new();
 
-            var globalCtx = S.Globals;
+            Table? globalCtx = S.Globals;
             globalCtx.Set(
                 DynValue.NewString("xassert"),
                 DynValue.NewCallback(
@@ -29,7 +29,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                         (x, a) =>
                         {
                             if (!a[1].CastToBool())
+                            {
                                 failedTests.Add(a[0].String);
+                            }
 
                             return DynValue.Nil;
                         }
@@ -45,7 +47,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                             ++i;
 
                             if (!a[0].CastToBool())
+                            {
                                 failedTests.Add(string.Format("assert #{0}", i));
+                            }
 
                             return DynValue.Nil;
                         }

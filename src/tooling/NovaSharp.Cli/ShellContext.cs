@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 
 namespace NovaSharp
@@ -12,7 +8,7 @@ namespace NovaSharp
 
         public ShellContext(Script script)
         {
-            this.Script = script;
+            Script = script;
         }
     }
 }

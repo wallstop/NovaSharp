@@ -33,14 +33,14 @@ public class ScriptLoadingBenchmarks
     [Benchmark(Description = "Compile + Execute")]
     public DynValue CompileAndExecute()
     {
-        var script = new Script(CoreModules.Preset_Complete);
+        Script script = new(CoreModules.Preset_Complete);
         return script.DoString(_scriptSource, null, $"compile_execute_{Complexity}");
     }
 
     [Benchmark(Description = "Compile Only")]
     public DynValue CompileOnly()
     {
-        var script = new Script(CoreModules.Preset_Complete);
+        Script script = new(CoreModules.Preset_Complete);
         return script.LoadString(_scriptSource, null, $"compile_{Complexity}");
     }
 

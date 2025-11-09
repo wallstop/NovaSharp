@@ -5,6 +5,8 @@ using NovaSharp.Interpreter.Loaders;
 
 namespace NovaSharp.Interpreter.Platforms
 {
+    using System.Linq.Expressions;
+
     /// <summary>
     /// A static class offering properties for autodetection of system/platform details
     /// </summary>
@@ -63,7 +65,9 @@ namespace NovaSharp.Interpreter.Platforms
                     {
                         System.Linq.Expressions.Expression e =
                             System.Linq.Expressions.Expression.Constant(5, typeof(int));
-                        var lambda = System.Linq.Expressions.Expression.Lambda<Func<int>>(e);
+                        Expression<Func<int>> lambda = System.Linq.Expressions.Expression.Lambda<
+                            Func<int>
+                        >(e);
                         lambda.Compile();
                         m_IsRunningOnAOT = false;
                     }
@@ -81,7 +85,9 @@ namespace NovaSharp.Interpreter.Platforms
         private static void AutoDetectPlatformFlags()
         {
             if (m_AutoDetectionsDone)
+            {
                 return;
+            }
 #if PCL
             IsPortableFramework = true;
 #if ENABLE_DOTNET
@@ -119,7 +125,9 @@ namespace NovaSharp.Interpreter.Platforms
             return new LimitedPlatformAccessor();
 #else
             if (IsRunningOnUnity)
+            {
                 return new LimitedPlatformAccessor();
+            }
 
 #if DOTNET_CORE
             return new DotNetCorePlatformAccessor();
@@ -134,7 +142,9 @@ namespace NovaSharp.Interpreter.Platforms
             AutoDetectPlatformFlags();
 
             if (IsRunningOnUnity)
+            {
                 return new UnityAssetsScriptLoader();
+            }
             else
             {
 #if (DOTNET_CORE)

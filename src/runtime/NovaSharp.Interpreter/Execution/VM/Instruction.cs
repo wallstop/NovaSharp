@@ -29,7 +29,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             int usage = (int)OpCode.GetFieldUsage();
 
             if (usage != 0)
+            {
                 append += GenSpaces();
+            }
 
             if (
                 (this.OpCode == VM.OpCode.Meta)
@@ -38,24 +40,38 @@ namespace NovaSharp.Interpreter.Execution.VM
                     == (int)InstructionFieldUsage.NumValAsCodeAddress
                 )
             )
+            {
                 append += " " + NumVal.ToString("X8");
+            }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
+            {
                 append += " " + NumVal.ToString();
+            }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
+            {
                 append += " " + NumVal2.ToString();
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
+            {
                 append += " " + Name;
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
+            {
                 append += " " + PurifyFromNewLines(Value);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
+            {
                 append += " " + Symbol;
+            }
 
             if (((usage & ((int)InstructionFieldUsage.SymbolList)) != 0) && (SymbolList != null))
+            {
                 append += " " + string.Join(",", SymbolList.Select(s => s.ToString()).ToArray());
+            }
 
             return append;
         }
@@ -63,7 +79,9 @@ namespace NovaSharp.Interpreter.Execution.VM
         private string PurifyFromNewLines(DynValue Value)
         {
             if (Value == null)
+            {
                 return "";
+            }
 
             return Value.ToString().Replace('\n', ' ').Replace('\r', ' ');
         }
@@ -87,27 +105,41 @@ namespace NovaSharp.Interpreter.Execution.VM
                 (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
                 == (int)InstructionFieldUsage.NumValAsCodeAddress
             )
+            {
                 wr.Write(this.NumVal - baseAddress);
+            }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
+            {
                 wr.Write(this.NumVal);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
+            {
                 wr.Write(this.NumVal2);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
+            {
                 wr.Write(Name ?? "");
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
+            {
                 DumpValue(wr, Value);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
+            {
                 WriteSymbol(wr, Symbol, symbolMap);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.SymbolList)) != 0)
             {
                 wr.Write(this.SymbolList.Length);
                 for (int i = 0; i < this.SymbolList.Length; i++)
+                {
                     WriteSymbol(wr, SymbolList[i], symbolMap);
+                }
             }
         }
 
@@ -126,7 +158,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             int id = rd.ReadInt32();
 
             if (id < 0)
+            {
                 return null;
+            }
+
             return deserializedSymbols[id];
         }
 
@@ -138,7 +173,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             SymbolRef[] deserializedSymbols
         )
         {
-            Instruction that = new Instruction(chunkRef);
+            Instruction that = new(chunkRef);
 
             that.OpCode = (OpCode)rd.ReadByte();
 
@@ -148,21 +183,33 @@ namespace NovaSharp.Interpreter.Execution.VM
                 (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
                 == (int)InstructionFieldUsage.NumValAsCodeAddress
             )
+            {
                 that.NumVal = rd.ReadInt32() + baseAddress;
+            }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
+            {
                 that.NumVal = rd.ReadInt32();
+            }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
+            {
                 that.NumVal2 = rd.ReadInt32();
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
+            {
                 that.Name = rd.ReadString();
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
+            {
                 that.Value = ReadValue(rd, envTable);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
+            {
                 that.Symbol = ReadSymbol(rd, deserializedSymbols);
+            }
 
             if ((usage & ((int)InstructionFieldUsage.SymbolList)) != 0)
             {
@@ -170,7 +217,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 that.SymbolList = new SymbolRef[len];
 
                 for (int i = 0; i < that.SymbolList.Length; i++)
+                {
                     that.SymbolList[i] = ReadSymbol(rd, deserializedSymbols);
+                }
             }
 
             return that;
@@ -181,7 +230,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             bool isnull = !rd.ReadBoolean();
 
             if (isnull)
+            {
                 return null;
+            }
 
             DataType dt = (DataType)rd.ReadByte();
 
@@ -247,10 +298,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             symbolList = null;
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
+            {
                 symbol = this.Symbol;
+            }
 
             if ((usage & ((int)InstructionFieldUsage.SymbolList)) != 0)
+            {
                 symbolList = this.SymbolList;
+            }
         }
     }
 }

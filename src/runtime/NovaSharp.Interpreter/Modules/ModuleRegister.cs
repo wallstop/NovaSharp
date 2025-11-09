@@ -23,41 +23,94 @@ namespace NovaSharp.Interpreter
             modules = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
 
             if (modules.Has(CoreModules.GlobalConsts))
+            {
                 RegisterConstants(table);
+            }
+
             if (modules.Has(CoreModules.TableIterators))
+            {
                 RegisterModuleType<TableIteratorsModule>(table);
+            }
+
             if (modules.Has(CoreModules.Basic))
+            {
                 RegisterModuleType<BasicModule>(table);
+            }
+
             if (modules.Has(CoreModules.Metatables))
+            {
                 RegisterModuleType<MetaTableModule>(table);
+            }
+
             if (modules.Has(CoreModules.String))
+            {
                 RegisterModuleType<StringModule>(table);
+            }
+
             if (modules.Has(CoreModules.LoadMethods))
+            {
                 RegisterModuleType<LoadModule>(table);
+            }
+
             if (modules.Has(CoreModules.Table))
+            {
                 RegisterModuleType<TableModule>(table);
+            }
+
             if (modules.Has(CoreModules.Table))
+            {
                 RegisterModuleType<TableModule_Globals>(table);
+            }
+
             if (modules.Has(CoreModules.ErrorHandling))
+            {
                 RegisterModuleType<ErrorHandlingModule>(table);
+            }
+
             if (modules.Has(CoreModules.Math))
+            {
                 RegisterModuleType<MathModule>(table);
+            }
+
             if (modules.Has(CoreModules.Coroutine))
+            {
                 RegisterModuleType<CoroutineModule>(table);
+            }
+
             if (modules.Has(CoreModules.Bit32))
+            {
                 RegisterModuleType<Bit32Module>(table);
+            }
+
             if (modules.Has(CoreModules.Dynamic))
+            {
                 RegisterModuleType<DynamicModule>(table);
+            }
+
             if (modules.Has(CoreModules.OS_System))
+            {
                 RegisterModuleType<OsSystemModule>(table);
+            }
+
             if (modules.Has(CoreModules.OS_Time))
+            {
                 RegisterModuleType<OsTimeModule>(table);
+            }
+
             if (modules.Has(CoreModules.IO))
+            {
                 RegisterModuleType<IoModule>(table);
+            }
+
             if (modules.Has(CoreModules.Debug))
+            {
                 RegisterModuleType<DebugModule>(table);
+            }
+
             if (modules.Has(CoreModules.Json))
+            {
                 RegisterModuleType<JsonModule>(table);
+            }
 
             return table;
         }
@@ -116,9 +169,11 @@ namespace NovaSharp.Interpreter
                             .First();
 
                     if (!CallbackFunction.CheckCallbackSignature(mi, true))
+                    {
                         throw new ArgumentException(
                             string.Format("Method {0} does not have the right signature.", mi.Name)
                         );
+                    }
 
 #if NETFX_CORE
                     Delegate deleg = mi.CreateDelegate(

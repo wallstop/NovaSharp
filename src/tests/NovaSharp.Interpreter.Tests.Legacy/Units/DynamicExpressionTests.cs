@@ -1,4 +1,3 @@
-using NovaSharp.Interpreter;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.Units
@@ -9,7 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateUsesCurrentGlobalValues()
         {
-            var script = new Script();
+            Script script = new();
             script.Globals["x"] = 21;
 
             DynValue result = script.Evaluate("x * 2");
@@ -24,8 +23,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateRespectsCustomEnvironment()
         {
-            var script = new Script();
-            var env = new Table(script);
+            Script script = new();
+            Table env = new(script);
             env["value"] = DynValue.NewNumber(3);
 
             DynValue function = script.LoadString("return value * 5", env, "dynamic-expression");

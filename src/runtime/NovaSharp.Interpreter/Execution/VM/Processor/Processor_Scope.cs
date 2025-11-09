@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             int from = I.NumVal;
             int to = I.NumVal2;
 
-            var array = this.m_ExecutionStack.Peek().LocalScope;
+            DynValue[] array = this.m_ExecutionStack.Peek().LocalScope;
 
             if (to >= 0 && from >= 0 && to >= from)
             {
@@ -41,9 +41,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         private DynValue GetGlobalSymbol(DynValue dynValue, string name)
         {
             if (dynValue.Type != DataType.Table)
+            {
                 throw new InvalidOperationException(
                     string.Format("_ENV is not a table but a {0}", dynValue.Type)
                 );
+            }
 
             return dynValue.Table.Get(name);
         }
@@ -51,9 +53,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         private void SetGlobalSymbol(DynValue dynValue, string name, DynValue value)
         {
             if (dynValue.Type != DataType.Table)
+            {
                 throw new InvalidOperationException(
                     string.Format("_ENV is not a table but a {0}", dynValue.Type)
                 );
+            }
 
             dynValue.Table.Set(name, value ?? DynValue.Nil);
         }
@@ -67,22 +71,26 @@ namespace NovaSharp.Interpreter.Execution.VM
                     break;
                 case SymbolRefType.Local:
                     {
-                        var stackframe = GetTopNonClrFunction();
+                        CallStackItem stackframe = GetTopNonClrFunction();
 
                         DynValue v = stackframe.LocalScope[symref.i_Index];
                         if (v == null)
+                        {
                             stackframe.LocalScope[symref.i_Index] = v = DynValue.NewNil();
+                        }
 
                         v.Assign(value);
                     }
                     break;
                 case SymbolRefType.Upvalue:
                     {
-                        var stackframe = GetTopNonClrFunction();
+                        CallStackItem stackframe = GetTopNonClrFunction();
 
                         DynValue v = stackframe.ClosureScope[symref.i_Index];
                         if (v == null)
+                        {
                             stackframe.ClosureScope[symref.i_Index] = v = DynValue.NewNil();
+                        }
 
                         v.Assign(value);
                     }
@@ -109,7 +117,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 stackframe = m_ExecutionStack.Peek(i);
 
                 if (stackframe.ClrFunction == null)
+                {
                     break;
+                }
             }
 
             return stackframe;
@@ -127,20 +137,26 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         for (int i = stackframe.Debug_Symbols.Length - 1; i >= 0; i--)
                         {
-                            var l = stackframe.Debug_Symbols[i];
+                            SymbolRef l = stackframe.Debug_Symbols[i];
 
                             if (l.i_Name == name && stackframe.LocalScope[i] != null)
+                            {
                                 return l;
+                            }
                         }
                     }
 
-                    var closure = stackframe.ClosureScope;
+                    ClosureContext closure = stackframe.ClosureScope;
 
                     if (closure != null)
                     {
                         for (int i = 0; i < closure.Symbols.Length; i++)
+                        {
                             if (closure.Symbols[i] == name)
+                            {
                                 return SymbolRef.Upvalue(name, i);
+                            }
+                        }
                     }
                 }
             }

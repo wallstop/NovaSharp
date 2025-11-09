@@ -35,30 +35,46 @@ namespace NovaSharp.Interpreter.Platforms
                 else
                 {
                     if (PlatformAutoDetector.IsRunningOnMono)
+                    {
                         suffix = "unity.dll.mono";
+                    }
                     else
+                    {
                         suffix = "unity.dll.unknown";
+                    }
                 }
             }
             else if (PlatformAutoDetector.IsRunningOnMono)
+            {
                 suffix = "mono";
+            }
             else
+            {
                 suffix = "dotnet";
+            }
 
             if (PlatformAutoDetector.IsPortableFramework)
+            {
                 suffix = suffix + ".portable";
+            }
 
             if (PlatformAutoDetector.IsRunningOnClr4)
+            {
                 suffix = suffix + ".clr4";
+            }
             else
+            {
                 suffix = suffix + ".clr2";
+            }
 
 #if DOTNET_CORE
             suffix += ".netcore";
 #endif
 
             if (PlatformAutoDetector.IsRunningOnAOT)
+            {
                 suffix = suffix + ".aot";
+            }
 
             return GetPlatformNamePrefix() + "." + suffix;
         }

@@ -67,7 +67,9 @@ namespace NovaSharp.Commands.Implementations
             );
 
             if (language == null)
+            {
                 return;
+            }
 
             string luafile = AskQuestion(
                 "Lua dump table file: ",
@@ -77,12 +79,16 @@ namespace NovaSharp.Commands.Implementations
             );
 
             if (luafile == null)
+            {
                 return;
+            }
 
             string destfile = AskQuestion("Destination file: ", "", s => true, "");
 
             if (destfile == null)
+            {
                 return;
+            }
 
             string allowinternals = AskQuestion(
                 "Allow internals y/n ? [y]: ",
@@ -92,7 +98,9 @@ namespace NovaSharp.Commands.Implementations
             );
 
             if (allowinternals == null)
+            {
                 return;
+            }
 
             string namespaceName = AskQuestion(
                 "Namespace ? [HardwiredClasses]: ",
@@ -102,7 +110,9 @@ namespace NovaSharp.Commands.Implementations
             );
 
             if (namespaceName == null)
+            {
                 return;
+            }
 
             string className = AskQuestion(
                 "Class ? [HardwireTypes]: ",
@@ -112,7 +122,9 @@ namespace NovaSharp.Commands.Implementations
             );
 
             if (className == null)
+            {
                 return;
+            }
 
             Generate(language, luafile, destfile, allowinternals == "y", className, namespaceName);
         }
@@ -120,16 +132,22 @@ namespace NovaSharp.Commands.Implementations
         private bool IsValidIdentifier(string s)
         {
             if (string.IsNullOrEmpty(s))
+            {
                 return false;
+            }
 
             foreach (char c in s)
             {
                 if (c != '_' && !char.IsLetterOrDigit(c))
+                {
                     return false;
+                }
             }
 
             if (char.IsDigit(s[0]))
+            {
                 return false;
+            }
 
             return true;
         }
@@ -143,17 +161,17 @@ namespace NovaSharp.Commands.Implementations
             string namespacename
         )
         {
-            var logger = new ConsoleLogger();
+            ConsoleLogger logger = new();
             try
             {
-                Script s = new Script(CoreModules.None);
-                var eee = s.CreateDynamicExpression(File.ReadAllText(luafile));
+                Script s = new(CoreModules.None);
+                DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(luafile));
 
                 Table t = eee.Evaluate(null).Table;
 
                 HardwireGeneratorRegistry.RegisterPredefined();
 
-                HardwireGenerator hcg = new HardwireGenerator(
+                HardwireGenerator hcg = new(
                     namespacename ?? "HardwiredClasses",
                     classname ?? "HardwireTypes",
                     logger,
@@ -193,13 +211,19 @@ namespace NovaSharp.Commands.Implementations
                 string inp = Console.ReadLine();
 
                 if (inp == "#quit")
+                {
                     return null;
+                }
 
                 if (inp == "")
+                {
                     inp = defval;
+                }
 
                 if (validator(inp))
+                {
                     return inp;
+                }
 
                 Console.WriteLine(errormsg);
             }

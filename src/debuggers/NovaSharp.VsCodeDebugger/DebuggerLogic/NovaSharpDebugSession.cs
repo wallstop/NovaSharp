@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Debugging;
@@ -16,7 +15,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     {
         AsyncDebugger m_Debug;
         NovaSharpVsCodeDebugServer m_Server;
-        List<DynValue> m_Variables = new List<DynValue>();
+        List<DynValue> m_Variables = new();
         bool m_NotifyExecutionEnd = false;
 
         const int SCOPE_LOCALS = 65536;
@@ -100,7 +99,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private static string getString(Table args, string property, string dflt = null)
         {
-            var s = (string)args[property];
+            string s = (string)args[property];
             if (s == null)
             {
                 return dflt;
@@ -115,14 +114,16 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Evaluate(Response response, Table args)
         {
-            var expression = getString(args, "expression");
-            var frameId = getInt(args, "frameId", 0);
-            var context = getString(args, "context") ?? "hover";
+            string expression = getString(args, "expression");
+            int frameId = getInt(args, "frameId", 0);
+            string context = getString(args, "context") ?? "hover";
 
             if (frameId != 0 && context != "repl")
+            {
                 SendText(
                     "Warning : Evaluation of variables/watches is always done with the top-level scope."
                 );
+            }
 
             if (context == "repl" && expression.StartsWith("!"))
             {
@@ -161,7 +162,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                 try
                 {
-                    Regex rx = new Regex(regex);
+                    Regex rx = new(regex);
                     m_Debug.ErrorRegex = rx;
                     SendText("Current error regex : {0}", m_Debug.ErrorRegex.ToString());
                 }
@@ -183,7 +184,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     m_NotifyExecutionEnd = true;
                 }
                 else if (val.Length > 0)
+                {
                     SendText("Error : expected 'on' or 'off'");
+                }
 
                 SendText(
                     "Notifications of execution end are : {0}",
@@ -194,7 +197,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             {
                 int currId = m_Server.CurrentId ?? -1000;
 
-                foreach (var pair in m_Server.GetAttachedDebuggersByIdAndName())
+                foreach (
+                    KeyValuePair<int, string> pair in m_Server.GetAttachedDebuggersByIdAndName()
+                )
                 {
                     string isthis = (pair.Key == m_Debug.Id) ? " (this)" : "";
                     string isdef = (pair.Key == currId) ? " (default)" : "";
@@ -218,12 +223,16 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     m_Server.CurrentId = id;
 
                     if (cmd.StartsWith("switch"))
+                    {
                         Unbind();
+                    }
                     else
+                    {
                         SendText(
                             "Next time you'll attach the debugger, it will be atteched to script #{0}",
                             id
                         );
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -283,7 +292,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Scopes(Response response, Table arguments)
         {
-            var scopes = new List<Scope>();
+            List<Scope> scopes = new();
 
             scopes.Add(new Scope("Locals", SCOPE_LOCALS));
             scopes.Add(new Scope("Self", SCOPE_SELF));
@@ -301,7 +310,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             {
                 string p = args_source["path"].ToString();
                 if (p != null && p.Trim().Length > 0)
+                {
                     path = p;
+                }
             }
 
             if (path == null)
@@ -330,16 +341,16 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
             Table clientLines = args.Get("lines").Table;
 
-            var lin = new HashSet<int>(
+            HashSet<int> lin = new(
                 clientLines
                     .Values.Select(jt => ConvertClientLineToDebugger(jt.ToObject<int>()))
                     .ToArray()
             );
 
-            var lin2 = m_Debug.DebugService.ResetBreakPoints(src, lin);
+            HashSet<int> lin2 = m_Debug.DebugService.ResetBreakPoints(src, lin);
 
-            var breakpoints = new List<Breakpoint>();
-            foreach (var l in lin)
+            List<Breakpoint> breakpoints = new();
+            foreach (int l in lin)
             {
                 breakpoints.Add(new Breakpoint(lin2.Contains(l), l));
             }
@@ -353,11 +364,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             int maxLevels = getInt(args, "levels", 10);
             //int threadReference = getInt(args, "threadId", 0);
 
-            var stackFrames = new List<StackFrame>();
+            List<StackFrame> stackFrames = new();
 
-            var stack = m_Debug.GetWatches(WatchType.CallStack);
+            List<WatchItem> stack = m_Debug.GetWatches(WatchType.CallStack);
 
-            var coroutine = m_Debug.GetWatches(WatchType.Threads).LastOrDefault();
+            WatchItem coroutine = m_Debug.GetWatches(WatchType.Threads).LastOrDefault();
 
             int level = 0;
             int max = Math.Min(maxLevels - 3, stack.Count);
@@ -374,7 +385,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     : (m_Debug.GetSourceFile(sourceIdx) ?? "???");
                 string sourceName = Path.GetFileName(path);
 
-                var source = new Source(sourceName, path); // ConvertDebuggerPathToClient(path));
+                Source source = new(sourceName, path); // ConvertDebuggerPathToClient(path));
 
                 stackFrames.Add(
                     new StackFrame(
@@ -392,28 +403,38 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
 
             if (stack.Count > maxLevels - 3)
+            {
                 stackFrames.Add(new StackFrame(level++, "(...)", null, 0));
+            }
 
             if (coroutine != null)
+            {
                 stackFrames.Add(new StackFrame(level++, "(" + coroutine.Name + ")", null, 0));
+            }
             else
+            {
                 stackFrames.Add(new StackFrame(level++, "(main coroutine)", null, 0));
+            }
 
             stackFrames.Add(new StackFrame(level++, "(native)", null, 0));
 
             SendResponse(response, new StackTraceResponseBody(stackFrames));
         }
 
-        readonly SourceRef DefaultSourceRef = new SourceRef(-1, 0, 0, 0, 0, false);
+        readonly SourceRef DefaultSourceRef = new(-1, 0, 0, 0, 0, false);
 
         private int getInt(Table args, string propName, int defaultValue)
         {
-            var jo = args.Get(propName);
+            DynValue jo = args.Get(propName);
 
             if (jo.Type != DataType.Number)
+            {
                 return defaultValue;
+            }
             else
+            {
                 return jo.ToObject<int>();
+            }
         }
 
         public override void StepIn(Response response, Table arguments)
@@ -432,7 +453,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Threads(Response response, Table arguments)
         {
-            var threads = new List<Thread>() { new Thread(0, "Main Thread") };
+            List<Thread> threads = new() { new Thread(0, "Main Thread") };
             SendResponse(response, new ThreadsResponseBody(threads));
         }
 
@@ -440,7 +461,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         {
             int index = getInt(arguments, "variablesReference", -1);
 
-            var variables = new List<Variable>();
+            List<Variable> variables = new();
 
             if (index == SCOPE_SELF)
             {
@@ -449,10 +470,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
             else if (index == SCOPE_LOCALS)
             {
-                foreach (var w in m_Debug.GetWatches(WatchType.Locals))
+                foreach (WatchItem w in m_Debug.GetWatches(WatchType.Locals))
+                {
                     variables.Add(
                         new Variable(w.Name, (w.Value ?? DynValue.Void).ToDebugPrintString())
                     );
+                }
             }
             else if (index < 0 || index >= m_Variables.Count)
             {
@@ -474,25 +497,33 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         void IAsyncDebuggerClient.OnWatchesUpdated(WatchType watchType)
         {
             if (watchType == WatchType.CallStack)
+            {
                 m_Variables.Clear();
+            }
         }
 
         void IAsyncDebuggerClient.OnSourceCodeChanged(int sourceID)
         {
             if (m_Debug.IsSourceOverride(sourceID))
+            {
                 SendText(
                     "Loaded source '{0}' -> '{1}'",
                     m_Debug.GetSource(sourceID).Name,
                     m_Debug.GetSourceFile(sourceID)
                 );
+            }
             else
+            {
                 SendText("Loaded source '{0}'", m_Debug.GetSource(sourceID).Name);
+            }
         }
 
         public void OnExecutionEnded()
         {
             if (m_NotifyExecutionEnd)
+            {
                 SendText("Execution ended.");
+            }
         }
 
         private void SendText(string msg, params object[] args)

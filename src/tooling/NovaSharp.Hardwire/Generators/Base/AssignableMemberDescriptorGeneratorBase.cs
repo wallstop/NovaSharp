@@ -1,10 +1,5 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Interop.BasicDescriptors;
 using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
@@ -47,14 +42,18 @@ namespace NovaSharp.Hardwire.Generators
             MemberDescriptorAccess access = 0;
 
             if (canWrite)
+            {
                 access = access | MemberDescriptorAccess.CanWrite;
+            }
 
             if (canRead)
+            {
                 access = access | MemberDescriptorAccess.CanRead;
+            }
 
             string className = GetPrefix() + "_" + Guid.NewGuid().ToString("N");
 
-            CodeTypeDeclaration classCode = new CodeTypeDeclaration(className);
+            CodeTypeDeclaration classCode = new(className);
 
             classCode.TypeAttributes =
                 System.Reflection.TypeAttributes.NestedPrivate
@@ -64,7 +63,7 @@ namespace NovaSharp.Hardwire.Generators
 
             // protected HardwiredMemberDescriptor(Type memberType, string name, bool isStatic, MemberDescriptorAccess access)
 
-            CodeConstructor ctor = new CodeConstructor();
+            CodeConstructor ctor = new();
             ctor.Attributes = MemberAttributes.Assembly;
             ctor.BaseConstructorArgs.Add(new CodeTypeOfExpression(memberType));
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(name));
@@ -77,7 +76,7 @@ namespace NovaSharp.Hardwire.Generators
             );
             classCode.Members.Add(ctor);
 
-            var thisExp = isStatic
+            CodeExpression thisExp = isStatic
                 ? (CodeExpression)(new CodeTypeReferenceExpression(decltype))
                 : (CodeExpression)(
                     new CodeCastExpression(decltype, new CodeVariableReferenceExpression("obj"))
@@ -85,9 +84,9 @@ namespace NovaSharp.Hardwire.Generators
 
             if (canRead)
             {
-                var memberExp = GetMemberAccessExpression(thisExp, name);
+                CodeExpression memberExp = GetMemberAccessExpression(thisExp, name);
                 //	protected virtual object GetValueImpl(Script script, object obj)
-                CodeMemberMethod m = new CodeMemberMethod();
+                CodeMemberMethod m = new();
                 classCode.Members.Add(m);
                 m.Name = "GetValueImpl";
                 m.Attributes = MemberAttributes.Override | MemberAttributes.Family;
@@ -100,7 +99,7 @@ namespace NovaSharp.Hardwire.Generators
             if (canWrite)
             {
                 //	protected virtual object GetValueImpl(Script script, object obj)
-                CodeMemberMethod m = new CodeMemberMethod();
+                CodeMemberMethod m = new();
                 classCode.Members.Add(m);
                 m.Name = "SetValueImpl";
                 m.Attributes = MemberAttributes.Override | MemberAttributes.Family;
@@ -108,14 +107,14 @@ namespace NovaSharp.Hardwire.Generators
                 m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "obj"));
                 m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
 
-                var valExp = new CodeCastExpression(
+                CodeCastExpression valExp = new(
                     memberType,
                     new CodeVariableReferenceExpression("value")
                 );
 
                 if (isStatic)
                 {
-                    var e = GetMemberAccessExpression(thisExp, name);
+                    CodeExpression e = GetMemberAccessExpression(thisExp, name);
                     m.Statements.Add(new CodeAssignStatement(e, valExp));
                 }
                 else
@@ -124,7 +123,7 @@ namespace NovaSharp.Hardwire.Generators
                         new CodeVariableDeclarationStatement(decltype, "tmp", thisExp)
                     );
 
-                    var memberExp = GetMemberAccessExpression(
+                    CodeExpression memberExp = GetMemberAccessExpression(
                         new CodeVariableReferenceExpression("tmp"),
                         name
                     );

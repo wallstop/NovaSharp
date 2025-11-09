@@ -1,9 +1,6 @@
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.VsCodeDebugger.SDK;
 
@@ -74,7 +71,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
             SendText("==========================================================");
 
-            foreach (var pair in m_Server.GetAttachedDebuggersByIdAndName())
+            foreach (KeyValuePair<int, string> pair in m_Server.GetAttachedDebuggersByIdAndName())
             {
                 string isdef = (pair.Key == currId) ? " (default)" : "";
                 SendText("{0} : {1}{2}", pair.Key.ToString().PadLeft(9), pair.Value, isdef);
@@ -101,7 +98,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private static string getString(Table args, string property, string dflt = null)
         {
-            var s = (string)args[property];
+            string s = (string)args[property];
             if (s == null)
             {
                 return dflt;
@@ -116,11 +113,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Evaluate(Response response, Table args)
         {
-            var expression = getString(args, "expression");
-            var context = getString(args, "context") ?? "hover";
+            string expression = getString(args, "expression");
+            string context = getString(args, "context") ?? "hover";
 
             if (context == "repl")
+            {
                 ExecuteRepl(expression);
+            }
 
             SendResponse(response);
         }
@@ -188,7 +187,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Threads(Response response, Table arguments)
         {
-            var threads = new List<Thread>() { new Thread(0, "Main Thread") };
+            List<Thread> threads = new() { new Thread(0, "Main Thread") };
             SendResponse(response, new ThreadsResponseBody(threads));
         }
 

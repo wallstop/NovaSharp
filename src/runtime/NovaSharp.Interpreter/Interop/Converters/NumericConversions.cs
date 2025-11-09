@@ -47,27 +47,59 @@ namespace NovaSharp.Interpreter.Interop.Converters
             try
             {
                 if (type == typeof(double))
+                {
                     return d;
+                }
+
                 if (type == typeof(sbyte))
+                {
                     return Convert.ToSByte(d);
+                }
+
                 if (type == typeof(byte))
+                {
                     return Convert.ToByte(d);
+                }
+
                 if (type == typeof(short))
+                {
                     return Convert.ToInt16(d);
+                }
+
                 if (type == typeof(ushort))
+                {
                     return Convert.ToUInt16(d);
+                }
+
                 if (type == typeof(int))
+                {
                     return Convert.ToInt32(d);
+                }
+
                 if (type == typeof(uint))
+                {
                     return Convert.ToUInt32(d);
+                }
+
                 if (type == typeof(long))
+                {
                     return Convert.ToInt64(d);
+                }
+
                 if (type == typeof(ulong))
+                {
                     return Convert.ToUInt64(d);
+                }
+
                 if (type == typeof(float))
+                {
                     return Convert.ToSingle(d);
+                }
+
                 if (type == typeof(decimal))
+                {
                     return Convert.ToDecimal(d);
+                }
             }
             catch (Exception) { }
 

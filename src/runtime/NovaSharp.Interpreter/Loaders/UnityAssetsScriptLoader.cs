@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Loaders
     /// </summary>
     public class UnityAssetsScriptLoader : ScriptLoaderBase
     {
-        Dictionary<string, string> m_Resources = new Dictionary<string, string>();
+        Dictionary<string, string> m_Resources = new();
 
         /// <summary>
         /// The default path where scripts are meant to be stored (if not changed)
@@ -125,7 +125,9 @@ namespace NovaSharp.Interpreter.Loaders
             int b = Math.Max(filename.LastIndexOf('\\'), filename.LastIndexOf('/'));
 
             if (b > 0)
+            {
                 filename = filename.Substring(b + 1);
+            }
 
             return filename;
         }
@@ -147,10 +149,12 @@ namespace NovaSharp.Interpreter.Loaders
             file = GetFileName(file);
 
             if (m_Resources.ContainsKey(file))
+            {
                 return m_Resources[file];
+            }
             else
             {
-                var error = string.Format(
+                string error = string.Format(
                     @"Cannot load script '{0}'. By default, scripts should be .txt files placed under a Assets/Resources/{1} directory.
 If you want scripts to be put in another directory or another way, use a custom instance of UnityAssetsScriptLoader or implement
 your own IScriptLoader (possibly extending ScriptLoaderBase).",

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -12,15 +10,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         private DynValue Script_RunString(string script)
         {
-            Script s1 = new Script();
+            Script s1 = new();
             DynValue v1 = s1.LoadString(script);
 
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new())
             {
                 s1.Dump(v1, ms);
                 ms.Seek(0, SeekOrigin.Begin);
 
-                Script s2 = new Script();
+                Script s2 = new();
                 DynValue func = s2.LoadStream(ms);
                 return func.Function.Call();
             }
@@ -28,16 +26,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private DynValue Script_LoadFunc(string script, string funcname)
         {
-            Script s1 = new Script();
+            Script s1 = new();
             DynValue v1 = s1.DoString(script);
             DynValue func = s1.Globals.Get(funcname);
 
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new())
             {
                 s1.Dump(func, ms);
                 ms.Seek(0, SeekOrigin.Begin);
 
-                Script s2 = new Script();
+                Script s2 = new();
                 return s2.LoadStream(ms);
             }
         }
@@ -276,7 +274,7 @@ return y;
         [Test]
         public void Load_ChangeEnvWithDebugSetUpvalue()
         {
-            List<Table> list = new List<Table>();
+            List<Table> list = new();
 
             string script =
                 @"
@@ -301,7 +299,7 @@ return y;
 
 				sandbox()";
 
-            Script S = new Script(CoreModules.Preset_Complete);
+            Script S = new(CoreModules.Preset_Complete);
 
             S.Globals["print"] = (Action<Table>)(t => list.Add(t));
 
@@ -312,7 +310,9 @@ return y;
             int[] eqs = new int[] { 0, 1, 1, 0, 1, 1 };
 
             for (int i = 0; i < 6; i++)
+            {
                 Assert.AreEqual(list[eqs[i]], list[i]);
+            }
         }
     }
 }

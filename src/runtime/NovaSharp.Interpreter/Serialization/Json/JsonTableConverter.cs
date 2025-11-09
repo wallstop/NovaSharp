@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
         /// <returns></returns>
         public static string TableToJson(this Table table)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             TableToJson(sb, table);
             return sb.ToString();
         }
@@ -44,7 +44,9 @@ namespace NovaSharp.Interpreter.Serialization.Json
                     if (pair.Key.Type == DataType.String && IsValueJsonCompatible(pair.Value))
                     {
                         if (!first)
+                        {
                             sb.Append(',');
+                        }
 
                         ValueToJson(sb, pair.Key);
                         sb.Append(':');
@@ -64,7 +66,9 @@ namespace NovaSharp.Interpreter.Serialization.Json
                     if (IsValueJsonCompatible(value))
                     {
                         if (!first)
+                        {
                             sb.Append(',');
+                        }
 
                         ValueToJson(sb, value);
 
@@ -144,33 +148,41 @@ namespace NovaSharp.Interpreter.Serialization.Json
         /// <returns>A table containing the representation of the given json.</returns>
         public static Table JsonToTable(string json, Script script = null)
         {
-            Lexer L = new Lexer(0, json, false);
+            Lexer L = new(0, json, false);
 
             if (L.Current.Type == TokenType.Brk_Open_Curly)
+            {
                 return ParseJsonObject(L, script);
+            }
             else if (L.Current.Type == TokenType.Brk_Open_Square)
+            {
                 return ParseJsonArray(L, script);
+            }
             else
+            {
                 throw new SyntaxErrorException(
                     L.Current,
                     "Unexpected token : '{0}'",
                     L.Current.Text
                 );
+            }
         }
 
         private static void AssertToken(Lexer L, TokenType type)
         {
             if (L.Current.Type != type)
+            {
                 throw new SyntaxErrorException(
                     L.Current,
                     "Unexpected token : '{0}'",
                     L.Current.Text
                 );
+            }
         }
 
         private static Table ParseJsonArray(Lexer L, Script script)
         {
-            Table t = new Table(script);
+            Table t = new(script);
 
             L.Next();
 
@@ -181,7 +193,9 @@ namespace NovaSharp.Interpreter.Serialization.Json
                 L.Next();
 
                 if (L.Current.Type == TokenType.Comma)
+                {
                     L.Next();
+                }
             }
 
             return t;
@@ -189,7 +203,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
 
         private static Table ParseJsonObject(Lexer L, Script script)
         {
-            Table t = new Table(script);
+            Table t = new(script);
 
             L.Next();
 
@@ -205,7 +219,9 @@ namespace NovaSharp.Interpreter.Serialization.Json
                 L.Next();
 
                 if (L.Current.Type == TokenType.Comma)
+                {
                     L.Next();
+                }
             }
 
             return t;
@@ -277,7 +293,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
                     L.Current.Text
                 );
             }
-            var numberValue = L.Current.GetNumberValue();
+            double numberValue = L.Current.GetNumberValue();
             if (negative)
             {
                 numberValue = -numberValue;

@@ -58,12 +58,18 @@ namespace NovaSharp.Interpreter
         {
             if (isMethodCall)
             {
-                var colon = executionContext.GetScript().Options.ColonOperatorClrCallbackBehaviour;
+                ColonOperatorBehaviour colon = executionContext
+                    .GetScript()
+                    .Options.ColonOperatorClrCallbackBehaviour;
 
                 if (colon == ColonOperatorBehaviour.TreatAsColon)
+                {
                     isMethodCall = false;
+                }
                 else if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
+                {
                     isMethodCall = (args.Count > 0 && args[0].Type == DataType.UserData);
+                }
             }
 
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
@@ -86,7 +92,9 @@ namespace NovaSharp.Interpreter
                     || value == InteropAccessMode.HideMembers
                     || value == InteropAccessMode.BackgroundOptimized
                 )
+                {
                     throw new ArgumentException("DefaultAccessMode");
+                }
 
                 m_DefaultAccessMode = value;
             }
@@ -106,7 +114,9 @@ namespace NovaSharp.Interpreter
         )
         {
             if (accessMode == InteropAccessMode.Default)
+            {
                 accessMode = m_DefaultAccessMode;
+            }
 
 #if NETFX_CORE
             MethodMemberDescriptor descr = new MethodMemberDescriptor(
@@ -114,7 +124,7 @@ namespace NovaSharp.Interpreter
                 accessMode
             );
 #else
-            MethodMemberDescriptor descr = new MethodMemberDescriptor(del.Method, accessMode);
+            MethodMemberDescriptor descr = new(del.Method, accessMode);
 #endif
             return descr.GetCallbackFunction(script, del.Target);
         }
@@ -136,9 +146,11 @@ namespace NovaSharp.Interpreter
         )
         {
             if (accessMode == InteropAccessMode.Default)
+            {
                 accessMode = m_DefaultAccessMode;
+            }
 
-            MethodMemberDescriptor descr = new MethodMemberDescriptor(mi, accessMode);
+            MethodMemberDescriptor descr = new(mi, accessMode);
             return descr.GetCallbackFunction(script, obj);
         }
 

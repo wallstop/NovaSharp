@@ -1,9 +1,5 @@
-using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace NovaSharp.Hardwire.Languages
 {
@@ -13,7 +9,7 @@ namespace NovaSharp.Hardwire.Languages
 
         public VbHardwireCodeGenerationLanguage()
         {
-            m_CodeDomProvider = System.CodeDom.Compiler.CodeDomProvider.CreateProvider("VB");
+            m_CodeDomProvider = CodeDomProvider.CreateProvider("VB");
         }
 
         public override string Name
@@ -75,7 +71,7 @@ namespace NovaSharp.Hardwire.Languages
             CodeExpression[] args
         )
         {
-            var idxexp = new CodeSnippetExpression(
+            CodeSnippetExpression idxexp = new(
                 string.Join(", ", args.Select(e => ExpressionToString(e)).ToArray())
             );
 

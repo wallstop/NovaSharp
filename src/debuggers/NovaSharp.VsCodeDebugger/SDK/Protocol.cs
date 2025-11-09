@@ -127,9 +127,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
         protected const int BUFFER_SIZE = 4096;
         protected const string TWO_CRLF = "\r\n\r\n";
-        protected static readonly Regex CONTENT_LENGTH_MATCHER = new Regex(
-            @"Content-Length: (\d+)"
-        );
+        protected static readonly Regex CONTENT_LENGTH_MATCHER = new(@"Content-Length: (\d+)");
 
         protected static readonly Encoding Encoding = System.Text.Encoding.UTF8;
 
@@ -158,7 +156,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
             _stopRequested = false;
             while (!_stopRequested)
             {
-                var read = inputStream.Read(buffer, 0, buffer.Length);
+                int read = inputStream.Read(buffer, 0, buffer.Length);
 
                 if (read == 0)
                 {
@@ -196,7 +194,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 {
                     if (_rawData.Length >= _bodyLength)
                     {
-                        var buf = _rawData.RemoveFirst(_bodyLength);
+                        byte[] buf = _rawData.RemoveFirst(_bodyLength);
 
                         _bodyLength = -1;
 
@@ -208,7 +206,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 else
                 {
                     string s = _rawData.GetString(Encoding);
-                    var idx = s.IndexOf(TWO_CRLF);
+                    int idx = s.IndexOf(TWO_CRLF);
                     if (idx != -1)
                     {
                         Match m = CONTENT_LENGTH_MATCHER.Match(s);
@@ -234,11 +232,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 if (request != null && request["type"].ToString() == "request")
                 {
                     if (TRACE)
+                    {
                         Console.Error.WriteLine(
                             string.Format("C {0}: {1}", request["command"], req)
                         );
+                    }
 
-                    var response = new Response(request);
+                    Response response = new(request);
 
                     DispatchRequest(
                         request.Get("command").String,
@@ -270,7 +270,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 );
             }
 
-            var data = ConvertToBytes(message);
+            byte[] data = ConvertToBytes(message);
             try
             {
                 _outputStream.Write(data, 0, data.Length);
@@ -284,7 +284,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
         private static byte[] ConvertToBytes(ProtocolMessage request)
         {
-            var asJson = JsonTableConverter.ObjectToJson(request);
+            string asJson = JsonTableConverter.ObjectToJson(request);
             byte[] jsonBytes = Encoding.GetBytes(asJson);
 
             string header = string.Format("Content-Length: {0}{1}", jsonBytes.Length, TWO_CRLF);

@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter.Interop;
 using NUnit.Framework;
 
@@ -32,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             UserData.RegisterProxyType<Proxy, Random>(r => new Proxy(r));
 
-            Script S = new Script();
+            Script S = new();
 
             S.Globals["R"] = new Random();
             S.Globals["func"] =

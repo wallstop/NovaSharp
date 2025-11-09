@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
-            Loop L = new Loop() { Scope = m_StackFrame };
+            Loop L = new() { Scope = m_StackFrame };
 
             bc.LoopTracker.Loops.Push(L);
 
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             int start = bc.GetJumpPointForNextInstruction();
 
             m_Condition.Compile(bc);
-            var jumpend = bc.Emit_Jump(OpCode.Jf, -1);
+            Instruction jumpend = bc.Emit_Jump(OpCode.Jf, -1);
 
             bc.Emit_Enter(m_StackFrame);
 
@@ -63,7 +63,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
             foreach (Instruction i in L.BreakJumps)
+            {
                 i.NumVal = exitpoint;
+            }
 
             jumpend.NumVal = exitpoint;
 

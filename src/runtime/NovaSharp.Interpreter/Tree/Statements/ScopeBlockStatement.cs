@@ -29,12 +29,16 @@ namespace NovaSharp.Interpreter.Tree.Statements
         public override void Compile(Execution.VM.ByteCode bc)
         {
             using (bc.EnterSource(m_Do))
+            {
                 bc.Emit_Enter(m_StackFrame);
+            }
 
             m_Block.Compile(bc);
 
             using (bc.EnterSource(m_End))
+            {
                 bc.Emit_Leave(m_StackFrame);
+            }
         }
     }
 }

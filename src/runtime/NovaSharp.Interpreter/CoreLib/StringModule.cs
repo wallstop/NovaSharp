@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
-            Table stringMetatable = new Table(globalTable.OwnerScript);
+            Table stringMetatable = new(globalTable.OwnerScript);
             stringMetatable.Set("__index", DynValue.NewTable(stringTable));
             globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
         }
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 byte[] bytes;
-                using (MemoryStream ms = new MemoryStream())
+                using (MemoryStream ms = new())
                 {
                     executionContext.GetScript().Dump(fn, ms);
                     ms.Seek(0, SeekOrigin.Begin);
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            StringBuilder sb = new StringBuilder(args.Count);
+            StringBuilder sb = new(args.Count);
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -63,9 +63,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     double? nd = v.CastToNumber();
                     if (nd == null)
+                    {
                         args.AsType(i, "char", DataType.Number, false);
+                    }
                     else
+                    {
                         d = nd.Value;
+                    }
                 }
                 else
                 {
@@ -108,7 +112,9 @@ namespace NovaSharp.Interpreter.CoreLib
         private static int Unicode2Ascii(int i)
         {
             if (i >= 0 && i <= 255)
+            {
                 return i;
+            }
 
             return (int)'?';
         }
@@ -137,15 +143,21 @@ namespace NovaSharp.Interpreter.CoreLib
         private static int? AdjustIndex(string s, DynValue vi, int defval)
         {
             if (vi.IsNil())
+            {
                 return defval;
+            }
 
             int i = (int)Math.Round(vi.Number, 0);
 
             if (i == 0)
+            {
                 return null;
+            }
 
             if (i > 0)
+            {
                 return i - 1;
+            }
 
             return s.Length - i;
         }
@@ -226,12 +238,14 @@ namespace NovaSharp.Interpreter.CoreLib
             string sep = (arg_sep.IsNotNil()) ? arg_sep.String : null;
 
             int count = (int)arg_n.Number;
-            StringBuilder result = new StringBuilder(arg_s.String.Length * count);
+            StringBuilder result = new(arg_s.String.Length * count);
 
             for (int i = 0; i < count; ++i)
             {
                 if (i != 0 && sep != null)
+                {
                     result.Append(sep);
+                }
 
                 result.Append(arg_s.String);
             }
@@ -294,7 +308,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue arg_s2 = args.AsType(1, "startsWith", DataType.String, true);
 
             if (arg_s1.IsNil() || arg_s2.IsNil())
+            {
                 return DynValue.False;
+            }
 
             return DynValue.NewBoolean(arg_s1.String.StartsWith(arg_s2.String));
         }
@@ -309,7 +325,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue arg_s2 = args.AsType(1, "endsWith", DataType.String, true);
 
             if (arg_s1.IsNil() || arg_s2.IsNil())
+            {
                 return DynValue.False;
+            }
 
             return DynValue.NewBoolean(arg_s1.String.EndsWith(arg_s2.String));
         }
@@ -324,7 +342,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue arg_s2 = args.AsType(1, "contains", DataType.String, true);
 
             if (arg_s1.IsNil() || arg_s2.IsNil())
+            {
                 return DynValue.False;
+            }
 
             return DynValue.NewBoolean(arg_s1.String.Contains(arg_s2.String));
         }

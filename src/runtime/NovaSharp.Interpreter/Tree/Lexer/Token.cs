@@ -108,15 +108,23 @@ namespace NovaSharp.Interpreter.Tree
         public double GetNumberValue()
         {
             if (this.Type == TokenType.Number)
+            {
                 return LexerUtils.ParseNumber(this);
+            }
             else if (this.Type == TokenType.Number_Hex)
+            {
                 return LexerUtils.ParseHexInteger(this);
+            }
             else if (this.Type == TokenType.Number_HexFloat)
+            {
                 return LexerUtils.ParseHexFloat(this);
+            }
             else
+            {
                 throw new NotSupportedException(
                     "GetNumberValue is supported only on numeric tokens"
                 );
+            }
         }
 
         public bool IsEndOfBlock()

@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
@@ -34,9 +31,13 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             if (index.Type == DataType.String)
             {
                 if (index.String == "add")
+                {
                     return DynValue.NewCallback((c, a) => m_AddCallback(m_Object, c, a));
+                }
                 else if (index.String == "remove")
+                {
                     return DynValue.NewCallback((c, a) => m_RemoveCallback(m_Object, c, a));
+                }
             }
 
             throw new ScriptRuntimeException("Events only support add and remove methods");

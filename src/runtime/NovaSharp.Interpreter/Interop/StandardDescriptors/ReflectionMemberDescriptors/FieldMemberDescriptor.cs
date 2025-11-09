@@ -64,7 +64,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (fi.GetVisibilityFromAttributes() ?? fi.IsPublic)
+            {
                 return new FieldMemberDescriptor(fi, accessMode);
+            }
 
             return null;
         }
@@ -77,7 +79,9 @@ namespace NovaSharp.Interpreter.Interop
         public FieldMemberDescriptor(FieldInfo fi, InteropAccessMode accessMode)
         {
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
+            {
                 accessMode = InteropAccessMode.Reflection;
+            }
 
             this.FieldInfo = fi;
             this.AccessMode = accessMode;
@@ -112,17 +116,25 @@ namespace NovaSharp.Interpreter.Interop
 
             // optimization+workaround of Unity bug..
             if (IsConst)
+            {
                 return ClrToScriptConversions.ObjectToDynValue(script, m_ConstValue);
+            }
 
             if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
+            {
                 OptimizeGetter();
+            }
 
             object result = null;
 
             if (m_OptimizedGetter != null)
+            {
                 result = m_OptimizedGetter(obj);
+            }
             else
+            {
                 result = FieldInfo.GetValue(obj);
+            }
 
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
@@ -130,7 +142,9 @@ namespace NovaSharp.Interpreter.Interop
         internal void OptimizeGetter()
         {
             if (this.IsConst)
+            {
                 return;
+            }
 
             using (
                 PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
@@ -138,19 +152,26 @@ namespace NovaSharp.Interpreter.Interop
             {
                 if (IsStatic)
                 {
-                    var paramExp = Expression.Parameter(typeof(object), "dummy");
-                    var propAccess = Expression.Field(null, FieldInfo);
-                    var castPropAccess = Expression.Convert(propAccess, typeof(object));
-                    var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
+                    ParameterExpression paramExp = Expression.Parameter(typeof(object), "dummy");
+                    MemberExpression propAccess = Expression.Field(null, FieldInfo);
+                    UnaryExpression castPropAccess = Expression.Convert(propAccess, typeof(object));
+                    Expression<Func<object, object>> lambda = Expression.Lambda<
+                        Func<object, object>
+                    >(castPropAccess, paramExp);
                     Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
                 }
                 else
                 {
-                    var paramExp = Expression.Parameter(typeof(object), "obj");
-                    var castParamExp = Expression.Convert(paramExp, this.FieldInfo.DeclaringType);
-                    var propAccess = Expression.Field(castParamExp, FieldInfo);
-                    var castPropAccess = Expression.Convert(propAccess, typeof(object));
-                    var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
+                    ParameterExpression paramExp = Expression.Parameter(typeof(object), "obj");
+                    UnaryExpression castParamExp = Expression.Convert(
+                        paramExp,
+                        this.FieldInfo.DeclaringType
+                    );
+                    MemberExpression propAccess = Expression.Field(castParamExp, FieldInfo);
+                    UnaryExpression castPropAccess = Expression.Convert(propAccess, typeof(object));
+                    Expression<Func<object, object>> lambda = Expression.Lambda<
+                        Func<object, object>
+                    >(castPropAccess, paramExp);
                     Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
                 }
             }
@@ -167,11 +188,13 @@ namespace NovaSharp.Interpreter.Interop
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (IsReadonly || IsConst)
+            {
                 throw new ScriptRuntimeException(
                     "userdata field '{0}.{1}' cannot be written to.",
                     this.FieldInfo.DeclaringType.Name,
                     this.Name
                 );
+            }
 
             object value = ScriptToClrConversions.DynValueToObjectOfType(
                 v,
@@ -183,7 +206,9 @@ namespace NovaSharp.Interpreter.Interop
             try
             {
                 if (value is double)
+                {
                     value = NumericConversions.DoubleToType(FieldInfo.FieldType, (double)value);
+                }
 
                 FieldInfo.SetValue(IsStatic ? null : obj, value);
             }
@@ -219,16 +244,22 @@ namespace NovaSharp.Interpreter.Interop
             get
             {
                 if (IsReadonly || IsConst)
+                {
                     return MemberDescriptorAccess.CanRead;
+                }
                 else
+                {
                     return MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite;
+                }
             }
         }
 
         void IOptimizableDescriptor.Optimize()
         {
             if (m_OptimizedGetter == null)
+            {
                 this.OptimizeGetter();
+            }
         }
 
         /// <summary>

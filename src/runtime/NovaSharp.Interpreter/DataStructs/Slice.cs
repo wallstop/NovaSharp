@@ -76,7 +76,9 @@ namespace NovaSharp.Interpreter.DataStructs
         private int CalcRealIndex(int index)
         {
             if (index < 0 || index >= m_Length)
+            {
                 throw new ArgumentOutOfRangeException("index");
+            }
 
             if (m_Reversed)
             {
@@ -97,7 +99,9 @@ namespace NovaSharp.Interpreter.DataStructs
         public IEnumerator<T> GetEnumerator()
         {
             for (int i = 0; i < m_Length; i++)
+            {
                 yield return m_SourceList[CalcRealIndex(i)];
+            }
         }
 
         /// <summary>
@@ -109,7 +113,9 @@ namespace NovaSharp.Interpreter.DataStructs
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             for (int i = 0; i < m_Length; i++)
+            {
                 yield return m_SourceList[CalcRealIndex(i)];
+            }
         }
 
         /// <summary>
@@ -120,7 +126,9 @@ namespace NovaSharp.Interpreter.DataStructs
             T[] array = new T[m_Length];
 
             for (int i = 0; i < m_Length; i++)
+            {
                 array[i] = m_SourceList[CalcRealIndex(i)];
+            }
 
             return array;
         }
@@ -130,10 +138,12 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public List<T> ToList()
         {
-            List<T> list = new List<T>(m_Length);
+            List<T> list = new(m_Length);
 
             for (int i = 0; i < m_Length; i++)
+            {
                 list.Add(m_SourceList[CalcRealIndex(i)]);
+            }
 
             return list;
         }
@@ -150,7 +160,9 @@ namespace NovaSharp.Interpreter.DataStructs
             for (int i = 0; i < this.Count; i++)
             {
                 if (this[i].Equals(item))
+                {
                     return i;
+                }
             }
             return -1;
         }
@@ -215,7 +227,9 @@ namespace NovaSharp.Interpreter.DataStructs
         public void CopyTo(T[] array, int arrayIndex)
         {
             for (int i = 0; i < Count; i++)
+            {
                 array[i + arrayIndex] = this[i];
+            }
         }
 
         /// <summary>

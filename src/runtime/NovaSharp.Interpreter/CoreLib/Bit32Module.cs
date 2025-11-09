@@ -64,9 +64,14 @@ namespace NovaSharp.Interpreter.CoreLib
         static uint NBitMask(int bits)
         {
             if (bits <= 0)
+            {
                 return 0;
+            }
+
             if (bits >= 32)
+            {
                 return MASKS[31];
+            }
 
             return MASKS[bits - 1];
         }
@@ -139,21 +144,27 @@ namespace NovaSharp.Interpreter.CoreLib
         private static void ValidatePosWidth(string func, int argPos, int pos, int width)
         {
             if (pos > 31 || (pos + width) > 31)
+            {
                 throw new ScriptRuntimeException("trying to access non-existent bits");
+            }
 
             if (pos < 0)
+            {
                 throw new ScriptRuntimeException(
                     "bad argument #{1} to '{0}' (field cannot be negative)",
                     func,
                     argPos
                 );
+            }
 
             if (width <= 0)
+            {
                 throw new ScriptRuntimeException(
                     "bad argument #{1} to '{0}' (width must be positive)",
                     func,
                     argPos + 1
                 );
+            }
         }
 
         [NovaSharpModuleMethod]
@@ -170,9 +181,13 @@ namespace NovaSharp.Interpreter.CoreLib
             int a = (int)v_a.Number;
 
             if (a < 0)
+            {
                 v = v << -a;
+            }
             else
+            {
                 v = v >> a;
+            }
 
             return DynValue.NewNumber(v);
         }
@@ -191,9 +206,13 @@ namespace NovaSharp.Interpreter.CoreLib
             int a = (int)v_a.Number;
 
             if (a < 0)
+            {
                 v = v << -a;
+            }
             else
+            {
                 v = v >> a;
+            }
 
             return DynValue.NewNumber(v);
         }
@@ -212,9 +231,13 @@ namespace NovaSharp.Interpreter.CoreLib
             int a = (int)v_a.Number;
 
             if (a < 0)
+            {
                 v = v >> -a;
+            }
             else
+            {
                 v = v << a;
+            }
 
             return DynValue.NewNumber(v);
         }
@@ -268,9 +291,13 @@ namespace NovaSharp.Interpreter.CoreLib
             int a = ((int)v_a.Number) % 32;
 
             if (a < 0)
+            {
                 v = (v >> (-a)) | (v << (32 + a));
+            }
             else
+            {
                 v = (v << a) | (v >> (32 - a));
+            }
 
             return DynValue.NewNumber(v);
         }
@@ -289,9 +316,13 @@ namespace NovaSharp.Interpreter.CoreLib
             int a = ((int)v_a.Number) % 32;
 
             if (a < 0)
+            {
                 v = (v << (-a)) | (v >> (32 + a));
+            }
             else
+            {
                 v = (v >> a) | (v << (32 - a));
+            }
 
             return DynValue.NewNumber(v);
         }

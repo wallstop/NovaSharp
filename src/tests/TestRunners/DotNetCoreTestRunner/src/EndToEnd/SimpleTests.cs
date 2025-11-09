@@ -1,26 +1,25 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Loaders;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using Interop.RegistrationPolicies;
+
     [TestFixture]
     public class SimpleTests
     {
         [Test]
         public void EmptyLongComment()
         {
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString("--[[]]");
         }
 
         [Test]
         public void EmptyChunk()
         {
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString("");
         }
 
@@ -31,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "print(\"hello\", \"world\");";
 
-            Script S = new Script();
+            Script S = new();
 
             S.Globals.Set(
                 "print",
@@ -63,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "local print = print; print(\"hello\", \"world\");";
 
-            var S = new Script();
+            Script S = new();
             S.Globals.Set(
                 "print",
                 DynValue.NewCallback(
@@ -92,7 +91,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return callback()();";
 
-            var callback2 = DynValue.NewCallback(
+            DynValue callback2 = DynValue.NewCallback(
                 new CallbackFunction(
                     (_x, a) =>
                     {
@@ -100,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     }
                 )
             );
-            var callback = DynValue.NewCallback(
+            DynValue callback = DynValue.NewCallback(
                 new CallbackFunction(
                     (_x, a) =>
                     {
@@ -109,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            var S = new Script();
+            Script S = new();
             S.Globals.Set("callback", callback);
 
             DynValue res = S.DoString(script);
@@ -123,7 +122,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return callback();";
 
-            var callback = DynValue.NewCallback(
+            DynValue callback = DynValue.NewCallback(
                 new CallbackFunction(
                     (_x, a) =>
                     {
@@ -132,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            var S = new Script();
+            Script S = new();
             S.Globals.Set("callback", callback);
 
             DynValue res = S.DoString(script);
@@ -148,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "return callback 'hello';";
 
-            var S = new Script();
+            Script S = new();
             S.Globals.Set(
                 "callback",
                 DynValue.NewCallback(
@@ -178,7 +177,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "return print(\"hello\", \"world\");";
 
-            var S = new Script();
+            Script S = new();
             S.Globals.Set(
                 "print",
                 DynValue.NewCallback(
@@ -335,7 +334,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            Script s = new Script();
+            Script s = new();
             s.DoString(script);
 
             DynValue res = s.Globals.Get("boh").Function.Call(82);
@@ -386,7 +385,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				y = false and crash();
 			";
 
-            Script S = new Script();
+            Script S = new();
             S.Globals.Set(
                 "crash",
                 DynValue.NewCallback(
@@ -412,7 +411,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return loadstring;
 			";
 
-            Script S = new Script();
+            Script S = new();
             DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.ClrFunction, res.Type);
@@ -426,7 +425,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return select(-1,'a','b','c');
 			";
 
-            Script S = new Script();
+            Script S = new();
             DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.String, res.Type);
@@ -735,7 +734,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = @"return 1+2*3";
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
             DynValue res = s.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
@@ -768,7 +767,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void OperatorPrecedence3()
         {
             string script = @"return 5-3-2";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue res = S.DoString(script);
 
@@ -780,7 +779,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void OperatorPrecedence4()
         {
             string script = @"return 3 + -1";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue res = S.DoString(script);
 
@@ -792,7 +791,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void OperatorPrecedence5()
         {
             string script = @"return 3 * -1 + 5 * 3";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue res = S.DoString(script);
 
@@ -804,7 +803,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void OperatorPrecedence6()
         {
             string script = @"return -2^2";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue res = S.DoString(script);
 
@@ -816,7 +815,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void OperatorPrecedence7()
         {
             string script = @"return -7 / 0.5";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             DynValue res = S.DoString(script);
 
@@ -919,7 +918,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     
 				return fact(5)";
 
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
             DynValue res = s.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
@@ -1424,7 +1423,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x() == 3;	
 			";
 
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.Boolean, res.Type);
@@ -1440,7 +1439,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x;	
 			";
 
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.String, res.Type);
@@ -1457,7 +1456,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return test(1, 2, 3);	
 			";
 
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString(script);
 
             Assert.AreEqual(DataType.Number, res.Type);
@@ -1541,7 +1540,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void Simple_Delegate_Interop_1()
         {
             int a = 3;
-            var script = new Script();
+            Script script = new();
             script.Globals["action"] = new Action(() => a = 5);
             script.DoString("action()");
             Assert.AreEqual(5, a);
@@ -1550,14 +1549,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Simple_Delegate_Interop_2()
         {
-            var oldPolicy = UserData.RegistrationPolicy;
+            IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
 
             try
             {
                 UserData.RegistrationPolicy = Interop.InteropRegistrationPolicy.Automatic;
 
                 int a = 3;
-                var script = new Script();
+                Script script = new();
                 script.Globals["action"] = new Action(() => a = 5);
                 script.DoString("action()");
                 Assert.AreEqual(5, a);
@@ -1571,7 +1570,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void MissingArgsDefaultToNil()
         {
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.DoString(
                 @"
 				function test(a)
@@ -1586,7 +1585,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void ParsingTest()
         {
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
             DynValue res = S.LoadString(
                 @"
 				t = {'a', 'b', 'c', ['d'] = 'f', ['e'] = 5, [65] = true, [true] = false}

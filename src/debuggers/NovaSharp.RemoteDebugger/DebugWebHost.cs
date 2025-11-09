@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using NovaSharp.RemoteDebugger.Network;
@@ -43,7 +39,7 @@ namespace NovaSharp.RemoteDebugger
 
         private byte[] GetResourceData(string resourceName)
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            Assembly assembly = Assembly.GetExecutingAssembly();
 
             using (
                 Stream stream = assembly.GetManifestResourceStream(

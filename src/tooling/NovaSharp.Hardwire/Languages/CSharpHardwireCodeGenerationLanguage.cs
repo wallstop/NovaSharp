@@ -71,7 +71,7 @@ namespace NovaSharp.Hardwire.Languages
             CodeExpression[] args
         )
         {
-            var idxexp = new CodeSnippetExpression(
+            CodeSnippetExpression idxexp = new(
                 string.Join(", ", args.Select(e => ExpressionToString(e)).ToArray())
             );
 

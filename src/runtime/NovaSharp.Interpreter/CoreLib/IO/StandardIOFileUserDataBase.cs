@@ -14,14 +14,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
         public static StandardIOFileUserDataBase CreateInputStream(Stream stream)
         {
-            var f = new StandardIOFileUserDataBase();
+            StandardIOFileUserDataBase f = new();
             f.Initialize(stream, new StreamReader(stream), null);
             return f;
         }
 
         public static StandardIOFileUserDataBase CreateOutputStream(Stream stream)
         {
-            var f = new StandardIOFileUserDataBase();
+            StandardIOFileUserDataBase f = new();
             f.Initialize(stream, null, new StreamWriter(stream));
             return f;
         }

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Execution;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -97,7 +91,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				t = { ciao = { 'hello' } }
 				";
 
-            Script script = new Script();
+            Script script = new();
             script.DoString(code);
 
             DynValue v = script.CreateDynamicExpression("t.ciao[1] .. ' world'").Evaluate();

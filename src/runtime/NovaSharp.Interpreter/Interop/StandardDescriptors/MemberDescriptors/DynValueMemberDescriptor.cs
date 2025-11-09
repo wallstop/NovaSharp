@@ -16,8 +16,8 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="serializedTableValue">A string containing a table whose first member is the dynvalue to be deserialized (convoluted...).</param>
         protected DynValueMemberDescriptor(string name, string serializedTableValue)
         {
-            Script s = new Script();
-            var exp = s.CreateDynamicExpression(serializedTableValue);
+            Script s = new();
+            DynamicExpression exp = s.CreateDynamicExpression(serializedTableValue);
             DynValue val = exp.Evaluate(null);
 
             m_Value = val.Table.Get(1);
@@ -47,9 +47,13 @@ namespace NovaSharp.Interpreter.Interop
             Name = name;
 
             if (value.Type == DataType.ClrFunction)
+            {
                 MemberAccess = MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute;
+            }
             else
+            {
                 MemberAccess = MemberDescriptorAccess.CanRead;
+            }
         }
 
         /// <summary>

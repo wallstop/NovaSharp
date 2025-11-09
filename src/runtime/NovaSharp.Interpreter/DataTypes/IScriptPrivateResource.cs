@@ -22,7 +22,9 @@ namespace NovaSharp.Interpreter
         )
         {
             foreach (DynValue v in values)
+            {
                 CheckScriptOwnership(containingResource, v);
+            }
         }
 
         public static void CheckScriptOwnership(
@@ -32,7 +34,7 @@ namespace NovaSharp.Interpreter
         {
             if (value != null)
             {
-                var otherResource = value.GetAsPrivateResource();
+                IScriptPrivateResource otherResource = value.GetAsPrivateResource();
 
                 if (otherResource != null)
                 {

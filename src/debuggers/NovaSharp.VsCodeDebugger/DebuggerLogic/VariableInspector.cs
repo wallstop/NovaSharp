@@ -1,9 +1,6 @@
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.VsCodeDebugger.SDK;
 
@@ -21,9 +18,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             {
                 case DataType.Tuple:
                     for (int i = 0; i < v.Tuple.Length; i++)
+                    {
                         variables.Add(
                             new Variable("[i]", (v.Tuple[i] ?? DynValue.Void).ToDebugPrintString())
                         );
+                    }
+
                     break;
                 case DataType.Function:
                     variables.Add(
@@ -42,33 +42,45 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 case DataType.Table:
 
                     if (v.Table.MetaTable != null && (v.Table.OwnerScript == null))
+                    {
                         variables.Add(new Variable("(table type)", "prime table with metatable"));
+                    }
                     else if (v.Table.MetaTable != null)
+                    {
                         variables.Add(new Variable("(table type)", "has metatable"));
+                    }
                     else if (v.Table.OwnerScript == null)
+                    {
                         variables.Add(new Variable("(table type)", "prime table"));
+                    }
                     else
+                    {
                         variables.Add(new Variable("(table type)", "standard"));
+                    }
 
                     variables.Add(new Variable("(table #id)", v.Table.ReferenceID.ToString()));
 
                     if (v.Table.MetaTable != null)
+                    {
                         variables.Add(
                             new Variable(
                                 "(metatable #id)",
                                 v.Table.MetaTable.ReferenceID.ToString()
                             )
                         );
+                    }
 
                     variables.Add(new Variable("(length)", v.Table.Length.ToString()));
 
                     foreach (TablePair p in v.Table.Pairs)
+                    {
                         variables.Add(
                             new Variable(
                                 "[" + p.Key.ToDebugPrintString() + "]",
                                 p.Value.ToDebugPrintString()
                             )
                         );
+                    }
 
                     break;
                 case DataType.UserData:

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter.Interop;
 using NUnit.Framework;
 
@@ -39,18 +35,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private MyClass Test(string tableDef)
         {
-            Script s = new Script(CoreModules.None);
+            Script s = new(CoreModules.None);
 
             DynValue table = s.DoString("return " + tableDef);
 
             Assert.AreEqual(DataType.Table, table.Type);
 
-            PropertyTableAssigner<MyClass> pta = new PropertyTableAssigner<MyClass>("class");
-            PropertyTableAssigner<MySubclass> pta2 = new PropertyTableAssigner<MySubclass>();
+            PropertyTableAssigner<MyClass> pta = new("class");
+            PropertyTableAssigner<MySubclass> pta2 = new();
 
             pta.SetSubassigner(pta2);
 
-            MyClass o = new MyClass();
+            MyClass o = new();
 
             pta.AssignObject(o, table.Table);
 

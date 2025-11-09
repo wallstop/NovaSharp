@@ -1,4 +1,3 @@
-using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Platforms;
 

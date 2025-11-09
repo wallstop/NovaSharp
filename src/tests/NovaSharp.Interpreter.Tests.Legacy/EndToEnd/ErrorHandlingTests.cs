@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = @"return pcall(function() return 1,2,3 end)";
 
-            Script S = new Script();
-            var res = S.DoString(script);
+            Script S = new();
+            DynValue? res = S.DoString(script);
 
             Assert.AreEqual(DataType.Tuple, res.Type);
             Assert.AreEqual(4, res.Tuple.Length);
@@ -108,14 +108,14 @@ end
 
 return a()
 ";
-            Script S = new Script(CoreModules.None);
+            Script S = new(CoreModules.None);
 
             S.Globals["try"] = DynValue.NewCallback(
                 (c, a) =>
                 {
                     try
                     {
-                        var v = a[0].Function.Call();
+                        DynValue? v = a[0].Function.Call();
                         return v;
                     }
                     catch (ScriptRuntimeException)

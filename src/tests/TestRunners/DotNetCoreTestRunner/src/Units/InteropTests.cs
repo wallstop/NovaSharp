@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Interop;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.Units

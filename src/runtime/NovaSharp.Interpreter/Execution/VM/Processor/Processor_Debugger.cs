@@ -22,7 +22,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             if (meta.OpCode != OpCode.Meta)
+            {
                 return null;
+            }
 
             return meta;
         }
@@ -80,23 +82,35 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 case DebuggerAction.ActionType.Run:
                     if (m_Debug.LineBasedBreakPoints)
+                    {
                         m_Debug.LastHlRef = instr.SourceCodeRef;
+                    }
+
                     return;
                 case DebuggerAction.ActionType.ByteCodeStepOver:
                     if (m_Debug.DebuggerCurrentActionTarget != instructionPtr)
+                    {
                         return;
+                    }
+
                     break;
                 case DebuggerAction.ActionType.ByteCodeStepOut:
                 case DebuggerAction.ActionType.StepOut:
                     if (m_ExecutionStack.Count >= m_Debug.ExStackDepthAtStep)
+                    {
                         return;
+                    }
+
                     break;
                 case DebuggerAction.ActionType.StepIn:
                     if (
                         (m_ExecutionStack.Count >= m_Debug.ExStackDepthAtStep)
                         && (instr.SourceCodeRef == null || instr.SourceCodeRef == m_Debug.LastHlRef)
                     )
+                    {
                         return;
+                    }
+
                     break;
                 case DebuggerAction.ActionType.StepOver:
                     if (
@@ -104,7 +118,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                         || instr.SourceCodeRef == m_Debug.LastHlRef
                         || m_ExecutionStack.Count > m_Debug.ExStackDepthAtStep
                     )
+                    {
                         return;
+                    }
+
                     break;
             }
 
@@ -112,7 +129,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             while (true)
             {
-                var action = m_Debug.DebuggerAttached.GetAction(
+                DebuggerAction action = m_Debug.DebuggerAttached.GetAction(
                     instructionPtr,
                     instr.SourceCodeRef
                 );
@@ -177,17 +194,21 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal HashSet<int> ResetBreakPoints(SourceCode src, HashSet<int> lines)
         {
-            HashSet<int> result = new HashSet<int>();
+            HashSet<int> result = new();
 
             foreach (SourceRef srf in src.Refs)
             {
                 if (srf.CannotBreakpoint)
+                {
                     continue;
+                }
 
                 srf.Breakpoint = lines.Contains(srf.FromLine);
 
                 if (srf.Breakpoint)
+                {
                     result.Add(srf.FromLine);
+                }
             }
 
             return result;
@@ -201,7 +222,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             foreach (SourceRef srf in src.Refs)
             {
                 if (srf.CannotBreakpoint)
+                {
                     continue;
+                }
 
                 if (srf.IncludesLocation(action.SourceID, action.SourceLine, action.SourceCol))
                 {
@@ -210,9 +233,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                     //System.Diagnostics.Debug.WriteLine(string.Format("BRK: found {0} for {1} on contains", srf, srf.Type));
 
                     if (state == null)
+                    {
                         srf.Breakpoint = !srf.Breakpoint;
+                    }
                     else
+                    {
                         srf.Breakpoint = state.Value;
+                    }
 
                     if (srf.Breakpoint)
                     {
@@ -233,7 +260,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 foreach (SourceRef srf in src.Refs)
                 {
                     if (srf.CannotBreakpoint)
+                    {
                         continue;
+                    }
 
                     int dist = srf.GetLocationDistance(
                         action.SourceID,
@@ -253,9 +282,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                     //System.Diagnostics.Debug.WriteLine(string.Format("BRK: found {0} for {1} on distance {2}", nearest, nearest.Type, minDistance));
 
                     if (state == null)
+                    {
                         nearest.Breakpoint = !nearest.Breakpoint;
+                    }
                     else
+                    {
                         nearest.Breakpoint = state.Value;
+                    }
 
                     if (nearest.Breakpoint)
                     {
@@ -269,16 +302,20 @@ namespace NovaSharp.Interpreter.Execution.VM
                     return true;
                 }
                 else
+                {
                     return false;
+                }
             }
             else
+            {
                 return true;
+            }
         }
 
         private void RefreshDebugger(bool hard, int instructionPtr)
         {
             SourceRef sref = GetCurrentSourceRef(instructionPtr);
-            ScriptExecutionContext context = new ScriptExecutionContext(this, null, sref);
+            ScriptExecutionContext context = new(this, null, sref);
 
             List<DynamicExpression> watchList = m_Debug.DebuggerAttached.GetWatchItems();
             List<WatchItem> callStack = Debugger_GetCallStack(sref);
@@ -294,7 +331,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             m_Debug.DebuggerAttached.Update(WatchType.Threads, threads);
 
             if (hard)
+            {
                 m_Debug.DebuggerAttached.RefreshBreakpoints(m_Debug.BreakPoints);
+            }
         }
 
         private List<WatchItem> Debugger_RefreshThreads(ScriptExecutionContext context)
@@ -313,7 +352,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private List<WatchItem> Debugger_RefreshVStack()
         {
-            List<WatchItem> lwi = new List<WatchItem>();
+            List<WatchItem> lwi = new();
             for (int i = 0; i < Math.Min(32, m_ValueStack.Count); i++)
             {
                 lwi.Add(new WatchItem() { Address = i, Value = m_ValueStack.Peek(i) });
@@ -332,8 +371,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private List<WatchItem> Debugger_RefreshLocals(ScriptExecutionContext context)
         {
-            List<WatchItem> locals = new List<WatchItem>();
-            var top = this.m_ExecutionStack.Peek();
+            List<WatchItem> locals = new();
+            CallStackItem top = this.m_ExecutionStack.Peek();
 
             if (top != null && top.Debug_Symbols != null && top.LocalScope != null)
             {
@@ -387,13 +426,13 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal List<WatchItem> Debugger_GetCallStack(SourceRef startingRef)
         {
-            List<WatchItem> wis = new List<WatchItem>();
+            List<WatchItem> wis = new();
 
             for (int i = 0; i < m_ExecutionStack.Count; i++)
             {
-                var c = m_ExecutionStack.Peek(i);
+                CallStackItem c = m_ExecutionStack.Peek(i);
 
-                var I = m_RootChunk.Code[c.Debug_EntryPoint];
+                Instruction I = m_RootChunk.Code[c.Debug_EntryPoint];
 
                 string callname = I.OpCode == OpCode.Meta ? I.Name : null;
 

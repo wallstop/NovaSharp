@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
     {
         BuildTimeScopeBlock m_ScopeTreeRoot;
         BuildTimeScopeBlock m_ScopeTreeHead;
-        RuntimeScopeFrame m_ScopeFrame = new RuntimeScopeFrame();
+        RuntimeScopeFrame m_ScopeFrame = new();
 
         public bool HasVarArgs { get; private set; }
 
@@ -23,14 +23,16 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal RuntimeScopeBlock PopBlock()
         {
-            var tree = m_ScopeTreeHead;
+            BuildTimeScopeBlock tree = m_ScopeTreeHead;
 
             m_ScopeTreeHead.ResolveGotos();
 
             m_ScopeTreeHead = m_ScopeTreeHead.Parent;
 
             if (m_ScopeTreeHead == null)
+            {
                 throw new InternalErrorException("Can't pop block - stack underflow");
+            }
 
             return tree.ScopeBlock;
         }
@@ -38,7 +40,9 @@ namespace NovaSharp.Interpreter.Execution.Scopes
         internal RuntimeScopeFrame GetRuntimeFrameData()
         {
             if (m_ScopeTreeHead != m_ScopeTreeRoot)
+            {
                 throw new InternalErrorException("Misaligned scope frames/blocks!");
+            }
 
             m_ScopeFrame.ToFirstBlock = m_ScopeTreeRoot.ScopeBlock.To;
 
@@ -47,12 +51,14 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal SymbolRef Find(string name)
         {
-            for (var tree = m_ScopeTreeHead; tree != null; tree = tree.Parent)
+            for (BuildTimeScopeBlock tree = m_ScopeTreeHead; tree != null; tree = tree.Parent)
             {
                 SymbolRef l = tree.Find(name);
 
                 if (l != null)
+                {
                     return l;
+                }
             }
 
             return null;

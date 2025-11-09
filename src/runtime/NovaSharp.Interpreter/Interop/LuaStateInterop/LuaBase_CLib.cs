@@ -16,21 +16,33 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         protected static int memcmp(CharPtr ptr1, CharPtr ptr2, int size)
         {
             for (int i = 0; i < size; i++)
+            {
                 if (ptr1[i] != ptr2[i])
                 {
                     if (ptr1[i] < ptr2[i])
+                    {
                         return -1;
+                    }
                     else
+                    {
                         return 1;
+                    }
                 }
+            }
+
             return 0;
         }
 
         protected static CharPtr memchr(CharPtr ptr, char c, uint count)
         {
             for (uint i = 0; i < count; i++)
+            {
                 if (ptr[i] == c)
+                {
                     return new CharPtr(ptr.chars, (int)(ptr.index + i));
+                }
+            }
+
             return null;
         }
 
@@ -38,8 +50,13 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             for (int i = 0; str[i] != '\0'; i++)
             for (int j = 0; charset[j] != '\0'; j++)
+            {
                 if (str[i] == charset[j])
+                {
                     return new CharPtr(str.chars, str.index + i);
+                }
+            }
+
             return null;
         }
 
@@ -162,8 +179,13 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         protected static CharPtr strchr(CharPtr str, char c)
         {
             for (int index = str.index; str.chars[index] != 0; index++)
+            {
                 if (str.chars[index] == c)
+                {
                     return new CharPtr(str.chars, index);
+                }
+            }
+
             return null;
         }
 
@@ -171,7 +193,10 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             int i;
             for (i = 0; src[i] != '\0'; i++)
+            {
                 dst[i] = src[i];
+            }
+
             dst[i] = '\0';
             return dst;
         }
@@ -185,7 +210,10 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 index++;
             }
             while (index < length)
+            {
                 dst[index++] = '\0';
+            }
+
             return dst;
         }
 
@@ -193,7 +221,10 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             int index = 0;
             while (str[index] != '\0')
+            {
                 index++;
+            }
+
             return index;
         }
 

@@ -46,7 +46,9 @@ namespace NovaSharp.Interpreter.Interop
             : base(enumType, friendlyName)
         {
             if (!Framework.Do.IsEnum(enumType))
+            {
                 throw new ArgumentException("enumType must be an enum!");
+            }
 
             UnderlyingType = underlyingType ?? Enum.GetUnderlyingType(enumType);
             IsUnsigned = (
@@ -76,7 +78,11 @@ namespace NovaSharp.Interpreter.Interop
                 base.AddDynValue(name, cvalue);
             }
 
-            var attrs = Framework.Do.GetCustomAttributes(this.Type, typeof(FlagsAttribute), true);
+            Attribute[] attrs = Framework.Do.GetCustomAttributes(
+                this.Type,
+                typeof(FlagsAttribute),
+                true
+            );
 
             if (attrs != null && attrs.Length > 0)
             {
@@ -99,10 +105,14 @@ namespace NovaSharp.Interpreter.Interop
         private void AddEnumMethod(string name, DynValue dynValue)
         {
             if (!HasMember(name))
+            {
                 AddDynValue(name, dynValue);
+            }
 
             if (!HasMember("__" + name))
+            {
                 AddDynValue("__" + name, dynValue);
+            }
         }
 
         /// <summary>
@@ -113,16 +123,20 @@ namespace NovaSharp.Interpreter.Interop
             CreateSignedConversionFunctions();
 
             if (dv.Type == DataType.Number)
+            {
                 return (long)dv.Number;
+            }
 
             if (
                 (dv.Type != DataType.UserData)
                 || (dv.UserData.Descriptor != this)
                 || (dv.UserData.Object == null)
             )
+            {
                 throw new ScriptRuntimeException(
                     "Enum userdata or number expected, or enum is not of the correct type."
                 );
+            }
 
             return m_EnumToLong(dv.UserData.Object);
         }
@@ -135,16 +149,20 @@ namespace NovaSharp.Interpreter.Interop
             CreateUnsignedConversionFunctions();
 
             if (dv.Type == DataType.Number)
+            {
                 return (ulong)dv.Number;
+            }
 
             if (
                 (dv.Type != DataType.UserData)
                 || (dv.UserData.Descriptor != this)
                 || (dv.UserData.Object == null)
             )
+            {
                 throw new ScriptRuntimeException(
                     "Enum userdata or number expected, or enum is not of the correct type."
                 );
+            }
 
             return m_EnumToULong(dv.UserData.Object);
         }
@@ -195,10 +213,12 @@ namespace NovaSharp.Interpreter.Interop
                     m_LongToEnum = o => (long)(o);
                 }
                 else
+                {
                     throw new ScriptRuntimeException(
                         "Unexpected enum underlying type : {0}",
                         UnderlyingType.FullName
                     );
+                }
             }
         }
 
@@ -230,10 +250,12 @@ namespace NovaSharp.Interpreter.Interop
                     m_ULongToEnum = o => (ulong)(o);
                 }
                 else
+                {
                     throw new ScriptRuntimeException(
                         "Unexpected enum underlying type : {0}",
                         UnderlyingType.FullName
                     );
+                }
             }
         }
 
@@ -245,7 +267,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (args.Count != 2)
+            {
                 throw new ScriptRuntimeException("Enum.{0} expects two arguments", funcName);
+            }
 
             long v1 = GetValueSigned(args[0]);
             long v2 = GetValueSigned(args[1]);
@@ -260,7 +284,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (args.Count != 2)
+            {
                 throw new ScriptRuntimeException("Enum.{0} expects two arguments", funcName);
+            }
 
             ulong v1 = GetValueUnsigned(args[0]);
             ulong v2 = GetValueUnsigned(args[1]);
@@ -305,7 +331,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (args.Count != 1)
+            {
                 throw new ScriptRuntimeException("Enum.{0} expects one argument.", funcName);
+            }
 
             long v1 = GetValueSigned(args[0]);
             long r = operation(v1);
@@ -320,7 +348,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (args.Count != 1)
+            {
                 throw new ScriptRuntimeException("Enum.{0} expects one argument.", funcName);
+            }
 
             ulong v1 = GetValueUnsigned(args[0]);
             ulong r = operation(v1);
@@ -330,69 +360,93 @@ namespace NovaSharp.Interpreter.Interop
         internal DynValue Callback_Or(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformBinaryOperationU("or", ctx, args, (v1, v2) => v1 | v2);
+            }
             else
+            {
                 return PerformBinaryOperationS("or", ctx, args, (v1, v2) => v1 | v2);
+            }
         }
 
         internal DynValue Callback_And(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformBinaryOperationU("and", ctx, args, (v1, v2) => v1 & v2);
+            }
             else
+            {
                 return PerformBinaryOperationS("and", ctx, args, (v1, v2) => v1 & v2);
+            }
         }
 
         internal DynValue Callback_Xor(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformBinaryOperationU("xor", ctx, args, (v1, v2) => v1 ^ v2);
+            }
             else
+            {
                 return PerformBinaryOperationS("xor", ctx, args, (v1, v2) => v1 ^ v2);
+            }
         }
 
         internal DynValue Callback_BwNot(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformUnaryOperationU("not", ctx, args, v1 => ~v1);
+            }
             else
+            {
                 return PerformUnaryOperationS("not", ctx, args, v1 => ~v1);
+            }
         }
 
         internal DynValue Callback_HasAll(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformBinaryOperationU(
                     "hasAll",
                     ctx,
                     args,
                     (v1, v2) => DynValue.NewBoolean((v1 & v2) == v2)
                 );
+            }
             else
+            {
                 return PerformBinaryOperationS(
                     "hasAll",
                     ctx,
                     args,
                     (v1, v2) => DynValue.NewBoolean((v1 & v2) == v2)
                 );
+            }
         }
 
         internal DynValue Callback_HasAny(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
+            {
                 return PerformBinaryOperationU(
                     "hasAny",
                     ctx,
                     args,
                     (v1, v2) => DynValue.NewBoolean((v1 & v2) != 0)
                 );
+            }
             else
+            {
                 return PerformBinaryOperationS(
                     "hasAny",
                     ctx,
                     args,
                     (v1, v2) => DynValue.NewBoolean((v1 & v2) != 0)
                 );
+            }
         }
 
         /// <summary>
@@ -404,7 +458,9 @@ namespace NovaSharp.Interpreter.Interop
         public override bool IsTypeCompatible(Type type, object obj)
         {
             if (obj != null)
+            {
                 return (Type == type);
+            }
 
             return base.IsTypeCompatible(type, obj);
         }
@@ -421,7 +477,9 @@ namespace NovaSharp.Interpreter.Interop
         public override DynValue MetaIndex(Script script, object obj, string metaname)
         {
             if (metaname == "__concat" && IsFlags)
+            {
                 return DynValue.NewCallback(Callback_Or);
+            }
 
             return null;
         }

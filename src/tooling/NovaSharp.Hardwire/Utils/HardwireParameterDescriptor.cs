@@ -1,8 +1,4 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Interop.BasicDescriptors;
 using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
@@ -57,7 +53,7 @@ namespace NovaSharp.Hardwire.Utils
 
         public static List<HardwireParameterDescriptor> LoadDescriptorsFromTable(Table t)
         {
-            List<HardwireParameterDescriptor> list = new List<HardwireParameterDescriptor>();
+            List<HardwireParameterDescriptor> list = new();
 
             for (int i = 1; i <= t.Length; i++)
             {
@@ -70,7 +66,9 @@ namespace NovaSharp.Hardwire.Utils
         public void SetTempVar(string varName)
         {
             if (!IsOut && !IsRef)
+            {
                 throw new InvalidOperationException("ReplaceExprWithVar on byval param");
+            }
 
             TempVarName = varName;
         }

@@ -63,7 +63,9 @@ namespace NovaSharp.Interpreter
         internal void MarkClrCallbackAsDead()
         {
             if (Type != CoroutineType.ClrCallback)
+            {
                 throw new InvalidOperationException("State must be CoroutineType.ClrCallback");
+            }
 
             Type = CoroutineType.ClrCallbackDead;
         }
@@ -83,16 +85,20 @@ namespace NovaSharp.Interpreter
         public IEnumerable<DynValue> AsTypedEnumerable()
         {
             if (Type != CoroutineType.Coroutine)
+            {
                 throw new InvalidOperationException(
                     "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
                 );
+            }
 
             while (
                 this.State == CoroutineState.NotStarted
                 || this.State == CoroutineState.Suspended
                 || this.State == CoroutineState.ForceSuspended
             )
+            {
                 yield return Resume();
+            }
         }
 
         /// <summary>
@@ -155,11 +161,15 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(args);
 
             if (Type == CoroutineType.Coroutine)
+            {
                 return m_Processor.Coroutine_Resume(args);
+            }
             else
+            {
                 throw new InvalidOperationException(
                     "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
                 );
+            }
         }
 
         /// <summary>
@@ -174,7 +184,9 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(args);
 
             if (Type == CoroutineType.Coroutine)
+            {
                 return m_Processor.Coroutine_Resume(args);
+            }
             else if (Type == CoroutineType.ClrCallback)
             {
                 DynValue ret = m_ClrCallback.Invoke(context, args);
@@ -182,7 +194,9 @@ namespace NovaSharp.Interpreter
                 return ret;
             }
             else
+            {
                 throw ScriptRuntimeException.CannotResumeNotSuspended(CoroutineState.Dead);
+            }
         }
 
         /// <summary>
@@ -216,14 +230,18 @@ namespace NovaSharp.Interpreter
         public DynValue Resume(params object[] args)
         {
             if (Type != CoroutineType.Coroutine)
+            {
                 throw new InvalidOperationException(
                     "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
                 );
+            }
 
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)
+            {
                 dargs[i] = DynValue.FromObject(this.OwnerScript, args[i]);
+            }
 
             return Resume(dargs);
         }
@@ -239,7 +257,9 @@ namespace NovaSharp.Interpreter
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)
+            {
                 dargs[i] = DynValue.FromObject(context.GetScript(), args[i]);
+            }
 
             return Resume(context, dargs);
         }
@@ -252,11 +272,17 @@ namespace NovaSharp.Interpreter
             get
             {
                 if (Type == CoroutineType.ClrCallback)
+                {
                     return CoroutineState.NotStarted;
+                }
                 else if (Type == CoroutineType.ClrCallbackDead)
+                {
                     return CoroutineState.Dead;
+                }
                 else
+                {
                     return m_Processor.State;
+                }
             }
         }
 

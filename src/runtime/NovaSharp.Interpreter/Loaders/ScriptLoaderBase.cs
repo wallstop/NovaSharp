@@ -37,7 +37,9 @@ namespace NovaSharp.Interpreter.Loaders
         protected virtual string ResolveModuleName(string modname, string[] paths)
         {
             if (paths == null)
+            {
                 return null;
+            }
 
             modname = modname.Replace('.', '/');
 
@@ -46,7 +48,9 @@ namespace NovaSharp.Interpreter.Loaders
                 string file = path.Replace("?", modname);
 
                 if (ScriptFileExists(file))
+                {
                     return file;
+                }
             }
 
             return null;
@@ -68,7 +72,9 @@ namespace NovaSharp.Interpreter.Loaders
                 DynValue s = globalContext.RawGet("LUA_PATH");
 
                 if (s != null && s.Type == DataType.String)
+                {
                     return ResolveModuleName(modname, UnpackStringPaths(s.String));
+                }
             }
 
             return ResolveModuleName(modname, this.ModulePaths);
@@ -102,17 +108,23 @@ namespace NovaSharp.Interpreter.Loaders
             {
                 string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
                 if (!string.IsNullOrEmpty(env))
+                {
                     modulePaths = UnpackStringPaths(env);
+                }
 
                 if (modulePaths == null)
                 {
                     env = Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH");
                     if (!string.IsNullOrEmpty(env))
+                    {
                         modulePaths = UnpackStringPaths(env);
+                    }
                 }
 
                 if (modulePaths == null)
+                {
                     modulePaths = UnpackStringPaths("?;?.lua");
+                }
             }
 
             return modulePaths;

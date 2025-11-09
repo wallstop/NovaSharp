@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests
@@ -221,9 +217,13 @@ namespace NovaSharp.Interpreter.Tests
         public void TestMore_308_io()
         {
             if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
+            {
                 TapRunner.Run(@"TestMore/308-io.t");
+            }
             else
+            {
                 TestRunner.Skip();
+            }
         }
 
         private bool AreCoreModulesFullySupported(CoreModules modules)
@@ -236,9 +236,13 @@ namespace NovaSharp.Interpreter.Tests
         public void TestMore_309_os()
         {
             if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
+            {
                 TapRunner.Run(@"TestMore/309-os.t");
+            }
             else
+            {
                 TestRunner.Skip();
+            }
         }
 
         //[Test]

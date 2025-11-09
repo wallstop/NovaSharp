@@ -38,12 +38,19 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             int j = End < 0 ? End + value.Length + 1 : End;
 
             if (i < 1)
+            {
                 i = 1;
+            }
+
             if (j > value.Length)
+            {
                 j = value.Length;
+            }
 
             if (i > j)
+            {
                 return string.Empty;
+            }
 
             return value.Substring(i - 1, j - i + 1);
         }

@@ -34,7 +34,9 @@ namespace NovaSharp.Interpreter.DataStructs
         public void Expand(int size)
         {
             for (int i = 0; i < size; i++)
+            {
                 this.Add(default(T));
+            }
         }
 
         public void Zero(int index)

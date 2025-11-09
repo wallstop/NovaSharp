@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 #if DOTNET_CORE
 using TTypeInfo = System.Reflection.TypeInfo;
 #elif NETFX_CORE

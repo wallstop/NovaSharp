@@ -1,10 +1,5 @@
-using System;
 using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
 using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
 namespace NovaSharp.Hardwire.Generators
@@ -25,7 +20,7 @@ namespace NovaSharp.Hardwire.Generators
             string type = (string)table["$key"];
             string className = "TYPE_" + Guid.NewGuid().ToString("N");
 
-            CodeTypeDeclaration classCode = new CodeTypeDeclaration(className);
+            CodeTypeDeclaration classCode = new(className);
 
             classCode.Comments.Add(new CodeCommentStatement("Descriptor of " + type));
 
@@ -41,7 +36,7 @@ namespace NovaSharp.Hardwire.Generators
 
             classCode.BaseTypes.Add(typeof(HardwiredUserDataDescriptor));
 
-            CodeConstructor ctor = new CodeConstructor();
+            CodeConstructor ctor = new();
             ctor.Attributes = MemberAttributes.Assembly;
             ctor.BaseConstructorArgs.Add(new CodeTypeOfExpression(type));
 
@@ -52,7 +47,7 @@ namespace NovaSharp.Hardwire.Generators
                 classCode.Members,
                 (key, exp) =>
                 {
-                    var mname = new CodePrimitiveExpression(key);
+                    CodePrimitiveExpression mname = new(key);
 
                     ctor.Statements.Add(
                         new CodeMethodInvokeExpression(
@@ -70,7 +65,7 @@ namespace NovaSharp.Hardwire.Generators
                 classCode.Members,
                 (key, exp) =>
                 {
-                    var mname = new CodePrimitiveExpression(key);
+                    CodePrimitiveExpression mname = new(key);
 
                     ctor.Statements.Add(
                         new CodeMethodInvokeExpression(

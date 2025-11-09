@@ -14,14 +14,16 @@ namespace NovaSharp.Interpreter.CoreLib
     public class OsTimeModule
     {
         static DateTime Time0 = DateTime.UtcNow;
-        static DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        static DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
             double time = (dateTime - (epoch ?? Epoch)).TotalSeconds;
 
             if (time < 0.0)
+            {
                 return DynValue.Nil;
+            }
 
             return DynValue.NewNumber(time);
         }
@@ -38,9 +40,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            var t = GetUnixTime(DateTime.UtcNow, Time0);
+            DynValue t = GetUnixTime(DateTime.UtcNow, Time0);
             if (t.IsNil())
+            {
                 return DynValue.NewNumber(0.0);
+            }
+
             return t;
         }
 
@@ -54,7 +59,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue t1 = args.AsType(1, "difftime", DataType.Number, true);
 
             if (t1.IsNil())
+            {
                 return DynValue.NewNumber(t2.Number);
+            }
 
             return DynValue.NewNumber(t2.Number - t1.Number);
         }
@@ -68,7 +75,9 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 DynValue vt = args.AsType(0, "time", DataType.Table, true);
                 if (vt.Type == DataType.Table)
+                {
                     date = ParseTimeTable(vt.Table);
+                }
             }
 
             return GetUnixTime(date);
@@ -84,13 +93,19 @@ namespace NovaSharp.Interpreter.CoreLib
             int? year = GetTimeTableField(t, "year");
 
             if (day == null)
+            {
                 throw new ScriptRuntimeException("field 'day' missing in date table");
+            }
 
             if (month == null)
+            {
                 throw new ScriptRuntimeException("field 'month' missing in date table");
+            }
 
             if (year == null)
+            {
                 throw new ScriptRuntimeException("field 'year' missing in date table");
+            }
 
             return new DateTime(year.Value, month.Value, day.Value, hour, min, sec);
         }
@@ -101,7 +116,9 @@ namespace NovaSharp.Interpreter.CoreLib
             double? d = v.CastToNumber();
 
             if (d.HasValue)
+            {
                 return (int)d.Value;
+            }
 
             return null;
         }
@@ -117,7 +134,9 @@ namespace NovaSharp.Interpreter.CoreLib
             string format = (vformat.IsNil()) ? "%c" : vformat.String;
 
             if (vtime.IsNotNil())
+            {
                 reference = FromUnixTime(vtime.Number);
+            }
 
             bool isDst = false;
 
@@ -144,7 +163,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (format == "*t")
             {
-                Table t = new Table(executionContext.GetScript());
+                Table t = new(executionContext.GetScript());
 
                 t.Set("year", DynValue.NewNumber(reference.Year));
                 t.Set("month", DynValue.NewNumber(reference.Month));
@@ -159,14 +178,16 @@ namespace NovaSharp.Interpreter.CoreLib
                 return DynValue.NewTable(t);
             }
             else
+            {
                 return DynValue.NewString(StrFTime(format, reference));
+            }
         }
 
         private static string StrFTime(string format, DateTime d)
         {
             // ref: http://www.cplusplus.com/reference/ctime/strftime/
 
-            Dictionary<char, string> STANDARD_PATTERNS = new Dictionary<char, string>()
+            Dictionary<char, string> STANDARD_PATTERNS = new()
             {
                 { 'a', "ddd" },
                 { 'A', "dddd" },
@@ -196,7 +217,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 { 'Z', "zzz" },
             };
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             bool isEscapeSequence = false;
 
@@ -212,7 +233,9 @@ namespace NovaSharp.Interpreter.CoreLib
                         isEscapeSequence = false;
                     }
                     else
+                    {
                         isEscapeSequence = true;
+                    }
 
                     continue;
                 }
@@ -224,7 +247,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
 
                 if (c == 'O' || c == 'E')
+                {
                     continue; // no modifiers
+                }
 
                 isEscapeSequence = false;
 
@@ -236,7 +261,10 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     string s = d.ToString("%d");
                     if (s.Length < 2)
+                    {
                         s = " " + s;
+                    }
+
                     sb.Append(s);
                 }
                 else if (c == 'n')
@@ -259,7 +287,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     int weekDay = (int)d.DayOfWeek;
                     if (weekDay == 0)
+                    {
                         weekDay = 7;
+                    }
 
                     sb.Append(weekDay);
                 }

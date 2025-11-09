@@ -1,11 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Loaders;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -103,9 +96,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected, bool tupleExpected = false)
         {
-            Script S = new Script();
+            Script S = new();
 
-            OverloadsTestClass obj = new OverloadsTestClass();
+            OverloadsTestClass obj = new();
 
             UserData.RegisterType<OverloadsTestClass>();
 
@@ -132,10 +125,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             try
             {
-                var lua = new Script();
+                Script lua = new();
                 lua.Globals["DictionaryIntInt"] = typeof(Dictionary<int, int>);
 
-                var script =
+                string script =
                     @"local dict = DictionaryIntInt.__new(); local res, v = dict.TryGetValue(0)";
                 lua.DoString(script);
                 lua.DoString(script);

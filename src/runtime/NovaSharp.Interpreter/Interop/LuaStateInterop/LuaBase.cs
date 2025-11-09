@@ -137,9 +137,13 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             DynValue v = ArgAsType(L, pos, DataType.Number, true);
 
             if (v.IsNil())
+            {
                 return def;
+            }
             else
+            {
                 return (int)v.Number;
+            }
         }
 
         protected static lua_Integer LuaLCheckInteger(LuaState L, lua_Integer pos)
@@ -156,7 +160,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         )
         {
             if (!condition)
+            {
                 LuaLArgError(L, argNum, message);
+            }
         }
 
         protected static lua_Integer LuaLCheckInt(LuaState L, lua_Integer argNum)
@@ -232,14 +238,16 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         protected static lua_Integer LuaIsString(LuaState L, lua_Integer p)
         {
-            var v = L.At(p);
+            DynValue v = L.At(p);
             return (v.Type == DataType.String || v.Type == DataType.Number) ? 1 : 0;
         }
 
         protected static void LuaPop(LuaState L, lua_Integer p)
         {
             for (int i = 0; i < p; i++)
+            {
                 L.Pop();
+            }
         }
 
         protected static void LuaGetTable(LuaState L, lua_Integer p)
@@ -249,9 +257,11 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             DynValue table = L.At(p);
 
             if (table.Type != DataType.Table)
+            {
                 throw new NotImplementedException();
+            }
 
-            var v = table.Table.Get(key);
+            DynValue v = table.Table.Get(key);
             L.Push(v);
         }
 

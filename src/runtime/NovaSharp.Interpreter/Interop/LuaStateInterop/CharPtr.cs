@@ -214,9 +214,15 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             string result = "";
             for (int i = 0; ptr1[i] != '\0'; i++)
+            {
                 result += ptr1[i];
+            }
+
             for (int i = 0; ptr2[i] != '\0'; i++)
+            {
                 result += ptr2[i];
+            }
+
             return new CharPtr(result);
         }
 
@@ -255,11 +261,20 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             object o1 = ptr1 as CharPtr;
             object o2 = ptr2 as CharPtr;
             if ((o1 == null) && (o2 == null))
+            {
                 return true;
+            }
+
             if (o1 == null)
+            {
                 return false;
+            }
+
             if (o2 == null)
+            {
                 return false;
+            }
+
             return (ptr1.chars == ptr2.chars) && (ptr1.index == ptr2.index);
         }
 
@@ -280,18 +295,23 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         public override string ToString()
         {
-            System.Text.StringBuilder result = new System.Text.StringBuilder();
+            System.Text.StringBuilder result = new();
             for (int i = index; (i < chars.Length) && (chars[i] != '\0'); i++)
+            {
                 result.Append(chars[i]);
+            }
 
             return result.ToString();
         }
 
         public string ToString(int length)
         {
-            System.Text.StringBuilder result = new System.Text.StringBuilder();
+            System.Text.StringBuilder result = new();
             for (int i = index; (i < chars.Length) && i < (length + index); i++)
+            {
                 result.Append(chars[i]);
+            }
+
             return result.ToString();
         }
     }

@@ -96,7 +96,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
 
             for (int i = 0; i < m_Arguments.Count; i++)
+            {
                 m_Arguments[i].Compile(bc);
+            }
 
             if (!string.IsNullOrEmpty(m_Name))
             {

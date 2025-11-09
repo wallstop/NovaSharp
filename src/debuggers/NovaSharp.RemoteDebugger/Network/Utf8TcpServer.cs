@@ -15,8 +15,8 @@ namespace NovaSharp.RemoteDebugger.Network
         IPAddress m_IPAddress;
         TcpListener m_Listener = null;
         Action<string> m_Logger;
-        List<Utf8TcpPeer> m_PeerList = new List<Utf8TcpPeer>();
-        object m_PeerListLock = new object();
+        List<Utf8TcpPeer> m_PeerList = new();
+        object m_PeerListLock = new();
         public char PacketSeparator { get; private set; }
 
         public Utf8TcpServerOptions Options { get; private set; }
@@ -84,7 +84,9 @@ namespace NovaSharp.RemoteDebugger.Network
         public int GetConnectedClients()
         {
             lock (m_PeerListLock)
+            {
                 return m_PeerList.Count;
+            }
         }
 
         private void AddNewClient(Socket socket)
@@ -93,14 +95,14 @@ namespace NovaSharp.RemoteDebugger.Network
             {
                 lock (m_PeerListLock)
                 {
-                    foreach (var pp in m_PeerList)
+                    foreach (Utf8TcpPeer? pp in m_PeerList)
                     {
                         pp.Disconnect();
                     }
                 }
             }
 
-            Utf8TcpPeer peer = new Utf8TcpPeer(this, socket);
+            Utf8TcpPeer peer = new(this, socket);
 
             lock (m_PeerListLock)
             {
@@ -111,7 +113,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
             if (ClientConnected != null)
             {
-                Utf8TcpPeerEventArgs args = new Utf8TcpPeerEventArgs(peer);
+                Utf8TcpPeerEventArgs args = new(peer);
                 ClientConnected(this, args);
             }
 
@@ -157,7 +159,9 @@ namespace NovaSharp.RemoteDebugger.Network
             message = CompleteMessage(message);
 
             if (message == null)
+            {
                 return;
+            }
 
             foreach (Utf8TcpPeer peer in peers)
             {
@@ -172,10 +176,14 @@ namespace NovaSharp.RemoteDebugger.Network
         public string CompleteMessage(string message)
         {
             if (string.IsNullOrEmpty(message))
+            {
                 return PacketSeparator.ToString();
+            }
 
             if (message[message.Length - 1] != PacketSeparator)
+            {
                 message = message + PacketSeparator;
+            }
 
             return message;
         }

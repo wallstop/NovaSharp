@@ -23,7 +23,9 @@ namespace NovaSharp.Interpreter.Tree.Fast_Interface
                         Diagnostics.PerformanceCounter.AstCreation
                     )
                 )
+                {
                     exp = Expression.Expr(lcontext);
+                }
 
                 return new DynamicExprExpression(exp, lcontext);
             }
@@ -57,7 +59,9 @@ namespace NovaSharp.Interpreter.Tree.Fast_Interface
                         Diagnostics.PerformanceCounter.AstCreation
                     )
                 )
+                {
                     stat = new ChunkStatement(lcontext);
+                }
 
                 int beginIp = -1;
 
@@ -106,7 +110,9 @@ namespace NovaSharp.Interpreter.Tree.Fast_Interface
                         Diagnostics.PerformanceCounter.AstCreation
                     )
                 )
+                {
                     fnx = new FunctionDefinitionExpression(lcontext, usesGlobalEnv);
+                }
 
                 int beginIp = -1;
 

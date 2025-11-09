@@ -43,9 +43,13 @@ namespace NovaSharp.Interpreter.Tree
                     Token localToken = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
                     if (lcontext.Lexer.Current.Type == TokenType.Function)
+                    {
                         return new FunctionDefinitionStatement(lcontext, true, localToken);
+                    }
                     else
+                    {
                         return new AssignmentStatement(lcontext, localToken);
+                    }
                 case TokenType.Return:
                     forceLast = true;
                     return new ReturnStatement(lcontext);
@@ -58,9 +62,13 @@ namespace NovaSharp.Interpreter.Tree
                     FunctionCallExpression fnexp = exp as FunctionCallExpression;
 
                     if (fnexp != null)
+                    {
                         return new FunctionCallStatement(lcontext, fnexp);
+                    }
                     else
+                    {
                         return new AssignmentStatement(lcontext, exp, l);
+                    }
                 }
             }
         }
@@ -75,9 +83,13 @@ namespace NovaSharp.Interpreter.Tree
             Token name = CheckTokenType(lcontext, TokenType.Name);
 
             if (lcontext.Lexer.Current.Type == TokenType.Op_Assignment)
+            {
                 return new ForLoopStatement(lcontext, name, forTkn);
+            }
             else
+            {
                 return new ForEachLoopStatement(lcontext, name, forTkn);
+            }
         }
     }
 }

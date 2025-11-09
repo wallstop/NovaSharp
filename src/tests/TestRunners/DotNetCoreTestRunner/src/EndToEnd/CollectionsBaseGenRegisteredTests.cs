@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -23,13 +21,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class RegCollMethods
         {
-            List<RegCollItem> m_Items = new List<RegCollItem>()
+            List<RegCollItem> m_Items = new()
             {
                 new RegCollItem(7),
                 new RegCollItem(8),
                 new RegCollItem(9),
             };
-            List<int> m_List = new List<int>() { 1, 2, 3 };
+            List<int> m_List = new() { 1, 2, 3 };
             int[] m_Array = new int[3] { 2, 4, 6 };
             int[,] m_MultiArray = new int[2, 3]
             {
@@ -66,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         void Do(string code, Action<DynValue> asserts)
         {
             // useless ops, to trick AOT to include the extension methods..
-            List<int> lst = new List<int>() { 1, 1, 1, 1 };
+            List<int> lst = new() { 1, 1, 1, 1 };
             lst.Add(lst.Sum());
             lst.Add(lst.Last());
 
@@ -83,9 +81,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 UserData.RegisterType(typeof(List<>));
                 UserData.RegisterExtensionType(typeof(Enumerable));
 
-                Script s = new Script();
+                Script s = new();
 
-                var obj = new RegCollMethods();
+                RegCollMethods obj = new();
                 s.Globals["o"] = obj;
                 s.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
 

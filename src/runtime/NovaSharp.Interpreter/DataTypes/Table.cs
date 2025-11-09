@@ -74,7 +74,9 @@ namespace NovaSharp.Interpreter
             int v = ((int)d);
 
             if (d >= 1.0 && d == v)
+            {
                 return v;
+            }
 
             return -1;
         }
@@ -123,10 +125,14 @@ namespace NovaSharp.Interpreter
                 DynValue vt = t.RawGet(key);
 
                 if (vt == null)
+                {
                     throw new ScriptRuntimeException("Key '{0}' did not point to anything");
+                }
 
                 if (vt.Type != DataType.Table)
+                {
                     throw new ScriptRuntimeException("Key '{0}' did not point to a table");
+                }
 
                 t = vt.Table;
                 key = keys[i];
@@ -180,7 +186,9 @@ namespace NovaSharp.Interpreter
                 m_ContainsNilEntries = true;
 
                 if (isNumber)
+                {
                     m_CachedLength = -1;
+                }
             }
             else if (isNumber)
             {
@@ -216,7 +224,9 @@ namespace NovaSharp.Interpreter
         public void Set(string key, DynValue value)
         {
             if (key == null)
+            {
                 throw ScriptRuntimeException.TableIndexIsNil();
+            }
 
             this.CheckScriptOwnership(value);
             PerformTableSet(m_StringMap, key, DynValue.NewString(key), value, false, -1);
@@ -243,9 +253,13 @@ namespace NovaSharp.Interpreter
             if (key.IsNilOrNan())
             {
                 if (key.IsNil())
+                {
                     throw ScriptRuntimeException.TableIndexIsNil();
+                }
                 else
+                {
                     throw ScriptRuntimeException.TableIndexIsNaN();
+                }
             }
 
             if (key.Type == DataType.String)
@@ -279,14 +293,22 @@ namespace NovaSharp.Interpreter
         public void Set(object key, DynValue value)
         {
             if (key == null)
+            {
                 throw ScriptRuntimeException.TableIndexIsNil();
+            }
 
             if (key is string)
+            {
                 Set((string)key, value);
+            }
             else if (key is int)
+            {
                 Set((int)key, value);
+            }
             else
+            {
                 Set(DynValue.FromObject(OwnerScript, key), value);
+            }
         }
 
         /// <summary>
@@ -298,7 +320,9 @@ namespace NovaSharp.Interpreter
         public void Set(object[] keys, DynValue value)
         {
             if (keys == null || keys.Length <= 0)
+            {
                 throw ScriptRuntimeException.TableIndexIsNil();
+            }
 
             object key;
             ResolveMultipleKeys(keys, out key).Set(key, value);
@@ -399,13 +423,17 @@ namespace NovaSharp.Interpreter
         public DynValue RawGet(DynValue key)
         {
             if (key.Type == DataType.String)
+            {
                 return RawGet(key.String);
+            }
 
             if (key.Type == DataType.Number)
             {
                 int idx = GetIntegralKey(key.Number);
                 if (idx > 0)
+                {
                     return RawGet(idx);
+                }
             }
 
             return RawGetValue(m_ValueMap.Find(key));
@@ -419,13 +447,19 @@ namespace NovaSharp.Interpreter
         public DynValue RawGet(object key)
         {
             if (key == null)
+            {
                 return null;
+            }
 
             if (key is string)
+            {
                 return RawGet((string)key);
+            }
 
             if (key is int)
+            {
                 return RawGet((int)key);
+            }
 
             return RawGet(DynValue.FromObject(OwnerScript, key));
         }
@@ -440,7 +474,9 @@ namespace NovaSharp.Interpreter
         public DynValue RawGet(params object[] keys)
         {
             if (keys == null || keys.Length <= 0)
+            {
                 return null;
+            }
 
             object key;
             return ResolveMultipleKeys(keys, out key).RawGet(key);
@@ -456,7 +492,7 @@ namespace NovaSharp.Interpreter
             bool isNumber
         )
         {
-            var removed = listIndex.Remove(key);
+            bool removed = listIndex.Remove(key);
 
             if (removed && isNumber)
             {
@@ -494,13 +530,17 @@ namespace NovaSharp.Interpreter
         public bool Remove(DynValue key)
         {
             if (key.Type == DataType.String)
+            {
                 return Remove(key.String);
+            }
 
             if (key.Type == DataType.Number)
             {
                 int idx = GetIntegralKey(key.Number);
                 if (idx > 0)
+                {
                     return Remove(idx);
+                }
             }
 
             return PerformTableRemove(m_ValueMap, key, false);
@@ -514,10 +554,14 @@ namespace NovaSharp.Interpreter
         public bool Remove(object key)
         {
             if (key is string)
+            {
                 return Remove((string)key);
+            }
 
             if (key is int)
+            {
                 return Remove((int)key);
+            }
 
             return Remove(DynValue.FromObject(OwnerScript, key));
         }
@@ -531,7 +575,9 @@ namespace NovaSharp.Interpreter
         public bool Remove(params object[] keys)
         {
             if (keys == null || keys.Length <= 0)
+            {
                 return false;
+            }
 
             object key;
             return ResolveMultipleKeys(keys, out key).Remove(key);
@@ -568,13 +614,19 @@ namespace NovaSharp.Interpreter
                 LinkedListNode<TablePair> node = m_Values.First;
 
                 if (node == null)
+                {
                     return TablePair.Nil;
+                }
                 else
                 {
                     if (node.Value.Value.IsNil())
+                    {
                         return NextKey(node.Value.Key);
+                    }
                     else
+                    {
                         return node.Value;
+                    }
                 }
             }
 
@@ -601,15 +653,21 @@ namespace NovaSharp.Interpreter
             while (true)
             {
                 if (linkedListNode == null)
+                {
                     return null;
+                }
 
                 if (linkedListNode.Next == null)
+                {
                     return TablePair.Nil;
+                }
 
                 linkedListNode = linkedListNode.Next;
 
                 if (!linkedListNode.Value.Value.IsNil())
+                {
                     return linkedListNode.Value;
+                }
             }
         }
 
@@ -629,7 +687,9 @@ namespace NovaSharp.Interpreter
                         m_ArrayMap.ContainsKey(i) && !m_ArrayMap.Find(i).Value.Value.IsNil();
                         i++
                     )
+                    {
                         m_CachedLength = i;
+                    }
                 }
 
                 return m_CachedLength;
@@ -641,7 +701,9 @@ namespace NovaSharp.Interpreter
             if (val.Type == DataType.Tuple && lastpos)
             {
                 foreach (DynValue v in val.Tuple)
+                {
                     InitNextArrayKeys(v, true);
+                }
             }
             else
             {

@@ -26,9 +26,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  *--------------------------------------------------------------------------------------------*/
 using System;
-using System.Net;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using NovaSharp.Interpreter.Compatibility;
@@ -37,7 +34,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 {
     internal class Utilities
     {
-        private static readonly Regex VARIABLE = new Regex(@"\{(\w+)\}");
+        private static readonly Regex VARIABLE = new(@"\{(\w+)\}");
 
         /*
          * Resolve hostname, dotted-quad notation for IPv4, or colon-hexadecimal notation for IPv6 to IPAddress.

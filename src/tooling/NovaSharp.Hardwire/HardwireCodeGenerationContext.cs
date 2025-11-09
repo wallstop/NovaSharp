@@ -26,7 +26,7 @@ namespace NovaSharp.Hardwire
         CodeNamespace m_Namespace;
         ICodeGenerationLogger m_Logger;
 
-        Stack<string> m_NestStack = new Stack<string>();
+        Stack<string> m_NestStack = new();
 
         public HardwireCodeGenerationLanguage TargetLanguage { get; private set; }
 
@@ -61,7 +61,9 @@ namespace NovaSharp.Hardwire
             if (extraComments != null)
             {
                 foreach (string str in extraComments)
+                {
                     Comment("{0}", str);
+                }
 
                 Comment("----------------------------------------------------------");
             }
@@ -117,10 +119,10 @@ namespace NovaSharp.Hardwire
             Action<string, CodeExpression> action = null
         )
         {
-            foreach (var pair in table.Pairs)
+            foreach (TablePair pair in table.Pairs)
             {
-                var key = pair.Key;
-                var value = pair.Value;
+                DynValue? key = pair.Key;
+                DynValue? value = pair.Value;
 
                 if (value.Type == DataType.Table && value.Table.Get("error").IsNotNil())
                 {
@@ -130,7 +132,9 @@ namespace NovaSharp.Hardwire
                 if (value.Type == DataType.Table)
                 {
                     if (value.Table.Get("skip").IsNotNil())
+                    {
                         continue;
+                    }
 
                     if (!IsVisibilityAccepted(value.Table))
                     {
@@ -144,11 +148,15 @@ namespace NovaSharp.Hardwire
                         continue;
                     }
 
-                    var exp = DispatchTable(key.String, value.Table, members);
+                    CodeExpression[]? exp = DispatchTable(key.String, value.Table, members);
 
                     if (action != null && exp != null)
-                        foreach (var e in exp)
+                    {
+                        foreach (CodeExpression e in exp)
+                        {
                             action(key.String, e);
+                        }
+                    }
                 }
                 else
                 {
@@ -209,9 +217,11 @@ namespace NovaSharp.Hardwire
         {
             DynValue d = table.Get("class");
             if (d.Type != DataType.String)
+            {
                 throw new ArgumentException(
                     "table cannot be dispatched as it has no class or class of invalid type."
                 );
+            }
 
             //m_NestStack.Push(string.Format("{0}[{1}]", key, d.String));
 
@@ -219,8 +229,8 @@ namespace NovaSharp.Hardwire
 
             table.Set("$key", DynValue.NewString(key));
 
-            var gen = HardwireGeneratorRegistry.GetGenerator(d.String);
-            var result = gen.Generate(table, this, members);
+            IHardwireGenerator gen = HardwireGeneratorRegistry.GetGenerator(d.String);
+            CodeExpression[] result = gen.Generate(table, this, members);
 
             m_NestStack.Pop();
 
@@ -279,30 +289,36 @@ namespace NovaSharp.Hardwire
             DynValue dv = t.Get("visibility");
 
             if (dv.Type != DataType.String)
+            {
                 return true;
+            }
 
             if (dv.String == "public")
+            {
                 return true;
+            }
 
             if (dv.String == "internal" || dv.String == "protected-internal")
+            {
                 return AllowInternals;
+            }
 
             return false;
         }
 
         private void GenerateKickstarter(string className)
         {
-            var cl = new CodeTypeDeclaration(className);
+            CodeTypeDeclaration cl = new(className);
             cl.TypeAttributes =
                 System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Abstract;
 
             m_Namespace.Types.Add(cl);
 
-            CodeConstructor ctor = new CodeConstructor();
+            CodeConstructor ctor = new();
             ctor.Attributes = MemberAttributes.Private;
             cl.Members.Add(ctor);
 
-            CodeMemberMethod m = new CodeMemberMethod();
+            CodeMemberMethod m = new();
             m.Name = "Initialize";
             m.Attributes = MemberAttributes.Static | MemberAttributes.Public;
 

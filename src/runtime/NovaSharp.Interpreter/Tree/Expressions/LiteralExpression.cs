@@ -45,7 +45,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
 
             if (m_Value == null)
+            {
                 throw new SyntaxErrorException(t, "unknown literal format near '{0}'", t.Text);
+            }
 
             lcontext.Lexer.Next();
         }

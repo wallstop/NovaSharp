@@ -4,28 +4,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Debugging;
-using NovaSharp.VsCodeDebugger;
-using NovaSharp.VsCodeDebugger.SDK;
 
 namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
     internal class AsyncDebugger : IDebugger
     {
-        private static object s_AsyncDebuggerIdLock = new object();
+        private static object s_AsyncDebuggerIdLock = new();
         private static int s_AsyncDebuggerIdCounter = 0;
 
-        object m_Lock = new object();
+        object m_Lock = new();
         private IAsyncDebuggerClient m_Client__;
         DebuggerAction m_PendingAction = null;
 
         List<WatchItem>[] m_WatchItems;
-        Dictionary<int, SourceCode> m_SourcesMap = new Dictionary<int, SourceCode>();
-        Dictionary<int, string> m_SourcesOverride = new Dictionary<int, string>();
+        Dictionary<int, SourceCode> m_SourcesMap = new();
+        Dictionary<int, string> m_SourcesOverride = new();
         Func<SourceCode, string> m_SourceFinder;
 
         public DebugService DebugService { get; private set; }
@@ -43,7 +39,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         public AsyncDebugger(Script script, Func<SourceCode, string> sourceFinder, string name)
         {
             lock (s_AsyncDebuggerIdLock)
+            {
                 Id = s_AsyncDebuggerIdCounter++;
+            }
 
             m_SourceFinder = sourceFinder;
             ErrorRegex = new Regex(@"\A.*\Z");
@@ -52,7 +50,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             Name = name;
 
             for (int i = 0; i < m_WatchItems.Length; i++)
+            {
                 m_WatchItems[i] = new List<WatchItem>(64);
+            }
         }
 
         public IAsyncDebuggerClient Client
@@ -70,8 +70,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     if (value != null)
                     {
                         for (int i = 0; i < Script.SourceCodeCount; i++)
+                        {
                             if (m_SourcesMap.ContainsKey(i))
+                            {
                                 value.OnSourceCodeChanged(i);
+                            }
+                        }
                     }
 
                     m_Client__ = value;
@@ -84,10 +88,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             PauseRequested = false;
 
             lock (m_Lock)
+            {
                 if (Client != null)
                 {
                     Client.SendStopEvent();
                 }
+            }
 
             while (true)
             {
@@ -100,7 +106,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                     if (m_PendingAction != null)
                     {
-                        var action = m_PendingAction;
+                        DebuggerAction action = m_PendingAction;
                         m_PendingAction = null;
                         return action;
                     }
@@ -115,11 +121,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             while (true)
             {
                 lock (m_Lock)
+                {
                     if (m_PendingAction == null)
                     {
                         m_PendingAction = action;
                         break;
                     }
+                }
 
                 Sleep(10);
             }
@@ -173,7 +181,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 try
                 {
                     if (!File.Exists(file))
+                    {
                         invalidFile = true;
+                    }
                 }
                 catch
                 {
@@ -197,8 +207,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
 
             lock (m_Lock)
+            {
                 if (Client != null)
+                {
                     Client.OnSourceCodeChanged(sourceCode.SourceID);
+                }
+            }
         }
 
         private string GetFooterForTempFile()
@@ -213,9 +227,14 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         public string GetSourceFile(int sourceId)
         {
             if (m_SourcesOverride.ContainsKey(sourceId))
+            {
                 return m_SourcesOverride[sourceId];
+            }
             else if (m_SourcesMap.ContainsKey(sourceId))
+            {
                 return m_SourcesMap[sourceId].Name;
+            }
+
             return null;
         }
 
@@ -227,15 +246,23 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         void IDebugger.SignalExecutionEnded()
         {
             lock (m_Lock)
+            {
                 if (Client != null)
+                {
                     Client.OnExecutionEnded();
+                }
+            }
         }
 
         bool IDebugger.SignalRuntimeException(ScriptRuntimeException ex)
         {
             lock (m_Lock)
+            {
                 if (Client == null)
+                {
                     return false;
+                }
+            }
 
             Client.OnException(ex);
             PauseRequested = ErrorRegex.IsMatch(ex.Message);
@@ -244,14 +271,18 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         void IDebugger.Update(WatchType watchType, IEnumerable<WatchItem> items)
         {
-            var list = m_WatchItems[(int)watchType];
+            List<WatchItem> list = m_WatchItems[(int)watchType];
 
             list.Clear();
             list.AddRange(items);
 
             lock (m_Lock)
+            {
                 if (Client != null)
+                {
                     Client.OnWatchesUpdated(watchType);
+                }
+            }
         }
 
         public List<WatchItem> GetWatches(WatchType watchType)
@@ -262,7 +293,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         public SourceCode GetSource(int id)
         {
             if (m_SourcesMap.ContainsKey(id))
+            {
                 return m_SourcesMap[id];
+            }
 
             return null;
         }
@@ -273,10 +306,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             // case in the same directory on Unix.
             path = path.Replace('\\', '/').ToUpperInvariant();
 
-            foreach (var kvp in m_SourcesOverride)
+            foreach (KeyValuePair<int, string> kvp in m_SourcesOverride)
             {
                 if (kvp.Value.Replace('\\', '/').ToUpperInvariant() == path)
+                {
                     return m_SourcesMap[kvp.Key];
+                }
             }
 
             return m_SourcesMap.Values.FirstOrDefault(s =>

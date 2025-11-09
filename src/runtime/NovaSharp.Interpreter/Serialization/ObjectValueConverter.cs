@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using NovaSharp.Interpreter.Compatibility;
 using NovaSharp.Interpreter.Interop.Converters;
 
@@ -17,19 +14,25 @@ namespace NovaSharp.Interpreter.Serialization
         )
         {
             if (o == null)
+            {
                 return valueForNulls ?? DynValue.Nil;
+            }
 
             DynValue v = ClrToScriptConversions.TryObjectToTrivialDynValue(script, o);
 
             if (v != null)
+            {
                 return v;
+            }
 
             if (o is Enum)
+            {
                 return DynValue.NewNumber(
                     NumericConversions.TypeToDouble(Enum.GetUnderlyingType(o.GetType()), o)
                 );
+            }
 
-            Table t = new Table(script);
+            Table t = new(script);
 
             System.Collections.IEnumerable ienum = o as System.Collections.IEnumerable;
 
@@ -46,9 +49,9 @@ namespace NovaSharp.Interpreter.Serialization
 
                 foreach (PropertyInfo pi in Framework.Do.GetProperties(type))
                 {
-                    var getter = Framework.Do.GetGetMethod(pi);
-                    var isStatic = getter.IsStatic;
-                    var obj = getter.Invoke(isStatic ? null : o, null); // convoluted workaround for --full-aot Mono execution
+                    MethodInfo getter = Framework.Do.GetGetMethod(pi);
+                    bool isStatic = getter.IsStatic;
+                    object obj = getter.Invoke(isStatic ? null : o, null); // convoluted workaround for --full-aot Mono execution
 
                     t.Set(pi.Name, SerializeObjectToDynValue(script, obj, valueForNulls));
                 }

@@ -27,7 +27,9 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
             if (t.Type != tokenType)
+            {
                 return UnexpectedTokenType(t);
+            }
 
             lcontext.Lexer.Next();
 
@@ -42,7 +44,9 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
             if (t.Type != tokenType1 && t.Type != tokenType2)
+            {
                 return UnexpectedTokenType(t);
+            }
 
             lcontext.Lexer.Next();
 
@@ -58,7 +62,9 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
             if (t.Type != tokenType1 && t.Type != tokenType2 && t.Type != tokenType3)
+            {
                 return UnexpectedTokenType(t);
+            }
 
             lcontext.Lexer.Next();
 
@@ -72,7 +78,9 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
             if (t.Type != tokenType)
+            {
                 UnexpectedTokenType(t);
+            }
         }
 
         protected static Token CheckMatch(

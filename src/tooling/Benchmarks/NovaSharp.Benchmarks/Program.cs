@@ -3,13 +3,15 @@ using NovaSharp.Benchmarking;
 
 namespace NovaSharp.Benchmarks;
 
+using BenchmarkDotNet.Reports;
+
 internal static class Program
 {
     public static void Main(string[] args)
     {
-        var effectiveArgs = args.Length > 0 ? args : new[] { "--filter", "*" };
+        string[] effectiveArgs = args.Length > 0 ? args : new[] { "--filter", "*" };
 
-        var summaries = BenchmarkSwitcher
+        IEnumerable<Summary> summaries = BenchmarkSwitcher
             .FromAssembly(typeof(Program).Assembly)
             .Run(effectiveArgs, DefaultConfigFactory.Create());
 

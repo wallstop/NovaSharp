@@ -57,7 +57,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
                         Token separator = lcontext.Lexer.Current;
 
                         if (separator.Type != TokenType.Colon && separator.Type != TokenType.Dot)
+                        {
                             UnexpectedTokenType(separator);
+                        }
 
                         lcontext.Lexer.Next();
 

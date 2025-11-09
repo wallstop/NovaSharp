@@ -24,7 +24,9 @@ namespace NovaSharp.Interpreter
             TValue v;
 
             if (dictionary.TryGetValue(key, out v))
+            {
                 return v;
+            }
 
             return default(TValue);
         }

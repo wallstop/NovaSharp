@@ -26,16 +26,18 @@ namespace NovaSharp
 
             Script.DefaultOptions.ScriptLoader = new ReplInterpreterScriptLoader();
 
-            Script script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
 
             script.Globals["makestatic"] = (Func<string, DynValue>)(MakeStatic);
 
             if (CheckArgs(args, new ShellContext(script)))
+            {
                 return;
+            }
 
             Banner();
 
-            ReplInterpreter interpreter = new ReplInterpreter(script)
+            ReplInterpreter interpreter = new(script)
             {
                 HandleDynamicExprs = true,
                 HandleClassicExprsSyntax = true,
@@ -51,9 +53,13 @@ namespace NovaSharp
         {
             Type tt = Type.GetType(type);
             if (tt == null)
+            {
                 Console.WriteLine("Type '{0}' not found.", type);
+            }
             else
+            {
                 return UserData.CreateStatic(tt);
+            }
 
             return DynValue.Nil;
         }
@@ -75,7 +81,9 @@ namespace NovaSharp
                 DynValue result = interpreter.Evaluate(s);
 
                 if (result != null && result.Type != DataType.Void)
+                {
                     Console.WriteLine("{0}", result);
+                }
             }
             catch (InterpreterException ex)
             {
@@ -100,11 +108,13 @@ namespace NovaSharp
         private static bool CheckArgs(string[] args, ShellContext shellContext)
         {
             if (args.Length == 0)
+            {
                 return false;
+            }
 
             if (args.Length == 1 && args[0].Length > 0 && args[0][0] != '-')
             {
-                Script script = new Script();
+                Script script = new();
                 script.DoFile(args[0]);
             }
 
@@ -137,22 +147,34 @@ namespace NovaSharp
                 for (int i = 1; i < args.Length; i++)
                 {
                     if (args[i] == "--internals")
+                    {
                         internals = true;
+                    }
                     else if (args[i] == "--vb")
+                    {
                         useVb = true;
+                    }
                     else if (args[i].StartsWith("--class:"))
+                    {
                         classname = args[i].Substring("--class:".Length);
+                    }
                     else if (args[i].StartsWith("--namespace:"))
+                    {
                         namespacename = args[i].Substring("--namespace:".Length);
+                    }
                     else if (dumpfile == null)
+                    {
                         dumpfile = args[i];
+                    }
                     else if (destfile == null)
                     {
                         destfile = args[i];
                         fail = false;
                     }
                     else
+                    {
                         fail = true;
+                    }
                 }
 
                 if (fail)

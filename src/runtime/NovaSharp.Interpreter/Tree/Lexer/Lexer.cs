@@ -21,7 +21,9 @@ namespace NovaSharp.Interpreter.Tree
 
             // remove unicode BOM if any
             if (m_Code.Length > 0 && m_Code[0] == 0xFEFF)
+            {
                 m_Code = m_Code.Substring(1);
+            }
 
             m_AutoSkipComments = autoSkipComments;
         }
@@ -31,7 +33,9 @@ namespace NovaSharp.Interpreter.Tree
             get
             {
                 if (m_Current == null)
+                {
                     Next();
+                }
 
                 return m_Current;
             }
@@ -49,7 +53,9 @@ namespace NovaSharp.Interpreter.Tree
                     (T.Type != TokenType.Comment && T.Type != TokenType.HashBang)
                     || (!m_AutoSkipComments)
                 )
+                {
                     return T;
+                }
             }
         }
 
@@ -97,9 +103,13 @@ namespace NovaSharp.Interpreter.Tree
         private char CursorChar()
         {
             if (m_Cursor < m_Code.Length)
+            {
                 return m_Code[m_Cursor];
+            }
             else
+            {
                 return '\0'; //  sentinel
+            }
         }
 
         private char CursorCharNext()
@@ -115,9 +125,14 @@ namespace NovaSharp.Interpreter.Tree
                 int j = m_Cursor + i;
 
                 if (j >= m_Code.Length)
+                {
                     return false;
+                }
+
                 if (m_Code[j] != pattern[i])
+                {
                     return false;
+                }
             }
             return true;
         }
@@ -145,7 +160,9 @@ namespace NovaSharp.Interpreter.Tree
             int fromCol = m_Col;
 
             if (!CursorNotEof())
+            {
                 return CreateToken(TokenType.Eof, fromLine, fromCol, "<eof>");
+            }
 
             char c = CursorChar();
 
@@ -184,11 +201,13 @@ namespace NovaSharp.Interpreter.Tree
                 case '~':
                 case '!':
                     if (CursorCharNext() != '=')
+                    {
                         throw new SyntaxErrorException(
                             CreateToken(TokenType.Invalid, fromLine, fromCol),
                             "unexpected symbol near '{0}'",
                             c
                         );
+                    }
 
                     CursorCharNext();
                     return CreateToken(TokenType.Op_NotEqual, fromLine, fromCol, "~=");
@@ -196,6 +215,7 @@ namespace NovaSharp.Interpreter.Tree
                 {
                     char next = CursorCharNext();
                     if (next == '.')
+                    {
                         return PotentiallyDoubleCharOperator(
                             '.',
                             TokenType.Op_Concat,
@@ -203,10 +223,15 @@ namespace NovaSharp.Interpreter.Tree
                             fromLine,
                             fromCol
                         );
+                    }
                     else if (LexerUtils.CharIsDigit(next))
+                    {
                         return ReadNumberToken(fromLine, fromCol, true);
+                    }
                     else
+                    {
                         return CreateToken(TokenType.Dot, fromLine, fromCol, ".");
+                    }
                 }
                 case '+':
                     return CreateSingleCharToken(TokenType.Op_Add, fromLine, fromCol);
@@ -240,7 +265,9 @@ namespace NovaSharp.Interpreter.Tree
                     );
                 case '#':
                     if (m_Cursor == 0 && m_Code.Length > 1 && m_Code[1] == '!')
+                    {
                         return ReadHashBang(fromLine, fromCol);
+                    }
 
                     return CreateSingleCharToken(TokenType.Op_Len, fromLine, fromCol);
                 case '[':
@@ -314,7 +341,7 @@ namespace NovaSharp.Interpreter.Tree
         )
         {
             // here we are at the first '=' or second '['
-            StringBuilder text = new StringBuilder(1024);
+            StringBuilder text = new(1024);
             string end_pattern = "]";
 
             if (startpattern == null)
@@ -363,7 +390,9 @@ namespace NovaSharp.Interpreter.Tree
             for (char c = CursorCharNext(); ; c = CursorCharNext())
             {
                 if (c == '\r') // XXI century and we still debate on how a newline is made. throw new DeveloperExtremelyAngryException.
+                {
                     continue;
+                }
 
                 if (c == '\0' || !CursorNotEof())
                 {
@@ -380,7 +409,9 @@ namespace NovaSharp.Interpreter.Tree
                 else if (c == ']' && CursorMatches(end_pattern))
                 {
                     for (int i = 0; i < end_pattern.Length; i++)
+                    {
                         CursorCharNext();
+                    }
 
                     return LexerUtils.AdjustLuaLongString(text.ToString());
                 }
@@ -393,7 +424,7 @@ namespace NovaSharp.Interpreter.Tree
 
         private Token ReadNumberToken(int fromLine, int fromCol, bool leadingDot)
         {
-            StringBuilder text = new StringBuilder(32);
+            StringBuilder text = new(32);
 
             //INT : Digit+
             //HEX : '0' [xX] HexDigit+
@@ -465,9 +496,13 @@ namespace NovaSharp.Interpreter.Tree
             TokenType numberType = TokenType.Number;
 
             if (isHex && (dotAdded || exponentPart))
+            {
                 numberType = TokenType.Number_HexFloat;
+            }
             else if (isHex)
+            {
                 numberType = TokenType.Number_Hex;
+            }
 
             string tokenStr = text.ToString();
             return CreateToken(numberType, fromLine, fromCol, tokenStr);
@@ -482,7 +517,7 @@ namespace NovaSharp.Interpreter.Tree
 
         private Token ReadHashBang(int fromLine, int fromCol)
         {
-            StringBuilder text = new StringBuilder(32);
+            StringBuilder text = new(32);
 
             for (char c = CursorChar(); CursorNotEof(); c = CursorCharNext())
             {
@@ -502,7 +537,7 @@ namespace NovaSharp.Interpreter.Tree
 
         private Token ReadComment(int fromLine, int fromCol)
         {
-            StringBuilder text = new StringBuilder(32);
+            StringBuilder text = new(32);
 
             bool extraneousFound = false;
 
@@ -524,7 +559,9 @@ namespace NovaSharp.Interpreter.Tree
                 else if (c != '\r')
                 {
                     if (c != '[' && c != '=')
+                    {
                         extraneousFound = true;
+                    }
 
                     text.Append(c);
                 }
@@ -535,7 +572,7 @@ namespace NovaSharp.Interpreter.Tree
 
         private Token ReadSimpleStringToken(int fromLine, int fromCol)
         {
-            StringBuilder text = new StringBuilder(32);
+            StringBuilder text = new(32);
             char separator = CursorChar();
 
             for (char c = CursorCharNext(); CursorNotEof(); c = CursorCharNext())
@@ -552,16 +589,22 @@ namespace NovaSharp.Interpreter.Tree
                     {
                         c = CursorCharNext();
                         if (c == '\n')
+                        {
                             text.Append(c);
+                        }
                         else
+                        {
                             goto redo_Loop;
+                        }
                     }
                     else if (c == 'z')
                     {
                         c = CursorCharNext();
 
                         if (char.IsWhiteSpace(c))
+                        {
                             SkipWhiteSpace();
+                        }
 
                         c = CursorChar();
 
@@ -617,7 +660,9 @@ namespace NovaSharp.Interpreter.Tree
                 return CreateToken(doubleCharToken, fromLine, fromCol, op + expectedSecondChar);
             }
             else
+            {
                 return CreateToken(singleCharToken, fromLine, fromCol, op);
+            }
         }
 
         private Token CreateNameToken(string name, int fromLine, int fromCol)
@@ -641,7 +686,7 @@ namespace NovaSharp.Interpreter.Tree
             string text = null
         )
         {
-            Token t = new Token(
+            Token t = new(
                 tokenType,
                 m_SourceId,
                 fromLine,
@@ -661,14 +706,18 @@ namespace NovaSharp.Interpreter.Tree
 
         private string ReadNameToken()
         {
-            StringBuilder name = new StringBuilder(32);
+            StringBuilder name = new(32);
 
             for (char c = CursorChar(); CursorNotEof(); c = CursorCharNext())
             {
                 if (char.IsLetterOrDigit(c) || c == '_')
+                {
                     name.Append(c);
+                }
                 else
+                {
                     break;
+                }
             }
 
             return name.ToString();

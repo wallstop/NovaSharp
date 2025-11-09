@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using NovaSharp.Interpreter.IO;
 using NUnit.Framework;
@@ -29,11 +25,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 int.MaxValue,
             };
 
-            using (MemoryStream ms_orig = new MemoryStream())
+            using (MemoryStream ms_orig = new())
             {
-                UndisposableStream ms = new UndisposableStream(ms_orig);
+                UndisposableStream ms = new(ms_orig);
 
-                using (BinDumpBinaryWriter bdbw = new BinDumpBinaryWriter(ms, Encoding.UTF8))
+                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {
@@ -43,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new BinDumpBinaryReader(ms, Encoding.UTF8))
+                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {
@@ -70,11 +66,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 uint.MaxValue,
             };
 
-            using (MemoryStream ms_orig = new MemoryStream())
+            using (MemoryStream ms_orig = new())
             {
-                UndisposableStream ms = new UndisposableStream(ms_orig);
+                UndisposableStream ms = new(ms_orig);
 
-                using (BinDumpBinaryWriter bdbw = new BinDumpBinaryWriter(ms, Encoding.UTF8))
+                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {
@@ -84,7 +80,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new BinDumpBinaryReader(ms, Encoding.UTF8))
+                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {
@@ -100,11 +96,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string[] values = new string[] { "hello", "you", "fool", "hello", "I", "love", "you" };
 
-            using (MemoryStream ms_orig = new MemoryStream())
+            using (MemoryStream ms_orig = new())
             {
-                UndisposableStream ms = new UndisposableStream(ms_orig);
+                UndisposableStream ms = new(ms_orig);
 
-                using (BinDumpBinaryWriter bdbw = new BinDumpBinaryWriter(ms, Encoding.UTF8))
+                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {
@@ -114,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new BinDumpBinaryReader(ms, Encoding.UTF8))
+                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
                 {
                     for (int i = 0; i < values.Length; i++)
                     {

@@ -1,9 +1,5 @@
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Debugging;
 

@@ -40,10 +40,8 @@ namespace NovaSharp.Interpreter.Interop
             public int HitIndexAtLastHit;
         }
 
-        private List<IOverloadableMemberDescriptor> m_Overloads =
-            new List<IOverloadableMemberDescriptor>();
-        private List<IOverloadableMemberDescriptor> m_ExtOverloads =
-            new List<IOverloadableMemberDescriptor>();
+        private List<IOverloadableMemberDescriptor> m_Overloads = new();
+        private List<IOverloadableMemberDescriptor> m_ExtOverloads = new();
         private bool m_Unsorted = true;
         private OverloadCacheItem[] m_Cache = new OverloadCacheItem[CACHE_SIZE];
         private int m_CacheHits = 0;
@@ -163,7 +161,9 @@ namespace NovaSharp.Interpreter.Interop
 
             // common case, let's optimize for it
             if (m_Overloads.Count == 1 && m_ExtOverloads.Count == 0 && extMethodCacheNotExpired)
+            {
                 return m_Overloads[0].Execute(script, obj, context, args);
+            }
 
             if (m_Unsorted)
             {
@@ -308,20 +308,28 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if (overloadCacheItem.HasObject && !hasObject)
+            {
                 return false;
+            }
 
             if (args.Count != overloadCacheItem.ArgsDataType.Count)
+            {
                 return false;
+            }
 
             for (int i = 0; i < args.Count; i++)
             {
                 if (args[i].Type != overloadCacheItem.ArgsDataType[i])
+                {
                     return false;
+                }
 
                 if (args[i].Type == DataType.UserData)
                 {
                     if (args[i].UserData.Descriptor.Type != overloadCacheItem.ArgsUserDataType[i])
+                    {
                         return false;
+                    }
                 }
             }
 
@@ -352,10 +360,14 @@ namespace NovaSharp.Interpreter.Interop
             for (int i = 0; i < method.Parameters.Length; i++)
             {
                 if (isExtMethod && i == 0)
+                {
                     continue;
+                }
 
                 if (method.Parameters[i].IsOut)
+                {
                     continue;
+                }
 
                 Type parameterType = method.Parameters[i].Type;
 
@@ -364,7 +376,9 @@ namespace NovaSharp.Interpreter.Interop
                     || (parameterType == typeof(ScriptExecutionContext))
                     || (parameterType == typeof(CallbackArguments))
                 )
+                {
                     continue;
+                }
 
                 if (i == method.Parameters.Length - 1 && method.VarArgsArrayType != null)
                 {
@@ -375,12 +389,16 @@ namespace NovaSharp.Interpreter.Interop
                     // update score for varargs
                     while (true)
                     {
-                        var arg = args.RawGet(argsCnt, false);
+                        DynValue arg = args.RawGet(argsCnt, false);
                         if (arg == null)
+                        {
                             break;
+                        }
 
                         if (firstArg == null)
+                        {
                             firstArg = arg;
+                        }
 
                         argsCnt += 1;
 
@@ -415,16 +433,18 @@ namespace NovaSharp.Interpreter.Interop
 
                     // apply varargs penalty to score
                     if (varargCnt == 0)
+                    {
                         totalScore = Math.Min(
                             totalScore,
                             ScriptToClrConversions.WEIGHT_VARARGS_EMPTY
                         );
+                    }
 
                     varArgsUsed = true;
                 }
                 else
                 {
-                    var arg = args.RawGet(argsCnt, false) ?? DynValue.Void;
+                    DynValue arg = args.RawGet(argsCnt, false) ?? DynValue.Void;
 
                     int score = CalcScoreForSingleArgument(
                         method.Parameters[i],
@@ -487,7 +507,9 @@ namespace NovaSharp.Interpreter.Interop
             );
 
             if (parameterType.IsByRef || desc.IsOut || desc.IsRef)
+            {
                 score = Math.Max(0, score + ScriptToClrConversions.WEIGHT_BYREF_BONUSMALUS);
+            }
 
             return score;
         }
@@ -508,8 +530,10 @@ namespace NovaSharp.Interpreter.Interop
 
         void IOptimizableDescriptor.Optimize()
         {
-            foreach (var d in m_Overloads.OfType<IOptimizableDescriptor>())
+            foreach (IOptimizableDescriptor d in m_Overloads.OfType<IOptimizableDescriptor>())
+            {
                 d.Optimize();
+            }
         }
 
         /// <summary>
@@ -580,7 +604,7 @@ namespace NovaSharp.Interpreter.Interop
 
             int i = 0;
 
-            foreach (var m in this.m_Overloads)
+            foreach (IOverloadableMemberDescriptor m in this.m_Overloads)
             {
                 IWireableDescriptor sd = m as IWireableDescriptor;
 

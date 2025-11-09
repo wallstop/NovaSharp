@@ -45,7 +45,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             m_LabelAddress = labelAddress;
 
             if (m_Jump != null)
+            {
                 m_Jump.NumVal = labelAddress;
+            }
         }
     }
 }

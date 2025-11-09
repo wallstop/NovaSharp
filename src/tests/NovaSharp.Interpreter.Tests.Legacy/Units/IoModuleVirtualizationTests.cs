@@ -34,10 +34,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IoOpenWriteThenReadUsesVirtualFileSystem()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
             script.DoString("local f = io.open('virtual.txt', 'w'); f:write('hello'); f:close()");
 
-            var result = script.DoString(
+            DynValue? result = script.DoString(
                 @"
                 local f = io.open('virtual.txt', 'r')
                 local data = f:read('*a')
@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IoOutputRedirectWritesToVirtualFile()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
 
             script.DoString(
                 @"
@@ -77,11 +77,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OsRemoveDeletesVirtualFile()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
             script.DoString("local f = io.open('temp.txt', 'w'); f:write('payload'); f:close()");
             Assert.That(_platform.FileExists("temp.txt"), Is.True);
 
-            var result = script.DoString("return os.remove('temp.txt')");
+            DynValue? result = script.DoString("return os.remove('temp.txt')");
             Assert.That(result.Boolean, Is.True);
             Assert.That(_platform.FileExists("temp.txt"), Is.False);
         }
@@ -89,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OsTmpNameGeneratesUniqueVirtualNames()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
 
             DynValue firstValue = script.DoString("return os.tmpname()");
             DynValue secondValue = script.DoString("return os.tmpname()");
@@ -112,10 +112,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OsRenameMovesVirtualFileContents()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
             script.DoString("local f = io.open('old.txt', 'w'); f:write('payload'); f:close()");
 
-            var result = script.DoString("return os.rename('old.txt', 'new.txt')");
+            DynValue? result = script.DoString("return os.rename('old.txt', 'new.txt')");
 
             Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
             Assert.That(result.Boolean, Is.True);
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IoWriteTargetsVirtualStdOut()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
 
             script.DoString("io.write('first'); io.write('second'); io.flush();");
 
@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IoStdErrWriteCapturesVirtualStdErr()
         {
-            var script = new Script(CoreModules.Preset_Complete);
+            Script script = new(CoreModules.Preset_Complete);
 
             script.DoString("io.stderr:write('failure'); io.stderr:flush();");
 
@@ -147,14 +147,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class InMemoryPlatformAccessor : PlatformAccessorBase
         {
-            private readonly ConcurrentDictionary<string, byte[]> _files = new ConcurrentDictionary<
-                string,
-                byte[]
-            >(StringComparer.OrdinalIgnoreCase);
+            private readonly ConcurrentDictionary<string, byte[]> _files = new(
+                StringComparer.OrdinalIgnoreCase
+            );
 
-            private readonly MemoryStream _stdin = new MemoryStream();
-            private readonly MemoryStream _stdout = new MemoryStream();
-            private readonly MemoryStream _stderr = new MemoryStream();
+            private readonly MemoryStream _stdin = new();
+            private readonly MemoryStream _stdout = new();
+            private readonly MemoryStream _stderr = new();
 
             public override string GetPlatformNamePrefix() => "test";
 
@@ -186,12 +185,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 if (write)
                 {
                     byte[] existing = Array.Empty<byte>();
-                    if (!truncate && _files.TryGetValue(filename, out var current))
+                    if (!truncate && _files.TryGetValue(filename, out byte[]? current))
                     {
                         existing = current;
                     }
 
-                    var mem = new MemoryStream();
+                    MemoryStream mem = new();
                     if (append && existing.Length > 0)
                     {
                         mem.Write(existing, 0, existing.Length);
@@ -203,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 if (read)
                 {
-                    if (!_files.TryGetValue(filename, out var data))
+                    if (!_files.TryGetValue(filename, out byte[]? data))
                     {
                         throw new FileNotFoundException(
                             $"File '{filename}' not found in virtual FS."
@@ -245,7 +244,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override void OS_FileMove(string src, string dst)
             {
-                if (_files.TryRemove(src, out var data))
+                if (_files.TryRemove(src, out byte[]? data))
                 {
                     _files[dst] = data;
                 }
@@ -261,7 +260,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             public string ReadAllText(string file) =>
-                _files.TryGetValue(file, out var data)
+                _files.TryGetValue(file, out byte[]? data)
                     ? Encoding.UTF8.GetString(data)
                     : string.Empty;
 

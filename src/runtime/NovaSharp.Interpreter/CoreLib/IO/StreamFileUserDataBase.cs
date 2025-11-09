@@ -22,7 +22,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         private void CheckFileIsNotClosed()
         {
             if (m_Closed)
+            {
                 throw new ScriptRuntimeException("attempt to use a closed file");
+            }
         }
 
         protected override bool Eof()
@@ -30,9 +32,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             CheckFileIsNotClosed();
 
             if (m_Reader != null)
+            {
                 return m_Reader.EndOfStream;
+            }
             else
+            {
                 return false;
+            }
         }
 
         protected override string ReadLine()
@@ -72,10 +78,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             CheckFileIsNotClosed();
 
             if (m_Writer != null)
+            {
                 m_Writer.Dispose();
+            }
 
             if (m_Reader != null)
+            {
                 m_Reader.Dispose();
+            }
 
             m_Stream.Dispose();
 
@@ -89,7 +99,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             CheckFileIsNotClosed();
 
             if (m_Writer != null)
+            {
                 m_Writer.Flush();
+            }
 
             return true;
         }
@@ -128,7 +140,10 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
             if (m_Writer != null)
+            {
                 m_Writer.AutoFlush = (mode == "no" || mode == "line");
+            }
+
             return true;
         }
 

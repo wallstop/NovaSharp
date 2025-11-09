@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -78,7 +74,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Public_Enum()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<SomeType>();
 
@@ -92,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Public_Ref()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<SomeType>();
 
@@ -107,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Private_Ref()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<SomeType>();
 
@@ -123,7 +119,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [ExpectedException(typeof(ScriptRuntimeException))]
         public void Interop_NestedTypes_Private_Ref_2()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<SomeType>();
 
@@ -138,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Public_Val()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<VSomeType>();
 
@@ -153,7 +149,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Private_Val()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<VSomeType>();
 
@@ -169,7 +165,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [ExpectedException(typeof(ScriptRuntimeException))]
         public void Interop_NestedTypes_Private_Val_2()
         {
-            Script S = new Script();
+            Script S = new();
 
             UserData.RegisterType<VSomeType>();
 

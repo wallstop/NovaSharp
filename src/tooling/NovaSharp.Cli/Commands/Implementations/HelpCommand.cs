@@ -28,11 +28,15 @@ namespace NovaSharp.Commands
         {
             if (arguments.Length > 0)
             {
-                var cmd = CommandManager.Find(arguments);
+                ICommand? cmd = CommandManager.Find(arguments);
                 if (cmd != null)
+                {
                     cmd.DisplayLongHelp();
+                }
                 else
+                {
                     Console.WriteLine("Command '{0}' not found.", arguments);
+                }
             }
             else
             {
@@ -42,7 +46,7 @@ namespace NovaSharp.Commands
                 Console.WriteLine("Commands:");
                 Console.WriteLine("");
 
-                foreach (var cmd in CommandManager.GetCommands())
+                foreach (ICommand cmd in CommandManager.GetCommands())
                 {
                     Console.Write("  !");
                     cmd.DisplayShortHelp();

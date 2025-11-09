@@ -31,15 +31,21 @@ namespace NovaSharp.Interpreter.Interop
             : base(type, friendlyName)
         {
             if (accessMode == InteropAccessMode.NoReflectionAllowed)
+            {
                 throw new ArgumentException(
                     "Can't create a StandardUserDataDescriptor under a NoReflectionAllowed access mode"
                 );
+            }
 
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
+            {
                 accessMode = InteropAccessMode.Reflection;
+            }
 
             if (accessMode == InteropAccessMode.Default)
+            {
                 accessMode = UserData.DefaultAccessMode;
+            }
 
             AccessMode = accessMode;
 
@@ -51,7 +57,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         private void FillMemberList()
         {
-            HashSet<string> membersToIgnore = new HashSet<string>(
+            HashSet<string> membersToIgnore = new(
                 Framework
                     .Do.GetCustomAttributes(this.Type, typeof(NovaSharpHideMemberAttribute), true)
                     .OfType<NovaSharpHideMemberAttribute>()
@@ -61,7 +67,9 @@ namespace NovaSharp.Interpreter.Interop
             Type type = this.Type;
 
             if (AccessMode == InteropAccessMode.HideMembers)
+            {
                 return;
+            }
 
             if (!type.IsDelegateType())
             {
@@ -69,7 +77,9 @@ namespace NovaSharp.Interpreter.Interop
                 foreach (ConstructorInfo ci in Framework.Do.GetConstructors(type))
                 {
                     if (membersToIgnore.Contains("__new"))
+                    {
                         continue;
+                    }
 
                     AddMember(
                         "__new",
@@ -79,14 +89,18 @@ namespace NovaSharp.Interpreter.Interop
 
                 // valuetypes don't reflect their empty ctor.. actually empty ctors are a perversion, we don't care and implement ours
                 if (Framework.Do.IsValueType(type) && !membersToIgnore.Contains("__new"))
+                {
                     AddMember("__new", new ValueTypeDefaultCtorMemberDescriptor(type));
+                }
             }
 
             // add methods to method list and metamethods
             foreach (MethodInfo mi in Framework.Do.GetMethods(type))
             {
                 if (membersToIgnore.Contains(mi.Name))
+                {
                     continue;
+                }
 
                 MethodMemberDescriptor md = MethodMemberDescriptor.TryCreateIfVisible(
                     mi,
@@ -96,7 +110,9 @@ namespace NovaSharp.Interpreter.Interop
                 if (md != null)
                 {
                     if (!MethodMemberDescriptor.CheckMethodIsCompatible(mi, false))
+                    {
                         continue;
+                    }
 
                     // transform explicit/implicit conversions to a friendlier name.
                     string name = mi.Name;
@@ -128,7 +144,9 @@ namespace NovaSharp.Interpreter.Interop
                     || pi.GetIndexParameters().Any()
                     || membersToIgnore.Contains(pi.Name)
                 )
+                {
                     continue;
+                }
 
                 AddMember(
                     pi.Name,
@@ -140,7 +158,9 @@ namespace NovaSharp.Interpreter.Interop
             foreach (FieldInfo fi in Framework.Do.GetFields(type))
             {
                 if (fi.IsSpecialName || membersToIgnore.Contains(fi.Name))
+                {
                     continue;
+                }
 
                 AddMember(fi.Name, FieldMemberDescriptor.TryCreateIfVisible(fi, this.AccessMode));
             }
@@ -149,7 +169,9 @@ namespace NovaSharp.Interpreter.Interop
             foreach (EventInfo ei in Framework.Do.GetEvents(type))
             {
                 if (ei.IsSpecialName || membersToIgnore.Contains(ei.Name))
+                {
                     continue;
+                }
 
                 AddMember(ei.Name, EventMemberDescriptor.TryCreateIfVisible(ei, this.AccessMode));
             }
@@ -158,7 +180,9 @@ namespace NovaSharp.Interpreter.Interop
             foreach (Type nestedType in Framework.Do.GetNestedTypes(type))
             {
                 if (membersToIgnore.Contains(nestedType.Name))
+                {
                     continue;
+                }
 
                 if (!Framework.Do.IsGenericTypeDefinition(nestedType))
                 {
@@ -173,10 +197,15 @@ namespace NovaSharp.Interpreter.Interop
                             .Length > 0
                     )
                     {
-                        var descr = UserData.RegisterType(nestedType, this.AccessMode);
+                        IUserDataDescriptor descr = UserData.RegisterType(
+                            nestedType,
+                            this.AccessMode
+                        );
 
                         if (descr != null)
+                        {
                             AddDynValue(nestedType.Name, UserData.CreateStatic(nestedType));
+                        }
                     }
                 }
             }
@@ -191,10 +220,12 @@ namespace NovaSharp.Interpreter.Interop
                     ParameterDescriptor[] set_pars = new ParameterDescriptor[rank + 1];
 
                     for (int i = 0; i < rank; i++)
+                    {
                         get_pars[i] = set_pars[i] = new ParameterDescriptor(
                             "idx" + i.ToString(),
                             typeof(int)
                         );
+                    }
 
                     set_pars[rank] = new ParameterDescriptor("value", Type.GetElementType());
 
@@ -250,7 +281,7 @@ namespace NovaSharp.Interpreter.Interop
             IEnumerable<KeyValuePair<string, IMemberDescriptor>> members
         )
         {
-            foreach (var pair in members)
+            foreach (KeyValuePair<string, IMemberDescriptor> pair in members)
             {
                 IWireableDescriptor sd = pair.Value as IWireableDescriptor;
 

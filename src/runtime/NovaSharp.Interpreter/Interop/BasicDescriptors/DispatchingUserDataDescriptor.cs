@@ -17,10 +17,8 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             IOptimizableDescriptor
     {
         private int m_ExtMethodsVersion = 0;
-        private Dictionary<string, IMemberDescriptor> m_MetaMembers =
-            new Dictionary<string, IMemberDescriptor>();
-        private Dictionary<string, IMemberDescriptor> m_Members =
-            new Dictionary<string, IMemberDescriptor>();
+        private Dictionary<string, IMemberDescriptor> m_MetaMembers = new();
+        private Dictionary<string, IMemberDescriptor> m_Members = new();
 
         /// <summary>
         /// The special name used by CLR for indexer getters
@@ -80,7 +78,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         public void AddMetaMember(string name, IMemberDescriptor desc)
         {
             if (desc != null)
+            {
                 AddMemberTo(m_MetaMembers, name, desc);
+            }
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="value">The value.</param>
         public void AddDynValue(string name, DynValue value)
         {
-            var desc = new DynValueMemberDescriptor(name, value);
+            DynValueMemberDescriptor desc = new(name, value);
             AddMemberTo(m_Members, name, desc);
         }
 
@@ -105,7 +105,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         public void AddMember(string name, IMemberDescriptor desc)
         {
             if (desc != null)
+            {
                 AddMemberTo(m_Members, name, desc);
+            }
         }
 
         /// <summary>
@@ -193,8 +195,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                         members[name] as OverloadedMethodMemberDescriptor;
 
                     if (overloads != null)
+                    {
                         overloads.AddOverload(odesc);
+                    }
                     else
+                    {
                         throw new ArgumentException(
                             string.Format(
                                 "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
@@ -202,6 +207,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                                 this.Type.FullName
                             )
                         );
+                    }
                 }
                 else
                 {
@@ -249,13 +255,17 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                     .WithAccessOrNull(MemberDescriptorAccess.CanExecute);
 
                 if (mdesc != null)
+                {
                     return ExecuteIndexer(mdesc, script, obj, index, null);
+                }
             }
 
             index = index.ToScalar();
 
             if (index.Type != DataType.String)
+            {
                 return null;
+            }
 
             DynValue v = TryIndex(script, obj, index.String);
             if (
@@ -265,13 +275,19 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                     & FuzzySymbolMatchingBehavior.UpperFirstLetter
                 ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
             )
+            {
                 v = TryIndex(script, obj, UpperFirstLetter(index.String));
+            }
+
             if (
                 v == null
                 && (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.Camelify)
                     == FuzzySymbolMatchingBehavior.Camelify
             )
+            {
                 v = TryIndex(script, obj, Camelify(index.String));
+            }
+
             if (
                 v == null
                 && (
@@ -279,7 +295,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                     & FuzzySymbolMatchingBehavior.PascalCase
                 ) == FuzzySymbolMatchingBehavior.PascalCase
             )
+            {
                 v = TryIndex(script, obj, UpperFirstLetter(Camelify(index.String)));
+            }
 
             if (v == null && m_ExtMethodsVersion < UserData.GetExtensionMethodsChangeVersion())
             {
@@ -293,7 +311,10 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                         & FuzzySymbolMatchingBehavior.UpperFirstLetter
                     ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
                 )
+                {
                     v = TryIndexOnExtMethod(script, obj, UpperFirstLetter(index.String));
+                }
+
                 if (
                     v == null
                     && (
@@ -301,7 +322,10 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                         & FuzzySymbolMatchingBehavior.Camelify
                     ) == FuzzySymbolMatchingBehavior.Camelify
                 )
+                {
                     v = TryIndexOnExtMethod(script, obj, Camelify(index.String));
+                }
+
                 if (
                     v == null
                     && (
@@ -309,7 +333,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                         & FuzzySymbolMatchingBehavior.PascalCase
                     ) == FuzzySymbolMatchingBehavior.PascalCase
                 )
+                {
                     v = TryIndexOnExtMethod(script, obj, UpperFirstLetter(Camelify(index.String)));
+                }
             }
 
             return v;
@@ -332,7 +358,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (methods != null && methods.Count > 0)
             {
-                var ext = new OverloadedMethodMemberDescriptor(indexName, this.Type);
+                OverloadedMethodMemberDescriptor ext = new(indexName, this.Type);
                 ext.SetExtensionMethodsSnapshot(
                     UserData.GetExtensionMethodsChangeVersion(),
                     methods
@@ -416,7 +442,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             index = index.ToScalar();
 
             if (index.Type != DataType.String)
+            {
                 return false;
+            }
 
             bool v = TrySetIndex(script, obj, index.String, value);
             if (
@@ -426,13 +454,19 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                     & FuzzySymbolMatchingBehavior.UpperFirstLetter
                 ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
             )
+            {
                 v = TrySetIndex(script, obj, UpperFirstLetter(index.String), value);
+            }
+
             if (
                 !v
                 && (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.Camelify)
                     == FuzzySymbolMatchingBehavior.Camelify
             )
+            {
                 v = TrySetIndex(script, obj, Camelify(index.String), value);
+            }
+
             if (
                 !v
                 && (
@@ -440,7 +474,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                     & FuzzySymbolMatchingBehavior.PascalCase
                 ) == FuzzySymbolMatchingBehavior.PascalCase
             )
+            {
                 v = TrySetIndex(script, obj, UpperFirstLetter(Camelify(index.String)), value);
+            }
 
             return v;
         }
@@ -475,11 +511,19 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         void IOptimizableDescriptor.Optimize()
         {
-            foreach (var m in this.m_MetaMembers.Values.OfType<IOptimizableDescriptor>())
+            foreach (
+                IOptimizableDescriptor m in this.m_MetaMembers.Values.OfType<IOptimizableDescriptor>()
+            )
+            {
                 m.Optimize();
+            }
 
-            foreach (var m in this.m_Members.Values.OfType<IOptimizableDescriptor>())
+            foreach (
+                IOptimizableDescriptor m in this.m_Members.Values.OfType<IOptimizableDescriptor>()
+            )
+            {
                 m.Optimize();
+            }
         }
 
         /// <summary>
@@ -558,17 +602,19 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 }
             }
 
-            CallbackArguments args = new CallbackArguments(values, false);
+            CallbackArguments args = new(values, false);
             ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();
 
             DynValue v = mdesc.GetValue(script, obj);
 
             if (v.Type != DataType.ClrFunction)
+            {
                 throw new ScriptRuntimeException(
                     "a clr callback was expected in member {0}, while a {1} was found",
                     mdesc.Name,
                     v.Type
                 );
+            }
 
             return v.Callback.ClrCallback(execCtx, args);
         }
@@ -648,9 +694,13 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             if (comp != null)
             {
                 if (object.ReferenceEquals(obj, p1))
+                {
                     return comp.CompareTo(p2);
+                }
                 else if (object.ReferenceEquals(obj, p2))
+                {
                     return -comp.CompareTo(p1);
+                }
             }
 
             throw new InternalErrorException("unexpected case");
@@ -691,15 +741,21 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         private DynValue TryDispatchLength(Script script, object obj)
         {
             if (obj == null)
+            {
                 return null;
+            }
 
-            var lenprop = m_Members.GetOrDefault("Length");
+            IMemberDescriptor lenprop = m_Members.GetOrDefault("Length");
             if (lenprop != null && lenprop.CanRead() && !lenprop.CanExecute())
+            {
                 return lenprop.GetGetterCallbackAsDynValue(script, obj);
+            }
 
-            var countprop = m_Members.GetOrDefault("Count");
+            IMemberDescriptor countprop = m_Members.GetOrDefault("Count");
             if (countprop != null && countprop.CanRead() && !countprop.CanExecute())
+            {
                 return countprop.GetGetterCallbackAsDynValue(script, obj);
+            }
 
             return null;
         }
@@ -717,17 +773,27 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             if (obj != null)
             {
                 if (object.ReferenceEquals(obj, p1))
+                {
                     return obj.Equals(p2);
+                }
                 else if (object.ReferenceEquals(obj, p2))
+                {
                     return obj.Equals(p1);
+                }
             }
 
             if (p1 != null)
+            {
                 return p1.Equals(p2);
+            }
             else if (p2 != null)
+            {
                 return p2.Equals(p1);
+            }
             else
+            {
                 return true;
+            }
         }
 
         private DynValue DispatchMetaOnMethod(Script script, object obj, string methodName)
@@ -739,27 +805,34 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 return desc.GetValue(script, obj);
             }
             else
+            {
                 return null;
+            }
         }
 
         private DynValue TryDispatchToNumber(Script script, object obj)
         {
             foreach (Type t in NumericConversions.NumericTypesOrdered)
             {
-                var name = t.GetConversionMethodName();
-                var v = DispatchMetaOnMethod(script, obj, name);
+                string name = t.GetConversionMethodName();
+                DynValue v = DispatchMetaOnMethod(script, obj, name);
                 if (v != null)
+                {
                     return v;
+                }
             }
             return null;
         }
 
         private DynValue TryDispatchToBool(Script script, object obj)
         {
-            var name = typeof(bool).GetConversionMethodName();
-            var v = DispatchMetaOnMethod(script, obj, name);
+            string name = typeof(bool).GetConversionMethodName();
+            DynValue v = DispatchMetaOnMethod(script, obj, name);
             if (v != null)
+            {
                 return v;
+            }
+
             return DispatchMetaOnMethod(script, obj, "op_True");
         }
 

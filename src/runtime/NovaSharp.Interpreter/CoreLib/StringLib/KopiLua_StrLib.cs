@@ -63,7 +63,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         {
             /* relative string position: negative means back from end */
             if (pos < 0)
+            {
                 pos += (ptrdiff_t)len + 1;
+            }
+
             return (pos >= 0) ? pos : 0;
         }
 
@@ -81,7 +84,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             public MatchState()
             {
                 for (int i = 0; i < LUA_MAXCAPTURES; i++)
+                {
                     capture[i] = new capture_();
+                }
             }
 
             public int matchdepth; /* control for recursive depth (to avoid C stack overflow) */
@@ -107,7 +112,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         {
             l -= '1';
             if (l < 0 || l >= ms.level || ms.capture[l].len == CAP_UNFINISHED)
+            {
                 return LuaLError(ms.L, "invalid capture index {0}", l + 1);
+            }
+
             return l;
         }
 
@@ -115,8 +123,13 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         {
             int level = ms.level;
             for (level--; level >= 0; level--)
+            {
                 if (ms.capture[level].len == CAP_UNFINISHED)
+                {
                     return level;
+                }
+            }
+
             return LuaLError(ms.L, "invalid pattern capture");
         }
 
@@ -130,21 +143,32 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 case L_ESC:
                 {
                     if (p[0] == '\0')
+                    {
                         LuaLError(ms.L, "malformed pattern (ends with " + LUA_QL("%") + ")");
+                    }
+
                     return p + 1;
                 }
                 case '[':
                 {
                     if (p[0] == '^')
+                    {
                         p = p.next();
+                    }
+
                     do
                     { /* look for a `]' */
                         if (p[0] == '\0')
+                        {
                             LuaLError(ms.L, "malformed pattern (missing " + LUA_QL("]") + ")");
+                        }
+
                         c = p[0];
                         p = p.next();
                         if (c == L_ESC && p[0] != '\0')
+                        {
                             p = p.next(); /* skip escapes (e.g. `%]') */
+                        }
                     } while (p[0] != ']');
                     return p + 1;
                 }
@@ -213,16 +237,22 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 {
                     p = p.next();
                     if (match_class((char)c, (char)(p[0])) != 0)
+                    {
                         return sig;
+                    }
                 }
                 else if ((p[1] == '-') && (p + 2 < ec))
                 {
                     p += 2;
                     if ((byte)((p[-2])) <= c && (c <= (byte)p[0]))
+                    {
                         return sig;
+                    }
                 }
                 else if ((byte)(p[0]) == c)
+                {
                     return sig;
+                }
             }
             return (sig == 0) ? 1 : 0;
         }
@@ -245,9 +275,14 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         private static CharPtr matchbalance(MatchState ms, CharPtr s, CharPtr p)
         {
             if ((p[0] == 0) || (p[1] == 0))
+            {
                 LuaLError(ms.L, "unbalanced pattern");
+            }
+
             if (s[0] != p[0])
+            {
                 return null;
+            }
             else
             {
                 int b = p[0];
@@ -258,10 +293,14 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                     if (s[0] == e)
                     {
                         if (--cont == 0)
+                        {
                             return s + 1;
+                        }
                     }
                     else if (s[0] == b)
+                    {
                         cont++;
+                    }
                 }
             }
             return null; /* string ends out of balance */
@@ -271,13 +310,19 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         {
             ptrdiff_t i = 0; /* counts maximum expand for item */
             while ((s + i < ms.src_end) && (singlematch((byte)(s[i]), p, ep) != 0))
+            {
                 i++;
+            }
+
             /* keeps trying to match with the maximum repetitions */
             while (i >= 0)
             {
                 CharPtr res = match(ms, (s + i), ep + 1);
                 if (res != null)
+                {
                     return res;
+                }
+
                 i--; /* else didn't match; reduce 1 repetition to try again */
             }
             return null;
@@ -289,11 +334,17 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             {
                 CharPtr res = match(ms, s, ep + 1);
                 if (res != null)
+                {
                     return res;
+                }
                 else if ((s < ms.src_end) && (singlematch((byte)(s[0]), p, ep) != 0))
+                {
                     s = s.next(); /* try with one more repetition */
+                }
                 else
+                {
                     return null;
+                }
             }
         }
 
@@ -302,12 +353,18 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             CharPtr res;
             int level = ms.level;
             if (level >= LUA_MAXCAPTURES)
+            {
                 LuaLError(ms.L, "too many captures");
+            }
+
             ms.capture[level].init = s;
             ms.capture[level].len = what;
             ms.level = level + 1;
             if ((res = match(ms, s, p)) == null) /* match failed? */
+            {
                 ms.level--; /* undo capture */
+            }
+
             return res;
         }
 
@@ -317,7 +374,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             CharPtr res;
             ms.capture[l].len = s - ms.capture[l].init; /* close capture */
             if ((res = match(ms, s, p)) == null) /* match failed? */
+            {
                 ms.capture[l].len = CAP_UNFINISHED; /* undo capture */
+            }
+
             return res;
         }
 
@@ -327,9 +387,13 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             l = check_capture(ms, l);
             len = (uint)ms.capture[l].len;
             if ((uint)(ms.src_end - s) >= len && memcmp(ms.capture[l].init, s, len) == 0)
+            {
                 return s + len;
+            }
             else
+            {
                 return null;
+            }
         }
 
         private static CharPtr match(MatchState ms, CharPtr s, CharPtr p)
@@ -337,16 +401,23 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             s = new CharPtr(s);
             p = new CharPtr(p);
             if (ms.matchdepth-- == 0)
+            {
                 LuaLError(ms.L, "pattern too complex");
+            }
+
             init: /* using goto's to optimize tail recursion */
             switch (p[0])
             {
                 case '(':
                 { /* start capture */
                     if (p[1] == ')') /* position capture? */
+                    {
                         return start_capture(ms, s, p + 2, CAP_POSITION);
+                    }
                     else
+                    {
                         return start_capture(ms, s, p + 1, CAP_UNFINISHED);
+                    }
                 }
                 case ')':
                 { /* end capture */
@@ -360,7 +431,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                         { /* balanced string? */
                             s = matchbalance(ms, s, p + 2);
                             if (s == null)
+                            {
                                 return null;
+                            }
+
                             p += 4;
                             goto init; /* else return match(ms, s, p+4); */
                         }
@@ -370,6 +444,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             char previous;
                             p += 2;
                             if (p[0] != '[')
+                            {
                                 LuaLError(
                                     ms.L,
                                     "missing "
@@ -378,13 +453,18 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                                         + LUA_QL("%f")
                                         + " in pattern"
                                 );
+                            }
+
                             ep = classend(ms, p); /* points to what is next */
                             previous = (s == ms.src_init) ? '\0' : s[-1];
                             if (
                                 (matchbracketclass((byte)(previous), p, ep - 1) != 0)
                                 || (matchbracketclass((byte)(s[0]), p, ep - 1) == 0)
                             )
+                            {
                                 return null;
+                            }
+
                             p = ep;
                             goto init; /* else return match(ms, s, ep); */
                         }
@@ -394,7 +474,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             { /* capture results (%0-%9)? */
                                 s = match_capture(ms, s, (byte)(p[1]));
                                 if (s == null)
+                                {
                                     return null;
+                                }
+
                                 p += 2;
                                 goto init; /* else return match(ms, s, p+2) */
                             }
@@ -411,7 +494,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                                     { /* optional */
                                         CharPtr res;
                                         if ((m != 0) && ((res = match(ms, s + 1, ep + 1)) != null))
+                                        {
                                             return res;
+                                        }
+
                                         p = ep + 1;
                                         goto init; /* else return match(ms, s, ep+1); */
                                     }
@@ -430,7 +516,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                                     default:
                                     {
                                         if (m == 0)
+                                        {
                                             return null;
+                                        }
+
                                         s = s.next();
                                         p = ep;
                                         goto init; /* else return match(ms, s+1, ep); */
@@ -448,9 +537,13 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 case '$':
                 {
                     if (p[1] == '\0') /* is the `$' the last char in pattern? */
+                    {
                         return (s == ms.src_end) ? s : null; /* check end of string */
+                    }
                     else
+                    {
                         goto dflt;
+                    }
                 }
                 default:
                     dflt:
@@ -463,7 +556,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             { /* optional */
                                 CharPtr res;
                                 if ((m != 0) && ((res = match(ms, s + 1, ep + 1)) != null))
+                                {
                                     return res;
+                                }
+
                                 p = ep + 1;
                                 goto init; /* else return match(ms, s, ep+1); */
                             }
@@ -482,7 +578,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             default:
                             {
                                 if (m == 0)
+                                {
                                     return null;
+                                }
+
                                 s = s.next();
                                 p = ep;
                                 goto init; /* else return match(ms, s+1, ep); */
@@ -495,9 +594,13 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         private static CharPtr lmemfind(CharPtr s1, uint l1, CharPtr s2, uint l2)
         {
             if (l2 == 0)
+            {
                 return s1; /* empty strings are everywhere */
+            }
             else if (l2 > l1)
+            {
                 return null; /* avoids a negative `l1' */
+            }
             else
             {
                 CharPtr init; /* to search for a `*s2' inside `s1' */
@@ -507,7 +610,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 {
                     init = init.next(); /* 1st char is already checked */
                     if (memcmp(init, s2 + 1, l2) == 0)
+                    {
                         return init - 1;
+                    }
                     else
                     { /* correct `l1' and `s1' to try again */
                         l1 -= (uint)(init - s1);
@@ -523,19 +628,30 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             if (i >= ms.level)
             {
                 if (i == 0) /* ms.level == 0, too */
+                {
                     LuaPushLString(ms.L, s, (uint)(e - s)); /* add whole match */
+                }
                 else
+                {
                     LuaLError(ms.L, "invalid capture index");
+                }
             }
             else
             {
                 ptrdiff_t l = ms.capture[i].len;
                 if (l == CAP_UNFINISHED)
+                {
                     LuaLError(ms.L, "unfinished capture");
+                }
+
                 if (l == CAP_POSITION)
+                {
                     LuaPushInteger(ms.L, ms.capture[i].init - ms.src_init + 1);
+                }
                 else
+                {
                     LuaPushLString(ms.L, ms.capture[i].init, (uint)l);
+                }
             }
         }
 
@@ -545,7 +661,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             int nlevels = ((ms.level == 0) && (s != null)) ? 1 : ms.level;
             LuaLCheckStack(ms.L, nlevels, "too many captures");
             for (i = 0; i < nlevels; i++)
+            {
                 push_onecapture(ms, i, s, e);
+            }
+
             return nlevels; /* number of strings pushed */
         }
 
@@ -558,9 +677,14 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
 
             ptrdiff_t init = posrelat(LuaLOptInteger(L, 3, 1), l1) - 1;
             if (init < 0)
+            {
                 init = 0;
+            }
             else if ((uint)(init) > l1)
+            {
                 init = (ptrdiff_t)l1;
+            }
+
             if (
                 (find != 0)
                 && (
@@ -581,7 +705,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             }
             else
             {
-                MatchState ms = new MatchState();
+                MatchState ms = new();
                 int anchor = 0;
                 if (p[0] == '^')
                 {
@@ -608,7 +732,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             return push_captures(ms, null, null) + 2;
                         }
                         else
+                        {
                             return push_captures(ms, s1, res);
+                        }
                     }
                 } while (((s1 = s1.next()) <= ms.src_end) && (anchor == 0));
             }
@@ -636,7 +762,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
 
         private static int gmatch_aux(LuaState L, GMatchAuxData auxdata)
         {
-            MatchState ms = new MatchState();
+            MatchState ms = new();
             uint ls = auxdata.LS;
             CharPtr s = auxdata.S;
             CharPtr p = auxdata.P;
@@ -656,7 +782,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 {
                     lua_Integer newstart = e - s;
                     if (e == src)
+                    {
                         newstart++; /* empty match? go at least one position */
+                    }
+
                     auxdata.POS = (uint)newstart;
                     return push_captures(ms, src, e);
                 }
@@ -678,7 +807,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
 
         public static int str_gmatch(LuaState L)
         {
-            CallbackFunction C = new CallbackFunction(gmatch_aux_2, "gmatch");
+            CallbackFunction C = new(gmatch_aux_2, "gmatch");
             string s = ArgAsType(L, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(L, 2, DataType.String, false).String);
 
@@ -711,7 +840,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             for (i = 0; i < l; i++)
             {
                 if (news[i] != L_ESC)
+                {
                     LuaLAddChar(b, news[i]);
+                }
                 else
                 {
                     i++; /* skip ESC */
@@ -724,7 +855,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                         LuaLAddChar(b, news[i]);
                     }
                     else if (news[i] == '0')
+                    {
                         LuaLAddLString(b, s, (uint)(e - s));
+                    }
                     else
                     {
                         push_onecapture(ms, news[i] - '1', s, e);
@@ -767,7 +900,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 LuaPushLString(L, s, (uint)(e - s)); /* keep original text */
             }
             else if (LuaIsString(L, -1) == 0)
+            {
                 LuaLError(L, "invalid replacement value (a {0})", LuaLTypeName(L, -1));
+            }
 
             LuaLAddValue(b); /* add result to accumulator */
         }
@@ -786,8 +921,8 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                 anchor = 1;
             }
             int n = 0;
-            MatchState ms = new MatchState();
-            LuaLBuffer b = new LuaLBuffer(L);
+            MatchState ms = new();
+            LuaLBuffer b = new(L);
             LuaLArgCheck(
                 L,
                 tr == LUA_TNUMBER
@@ -816,7 +951,9 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                     add_value(ms, b, src, e);
                 }
                 if ((e != null) && e > src) /* non empty match? */
+                {
                     src = e; /* skip it */
+                }
                 else if (src < ms.src_end)
                 {
                     char c = src[0];
@@ -824,9 +961,14 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                     LuaLAddChar(b, c);
                 }
                 else
+                {
                     break;
+                }
+
                 if (anchor != 0)
+                {
                     break;
+                }
             }
             LuaLAddLString(b, src, (uint)(ms.src_end - src));
             LuaLPushResult(b);
@@ -880,13 +1022,19 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                             if (l >= 1)
                             {
                                 if (char.IsNumber(s[1]))
+                                {
                                     isfollowedbynum = true;
+                                }
                             }
 
                             if (isfollowedbynum)
+                            {
                                 LuaLAddString(b, string.Format("\\{0:000}", (int)s[0]));
+                            }
                             else
+                            {
                                 LuaLAddString(b, string.Format("\\{0}", (int)s[0]));
+                            }
                         }
                         else
                         {
@@ -904,23 +1052,43 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
         {
             CharPtr p = strfrmt;
             while (p[0] != '\0' && strchr(FLAGS, p[0]) != null)
+            {
                 p = p.next(); /* skip flags */
+            }
+
             if ((uint)(p - strfrmt) >= (FLAGS.Length + 1))
+            {
                 LuaLError(L, "invalid format (repeated flags)");
+            }
+
             if (isdigit((byte)(p[0])))
+            {
                 p = p.next(); /* skip width */
+            }
+
             if (isdigit((byte)(p[0])))
+            {
                 p = p.next(); /* (2 digits at most) */
+            }
+
             if (p[0] == '.')
             {
                 p = p.next();
                 if (isdigit((byte)(p[0])))
+                {
                     p = p.next(); /* skip precision */
+                }
+
                 if (isdigit((byte)(p[0])))
+                {
                     p = p.next(); /* (2 digits at most) */
+                }
             }
             if (isdigit((byte)(p[0])))
+            {
                 LuaLError(L, "invalid format (width or precision too long)");
+            }
+
             form[0] = '%';
             form = form.next();
             strncpy(form, strfrmt, p - strfrmt + 1);
@@ -945,7 +1113,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
             uint sfl;
             CharPtr strfrmt = LuaLCheckLString(L, arg, out sfl);
             CharPtr strfrmt_end = strfrmt + sfl;
-            LuaLBuffer b = new LuaLBuffer(L);
+            LuaLBuffer b = new(L);
             LuaLBuffInit(L, b);
             while (strfrmt < strfrmt_end)
             {
@@ -965,7 +1133,10 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                     CharPtr form = new char[MAX_FORMAT]; /* to store the format (`%...') */
                     CharPtr buff = new char[MAX_ITEM]; /* to store the formatted item */
                     if (++arg > top)
+                    {
                         LuaLArgError(L, arg, "no value");
+                    }
+
                     strfrmt = scanformat(L, strfrmt, form);
                     char ch = strfrmt[0];
                     strfrmt = strfrmt.next();

@@ -23,9 +23,11 @@ namespace NovaSharp.Interpreter.Interop
         public StandardGenericsUserDataDescriptor(Type type, InteropAccessMode accessMode)
         {
             if (accessMode == InteropAccessMode.NoReflectionAllowed)
+            {
                 throw new ArgumentException(
                     "Can't create a StandardGenericsUserDataDescriptor under a NoReflectionAllowed access mode"
                 );
+            }
 
             AccessMode = accessMode;
             this.Type = type;
@@ -78,10 +80,14 @@ namespace NovaSharp.Interpreter.Interop
         public IUserDataDescriptor Generate(Type type)
         {
             if (UserData.IsTypeRegistered(type))
+            {
                 return null;
+            }
 
             if (Framework.Do.IsGenericTypeDefinition(type))
+            {
                 return null;
+            }
 
             return UserData.RegisterType(type, AccessMode);
         }

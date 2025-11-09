@@ -70,13 +70,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                 m_Parent != null ? m_Parent.m_CoroutinesStack : this.m_CoroutinesStack;
 
             if (coroutinesStack.Count > 0 && coroutinesStack[coroutinesStack.Count - 1] != this)
+            {
                 return coroutinesStack[coroutinesStack.Count - 1].Call(function, args);
+            }
 
             EnterProcessor();
 
             try
             {
-                var stopwatch = this.m_Script.PerformanceStats.StartStopwatch(
+                IDisposable stopwatch = this.m_Script.PerformanceStats.StartStopwatch(
                     Diagnostics.PerformanceCounter.Execution
                 );
 
@@ -96,7 +98,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                     m_CanYield = true;
 
                     if (stopwatch != null)
+                    {
                         stopwatch.Dispose();
+                    }
                 }
             }
             finally
@@ -114,14 +118,20 @@ namespace NovaSharp.Interpreter.Execution.VM
         )
         {
             if (function == null)
+            {
                 function = m_ValueStack.Peek();
+            }
             else
+            {
                 m_ValueStack.Push(function); // func val
+            }
 
             args = Internal_AdjustTuple(args);
 
             for (int i = 0; i < args.Length; i++)
+            {
                 m_ValueStack.Push(args[i]);
+            }
 
             m_ValueStack.Push(DynValue.NewNumber(args.Length)); // func args count
 

@@ -1,4 +1,3 @@
-using System;
 using NovaSharp.Interpreter.Execution;
 using NovaSharp.Interpreter.Execution.VM;
 using NovaSharp.Interpreter.Tree.Expressions;

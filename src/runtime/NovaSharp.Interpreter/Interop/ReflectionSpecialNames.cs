@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace NovaSharp.Interpreter.Interop
 {
     /// <summary>

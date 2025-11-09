@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml;
 
 namespace NovaSharp.RemoteDebugger.Network
@@ -32,7 +28,10 @@ namespace NovaSharp.RemoteDebugger.Network
         public static XmlWriter Attribute(this XmlWriter xw, string name, string val)
         {
             if (val == null)
+            {
                 val = "(null)";
+            }
+
             xw.WriteAttributeString(name, val);
             return xw;
         }
@@ -40,7 +39,10 @@ namespace NovaSharp.RemoteDebugger.Network
         public static XmlWriter Attribute(this XmlWriter xw, string name, object val)
         {
             if (val == null)
+            {
                 val = "(null)";
+            }
+
             xw.WriteAttributeString(name, val.ToString());
             return xw;
         }
@@ -48,7 +50,10 @@ namespace NovaSharp.RemoteDebugger.Network
         public static XmlWriter Element(this XmlWriter xw, string name, string val)
         {
             if (val == null)
+            {
                 val = "(null)";
+            }
+
             xw.WriteElementString(name, val);
             return xw;
         }
@@ -56,7 +61,9 @@ namespace NovaSharp.RemoteDebugger.Network
         public static XmlWriter ElementCData(this XmlWriter xw, string name, string val)
         {
             if (val == null)
+            {
                 val = "(null)";
+            }
 
             xw.WriteStartElement(name);
             xw.WriteCData(val);
@@ -67,7 +74,10 @@ namespace NovaSharp.RemoteDebugger.Network
         public static XmlWriter Comment(this XmlWriter xw, object text)
         {
             if (text == null)
+            {
                 return xw;
+            }
+
             xw.WriteComment(text.ToString());
             return xw;
         }

@@ -8,6 +8,8 @@ using NovaSharp.Interpreter.REPL;
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using Execution;
+
     /// <summary>
     /// Class implementing debug Lua functions. Support for the debug module is partial.
     /// </summary>
@@ -23,11 +25,13 @@ namespace NovaSharp.Interpreter.CoreLib
             Script script = executionContext.GetScript();
 
             if (script.Options.DebugInput == null)
+            {
                 throw new ScriptRuntimeException(
                     "debug.debug not supported on this platform/configuration"
                 );
+            }
 
-            ReplInterpreter interpreter = new ReplInterpreter(script)
+            ReplInterpreter interpreter = new(script)
             {
                 HandleDynamicExprs = false,
                 HandleClassicExprsSyntax = true,
@@ -42,7 +46,9 @@ namespace NovaSharp.Interpreter.CoreLib
                     DynValue result = interpreter.Evaluate(s);
 
                     if (result != null && result.Type != DataType.Void)
+                    {
                         script.Options.DebugPrint(string.Format("{0}", result));
+                    }
                 }
                 catch (InterpreterException ex)
                 {
@@ -66,7 +72,9 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue v = args[0];
 
             if (v.Type != DataType.UserData)
+            {
                 return DynValue.Nil;
+            }
 
             return v.UserData.UserValue ?? DynValue.Nil;
         }
@@ -102,11 +110,17 @@ namespace NovaSharp.Interpreter.CoreLib
             Script S = executionContext.GetScript();
 
             if (v.Type.CanHaveTypeMetatables())
+            {
                 return DynValue.NewTable(S.GetTypeMetatable(v.Type));
+            }
             else if (v.Type == DataType.Table)
+            {
                 return DynValue.NewTable(v.Table.MetaTable);
+            }
             else
+            {
                 return DynValue.Nil;
+            }
         }
 
         [NovaSharpModuleMethod]
@@ -121,14 +135,20 @@ namespace NovaSharp.Interpreter.CoreLib
             Script S = executionContext.GetScript();
 
             if (v.Type.CanHaveTypeMetatables())
+            {
                 S.SetTypeMetatable(v.Type, m);
+            }
             else if (v.Type == DataType.Table)
+            {
                 v.Table.MetaTable = m;
+            }
             else
+            {
                 throw new ScriptRuntimeException(
                     "cannot debug.setmetatable on type {0}",
                     v.Type.ToErrorTypeString()
                 );
+            }
 
             return v;
         }
@@ -139,17 +159,21 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            var index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
+            int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
+            {
                 return DynValue.Nil;
+            }
 
-            var fn = args.AsType(0, "getupvalue", DataType.Function, false).Function;
+            Closure fn = args.AsType(0, "getupvalue", DataType.Function, false).Function;
 
-            var closure = fn.ClosureContext;
+            ClosureContext closure = fn.ClosureContext;
 
             if (index < 0 || index >= closure.Count)
+            {
                 return DynValue.Nil;
+            }
 
             return DynValue.NewTuple(DynValue.NewString(closure.Symbols[index]), closure[index]);
         }
@@ -160,17 +184,21 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            var index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
+            int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
+            {
                 return DynValue.Nil;
+            }
 
-            var fn = args.AsType(0, "getupvalue", DataType.Function, false).Function;
+            Closure fn = args.AsType(0, "getupvalue", DataType.Function, false).Function;
 
-            var closure = fn.ClosureContext;
+            ClosureContext closure = fn.ClosureContext;
 
             if (index < 0 || index >= closure.Count)
+            {
                 return DynValue.Nil;
+            }
 
             return DynValue.NewNumber(closure[index].ReferenceID);
         }
@@ -181,17 +209,21 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            var index = (int)args.AsType(1, "setupvalue", DataType.Number, false).Number - 1;
+            int index = (int)args.AsType(1, "setupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
+            {
                 return DynValue.Nil;
+            }
 
-            var fn = args.AsType(0, "setupvalue", DataType.Function, false).Function;
+            Closure fn = args.AsType(0, "setupvalue", DataType.Function, false).Function;
 
-            var closure = fn.ClosureContext;
+            ClosureContext closure = fn.ClosureContext;
 
             if (index < 0 || index >= closure.Count)
+            {
                 return DynValue.Nil;
+            }
 
             closure[index].Assign(args[2]);
 
@@ -213,10 +245,14 @@ namespace NovaSharp.Interpreter.CoreLib
             Closure c2 = f2.Function;
 
             if (n1 < 0 || n1 >= c1.ClosureContext.Count)
+            {
                 throw ScriptRuntimeException.BadArgument(1, "upvaluejoin", "invalid upvalue index");
+            }
 
             if (n2 < 0 || n2 >= c2.ClosureContext.Count)
+            {
                 throw ScriptRuntimeException.BadArgument(3, "upvaluejoin", "invalid upvalue index");
+            }
 
             c2.ClosureContext[n2] = c1.ClosureContext[n1];
 
@@ -229,7 +265,7 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             DynValue vmessage = args[0];
             DynValue vlevel = args[1];
@@ -262,7 +298,9 @@ namespace NovaSharp.Interpreter.CoreLib
             WatchItem[] stacktrace = cor.GetStackTrace(Math.Max(0, skip));
 
             if (message != null)
+            {
                 sb.AppendLine(message);
+            }
 
             sb.AppendLine("stack traceback:");
 
@@ -271,12 +309,20 @@ namespace NovaSharp.Interpreter.CoreLib
                 string name;
 
                 if (wi.Name == null)
+                {
                     if (wi.RetAddress < 0)
+                    {
                         name = "main chunk";
+                    }
                     else
+                    {
                         name = "?";
+                    }
+                }
                 else
+                {
                     name = "function '" + wi.Name + "'";
+                }
 
                 string loc =
                     wi.Location != null

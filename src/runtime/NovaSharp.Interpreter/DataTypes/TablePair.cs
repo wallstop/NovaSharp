@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public struct TablePair
     {
-        private static TablePair s_NilNode = new TablePair(DynValue.Nil, DynValue.Nil);
+        private static TablePair s_NilNode = new(DynValue.Nil, DynValue.Nil);
         private DynValue key,
             value;
 
@@ -27,7 +27,9 @@ namespace NovaSharp.Interpreter
             set
             {
                 if (key.IsNotNil())
+                {
                     Value = value;
+                }
             }
         }
 

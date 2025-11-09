@@ -22,7 +22,9 @@ namespace NovaSharp.Interpreter.Interop
         public void Reset()
         {
             if (m_HasTurnOnce)
+            {
                 m_Enumerator.Reset();
+            }
 
             m_HasTurnOnce = true;
         }
@@ -30,7 +32,9 @@ namespace NovaSharp.Interpreter.Interop
         private DynValue GetNext(DynValue prev)
         {
             if (prev.IsNil())
+            {
                 Reset();
+            }
 
             while (m_Enumerator.MoveNext())
             {
@@ -40,7 +44,9 @@ namespace NovaSharp.Interpreter.Interop
                 );
 
                 if (!v.IsNil())
+                {
                     return v;
+                }
             }
 
             return DynValue.Nil;
@@ -57,7 +63,7 @@ namespace NovaSharp.Interpreter.Interop
 
         internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
         {
-            EnumerableWrapper ei = new EnumerableWrapper(script, enumerator);
+            EnumerableWrapper ei = new(script, enumerator);
             return DynValue.NewTuple(UserData.Create(ei), DynValue.Nil, DynValue.Nil);
         }
 
@@ -104,9 +110,13 @@ namespace NovaSharp.Interpreter.Interop
         public DynValue MetaIndex(Script script, string metaname)
         {
             if (metaname == "__call")
+            {
                 return DynValue.NewCallback(LuaIteratorCallback);
+            }
             else
+            {
                 return null;
+            }
         }
     }
 }

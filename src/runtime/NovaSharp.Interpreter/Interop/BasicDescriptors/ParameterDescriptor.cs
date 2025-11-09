@@ -174,10 +174,14 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         public void RestrictType(Type type)
         {
             if (IsOut || IsRef || IsVarArgs)
+            {
                 throw new InvalidOperationException("Cannot restrict a ref/out or varargs param");
+            }
 
             if (!Framework.Do.IsAssignableFrom(Type, type))
+            {
                 throw new InvalidOperationException("Specified operation is not a restriction");
+            }
 
             m_OriginalType = Type;
             Type = type;
@@ -193,14 +197,22 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             table.Set("name", DynValue.NewString(Name));
 
             if (Type.IsByRef)
+            {
                 table.Set("type", DynValue.NewString(Type.GetElementType().FullName));
+            }
             else
+            {
                 table.Set("type", DynValue.NewString(Type.FullName));
+            }
 
             if (OriginalType.IsByRef)
+            {
                 table.Set("origtype", DynValue.NewString(OriginalType.GetElementType().FullName));
+            }
             else
+            {
                 table.Set("origtype", DynValue.NewString(OriginalType.FullName));
+            }
 
             table.Set("default", DynValue.NewBoolean(HasDefaultValue));
             table.Set("out", DynValue.NewBoolean(IsOut));

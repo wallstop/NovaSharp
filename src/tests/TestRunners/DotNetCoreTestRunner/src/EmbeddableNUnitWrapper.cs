@@ -36,23 +36,31 @@ namespace NUnit.Framework
         public static void AreEqual(object expected, object other, string message = null)
         {
             if (expected is int && other is double)
+            {
                 AreEqualNum((int)expected, (double)other, message);
+            }
             else if (expected != null)
+            {
                 Assert.IsTrue(
                     expected.Equals(other),
                     message ?? string.Format("{0} was expected, {1} was returned", expected, other)
                 );
+            }
             else
+            {
                 Assert.IsTrue(
                     other == null,
                     message ?? string.Format("null was expected, {0} was returned", other)
                 );
+            }
         }
 
         public static void IsTrue(bool condition, string message)
         {
             if (!condition)
+            {
                 throw new Exception("Test failed : " + message);
+            }
         }
 
         public static void IsFalse(bool condition, string message)

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace NovaSharp.Interpreter.Tests.EndToEnd
@@ -108,7 +104,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				";
 
             // Load the code and get the returned function
-            Script script = new Script();
+            Script script = new();
 
             script.Globals["callback"] = DynValue.NewCallback(
                 (ctx, args) => args[0].Function.Call()
@@ -165,7 +161,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
 				";
 
             // Load the code and get the returned function
-            Script script = new Script();
+            Script script = new();
 
             script.Options.DebugPrint = (s) => last = s;
 
@@ -192,7 +188,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
 				";
 
             // Load the code and get the returned function
-            Script script = new Script();
+            Script script = new();
             DynValue function = script.DoString(code);
 
             // Create the coroutine in C#
@@ -227,7 +223,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
 				";
 
             // Load the code and get the returned function
-            Script script = new Script();
+            Script script = new();
             DynValue function = script.DoString(code);
 
             // Create the coroutine in C#
@@ -259,7 +255,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
 				";
 
             // Load the code and get the returned function
-            Script script = new Script(CoreModules.None);
+            Script script = new(CoreModules.None);
             script.DoString(code);
 
             // get the function

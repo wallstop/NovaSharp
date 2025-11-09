@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <LangVersion>latest</LangVersion>
         <AssemblyName>NovaSharp.Comparison</AssemblyName>
         <RootNamespace>NovaSharp.Comparison</RootNamespace>

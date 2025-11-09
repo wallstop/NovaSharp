@@ -47,9 +47,12 @@ namespace NovaSharp.Interpreter
             set
             {
                 if (m_Callback == null)
+                {
                     throw new InvalidOperationException(
                         "Cannot set additional data on a context which has no callback"
                     );
+                }
+
                 m_Callback.AdditionalData = value;
             }
         }
@@ -86,7 +89,10 @@ namespace NovaSharp.Interpreter
         {
             DynValue meta = this.GetMetamethod(value, metamethod);
             if (meta == null)
+            {
                 return null;
+            }
+
             return DynValue.NewTailCallReq(meta, args);
         }
 
@@ -132,7 +138,7 @@ namespace NovaSharp.Interpreter
             Func<LuaState, int> callback
         )
         {
-            LuaState L = new LuaState(this, args, functionName);
+            LuaState L = new(this, args, functionName);
             int retvals = callback(L);
             return L.GetReturnValue(retvals);
         }
@@ -162,7 +168,7 @@ namespace NovaSharp.Interpreter
                     }
                     else if (ret.Type == DataType.TailCallRequest)
                     {
-                        var tail = ret.TailCallData;
+                        TailCallData tail = ret.TailCallData;
 
                         if (tail.Continuation != null || tail.ErrorHandler != null)
                         {
@@ -213,7 +219,9 @@ namespace NovaSharp.Interpreter
         public DynValue EvaluateSymbol(SymbolRef symref)
         {
             if (symref == null)
+            {
                 return DynValue.Nil;
+            }
 
             return m_Processor.GetGenericSymbol(symref);
         }
@@ -244,9 +252,13 @@ namespace NovaSharp.Interpreter
                 DynValue env = EvaluateSymbolByName(WellKnownSymbols.ENV);
 
                 if (env == null || env.Type != DataType.Table)
+                {
                     return null;
+                }
                 else
+                {
                     return env.Table;
+                }
             }
         }
 
@@ -261,13 +273,17 @@ namespace NovaSharp.Interpreter
         )
         {
             if (messageHandler != null)
+            {
                 exception.DecoratedMessage = m_Processor.PerformMessageDecorationBeforeUnwind(
                     messageHandler,
                     exception.Message,
                     CallingLocation
                 );
+            }
             else
+            {
                 exception.DecoratedMessage = exception.Message;
+            }
         }
 
         /// <summary>

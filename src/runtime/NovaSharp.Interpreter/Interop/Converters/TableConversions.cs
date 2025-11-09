@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         internal static Table ConvertIListToTable(Script script, System.Collections.IList list)
         {
-            Table t = new Table(script);
+            Table t = new(script);
             for (int i = 0; i < list.Count; i++)
             {
                 t[i + 1] = ClrToScriptConversions.ObjectToDynValue(script, list[i]);
@@ -27,7 +27,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
             System.Collections.IDictionary dict
         )
         {
-            Table t = new Table(script);
+            Table t = new(script);
 
             foreach (System.Collections.DictionaryEntry kvp in dict)
             {
@@ -48,17 +48,29 @@ namespace NovaSharp.Interpreter.Interop.Converters
         internal static bool CanConvertTableToType(Table table, Type t)
         {
             if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<object, object>)))
+            {
                 return true;
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<DynValue, DynValue>)))
+            {
                 return true;
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(List<object>)))
+            {
                 return true;
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(List<DynValue>)))
+            {
                 return true;
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(object[])))
+            {
                 return true;
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(DynValue[])))
+            {
                 return true;
+            }
 
             if (Framework.Do.IsGenericType(t))
             {
@@ -80,7 +92,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             }
 
             if (t.IsArray && t.GetArrayRank() == 1)
+            {
                 return true;
+            }
 
             return false;
         }
@@ -91,21 +105,33 @@ namespace NovaSharp.Interpreter.Interop.Converters
         internal static object ConvertTableToType(Table table, Type t)
         {
             if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<object, object>)))
+            {
                 return TableToDictionary<object, object>(
                     table,
                     v => v.ToObject(),
                     v => v.ToObject()
                 );
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<DynValue, DynValue>)))
+            {
                 return TableToDictionary<DynValue, DynValue>(table, v => v, v => v);
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(List<object>)))
+            {
                 return TableToList<object>(table, v => v.ToObject());
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(List<DynValue>)))
+            {
                 return TableToList<DynValue>(table, v => v);
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(object[])))
+            {
                 return TableToList<object>(table, v => v.ToObject()).ToArray();
+            }
             else if (Framework.Do.IsAssignableFrom(t, typeof(DynValue[])))
+            {
                 return TableToList<DynValue>(table, v => v).ToArray();
+            }
 
             if (Framework.Do.IsGenericType(t))
             {
@@ -136,7 +162,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             }
 
             if (t.IsArray && t.GetArrayRank() == 1)
+            {
                 return ConvertTableToArrayOfGenericType(t, t.GetElementType(), table);
+            }
 
             return null;
         }
@@ -160,7 +188,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
             System.Collections.IDictionary dic = (System.Collections.IDictionary)
                 Activator.CreateInstance(dictionaryType);
 
-            foreach (var kvp in table.Pairs)
+            foreach (TablePair kvp in table.Pairs)
             {
                 object key = ScriptToClrConversions.DynValueToObjectOfType(
                     kvp.Key,
@@ -190,7 +218,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
             Table table
         )
         {
-            List<object> lst = new List<object>();
+            List<object> lst = new();
 
             for (int i = 1, l = table.Length; i <= l; i++)
             {
@@ -203,7 +231,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 Activator.CreateInstance(arrayType, new object[] { lst.Count });
 
             for (int i = 0; i < lst.Count; i++)
+            {
                 array[i] = lst[i];
+            }
 
             return array;
         }
@@ -241,7 +271,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         internal static List<T> TableToList<T>(Table table, Func<DynValue, T> converter)
         {
-            List<T> lst = new List<T>();
+            List<T> lst = new();
 
             for (int i = 1, l = table.Length; i <= l; i++)
             {
@@ -262,9 +292,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             Func<DynValue, TV> valconverter
         )
         {
-            Dictionary<TK, TV> dict = new Dictionary<TK, TV>();
+            Dictionary<TK, TV> dict = new();
 
-            foreach (var kvp in table.Pairs)
+            foreach (TablePair kvp in table.Pairs)
             {
                 TK key = keyconverter(kvp.Key);
                 TV val = valconverter(kvp.Value);

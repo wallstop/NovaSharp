@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             public SourceRef Source;
         }
 
-        List<IfBlock> m_Ifs = new List<IfBlock>();
+        List<IfBlock> m_Ifs = new();
         IfBlock m_Else = null;
         SourceRef m_End;
 
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             lcontext.Scope.PushBlock();
 
-            var ifblock = new IfBlock();
+            IfBlock ifblock = new();
 
             ifblock.Exp = Expression.Expr(lcontext);
             ifblock.Source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then));
@@ -62,7 +62,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             lcontext.Scope.PushBlock();
 
-            var ifblock = new IfBlock();
+            IfBlock ifblock = new();
             ifblock.Block = new CompositeStatement(lcontext);
             ifblock.StackFrame = lcontext.Scope.PopBlock();
             ifblock.Source = type.GetSourceRef();
@@ -72,16 +72,18 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            List<Instruction> endJumps = new List<Instruction>();
+            List<Instruction> endJumps = new();
 
             Instruction lastIfJmp = null;
 
-            foreach (var ifblock in m_Ifs)
+            foreach (IfBlock ifblock in m_Ifs)
             {
                 using (bc.EnterSource(ifblock.Source))
                 {
                     if (lastIfJmp != null)
+                    {
                         lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
+                    }
 
                     ifblock.Exp.Compile(bc);
                     lastIfJmp = bc.Emit_Jump(OpCode.Jf, -1);
@@ -90,7 +92,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 }
 
                 using (bc.EnterSource(m_End))
+                {
                     bc.Emit_Leave(ifblock.StackFrame);
+                }
 
                 endJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
             }
@@ -106,11 +110,15 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 }
 
                 using (bc.EnterSource(m_End))
+                {
                     bc.Emit_Leave(m_Else.StackFrame);
+                }
             }
 
-            foreach (var endjmp in endJumps)
+            foreach (Instruction endjmp in endJumps)
+            {
                 endjmp.NumVal = bc.GetJumpPointForNextInstruction();
+            }
         }
     }
 }

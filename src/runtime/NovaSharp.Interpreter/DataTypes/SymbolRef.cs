@@ -8,10 +8,7 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public class SymbolRef
     {
-        private static SymbolRef s_DefaultEnv = new SymbolRef()
-        {
-            i_Type = SymbolRefType.DefaultEnv,
-        };
+        private static SymbolRef s_DefaultEnv = new() { i_Type = SymbolRefType.DefaultEnv };
 
         // Fields are internal - direct access by the executor was a 10% improvement at profiling here!
         internal SymbolRefType i_Type;
@@ -119,11 +116,17 @@ namespace NovaSharp.Interpreter
         public override string ToString()
         {
             if (i_Type == SymbolRefType.DefaultEnv)
+            {
                 return "(default _ENV)";
+            }
             else if (i_Type == SymbolRefType.Global)
+            {
                 return string.Format("{2} : {0} / {1}", i_Type, i_Env, i_Name);
+            }
             else
+            {
                 return string.Format("{2} : {0}[{1}]", i_Type, i_Index, i_Name);
+            }
         }
 
         /// <summary>
@@ -141,7 +144,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         internal static SymbolRef ReadBinary(BinaryReader br)
         {
-            SymbolRef that = new SymbolRef();
+            SymbolRef that = new();
             that.i_Type = (SymbolRefType)br.ReadByte();
             that.i_Index = br.ReadInt32();
             that.i_Name = br.ReadString();
@@ -151,9 +154,13 @@ namespace NovaSharp.Interpreter
         internal void WriteBinaryEnv(BinaryWriter bw, Dictionary<SymbolRef, int> symbolMap)
         {
             if (this.i_Env != null)
+            {
                 bw.Write(symbolMap[i_Env]);
+            }
             else
+            {
                 bw.Write(-1);
+            }
         }
 
         internal void ReadBinaryEnv(BinaryReader br, SymbolRef[] symbolRefs)
@@ -161,7 +168,9 @@ namespace NovaSharp.Interpreter
             int idx = br.ReadInt32();
 
             if (idx >= 0)
+            {
                 i_Env = symbolRefs[idx];
+            }
         }
     }
 }

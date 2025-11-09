@@ -1,10 +1,4 @@
-using System;
-using System.CodeDom;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using NovaSharp.Hardwire.Languages;
 using NovaSharp.Interpreter;
 
@@ -38,10 +32,10 @@ namespace NovaSharp.Hardwire
 
         public string GenerateSourceCode()
         {
-            var codeDomProvider = m_Language.CodeDomProvider;
-            var codeGeneratorOptions = new CodeGeneratorOptions();
+            CodeDomProvider codeDomProvider = m_Language.CodeDomProvider;
+            CodeGeneratorOptions codeGeneratorOptions = new();
 
-            using (StringWriter sourceWriter = new StringWriter())
+            using (StringWriter sourceWriter = new())
             {
                 codeDomProvider.GenerateCodeFromCompileUnit(
                     m_Context.CompileUnit,

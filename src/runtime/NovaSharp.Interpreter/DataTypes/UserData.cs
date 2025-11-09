@@ -262,11 +262,13 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static DynValue Create(object o)
         {
-            var descr = GetDescriptorForObject(o);
+            IUserDataDescriptor descr = GetDescriptorForObject(o);
             if (descr == null)
             {
                 if (o is Type)
+                {
                     return CreateStatic((Type)o);
+                }
 
                 return null;
             }
@@ -282,7 +284,9 @@ namespace NovaSharp.Interpreter
         public static DynValue CreateStatic(IUserDataDescriptor descr)
         {
             if (descr == null)
+            {
                 return null;
+            }
 
             return DynValue.NewUserData(new UserData() { Descriptor = descr, Object = null });
         }
@@ -406,11 +410,12 @@ namespace NovaSharp.Interpreter
         public static Table GetDescriptionOfRegisteredTypes(bool useHistoricalData = false)
         {
             DynValue output = DynValue.NewPrimeTable();
-            var registeredTypesPairs = useHistoricalData
-                ? TypeDescriptorRegistry.RegisteredTypesHistory
-                : TypeDescriptorRegistry.RegisteredTypes;
+            IEnumerable<KeyValuePair<Type, IUserDataDescriptor>> registeredTypesPairs =
+                useHistoricalData
+                    ? TypeDescriptorRegistry.RegisteredTypesHistory
+                    : TypeDescriptorRegistry.RegisteredTypes;
 
-            foreach (var descpair in registeredTypesPairs)
+            foreach (KeyValuePair<Type, IUserDataDescriptor> descpair in registeredTypesPairs)
             {
                 IWireableDescriptor sd = descpair.Value as IWireableDescriptor;
 
@@ -432,9 +437,10 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static IEnumerable<Type> GetRegisteredTypes(bool useHistoricalData = false)
         {
-            var registeredTypesPairs = useHistoricalData
-                ? TypeDescriptorRegistry.RegisteredTypesHistory
-                : TypeDescriptorRegistry.RegisteredTypes;
+            IEnumerable<KeyValuePair<Type, IUserDataDescriptor>> registeredTypesPairs =
+                useHistoricalData
+                    ? TypeDescriptorRegistry.RegisteredTypesHistory
+                    : TypeDescriptorRegistry.RegisteredTypes;
             return registeredTypesPairs.Select(p => p.Value.Type);
         }
     }

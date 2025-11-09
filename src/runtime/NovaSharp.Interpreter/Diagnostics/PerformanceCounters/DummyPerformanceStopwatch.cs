@@ -4,7 +4,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
     class DummyPerformanceStopwatch : IPerformanceStopwatch, IDisposable
     {
-        public static DummyPerformanceStopwatch Instance = new DummyPerformanceStopwatch();
+        public static DummyPerformanceStopwatch Instance = new();
         PerformanceResult m_Result;
 
         private DummyPerformanceStopwatch()

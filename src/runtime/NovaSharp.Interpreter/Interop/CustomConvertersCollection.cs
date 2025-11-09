@@ -13,13 +13,14 @@ namespace NovaSharp.Interpreter.Interop
             Type,
             Func<DynValue, object>
         >[(int)LuaTypeExtensions.MaxConvertibleTypes + 1];
-        private Dictionary<Type, Func<Script, object, DynValue>> m_Clr2Script =
-            new Dictionary<Type, Func<Script, object, DynValue>>();
+        private Dictionary<Type, Func<Script, object, DynValue>> m_Clr2Script = new();
 
         internal CustomConvertersCollection()
         {
             for (int i = 0; i < m_Script2Clr.Length; i++)
+            {
                 m_Script2Clr[i] = new Dictionary<Type, Func<DynValue, object>>();
+            }
         }
 
         // This needs to be evaluated further (doesn't work well with inheritance)
@@ -87,14 +88,18 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if ((int)scriptDataType > m_Script2Clr.Length)
+            {
                 throw new ArgumentException("scriptDataType");
+            }
 
             Dictionary<Type, Func<DynValue, object>> map = m_Script2Clr[(int)scriptDataType];
 
             if (converter == null)
             {
                 if (map.ContainsKey(clrDataType))
+                {
                     map.Remove(clrDataType);
+                }
             }
             else
             {
@@ -114,7 +119,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             if ((int)scriptDataType > m_Script2Clr.Length)
+            {
                 return null;
+            }
 
             Dictionary<Type, Func<DynValue, object>> map = m_Script2Clr[(int)scriptDataType];
             return map.GetOrDefault(clrDataType);
@@ -133,7 +140,9 @@ namespace NovaSharp.Interpreter.Interop
             if (converter == null)
             {
                 if (m_Clr2Script.ContainsKey(clrDataType))
+                {
                     m_Clr2Script.Remove(clrDataType);
+                }
             }
             else
             {
@@ -197,7 +206,9 @@ namespace NovaSharp.Interpreter.Interop
             m_Clr2Script.Clear();
 
             for (int i = 0; i < m_Script2Clr.Length; i++)
+            {
                 m_Script2Clr[i].Clear();
+            }
         }
     }
 }

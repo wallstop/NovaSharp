@@ -70,7 +70,9 @@ namespace NovaSharp.Interpreter.Interop
             this.Parameters = parameters;
 
             if (isExtensionMethod)
+            {
                 this.ExtensionMethodType = Parameters[0].Type;
+            }
 
             if (Parameters.Length > 0 && Parameters[Parameters.Length - 1].IsVarArgs)
             {
@@ -133,7 +135,7 @@ namespace NovaSharp.Interpreter.Interop
             object obj = null
         )
         {
-            var desc = new MethodMemberDescriptor(mi);
+            MethodMemberDescriptor desc = new(mi);
             return desc.GetCallbackAsDynValue(script, obj);
         }
 
@@ -168,7 +170,10 @@ namespace NovaSharp.Interpreter.Interop
                 if (parameters[i].Type.IsByRef)
                 {
                     if (outParams == null)
+                    {
                         outParams = new List<int>();
+                    }
+
                     outParams.Add(i);
                 }
 
@@ -198,16 +203,20 @@ namespace NovaSharp.Interpreter.Interop
                 }
                 else if (i == parameters.Length - 1 && VarArgsArrayType != null)
                 {
-                    List<DynValue> extraArgs = new List<DynValue>();
+                    List<DynValue> extraArgs = new();
 
                     while (true)
                     {
                         DynValue arg = args.RawGet(j, false);
                         j += 1;
                         if (arg != null)
+                        {
                             extraArgs.Add(arg);
+                        }
                         else
+                        {
                             break;
+                        }
                     }
 
                     // here we have to worry we already have an array.. damn. We only support this for userdata.
@@ -253,7 +262,7 @@ namespace NovaSharp.Interpreter.Interop
                 // else, convert it
                 else
                 {
-                    var arg = args.RawGet(j, false) ?? DynValue.Void;
+                    DynValue arg = args.RawGet(j, false) ?? DynValue.Void;
                     pars[i] = ScriptToClrConversions.DynValueToObjectOfType(
                         arg,
                         parameters[i].Type,
@@ -291,15 +300,21 @@ namespace NovaSharp.Interpreter.Interop
                 DynValue[] rets = new DynValue[outParams.Count + 1];
 
                 if (retv is DynValue && ((DynValue)retv).IsVoid())
+                {
                     rets[0] = DynValue.Nil;
+                }
                 else
+                {
                     rets[0] = ClrToScriptConversions.ObjectToDynValue(script, retv);
+                }
 
                 for (int i = 0; i < outParams.Count; i++)
+                {
                     rets[i + 1] = ClrToScriptConversions.ObjectToDynValue(
                         script,
                         pars[outParams[i]]
                     );
+                }
 
                 return DynValue.NewTuple(rets);
             }
