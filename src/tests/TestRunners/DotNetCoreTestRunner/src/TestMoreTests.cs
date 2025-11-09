@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace MoonSharp.Interpreter.Tests
+namespace NovaSharp.Interpreter.Tests
 {
     [TestFixture]
     public class TestMoreTests

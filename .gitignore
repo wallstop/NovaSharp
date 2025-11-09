@@ -22,12 +22,12 @@ src/.vs/
 
 # Remove generated docs
 
-src/MoonSharp.Documentation/Help/html/
-src/MoonSharp.Documentation/Help/toc/
-src/MoonSharp.Documentation/Help/fti/
-src/MoonSharp.Documentation/Help/styles/
-src/MoonSharp.Documentation/Help/icons/
-src/MoonSharp.Documentation/Help/
+src/NovaSharp.Documentation/Help/html/
+src/NovaSharp.Documentation/Help/toc/
+src/NovaSharp.Documentation/Help/fti/
+src/NovaSharp.Documentation/Help/styles/
+src/NovaSharp.Documentation/Help/icons/
+src/NovaSharp.Documentation/Help/
 
 #
 

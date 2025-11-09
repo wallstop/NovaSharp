@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Serialization.Json;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Serialization.Json;
 using NUnit.Framework;
 
-namespace MoonSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     [TestFixture]
     public class JsonSerializationTests

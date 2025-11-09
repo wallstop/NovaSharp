@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Loaders;
-using MoonSharp.Interpreter.Platforms;
-using MoonSharp.RemoteDebugger;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Loaders;
+using NovaSharp.Interpreter.Platforms;
+using NovaSharp.RemoteDebugger;
 
 namespace Tutorials.Chapters
 {

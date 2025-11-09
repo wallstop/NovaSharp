@@ -1,8 +1,8 @@
 #if NET8_0_OR_GREATER
 using BenchmarkDotNet.Running;
-using MoonSharp.Benchmarking;
+using NovaSharp.Benchmarking;
 
-namespace MoonSharp.PerformanceComparison;
+namespace NovaSharp.PerformanceComparison;
 
 internal static class Program
 {

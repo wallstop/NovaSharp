@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoonSharp.Interpreter.Execution;
-using MoonSharp.Interpreter.Loaders;
+using NovaSharp.Interpreter.Execution;
+using NovaSharp.Interpreter.Loaders;
 using NUnit.Framework;
 
-namespace MoonSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     [TestFixture]
     public class SimpleTests

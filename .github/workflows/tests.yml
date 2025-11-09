@@ -18,11 +18,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
-        run: dotnet restore src/moonsharp.sln
+        run: dotnet restore src/NovaSharp.sln
       - name: Restore tools
         run: dotnet tool restore
       - name: Build solution
-        run: dotnet build src/moonsharp.sln -c Release --no-restore
+        run: dotnet build src/NovaSharp.sln -c Release --no-restore
       - name: Run interpreter tests
         working-directory: src/TestRunners/DotNetCoreTestRunner
         run: dotnet run -c Release -- --ci
@@ -30,6 +30,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: moonsharp-tests-log
-          path: src/TestRunners/DotNetCoreTestRunner/moonsharp_tests.log
+          name: NovaSharp-tests-log
+          path: src/TestRunners/DotNetCoreTestRunner/NovaSharp_tests.log
           if-no-files-found: ignore

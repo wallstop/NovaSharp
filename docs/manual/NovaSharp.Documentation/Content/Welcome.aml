@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<topic id="06af6655-1018-45a9-9efb-b6a42cb4a88a" revisionNumber="1">
+	<developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<introduction>
+      <para>This is the API reference for the NovaSharp.Interpreter assembly.</para>
+      <para>To get started, please visit <externalLink>
+        <linkText>the NovaSharp homepage</linkText>
+        <linkAlternateText>NovaSharp homepage</linkAlternateText>
+        <linkUri>http://www.NovaSharp.org</linkUri>
+      </externalLink>.</para>
+    </introduction>
+	</developerConceptualDocument>
+</topic>
+
+

@@ -1,12 +1,12 @@
 language: csharp
-solution: src/moonsharp.sln
+solution: src/NovaSharp.sln
 sudo: required
 
 mono: 
   - 2.10.8
 
 script:
-  - xbuild /p:TargetFrameworkProfile='' /p:Configuration=Release src/moonsharp_ci_net35.sln
+  - xbuild /p:TargetFrameworkProfile='' /p:Configuration=Release src/NovaSharp_ci_net35.sln
   - cd src/TestRunners/ConsoleTestRunner/bin/Release
   - mono ConsoleTestRunner.exe
 #  - chmod 777 aotregen.sh

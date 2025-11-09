@@ -1,4 +1,4 @@
-﻿// Disable warning 429 (Unreachable code) because of the RESTRICT_TEST condition below.
+// Disable warning 429 (Unreachable code) because of the RESTRICT_TEST condition below.
 #pragma warning disable 429
 
 using System;
@@ -8,11 +8,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Diagnostics;
-using MoonSharp.Interpreter.Serialization;
-using MoonSharp.Interpreter.Tests;
-using MoonSharp.VsCodeDebugger;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Diagnostics;
+using NovaSharp.Interpreter.Serialization;
+using NovaSharp.Interpreter.Tests;
+using NovaSharp.VsCodeDebugger;
 using NUnit.Framework;
 
 namespace DotNetCoreTestRunner
@@ -22,7 +22,7 @@ namespace DotNetCoreTestRunner
         private static bool s_isCi;
 
         public const string RESTRICT_TEST = null; //"VInterop_ConstructorAndConcatMethodSemicolon_None";
-        public const string LOG_ON_FILE = "moonsharp_tests.log";
+        public const string LOG_ON_FILE = "NovaSharp_tests.log";
 
         // Tests skipped on all platforms
         static List<string> SKIPLIST = new List<string>()
@@ -129,7 +129,7 @@ namespace DotNetCoreTestRunner
 
         private static void DebuggerMain(string[] args)
         {
-            MoonSharpVsCodeDebugServer server = new MoonSharpVsCodeDebugServer().Start();
+            NovaSharpVsCodeDebugServer server = new NovaSharpVsCodeDebugServer().Start();
             Script s = new Script();
 
             server.AttachToScript(s, "xxx");

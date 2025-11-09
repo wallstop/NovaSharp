@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Interop;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Interop;
 
 namespace Tutorials.Chapters
 {
@@ -13,7 +13,7 @@ namespace Tutorials.Chapters
     {
         #region UserData classes
 
-        [MoonSharpUserData]
+        [NovaSharpUserData]
         class MyClass
         {
             public event EventHandler SomethingHappened;
@@ -41,7 +41,7 @@ namespace Tutorials.Chapters
             }
         }
 
-        [MoonSharpUserData]
+        [NovaSharpUserData]
         class MyClassStatic
         {
             public static double calcHypotenuse(double a, double b)
@@ -91,19 +91,19 @@ namespace Tutorials.Chapters
                 get { return 117; }
             }
 
-            [MoonSharpUserDataMetamethod("__concat")]
+            [NovaSharpUserDataMetamethod("__concat")]
             public static int Concat(ArithmOperatorsTestClass o, int v)
             {
                 return o.Value + v;
             }
 
-            [MoonSharpUserDataMetamethod("__concat")]
+            [NovaSharpUserDataMetamethod("__concat")]
             public static int Concat(int v, ArithmOperatorsTestClass o)
             {
                 return o.Value + v;
             }
 
-            [MoonSharpUserDataMetamethod("__concat")]
+            [NovaSharpUserDataMetamethod("__concat")]
             public static int Concat(ArithmOperatorsTestClass o1, ArithmOperatorsTestClass o2)
             {
                 return o1.Value + o2.Value;
@@ -156,14 +156,14 @@ namespace Tutorials.Chapters
                 return (new List<int>() { 1, 2, 3 }).GetEnumerator();
             }
 
-            [MoonSharpUserDataMetamethod("__call")]
+            [NovaSharpUserDataMetamethod("__call")]
             public int DefaultMethod()
             {
                 return -Value;
             }
 
-            [MoonSharpUserDataMetamethod("__pairs")]
-            [MoonSharpUserDataMetamethod("__ipairs")]
+            [NovaSharpUserDataMetamethod("__pairs")]
+            [NovaSharpUserDataMetamethod("__ipairs")]
             public System.Collections.IEnumerator Pairs()
             {
                 return (
@@ -188,7 +188,7 @@ namespace Tutorials.Chapters
 				return obj.calcHypotenuse(3, 4);
 			";
 
-            // Automatically register all MoonSharpUserData types
+            // Automatically register all NovaSharpUserData types
             UserData.RegisterAssembly();
 
             Script script = new Script();
@@ -232,7 +232,7 @@ namespace Tutorials.Chapters
 				return obj.calcHypotenuse(3, 4);
 			";
 
-            // Automatically register all MoonSharpUserData types
+            // Automatically register all NovaSharpUserData types
             UserData.RegisterAssembly();
 
             Script script = new Script();
@@ -252,7 +252,7 @@ namespace Tutorials.Chapters
 				return obj.calcHypotenuse(3, 4);
 			";
 
-            // Automatically register all MoonSharpUserData types
+            // Automatically register all NovaSharpUserData types
             UserData.RegisterAssembly();
 
             Script script = new Script();
@@ -273,7 +273,7 @@ namespace Tutorials.Chapters
 				return x, y, z
 			";
 
-            // Automatically register all MoonSharpUserData types
+            // Automatically register all NovaSharpUserData types
             UserData.RegisterAssembly();
 
             Script script = new Script();
@@ -444,11 +444,11 @@ namespace Tutorials.Chapters
             public void Method2() { }
 
             // Visible - it's private but forced visible by attribute
-            [MoonSharpVisible(true)]
+            [NovaSharpVisible(true)]
             private void Method3() { }
 
             // Not visible - it's public but forced hidden by attribute
-            [MoonSharpVisible(false)]
+            [NovaSharpVisible(false)]
             public void Method4() { }
 
             // Not visible - it's private
@@ -458,11 +458,11 @@ namespace Tutorials.Chapters
             public int Field2 = 0;
 
             // Visible - it's private but forced visible by attribute
-            [MoonSharpVisible(true)]
+            [NovaSharpVisible(true)]
             private int Field3 = 0;
 
             // Not visible - it's public but forced hidden by attribute
-            [MoonSharpVisible(false)]
+            [NovaSharpVisible(false)]
             public int Field4 = 0;
 
             // Not visible at all - it's private
@@ -474,26 +474,26 @@ namespace Tutorials.Chapters
             // Readonly - it's public, but the setter is private
             public int Property3 { get; private set; }
 
-            // Write only! - the MoonSharpVisible makes the getter hidden and the setter visible!
+            // Write only! - the NovaSharpVisible makes the getter hidden and the setter visible!
             public int Property4
             {
-                [MoonSharpVisible(false)]
+                [NovaSharpVisible(false)]
                 get;
-                [MoonSharpVisible(true)]
+                [NovaSharpVisible(true)]
                 private set;
             }
 
-            // Write only! - the MoonSharpVisible makes the whole property hidden but another attribute resets the setter as visible!
-            [MoonSharpVisible(false)]
+            // Write only! - the NovaSharpVisible makes the whole property hidden but another attribute resets the setter as visible!
+            [NovaSharpVisible(false)]
             public int Property5
             {
                 get;
-                [MoonSharpVisible(true)]
+                [NovaSharpVisible(true)]
                 private set;
             }
 
-            // Not visible at all - the MoonSharpVisible hides everything
-            [MoonSharpVisible(false)]
+            // Not visible at all - the NovaSharpVisible hides everything
+            [NovaSharpVisible(false)]
             public int Property6 { get; set; }
 
             // Not visible - it's private
@@ -503,20 +503,20 @@ namespace Tutorials.Chapters
             public event EventHandler Event2;
 
             // Visible - it's private but forced visible by attribute
-            [MoonSharpVisible(true)]
+            [NovaSharpVisible(true)]
             private event EventHandler Event3;
 
             // Not visible - it's public but forced hidden by attribute
-            [MoonSharpVisible(false)]
+            [NovaSharpVisible(false)]
             public event EventHandler Event4;
 
             // Not visible - visibility modifiers over add and remove are not currently supported!
-            [MoonSharpVisible(false)]
+            [NovaSharpVisible(false)]
             public event EventHandler Event5
             {
-                [MoonSharpVisible(true)]
+                [NovaSharpVisible(true)]
                 add { }
-                [MoonSharpVisible(true)]
+                [NovaSharpVisible(true)]
                 remove { }
             }
         }

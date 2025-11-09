@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MoonSharp.Interpreter;
+using NovaSharp.Interpreter;
 
 namespace Tutorials.Chapters
 {
@@ -11,7 +11,7 @@ namespace Tutorials.Chapters
     static class Chapter03
     {
         [Tutorial]
-        public static double MoonSharpFactorial()
+        public static double NovaSharpFactorial()
         {
             string scriptCode =
                 @"    
@@ -36,7 +36,7 @@ namespace Tutorials.Chapters
         }
 
         [Tutorial]
-        public static double MoonSharpFactorial2()
+        public static double NovaSharpFactorial2()
         {
             string scriptCode =
                 @"    

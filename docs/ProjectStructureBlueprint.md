@@ -6,32 +6,32 @@ This document captures the current repository layout, highlights legacy or dupli
 
 | Path | Purpose | Notes / Issues |
 | --- | --- | --- |
-| `src/runtime/MoonSharp.Interpreter` | Core runtime source | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` staging removed. |
-| `src/debuggers/MoonSharp.RemoteDebugger` | Remote debugger assemblies | Path aligned, no structural changes needed. |
-| `src/debuggers/MoonSharp.VsCodeDebugger` | VS Code debugger backend | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed. |
+| `src/runtime/NovaSharp.Interpreter` | Core runtime source | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` staging removed. |
+| `src/debuggers/NovaSharp.RemoteDebugger` | Remote debugger assemblies | Path aligned, no structural changes needed. |
+| `src/debuggers/NovaSharp.VsCodeDebugger` | VS Code debugger backend | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed. |
 | `src/debuggers/vscode-extension` | VS Code extension (TypeScript) | Now grouped under debuggers. |
-| `src/tooling/MoonSharp.Cli` | CLI shell (`MoonSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); update packaging/docs to reflect new CLI name. |
-| `src/tooling/MoonSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
+| `src/tooling/NovaSharp.Cli` | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); update packaging/docs to reflect new CLI name. |
+| `src/tooling/NovaSharp.Hardwire` | Hardwire generator | Tooling category aligned. |
 | `src/tooling/Benchmarks`, `src/tooling/PerformanceComparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
 | `src/tests/TestRunners/DotNetCoreTestRunner` | Net8 runner (active) | Drives modern coverage pipeline. |
-| `src/tests/MoonSharp.Interpreter.Tests.Legacy` | Legacy NUnit 2.6 tree | Ready for gradual migration or archival. |
+| `src/tests/NovaSharp.Interpreter.Tests.Legacy` | Legacy NUnit 2.6 tree | Ready for gradual migration or archival. |
 | `src/samples/Tutorial` | Tutorial snippets | Under dedicated samples hierarchy. |
-| `src/legacy/*` (`Flash`, `MoonSharpPreGen`, `Tools`, `moonsharp_netcore`) | Archived assets | Confirm safe to delete or retain as read-only history. |
-| `docs/manual/MoonSharp.Documentation` | Historical documentation | Lives under docs tree; evaluate for migration to markdown. |
+| `src/legacy/*` (`Flash`, `NovaSharpPreGen`, `Tools`, `NovaSharp_netcore`) | Archived assets | Confirm safe to delete or retain as read-only history. |
+| `docs/manual/NovaSharp.Documentation` | Historical documentation | Lives under docs tree; evaluate for migration to markdown. |
 
 ## 2. Target Layout (post-Milestone B/C)
 
 ```
 src/
   runtime/
-    MoonSharp.Interpreter/                 (multi-targeted, no `_Projects`)
+    NovaSharp.Interpreter/                 (multi-targeted, no `_Projects`)
   debuggers/
-    MoonSharp.RemoteDebugger/
-    MoonSharp.VsCodeDebugger/
+    NovaSharp.RemoteDebugger/
+    NovaSharp.VsCodeDebugger/
     vscode-extension/
   tooling/
-    MoonSharp.Cli/
-    MoonSharp.Hardwire/
+    NovaSharp.Cli/
+    NovaSharp.Hardwire/
     Benchmarks/
     PerformanceComparison/
   tests/
@@ -43,9 +43,9 @@ src/
     manual/                                (historical documentation)
   legacy/
     Flash/
-    MoonSharpPreGen/
+    NovaSharpPreGen/
     Tools/
-    moonsharp_netcore/
+    NovaSharp_netcore/
   packaging/
     signing/                               (e.g., `keypair.snk`, nuspecs)
 ```
@@ -53,7 +53,7 @@ src/
 Key principles:
 
 - **Single source of truth:** Eliminate `_Projects/*netcore` mirrors by converting main projects to multi-targeting where required.
-- **Namespace alignment:** Paths should mirror namespaces (`runtime/MoonSharp.Interpreter/...`), satisfying the new `.editorconfig` rules.
+- **Namespace alignment:** Paths should mirror namespaces (`runtime/NovaSharp.Interpreter/...`), satisfying the new `.editorconfig` rules.
 - **Clear ownership:** Runtime vs. debugger vs. tooling content live in dedicated top-level folders, aiding discoverability.
 - **Legacy quarantine:** Old clients/tools move under `legacy/` (or are deleted) so they no longer clutter active build graphs.
 
@@ -64,9 +64,9 @@ Key principles:
    - Migrate any remaining useful scripts into `tooling/` or `docs/`.
 
 2. **Project Updates**
-   - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `MoonSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
-   - ✅ Renamed `tooling/MoonSharp/MoonSharp.csproj` to `tooling/MoonSharp.Cli/MoonSharp.Cli.csproj` and relocated CLI assets accordingly.
-   - Update `MoonSharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
+   - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `NovaSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
+   - ✅ Renamed `tooling/NovaSharp/NovaSharp.csproj` to `tooling/NovaSharp.Cli/NovaSharp.Cli.csproj` and relocated CLI assets accordingly.
+   - Update `NovaSharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
 
 3. **Namespace + Usings Sweep**
    - After moves, fix namespaces to reflect the new folder structure (enforced by `.editorconfig`).
@@ -86,8 +86,8 @@ Key principles:
 
 ## 4. Open Questions
 
-- Do we keep `MoonSharpPreGen` for historical builds, or move it to a separate archive repository?
-- Should `MoonSharp.Interpreter.Tests` be fully migrated into the new `tests/` structure, or partially archived?
+- Do we keep `NovaSharpPreGen` for historical builds, or move it to a separate archive repository?
+- Should `NovaSharp.Interpreter.Tests` be fully migrated into the new `tests/` structure, or partially archived?
 - How much of `Tools/` is still relevant? (Needs triage; most content predates .NET Core.)
 
 These questions should be resolved during Milestone B execution before deleting any assets.

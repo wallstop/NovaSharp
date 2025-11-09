@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MoonSharp is a complete Lua 5.2 interpreter written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides 99% Lua compatibility with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
+NovaSharp is a complete Lua 5.2 interpreter written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides 99% Lua compatibility with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
 
 ## Build, Test, and Development Commands
 
@@ -17,13 +17,13 @@ dotnet tool restore
 ### Building
 ```bash
 # Full release build of all targets
-dotnet build src\MoonSharp.sln -c Release
+dotnet build src\NovaSharp.sln -c Release
 
 # Quick iteration on interpreter core
-dotnet build src\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj
+dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj
 
 # Legacy MSBuild option (if Visual Studio tooling preferred)
-msbuild src\MoonSharp.sln /p:Configuration=Release
+msbuild src\NovaSharp.sln /p:Configuration=Release
 ```
 
 ### Testing
@@ -40,7 +40,7 @@ dotnet csharpier .
 
 ## Architecture Overview
 
-MoonSharp follows a classic interpreter pipeline with three main subsystems:
+NovaSharp follows a classic interpreter pipeline with three main subsystems:
 
 ### 1. Pipeline Flow
 ```
@@ -51,20 +51,20 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 2. Core Subsystems
 
-**Tree (Parsing & AST)** - `src/runtime/MoonSharp.Interpreter/Tree/`
+**Tree (Parsing & AST)** - `src/runtime/NovaSharp.Interpreter/Tree/`
 - Converts source code to Abstract Syntax Tree
 - Each AST node implements its own `Compile(ByteCode)` method
 - Key classes: `Lexer`, `Parser`, `Statement`, `Expression`
 - Loader_Fast.cs orchestrates the parse-compile sequence
 
-**Execution/VM (Bytecode & Runtime)** - `src/runtime/MoonSharp.Interpreter/Execution/`
+**Execution/VM (Bytecode & Runtime)** - `src/runtime/NovaSharp.Interpreter/Execution/`
 - `Processor` class implements stack-based virtual machine
 - 52 opcodes (ADD, MUL, CALL, JF, etc.)
 - Uses `FastStack<T>` for value stack and execution stack
 - Each `Instruction` contains opcode, operands, and source location
 - Supports tail call optimization for Lua compatibility
 
-**Interop (C# ↔ Lua Bridge)** - `src/runtime/MoonSharp.Interpreter/Interop/`
+**Interop (C# ↔ Lua Bridge)** - `src/runtime/NovaSharp.Interpreter/Interop/`
 - Bidirectional conversion between C# objects and Lua values
 - Uses descriptor pattern via `IUserDataDescriptor`
 - Global `TypeDescriptorRegistry` caches type metadata
@@ -73,7 +73,7 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 3. DynValue: The Universal Value Type
 
-`DynValue` is the **central hub** of MoonSharp's architecture:
+`DynValue` is the **central hub** of NovaSharp's architecture:
 - Single unified type representing all Lua values (nil, boolean, number, string, table, function, etc.)
 - Used everywhere: function parameters, return values, table contents, variables
 - Contains a discriminated union: `DataType` enum + value storage (m_Number for numbers, m_Object for references)
@@ -134,7 +134,7 @@ Script.DoString("return x + 1")
 - **Framework**: NUnit 2.6 (`[TestFixture]`, `[Test]` attributes)
 - **Organization**: Group tests under `Units/`, `EndToEnd/`, or `TestMore/` based on scope
 - **Naming**: `<Feature>Tests.cs` pattern, store Lua fixtures alongside test classes
-- **Dual Coverage**: Update both `tests/MoonSharp.Interpreter.Tests.Legacy` and `tests/TestRunners/DotNetCoreTestRunner` when interpreter behavior changes
+- **Dual Coverage**: Update both `tests/NovaSharp.Interpreter.Tests.Legacy` and `tests/TestRunners/DotNetCoreTestRunner` when interpreter behavior changes
 - **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
 
 ## Commit & Pull Request Guidelines
@@ -148,11 +148,11 @@ Script.DoString("return x + 1")
 
 ## Module Organization
 
-  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/MoonSharp.Interpreter/`
-  - **Debuggers**: `src/debuggers/MoonSharp.VsCodeDebugger/`, `src/debuggers/MoonSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
-  - **Tooling**: `src/tooling/` for the CLI (`MoonSharp`), hardwire generator, benchmarks, and perf comparisons
+  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/NovaSharp.Interpreter/`
+  - **Debuggers**: `src/debuggers/NovaSharp.VsCodeDebugger/`, `src/debuggers/NovaSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
+  - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
-  - **Tests**: `src/tests/TestRunners/DotNetCoreTestRunner/` for modern runs; legacy NUnit in `src/tests/MoonSharp.Interpreter.Tests.Legacy/`
+  - **Tests**: `src/tests/TestRunners/DotNetCoreTestRunner/` for modern runs; legacy NUnit in `src/tests/NovaSharp.Interpreter.Tests.Legacy/`
   - **Legacy Assets**: Archived clients and scripts under `src/legacy/`
 
 ## Important Implementation Notes

@@ -4,7 +4,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 
-namespace MoonSharp.PerformanceComparison;
+namespace NovaSharp.PerformanceComparison;
 
 internal static class BenchmarkConfig
 {

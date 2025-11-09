@@ -4,12 +4,12 @@
 
 echo Cleaning...
 echo ... Unity
-rm -R ./Unity/MoonSharp/Assets/Tests
-rm -R ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Interpreter
-rm -R ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Debugger
-mkdir ./Unity/MoonSharp/Assets/Tests
-mkdir ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Interpreter
-mkdir ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Debugger
+rm -R ./Unity/NovaSharp/Assets/Tests
+rm -R ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Interpreter
+rm -R ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Debugger
+mkdir ./Unity/NovaSharp/Assets/Tests
+mkdir ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Interpreter
+mkdir ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Debugger
 
 echo ... .NET Core
 rm -R ./tests/TestRunners/DotNetCoreTestRunner/src
@@ -20,13 +20,13 @@ echo
 echo Copying files...
 
 echo ... Unity - interpreter
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/runtime/MoonSharp.Interpreter/ ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Interpreter/
+rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/NovaSharp/src/runtime/NovaSharp.Interpreter/ ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Interpreter/
 
 echo ... Unity - vscode debugger...
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/debuggers/MoonSharp.VsCodeDebugger/ ./Unity/MoonSharp/Assets/Plugins/MoonSharp/Debugger/
+rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/NovaSharp/src/debuggers/NovaSharp.VsCodeDebugger/ ./Unity/NovaSharp/Assets/Plugins/NovaSharp/Debugger/
 
 echo ... Unity - unit tests...
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/tests/MoonSharp.Interpreter.Tests.Legacy/ ./Unity/MoonSharp/Assets/Tests
+rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/NovaSharp/src/tests/NovaSharp.Interpreter.Tests.Legacy/ ./Unity/NovaSharp/Assets/Tests
 
 echo ... .NET Core - unit tests...
-rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/moonsharp/src/tests/MoonSharp.Interpreter.Tests.Legacy/ ./tests/TestRunners/DotNetCoreTestRunner/src
+rsync -a --prune-empty-dirs --exclude 'AssemblyInfo.cs' --include '*/' --include '*.cs' --exclude '*' /git/my/NovaSharp/src/tests/NovaSharp.Interpreter.Tests.Legacy/ ./tests/TestRunners/DotNetCoreTestRunner/src

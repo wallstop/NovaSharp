@@ -1,9 +1,9 @@
 {
-    "name": "moonsharp-debug",
-    "displayName": "MoonSharp Debug",
+    "name": "NovaSharp-debug",
+    "displayName": "NovaSharp Debug",
     "version": "1.8.2",
     "publisher": "xanathar",
-    "description": "VS Code Debugger for applications embedding MoonSharp.",
+    "description": "VS Code Debugger for applications embedding NovaSharp.",
     "author": {
         "name": "Marco Mastropaolo",
         "email": "marco@mastropaolo.com"
@@ -19,10 +19,10 @@
     "private": true,
     "repository": {
         "type": "git",
-        "url": "https://github.com/xanathar/moonsharp.git"
+        "url": "https://github.com/xanathar/NovaSharp.git"
     },
     "bugs": {
-        "url": "https://github.com/xanathar/moonsharp/issues"
+        "url": "https://github.com/xanathar/NovaSharp/issues"
     },
     "dependencies": {},
     "devDependencies": {
@@ -57,15 +57,15 @@
         ],
         "debuggers": [
             {
-                "type": "moonsharp-debug",
-                "label": "MoonSharp",
+                "type": "NovaSharp-debug",
+                "label": "NovaSharp",
 
 				"debugServer": 41912,
 
                 "initialConfigurations": [
                     {
-                        "name": "MoonSharp Attach",
-                        "type": "moonsharp-debug",
+                        "name": "NovaSharp Attach",
+                        "type": "NovaSharp-debug",
                         "request": "attach",
 						"HELP": "Please set 'debugServer':41912 (or whatever port you ar connecting to) right after the 'version' field in this json."
                     }

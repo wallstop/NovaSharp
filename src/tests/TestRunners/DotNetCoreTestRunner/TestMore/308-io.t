@@ -31,7 +31,7 @@ See "Programming in Lua", section 21 "The I/O Library".
 
 require 'Test.More'
 
-local lua = [[\git\moonsharp\src\Tools\lua52.exe]]
+local lua = [[\git\NovaSharp\src\Tools\lua52.exe]]
 
 plan(67)
 
@@ -255,4 +255,5 @@ os.remove('file.out') --clean up
 -- vim: ft=lua expandtab shiftwidth=4:
 
 --]==]
+
 

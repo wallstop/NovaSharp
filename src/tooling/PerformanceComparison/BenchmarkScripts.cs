@@ -1,4 +1,4 @@
-namespace MoonSharp.PerformanceComparison;
+namespace NovaSharp.PerformanceComparison;
 
 internal static class BenchmarkScripts
 {

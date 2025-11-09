@@ -1,17 +1,17 @@
 #if NET8_0_OR_GREATER
 using BenchmarkDotNet.Attributes;
-using MoonSharp.Interpreter;
+using NovaSharp.Interpreter;
 using NLua;
 
-namespace MoonSharp.PerformanceComparison;
+namespace NovaSharp.PerformanceComparison;
 
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
 public class LuaPerformanceBenchmarks
 {
     private string _source = string.Empty;
-    private Script _moonSharpScript = null!;
-    private DynValue _moonSharpFunction = DynValue.Nil;
+    private Script _NovaSharpScript = null!;
+    private DynValue _NovaSharpFunction = DynValue.Nil;
     private Lua _nLua = null!;
     private LuaFunction? _nLuaFunction;
 
@@ -29,8 +29,8 @@ public class LuaPerformanceBenchmarks
 
         _source = BenchmarkScripts.GetScript(Scenario);
 
-        _moonSharpScript = new Script(CoreModules.Preset_Complete);
-        _moonSharpFunction = _moonSharpScript.LoadString(_source, null, $"precompiled_{Scenario}");
+        _NovaSharpScript = new Script(CoreModules.Preset_Complete);
+        _NovaSharpFunction = _NovaSharpScript.LoadString(_source, null, $"precompiled_{Scenario}");
 
         _nLua = new Lua();
         _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{Scenario}") as LuaFunction;
@@ -43,15 +43,15 @@ public class LuaPerformanceBenchmarks
         _nLua.Dispose();
     }
 
-    [Benchmark(Description = "MoonSharp Compile")]
-    public DynValue MoonSharpCompile()
+    [Benchmark(Description = "NovaSharp Compile")]
+    public DynValue NovaSharpCompile()
     {
         var script = new Script(CoreModules.Preset_Complete);
         return script.LoadString(_source, null, $"compile_{Scenario}");
     }
 
-    [Benchmark(Description = "MoonSharp Execute")]
-    public DynValue MoonSharpExecute() => _moonSharpScript.Call(_moonSharpFunction);
+    [Benchmark(Description = "NovaSharp Execute")]
+    public DynValue NovaSharpExecute() => _NovaSharpScript.Call(_NovaSharpFunction);
 
     [Benchmark(Description = "NLua Compile")]
     public LuaFunction? NLuaCompile()

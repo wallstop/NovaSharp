@@ -1,8 +1,8 @@
-# MoonSharp VSCode Debugger
+# NovaSharp VSCode Debugger
 
-This is an extension to allow debugging of MoonSharp scripts running inside other applications.
+This is an extension to allow debugging of NovaSharp scripts running inside other applications.
 
-It requires the application to be embedding MoonSharp 1.8.0.0 (or later) and exposing the VSCode debugger extensions.
+It requires the application to be embedding NovaSharp 1.8.0.0 (or later) and exposing the VSCode debugger extensions.
 
 
 ## Features supported
@@ -24,7 +24,7 @@ It requires the application to be embedding MoonSharp 1.8.0.0 (or later) and exp
 
 ## Screenshot
 
-![Screenshot](src/moonsharp-vscode-debug/images/screenshot.png)
+![Screenshot](src/NovaSharp-vscode-debug/images/screenshot.png)
 
 
 ## How to use
@@ -39,8 +39,8 @@ It requires the application to be embedding MoonSharp 1.8.0.0 (or later) and exp
     "debugServer" : 41912,
     "configurations": [
         {
-            "name": "MoonSharp Attach",
-            "type": "moonsharp-debug",
+            "name": "NovaSharp Attach",
+            "type": "NovaSharp-debug",
             "request": "attach",
             "HELP": "Please set 'debugServer':41912 (or whatever port you ar connecting to) right after the 'version' field in this json."
         }

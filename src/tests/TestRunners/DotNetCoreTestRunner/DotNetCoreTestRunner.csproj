@@ -10,8 +10,8 @@
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
-        <ProjectReference Include="..\..\..\debuggers\MoonSharp.VsCodeDebugger\MoonSharp.VsCodeDebugger.csproj" />
+        <ProjectReference Include="..\..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="..\..\..\debuggers\NovaSharp.VsCodeDebugger\NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Update="TestMore\**\*">

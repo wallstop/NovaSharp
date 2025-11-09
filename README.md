@@ -1,11 +1,11 @@
-MoonSharp       [![Build Status](https://travis-ci.org/xanathar/moonsharp.svg?branch=master)](https://travis-ci.org/xanathar/moonsharp) [![Build Status](https://img.shields.io/nuget/v/MoonSharp.svg)](https://www.nuget.org/packages/MoonSharp/)
+NovaSharp       [![Build Status](https://travis-ci.org/xanathar/NovaSharp.svg?branch=master)](https://travis-ci.org/xanathar/NovaSharp) [![Build Status](https://img.shields.io/nuget/v/NovaSharp.svg)](https://www.nuget.org/packages/NovaSharp/)
 =========
-http://www.moonsharp.org   
+http://www.NovaSharp.org   
 
 
 # Overview
 
-This project is a port of [MoonSharp](http://www.moonsharp.org). MoonSharp has not had a commit in over 4 years, and its last stable release was over 9 years ago. It would be awesome to have an active, maintained version of this project.
+This project is a port of [NovaSharp](http://www.NovaSharp.org). NovaSharp has not had a commit in over 4 years, and its last stable release was over 9 years ago. It would be awesome to have an active, maintained version of this project.
 
 ## Project Goals
 
@@ -44,11 +44,11 @@ Features:
 * Easy to use error handling (script errors are exceptions)
 * Support for coroutines, including invocation of coroutines as C# iterators 
 * REPL interpreter, plus facilities to easily implement your own REPL in few lines of code
-* Complete XML help, and walkthroughs on http://www.moonsharp.org
+* Complete XML help, and walkthroughs on http://www.NovaSharp.org
 
-For highlights on differences between MoonSharp and standard Lua, see http://www.moonsharp.org/moonluadifferences.html
+For highlights on differences between NovaSharp and standard Lua, see http://www.NovaSharp.org/moonluadifferences.html
 
-Please see http://www.moonsharp.org for downloads, infos, tutorials, etc.
+Please see http://www.NovaSharp.org for downloads, infos, tutorials, etc.
 
 Additional documentation:
 - [Performance Benchmarks](docs/Performance.md)
@@ -69,7 +69,7 @@ Debugger icons are from the Eclipse project (https://www.eclipse.org/).
 Use of the library is easy as:
 
 ```C#
-double MoonSharpFactorial()
+double NovaSharpFactorial()
 {
 	string script = @"    
 		-- defines a factorial function
@@ -88,7 +88,8 @@ double MoonSharpFactorial()
 }
 ```
 
-For more in-depth tutorials, samples, etc. please refer to http://www.moonsharp.org/getting_started.html
+For more in-depth tutorials, samples, etc. please refer to http://www.NovaSharp.org/getting_started.html
+
 
 
 

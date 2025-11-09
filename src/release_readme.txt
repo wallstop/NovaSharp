@@ -1,11 +1,11 @@
-MoonSharp [http://www.moonsharp.org]
+NovaSharp [http://www.NovaSharp.org]
 ------------------------------------
 
-This archive contains all the files required to setup MoonSharp on your machine.
+This archive contains all the files required to setup NovaSharp on your machine.
 
 Contents:
 
- - /interpreter    -> The main DLL of the MoonSharp interpreter itself. 
+ - /interpreter    -> The main DLL of the NovaSharp interpreter itself. 
                       Use this if you want to just embed the interpreter in your application.
                       
  - /vscodedebugger -> The DLL for the Visual Studio Code debugger facilities (plus the interpreter DLL itself). 
@@ -28,7 +28,7 @@ Each directory contains, where applicable, subdirectories for the supported mode
 
 - net8.0 :
   Desktop-first builds that light up additional tooling (CLI shell, benchmarks, test runner). Use these for development,
-  automation, or when you need the latest .NET runtime features alongside MoonSharp.
+  automation, or when you need the latest .NET runtime features alongside NovaSharp.
 
 - sources
 This contains just the C# sources, with no project files. Import this in any project and you are ready to go. 

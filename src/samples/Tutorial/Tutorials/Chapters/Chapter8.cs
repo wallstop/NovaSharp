@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Loaders;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Loaders;
 
 namespace Tutorials.Chapters
 {

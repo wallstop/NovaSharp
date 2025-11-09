@@ -1,4 +1,4 @@
-# MoonSharp Performance Baselines
+# NovaSharp Performance Baselines
 
 This document captures benchmark snapshots across supported operating systems. Each run overwrites the section for the current OS with fresh measurements, hardware notes, and environment details.
 
@@ -11,9 +11,9 @@ _Last updated: 2025-11-08 12:02:37 -08:00_
 - Logical cores: 24
 - Runtime: .NET 8.0.21 (8.0.2125.47513)
 - Approx. RAM: 195,968 MB
-- Suite: MoonSharp Benchmarks
+- Suite: NovaSharp Benchmarks
 
-### MoonSharp.Benchmarks.RuntimeBenchmarks-20251108-115938
+### NovaSharp.Benchmarks.RuntimeBenchmarks-20251108-115938
 
 ```
 
@@ -35,7 +35,7 @@ WarmupCount=2
 | **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **280.2 ns** |  **11.47 ns** |   **7.59 ns** |   **291.9 ns** |    **3** | **0.0720** |      **-** |    **1360 B** |
 
 
-### MoonSharp.Benchmarks.ScriptLoadingBenchmarks-20251108-120017
+### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251108-120017
 
 ```
 
@@ -64,7 +64,7 @@ WarmupCount=2
 | &#39;Compile Only&#39;        | Large      |   3,189,098.95 ns |    726,924.237 ns |    480,815.375 ns |   3,633,812.87 ns |    6 |    320.3125 |  312.5000 | 285.1563 |    2937547 B |
 | &#39;Execute Precompiled&#39; | Large      | 796,714,790.00 ns | 95,348,054.650 ns | 63,066,834.573 ns | 879,477,975.00 ns |   10 | 163000.0000 |         - |        - | 3069038760 B |
 
-### MoonSharp.Benchmarks.RuntimeBenchmarks-20251108-115419
+### NovaSharp.Benchmarks.RuntimeBenchmarks-20251108-115419
 
 ```
 
@@ -86,7 +86,7 @@ WarmupCount=2
 | **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **285.9 ns** |  **14.15 ns** |   **9.36 ns** |   **299.5 ns** |    **3** | **0.0720** |      **-** |    **1360 B** |
 
 
-### MoonSharp.Benchmarks.ScriptLoadingBenchmarks-20251108-115506
+### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251108-115506
 
 ```
 
@@ -123,5 +123,6 @@ _No benchmark data recorded yet._
 ## macOS
 
 _No benchmark data recorded yet._
+
 
 

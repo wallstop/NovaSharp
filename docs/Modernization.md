@@ -1,6 +1,6 @@
 # Modernization Notes
 
-MoonSharp now targets `netstandard2.1` for all runtime components and `net8.0` for tooling, ensuring out-of-the-box support for:
+NovaSharp now targets `netstandard2.1` for all runtime components and `net8.0` for tooling, ensuring out-of-the-box support for:
 
 - Unity 2021+ (including IL2CPP builds)
 - Mono and Xamarin successors consuming .NET Standard
@@ -18,3 +18,4 @@ MoonSharp now targets `netstandard2.1` for all runtime components and `net8.0` f
 - Validate remote debugger assets on modern browsers now that Flash-era scaffolding has been archived.
 
 Keep this page current when additional modernization steps land (e.g., nullable annotations, trimming support, native AOT testing).
+

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
@@ -6,22 +6,21 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <AssemblyName>PerformanceComparison</AssemblyName>
-        <RootNamespace>MoonSharp.PerformanceComparison</RootNamespace>
+        <RootNamespace>NovaSharp.PerformanceComparison</RootNamespace>
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
-        <OutputType>Library</OutputType>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="KeraLua" Version="1.4.4" />
         <PackageReference Include="NLua" Version="1.7.5" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\MoonSharp.Interpreter\MoonSharp.Interpreter.csproj" />
+        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
         <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
         <Compile
-            Include="..\Benchmarks\MoonSharp.Benchmarks\PerformanceReportWriter.cs"
+            Include="..\Benchmarks\NovaSharp.Benchmarks\PerformanceReportWriter.cs"
             Link="PerformanceReportWriter.cs"
         />
     </ItemGroup>

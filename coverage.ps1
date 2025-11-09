@@ -18,7 +18,7 @@ try {
 
     if (-not $SkipBuild) {
         Write-Host "Building solution (configuration: $Configuration)..."
-        dotnet build "src/MoonSharp.sln" -c $Configuration | Out-Null
+        dotnet build "src/NovaSharp.sln" -c $Configuration | Out-Null
     }
 
     $runnerProject = "src/tests/TestRunners/DotNetCoreTestRunner/DotNetCoreTestRunner.csproj"
@@ -41,7 +41,7 @@ try {
         --format "cobertura" `
         --format "opencover" `
         --output $coverageBase `
-        --include "[MoonSharp.*]*"
+        --include "[NovaSharp.*]*"
 
     $reportTarget = Join-Path $repoRoot "docs/coverage/latest"
     if (Test-Path $reportTarget) {
@@ -59,7 +59,7 @@ try {
         "-reports:$coberturaReport" `
         "-targetdir:$reportTarget" `
         "-reporttypes:Html;TextSummary" `
-        "-assemblyfilters:+MoonSharp.*"
+        "-assemblyfilters:+NovaSharp.*"
 
     $summaryPath = Join-Path $reportTarget "Summary.txt"
     if (Test-Path $summaryPath) {

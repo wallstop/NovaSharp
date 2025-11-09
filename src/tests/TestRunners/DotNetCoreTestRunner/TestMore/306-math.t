@@ -108,7 +108,7 @@ like(math.random(9), '^%d$', "function random 1 arg")
 like(math.random(10, 19), '^1%d$', "function random 2 arg")
 
 --[[
-MoonSharp : math.random normalizes inputs, and we are happy with that
+NovaSharp : math.random normalizes inputs, and we are happy with that
 
 if jit then
     todo("LuaJIT intentional. Don't check empty interval.", 2)
@@ -151,3 +151,4 @@ like(math.tanh(1), '^0%.761', "function sinh")
 --   fill-column: 100
 -- End:
 -- vim: ft=lua expandtab shiftwidth=4:
+

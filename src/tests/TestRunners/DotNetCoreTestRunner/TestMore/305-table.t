@@ -225,7 +225,7 @@ eq_array(output, {
 
 --[[
 
-MoonSharp: Sort callbacks work --]]
+NovaSharp: Sort callbacks work --]]
 
 
 error_like(function ()
@@ -249,5 +249,6 @@ eq_array({table.unpack({'a','b','c'},2,4)}, {'b','c'})
 --   fill-column: 100
 -- End:
 -- vim: ft=lua expandtab shiftwidth=4:
+
 
 

@@ -8,8 +8,8 @@ import * as vscode from 'vscode';
 
 const initialConfigurations = [
 	{
-		name: 'MoonSharp-Debug',
-		type: 'moonsharp-debug',
+		name: 'NovaSharp-Debug',
+		type: 'NovaSharp-debug',
 		request: 'attach',
 		stopOnEntry: true
 	}
