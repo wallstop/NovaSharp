@@ -1,15 +1,15 @@
-using System;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using Compatibility;
+
     /// <summary>
     /// Data descriptor used for proxy objects
     /// </summary>
     public sealed class ProxyUserDataDescriptor : IUserDataDescriptor
     {
-        IUserDataDescriptor m_ProxyDescriptor;
-        IProxyFactory m_ProxyFactory;
+        private readonly IUserDataDescriptor _proxyDescriptor;
+        private readonly IProxyFactory _proxyFactory;
 
         internal ProxyUserDataDescriptor(
             IProxyFactory proxyFactory,
@@ -17,9 +17,9 @@ namespace NovaSharp.Interpreter.Interop
             string friendlyName = null
         )
         {
-            m_ProxyFactory = proxyFactory;
+            _proxyFactory = proxyFactory;
             Name = friendlyName ?? (proxyFactory.TargetType.Name + "::proxy");
-            m_ProxyDescriptor = proxyDescriptor;
+            _proxyDescriptor = proxyDescriptor;
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public IUserDataDescriptor InnerDescriptor
         {
-            get { return m_ProxyDescriptor; }
+            get { return _proxyDescriptor; }
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public Type Type
         {
-            get { return m_ProxyFactory.TargetType; }
+            get { return _proxyFactory.TargetType; }
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         private object Proxy(object obj)
         {
-            return obj != null ? m_ProxyFactory.CreateProxyObject(obj) : null;
+            return obj != null ? _proxyFactory.CreateProxyObject(obj) : null;
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
-            return m_ProxyDescriptor.Index(script, Proxy(obj), index, isDirectIndexing);
+            return _proxyDescriptor.Index(script, Proxy(obj), index, isDirectIndexing);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Interop
             bool isDirectIndexing
         )
         {
-            return m_ProxyDescriptor.SetIndex(script, Proxy(obj), index, value, isDirectIndexing);
+            return _proxyDescriptor.SetIndex(script, Proxy(obj), index, value, isDirectIndexing);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public string AsString(object obj)
         {
-            return m_ProxyDescriptor.AsString(Proxy(obj));
+            return _proxyDescriptor.AsString(Proxy(obj));
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            return m_ProxyDescriptor.MetaIndex(script, Proxy(obj), metaname);
+            return _proxyDescriptor.MetaIndex(script, Proxy(obj), metaname);
         }
 
         /// <summary>

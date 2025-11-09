@@ -1,7 +1,10 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using NUnit.Framework;
+
     [TestFixture]
     public class BinaryDumpTests
     {
@@ -10,15 +13,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s1 = new();
             DynValue v1 = s1.LoadString(script);
 
-            using (MemoryStream ms = new())
-            {
-                s1.Dump(v1, ms);
-                ms.Seek(0, SeekOrigin.Begin);
+            using MemoryStream ms = new();
+            s1.Dump(v1, ms);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                Script s2 = new();
-                DynValue func = s2.LoadStream(ms);
-                return func.Function.Call();
-            }
+            Script s2 = new();
+            DynValue func = s2.LoadStream(ms);
+            return func.Function.Call();
         }
 
         private DynValue Script_LoadFunc(string script, string funcname)
@@ -27,14 +28,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue v1 = s1.DoString(script);
             DynValue func = s1.Globals.Get(funcname);
 
-            using (MemoryStream ms = new())
-            {
-                s1.Dump(func, ms);
-                ms.Seek(0, SeekOrigin.Begin);
+            using MemoryStream ms = new();
+            s1.Dump(func, ms);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                Script s2 = new();
-                return s2.LoadStream(ms);
-            }
+            Script s2 = new();
+            return s2.LoadStream(ms);
         }
 
         [Test]
@@ -50,8 +49,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(81, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(81));
         }
 
         [Test]
@@ -66,8 +65,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(81, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(81));
         }
 
         [Test]
@@ -86,8 +85,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue fact = Script_LoadFunc(script, "fact");
             DynValue res = fact.Function.Call(5);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120));
         }
 
         [Test]
@@ -105,8 +104,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             DynValue res = fact.Function.Call(5);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120));
         }
 
         [Test]
@@ -127,8 +126,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120));
         }
 
         [Test]
@@ -150,8 +149,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120));
         }
 
         [Test]
@@ -179,8 +178,8 @@ return y;
 
             DynValue res = Script_RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(140, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(140));
         }
 
         [Test]
@@ -199,8 +198,8 @@ return y;
 
             DynValue res = Script_RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(5, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(5));
         }
 
         [Test]
@@ -228,8 +227,8 @@ return y;
 
             DynValue res = Script_RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -264,8 +263,8 @@ return y;
 
             DynValue res = Script_RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -296,19 +295,20 @@ return y;
 
 				sandbox()";
 
-            Script S = new(CoreModules.Preset_Complete);
+            Script s = new(CoreModules.PresetComplete)
+            {
+                Globals = { ["print"] = (Action<Table>)(t => list.Add(t)) },
+            };
 
-            S.Globals["print"] = (Action<Table>)(t => list.Add(t));
+            s.DoString(script);
 
-            S.DoString(script);
-
-            Assert.AreEqual(6, list.Count);
+            Assert.That(list.Count, Is.EqualTo(6));
 
             int[] eqs = new int[] { 0, 1, 1, 0, 1, 1 };
 
             for (int i = 0; i < 6; i++)
             {
-                Assert.AreEqual(list[eqs[i]], list[i]);
+                Assert.That(list[i], Is.EqualTo(list[eqs[i]]));
             }
         }
     }

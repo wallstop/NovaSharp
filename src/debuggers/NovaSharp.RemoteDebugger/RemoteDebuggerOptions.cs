@@ -1,15 +1,15 @@
-using NovaSharp.RemoteDebugger.Network;
-
 namespace NovaSharp.RemoteDebugger
 {
+    using Network;
+
     public struct RemoteDebuggerOptions
     {
-        public Utf8TcpServerOptions NetworkOptions;
+        public Utf8TcpServerOptions networkOptions;
 
-        public bool SingleScriptMode;
+        public bool singleScriptMode;
 
-        public int? HttpPort;
-        public int RpcPortBase;
+        public int? httpPort;
+        public int rpcPortBase;
 
         public static RemoteDebuggerOptions Default
         {
@@ -17,11 +17,11 @@ namespace NovaSharp.RemoteDebugger
             {
                 return new RemoteDebuggerOptions()
                 {
-                    NetworkOptions =
+                    networkOptions =
                         Utf8TcpServerOptions.LocalHostOnly | Utf8TcpServerOptions.SingleClientOnly,
-                    SingleScriptMode = false,
-                    HttpPort = 2705,
-                    RpcPortBase = 2006,
+                    singleScriptMode = false,
+                    httpPort = 2705,
+                    rpcPortBase = 2006,
                 };
             }
         }

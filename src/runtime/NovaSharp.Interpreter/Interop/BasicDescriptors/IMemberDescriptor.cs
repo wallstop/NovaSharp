@@ -10,17 +10,17 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <summary>
         /// Gets a value indicating whether the described member is static.
         /// </summary>
-        bool IsStatic { get; }
+        public bool IsStatic { get; }
 
         /// <summary>
         /// Gets the name of the member
         /// </summary>
-        string Name { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the types of access supported by this member
         /// </summary>
-        MemberDescriptorAccess MemberAccess { get; }
+        public MemberDescriptorAccess MemberAccess { get; }
 
         /// <summary>
         /// Gets the value of this member as a <see cref="DynValue"/> to be exposed to scripts.
@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <returns>The value of this member as a <see cref="DynValue"/>.</returns>
-        DynValue GetValue(Script script, object obj);
+        public DynValue GetValue(Script script, object obj);
 
         /// <summary>
         /// Sets the value of this member from a <see cref="DynValue"/>.
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <param name="value">The value to be set.</param>
-        void SetValue(Script script, object obj, DynValue value);
+        public void SetValue(Script script, object obj, DynValue value);
     }
 
     /// <summary>

@@ -1,32 +1,32 @@
-using System.Collections;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System.Collections;
+    using Converters;
+
     /// <summary>
     /// Wrappers for enumerables as return types
     /// </summary>
     internal class EnumerableWrapper : IUserDataType
     {
-        IEnumerator m_Enumerator;
-        Script m_Script;
-        DynValue m_Prev = DynValue.Nil;
-        bool m_HasTurnOnce = false;
+        private readonly IEnumerator _enumerator;
+        private readonly Script _script;
+        private DynValue _prev = DynValue.Nil;
+        private bool _hasTurnOnce = false;
 
         private EnumerableWrapper(Script script, IEnumerator enumerator)
         {
-            m_Script = script;
-            m_Enumerator = enumerator;
+            _script = script;
+            _enumerator = enumerator;
         }
 
         public void Reset()
         {
-            if (m_HasTurnOnce)
+            if (_hasTurnOnce)
             {
-                m_Enumerator.Reset();
+                _enumerator.Reset();
             }
 
-            m_HasTurnOnce = true;
+            _hasTurnOnce = true;
         }
 
         private DynValue GetNext(DynValue prev)
@@ -36,12 +36,9 @@ namespace NovaSharp.Interpreter.Interop
                 Reset();
             }
 
-            while (m_Enumerator.MoveNext())
+            while (_enumerator.MoveNext())
             {
-                DynValue v = ClrToScriptConversions.ObjectToDynValue(
-                    m_Script,
-                    m_Enumerator.Current
-                );
+                DynValue v = ClrToScriptConversions.ObjectToDynValue(_script, _enumerator.Current);
 
                 if (!v.IsNil())
                 {
@@ -57,8 +54,8 @@ namespace NovaSharp.Interpreter.Interop
             CallbackArguments args
         )
         {
-            m_Prev = this.GetNext(m_Prev);
-            return m_Prev;
+            _prev = GetNext(_prev);
+            return _prev;
         }
 
         internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
@@ -80,12 +77,12 @@ namespace NovaSharp.Interpreter.Interop
 
                 if (idx == "Current" || idx == "current")
                 {
-                    return DynValue.FromObject(script, m_Enumerator.Current);
+                    return DynValue.FromObject(script, _enumerator.Current);
                 }
                 else if (idx == "MoveNext" || idx == "moveNext" || idx == "move_next")
                 {
                     return DynValue.NewCallback(
-                        (ctx, args) => DynValue.NewBoolean(m_Enumerator.MoveNext())
+                        (ctx, args) => DynValue.NewBoolean(_enumerator.MoveNext())
                     );
                 }
                 else if (idx == "Reset" || idx == "reset")

@@ -1,16 +1,16 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.DataStructs;
-
 namespace NovaSharp.Interpreter
 {
+    using System.Collections.Generic;
+    using DataStructs;
+
     /// <summary>
     /// This class is a container for arguments received by a CallbackFunction
     /// </summary>
     public class CallbackArguments
     {
-        IList<DynValue> m_Args;
-        int m_Count;
-        bool m_LastIsTuple = false;
+        private readonly IList<DynValue> _args;
+        private readonly int _count;
+        private bool _lastIsTuple = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CallbackArguments" /> class.
@@ -19,29 +19,29 @@ namespace NovaSharp.Interpreter
         /// <param name="isMethodCall">if set to <c>true</c> [is method call].</param>
         public CallbackArguments(IList<DynValue> args, bool isMethodCall)
         {
-            m_Args = args;
+            _args = args;
 
-            if (m_Args.Count > 0)
+            if (_args.Count > 0)
             {
-                DynValue last = m_Args[m_Args.Count - 1];
+                DynValue last = _args[^1];
 
                 if (last.Type == DataType.Tuple)
                 {
-                    m_Count = last.Tuple.Length - 1 + m_Args.Count;
-                    m_LastIsTuple = true;
+                    _count = last.Tuple.Length - 1 + _args.Count;
+                    _lastIsTuple = true;
                 }
                 else if (last.Type == DataType.Void)
                 {
-                    m_Count = m_Args.Count - 1;
+                    _count = _args.Count - 1;
                 }
                 else
                 {
-                    m_Count = m_Args.Count;
+                    _count = _args.Count;
                 }
             }
             else
             {
-                m_Count = 0;
+                _count = 0;
             }
 
             IsMethodCall = isMethodCall;
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public int Count
         {
-            get { return m_Count; }
+            get { return _count; }
         }
 
         /// <summary>
@@ -78,18 +78,18 @@ namespace NovaSharp.Interpreter
         {
             DynValue v;
 
-            if (index >= m_Count)
+            if (index >= _count)
             {
                 return null;
             }
 
-            if (!m_LastIsTuple || index < m_Args.Count - 1)
+            if (!_lastIsTuple || index < _args.Count - 1)
             {
-                v = m_Args[index];
+                v = _args[index];
             }
             else
             {
-                v = m_Args[m_Args.Count - 1].Tuple[index - (m_Args.Count - 1)];
+                v = _args[^1].Tuple[index - (_args.Count - 1)];
             }
 
             if (v.Type == DataType.Tuple)
@@ -119,14 +119,14 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue[] GetArray(int skip = 0)
         {
-            if (skip >= m_Count)
+            if (skip >= _count)
             {
                 return new DynValue[0];
             }
 
-            DynValue[] vals = new DynValue[m_Count - skip];
+            DynValue[] vals = new DynValue[_count - skip];
 
-            for (int i = skip; i < m_Count; i++)
+            for (int i = skip; i < _count; i++)
             {
                 vals[i - skip] = this[i];
             }
@@ -249,9 +249,9 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public CallbackArguments SkipMethodCall()
         {
-            if (this.IsMethodCall)
+            if (IsMethodCall)
             {
-                Slice<DynValue> slice = new(m_Args, 1, m_Args.Count - 1, false);
+                Slice<DynValue> slice = new(_args, 1, _args.Count - 1, false);
                 return new CallbackArguments(slice, false);
             }
             else

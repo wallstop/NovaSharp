@@ -1,15 +1,15 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class FunctionCallExpression : Expression
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+
+    internal class FunctionCallExpression : Expression
     {
-        List<Expression> m_Arguments;
-        Expression m_Function;
-        string m_Name;
-        string m_DebugErr;
+        private readonly List<Expression> _arguments;
+        private readonly Expression _function;
+        private readonly string _name;
+        private readonly string _debugErr;
 
         internal SourceRef SourceRef { get; private set; }
 
@@ -22,47 +22,47 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             Token callToken = thisCallName ?? lcontext.Lexer.Current;
 
-            m_Name = thisCallName != null ? thisCallName.Text : null;
-            m_DebugErr = function.GetFriendlyDebugName();
-            m_Function = function;
+            _name = thisCallName != null ? thisCallName.Text : null;
+            _debugErr = function.GetFriendlyDebugName();
+            _function = function;
 
-            switch (lcontext.Lexer.Current.Type)
+            switch (lcontext.Lexer.Current.type)
             {
-                case TokenType.Brk_Open_Round:
+                case TokenType.BrkOpenRound:
                     Token openBrk = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
                     Token t = lcontext.Lexer.Current;
-                    if (t.Type == TokenType.Brk_Close_Round)
+                    if (t.type == TokenType.BrkCloseRound)
                     {
-                        m_Arguments = new List<Expression>();
+                        _arguments = new List<Expression>();
                         SourceRef = callToken.GetSourceRef(t);
                         lcontext.Lexer.Next();
                     }
                     else
                     {
-                        m_Arguments = ExprList(lcontext);
+                        _arguments = ExprList(lcontext);
                         SourceRef = callToken.GetSourceRef(
-                            CheckMatch(lcontext, openBrk, TokenType.Brk_Close_Round, ")")
+                            CheckMatch(lcontext, openBrk, TokenType.BrkCloseRound, ")")
                         );
                     }
                     break;
                 case TokenType.String:
-                case TokenType.String_Long:
+                case TokenType.StringLong:
                     {
-                        m_Arguments = new List<Expression>();
+                        _arguments = new List<Expression>();
                         Expression le = new LiteralExpression(lcontext, lcontext.Lexer.Current);
-                        m_Arguments.Add(le);
+                        _arguments.Add(le);
                         SourceRef = callToken.GetSourceRef(lcontext.Lexer.Current);
                     }
                     break;
-                case TokenType.Brk_Open_Curly:
-                case TokenType.Brk_Open_Curly_Shared:
+                case TokenType.BrkOpenCurly:
+                case TokenType.BrkOpenCurlyShared:
                     {
-                        m_Arguments = new List<Expression>();
-                        m_Arguments.Add(
+                        _arguments = new List<Expression>();
+                        _arguments.Add(
                             new TableConstructor(
                                 lcontext,
-                                lcontext.Lexer.Current.Type == TokenType.Brk_Open_Curly_Shared
+                                lcontext.Lexer.Current.type == TokenType.BrkOpenCurlyShared
                             )
                         );
                         SourceRef = callToken.GetSourceRefUpTo(lcontext.Lexer.Current);
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     )
                     {
                         IsPrematureStreamTermination = (
-                            lcontext.Lexer.Current.Type == TokenType.Eof
+                            lcontext.Lexer.Current.type == TokenType.Eof
                         ),
                     };
             }
@@ -83,30 +83,30 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            m_Function.Compile(bc);
+            _function.Compile(bc);
 
-            int argslen = m_Arguments.Count;
+            int argslen = _arguments.Count;
 
-            if (!string.IsNullOrEmpty(m_Name))
+            if (!string.IsNullOrEmpty(_name))
             {
                 bc.Emit_Copy(0);
-                bc.Emit_Index(DynValue.NewString(m_Name), true);
+                bc.Emit_Index(DynValue.NewString(_name), true);
                 bc.Emit_Swap(0, 1);
                 ++argslen;
             }
 
-            for (int i = 0; i < m_Arguments.Count; i++)
+            for (int i = 0; i < _arguments.Count; i++)
             {
-                m_Arguments[i].Compile(bc);
+                _arguments[i].Compile(bc);
             }
 
-            if (!string.IsNullOrEmpty(m_Name))
+            if (!string.IsNullOrEmpty(_name))
             {
-                bc.Emit_ThisCall(argslen, m_DebugErr);
+                bc.Emit_ThisCall(argslen, _debugErr);
             }
             else
             {
-                bc.Emit_Call(argslen, m_DebugErr);
+                bc.Emit_Call(argslen, _debugErr);
             }
         }
 

@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
+
     /// <summary>
     /// Wrapper for a debugger initiated action
     /// </summary>
@@ -91,12 +91,12 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets the time stamp UTC of this action
         /// </summary>
-        public DateTime TimeStampUTC { get; private set; }
+        public DateTime TimeStampUtc { get; private set; }
 
         /// <summary>
         /// Gets or sets the source identifier this action refers to. <see cref="Script.GetSourceCode"/>
         /// </summary>
-        public int SourceID { get; set; }
+        public int SourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the source line this action refers to.
@@ -118,7 +118,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public DebuggerAction()
         {
-            TimeStampUTC = DateTime.UtcNow;
+            TimeStampUtc = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public TimeSpan Age
         {
-            get { return DateTime.UtcNow - TimeStampUTC; }
+            get { return DateTime.UtcNow - TimeStampUtc; }
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace NovaSharp.Interpreter.Debugging
                 || Action == ActionType.ClearBreakpoint
             )
             {
-                return string.Format("{0} {1}:({2},{3})", Action, SourceID, SourceLine, SourceCol);
+                return $"{Action} {SourceId}:({SourceLine},{SourceCol})";
             }
             else
             {

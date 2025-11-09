@@ -15,8 +15,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // Otherwise, returns three values: an iterator function, the table t, and 0, so that the construction
         //	  for i,v in ipairs(t) do body end
         // will iterate over the pairs (1,t[1]), (2,t[2]), ..., up to the first integer key absent from the table.
-        [NovaSharpModuleMethod]
-        public static DynValue ipairs(
+        [NovaSharpModuleMethod(Name = "ipairs")]
+        public static DynValue Ipairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -40,8 +40,8 @@ namespace NovaSharp.Interpreter.CoreLib
         //     for k,v in pairs(t) do body end
         // will iterate over all key–value pairs of table t.
         // See function next for the caveats of modifying the table during its traversal.
-        [NovaSharpModuleMethod]
-        public static DynValue pairs(
+        [NovaSharpModuleMethod(Name = "pairs")]
+        public static DynValue Pairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 args.GetArray()
             );
 
-            return meta ?? DynValue.NewTuple(DynValue.NewCallback(next), table);
+            return meta ?? DynValue.NewTuple(DynValue.NewCallback(Next), table);
         }
 
         // next (table [, index])
@@ -68,8 +68,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // (To traverse a table in numeric order, use a numerical for.)
         // The behavior of next is undefined if, during the traversal, you assign any value to a non-existent field in the table.
         // You may however modify existing fields. In particular, you may clear existing fields.
-        [NovaSharpModuleMethod]
-        public static DynValue next(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "next")]
+        public static DynValue Next(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue table = args.AsType(0, "next", DataType.Table);
             DynValue index = args[1];

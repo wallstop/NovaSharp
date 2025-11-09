@@ -1,26 +1,27 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-using NovaSharp.Interpreter.Tree.Statements;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class FunctionDefinitionExpression : Expression, IClosureBuilder
+    using System;
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+    using Execution.VM;
+    using Statements;
+
+    internal class FunctionDefinitionExpression : Expression, IClosureBuilder
     {
-        SymbolRef[] m_ParamNames = null;
-        Statement m_Statement;
-        RuntimeScopeFrame m_StackFrame;
-        List<SymbolRef> m_Closure = new();
-        bool m_HasVarArgs = false;
-        Instruction m_ClosureInstruction = null;
+        private readonly SymbolRef[] _paramNames = null;
+        private readonly Statement _statement;
+        private readonly RuntimeScopeFrame _stackFrame;
+        private readonly List<SymbolRef> _closure = new();
+        private bool _hasVarArgs = false;
+        private Instruction _closureInstruction = null;
 
-        bool m_UsesGlobalEnv;
-        SymbolRef m_Env;
+        private readonly bool _usesGlobalEnv;
+        private readonly SymbolRef _env;
 
-        SourceRef m_Begin,
-            m_End;
+        private readonly SourceRef _begin;
+
+        private SourceRef _end;
 
         public FunctionDefinitionExpression(ScriptLoadingContext lcontext, bool usesGlobalEnv)
             : this(lcontext, false, usesGlobalEnv, false) { }
@@ -40,7 +41,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
             : base(lcontext)
         {
-            if (m_UsesGlobalEnv = usesGlobalEnv)
+            if (_usesGlobalEnv = usesGlobalEnv)
             {
                 CheckTokenType(lcontext, TokenType.Function);
             }
@@ -48,47 +49,47 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer should be at the '(' or at the '|'
             Token openRound = CheckTokenType(
                 lcontext,
-                isLambda ? TokenType.Lambda : TokenType.Brk_Open_Round
+                isLambda ? TokenType.Lambda : TokenType.BrkOpenRound
             );
 
             List<string> paramnames = BuildParamList(lcontext, pushSelfParam, openRound, isLambda);
             // here lexer is at first token of body
 
-            m_Begin = openRound.GetSourceRefUpTo(lcontext.Lexer.Current);
+            _begin = openRound.GetSourceRefUpTo(lcontext.Lexer.Current);
 
             // create scope
-            lcontext.Scope.PushFunction(this, m_HasVarArgs);
+            lcontext.Scope.PushFunction(this, _hasVarArgs);
 
-            if (m_UsesGlobalEnv)
+            if (_usesGlobalEnv)
             {
-                m_Env = lcontext.Scope.DefineLocal(WellKnownSymbols.ENV);
+                _env = lcontext.Scope.DefineLocal(WellKnownSymbols.ENV);
             }
             else
             {
                 lcontext.Scope.ForceEnvUpValue();
             }
 
-            m_ParamNames = DefineArguments(paramnames, lcontext);
+            _paramNames = DefineArguments(paramnames, lcontext);
 
             if (isLambda)
             {
-                m_Statement = CreateLambdaBody(lcontext);
+                _statement = CreateLambdaBody(lcontext);
             }
             else
             {
-                m_Statement = CreateBody(lcontext);
+                _statement = CreateBody(lcontext);
             }
 
-            m_StackFrame = lcontext.Scope.PopFunction();
+            _stackFrame = lcontext.Scope.PopFunction();
 
-            lcontext.Source.Refs.Add(m_Begin);
-            lcontext.Source.Refs.Add(m_End);
+            lcontext.Source.Refs.Add(_begin);
+            lcontext.Source.Refs.Add(_end);
         }
 
         private Statement CreateLambdaBody(ScriptLoadingContext lcontext)
         {
             Token start = lcontext.Lexer.Current;
-            Expression e = Expression.Expr(lcontext);
+            Expression e = Expr(lcontext);
             Token end = lcontext.Lexer.Current;
             SourceRef sref = start.GetSourceRefUpTo(end);
             Statement s = new ReturnStatement(lcontext, e, sref);
@@ -99,7 +100,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             Statement s = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.Type != TokenType.End)
+            if (lcontext.Lexer.Current.type != TokenType.End)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -107,11 +108,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     lcontext.Lexer.Current.Text
                 )
                 {
-                    IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
+                    IsPrematureStreamTermination = (lcontext.Lexer.Current.type == TokenType.Eof),
                 };
             }
 
-            m_End = lcontext.Lexer.Current.GetSourceRef();
+            _end = lcontext.Lexer.Current.GetSourceRef();
 
             lcontext.Lexer.Next();
             return s;
@@ -124,7 +125,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bool isLambda
         )
         {
-            TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.Brk_Close_Round;
+            TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.BrkCloseRound;
 
             List<string> paramnames = new();
 
@@ -134,17 +135,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 paramnames.Add("self");
             }
 
-            while (lcontext.Lexer.Current.Type != closeToken)
+            while (lcontext.Lexer.Current.type != closeToken)
             {
                 Token t = lcontext.Lexer.Current;
 
-                if (t.Type == TokenType.Name)
+                if (t.type == TokenType.Name)
                 {
                     paramnames.Add(t.Text);
                 }
-                else if (t.Type == TokenType.VarArgs)
+                else if (t.type == TokenType.VarArgs)
                 {
-                    m_HasVarArgs = true;
+                    _hasVarArgs = true;
                     paramnames.Add(WellKnownSymbols.VARARGS);
                 }
                 else
@@ -156,7 +157,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 t = lcontext.Lexer.Current;
 
-                if (t.Type == TokenType.Comma)
+                if (t.type == TokenType.Comma)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -167,7 +168,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            if (lcontext.Lexer.Current.Type == closeToken)
+            if (lcontext.Lexer.Current.type == closeToken)
             {
                 lcontext.Lexer.Next();
             }
@@ -196,22 +197,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
         {
-            for (int i = 0; i < m_Closure.Count; i++)
+            for (int i = 0; i < _closure.Count; i++)
             {
-                if (m_Closure[i].i_Name == symbol.i_Name)
+                if (_closure[i].i_Name == symbol.i_Name)
                 {
                     return SymbolRef.Upvalue(symbol.i_Name, i);
                 }
             }
 
-            m_Closure.Add(symbol);
+            _closure.Add(symbol);
 
-            if (m_ClosureInstruction != null)
+            if (_closureInstruction != null)
             {
-                m_ClosureInstruction.SymbolList = m_Closure.ToArray();
+                _closureInstruction.SymbolList = _closure.ToArray();
             }
 
-            return SymbolRef.Upvalue(symbol.i_Name, m_Closure.Count - 1);
+            return SymbolRef.Upvalue(symbol.i_Name, _closure.Count - 1);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
@@ -223,44 +224,43 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public int CompileBody(ByteCode bc, string friendlyName)
         {
-            string funcName =
-                friendlyName ?? ("<" + this.m_Begin.FormatLocation(bc.Script, true) + ">");
+            string funcName = friendlyName ?? ("<" + _begin.FormatLocation(bc.Script, true) + ">");
 
-            bc.PushSourceRef(m_Begin);
+            bc.PushSourceRef(_begin);
 
-            Instruction I = bc.Emit_Jump(OpCode.Jump, -1);
+            Instruction i = bc.Emit_Jump(OpCode.Jump, -1);
 
             Instruction meta = bc.Emit_Meta(funcName, OpCodeMetadataType.FunctionEntrypoint);
             int metaip = bc.GetJumpPointForLastInstruction();
 
-            bc.Emit_BeginFn(m_StackFrame);
+            bc.Emit_BeginFn(_stackFrame);
 
-            bc.LoopTracker.Loops.Push(new LoopBoundary());
+            bc.LoopTracker.loops.Push(new LoopBoundary());
 
             int entryPoint = bc.GetJumpPointForLastInstruction();
 
-            if (m_UsesGlobalEnv)
+            if (_usesGlobalEnv)
             {
                 bc.Emit_Load(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
-                bc.Emit_Store(m_Env, 0, 0);
+                bc.Emit_Store(_env, 0, 0);
                 bc.Emit_Pop();
             }
 
-            if (m_ParamNames.Length > 0)
+            if (_paramNames.Length > 0)
             {
-                bc.Emit_Args(m_ParamNames);
+                bc.Emit_Args(_paramNames);
             }
 
-            m_Statement.Compile(bc);
+            _statement.Compile(bc);
 
             bc.PopSourceRef();
-            bc.PushSourceRef(m_End);
+            bc.PushSourceRef(_end);
 
             bc.Emit_Ret(0);
 
-            bc.LoopTracker.Loops.Pop();
+            bc.LoopTracker.loops.Pop();
 
-            I.NumVal = bc.GetJumpPointForNextInstruction();
+            i.NumVal = bc.GetJumpPointForNextInstruction();
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
 
             bc.PopSourceRef();
@@ -270,16 +270,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public int Compile(ByteCode bc, Func<int> afterDecl, string friendlyName)
         {
-            using (bc.EnterSource(m_Begin))
+            using (bc.EnterSource(_begin))
             {
-                SymbolRef[] symbs = m_Closure
-                //.Select((s, idx) => s.CloneLocalAndSetFrame(m_ClosureFrames[idx]))
+                SymbolRef[] symbs = _closure
+                //.Select((s, idx) => s.CloneLocalAndSetFrame(_ClosureFrames[idx]))
                 .ToArray();
 
-                m_ClosureInstruction = bc.Emit_Closure(symbs, bc.GetJumpPointForNextInstruction());
+                _closureInstruction = bc.Emit_Closure(symbs, bc.GetJumpPointForNextInstruction());
                 int ops = afterDecl();
 
-                m_ClosureInstruction.NumVal += 2 + ops;
+                _closureInstruction.NumVal += 2 + ops;
             }
 
             return CompileBody(bc, friendlyName);

@@ -1,15 +1,20 @@
-using System;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using BasicDescriptors;
+    using Converters;
+
     /// <summary>
     /// Member descriptor which allows to define new members which behave similarly to class instance members
     /// </summary>
     public class ObjectCallbackMemberDescriptor : FunctionMemberDescriptorBase
     {
-        Func<object, ScriptExecutionContext, CallbackArguments, object> m_CallbackFunc;
+        private readonly Func<
+            object,
+            ScriptExecutionContext,
+            CallbackArguments,
+            object
+        > _callbackFunc;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObjectCallbackMemberDescriptor"/> class.
@@ -46,7 +51,7 @@ namespace NovaSharp.Interpreter.Interop
             ParameterDescriptor[] parameters
         )
         {
-            m_CallbackFunc = callBack;
+            _callbackFunc = callBack;
             Initialize(funcName, false, parameters, false);
         }
 
@@ -65,9 +70,9 @@ namespace NovaSharp.Interpreter.Interop
             CallbackArguments args
         )
         {
-            if (m_CallbackFunc != null)
+            if (_callbackFunc != null)
             {
-                object retv = m_CallbackFunc(obj, context, args);
+                object retv = _callbackFunc(obj, context, args);
                 return ClrToScriptConversions.ObjectToDynValue(script, retv);
             }
             else

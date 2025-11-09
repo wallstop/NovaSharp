@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Loaders
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Compatibility;
+
     /// <summary>
     /// A script loader which can load scripts from assets in Unity3D.
     /// Scripts should be saved as .txt files in a subdirectory of Assets/Resources.
@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Loaders
     /// </summary>
     public class UnityAssetsScriptLoader : ScriptLoaderBase
     {
-        Dictionary<string, string> m_Resources = new();
+        private readonly Dictionary<string, string> _resources = new();
 
         /// <summary>
         /// The default path where scripts are meant to be stored (if not changed)
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// <param name="scriptToCodeMap">A dictionary mapping filenames to the proper Lua script code.</param>
         public UnityAssetsScriptLoader(Dictionary<string, string> scriptToCodeMap)
         {
-            m_Resources = scriptToCodeMap;
+            _resources = scriptToCodeMap;
         }
 
 #if UNITY_5
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Loaders
                     string name = o.name;
                     string text = o.text;
 
-                    m_Resources.Add(name, text);
+                    _Resources.Add(name, text);
                 }
             }
             catch (Exception ex)
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Loaders
 
 #else
 
-        void LoadResourcesWithReflection(string assetsPath)
+        private void LoadResourcesWithReflection(string assetsPath)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace NovaSharp.Interpreter.Loaders
                     string name = textAssetNameGet.Invoke(o, null) as string;
                     string text = textAssetTextGet.Invoke(o, null) as string;
 
-                    m_Resources.Add(name, text);
+                    _resources.Add(name, text);
                 }
             }
             catch (Exception ex)
@@ -113,9 +113,7 @@ namespace NovaSharp.Interpreter.Loaders
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
                 Console.WriteLine("Error initializing UnityScriptLoader : {0}", ex);
 #endif
-                System.Diagnostics.Debug.WriteLine(
-                    string.Format("Error initializing UnityScriptLoader : {0}", ex)
-                );
+                System.Diagnostics.Debug.WriteLine($"Error initializing UnityScriptLoader : {ex}");
             }
         }
 #endif
@@ -148,9 +146,9 @@ namespace NovaSharp.Interpreter.Loaders
         {
             file = GetFileName(file);
 
-            if (m_Resources.ContainsKey(file))
+            if (_resources.ContainsKey(file))
             {
-                return m_Resources[file];
+                return _resources[file];
             }
             else
             {
@@ -174,7 +172,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).",
         public override bool ScriptFileExists(string file)
         {
             file = GetFileName(file);
-            return m_Resources.ContainsKey(file);
+            return _resources.ContainsKey(file);
         }
 
         /// <summary>
@@ -183,7 +181,7 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).",
         /// <returns></returns>
         public string[] GetLoadedScripts()
         {
-            return m_Resources.Keys.ToArray();
+            return _resources.Keys.ToArray();
         }
     }
 }

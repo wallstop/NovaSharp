@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class TableTests
     {
@@ -18,8 +18,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -37,22 +37,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(7, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[2].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[3].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[4].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[5].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[6].Type);
-            Assert.AreEqual(1, res.Tuple[0].Number);
-            Assert.AreEqual(2, res.Tuple[1].Number);
-            Assert.AreEqual(3, res.Tuple[2].Number);
-            Assert.AreEqual(4, res.Tuple[3].Number);
-            Assert.AreEqual(5, res.Tuple[4].Number);
-            Assert.AreEqual(6, res.Tuple[5].Number);
-            Assert.AreEqual(7, res.Tuple[6].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(7));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[3].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[4].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[5].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[6].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(1));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(2));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(3));
+            Assert.That(res.Tuple[3].Number, Is.EqualTo(4));
+            Assert.That(res.Tuple[4].Number, Is.EqualTo(5));
+            Assert.That(res.Tuple[5].Number, Is.EqualTo(6));
+            Assert.That(res.Tuple[6].Number, Is.EqualTo(7));
         }
 
         [Test]
@@ -77,8 +77,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -103,8 +103,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -129,8 +129,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -155,8 +155,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -184,8 +184,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -201,8 +201,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Boolean, res.Type);
-            Assert.AreEqual(true, res.CastToBool());
+            Assert.That(res.Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(res.CastToBool(), Is.EqualTo(true));
         }
 
         [Test]
@@ -248,8 +248,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("1|2|3|4|5", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("1|2|3|4|5"));
         }
 
         [Test]
@@ -278,11 +278,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(5, res.Tuple[0].String.Length);
-            Assert.AreEqual(15, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].String.Length, Is.EqualTo(5));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(15));
         }
 
         [Test]
@@ -308,12 +308,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(6, res.Tuple[0].Number);
-            Assert.AreEqual(12, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(6));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(12));
         }
 
         [Test]
@@ -336,10 +336,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[1].Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
         }
 
         [Test]
@@ -357,7 +357,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
             DynValue t = s.DoString(script);
 
-            Assert.AreEqual("hello", t.Table["ciao"]);
+            Assert.That(t.Table["ciao"], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -372,11 +372,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			return t;
 		";
 
-            Script s = new();
-            s.Globals["x"] = "hello";
+            Script s = new() { Globals = { ["x"] = "hello" } };
             DynValue t = s.DoString(script);
 
-            Assert.AreEqual("hello", t.Table["ciao"]);
+            Assert.That(t.Table["ciao"], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -395,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             s.Globals["t", "ciao"] = "hello";
 
-            Assert.AreEqual("hello", t.Table["ciao"]);
+            Assert.That(t.Table["ciao"], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -412,7 +411,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             s.Globals["t", "ciao"] = "hello";
 
-            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
+            Assert.That(s.Globals["t", "ciao"], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -428,7 +427,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
             s.DoString(script);
 
-            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
+            Assert.That(s.Globals["t", "ciao"], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -445,7 +444,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new(CoreModules.None);
             s.DoString(script);
 
-            Assert.AreEqual("hello", s.Globals["t", "ciao", 1]);
+            Assert.That(s.Globals["t", "ciao", 1], Is.EqualTo("hello"));
         }
 
         [Test]
@@ -476,8 +475,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("id$$", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("id$$"));
         }
 
         [Test]
@@ -490,10 +489,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(3, res.Tuple[0].Number);
-            Assert.AreEqual(4, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(3));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(4));
         }
 
         [Test]
@@ -509,8 +508,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
             s.DoString(script);
 
-            Assert.AreEqual("hello", s.Globals["t", "ciao"]);
-            Assert.IsTrue(s.Globals.Get("t").Table.OwnerScript == null);
+            Assert.That(s.Globals["t", "ciao"], Is.EqualTo("hello"));
+            Assert.That(s.Globals.Get("t").Table.OwnerScript == null, Is.True);
         }
 
         [Test]
@@ -533,39 +532,39 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Table_Length_Calculations()
         {
-            Table T = new(null);
+            Table t = new(null);
 
-            Assert.AreEqual(0, T.Length, "A");
+            Assert.That(t.Length, Is.EqualTo(0), "A");
 
-            T.Set(1, DynValue.True);
+            t.Set(1, DynValue.True);
 
-            Assert.AreEqual(1, T.Length, "B");
+            Assert.That(t.Length, Is.EqualTo(1), "B");
 
-            T.Set(2, DynValue.True);
-            T.Set(3, DynValue.True);
-            T.Set(4, DynValue.True);
+            t.Set(2, DynValue.True);
+            t.Set(3, DynValue.True);
+            t.Set(4, DynValue.True);
 
-            Assert.AreEqual(4, T.Length, "C");
+            Assert.That(t.Length, Is.EqualTo(4), "C");
 
-            T.Set(3, DynValue.Nil);
+            t.Set(3, DynValue.Nil);
 
-            Assert.AreEqual(2, T.Length, "D");
+            Assert.That(t.Length, Is.EqualTo(2), "D");
 
-            T.Set(3, DynValue.True);
+            t.Set(3, DynValue.True);
 
-            Assert.AreEqual(4, T.Length, "E");
+            Assert.That(t.Length, Is.EqualTo(4), "E");
 
-            T.Set(3, DynValue.Nil);
+            t.Set(3, DynValue.Nil);
 
-            Assert.AreEqual(2, T.Length, "F");
+            Assert.That(t.Length, Is.EqualTo(2), "F");
 
-            T.Append(DynValue.True);
+            t.Append(DynValue.True);
 
-            Assert.AreEqual(4, T.Length, "G");
+            Assert.That(t.Length, Is.EqualTo(4), "G");
 
-            T.Append(DynValue.True);
+            t.Append(DynValue.True);
 
-            Assert.AreEqual(5, T.Length, "H");
+            Assert.That(t.Length, Is.EqualTo(5), "H");
         }
     }
 }

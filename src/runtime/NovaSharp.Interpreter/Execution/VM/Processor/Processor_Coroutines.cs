@@ -1,43 +1,43 @@
-using System;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
+
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.
     // Same reason for the "sealed" declaration.
-    sealed partial class Processor
+    internal sealed partial class Processor
     {
         public DynValue Coroutine_Create(Closure closure)
         {
             // create a processor instance
-            Processor P = new(this);
+            Processor p = new(this);
 
             // Put the closure as first value on the stack, for future reference
-            P.m_ValueStack.Push(DynValue.NewClosure(closure));
+            p._valueStack.Push(DynValue.NewClosure(closure));
 
             // Return the coroutine handle
-            return DynValue.NewCoroutine(new Coroutine(P));
+            return DynValue.NewCoroutine(new Coroutine(p));
         }
 
         public DynValue Coroutine_Recycle(Processor mainProcessor, Closure closure)
         {
             // Clear the used parts of the stacks to prep for reuse
-            this.m_ValueStack.ClearUsed();
-            this.m_ExecutionStack.ClearUsed();
+            _valueStack.ClearUsed();
+            _executionStack.ClearUsed();
 
             // Create a new processor instance, recycling this one
-            Processor P = new(mainProcessor, this);
+            Processor p = new(mainProcessor, this);
 
             // Put the closure as first value on the stack, for future reference
-            P.m_ValueStack.Push(DynValue.NewClosure(closure));
+            p._valueStack.Push(DynValue.NewClosure(closure));
 
             // Return the coroutine handle
-            return DynValue.NewCoroutine(new Coroutine(P));
+            return DynValue.NewCoroutine(new Coroutine(p));
         }
 
         public CoroutineState State
         {
-            get { return m_State; }
+            get { return _state; }
         }
         public Coroutine AssociatedCoroutine { get; set; }
 
@@ -50,15 +50,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                 int entrypoint = 0;
 
                 if (
-                    m_State != CoroutineState.NotStarted
-                    && m_State != CoroutineState.Suspended
-                    && m_State != CoroutineState.ForceSuspended
+                    _state != CoroutineState.NotStarted
+                    && _state != CoroutineState.Suspended
+                    && _state != CoroutineState.ForceSuspended
                 )
                 {
-                    throw ScriptRuntimeException.CannotResumeNotSuspended(m_State);
+                    throw ScriptRuntimeException.CannotResumeNotSuspended(_state);
                 }
 
-                if (m_State == CoroutineState.NotStarted)
+                if (_state == CoroutineState.NotStarted)
                 {
                     entrypoint = PushClrToScriptStackFrame(
                         CallStackItemFlags.ResumeEntryPoint,
@@ -66,12 +66,12 @@ namespace NovaSharp.Interpreter.Execution.VM
                         args
                     );
                 }
-                else if (m_State == CoroutineState.Suspended)
+                else if (_state == CoroutineState.Suspended)
                 {
-                    m_ValueStack.Push(DynValue.NewTuple(args));
-                    entrypoint = m_SavedInstructionPtr;
+                    _valueStack.Push(DynValue.NewTuple(args));
+                    entrypoint = _savedInstructionPtr;
                 }
-                else if (m_State == CoroutineState.ForceSuspended)
+                else if (_state == CoroutineState.ForceSuspended)
                 {
                     if (args != null && args.Length > 0)
                     {
@@ -80,35 +80,35 @@ namespace NovaSharp.Interpreter.Execution.VM
                         );
                     }
 
-                    entrypoint = m_SavedInstructionPtr;
+                    entrypoint = _savedInstructionPtr;
                 }
 
-                m_State = CoroutineState.Running;
+                _state = CoroutineState.Running;
                 DynValue retVal = Processing_Loop(entrypoint);
 
                 if (retVal.Type == DataType.YieldRequest)
                 {
                     if (retVal.YieldRequest.Forced)
                     {
-                        m_State = CoroutineState.ForceSuspended;
+                        _state = CoroutineState.ForceSuspended;
                         return retVal;
                     }
                     else
                     {
-                        m_State = CoroutineState.Suspended;
-                        return DynValue.NewTuple(retVal.YieldRequest.ReturnValues);
+                        _state = CoroutineState.Suspended;
+                        return DynValue.NewTuple(retVal.YieldRequest.returnValues);
                     }
                 }
                 else
                 {
-                    m_State = CoroutineState.Dead;
+                    _state = CoroutineState.Dead;
                     return retVal;
                 }
             }
             catch (Exception)
             {
                 // Unhandled exception - move to dead
-                m_State = CoroutineState.Dead;
+                _state = CoroutineState.Dead;
                 throw;
             }
             finally

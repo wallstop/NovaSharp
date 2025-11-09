@@ -1,11 +1,11 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Hardwire.Generators
 {
-    class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop;
+    using Interpreter.Interop.BasicDescriptors;
+
+    internal class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {

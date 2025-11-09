@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Compatibility;
+
     /// <summary>
     /// Abstract class implementing a file Lua userdata. Methods are meant to be called by Lua code.
     /// </summary>
     internal abstract class FileUserDataBase : RefIdObject
     {
-        public DynValue lines(ScriptExecutionContext executionContext, CallbackArguments args)
+        public DynValue Lines(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             List<DynValue> readLines = new();
 
@@ -18,14 +18,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
             do
             {
-                readValue = read(executionContext, args);
+                readValue = Read(executionContext, args);
                 readLines.Add(readValue);
             } while (readValue.IsNotNil());
 
             return DynValue.FromObject(executionContext.GetScript(), readLines.Select(s => s));
         }
 
-        public DynValue read(ScriptExecutionContext executionContext, CallbackArguments args)
+        public DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args.Count == 0)
             {
@@ -113,7 +113,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
-        public DynValue write(ScriptExecutionContext executionContext, CallbackArguments args)
+        public DynValue Write(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
@@ -136,7 +136,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
-        public DynValue close(ScriptExecutionContext executionContext, CallbackArguments args)
+        public DynValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
@@ -160,7 +160,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
-        double? ReadNumber()
+        private double? ReadNumber()
         {
             string chr = "";
 
@@ -182,9 +182,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 }
             }
 
-            double d;
-
-            if (double.TryParse(chr, out d))
+            if (double.TryParse(chr, out double d))
             {
                 return d;
             }
@@ -229,18 +227,18 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected abstract char Peek();
         protected abstract void Write(string value);
 
-        protected internal abstract bool isopen();
+        protected internal abstract bool Isopen();
         protected abstract string Close();
 
-        public abstract bool flush();
-        public abstract long seek(string whence, long offset = 0);
-        public abstract bool setvbuf(string mode);
+        public abstract bool Flush();
+        public abstract long Seek(string whence, long offset = 0);
+        public abstract bool Setvbuf(string mode);
 
         public override string ToString()
         {
-            if (isopen())
+            if (Isopen())
             {
-                return string.Format("file ({0:X8})", base.ReferenceID);
+                return $"file ({ReferenceId:X8})";
             }
             else
             {

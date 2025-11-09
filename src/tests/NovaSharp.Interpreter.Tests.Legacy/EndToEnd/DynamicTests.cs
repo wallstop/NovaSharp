@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class DynamicTests
     {
@@ -15,8 +15,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(6, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -30,8 +30,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(6, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -53,8 +53,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(6, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Nil, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Nil));
             //Assert.AreEqual(6, res.Number);
         }
 
@@ -96,7 +96,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue v = script.CreateDynamicExpression("t.ciao[1] .. ' world'").Evaluate();
 
-            Assert.AreEqual(v.String, "hello world");
+            Assert.That("hello world", Is.EqualTo(v.String));
         }
     }
 }

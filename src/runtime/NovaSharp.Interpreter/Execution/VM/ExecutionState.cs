@@ -1,12 +1,12 @@
-using NovaSharp.Interpreter.DataStructs;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using DataStructs;
+
     internal sealed class ExecutionState
     {
-        public FastStack<DynValue> ValueStack = new(131072);
-        public FastStack<CallStackItem> ExecutionStack = new(131072);
-        public int InstructionPtr = 0;
-        public CoroutineState State = CoroutineState.NotStarted;
+        public FastStack<DynValue> valueStack = new(131072);
+        public FastStack<CallStackItem> executionStack = new(131072);
+        public int instructionPtr = 0;
+        public CoroutineState state = CoroutineState.NotStarted;
     }
 }

@@ -1,8 +1,8 @@
-using System;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Platforms
 {
+    using System;
+    using System.Text;
+
     /// <summary>
     /// A class implementing all the bits needed to have a minimal support of a platform.
     /// This does not support the 'io'/'file' modules and has partial support of the 'os' module.
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </returns>
         public override CoreModules FilterSupportedCoreModules(CoreModules module)
         {
-            return module & (~(CoreModules.IO | CoreModules.OS_System));
+            return module & (~(CoreModules.Io | CoreModules.OsSystem));
         }
 
         /// <summary>

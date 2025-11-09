@@ -1,20 +1,20 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
+    using System.Collections.Generic;
+    using Debugging;
+
+    internal sealed partial class Processor
     {
         private class DebugContext
         {
-            public bool DebuggerEnabled = true;
-            public IDebugger DebuggerAttached = null;
-            public DebuggerAction.ActionType DebuggerCurrentAction = DebuggerAction.ActionType.None;
-            public int DebuggerCurrentActionTarget = -1;
-            public SourceRef LastHlRef = null;
-            public int ExStackDepthAtStep = -1;
-            public List<SourceRef> BreakPoints = new();
-            public bool LineBasedBreakPoints = false;
+            public bool debuggerEnabled = true;
+            public IDebugger debuggerAttached = null;
+            public DebuggerAction.ActionType debuggerCurrentAction = DebuggerAction.ActionType.None;
+            public int debuggerCurrentActionTarget = -1;
+            public SourceRef lastHlRef = null;
+            public int exStackDepthAtStep = -1;
+            public readonly List<SourceRef> breakPoints = new();
+            public bool lineBasedBreakPoints = false;
         }
     }
 }

@@ -1,37 +1,38 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.DataStructs;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using System.Runtime.CompilerServices;
+    using BasicDescriptors;
+    using Compatibility;
+    using DataStructs;
+
     /// <summary>
     /// Registry of all extension methods. Use UserData statics to access these.
     /// </summary>
     internal class ExtensionMethodsRegistry
     {
-        private static object s_Lock = new();
-        private static MultiDictionary<string, IOverloadableMemberDescriptor> s_Registry = new();
-        private static MultiDictionary<
+        private static readonly object SLock = new();
+        private static readonly MultiDictionary<string, IOverloadableMemberDescriptor> SRegistry =
+            new();
+        private static readonly MultiDictionary<
             string,
             UnresolvedGenericMethod
-        > s_UnresolvedGenericsRegistry = new();
-        private static int s_ExtensionMethodChangeVersion = 0;
+        > SUnresolvedGenericsRegistry = new();
+        private static int _sExtensionMethodChangeVersion = 0;
 
         private class UnresolvedGenericMethod
         {
-            public readonly MethodInfo Method;
-            public readonly InteropAccessMode AccessMode;
-            public readonly HashSet<Type> AlreadyAddedTypes = new();
+            public readonly MethodInfo method;
+            public readonly InteropAccessMode accessMode;
+            public readonly HashSet<Type> alreadyAddedTypes = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)
             {
-                AccessMode = mode;
-                Method = mi;
+                accessMode = mode;
+                method = mi;
             }
         }
 
@@ -45,11 +46,11 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             InteropAccessMode mode = InteropAccessMode.Default
         )
         {
-            lock (s_Lock)
+            lock (SLock)
             {
                 bool changesDone = false;
 
-                foreach (MethodInfo mi in Framework.Do.GetMethods(type).Where(_mi => _mi.IsStatic))
+                foreach (MethodInfo mi in Framework.Do.GetMethods(type).Where(mi => mi.IsStatic))
                 {
                     if (mi.GetCustomAttributes(typeof(ExtensionAttribute), false).Count() == 0)
                     {
@@ -58,7 +59,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                     if (mi.ContainsGenericParameters)
                     {
-                        s_UnresolvedGenericsRegistry.Add(
+                        SUnresolvedGenericsRegistry.Add(
                             mi.Name,
                             new UnresolvedGenericMethod(mi, mode)
                         );
@@ -73,13 +74,13 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                     MethodMemberDescriptor desc = new(mi, mode);
 
-                    s_Registry.Add(mi.Name, desc);
+                    SRegistry.Add(mi.Name, desc);
                     changesDone = true;
                 }
 
                 if (changesDone)
                 {
-                    ++s_ExtensionMethodChangeVersion;
+                    ++_sExtensionMethodChangeVersion;
                 }
             }
         }
@@ -98,9 +99,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             string name
         )
         {
-            lock (s_Lock)
+            lock (SLock)
             {
-                return new List<IOverloadableMemberDescriptor>(s_Registry.Find(name));
+                return new List<IOverloadableMemberDescriptor>(SRegistry.Find(name));
             }
         }
 
@@ -111,7 +112,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         public static int GetExtensionMethodsChangeVersion()
         {
-            return s_ExtensionMethodChangeVersion;
+            return _sExtensionMethodChangeVersion;
         }
 
         /// <summary>
@@ -127,14 +128,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             List<UnresolvedGenericMethod> unresolvedGenerics = null;
 
-            lock (s_Lock)
+            lock (SLock)
             {
-                unresolvedGenerics = s_UnresolvedGenericsRegistry.Find(name).ToList();
+                unresolvedGenerics = SUnresolvedGenericsRegistry.Find(name).ToList();
             }
 
             foreach (UnresolvedGenericMethod ugm in unresolvedGenerics)
             {
-                ParameterInfo[] args = ugm.Method.GetParameters();
+                ParameterInfo[] args = ugm.method.GetParameters();
                 if (args.Length == 0)
                 {
                     continue;
@@ -144,12 +145,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                 Type genericType = GetGenericMatch(extensionType, extendedType);
 
-                if (ugm.AlreadyAddedTypes.Add(genericType))
+                if (ugm.alreadyAddedTypes.Add(genericType))
                 {
                     if (genericType != null)
                     {
                         MethodInfo mi = InstantiateMethodInfo(
-                            ugm.Method,
+                            ugm.method,
                             extensionType,
                             genericType,
                             extendedType
@@ -161,16 +162,16 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                                 continue;
                             }
 
-                            MethodMemberDescriptor desc = new(mi, ugm.AccessMode);
+                            MethodMemberDescriptor desc = new(mi, ugm.accessMode);
 
-                            s_Registry.Add(ugm.Method.Name, desc);
-                            ++s_ExtensionMethodChangeVersion;
+                            SRegistry.Add(ugm.method.Name, desc);
+                            ++_sExtensionMethodChangeVersion;
                         }
                     }
                 }
             }
 
-            return s_Registry
+            return SRegistry
                 .Find(name)
                 .Where(d =>
                     d.ExtensionMethodType != null

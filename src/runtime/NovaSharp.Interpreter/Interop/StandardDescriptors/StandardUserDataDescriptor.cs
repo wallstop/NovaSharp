@@ -1,12 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using BasicDescriptors;
+    using Compatibility;
+
     /// <summary>
     /// Standard descriptor for userdata types.
     /// </summary>
@@ -59,12 +59,12 @@ namespace NovaSharp.Interpreter.Interop
         {
             HashSet<string> membersToIgnore = new(
                 Framework
-                    .Do.GetCustomAttributes(this.Type, typeof(NovaSharpHideMemberAttribute), true)
+                    .Do.GetCustomAttributes(Type, typeof(NovaSharpHideMemberAttribute), true)
                     .OfType<NovaSharpHideMemberAttribute>()
                     .Select(a => a.MemberName)
             );
 
-            Type type = this.Type;
+            Type type = Type;
 
             if (AccessMode == InteropAccessMode.HideMembers)
             {
@@ -81,10 +81,7 @@ namespace NovaSharp.Interpreter.Interop
                         continue;
                     }
 
-                    AddMember(
-                        "__new",
-                        MethodMemberDescriptor.TryCreateIfVisible(ci, this.AccessMode)
-                    );
+                    AddMember("__new", MethodMemberDescriptor.TryCreateIfVisible(ci, AccessMode));
                 }
 
                 // valuetypes don't reflect their empty ctor.. actually empty ctors are a perversion, we don't care and implement ours
@@ -104,7 +101,7 @@ namespace NovaSharp.Interpreter.Interop
 
                 MethodMemberDescriptor md = MethodMemberDescriptor.TryCreateIfVisible(
                     mi,
-                    this.AccessMode
+                    AccessMode
                 );
 
                 if (md != null)
@@ -148,10 +145,7 @@ namespace NovaSharp.Interpreter.Interop
                     continue;
                 }
 
-                AddMember(
-                    pi.Name,
-                    PropertyMemberDescriptor.TryCreateIfVisible(pi, this.AccessMode)
-                );
+                AddMember(pi.Name, PropertyMemberDescriptor.TryCreateIfVisible(pi, AccessMode));
             }
 
             // get fields
@@ -162,7 +156,7 @@ namespace NovaSharp.Interpreter.Interop
                     continue;
                 }
 
-                AddMember(fi.Name, FieldMemberDescriptor.TryCreateIfVisible(fi, this.AccessMode));
+                AddMember(fi.Name, FieldMemberDescriptor.TryCreateIfVisible(fi, AccessMode));
             }
 
             // get events
@@ -173,7 +167,7 @@ namespace NovaSharp.Interpreter.Interop
                     continue;
                 }
 
-                AddMember(ei.Name, EventMemberDescriptor.TryCreateIfVisible(ei, this.AccessMode));
+                AddMember(ei.Name, EventMemberDescriptor.TryCreateIfVisible(ei, AccessMode));
             }
 
             // get nested types and create statics
@@ -197,10 +191,7 @@ namespace NovaSharp.Interpreter.Interop
                             .Length > 0
                     )
                     {
-                        IUserDataDescriptor descr = UserData.RegisterType(
-                            nestedType,
-                            this.AccessMode
-                        );
+                        IUserDataDescriptor descr = UserData.RegisterType(nestedType, AccessMode);
 
                         if (descr != null)
                         {
@@ -216,26 +207,26 @@ namespace NovaSharp.Interpreter.Interop
                 {
                     int rank = Type.GetArrayRank();
 
-                    ParameterDescriptor[] get_pars = new ParameterDescriptor[rank];
-                    ParameterDescriptor[] set_pars = new ParameterDescriptor[rank + 1];
+                    ParameterDescriptor[] getPars = new ParameterDescriptor[rank];
+                    ParameterDescriptor[] setPars = new ParameterDescriptor[rank + 1];
 
                     for (int i = 0; i < rank; i++)
                     {
-                        get_pars[i] = set_pars[i] = new ParameterDescriptor(
+                        getPars[i] = setPars[i] = new ParameterDescriptor(
                             "idx" + i.ToString(),
                             typeof(int)
                         );
                     }
 
-                    set_pars[rank] = new ParameterDescriptor("value", Type.GetElementType());
+                    setPars[rank] = new ParameterDescriptor("value", Type.GetElementType());
 
                     AddMember(
                         SPECIALNAME_INDEXER_SET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_SET, true, set_pars)
+                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_SET, true, setPars)
                     );
                     AddMember(
                         SPECIALNAME_INDEXER_GET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_GET, false, get_pars)
+                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_GET, false, getPars)
                     );
                 }
                 else if (Type == typeof(Array))
@@ -256,16 +247,16 @@ namespace NovaSharp.Interpreter.Interop
         {
             if (
                 AccessMode == InteropAccessMode.HideMembers
-                || Framework.Do.GetAssembly(Type) == Framework.Do.GetAssembly(this.GetType())
+                || Framework.Do.GetAssembly(Type) == Framework.Do.GetAssembly(GetType())
             )
             {
                 t.Set("skip", DynValue.NewBoolean(true));
             }
             else
             {
-                t.Set("visibility", DynValue.NewString(this.Type.GetClrVisibility()));
+                t.Set("visibility", DynValue.NewString(Type.GetClrVisibility()));
 
-                t.Set("class", DynValue.NewString(this.GetType().FullName));
+                t.Set("class", DynValue.NewString(GetType().FullName));
                 DynValue tm = DynValue.NewPrimeTable();
                 t.Set("members", tm);
                 DynValue tmm = DynValue.NewPrimeTable();
@@ -283,9 +274,7 @@ namespace NovaSharp.Interpreter.Interop
         {
             foreach (KeyValuePair<string, IMemberDescriptor> pair in members)
             {
-                IWireableDescriptor sd = pair.Value as IWireableDescriptor;
-
-                if (sd != null)
+                if (pair.Value is IWireableDescriptor sd)
                 {
                     DynValue mt = DynValue.NewPrimeTable();
                     t.Set(pair.Key, mt);

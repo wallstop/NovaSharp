@@ -1,15 +1,15 @@
-using System;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
-    {
-        private void ClearBlockData(Instruction I)
-        {
-            int from = I.NumVal;
-            int to = I.NumVal2;
+    using System;
 
-            DynValue[] array = this.m_ExecutionStack.Peek().LocalScope;
+    internal sealed partial class Processor
+    {
+        private void ClearBlockData(Instruction i)
+        {
+            int from = i.NumVal;
+            int to = i.NumVal2;
+
+            DynValue[] array = _executionStack.Peek().localScope;
 
             if (to >= 0 && from >= 0 && to >= from)
             {
@@ -22,13 +22,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             switch (symref.i_Type)
             {
                 case SymbolRefType.DefaultEnv:
-                    return DynValue.NewTable(this.GetScript().Globals);
+                    return DynValue.NewTable(GetScript().Globals);
                 case SymbolRefType.Global:
                     return GetGlobalSymbol(GetGenericSymbol(symref.i_Env), symref.i_Name);
                 case SymbolRefType.Local:
-                    return GetTopNonClrFunction().LocalScope[symref.i_Index];
+                    return GetTopNonClrFunction().localScope[symref.i_Index];
                 case SymbolRefType.Upvalue:
-                    return GetTopNonClrFunction().ClosureScope[symref.i_Index];
+                    return GetTopNonClrFunction().closureScope[symref.i_Index];
                 default:
                     throw new InternalErrorException(
                         "Unexpected {0} LRef at resolution: {1}",
@@ -42,9 +42,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (dynValue.Type != DataType.Table)
             {
-                throw new InvalidOperationException(
-                    string.Format("_ENV is not a table but a {0}", dynValue.Type)
-                );
+                throw new InvalidOperationException($"_ENV is not a table but a {dynValue.Type}");
             }
 
             return dynValue.Table.Get(name);
@@ -54,9 +52,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (dynValue.Type != DataType.Table)
             {
-                throw new InvalidOperationException(
-                    string.Format("_ENV is not a table but a {0}", dynValue.Type)
-                );
+                throw new InvalidOperationException($"_ENV is not a table but a {dynValue.Type}");
             }
 
             dynValue.Table.Set(name, value ?? DynValue.Nil);
@@ -73,10 +69,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
 
-                        DynValue v = stackframe.LocalScope[symref.i_Index];
+                        DynValue v = stackframe.localScope[symref.i_Index];
                         if (v == null)
                         {
-                            stackframe.LocalScope[symref.i_Index] = v = DynValue.NewNil();
+                            stackframe.localScope[symref.i_Index] = v = DynValue.NewNil();
                         }
 
                         v.Assign(value);
@@ -86,10 +82,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
 
-                        DynValue v = stackframe.ClosureScope[symref.i_Index];
+                        DynValue v = stackframe.closureScope[symref.i_Index];
                         if (v == null)
                         {
-                            stackframe.ClosureScope[symref.i_Index] = v = DynValue.NewNil();
+                            stackframe.closureScope[symref.i_Index] = v = DynValue.NewNil();
                         }
 
                         v.Assign(value);
@@ -108,15 +104,15 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        CallStackItem GetTopNonClrFunction()
+        private CallStackItem GetTopNonClrFunction()
         {
             CallStackItem stackframe = null;
 
-            for (int i = 0; i < m_ExecutionStack.Count; i++)
+            for (int i = 0; i < _executionStack.Count; i++)
             {
-                stackframe = m_ExecutionStack.Peek(i);
+                stackframe = _executionStack.Peek(i);
 
-                if (stackframe.ClrFunction == null)
+                if (stackframe.clrFunction == null)
                 {
                     break;
                 }
@@ -127,26 +123,26 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public SymbolRef FindSymbolByName(string name)
         {
-            if (m_ExecutionStack.Count > 0)
+            if (_executionStack.Count > 0)
             {
                 CallStackItem stackframe = GetTopNonClrFunction();
 
                 if (stackframe != null)
                 {
-                    if (stackframe.Debug_Symbols != null)
+                    if (stackframe.debugSymbols != null)
                     {
-                        for (int i = stackframe.Debug_Symbols.Length - 1; i >= 0; i--)
+                        for (int i = stackframe.debugSymbols.Length - 1; i >= 0; i--)
                         {
-                            SymbolRef l = stackframe.Debug_Symbols[i];
+                            SymbolRef l = stackframe.debugSymbols[i];
 
-                            if (l.i_Name == name && stackframe.LocalScope[i] != null)
+                            if (l.i_Name == name && stackframe.localScope[i] != null)
                             {
                                 return l;
                             }
                         }
                     }
 
-                    ClosureContext closure = stackframe.ClosureScope;
+                    ClosureContext closure = stackframe.closureScope;
 
                     if (closure != null)
                     {

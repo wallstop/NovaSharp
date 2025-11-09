@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using Debugging;
+
     /// <summary>
     /// Base type of all exceptions thrown in NovaSharp
     /// </summary>
@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets the interpreter call stack.
         /// </summary>
-        public IList<NovaSharp.Interpreter.Debugging.WatchItem> CallStack { get; internal set; }
+        public IList<WatchItem> CallStack { get; internal set; }
 
         /// <summary>
         /// Gets the decorated message (error message plus error location in script) if possible.
@@ -63,24 +63,24 @@ namespace NovaSharp.Interpreter
 
         internal void DecorateMessage(Script script, SourceRef sref, int ip = -1)
         {
-            if (string.IsNullOrEmpty(this.DecoratedMessage))
+            if (string.IsNullOrEmpty(DecoratedMessage))
             {
                 if (DoNotDecorateMessage)
                 {
-                    this.DecoratedMessage = this.Message;
+                    DecoratedMessage = Message;
                     return;
                 }
                 else if (sref != null)
                 {
-                    this.DecoratedMessage = string.Format(
+                    DecoratedMessage = string.Format(
                         "{0}: {1}",
                         sref.FormatLocation(script),
-                        this.Message
+                        Message
                     );
                 }
                 else
                 {
-                    this.DecoratedMessage = string.Format("bytecode:{0}: {1}", ip, this.Message);
+                    DecoratedMessage = $"bytecode:{ip}: {Message}";
                 }
             }
         }

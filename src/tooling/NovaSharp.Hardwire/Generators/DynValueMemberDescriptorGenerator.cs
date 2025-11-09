@@ -1,10 +1,10 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Serialization;
-
 namespace NovaSharp.Hardwire.Generators
 {
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop;
+    using Interpreter.Serialization;
+
     public class DynValueMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
@@ -27,16 +27,16 @@ namespace NovaSharp.Hardwire.Generators
             string type = (vtype.Type == DataType.String) ? vtype.String : null;
             string staticType = (vstaticType.Type == DataType.String) ? vstaticType.String : null;
 
-            CodeTypeDeclaration classCode = new(className);
-
-            classCode.TypeAttributes =
-                System.Reflection.TypeAttributes.NestedPrivate
-                | System.Reflection.TypeAttributes.Sealed;
+            CodeTypeDeclaration classCode = new(className)
+            {
+                TypeAttributes =
+                    System.Reflection.TypeAttributes.NestedPrivate
+                    | System.Reflection.TypeAttributes.Sealed,
+            };
 
             classCode.BaseTypes.Add(typeof(DynValueMemberDescriptor));
 
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Assembly;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Assembly };
             classCode.Members.Add(ctor);
 
             if (type == null)
@@ -52,10 +52,12 @@ namespace NovaSharp.Hardwire.Generators
             {
                 ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(table.Get("name").String));
 
-                CodeMemberProperty p = new();
-                p.Name = "Value";
-                p.Type = new CodeTypeReference(typeof(DynValue));
-                p.Attributes = MemberAttributes.Override | MemberAttributes.Public;
+                CodeMemberProperty p = new()
+                {
+                    Name = "Value",
+                    Type = new CodeTypeReference(typeof(DynValue)),
+                    Attributes = MemberAttributes.Override | MemberAttributes.Public,
+                };
                 p.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(

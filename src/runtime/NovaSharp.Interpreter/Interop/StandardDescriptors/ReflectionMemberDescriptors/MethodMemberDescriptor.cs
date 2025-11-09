@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Linq.Expressions;
+    using System.Reflection;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
+    using BasicDescriptors;
+    using Compatibility;
+    using Diagnostics;
+
     /// <summary>
     /// Class providing easier marshalling of CLR functions
     /// </summary>
@@ -34,10 +34,10 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public bool IsConstructor { get; private set; }
 
-        private Func<object, object[], object> m_OptimizedFunc = null;
-        private Action<object, object[]> m_OptimizedAction = null;
-        private bool m_IsAction = false;
-        private bool m_IsArrayCtor = false;
+        private Func<object, object[], object> _optimizedFunc = null;
+        private Action<object, object[]> _optimizedAction = null;
+        private readonly bool _isAction = false;
+        private readonly bool _isArrayCtor = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MethodMemberDescriptor"/> class.
@@ -53,27 +53,27 @@ namespace NovaSharp.Interpreter.Interop
             CheckMethodIsCompatible(methodBase, true);
 
             IsConstructor = (methodBase is ConstructorInfo);
-            this.MethodInfo = methodBase;
+            MethodInfo = methodBase;
 
             bool isStatic = methodBase.IsStatic || IsConstructor;
 
             if (IsConstructor)
             {
-                m_IsAction = false;
+                _isAction = false;
             }
             else
             {
-                m_IsAction = ((MethodInfo)methodBase).ReturnType == typeof(void);
+                _isAction = ((MethodInfo)methodBase).ReturnType == typeof(void);
             }
 
             ParameterInfo[] reflectionParams = methodBase.GetParameters();
             ParameterDescriptor[] parameters;
 
-            if (this.MethodInfo.DeclaringType.IsArray)
+            if (MethodInfo.DeclaringType.IsArray)
             {
-                m_IsArrayCtor = true;
+                _isArrayCtor = true;
 
-                int rank = this.MethodInfo.DeclaringType.GetArrayRank();
+                int rank = MethodInfo.DeclaringType.GetArrayRank();
 
                 parameters = new ParameterDescriptor[rank];
 
@@ -93,7 +93,7 @@ namespace NovaSharp.Interpreter.Interop
                 && methodBase.GetCustomAttributes(typeof(ExtensionAttribute), false).Any()
             );
 
-            base.Initialize(methodBase.Name, isStatic, parameters, isExtensionMethod);
+            Initialize(methodBase.Name, isStatic, parameters, isExtensionMethod);
 
             // adjust access mode
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Interop
                 accessMode = InteropAccessMode.Reflection;
             }
 
-            this.AccessMode = accessMode;
+            AccessMode = accessMode;
 
             if (AccessMode == InteropAccessMode.Preoptimized)
             {
@@ -241,27 +241,32 @@ namespace NovaSharp.Interpreter.Interop
 
             if (
                 AccessMode == InteropAccessMode.LazyOptimized
-                && m_OptimizedFunc == null
-                && m_OptimizedAction == null
+                && _optimizedFunc == null
+                && _optimizedAction == null
             )
             {
                 ((IOptimizableDescriptor)this).Optimize();
             }
 
-            List<int> outParams = null;
-            object[] pars = base.BuildArgumentList(script, obj, context, args, out outParams);
+            object[] pars = base.BuildArgumentList(
+                script,
+                obj,
+                context,
+                args,
+                out List<int> outParams
+            );
             object retv = null;
 
-            if (m_OptimizedFunc != null)
+            if (_optimizedFunc != null)
             {
-                retv = m_OptimizedFunc(obj, pars);
+                retv = _optimizedFunc(obj, pars);
             }
-            else if (m_OptimizedAction != null)
+            else if (_optimizedAction != null)
             {
-                m_OptimizedAction(obj, pars);
+                _optimizedAction(obj, pars);
                 retv = DynValue.Void;
             }
-            else if (m_IsAction)
+            else if (_isAction)
             {
                 MethodInfo.Invoke(obj, pars);
                 retv = DynValue.Void;
@@ -294,7 +299,7 @@ namespace NovaSharp.Interpreter.Interop
                 return;
             }
 
-            MethodInfo methodInfo = this.MethodInfo as MethodInfo;
+            MethodInfo methodInfo = MethodInfo as MethodInfo;
 
             if (methodInfo == null)
             {
@@ -335,12 +340,12 @@ namespace NovaSharp.Interpreter.Interop
                     fn = Expression.Call(inst, methodInfo, args);
                 }
 
-                if (this.m_IsAction)
+                if (_isAction)
                 {
                     Expression<Action<object, object[]>> lambda = Expression.Lambda<
                         Action<object, object[]>
                     >(fn, objinst, ep);
-                    Interlocked.Exchange(ref m_OptimizedAction, lambda.Compile());
+                    Interlocked.Exchange(ref _optimizedAction, lambda.Compile());
                 }
                 else
                 {
@@ -348,7 +353,7 @@ namespace NovaSharp.Interpreter.Interop
                     Expression<Func<object, object[], object>> lambda = Expression.Lambda<
                         Func<object, object[], object>
                     >(fnc, objinst, ep);
-                    Interlocked.Exchange(ref m_OptimizedFunc, lambda.Compile());
+                    Interlocked.Exchange(ref _optimizedFunc, lambda.Compile());
                 }
             }
         }
@@ -360,35 +365,35 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("name", DynValue.NewString(this.Name));
-            t.Set("ctor", DynValue.NewBoolean(this.IsConstructor));
-            t.Set("special", DynValue.NewBoolean(this.MethodInfo.IsSpecialName));
-            t.Set("visibility", DynValue.NewString(this.MethodInfo.GetClrVisibility()));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("name", DynValue.NewString(Name));
+            t.Set("ctor", DynValue.NewBoolean(IsConstructor));
+            t.Set("special", DynValue.NewBoolean(MethodInfo.IsSpecialName));
+            t.Set("visibility", DynValue.NewString(MethodInfo.GetClrVisibility()));
 
-            if (this.IsConstructor)
+            if (IsConstructor)
             {
                 t.Set(
                     "ret",
-                    DynValue.NewString(((ConstructorInfo)this.MethodInfo).DeclaringType.FullName)
+                    DynValue.NewString(((ConstructorInfo)MethodInfo).DeclaringType.FullName)
                 );
             }
             else
             {
-                t.Set("ret", DynValue.NewString(((MethodInfo)this.MethodInfo).ReturnType.FullName));
+                t.Set("ret", DynValue.NewString(((MethodInfo)MethodInfo).ReturnType.FullName));
             }
 
-            if (m_IsArrayCtor)
+            if (_isArrayCtor)
             {
                 t.Set(
                     "arraytype",
-                    DynValue.NewString(this.MethodInfo.DeclaringType.GetElementType().FullName)
+                    DynValue.NewString(MethodInfo.DeclaringType.GetElementType().FullName)
                 );
             }
 
-            t.Set("decltype", DynValue.NewString(this.MethodInfo.DeclaringType.FullName));
-            t.Set("static", DynValue.NewBoolean(this.IsStatic));
-            t.Set("extension", DynValue.NewBoolean(this.ExtensionMethodType != null));
+            t.Set("decltype", DynValue.NewString(MethodInfo.DeclaringType.FullName));
+            t.Set("static", DynValue.NewBoolean(IsStatic));
+            t.Set("extension", DynValue.NewBoolean(ExtensionMethodType != null));
 
             DynValue pars = DynValue.NewPrimeTable();
 

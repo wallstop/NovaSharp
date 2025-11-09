@@ -8,8 +8,8 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public class RefIdObject
     {
-        private static int s_RefIDCounter = 0;
-        private int m_RefID = ++s_RefIDCounter;
+        private static int _sRefIdCounter = 0;
+        private readonly int _refId = ++_sRefIdCounter;
 
         /// <summary>
         /// Gets the reference identifier.
@@ -17,9 +17,9 @@ namespace NovaSharp.Interpreter
         /// <value>
         /// The reference identifier.
         /// </value>
-        public int ReferenceID
+        public int ReferenceId
         {
-            get { return m_RefID; }
+            get { return _refId; }
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public string FormatTypeString(string typeString)
         {
-            return string.Format("{0}: {1:X8}", typeString, m_RefID);
+            return $"{typeString}: {_refId:X8}";
         }
     }
 }

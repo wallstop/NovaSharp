@@ -1,17 +1,17 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.CoreLib.IO;
-using NovaSharp.Interpreter.Platforms;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using Compatibility;
+    using IO;
+    using Platforms;
+
     /// <summary>
     /// Class implementing io Lua functions. Proper support requires a compatible IPlatformAccessor
     /// </summary>
@@ -23,10 +23,10 @@ namespace NovaSharp.Interpreter.CoreLib
             UserData.RegisterType<FileUserDataBase>(InteropAccessMode.Default, "file");
 
             Table meta = new(ioTable.OwnerScript);
-            DynValue __index = DynValue.NewCallback(
+            DynValue index = DynValue.NewCallback(
                 new CallbackFunction(__index_callback, "__index_callback")
             );
-            meta.Set("__index", __index);
+            meta.Set("__index", index);
             ioTable.MetaTable = meta;
 
             SetStandardFile(
@@ -71,17 +71,17 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        private static DynValue GetStandardFile(Script S, StandardFileType file)
+        private static DynValue GetStandardFile(Script s, StandardFileType file)
         {
-            Table R = S.Registry;
+            Table r = s.Registry;
 
-            DynValue ff = R.Get("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString());
+            DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString());
             return ff;
         }
 
-        private static void SetStandardFile(Script S, StandardFileType file, Stream optionsStream)
+        private static void SetStandardFile(Script s, StandardFileType file, Stream optionsStream)
         {
-            Table R = S.Registry;
+            Table r = s.Registry;
 
             optionsStream =
                 optionsStream ?? Script.GlobalOptions.Platform.IO_GetStandardStream(file);
@@ -90,24 +90,24 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (file == StandardFileType.StdIn)
             {
-                udb = StandardIOFileUserDataBase.CreateInputStream(optionsStream);
+                udb = StandardIoFileUserDataBase.CreateInputStream(optionsStream);
             }
             else
             {
-                udb = StandardIOFileUserDataBase.CreateOutputStream(optionsStream);
+                udb = StandardIoFileUserDataBase.CreateOutputStream(optionsStream);
             }
 
-            R.Set("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString(), UserData.Create(udb));
+            r.Set("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString(), UserData.Create(udb));
         }
 
-        static FileUserDataBase GetDefaultFile(
+        private static FileUserDataBase GetDefaultFile(
             ScriptExecutionContext executionContext,
             StandardFileType file
         )
         {
-            Table R = executionContext.GetScript().Registry;
+            Table r = executionContext.GetScript().Registry;
 
-            DynValue ff = R.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
+            DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
 
             if (ff.IsNil())
             {
@@ -119,7 +119,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
-        static void SetDefaultFile(
+        private static void SetDefaultFile(
             ScriptExecutionContext executionContext,
             StandardFileType file,
             FileUserDataBase fileHandle
@@ -134,8 +134,8 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase fileHandle
         )
         {
-            Table R = script.Registry;
-            R.Set(
+            Table r = script.Registry;
+            r.Set(
                 "853BEAAF298648839E2C99D005E1DF94_" + file.ToString(),
                 UserData.Create(fileHandle)
             );
@@ -145,16 +145,16 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             if (file == StandardFileType.StdIn)
             {
-                SetDefaultFile(script, file, StandardIOFileUserDataBase.CreateInputStream(stream));
+                SetDefaultFile(script, file, StandardIoFileUserDataBase.CreateInputStream(stream));
             }
             else
             {
-                SetDefaultFile(script, file, StandardIOFileUserDataBase.CreateOutputStream(stream));
+                SetDefaultFile(script, file, StandardIoFileUserDataBase.CreateOutputStream(stream));
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue close(
+        [NovaSharpModuleMethod(Name = "close")]
+        public static DynValue Close(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -162,11 +162,11 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase outp =
                 args.AsUserData<FileUserDataBase>(0, "close", true)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
-            return outp.close(executionContext, args);
+            return outp.Close(executionContext, args);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue flush(
+        [NovaSharpModuleMethod(Name = "flush")]
+        public static DynValue Flush(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -174,12 +174,12 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase outp =
                 args.AsUserData<FileUserDataBase>(0, "close", true)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
-            outp.flush();
+            outp.Flush();
             return DynValue.True;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue input(
+        [NovaSharpModuleMethod(Name = "input")]
+        public static DynValue Input(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -187,8 +187,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdIn);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue output(
+        [NovaSharpModuleMethod(Name = "output")]
+        public static DynValue Output(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -216,7 +216,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 inp = Open(
                     executionContext,
                     fileName,
-                    GetUTF8Encoding(),
+                    GetUtf8Encoding(),
                     defaultFiles == StandardFileType.StdIn ? "r" : "w"
                 );
             }
@@ -234,13 +234,13 @@ namespace NovaSharp.Interpreter.CoreLib
             return UserData.Create(inp);
         }
 
-        private static Encoding GetUTF8Encoding()
+        private static Encoding GetUtf8Encoding()
         {
-            return new System.Text.UTF8Encoding(false);
+            return new UTF8Encoding(false);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue lines(
+        [NovaSharpModuleMethod(Name = "lines")]
+        public static DynValue Lines(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -280,8 +280,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue open(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "open")]
+        public static DynValue Open(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             string filename = args.AsType(0, "open", DataType.String, false).String;
             DynValue vmode = args.AsType(1, "open", DataType.String, true);
@@ -319,7 +319,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     if (!isBinary)
                     {
-                        e = GetUTF8Encoding();
+                        e = GetUtf8Encoding();
                     }
                     else
                     {
@@ -351,9 +351,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
         public static string IoExceptionToLuaMessage(Exception ex, string filename)
         {
-            if (ex is System.IO.FileNotFoundException)
+            if (ex is FileNotFoundException)
             {
-                return string.Format("{0}: No such file or directory", filename);
+                return $"{filename}: No such file or directory";
             }
             else
             {
@@ -361,21 +361,19 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue type(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "type")]
+        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args[0].Type != DataType.UserData)
             {
                 return DynValue.Nil;
             }
 
-            FileUserDataBase file = args[0].UserData.Object as FileUserDataBase;
-
-            if (file == null)
+            if (args[0].UserData.Object is not FileUserDataBase file)
             {
                 return DynValue.Nil;
             }
-            else if (file.isopen())
+            else if (file.Isopen())
             {
                 return DynValue.NewString("file");
             }
@@ -385,31 +383,31 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue read(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "read")]
+        public static DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdIn);
-            return file.read(executionContext, args);
+            return file.Read(executionContext, args);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue write(
+        [NovaSharpModuleMethod(Name = "write")]
+        public static DynValue Write(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdOut);
-            return file.write(executionContext, args);
+            return file.Write(executionContext, args);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue tmpfile(
+        [NovaSharpModuleMethod(Name = "tmpfile")]
+        public static DynValue Tmpfile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             string tmpfilename = Script.GlobalOptions.Platform.IO_OS_GetTempFilename();
-            FileUserDataBase file = Open(executionContext, tmpfilename, GetUTF8Encoding(), "w");
+            FileUserDataBase file = Open(executionContext, tmpfilename, GetUtf8Encoding(), "w");
             return UserData.Create(file);
         }
 

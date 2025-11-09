@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        DynValue Index(Script script, DynValue index, bool isDirectIndexing);
+        public DynValue Index(Script script, DynValue index, bool isDirectIndexing);
 
         /// <summary>
         /// Performs an "index" "set" operation.
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="value">The value to be set</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing);
+        public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing);
 
         /// <summary>
         ///
@@ -43,6 +43,6 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="script">The script originating the request</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        DynValue MetaIndex(Script script, string metaname);
+        public DynValue MetaIndex(Script script, string metaname);
     }
 }

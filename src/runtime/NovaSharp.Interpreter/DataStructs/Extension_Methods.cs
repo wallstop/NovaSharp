@@ -1,12 +1,12 @@
-using System;
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+
     /// <summary>
     /// Extension methods used in the whole project.
     /// </summary>
-    internal static class Extension_Methods
+    internal static class ExtensionMethods
     {
         /// <summary>
         /// Gets a value from the dictionary or returns the default value
@@ -21,9 +21,7 @@ namespace NovaSharp.Interpreter
             TKey key
         )
         {
-            TValue v;
-
-            if (dictionary.TryGetValue(key, out v))
+            if (dictionary.TryGetValue(key, out TValue v))
             {
                 return v;
             }
@@ -46,9 +44,7 @@ namespace NovaSharp.Interpreter
             Func<TValue> creator
         )
         {
-            TValue v;
-
-            if (!dictionary.TryGetValue(key, out v))
+            if (!dictionary.TryGetValue(key, out TValue v))
             {
                 v = creator();
                 dictionary.Add(key, v);

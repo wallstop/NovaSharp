@@ -1,19 +1,16 @@
-using System;
-using System.CodeDom;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace NovaSharp.Hardwire.Languages
 {
+    using System.CodeDom;
+    using System.CodeDom.Compiler;
+    using System.Linq;
+
     public class CSharpHardwireCodeGenerationLanguage : HardwireCodeGenerationLanguage
     {
-        private CodeDomProvider m_CodeDomProvider;
+        private readonly CodeDomProvider _codeDomProvider;
 
         public CSharpHardwireCodeGenerationLanguage()
         {
-            m_CodeDomProvider = System.CodeDom.Compiler.CodeDomProvider.CreateProvider("CSharp");
+            _codeDomProvider = CodeDomProvider.CreateProvider("CSharp");
         }
 
         public override string Name
@@ -23,7 +20,7 @@ namespace NovaSharp.Hardwire.Languages
 
         public override CodeDomProvider CodeDomProvider
         {
-            get { return m_CodeDomProvider; }
+            get { return _codeDomProvider; }
         }
 
         public override CodeExpression UnaryPlus(CodeExpression arg)

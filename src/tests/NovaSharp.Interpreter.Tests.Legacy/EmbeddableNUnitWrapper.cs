@@ -1,4 +1,4 @@
-﻿#if EMBEDTEST || UNITY_5
+#if EMBEDTEST || UNITY_5
 
 using System;
 using System.Collections.Generic;

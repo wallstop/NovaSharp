@@ -1,32 +1,32 @@
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.DataStructs
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// A Dictionary where multiple values can be associated to the same key
     /// </summary>
-    /// <typeparam name="K">The key type</typeparam>
-    /// <typeparam name="V">The value type</typeparam>
-    internal class MultiDictionary<K, V>
+    /// <typeparam name="TK">The key type</typeparam>
+    /// <typeparam name="TV">The value type</typeparam>
+    internal class MultiDictionary<TK, TV>
     {
-        Dictionary<K, List<V>> m_Map;
-        V[] m_DefaultRet = new V[0];
+        private readonly Dictionary<TK, List<TV>> _map;
+        private readonly TV[] _defaultRet = new TV[0];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MultiDictionary{K, V}"/> class.
         /// </summary>
         public MultiDictionary()
         {
-            m_Map = new Dictionary<K, List<V>>();
+            _map = new Dictionary<TK, List<TV>>();
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MultiDictionary{K, V}"/> class.
         /// </summary>
         /// <param name="eqComparer">The equality comparer to use in the underlying dictionary.</param>
-        public MultiDictionary(IEqualityComparer<K> eqComparer)
+        public MultiDictionary(IEqualityComparer<TK> eqComparer)
         {
-            m_Map = new Dictionary<K, List<V>>(eqComparer);
+            _map = new Dictionary<TK, List<TV>>(eqComparer);
         }
 
         /// <summary>
@@ -35,19 +35,18 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        public bool Add(K key, V value)
+        public bool Add(TK key, TV value)
         {
-            List<V> list;
-            if (m_Map.TryGetValue(key, out list))
+            if (_map.TryGetValue(key, out List<TV> list))
             {
                 list.Add(value);
                 return false;
             }
             else
             {
-                list = new List<V>();
+                list = new List<TV>();
                 list.Add(value);
-                m_Map.Add(key, list);
+                _map.Add(key, list);
                 return true;
             }
         }
@@ -57,16 +56,15 @@ namespace NovaSharp.Interpreter.DataStructs
         /// An empty collection is returned if not found.
         /// </summary>
         /// <param name="key">The key.</param>
-        public IEnumerable<V> Find(K key)
+        public IEnumerable<TV> Find(TK key)
         {
-            List<V> list;
-            if (m_Map.TryGetValue(key, out list))
+            if (_map.TryGetValue(key, out List<TV> list))
             {
                 return list;
             }
             else
             {
-                return m_DefaultRet;
+                return _defaultRet;
             }
         }
 
@@ -74,17 +72,17 @@ namespace NovaSharp.Interpreter.DataStructs
         /// Determines whether this contains the specified key
         /// </summary>
         /// <param name="key">The key.</param>
-        public bool ContainsKey(K key)
+        public bool ContainsKey(TK key)
         {
-            return m_Map.ContainsKey(key);
+            return _map.ContainsKey(key);
         }
 
         /// <summary>
         /// Gets the keys.
         /// </summary>
-        public IEnumerable<K> Keys
+        public IEnumerable<TK> Keys
         {
-            get { return m_Map.Keys; }
+            get { return _map.Keys; }
         }
 
         /// <summary>
@@ -92,16 +90,16 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public void Clear()
         {
-            m_Map.Clear();
+            _map.Clear();
         }
 
         /// <summary>
         /// Removes the specified key and all its associated values from the multidictionary
         /// </summary>
         /// <param name="key">The key.</param>
-        public void Remove(K key)
+        public void Remove(TK key)
         {
-            m_Map.Remove(key);
+            _map.Remove(key);
         }
 
         /// <summary>
@@ -110,11 +108,9 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        public bool RemoveValue(K key, V value)
+        public bool RemoveValue(TK key, TV value)
         {
-            List<V> list;
-
-            if (m_Map.TryGetValue(key, out list))
+            if (_map.TryGetValue(key, out List<TV> list))
             {
                 list.Remove(value);
 

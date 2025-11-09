@@ -1,10 +1,13 @@
-using System.Reflection;
-
 namespace NovaSharp.Commands
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+
     public static class CommandManager
     {
-        static readonly Dictionary<string, ICommand> m_Registry = new();
+        private static readonly Dictionary<string, ICommand> Registry = new();
 
         public static void Initialize()
         {
@@ -18,7 +21,7 @@ namespace NovaSharp.Commands
             {
                 object o = Activator.CreateInstance(t);
                 ICommand cmd = (ICommand)o;
-                m_Registry.Add(cmd.Name, cmd);
+                Registry.Add(cmd.Name, cmd);
             }
         }
 
@@ -68,12 +71,10 @@ namespace NovaSharp.Commands
 
         public static IEnumerable<ICommand> GetCommands()
         {
-            yield return m_Registry["help"];
+            yield return Registry["help"];
 
             foreach (
-                ICommand cmd in m_Registry
-                    .Values.Where(c => !(c is HelpCommand))
-                    .OrderBy(c => c.Name)
+                ICommand cmd in Registry.Values.Where(c => !(c is HelpCommand)).OrderBy(c => c.Name)
             )
             {
                 yield return cmd;
@@ -82,9 +83,9 @@ namespace NovaSharp.Commands
 
         public static ICommand Find(string cmd)
         {
-            if (m_Registry.ContainsKey(cmd))
+            if (Registry.ContainsKey(cmd))
             {
-                return m_Registry[cmd];
+                return Registry[cmd];
             }
 
             return null;

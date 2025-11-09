@@ -5,9 +5,9 @@ namespace NovaSharp.Interpreter.REPL
     /// </summary>
     public class ReplHistoryInterpreter : ReplInterpreter
     {
-        string[] m_History;
-        int m_Last = -1;
-        int m_Navi = -1;
+        private readonly string[] _history;
+        private int _last = -1;
+        private int _navi = -1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReplHistoryInterpreter"/> class.
@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.REPL
         public ReplHistoryInterpreter(Script script, int historySize)
             : base(script)
         {
-            m_History = new string[historySize];
+            _history = new string[historySize];
         }
 
         /// <summary>
@@ -31,9 +31,9 @@ namespace NovaSharp.Interpreter.REPL
         /// </returns>
         public override DynValue Evaluate(string input)
         {
-            m_Navi = -1;
-            m_Last = (m_Last + 1) % m_History.Length;
-            m_History[m_Last] = input;
+            _navi = -1;
+            _last = (_last + 1) % _history.Length;
+            _history[_last] = input;
             return base.Evaluate(input);
         }
 
@@ -42,18 +42,18 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public string HistoryPrev()
         {
-            if (m_Navi == -1)
+            if (_navi == -1)
             {
-                m_Navi = m_Last;
+                _navi = _last;
             }
             else
             {
-                m_Navi = ((m_Navi - 1) + m_History.Length) % m_History.Length;
+                _navi = ((_navi - 1) + _history.Length) % _history.Length;
             }
 
-            if (m_Navi >= 0)
+            if (_navi >= 0)
             {
-                return m_History[m_Navi];
+                return _history[_navi];
             }
 
             return null;
@@ -64,18 +64,18 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public string HistoryNext()
         {
-            if (m_Navi == -1)
+            if (_navi == -1)
             {
                 return null;
             }
             else
             {
-                m_Navi = (m_Navi + 1) % m_History.Length;
+                _navi = (_navi + 1) % _history.Length;
             }
 
-            if (m_Navi >= 0)
+            if (_navi >= 0)
             {
-                return m_History[m_Navi];
+                return _history[_navi];
             }
 
             return null;

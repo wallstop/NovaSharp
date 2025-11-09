@@ -1,20 +1,20 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
     /// <summary>
     /// Class implementing table Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "table")]
     public class TableModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue unpack(
+        [NovaSharpModuleMethod(Name = "unpack")]
+        public static DynValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -39,8 +39,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue pack(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "pack")]
+        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             Table t = new(executionContext.GetScript());
             DynValue v = DynValue.NewTable(t);
@@ -55,8 +55,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue sort(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "sort")]
+        public static DynValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue vlist = args.AsType(0, "sort", DataType.Table, false);
             DynValue lt = args[1];
@@ -160,8 +160,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return 0;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue insert(
+        [NovaSharpModuleMethod(Name = "insert")]
+        public static DynValue Insert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -214,8 +214,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return vlist;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue remove(
+        [NovaSharpModuleMethod(Name = "remove")]
+        public static DynValue Remove(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -258,8 +258,8 @@ namespace NovaSharp.Interpreter.CoreLib
         //Given a list where all elements are strings or numbers, returns the string list[i]..sep..list[i+1] (...) sep..list[j].
         //The default value for sep is the empty string, the default for i is 1, and the default for j is #list. If i is greater
         //than j, returns the empty string.
-        [NovaSharpModuleMethod]
-        public static DynValue concat(
+        [NovaSharpModuleMethod(Name = "concat")]
+        public static DynValue Concat(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -318,20 +318,20 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
         {
-            DynValue __len = executionContext.GetMetamethod(vlist, "__len");
+            DynValue len = executionContext.GetMetamethod(vlist, "__len");
 
-            if (__len != null)
+            if (len != null)
             {
-                DynValue lenv = executionContext.GetScript().Call(__len, vlist);
+                DynValue lenv = executionContext.GetScript().Call(len, vlist);
 
-                double? len = lenv.CastToNumber();
+                double? lengthValue = lenv.CastToNumber();
 
-                if (len == null)
+                if (lengthValue == null)
                 {
                     throw new ScriptRuntimeException("object length is not a number");
                 }
 
-                return (int)len;
+                return (int)lengthValue;
             }
             else
             {
@@ -344,21 +344,21 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class exposing table.unpack and table.pack in the global namespace (to work around the most common Lua 5.1 compatibility issue).
     /// </summary>
     [NovaSharpModule]
-    public class TableModule_Globals
+    public class TableModuleGlobals
     {
-        [NovaSharpModuleMethod]
-        public static DynValue unpack(
+        [NovaSharpModuleMethod(Name = "unpack")]
+        public static DynValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return TableModule.unpack(executionContext, args);
+            return TableModule.Unpack(executionContext, args);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue pack(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "pack")]
+        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            return TableModule.pack(executionContext, args);
+            return TableModule.Pack(executionContext, args);
         }
     }
 }

@@ -1,9 +1,9 @@
-#if !(PCL || ENABLE_DOTNET || NETFX_CORE)
-using System;
-using NovaSharp.Interpreter.Loaders;
-
 namespace NovaSharp.Interpreter.REPL
 {
+#if !(PCL || ENABLE_DOTNET || NETFX_CORE)
+    using System;
+    using Loaders;
+
     /// <summary>
     /// A script loader loading scripts directly from the file system (does not go through platform object)
     /// AND starts with module paths taken from environment variables (again, not going through the platform object).

@@ -1,9 +1,9 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
 namespace NovaSharp.Interpreter.IO
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+
     /// <summary>
     /// "Optimized" BinaryReader which shares strings and use a dumb compression for integers
     /// </summary>
@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.IO
         public BinDumpBinaryReader(Stream s, Encoding e)
             : base(s, e) { }
 
-        List<string> m_Strings = new();
+        private readonly List<string> _strings = new();
 
         public override int ReadInt32()
         {
@@ -57,14 +57,14 @@ namespace NovaSharp.Interpreter.IO
         {
             int pos = ReadInt32();
 
-            if (pos < m_Strings.Count)
+            if (pos < _strings.Count)
             {
-                return m_Strings[pos];
+                return _strings[pos];
             }
-            else if (pos == m_Strings.Count)
+            else if (pos == _strings.Count)
             {
                 string str = base.ReadString();
-                m_Strings.Add(str);
+                _strings.Add(str);
                 return str;
             }
             else

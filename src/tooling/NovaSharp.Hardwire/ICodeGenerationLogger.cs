@@ -2,8 +2,8 @@ namespace NovaSharp.Hardwire
 {
     public interface ICodeGenerationLogger
     {
-        void LogError(string message);
-        void LogWarning(string message);
-        void LogMinor(string message);
+        public void LogError(string message);
+        public void LogWarning(string message);
+        public void LogMinor(string message);
     }
 }

@@ -1,13 +1,13 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.IO;
-using System.Text;
-using NovaSharp.Interpreter.CoreLib.StringLib;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.IO;
+    using System.Text;
+    using StringLib;
+
     /// <summary>
     /// Class implementing string Lua functions
     /// </summary>
@@ -23,8 +23,8 @@ namespace NovaSharp.Interpreter.CoreLib
             globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue dump(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "dump")]
+        public static DynValue Dump(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue fn = args.AsType(0, "dump", DataType.Function, false);
 
@@ -46,11 +46,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue @char(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
+        [NovaSharpModuleMethod(Name = "char")]
+        public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             StringBuilder sb = new(args.Count);
 
@@ -83,11 +80,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(sb.ToString());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue @byte(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
+        [NovaSharpModuleMethod(Name = "byte")]
+        public static DynValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue vs = args.AsType(0, "byte", DataType.String, false);
             DynValue vi = args.AsType(1, "byte", DataType.Number, true);
@@ -96,8 +90,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return PerformByteLike(vs, vi, vj, i => Unicode2Ascii(i));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue unicode(
+        [NovaSharpModuleMethod(Name = "unicode")]
+        public static DynValue Unicode(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -162,83 +156,79 @@ namespace NovaSharp.Interpreter.CoreLib
             return s.Length - i;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue len(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "len")]
+        public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue vs = args.AsType(0, "len", DataType.String, false);
             return DynValue.NewNumber(vs.String.Length);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue match(
+        [NovaSharpModuleMethod(Name = "match")]
+        public static DynValue Match(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return executionContext.EmulateClassicCall(args, "match", KopiLua_StringLib.str_match);
+            return executionContext.EmulateClassicCall(args, "match", KopiLuaStringLib.str_match);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue gmatch(
+        [NovaSharpModuleMethod(Name = "gmatch")]
+        public static DynValue Gmatch(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return executionContext.EmulateClassicCall(
-                args,
-                "gmatch",
-                KopiLua_StringLib.str_gmatch
-            );
+            return executionContext.EmulateClassicCall(args, "gmatch", KopiLuaStringLib.str_gmatch);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue gsub(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "gsub")]
+        public static DynValue Gsub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            return executionContext.EmulateClassicCall(args, "gsub", KopiLua_StringLib.str_gsub);
+            return executionContext.EmulateClassicCall(args, "gsub", KopiLuaStringLib.str_gsub);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue find(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "find")]
+        public static DynValue Find(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            return executionContext.EmulateClassicCall(args, "find", KopiLua_StringLib.str_find);
+            return executionContext.EmulateClassicCall(args, "find", KopiLuaStringLib.str_find);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue lower(
+        [NovaSharpModuleMethod(Name = "lower")]
+        public static DynValue Lower(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s = args.AsType(0, "lower", DataType.String, false);
-            return DynValue.NewString(arg_s.String.ToLower());
+            DynValue argS = args.AsType(0, "lower", DataType.String, false);
+            return DynValue.NewString(argS.String.ToLower());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue upper(
+        [NovaSharpModuleMethod(Name = "upper")]
+        public static DynValue Upper(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s = args.AsType(0, "upper", DataType.String, false);
-            return DynValue.NewString(arg_s.String.ToUpper());
+            DynValue argS = args.AsType(0, "upper", DataType.String, false);
+            return DynValue.NewString(argS.String.ToUpper());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue rep(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "rep")]
+        public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DynValue arg_s = args.AsType(0, "rep", DataType.String, false);
-            DynValue arg_n = args.AsType(1, "rep", DataType.Number, false);
-            DynValue arg_sep = args.AsType(2, "rep", DataType.String, true);
+            DynValue argS = args.AsType(0, "rep", DataType.String, false);
+            DynValue argN = args.AsType(1, "rep", DataType.Number, false);
+            DynValue argSep = args.AsType(2, "rep", DataType.String, true);
 
-            if (String.IsNullOrEmpty(arg_s.String) || (arg_n.Number < 1))
+            if (String.IsNullOrEmpty(argS.String) || (argN.Number < 1))
             {
                 return DynValue.NewString("");
             }
 
-            string sep = (arg_sep.IsNotNil()) ? arg_sep.String : null;
+            string sep = (argSep.IsNotNil()) ? argSep.String : null;
 
-            int count = (int)arg_n.Number;
-            StringBuilder result = new(arg_s.String.Length * count);
+            int count = (int)argN.Number;
+            StringBuilder result = new(argS.String.Length * count);
 
             for (int i = 0; i < count; ++i)
             {
@@ -247,106 +237,102 @@ namespace NovaSharp.Interpreter.CoreLib
                     result.Append(sep);
                 }
 
-                result.Append(arg_s.String);
+                result.Append(argS.String);
             }
 
             return DynValue.NewString(result.ToString());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue format(
+        [NovaSharpModuleMethod(Name = "format")]
+        public static DynValue Format(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return executionContext.EmulateClassicCall(
-                args,
-                "format",
-                KopiLua_StringLib.str_format
-            );
+            return executionContext.EmulateClassicCall(args, "format", KopiLuaStringLib.str_format);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue reverse(
+        [NovaSharpModuleMethod(Name = "reverse")]
+        public static DynValue Reverse(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s = args.AsType(0, "reverse", DataType.String, false);
+            DynValue argS = args.AsType(0, "reverse", DataType.String, false);
 
-            if (String.IsNullOrEmpty(arg_s.String))
+            if (String.IsNullOrEmpty(argS.String))
             {
                 return DynValue.NewString("");
             }
 
-            char[] elements = arg_s.String.ToCharArray();
+            char[] elements = argS.String.ToCharArray();
             Array.Reverse(elements);
 
             return DynValue.NewString(new String(elements));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue sub(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "sub")]
+        public static DynValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DynValue arg_s = args.AsType(0, "sub", DataType.String, false);
-            DynValue arg_i = args.AsType(1, "sub", DataType.Number, true);
-            DynValue arg_j = args.AsType(2, "sub", DataType.Number, true);
+            DynValue argS = args.AsType(0, "sub", DataType.String, false);
+            DynValue argI = args.AsType(1, "sub", DataType.Number, true);
+            DynValue argJ = args.AsType(2, "sub", DataType.Number, true);
 
-            StringRange range = StringRange.FromLuaRange(arg_i, arg_j, -1);
-            string s = range.ApplyToString(arg_s.String);
+            StringRange range = StringRange.FromLuaRange(argI, argJ, -1);
+            string s = range.ApplyToString(argS.String);
 
             return DynValue.NewString(s);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue startsWith(
+        [NovaSharpModuleMethod(Name = "startswith")]
+        public static DynValue StartsWith(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s1 = args.AsType(0, "startsWith", DataType.String, true);
-            DynValue arg_s2 = args.AsType(1, "startsWith", DataType.String, true);
+            DynValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
+            DynValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
 
-            if (arg_s1.IsNil() || arg_s2.IsNil())
+            if (argS1.IsNil() || argS2.IsNil())
             {
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(arg_s1.String.StartsWith(arg_s2.String));
+            return DynValue.NewBoolean(argS1.String.StartsWith(argS2.String));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue endsWith(
+        [NovaSharpModuleMethod(Name = "endswith")]
+        public static DynValue EndsWith(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s1 = args.AsType(0, "endsWith", DataType.String, true);
-            DynValue arg_s2 = args.AsType(1, "endsWith", DataType.String, true);
+            DynValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
+            DynValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
 
-            if (arg_s1.IsNil() || arg_s2.IsNil())
+            if (argS1.IsNil() || argS2.IsNil())
             {
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(arg_s1.String.EndsWith(arg_s2.String));
+            return DynValue.NewBoolean(argS1.String.EndsWith(argS2.String));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue contains(
+        [NovaSharpModuleMethod(Name = "contains")]
+        public static DynValue Contains(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue arg_s1 = args.AsType(0, "contains", DataType.String, true);
-            DynValue arg_s2 = args.AsType(1, "contains", DataType.String, true);
+            DynValue argS1 = args.AsType(0, "contains", DataType.String, true);
+            DynValue argS2 = args.AsType(1, "contains", DataType.String, true);
 
-            if (arg_s1.IsNil() || arg_s2.IsNil())
+            if (argS1.IsNil() || argS2.IsNil())
             {
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(arg_s1.String.Contains(arg_s2.String));
+            return DynValue.NewBoolean(argS1.String.Contains(argS2.String));
         }
     }
 }

@@ -1,31 +1,50 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.DataStructs;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.StandardDescriptors;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using BasicDescriptors;
+    using Compatibility;
+    using DataStructs;
+    using StandardDescriptors;
+
     /// <summary>
     /// Class providing easier marshalling of CLR events. Handling is limited to a narrow range of handler signatures, which,
     /// however, covers in practice most of all available events.
     /// </summary>
     public class EventMemberDescriptor : IMemberDescriptor
     {
+        private sealed class RefEqualityComparer : IEqualityComparer<object>
+        {
+            public static readonly RefEqualityComparer Instance = new();
+
+            private RefEqualityComparer() { }
+
+            bool IEqualityComparer<object>.Equals(object x, object y)
+            {
+                return object.ReferenceEquals(x, y);
+            }
+
+            int IEqualityComparer<object>.GetHashCode(object obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
+
         /// <summary>
         /// The maximum number of arguments supported in an event handler delegate
         /// </summary>
         public const int MAX_ARGS_IN_DELEGATE = 16;
 
-        object m_Lock = new();
-        MultiDictionary<object, Closure> m_Callbacks = new(
-            new NovaSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
+        private readonly object _lock = new();
+
+        private readonly MultiDictionary<object, Closure> _callbacks = new(
+            RefEqualityComparer.Instance
         );
-        Dictionary<object, Delegate> m_Delegates = new(
-            new NovaSharp.Interpreter.DataStructs.ReferenceEqualityComparer()
+
+        private readonly Dictionary<object, Delegate> _delegates = new(
+            RefEqualityComparer.Instance
         );
 
         /// <summary>
@@ -140,10 +159,7 @@ namespace NovaSharp.Interpreter.Interop
                 if (throwException)
                 {
                     throw new ArgumentException(
-                        string.Format(
-                            "Event handler cannot have more than {0} parameters",
-                            MAX_ARGS_IN_DELEGATE
-                        )
+                        $"Event handler cannot have more than {MAX_ARGS_IN_DELEGATE} parameters"
                     );
                 }
 
@@ -191,9 +207,9 @@ namespace NovaSharp.Interpreter.Interop
         {
             CheckEventIsCompatible(ei, true);
             EventInfo = ei;
-            m_Add = Framework.Do.GetAddMethod(ei);
-            m_Remove = Framework.Do.GetRemoveMethod(ei);
-            IsStatic = m_Add.IsStatic;
+            _add = Framework.Do.GetAddMethod(ei);
+            _remove = Framework.Do.GetRemoveMethod(ei);
+            IsStatic = _add.IsStatic;
         }
 
         /// <summary>
@@ -206,8 +222,9 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public bool IsStatic { get; private set; }
 
-        private MethodInfo m_Add,
-            m_Remove;
+        private readonly MethodInfo _add;
+
+        private readonly MethodInfo _remove;
 
         /// <summary>
         /// Gets a dynvalue which is a facade supporting add/remove methods which is callable from scripts
@@ -233,16 +250,16 @@ namespace NovaSharp.Interpreter.Interop
             CallbackArguments args
         )
         {
-            lock (m_Lock)
+            lock (_lock)
             {
                 Closure closure = args.AsType(
                     0,
-                    string.Format("userdata<{0}>.{1}.add", EventInfo.DeclaringType, EventInfo.Name),
+                    $"userdata<{EventInfo.DeclaringType}>.{EventInfo.Name}.add",
                     DataType.Function,
                     false
                 ).Function;
 
-                if (m_Callbacks.Add(o, closure))
+                if (_callbacks.Add(o, closure))
                 {
                     RegisterCallback(o);
                 }
@@ -257,7 +274,7 @@ namespace NovaSharp.Interpreter.Interop
             CallbackArguments args
         )
         {
-            lock (m_Lock)
+            lock (_lock)
             {
                 Closure closure = args.AsType(
                     0,
@@ -270,7 +287,7 @@ namespace NovaSharp.Interpreter.Interop
                     false
                 ).Function;
 
-                if (m_Callbacks.RemoveValue(o, closure))
+                if (_callbacks.RemoveValue(o, closure))
                 {
                     UnregisterCallback(o);
                 }
@@ -281,7 +298,7 @@ namespace NovaSharp.Interpreter.Interop
 
         private void RegisterCallback(object o)
         {
-            m_Delegates.GetOrCreate(
+            _delegates.GetOrCreate(
                 o,
                 () =>
                 {
@@ -296,7 +313,7 @@ namespace NovaSharp.Interpreter.Interop
                         d.Method
                     );
 #endif
-                    m_Add.Invoke(o, new object[] { handler });
+                    _add.Invoke(o, new object[] { handler });
                     return handler;
                 }
             );
@@ -304,15 +321,15 @@ namespace NovaSharp.Interpreter.Interop
 
         private void UnregisterCallback(object o)
         {
-            Delegate handler = m_Delegates.GetOrDefault(o);
+            Delegate handler = _delegates.GetOrDefault(o);
 
             if (handler == null)
             {
                 throw new InternalErrorException("can't unregister null delegate");
             }
 
-            m_Delegates.Remove(o);
-            m_Remove.Invoke(o, new object[] { handler });
+            _delegates.Remove(o);
+            _remove.Invoke(o, new object[] { handler });
         }
 
         private Delegate CreateDelegate(object sender)
@@ -483,9 +500,9 @@ namespace NovaSharp.Interpreter.Interop
         )
         {
             Closure[] closures = null;
-            lock (m_Lock)
+            lock (_lock)
             {
-                closures = m_Callbacks.Find(sender).ToArray();
+                closures = _callbacks.Find(sender).ToArray();
             }
 
             foreach (Closure c in closures)
@@ -666,7 +683,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public string Name
         {
-            get { return this.EventInfo.Name; }
+            get { return EventInfo.Name; }
         }
 
         /// <summary>

@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Tree.Statements;
-
 namespace NovaSharp.Interpreter.Execution.Scopes
 {
+    using System;
+    using System.Collections.Generic;
+    using Tree.Statements;
+
     internal class BuildTimeScopeBlock
     {
         internal BuildTimeScopeBlock Parent { get; private set; }
@@ -11,13 +11,13 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal RuntimeScopeBlock ScopeBlock { get; private set; }
 
-        Dictionary<string, SymbolRef> m_DefinedNames = new();
+        private readonly Dictionary<string, SymbolRef> _definedNames = new();
 
         internal void Rename(string name)
         {
-            SymbolRef sref = m_DefinedNames[name];
-            m_DefinedNames.Remove(name);
-            m_DefinedNames.Add(string.Format("@{0}_{1}", name, Guid.NewGuid().ToString("N")), sref);
+            SymbolRef sref = _definedNames[name];
+            _definedNames.Remove(name);
+            _definedNames.Add($"@{name}_{Guid.NewGuid().ToString("N")}", sref);
         }
 
         internal BuildTimeScopeBlock(BuildTimeScopeBlock parent)
@@ -36,14 +36,14 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal SymbolRef Find(string name)
         {
-            return m_DefinedNames.GetOrDefault(name);
+            return _definedNames.GetOrDefault(name);
         }
 
         internal SymbolRef Define(string name)
         {
             SymbolRef l = SymbolRef.Local(name, -1);
-            m_DefinedNames.Add(name, l);
-            m_LastDefinedName = name;
+            _definedNames.Add(name, l);
+            _lastDefinedName = name;
             return l;
         }
 
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             int firstVal = -1;
             int lastVal = -1;
 
-            foreach (SymbolRef lref in m_DefinedNames.Values)
+            foreach (SymbolRef lref in _definedNames.Values)
             {
                 int pos = buildTimeScopeFrame.AllocVar(lref);
 
@@ -64,83 +64,84 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                 lastVal = pos;
             }
 
-            this.ScopeBlock.From = firstVal;
-            this.ScopeBlock.ToInclusive = this.ScopeBlock.To = lastVal;
+            ScopeBlock.From = firstVal;
+            ScopeBlock.ToInclusive = ScopeBlock.To = lastVal;
 
             if (firstVal < 0)
             {
-                this.ScopeBlock.From = buildTimeScopeFrame.GetPosForNextVar();
+                ScopeBlock.From = buildTimeScopeFrame.GetPosForNextVar();
             }
 
             foreach (BuildTimeScopeBlock child in ChildNodes)
             {
-                this.ScopeBlock.ToInclusive = Math.Max(
-                    this.ScopeBlock.ToInclusive,
+                ScopeBlock.ToInclusive = Math.Max(
+                    ScopeBlock.ToInclusive,
                     child.ResolveLRefs(buildTimeScopeFrame)
                 );
             }
 
-            if (m_LocalLabels != null)
+            if (_localLabels != null)
             {
-                foreach (LabelStatement label in m_LocalLabels.Values)
+                foreach (LabelStatement label in _localLabels.Values)
                 {
-                    label.SetScope(this.ScopeBlock);
+                    label.SetScope(ScopeBlock);
                 }
             }
 
-            return this.ScopeBlock.ToInclusive;
+            return ScopeBlock.ToInclusive;
         }
 
-        List<GotoStatement> m_PendingGotos;
-        Dictionary<string, LabelStatement> m_LocalLabels;
-        string m_LastDefinedName;
+        private List<GotoStatement> _pendingGotos;
+        private Dictionary<string, LabelStatement> _localLabels;
+        private string _lastDefinedName;
 
         internal void DefineLabel(LabelStatement label)
         {
-            if (m_LocalLabels == null)
+            if (_localLabels == null)
             {
-                m_LocalLabels = new Dictionary<string, LabelStatement>();
+                _localLabels = new Dictionary<string, LabelStatement>();
             }
 
-            if (m_LocalLabels.ContainsKey(label.Label))
+            if (_localLabels.ContainsKey(label.Label))
             {
                 throw new SyntaxErrorException(
                     label.NameToken,
                     "label '{0}' already defined on line {1}",
                     label.Label,
-                    m_LocalLabels[label.Label].SourceRef.FromLine
+                    _localLabels[label.Label].SourceRef.FromLine
                 );
             }
             else
             {
-                m_LocalLabels.Add(label.Label, label);
-                label.SetDefinedVars(m_DefinedNames.Count, m_LastDefinedName);
+                _localLabels.Add(label.Label, label);
+                label.SetDefinedVars(_definedNames.Count, _lastDefinedName);
             }
         }
 
         internal void RegisterGoto(GotoStatement gotostat)
         {
-            if (m_PendingGotos == null)
+            if (_pendingGotos == null)
             {
-                m_PendingGotos = new List<GotoStatement>();
+                _pendingGotos = new List<GotoStatement>();
             }
 
-            m_PendingGotos.Add(gotostat);
-            gotostat.SetDefinedVars(m_DefinedNames.Count, m_LastDefinedName);
+            _pendingGotos.Add(gotostat);
+            gotostat.SetDefinedVars(_definedNames.Count, _lastDefinedName);
         }
 
         internal void ResolveGotos()
         {
-            if (m_PendingGotos == null)
+            if (_pendingGotos == null)
             {
                 return;
             }
 
-            foreach (GotoStatement gotostat in m_PendingGotos)
+            foreach (GotoStatement gotostat in _pendingGotos)
             {
-                LabelStatement label;
-
-                if (m_LocalLabels != null && m_LocalLabels.TryGetValue(gotostat.Label, out label))
+                if (
+                    _localLabels != null
+                    && _localLabels.TryGetValue(gotostat.Label, out LabelStatement label)
+                )
                 {
                     if (label.DefinedVarsCount > gotostat.DefinedVarsCount)
                     {
@@ -148,7 +149,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                             gotostat.GotoToken,
                             "<goto {0}> at line {1} jumps into the scope of local '{2}'",
                             gotostat.Label,
-                            gotostat.GotoToken.FromLine,
+                            gotostat.GotoToken.fromLine,
                             label.LastDefinedVarName
                         );
                     }
@@ -163,7 +164,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                             gotostat.GotoToken,
                             "no visible label '{0}' for <goto> at line {1}",
                             gotostat.Label,
-                            gotostat.GotoToken.FromLine
+                            gotostat.GotoToken.fromLine
                         );
                     }
 
@@ -171,7 +172,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                 }
             }
 
-            m_PendingGotos.Clear();
+            _pendingGotos.Clear();
         }
     }
 }

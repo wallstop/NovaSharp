@@ -1,19 +1,19 @@
-#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
-
-using System.Collections.Generic;
-using NovaSharp.Interpreter;
-using NovaSharp.VsCodeDebugger.SDK;
-
 namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
-    internal class EmptyDebugSession : DebugSession
+#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
+
+    using System.Collections.Generic;
+    using Interpreter;
+    using SDK;
+
+    internal sealed class EmptyDebugSession : DebugSession
     {
-        NovaSharpVsCodeDebugServer m_Server;
+        private readonly NovaSharpVsCodeDebugServer _server;
 
         internal EmptyDebugSession(NovaSharpVsCodeDebugServer server)
             : base(true, false)
         {
-            m_Server = server;
+            _server = server;
         }
 
         public override void Initialize(Response response, Table args)
@@ -67,11 +67,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void SendList()
         {
-            int currId = m_Server.CurrentId ?? -1000;
+            int currId = _server.CurrentId ?? -1000;
 
             SendText("==========================================================");
 
-            foreach (KeyValuePair<int, string> pair in m_Server.GetAttachedDebuggersByIdAndName())
+            foreach (KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName())
             {
                 string isdef = (pair.Key == currId) ? " (default)" : "";
                 SendText("{0} : {1}{2}", pair.Key.ToString().PadLeft(9), pair.Value, isdef);
@@ -96,7 +96,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        private static string getString(Table args, string property, string dflt = null)
+        private static string GetString(Table args, string property, string dflt = null)
         {
             string s = (string)args[property];
             if (s == null)
@@ -113,8 +113,8 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Evaluate(Response response, Table args)
         {
-            string expression = getString(args, "expression");
-            string context = getString(args, "context") ?? "hover";
+            string expression = GetString(args, "expression");
+            string context = GetString(args, "context") ?? "hover";
 
             if (context == "repl")
             {
@@ -126,10 +126,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void ExecuteRepl(string cmd)
         {
-            int id = 0;
-            if (int.TryParse(cmd, out id))
+            if (int.TryParse(cmd, out int id))
             {
-                m_Server.CurrentId = id;
+                _server.CurrentId = id;
 
                 SendText("Re-attach the debugger to debug the selected script.");
 

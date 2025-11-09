@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// Interface used by standard descriptors to access members of a given type from scripts.
     /// </summary>
@@ -10,12 +10,12 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Gets the name of the descriptor (usually, the name of the type described).
         /// </summary>
-        string Name { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the type this descriptor refers to
         /// </summary>
-        Type Type { get; }
+        public Type Type { get; }
 
         /// <summary>
         /// Gets the value of the member
@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        DynValue GetValue(Script script, object obj);
+        public DynValue GetValue(Script script, object obj);
 
         /// <summary>
         /// Sets the value of the member
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="obj">The object.</param>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        bool SetValue(Script script, object obj, DynValue value);
+        public bool SetValue(Script script, object obj, DynValue value);
 
         /// <summary>
         /// Gets the type of the member.
@@ -40,10 +40,10 @@ namespace NovaSharp.Interpreter.Interop
         /// <value>
         /// The type of the member.
         /// </value>
-        UserDataMemberType MemberType { get; }
+        public UserDataMemberType MemberType { get; }
 
-        void Optimize();
+        public void Optimize();
 
-        bool IsStatic { get; }
+        public bool IsStatic { get; }
     }
 }

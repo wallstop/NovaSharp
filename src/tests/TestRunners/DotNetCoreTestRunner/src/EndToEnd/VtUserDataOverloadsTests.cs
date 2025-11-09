@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     public static class VtOverloadsExtMethods
     {
         public static string Method1(
@@ -33,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 OverloadsTestClass otc = new();
                 otc.Method1();
-                OverloadsTestClass.Method1(false);
+                Method1(false);
             }
 
             public string MethodV(string fmt, params object[] args)
@@ -94,25 +90,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected, bool tupleExpected = false)
         {
-            Script S = new();
+            Script s = new();
 
             OverloadsTestClass obj = new();
 
             UserData.RegisterType<OverloadsTestClass>();
 
-            S.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
-            S.Globals.Set("o", UserData.Create(obj));
+            s.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
+            s.Globals.Set("o", UserData.Create(obj));
 
-            DynValue v = S.DoString("return " + code);
+            DynValue v = s.DoString("return " + code);
 
             if (tupleExpected)
             {
-                Assert.AreEqual(DataType.Tuple, v.Type);
+                Assert.That(v.Type, Is.EqualTo(DataType.Tuple));
                 v = v.Tuple[0];
             }
 
-            Assert.AreEqual(DataType.String, v.Type);
-            Assert.AreEqual(expected, v.String);
+            Assert.That(v.Type, Is.EqualTo(DataType.String));
+            Assert.That(v.String, Is.EqualTo(expected));
         }
 
         [Test]

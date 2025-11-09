@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
+    using System;
+
     /// <summary>
     /// Interface for managing how to handle
     /// </summary>
@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
         /// <param name="newDescriptor">The new descriptor, or null if this is a deregistration.</param>
         /// <param name="oldDescriptor">The old descriptor, or null if no descriptor was previously registered for this type.</param>
         /// <returns></returns>
-        IUserDataDescriptor HandleRegistration(
+        public IUserDataDescriptor HandleRegistration(
             IUserDataDescriptor newDescriptor,
             IUserDataDescriptor oldDescriptor
         );
@@ -24,6 +24,6 @@ namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>True to register the type automatically, false otherwise.</returns>
-        bool AllowTypeAutoRegistration(Type type);
+        public bool AllowTypeAutoRegistration(Type type);
     }
 }

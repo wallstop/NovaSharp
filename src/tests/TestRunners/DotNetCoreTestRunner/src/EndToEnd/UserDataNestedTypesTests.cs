@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class UserDataNestedTypesTests
     {
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
 
             [NovaSharpUserData]
-            private class SomeNestedTypePrivate
+            private sealed class SomeNestedTypePrivate
             {
                 public static string Get()
                 {
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 }
             }
 
-            private class SomeNestedTypePrivate2
+            private static class SomeNestedTypePrivate2
             {
                 public static string Get()
                 {
@@ -74,107 +74,107 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_NestedTypes_Public_Enum()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<SomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<SomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue res = S.DoString("return o:Get()");
+            DynValue res = s.DoString("return o:Get()");
 
-            Assert.AreEqual(DataType.UserData, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.UserData));
         }
 
         [Test]
         public void Interop_NestedTypes_Public_Ref()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<SomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<SomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedType:Get()");
+            DynValue res = s.DoString("return o.SomeNestedType:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedType", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedType"));
         }
 
         [Test]
         public void Interop_NestedTypes_Private_Ref()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<SomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<SomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedTypePrivate:Get()");
+            DynValue res = s.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedTypePrivate", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate"));
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
         public void Interop_NestedTypes_Private_Ref_2()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<SomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<SomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedTypePrivate2:Get()");
+            DynValue res = s.DoString("return o.SomeNestedTypePrivate2:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedTypePrivate2", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate2"));
         }
 
         [Test]
         public void Interop_NestedTypes_Public_Val()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<VSomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedType:Get()");
+            DynValue res = s.DoString("return o.SomeNestedType:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedType", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedType"));
         }
 
         [Test]
         public void Interop_NestedTypes_Private_Val()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<VSomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedTypePrivate:Get()");
+            DynValue res = s.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedTypePrivate", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate"));
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
         public void Interop_NestedTypes_Private_Val_2()
         {
-            Script S = new();
+            Script s = new();
 
             UserData.RegisterType<VSomeType>();
 
-            S.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+            s.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue res = S.DoString("return o.SomeNestedTypePrivate2:Get()");
+            DynValue res = s.DoString("return o.SomeNestedTypePrivate2:Get()");
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Ciao from SomeNestedTypePrivate2", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate2"));
         }
     }
 }

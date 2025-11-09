@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Exception thrown when a dynamic expression is invalid
     /// </summary>

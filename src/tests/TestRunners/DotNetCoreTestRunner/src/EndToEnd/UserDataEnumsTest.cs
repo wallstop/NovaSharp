@@ -1,8 +1,8 @@
-using System;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using NUnit.Framework;
+
     public enum MyEnum : short
     {
         Uno = 1,
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected)
         {
-            Script S = new();
+            Script s = new();
 
             EnumOverloadsTestClass obj = new();
 
@@ -70,16 +70,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<MyEnum>();
             UserData.RegisterType<MyFlags>();
 
-            S.Globals.Set("MyEnum", UserData.CreateStatic<MyEnum>());
+            s.Globals.Set("MyEnum", UserData.CreateStatic<MyEnum>());
             //			S.Globals.Set("MyFlags", UserData.CreateStatic<MyFlags>());
-            S.Globals["MyFlags"] = typeof(MyFlags);
+            s.Globals["MyFlags"] = typeof(MyFlags);
 
-            S.Globals.Set("o", UserData.Create(obj));
+            s.Globals.Set("o", UserData.Create(obj));
 
-            DynValue v = S.DoString("return " + code);
+            DynValue v = s.DoString("return " + code);
 
-            Assert.AreEqual(DataType.String, v.Type);
-            Assert.AreEqual(expected, v.String);
+            Assert.That(v.Type, Is.EqualTo(DataType.String));
+            Assert.That(v.String, Is.EqualTo(expected));
         }
 
         [Test]

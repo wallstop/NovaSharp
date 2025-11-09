@@ -5,13 +5,13 @@ internal static class BenchmarkScripts
     public static string GetScript(ScriptScenario scenario) =>
         scenario switch
         {
-            ScriptScenario.TowerOfHanoi => TowerOfHanoi,
-            ScriptScenario.EightQueens => EightQueens,
-            ScriptScenario.CoroutinePingPong => CoroutinePingPong,
-            _ => TowerOfHanoi,
+            ScriptScenario.TowerOfHanoi => TOWER_OF_HANOI,
+            ScriptScenario.EightQueens => EIGHT_QUEENS,
+            ScriptScenario.CoroutinePingPong => COROUTINE_PING_PONG,
+            _ => TOWER_OF_HANOI,
         };
 
-    private const string TowerOfHanoi =
+    private const string TOWER_OF_HANOI =
         @"
         function move(n, src, dst, via)
             if n > 0 then
@@ -25,7 +25,7 @@ internal static class BenchmarkScripts
         end
     ";
 
-    private const string EightQueens =
+    private const string EIGHT_QUEENS =
         @"
         local N = 8
         local board = {}
@@ -61,7 +61,7 @@ internal static class BenchmarkScripts
         solve(1)
     ";
 
-    private const string CoroutinePingPong =
+    private const string COROUTINE_PING_PONG =
         @"
         local function producer(n)
             local value = 0

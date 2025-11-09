@@ -1,6 +1,8 @@
 namespace NovaSharp.Commands.Implementations
 {
-    class RunCommand : ICommand
+    using System;
+
+    internal sealed class RunCommand : ICommand
     {
         public string Name
         {

@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Marks a CLR type to be a NovaSharp module.
     /// Modules are the fastest way to bring interop between scripts and CLR code, albeit at the cost of a very increased

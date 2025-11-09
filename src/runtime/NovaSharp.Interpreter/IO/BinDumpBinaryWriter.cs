@@ -1,15 +1,15 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
 namespace NovaSharp.Interpreter.IO
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+
     /// <summary>
     /// "Optimized" BinaryWriter which shares strings and use a dumb compression for integers
     /// </summary>
     public class BinDumpBinaryWriter : BinaryWriter
     {
-        Dictionary<string, int> m_StringMap = new();
+        private readonly Dictionary<string, int> _stringMap = new();
 
         public BinDumpBinaryWriter(Stream s)
             : base(s) { }
@@ -69,18 +69,16 @@ namespace NovaSharp.Interpreter.IO
 
         public override void Write(string value)
         {
-            int pos;
-
-            if (m_StringMap.TryGetValue(value, out pos))
+            if (_stringMap.TryGetValue(value, out int pos))
             {
-                this.Write(m_StringMap[value]);
+                Write(_stringMap[value]);
             }
             else
             {
-                pos = m_StringMap.Count;
-                m_StringMap[value] = pos;
+                pos = _stringMap.Count;
+                _stringMap[value] = pos;
 
-                this.Write(pos);
+                Write(pos);
                 base.Write(value);
             }
         }

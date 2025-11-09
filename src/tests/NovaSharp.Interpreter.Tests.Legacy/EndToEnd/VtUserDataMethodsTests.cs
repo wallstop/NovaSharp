@@ -1,19 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using Compatibility;
+    using Interop;
     using Interop.RegistrationPolicies;
+    using NUnit.Framework;
 
     [TestFixture]
     public class VtUserDataMethodsTests
     {
-        public struct SomeClass_NoRegister : IComparable
+        public struct SomeClassNoRegister : IComparable
         {
             public string ManipulateString(
                 string input,
@@ -28,7 +27,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string ConcatNums(int p1, int p2)
             {
-                return string.Format("{0}%{1}", p1, p2);
+                return $"{p1}%{p2}";
             }
 
             public int SomeMethodWithLongName(int i)
@@ -95,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 IEnumerable<object> p6,
                 StringBuilder p7,
                 Dictionary<object, object> p8,
-                SomeClass_NoRegister p9,
+                SomeClassNoRegister p9,
                 int p10 = 1994
             )
             {
@@ -151,11 +150,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 IEnumerable<object> p6,
                 StringBuilder p7,
                 Dictionary<object, object> p8,
-                SomeClass_NoRegister p9,
+                SomeClassNoRegister p9,
                 int p10 = 1912
             )
             {
-                Assert.IsNotNull(s);
+                Assert.That(s, Is.Not.Null);
                 return ConcatS(p1, p2, p3, p4, p5, p6, p7, p8, this, p10);
             }
 
@@ -196,7 +195,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string ConcatNums(int p1, int p2)
             {
-                return string.Format("{0}%{1}", p1, p2);
+                return $"{p1}%{p2}";
             }
 
             public int SomeMethodWithLongName(int i)
@@ -323,7 +322,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 int p10 = 1912
             )
             {
-                Assert.IsNotNull(s);
+                Assert.That(s, Is.Not.Null);
                 return ConcatS(p1, p2, p3, p4, p5, p6, p7, p8, this, p10);
             }
 
@@ -349,14 +348,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public interface Interface1
+        public interface INterface1
         {
-            string Test1();
+            public string Test1();
         }
 
-        public interface Interface2
+        public interface INterface2
         {
-            string Test2();
+            public string Test2();
         }
 
         public class SomeOtherClass
@@ -436,7 +435,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeOtherClassWithDualInterfaces : Interface1, Interface2
+        public struct SomeOtherClassWithDualInterfaces : INterface1, INterface2
         {
             public string Test1()
             {
@@ -457,19 +456,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 			return myobj.format('{0}.{1}@{2}:{3}', 1, 2, 'ciao', true);";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("1.2@ciao:True", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("1.2@ciao:True"));
         }
 
         public void Test_ConcatMethodStaticComplexCustomConv(InteropAccessMode opt)
@@ -488,7 +487,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-                Script S = new();
+                Script s = new();
 
                 SomeClass obj = new();
 
@@ -516,18 +515,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 );
 
                 Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-                    (_s, v) => DynValue.NewString(v.ToString().ToUpper())
+                    (s, v) => DynValue.NewString(v.ToString().ToUpper())
                 );
 
-                S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
 
-                Assert.AreEqual(DataType.String, res.Type);
-                Assert.AreEqual(
-                    "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14",
-                    res.String
+                Assert.That(res.Type, Is.EqualTo(DataType.String));
+                Assert.That(
+                    res.String,
+                    Is.EqualTo(
+                        "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14"
+                    )
                 );
             }
             finally
@@ -550,22 +551,24 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "ciao,hello,aloha|42,77,125,13|aloha,ciao,hello|39,78,128|ciao,hello,aloha|42,77,125,13",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "ciao,hello,aloha|42,77,125,13|aloha,ciao,hello|39,78,128|ciao,hello,aloha|42,77,125,13"
+                )
             );
         }
 
@@ -581,20 +584,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("1,2,3|11,35,77|16,42,64|99,76,17|", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("1,2,3|11,35,77|16,42,64|99,76,17|"));
         }
 
         public void Test_RefOutParams(InteropAccessMode opt)
@@ -606,26 +609,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x, y, z = myobj:manipulateString('CiAo', 'hello');
 				return x, y, z;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(3, res.Tuple.Length);
-            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[2].Type);
-            Assert.AreEqual("CIAO", res.Tuple[0].String);
-            Assert.AreEqual("CiAohello", res.Tuple[1].String);
-            Assert.AreEqual("ciao", res.Tuple[2].String);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(3));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[0].String, Is.EqualTo("CIAO"));
+            Assert.That(res.Tuple[1].String, Is.EqualTo("CiAohello"));
+            Assert.That(res.Tuple[2].String, Is.EqualTo("ciao"));
         }
 
         public void Test_ConcatMethodStatic(InteropAccessMode opt)
@@ -638,22 +641,24 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = static.ConcatS(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994"
+                )
             );
         }
 
@@ -667,21 +672,23 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
+                )
             );
         }
 
@@ -695,21 +702,23 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj:ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
+                )
             );
         }
 
@@ -724,19 +733,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj:ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals["mytype"] = typeof(SomeClass);
+            s.Globals["mytype"] = typeof(SomeClass);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
+                )
             );
         }
 
@@ -750,22 +761,24 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = static.ConcatS(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals["static"] = typeof(SomeClass);
-            S.Globals["myobj"] = obj;
+            s.Globals["static"] = typeof(SomeClass);
+            s.Globals["myobj"] = obj;
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(
-                "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994",
-                res.String
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(
+                res.String,
+                Is.EqualTo(
+                    "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994"
+                )
             );
         }
 
@@ -778,20 +791,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = concat(1, 2);
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
-            S.Globals["concat"] = CallbackFunction.FromDelegate(
-                S,
+            s.Globals["concat"] = CallbackFunction.FromDelegate(
+                s,
                 (Func<int, int, string>)obj.ConcatNums,
                 opt
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("1%2", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("1%2"));
         }
 
         public void Test_ListMethod(InteropAccessMode opt)
@@ -807,20 +820,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return sum;";
 
-            Script S = new();
+            Script s = new();
 
-            SomeClass_NoRegister obj = new();
+            SomeClassNoRegister obj = new();
 
-            S.Globals["mklist"] = CallbackFunction.FromDelegate(
-                S,
+            s.Globals["mklist"] = CallbackFunction.FromDelegate(
+                s,
                 (Func<int, int, List<int>>)obj.MkList,
                 opt
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -1042,7 +1055,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void VInterop_TestAutoregisterPolicy()
         {
-            IRegistrationPolicy? oldPolicy = UserData.RegistrationPolicy;
+            IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
 
             try
             {
@@ -1050,16 +1063,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
 
-                Script S = new();
+                Script s = new();
 
                 SomeOtherClass obj = new();
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
 
-                Assert.AreEqual(DataType.String, res.Type);
-                Assert.AreEqual("Test1", res.String);
+                Assert.That(res.Type, Is.EqualTo(DataType.String));
+                Assert.That(res.String, Is.EqualTo("Test1"));
             }
             finally
             {
@@ -1072,21 +1085,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = @"return myobj:Test1() .. myobj:Test2()";
 
-            Script S = new();
+            Script s = new();
 
-            UserData.UnregisterType<Interface1>();
-            UserData.UnregisterType<Interface2>();
-            UserData.RegisterType<Interface1>();
-            UserData.RegisterType<Interface2>();
+            UserData.UnregisterType<INterface1>();
+            UserData.UnregisterType<INterface2>();
+            UserData.RegisterType<INterface1>();
+            UserData.RegisterType<INterface2>();
 
             SomeOtherClassWithDualInterfaces obj = new();
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("Test1Test2", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("Test1Test2"));
         }
 
         [Test]
@@ -1104,19 +1117,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c + d;
 			";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>();
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(20, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(20));
         }
 
         [Test]
@@ -1133,19 +1146,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c;
 			";
 
-            Script S = new();
+            Script s = new();
 
             SelfDescribingClass obj = new();
 
             UserData.UnregisterType<SelfDescribingClass>();
             UserData.RegisterType<SelfDescribingClass>();
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(18, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(18));
         }
 
         [Test]
@@ -1162,18 +1175,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return a + b + c;
 			";
 
-            Script S = new();
+            Script s = new();
 
             SomeOtherClassCustomDescriptor obj = new();
 
             UserData.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(24, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(24));
         }
     }
 }

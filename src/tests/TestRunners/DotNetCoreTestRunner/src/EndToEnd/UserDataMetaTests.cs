@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Collections.Generic;
+    using NUnit.Framework;
+
     [TestFixture]
     public class UserDataMetaTests
     {
-        internal class ClassWithLength
+        internal sealed class ClassWithLength
         {
             public int Length
             {
@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        internal class ClassWithCount
+        internal sealed class ClassWithCount
         {
             public int Count
             {
@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        internal class ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
+        internal sealed class ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
         {
             public int Value { get; set; }
 
@@ -122,13 +122,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public override bool Equals(object obj)
             {
-                if (obj is double)
+                if (obj is double d)
                 {
-                    return ((double)obj) == Value;
+                    return d == Value;
                 }
 
-                ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;
-                if (other == null)
+                if (obj is not ArithmOperatorsTestClass other)
                 {
                     return false;
                 }
@@ -143,13 +142,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public int CompareTo(object obj)
             {
-                if (obj is double)
+                if (obj is double d)
                 {
-                    return Value.CompareTo((int)(double)obj);
+                    return Value.CompareTo((int)d);
                 }
 
-                ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;
-                if (other == null)
+                if (obj is not ArithmOperatorsTestClass other)
                 {
                     return 1;
                 }
@@ -186,9 +184,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void Interop_Meta_Pairs()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
-            S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            s.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string @script =
                 @"
@@ -200,15 +198,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return str;
 				";
 
-            Assert.AreEqual("aAbBcC", S.DoString(script).String);
+            Assert.That(s.DoString(script).String, Is.EqualTo("aAbBcC"));
         }
 
         [Test]
         public void Interop_Meta_IPairs()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
-            S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            s.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string @script =
                 @"
@@ -220,15 +218,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return str;
 				";
 
-            Assert.AreEqual("aAbBcC", S.DoString(script).String);
+            Assert.That(s.DoString(script).String, Is.EqualTo("aAbBcC"));
         }
 
         [Test]
         public void Interop_Meta_Iterator()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
-            S.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            s.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string @script =
                 @"
@@ -240,92 +238,92 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return sum;
 				";
 
-            Assert.AreEqual(6, S.DoString(script).Number);
+            Assert.That(s.DoString(script).Number, Is.EqualTo(6));
         }
 
         [Test]
         public void Interop_Meta_Op_Len()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
             UserData.RegisterType<ClassWithCount>();
             UserData.RegisterType<ClassWithLength>();
 
-            S.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
-            S.Globals.Set("o2", UserData.Create(new ClassWithCount()));
-            S.Globals.Set("o3", UserData.Create(new ClassWithLength()));
+            s.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
+            s.Globals.Set("o2", UserData.Create(new ClassWithCount()));
+            s.Globals.Set("o3", UserData.Create(new ClassWithLength()));
 
-            Assert.AreEqual(55, S.DoString("return #o3").Number);
-            Assert.AreEqual(123, S.DoString("return #o2").Number);
+            Assert.That(s.DoString("return #o3").Number, Is.EqualTo(55));
+            Assert.That(s.DoString("return #o2").Number, Is.EqualTo(123));
 
-            Assert.Catch<ScriptRuntimeException>(() => S.DoString("return #o1"));
+            Assert.Catch<ScriptRuntimeException>(() => s.DoString("return #o1"));
         }
 
         [Test]
         public void Interop_Meta_Equality()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
 
-            S.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
-            S.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)));
-            S.Globals.Set("o3", UserData.Create(new ArithmOperatorsTestClass(5)));
+            s.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
+            s.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)));
+            s.Globals.Set("o3", UserData.Create(new ArithmOperatorsTestClass(5)));
 
-            Assert.IsTrue(S.DoString("return o1 == o1").Boolean, "o1 == o1");
-            Assert.IsTrue(S.DoString("return o1 != o2").Boolean, "o1 != o2");
-            Assert.IsTrue(S.DoString("return o1 == o3").Boolean, "o1 == o3");
-            Assert.IsTrue(S.DoString("return o2 != o3").Boolean, "o2 != o3");
-            Assert.IsTrue(S.DoString("return o1 == 5 ").Boolean, "o1 == 5 ");
-            Assert.IsTrue(S.DoString("return 5 == o1 ").Boolean, "5 == o1 ");
-            Assert.IsTrue(S.DoString("return o1 != 6 ").Boolean, "o1 != 6 ");
-            Assert.IsTrue(S.DoString("return 6 != o1 ").Boolean, "6 != o1 ");
-            Assert.IsTrue(S.DoString("return 'xx' != o1 ").Boolean, "'xx' != o1 ");
-            Assert.IsTrue(S.DoString("return o1 != 'xx' ").Boolean, "o1 != 'xx'");
+            Assert.That(s.DoString("return o1 == o1").Boolean, Is.True, "o1 == o1");
+            Assert.That(s.DoString("return o1 != o2").Boolean, Is.True, "o1 != o2");
+            Assert.That(s.DoString("return o1 == o3").Boolean, Is.True, "o1 == o3");
+            Assert.That(s.DoString("return o2 != o3").Boolean, Is.True, "o2 != o3");
+            Assert.That(s.DoString("return o1 == 5 ").Boolean, Is.True, "o1 == 5 ");
+            Assert.That(s.DoString("return 5 == o1 ").Boolean, Is.True, "5 == o1 ");
+            Assert.That(s.DoString("return o1 != 6 ").Boolean, Is.True, "o1 != 6 ");
+            Assert.That(s.DoString("return 6 != o1 ").Boolean, Is.True, "6 != o1 ");
+            Assert.That(s.DoString("return 'xx' != o1 ").Boolean, Is.True, "'xx' != o1 ");
+            Assert.That(s.DoString("return o1 != 'xx' ").Boolean, Is.True, "o1 != 'xx'");
         }
 
         [Test]
         public void Interop_Meta_Comparisons()
         {
-            Script S = new();
+            Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
 
-            S.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
-            S.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));
+            s.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
+            s.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));
 
-            Assert.IsTrue(S.DoString("return o1 <= o1").Boolean, "o1 <= o1");
-            Assert.IsTrue(S.DoString("return o1 <= o2").Boolean, "o1 <= o2");
-            Assert.IsTrue(S.DoString("return o1 <  o2").Boolean, "o1 <  o2");
+            Assert.That(s.DoString("return o1 <= o1").Boolean, Is.True, "o1 <= o1");
+            Assert.That(s.DoString("return o1 <= o2").Boolean, Is.True, "o1 <= o2");
+            Assert.That(s.DoString("return o1 <  o2").Boolean, Is.True, "o1 <  o2");
 
-            Assert.IsTrue(S.DoString("return o2 > o1 ").Boolean, "o2 > o1 ");
-            Assert.IsTrue(S.DoString("return o2 >= o1").Boolean, "o2 >= o1");
-            Assert.IsTrue(S.DoString("return o2 >= o2").Boolean, "o2 >= o2");
+            Assert.That(s.DoString("return o2 > o1 ").Boolean, Is.True, "o2 > o1 ");
+            Assert.That(s.DoString("return o2 >= o1").Boolean, Is.True, "o2 >= o1");
+            Assert.That(s.DoString("return o2 >= o2").Boolean, Is.True, "o2 >= o2");
 
-            Assert.IsTrue(S.DoString("return o1 <= 4 ").Boolean, "o1 <= 4 ");
-            Assert.IsTrue(S.DoString("return o1 <  4 ").Boolean, "o1 <  4 ");
+            Assert.That(s.DoString("return o1 <= 4 ").Boolean, Is.True, "o1 <= 4 ");
+            Assert.That(s.DoString("return o1 <  4 ").Boolean, Is.True, "o1 <  4 ");
 
-            Assert.IsTrue(S.DoString("return 4 > o1  ").Boolean, "4 > o1  ");
-            Assert.IsTrue(S.DoString("return 4 >= o1 ").Boolean, "4 >= o1 ");
+            Assert.That(s.DoString("return 4 > o1  ").Boolean, Is.True, "4 > o1  ");
+            Assert.That(s.DoString("return 4 >= o1 ").Boolean, Is.True, "4 >= o1 ");
 
-            Assert.IsFalse(S.DoString("return o1 > o2 ").Boolean, "o1 > o2 ");
-            Assert.IsFalse(S.DoString("return o1 >= o2").Boolean, "o1 >= o2");
-            Assert.IsFalse(S.DoString("return o2 < o1 ").Boolean, "o2 < o1 ");
-            Assert.IsFalse(S.DoString("return o2 <= o1").Boolean, "o2 <= o1");
+            Assert.That(s.DoString("return o1 > o2 ").Boolean, Is.False, "o1 > o2 ");
+            Assert.That(s.DoString("return o1 >= o2").Boolean, Is.False, "o1 >= o2");
+            Assert.That(s.DoString("return o2 < o1 ").Boolean, Is.False, "o2 < o1 ");
+            Assert.That(s.DoString("return o2 <= o1").Boolean, Is.False, "o2 <= o1");
         }
 
         private void OperatorTest(string code, int input, int output)
         {
-            Script S = new();
+            Script s = new();
 
             ArithmOperatorsTestClass obj = new(input);
 
             UserData.RegisterType<ArithmOperatorsTestClass>();
 
-            S.Globals.Set("o", UserData.Create(obj));
+            s.Globals.Set("o", UserData.Create(obj));
 
-            DynValue v = S.DoString(code);
+            DynValue v = s.DoString(code);
 
-            Assert.AreEqual(DataType.Number, v.Type);
-            Assert.AreEqual(output, v.Number);
+            Assert.That(v.Type, Is.EqualTo(DataType.Number));
+            Assert.That(v.Number, Is.EqualTo(output));
         }
 
         [Test]

@@ -1,15 +1,15 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class VarargsTupleTests
     {
         private void DoTest(string code, string expectedResult)
         {
-            Script S = new();
+            Script s = new();
 
-            S.DoString(
+            s.DoString(
                 @"
 function f(a,b)
 	local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
@@ -41,10 +41,10 @@ function i(...)
 end
 "
             );
-            DynValue res = S.DoString("return " + code);
+            DynValue res = s.DoString("return " + code);
 
-            Assert.AreEqual(res.Type, DataType.String);
-            Assert.AreEqual(expectedResult, res.String);
+            Assert.That(DataType.String, Is.EqualTo(res.Type));
+            Assert.That(res.String, Is.EqualTo(expectedResult));
         }
 
         [Test]
@@ -97,9 +97,9 @@ end
 				Obj(1)
 			";
 
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            S.DoString(script);
+            s.DoString(script);
         }
     }
 }

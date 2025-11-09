@@ -1,4 +1,4 @@
-﻿namespace NUnit.Framework
+namespace NUnit.Framework
 {
-    class _NUnitWrapper { }
+    internal sealed class NUnitWrapper { }
 }

@@ -1,58 +1,58 @@
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Execution.Scopes;
-using NovaSharp.Interpreter.Tree.Statements;
-
 namespace NovaSharp.Interpreter.Execution
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using Scopes;
+    using Tree.Statements;
+
     internal class BuildTimeScope
     {
-        List<BuildTimeScopeFrame> m_Frames = new();
-        List<IClosureBuilder> m_ClosureBuilders = new();
+        private readonly List<BuildTimeScopeFrame> _frames = new();
+        private readonly List<IClosureBuilder> _closureBuilders = new();
 
         public void PushFunction(IClosureBuilder closureBuilder, bool hasVarArgs)
         {
-            m_ClosureBuilders.Add(closureBuilder);
-            m_Frames.Add(new BuildTimeScopeFrame(hasVarArgs));
+            _closureBuilders.Add(closureBuilder);
+            _frames.Add(new BuildTimeScopeFrame(hasVarArgs));
         }
 
         public void PushBlock()
         {
-            m_Frames.Last().PushBlock();
+            _frames.Last().PushBlock();
         }
 
         public RuntimeScopeBlock PopBlock()
         {
-            return m_Frames.Last().PopBlock();
+            return _frames.Last().PopBlock();
         }
 
         public RuntimeScopeFrame PopFunction()
         {
-            BuildTimeScopeFrame last = m_Frames.Last();
+            BuildTimeScopeFrame last = _frames.Last();
             last.ResolveLRefs();
-            m_Frames.RemoveAt(m_Frames.Count - 1);
+            _frames.RemoveAt(_frames.Count - 1);
 
-            m_ClosureBuilders.RemoveAt(m_ClosureBuilders.Count - 1);
+            _closureBuilders.RemoveAt(_closureBuilders.Count - 1);
 
             return last.GetRuntimeFrameData();
         }
 
         public SymbolRef Find(string name)
         {
-            SymbolRef local = m_Frames.Last().Find(name);
+            SymbolRef local = _frames.Last().Find(name);
 
             if (local != null)
             {
                 return local;
             }
 
-            for (int i = m_Frames.Count - 2; i >= 0; i--)
+            for (int i = _frames.Count - 2; i >= 0; i--)
             {
-                SymbolRef symb = m_Frames[i].Find(name);
+                SymbolRef symb = _frames[i].Find(name);
 
                 if (symb != null)
                 {
-                    symb = CreateUpValue(this, symb, i, m_Frames.Count - 2);
+                    symb = CreateUpValue(this, symb, i, _frames.Count - 2);
 
                     if (symb != null)
                     {
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Execution
             // it's a 0-level upvalue. Just create it and we're done.
             if (closuredFrame == currentFrame)
             {
-                return m_ClosureBuilders[currentFrame + 1].CreateUpvalue(this, symb);
+                return _closureBuilders[currentFrame + 1].CreateUpvalue(this, symb);
             }
 
             SymbolRef upvalue = CreateUpValue(
@@ -100,32 +100,32 @@ namespace NovaSharp.Interpreter.Execution
                 currentFrame - 1
             );
 
-            return m_ClosureBuilders[currentFrame + 1].CreateUpvalue(this, upvalue);
+            return _closureBuilders[currentFrame + 1].CreateUpvalue(this, upvalue);
         }
 
         public SymbolRef DefineLocal(string name)
         {
-            return m_Frames.Last().DefineLocal(name);
+            return _frames.Last().DefineLocal(name);
         }
 
         public SymbolRef TryDefineLocal(string name)
         {
-            return m_Frames.Last().TryDefineLocal(name);
+            return _frames.Last().TryDefineLocal(name);
         }
 
         public bool CurrentFunctionHasVarArgs()
         {
-            return m_Frames.Last().HasVarArgs;
+            return _frames.Last().HasVarArgs;
         }
 
         internal void DefineLabel(LabelStatement label)
         {
-            m_Frames.Last().DefineLabel(label);
+            _frames.Last().DefineLabel(label);
         }
 
         internal void RegisterGoto(GotoStatement gotostat)
         {
-            m_Frames.Last().RegisterGoto(gotostat);
+            _frames.Last().RegisterGoto(gotostat);
         }
     }
 }

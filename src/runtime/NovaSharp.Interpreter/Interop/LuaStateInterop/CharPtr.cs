@@ -1,55 +1,55 @@
-#pragma warning disable 1591
-//
-// This part taken from KopiLua - https://github.com/NLua/KopiLua
-//
-// =========================================================================================================
-//
-// Kopi Lua License
-// ----------------
-// MIT License for KopiLua
-// Copyright (c) 2012 LoDC
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-// associated documentation files (the "Software"), to deal in the Software without restriction,
-// including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
-// subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all copies or substantial
-// portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-// ===============================================================================
-// Lua License
-// -----------
-// Lua is licensed under the terms of the MIT license reproduced below.
-// This means that Lua is free software and can be used for both academic
-// and commercial purposes at absolutely no cost.
-// For details and rationale, see http://www.lua.org/license.html .
-// ===============================================================================
-// Copyright (C) 1994-2008 Lua.org, PUC-Rio.
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
-using System;
-using System.Diagnostics;
-
 namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 {
+#pragma warning disable 1591
+    //
+    // This part taken from KopiLua - https://github.com/NLua/KopiLua
+    //
+    // =========================================================================================================
+    //
+    // Kopi Lua License
+    // ----------------
+    // MIT License for KopiLua
+    // Copyright (c) 2012 LoDC
+    // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+    // associated documentation files (the "Software"), to deal in the Software without restriction,
+    // including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    // and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+    // subject to the following conditions:
+    // The above copyright notice and this permission notice shall be included in all copies or substantial
+    // portions of the Software.
+    // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+    // LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    // IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    // ===============================================================================
+    // Lua License
+    // -----------
+    // Lua is licensed under the terms of the MIT license reproduced below.
+    // This means that Lua is free software and can be used for both academic
+    // and commercial purposes at absolutely no cost.
+    // For details and rationale, see http://www.lua.org/license.html .
+    // ===============================================================================
+    // Copyright (C) 1994-2008 Lua.org, PUC-Rio.
+    // Permission is hereby granted, free of charge, to any person obtaining a copy
+    // of this software and associated documentation files (the "Software"), to deal
+    // in the Software without restriction, including without limitation the rights
+    // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    // copies of the Software, and to permit persons to whom the Software is
+    // furnished to do so, subject to the following conditions:
+    // The above copyright notice and this permission notice shall be included in
+    // all copies or substantial portions of the Software.
+    // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    // THE SOFTWARE.
+
+    using System;
+    using System.Diagnostics;
+
     public class CharPtr
     {
         public char[] chars;
@@ -89,32 +89,32 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         public CharPtr()
         {
-            this.chars = null;
-            this.index = 0;
+            chars = null;
+            index = 0;
         }
 
         public CharPtr(string str)
         {
-            this.chars = (str + '\0').ToCharArray();
-            this.index = 0;
+            chars = (str + '\0').ToCharArray();
+            index = 0;
         }
 
         public CharPtr(CharPtr ptr)
         {
-            this.chars = ptr.chars;
-            this.index = ptr.index;
+            chars = ptr.chars;
+            index = ptr.index;
         }
 
         public CharPtr(CharPtr ptr, int index)
         {
-            this.chars = ptr.chars;
+            chars = ptr.chars;
             this.index = index;
         }
 
         public CharPtr(char[] chars)
         {
             this.chars = chars;
-            this.index = 0;
+            index = 0;
         }
 
         public CharPtr(char[] chars, int index)
@@ -125,19 +125,19 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         public CharPtr(byte[] bytes)
         {
-            this.chars = new char[bytes.Length];
+            chars = new char[bytes.Length];
             for (int i = 0; i < bytes.Length; i++)
             {
-                this.chars[i] = (char)bytes[i];
+                chars[i] = (char)bytes[i];
             }
 
-            this.index = 0;
+            index = 0;
         }
 
         public CharPtr(IntPtr ptr)
         {
-            this.chars = new char[0];
-            this.index = 0;
+            chars = new char[0];
+            index = 0;
         }
 
         public static CharPtr operator +(CharPtr ptr, int offset)
@@ -160,34 +160,34 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             return new CharPtr(ptr.chars, ptr.index - (int)offset);
         }
 
-        public void inc()
+        public void Inc()
         {
-            this.index++;
+            index++;
         }
 
-        public void dec()
+        public void Dec()
         {
-            this.index--;
+            index--;
         }
 
-        public CharPtr next()
+        public CharPtr Next()
         {
-            return new CharPtr(this.chars, this.index + 1);
+            return new CharPtr(chars, index + 1);
         }
 
-        public CharPtr prev()
+        public CharPtr Prev()
         {
-            return new CharPtr(this.chars, this.index - 1);
+            return new CharPtr(chars, index - 1);
         }
 
-        public CharPtr add(int ofs)
+        public CharPtr Add(int ofs)
         {
-            return new CharPtr(this.chars, this.index + ofs);
+            return new CharPtr(chars, index + ofs);
         }
 
-        public CharPtr sub(int ofs)
+        public CharPtr Sub(int ofs)
         {
-            return new CharPtr(this.chars, this.index - ofs);
+            return new CharPtr(chars, index - ofs);
         }
 
         public static bool operator ==(CharPtr ptr, char ch)

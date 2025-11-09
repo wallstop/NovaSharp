@@ -1,8 +1,8 @@
-using NovaSharp.Interpreter.CoreLib;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using CoreLib;
+    using NUnit.Framework;
+
     [TestFixture]
     public class MetatableTests
     {
@@ -38,8 +38,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script()).DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("321", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("321"));
         }
 
         [Test]
@@ -65,16 +65,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return(v1 + v2);";
 
-            Script S = new();
-            Table globalCtx = S.Globals;
+            Script s = new();
+            Table globalCtx = s.Globals;
 
             globalCtx.RegisterModuleType<TableIteratorsModule>();
             globalCtx.RegisterModuleType<MetaTableModule>();
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(24, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(24));
         }
 
         [Test]
@@ -97,9 +97,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script()).DoString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(true, res.Tuple[0].Boolean);
-            Assert.AreEqual(false, res.Tuple[1].Boolean);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple[0].Boolean, Is.EqualTo(true));
+            Assert.That(res.Tuple[1].Boolean, Is.EqualTo(false));
         }
 
         [Test]
@@ -122,13 +122,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 					return t;
 				";
 
-            Script S = new();
+            Script s = new();
 
-            DynValue tbl = S.DoString(script);
-            DynValue res = S.Call(tbl, 3);
+            DynValue tbl = s.DoString(script);
+            DynValue res = s.Call(tbl, 3);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(468, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(468));
         }
 
         [Test]
@@ -153,8 +153,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script()).DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(468, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(468));
         }
 
         [Test]
@@ -192,8 +192,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script()).DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("abc!bc", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("abc!bc"));
         }
 
         [Test]
@@ -222,8 +222,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script()).DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("abc!bc", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("abc!bc"));
         }
 
         public class MyObject
@@ -263,8 +263,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = script.DoString(code);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120));
         }
 
         [Test]

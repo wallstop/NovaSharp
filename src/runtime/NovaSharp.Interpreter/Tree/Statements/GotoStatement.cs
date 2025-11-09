@@ -1,10 +1,10 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class GotoStatement : Statement
+    using Debugging;
+    using Execution;
+    using Execution.VM;
+
+    internal class GotoStatement : Statement
     {
         internal SourceRef SourceRef { get; private set; }
         internal Token GotoToken { get; private set; }
@@ -13,8 +13,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
         internal int DefinedVarsCount { get; private set; }
         internal string LastDefinedVarName { get; private set; }
 
-        Instruction m_Jump;
-        int m_LabelAddress = -1;
+        private Instruction _jump;
+        private int _labelAddress = -1;
 
         public GotoStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
-            m_Jump = bc.Emit_Jump(OpCode.Jump, m_LabelAddress);
+            _jump = bc.Emit_Jump(OpCode.Jump, _labelAddress);
         }
 
         internal void SetDefinedVars(int definedVarsCount, string lastDefinedVarsName)
@@ -42,11 +42,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         internal void SetAddress(int labelAddress)
         {
-            m_LabelAddress = labelAddress;
+            _labelAddress = labelAddress;
 
-            if (m_Jump != null)
+            if (_jump != null)
             {
-                m_Jump.NumVal = labelAddress;
+                _jump.NumVal = labelAddress;
             }
         }
     }

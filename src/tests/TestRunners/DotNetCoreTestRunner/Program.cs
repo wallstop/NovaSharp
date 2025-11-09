@@ -1,37 +1,33 @@
 // Disable warning 429 (Unreachable code) because of the RESTRICT_TEST condition below.
-#pragma warning disable 429
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Serialization;
-using NovaSharp.Interpreter.Tests;
-using NovaSharp.VsCodeDebugger;
-using NUnit.Framework;
-
 namespace DotNetCoreTestRunner
 {
-    class Program
+#pragma warning disable 429
+
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Serialization;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.VsCodeDebugger;
+
+    internal sealed class Program
     {
-        private static bool s_isCi;
+        private static bool _sIsCi;
 
         public const string RESTRICT_TEST = null; //"VInterop_ConstructorAndConcatMethodSemicolon_None";
         public const string LOG_ON_FILE = "NovaSharp_tests.log";
 
         // Tests skipped on all platforms
-        static List<string> SKIPLIST = new()
+        private static readonly List<string> Skiplist = new()
         {
             "TestMore_308_io", // avoid interactions with low level system
             "TestMore_309_os", // avoid interactions with low level system
         };
 
-        static List<string> HARDWIRE_SKIPLIST = new()
+        private static readonly List<string> HardwireSkiplist = new()
         {
             // events
             "Interop_Event_Simple",
@@ -75,7 +71,7 @@ namespace DotNetCoreTestRunner
         };
 
         // Tests skipped on AOT platforms - known not workings :(
-        static List<string> AOT_SKIPLIST = new()
+        private static readonly List<string> AotSkiplist = new()
         {
             //"RegCollGen_List_ExtMeth_Last",
             //"VInterop_NIntPropertySetter_None",
@@ -98,9 +94,9 @@ namespace DotNetCoreTestRunner
             //"VInterop_ConstructorAndConcatMethodSemicolon_Precomputed",
         };
 
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
-            s_isCi =
+            _sIsCi =
                 args.Any(a => string.Equals(a, "--ci", StringComparison.OrdinalIgnoreCase))
                 || string.Equals(
                     Environment.GetEnvironmentVariable("CI"),
@@ -108,7 +104,7 @@ namespace DotNetCoreTestRunner
                     StringComparison.OrdinalIgnoreCase
                 );
 
-            if (s_isCi)
+            if (_sIsCi)
             {
                 return TestMain(args);
             }
@@ -149,7 +145,7 @@ namespace DotNetCoreTestRunner
             WaitForKeypress();
         }
 
-        static int TestMain(string[] args)
+        private static int TestMain(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.Magenta;
 
@@ -172,7 +168,7 @@ namespace DotNetCoreTestRunner
 
             try
             {
-                TestRunner T = new(Log);
+                TestRunner t = new(Log);
 
                 if (LOG_ON_FILE != null)
                 {
@@ -187,13 +183,13 @@ namespace DotNetCoreTestRunner
 
                 if (Script.GlobalOptions.Platform.IsRunningOnAOT())
                 {
-                    SKIPLIST.AddRange(AOT_SKIPLIST);
+                    Skiplist.AddRange(AotSkiplist);
                 }
 
                 Console.WriteLine();
                 Console.WriteLine();
 
-                T.Test(RESTRICT_TEST, SKIPLIST.ToArray());
+                t.Test(RESTRICT_TEST, Skiplist.ToArray());
 
                 if (Debugger.IsAttached)
                 {
@@ -204,7 +200,7 @@ namespace DotNetCoreTestRunner
                 //OnTestEnded();
                 WaitForKeypress();
 
-                return T.Fail;
+                return t.fail;
             }
             catch (Exception ex)
             {
@@ -225,38 +221,38 @@ namespace DotNetCoreTestRunner
 
         private static void Log(TestResult r)
         {
-            if (r.Type == TestResultType.Fail)
+            if (r.type == TestResultType.Fail)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
 
                 Console.WriteLine();
-                if (r.Exception != null)
+                if (r.exception != null)
                 {
-                    Console_WriteLine("{0} - {1}", r.TestName, r.Exception);
+                    Console_WriteLine("{0} - {1}", r.testName, r.exception);
                 }
                 else
                 {
-                    Console_WriteLine("{0} - {1}", r.TestName, r.Message);
+                    Console_WriteLine("{0} - {1}", r.testName, r.message);
                 }
 
                 Console.WriteLine();
 
-                HARDWIRE_SKIPLIST.Add(r.TestName);
+                HardwireSkiplist.Add(r.testName);
             }
-            else if (r.Type == TestResultType.Ok)
+            else if (r.type == TestResultType.Ok)
             {
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console_WriteLine("{0} - {1}", r.TestName, r.Message);
+                Console_WriteLine("{0} - {1}", r.testName, r.message);
             }
-            else if (r.Type == TestResultType.Skipped)
+            else if (r.type == TestResultType.Skipped)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console_WriteLine("{0} - {1}", r.TestName, r.Message);
+                Console_WriteLine("{0} - {1}", r.testName, r.message);
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console_WriteLine("{0}", r.Message);
+                Console_WriteLine("{0}", r.message);
             }
         }
 
@@ -275,7 +271,7 @@ namespace DotNetCoreTestRunner
 
         private static void WaitForKeypress()
         {
-            if (!s_isCi && !Console.IsInputRedirected)
+            if (!_sIsCi && !Console.IsInputRedirected)
             {
                 Console.ReadKey();
             }

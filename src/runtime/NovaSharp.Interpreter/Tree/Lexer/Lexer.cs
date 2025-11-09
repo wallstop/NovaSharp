@@ -1,43 +1,43 @@
-using System.Text;
-
 namespace NovaSharp.Interpreter.Tree
 {
-    class Lexer
-    {
-        Token m_Current = null;
-        string m_Code;
-        int m_PrevLineTo = 0;
-        int m_PrevColTo = 1;
-        int m_Cursor = 0;
-        int m_Line = 1;
-        int m_Col = 0;
-        int m_SourceId;
-        bool m_AutoSkipComments = false;
+    using System.Text;
 
-        public Lexer(int sourceID, string scriptContent, bool autoSkipComments)
+    internal class Lexer
+    {
+        private Token _current = null;
+        private readonly string _code;
+        private int _prevLineTo = 0;
+        private int _prevColTo = 1;
+        private int _cursor = 0;
+        private int _line = 1;
+        private int _col = 0;
+        private readonly int _sourceId;
+        private bool _autoSkipComments = false;
+
+        public Lexer(int sourceId, string scriptContent, bool autoSkipComments)
         {
-            m_Code = scriptContent;
-            m_SourceId = sourceID;
+            _code = scriptContent;
+            _sourceId = sourceId;
 
             // remove unicode BOM if any
-            if (m_Code.Length > 0 && m_Code[0] == 0xFEFF)
+            if (_code.Length > 0 && _code[0] == 0xFEFF)
             {
-                m_Code = m_Code.Substring(1);
+                _code = _code.Substring(1);
             }
 
-            m_AutoSkipComments = autoSkipComments;
+            _autoSkipComments = autoSkipComments;
         }
 
         public Token Current
         {
             get
             {
-                if (m_Current == null)
+                if (_current == null)
                 {
                     Next();
                 }
 
-                return m_Current;
+                return _current;
             }
         }
 
@@ -45,39 +45,39 @@ namespace NovaSharp.Interpreter.Tree
         {
             while (true)
             {
-                Token T = ReadToken();
+                Token t = ReadToken();
 
                 //System.Diagnostics.Debug.WriteLine("LEXER : " + T.ToString());
 
                 if (
-                    (T.Type != TokenType.Comment && T.Type != TokenType.HashBang)
-                    || (!m_AutoSkipComments)
+                    (t.type != TokenType.Comment && t.type != TokenType.HashBang)
+                    || (!_autoSkipComments)
                 )
                 {
-                    return T;
+                    return t;
                 }
             }
         }
 
         public void Next()
         {
-            m_Current = FetchNewToken();
+            _current = FetchNewToken();
         }
 
         public Token PeekNext()
         {
-            int snapshot = m_Cursor;
-            Token current = m_Current;
-            int line = m_Line;
-            int col = m_Col;
+            int snapshot = _cursor;
+            Token current = _current;
+            int line = _line;
+            int col = _col;
 
             Next();
             Token t = Current;
 
-            m_Cursor = snapshot;
-            m_Current = current;
-            m_Line = line;
-            m_Col = col;
+            _cursor = snapshot;
+            _current = current;
+            _line = line;
+            _col = col;
 
             return t;
         }
@@ -88,23 +88,23 @@ namespace NovaSharp.Interpreter.Tree
             {
                 if (CursorChar() == '\n')
                 {
-                    m_Col = 0;
-                    m_Line += 1;
+                    _col = 0;
+                    _line += 1;
                 }
                 else
                 {
-                    m_Col += 1;
+                    _col += 1;
                 }
 
-                m_Cursor += 1;
+                _cursor += 1;
             }
         }
 
         private char CursorChar()
         {
-            if (m_Cursor < m_Code.Length)
+            if (_cursor < _code.Length)
             {
-                return m_Code[m_Cursor];
+                return _code[_cursor];
             }
             else
             {
@@ -122,14 +122,14 @@ namespace NovaSharp.Interpreter.Tree
         {
             for (int i = 0; i < pattern.Length; i++)
             {
-                int j = m_Cursor + i;
+                int j = _cursor + i;
 
-                if (j >= m_Code.Length)
+                if (j >= _code.Length)
                 {
                     return false;
                 }
 
-                if (m_Code[j] != pattern[i])
+                if (_code[j] != pattern[i])
                 {
                     return false;
                 }
@@ -139,7 +139,7 @@ namespace NovaSharp.Interpreter.Tree
 
         private bool CursorNotEof()
         {
-            return m_Cursor < m_Code.Length;
+            return _cursor < _code.Length;
         }
 
         private bool IsWhiteSpace(char c)
@@ -156,8 +156,8 @@ namespace NovaSharp.Interpreter.Tree
         {
             SkipWhiteSpace();
 
-            int fromLine = m_Line;
-            int fromCol = m_Col;
+            int fromLine = _line;
+            int fromCol = _col;
 
             if (!CursorNotEof())
             {
@@ -177,24 +177,24 @@ namespace NovaSharp.Interpreter.Tree
                 case '=':
                     return PotentiallyDoubleCharOperator(
                         '=',
-                        TokenType.Op_Assignment,
-                        TokenType.Op_Equal,
+                        TokenType.OpAssignment,
+                        TokenType.OpEqual,
                         fromLine,
                         fromCol
                     );
                 case '<':
                     return PotentiallyDoubleCharOperator(
                         '=',
-                        TokenType.Op_LessThan,
-                        TokenType.Op_LessThanEqual,
+                        TokenType.OpLessThan,
+                        TokenType.OpLessThanEqual,
                         fromLine,
                         fromCol
                     );
                 case '>':
                     return PotentiallyDoubleCharOperator(
                         '=',
-                        TokenType.Op_GreaterThan,
-                        TokenType.Op_GreaterThanEqual,
+                        TokenType.OpGreaterThan,
+                        TokenType.OpGreaterThanEqual,
                         fromLine,
                         fromCol
                     );
@@ -210,7 +210,7 @@ namespace NovaSharp.Interpreter.Tree
                     }
 
                     CursorCharNext();
-                    return CreateToken(TokenType.Op_NotEqual, fromLine, fromCol, "~=");
+                    return CreateToken(TokenType.OpNotEqual, fromLine, fromCol, "~=");
                 case '.':
                 {
                     char next = CursorCharNext();
@@ -218,7 +218,7 @@ namespace NovaSharp.Interpreter.Tree
                     {
                         return PotentiallyDoubleCharOperator(
                             '.',
-                            TokenType.Op_Concat,
+                            TokenType.OpConcat,
                             TokenType.VarArgs,
                             fromLine,
                             fromCol
@@ -234,7 +234,7 @@ namespace NovaSharp.Interpreter.Tree
                     }
                 }
                 case '+':
-                    return CreateSingleCharToken(TokenType.Op_Add, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpAdd, fromLine, fromCol);
                 case '-':
                 {
                     char next = CursorCharNext();
@@ -244,52 +244,52 @@ namespace NovaSharp.Interpreter.Tree
                     }
                     else
                     {
-                        return CreateToken(TokenType.Op_MinusOrSub, fromLine, fromCol, "-");
+                        return CreateToken(TokenType.OpMinusOrSub, fromLine, fromCol, "-");
                     }
                 }
                 case '*':
-                    return CreateSingleCharToken(TokenType.Op_Mul, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpMul, fromLine, fromCol);
                 case '/':
-                    return CreateSingleCharToken(TokenType.Op_Div, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpDiv, fromLine, fromCol);
                 case '%':
-                    return CreateSingleCharToken(TokenType.Op_Mod, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpMod, fromLine, fromCol);
                 case '^':
-                    return CreateSingleCharToken(TokenType.Op_Pwr, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpPwr, fromLine, fromCol);
                 case '$':
                     return PotentiallyDoubleCharOperator(
                         '{',
-                        TokenType.Op_Dollar,
-                        TokenType.Brk_Open_Curly_Shared,
+                        TokenType.OpDollar,
+                        TokenType.BrkOpenCurlyShared,
                         fromLine,
                         fromCol
                     );
                 case '#':
-                    if (m_Cursor == 0 && m_Code.Length > 1 && m_Code[1] == '!')
+                    if (_cursor == 0 && _code.Length > 1 && _code[1] == '!')
                     {
                         return ReadHashBang(fromLine, fromCol);
                     }
 
-                    return CreateSingleCharToken(TokenType.Op_Len, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.OpLen, fromLine, fromCol);
                 case '[':
                 {
                     char next = CursorCharNext();
                     if (next == '=' || next == '[')
                     {
                         string str = ReadLongString(fromLine, fromCol, null, "string");
-                        return CreateToken(TokenType.String_Long, fromLine, fromCol, str);
+                        return CreateToken(TokenType.StringLong, fromLine, fromCol, str);
                     }
-                    return CreateToken(TokenType.Brk_Open_Square, fromLine, fromCol, "[");
+                    return CreateToken(TokenType.BrkOpenSquare, fromLine, fromCol, "[");
                 }
                 case ']':
-                    return CreateSingleCharToken(TokenType.Brk_Close_Square, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.BrkCloseSquare, fromLine, fromCol);
                 case '(':
-                    return CreateSingleCharToken(TokenType.Brk_Open_Round, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.BrkOpenRound, fromLine, fromCol);
                 case ')':
-                    return CreateSingleCharToken(TokenType.Brk_Close_Round, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.BrkCloseRound, fromLine, fromCol);
                 case '{':
-                    return CreateSingleCharToken(TokenType.Brk_Open_Curly, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.BrkOpenCurly, fromLine, fromCol);
                 case '}':
-                    return CreateSingleCharToken(TokenType.Brk_Close_Curly, fromLine, fromCol);
+                    return CreateSingleCharToken(TokenType.BrkCloseCurly, fromLine, fromCol);
                 case ',':
                     return CreateSingleCharToken(TokenType.Comma, fromLine, fromCol);
                 case ':':
@@ -342,7 +342,7 @@ namespace NovaSharp.Interpreter.Tree
         {
             // here we are at the first '=' or second '['
             StringBuilder text = new(1024);
-            string end_pattern = "]";
+            string endPattern = "]";
 
             if (startpattern == null)
             {
@@ -361,11 +361,11 @@ namespace NovaSharp.Interpreter.Tree
                     }
                     else if (c == '=')
                     {
-                        end_pattern += "=";
+                        endPattern += "=";
                     }
                     else if (c == '[')
                     {
-                        end_pattern += "]";
+                        endPattern += "]";
                         break;
                     }
                     else
@@ -384,7 +384,7 @@ namespace NovaSharp.Interpreter.Tree
             }
             else
             {
-                end_pattern = startpattern.Replace('[', ']');
+                endPattern = startpattern.Replace('[', ']');
             }
 
             for (char c = CursorCharNext(); ; c = CursorCharNext())
@@ -406,9 +406,9 @@ namespace NovaSharp.Interpreter.Tree
                         IsPrematureStreamTermination = true,
                     };
                 }
-                else if (c == ']' && CursorMatches(end_pattern))
+                else if (c == ']' && CursorMatches(endPattern))
                 {
-                    for (int i = 0; i < end_pattern.Length; i++)
+                    for (int i = 0; i < endPattern.Length; i++)
                     {
                         CursorCharNext();
                     }
@@ -497,11 +497,11 @@ namespace NovaSharp.Interpreter.Tree
 
             if (isHex && (dotAdded || exponentPart))
             {
-                numberType = TokenType.Number_HexFloat;
+                numberType = TokenType.NumberHexFloat;
             }
             else if (isHex)
             {
-                numberType = TokenType.Number_Hex;
+                numberType = TokenType.NumberHex;
             }
 
             string tokenStr = text.ToString();
@@ -688,19 +688,19 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = new(
                 tokenType,
-                m_SourceId,
+                _sourceId,
                 fromLine,
                 fromCol,
-                m_Line,
-                m_Col,
-                m_PrevLineTo,
-                m_PrevColTo
+                _line,
+                _col,
+                _prevLineTo,
+                _prevColTo
             )
             {
                 Text = text,
             };
-            m_PrevLineTo = m_Line;
-            m_PrevColTo = m_Col;
+            _prevLineTo = _line;
+            _prevColTo = _col;
             return t;
         }
 

@@ -1,16 +1,16 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 {
+#pragma warning disable 1591
+
+    using System.Collections.Generic;
+
     /// <summary>
     ///
     /// </summary>
     public class LuaState
     {
-        private List<DynValue> m_Stack;
+        private readonly List<DynValue> _stack;
 
         public ScriptExecutionContext ExecutionContext { get; private set; }
         public string FunctionName { get; private set; }
@@ -22,11 +22,11 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         )
         {
             ExecutionContext = executionContext;
-            m_Stack = new List<DynValue>(16);
+            _stack = new List<DynValue>(16);
 
             for (int i = 0; i < args.Count; i++)
             {
-                m_Stack.Add(args[i]);
+                _stack.Add(args[i]);
             }
 
             FunctionName = functionName;
@@ -34,38 +34,38 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         public DynValue Top(int pos = 0)
         {
-            return m_Stack[m_Stack.Count - 1 - pos];
+            return _stack[_stack.Count - 1 - pos];
         }
 
         public DynValue At(int pos)
         {
             if (pos < 0)
             {
-                pos = m_Stack.Count + pos + 1;
+                pos = _stack.Count + pos + 1;
             }
 
-            if (pos > m_Stack.Count)
+            if (pos > _stack.Count)
             {
                 return DynValue.Void;
             }
 
-            return m_Stack[pos - 1];
+            return _stack[pos - 1];
         }
 
         public int Count
         {
-            get { return m_Stack.Count; }
+            get { return _stack.Count; }
         }
 
         public void Push(DynValue v)
         {
-            m_Stack.Add(v);
+            _stack.Add(v);
         }
 
         public DynValue Pop()
         {
             DynValue v = Top();
-            m_Stack.RemoveAt(m_Stack.Count - 1);
+            _stack.RemoveAt(_stack.Count - 1);
             return v;
         }
 
@@ -102,7 +102,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             for (int i = 0; i < nargs; i++)
             {
-                m_Stack.RemoveAt(m_Stack.Count - 1);
+                _stack.RemoveAt(_stack.Count - 1);
             }
         }
     }

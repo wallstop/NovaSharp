@@ -2,11 +2,11 @@ package
 {
 	public class SourceCode
 	{
-		private var m_Id : int;
-		private var m_Name : String;
-		private var m_Lines : Number;
-		private var m_Text : String;
-		private var m_CumulativeLength : Vector.<int> = new Vector.<int>();
+		private var _Id : int;
+		private var _Name : String;
+		private var _Lines : Number;
+		private var _Text : String;
+		private var _CumulativeLength : Vector.<int> = new Vector.<int>();
 		
 		public var Breakpoints : Vector.<Highlight> = new Vector.<Highlight>();
 		
@@ -21,7 +21,7 @@ package
 			
 			for each (var line : XML in lines)
 			{
-				m_CumulativeLength.push(m_Text.length);
+				m_CumulativeLength.push(_Text.length);
 				m_Text += line.toString() + "\n";			
 				m_Lines += 1;
 			}
@@ -29,40 +29,40 @@ package
 		
 		public function getId() : int
 		{
-			return m_Id;	
+			return _Id;	
 		}
 		
 		public function getName() : String
 		{
-			return m_Name;	
+			return _Name;	
 		}
 		
 		public function getText() : String
 		{
-			return m_Text;	
+			return _Text;	
 		}
 		
 		public function flattenLocation(line: int, col: int) : int
 		{
-			return m_CumulativeLength[line] + col;
+			return _CumulativeLength[line] + col;
 		}
 		
 		
 		public function inflateLocationLine(pos : int) : int 
 		{
-			for(var line:int = 0; line < m_CumulativeLength.length; line++)
+			for(var line:int = 0; line < _CumulativeLength.length; line++)
 			{
-				if (pos < m_CumulativeLength[line])
+				if (pos < _CumulativeLength[line])
 					return line - 1;
 			}
 			
-			return m_CumulativeLength.length - 1;
+			return _CumulativeLength.length - 1;
 		}
 		
 		public function inflateLocationColumn(pos : int, line : int) : int
 		{
 			if (line <= 0) return pos;
-			return pos - m_CumulativeLength[line];
+			return pos - _CumulativeLength[line];
 		}
 		
 	}

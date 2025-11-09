@@ -1,18 +1,28 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
+    using System;
+
     internal class EventFacade : IUserDataType
     {
-        Func<object, ScriptExecutionContext, CallbackArguments, DynValue> m_AddCallback;
-        Func<object, ScriptExecutionContext, CallbackArguments, DynValue> m_RemoveCallback;
-        object m_Object;
+        private readonly Func<
+            object,
+            ScriptExecutionContext,
+            CallbackArguments,
+            DynValue
+        > _addCallback;
+        private readonly Func<
+            object,
+            ScriptExecutionContext,
+            CallbackArguments,
+            DynValue
+        > _removeCallback;
+        private readonly object _object;
 
         public EventFacade(EventMemberDescriptor parent, object obj)
         {
-            m_Object = obj;
-            m_AddCallback = parent.AddCallback;
-            m_RemoveCallback = parent.RemoveCallback;
+            _object = obj;
+            _addCallback = parent.AddCallback;
+            _removeCallback = parent.RemoveCallback;
         }
 
         public EventFacade(
@@ -21,9 +31,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             object obj
         )
         {
-            m_Object = obj;
-            m_AddCallback = addCallback;
-            m_RemoveCallback = removeCallback;
+            _object = obj;
+            _addCallback = addCallback;
+            _removeCallback = removeCallback;
         }
 
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
@@ -32,11 +42,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 if (index.String == "add")
                 {
-                    return DynValue.NewCallback((c, a) => m_AddCallback(m_Object, c, a));
+                    return DynValue.NewCallback((c, a) => _addCallback(_object, c, a));
                 }
                 else if (index.String == "remove")
                 {
-                    return DynValue.NewCallback((c, a) => m_RemoveCallback(m_Object, c, a));
+                    return DynValue.NewCallback((c, a) => _removeCallback(_object, c, a));
                 }
             }
 

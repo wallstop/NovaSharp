@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Interpreter.Compatibility;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using System.Text;
+    using Compatibility;
+    using NUnit.Framework;
+
     public enum TestResultType
     {
         Message,
@@ -18,21 +18,21 @@ namespace NovaSharp.Interpreter.Tests
 
     public class TestResult
     {
-        public string TestName;
-        public string Message;
-        public Exception Exception;
-        public TestResultType Type;
+        public string testName;
+        public string message;
+        public Exception exception;
+        public TestResultType type;
     }
 
-    internal class SkipThisTestException : Exception { }
+    internal sealed class SkipThisTestException : Exception { }
 
     public class TestRunner
     {
-        Action<TestResult> loggerAction;
-        public int Ok = 0;
-        public int Fail = 0;
-        public int Total = 0;
-        public int Skipped = 0;
+        private readonly Action<TestResult> _loggerAction;
+        public int ok = 0;
+        public int fail = 0;
+        public int total = 0;
+        public int skipped = 0;
 
         public static bool IsRunning { get; private set; }
 
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests
         {
             IsRunning = true;
 
-            this.loggerAction = loggerAction;
+            _loggerAction = loggerAction;
 
             Console_WriteLine(
                 "NovaSharp Test Suite Runner - {0} [{1}]",
@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests
         {
             foreach (TestResult tr in IterateOnTests(whichTest, testsToSkip))
             {
-                loggerAction(tr);
+                _loggerAction(tr);
             }
         }
 
@@ -108,12 +108,12 @@ namespace NovaSharp.Interpreter.Tests
 
                     if (skipList.Contains(mi.Name))
                     {
-                        ++Skipped;
+                        ++skipped;
                         TestResult trs = new()
                         {
-                            TestName = mi.Name,
-                            Message = "skipped (skip-list)",
-                            Type = TestResultType.Skipped,
+                            testName = mi.Name,
+                            message = "skipped (skip-list)",
+                            type = TestResultType.Skipped,
                         };
                         yield return trs;
                         continue;
@@ -121,22 +121,22 @@ namespace NovaSharp.Interpreter.Tests
 
                     TestResult tr = RunTest(t, mi);
 
-                    if (tr.Type != TestResultType.Message)
+                    if (tr.type != TestResultType.Message)
                     {
-                        if (tr.Type == TestResultType.Fail)
+                        if (tr.type == TestResultType.Fail)
                         {
-                            ++Fail;
+                            ++fail;
                         }
-                        else if (tr.Type == TestResultType.Ok)
+                        else if (tr.type == TestResultType.Ok)
                         {
-                            ++Ok;
+                            ++ok;
                         }
                         else
                         {
-                            ++Skipped;
+                            ++skipped;
                         }
 
-                        ++Total;
+                        ++total;
                     }
 
                     yield return tr;
@@ -146,20 +146,20 @@ namespace NovaSharp.Interpreter.Tests
             Console_WriteLine("");
             Console_WriteLine(
                 "OK : {0}/{2}, Failed {1}/{2}, Skipped {3}/{2}",
-                Ok,
-                Fail,
-                Total,
-                Skipped
+                ok,
+                fail,
+                total,
+                skipped
             );
         }
 
         private void Console_WriteLine(string message, params object[] args)
         {
-            loggerAction(
+            _loggerAction(
                 new TestResult()
                 {
-                    Type = TestResultType.Message,
-                    Message = string.Format(message, args),
+                    type = TestResultType.Message,
+                    message = string.Format(message, args),
                 }
             );
         }
@@ -170,9 +170,9 @@ namespace NovaSharp.Interpreter.Tests
             {
                 return new TestResult()
                 {
-                    TestName = mi.Name,
-                    Message = "skipped",
-                    Type = TestResultType.Skipped,
+                    testName = mi.Name,
+                    message = "skipped",
+                    type = TestResultType.Skipped,
                 };
             }
 
@@ -192,21 +192,18 @@ namespace NovaSharp.Interpreter.Tests
                 {
                     return new TestResult()
                     {
-                        TestName = mi.Name,
-                        Message = string.Format(
-                            "Exception {0} expected",
-                            expectedEx.ExpectedException
-                        ),
-                        Type = TestResultType.Fail,
+                        testName = mi.Name,
+                        message = $"Exception {expectedEx.ExpectedException} expected",
+                        type = TestResultType.Fail,
                     };
                 }
                 else
                 {
                     return new TestResult()
                     {
-                        TestName = mi.Name,
-                        Message = "ok",
-                        Type = TestResultType.Ok,
+                        testName = mi.Name,
+                        message = "ok",
+                        type = TestResultType.Ok,
                     };
                 }
             }
@@ -218,9 +215,9 @@ namespace NovaSharp.Interpreter.Tests
                 {
                     return new TestResult()
                     {
-                        TestName = mi.Name,
-                        Message = "skipped",
-                        Type = TestResultType.Skipped,
+                        testName = mi.Name,
+                        message = "skipped",
+                        type = TestResultType.Skipped,
                     };
                 }
 
@@ -231,19 +228,19 @@ namespace NovaSharp.Interpreter.Tests
                 {
                     return new TestResult()
                     {
-                        TestName = mi.Name,
-                        Message = "ok",
-                        Type = TestResultType.Ok,
+                        testName = mi.Name,
+                        message = "ok",
+                        type = TestResultType.Ok,
                     };
                 }
                 else
                 {
                     return new TestResult()
                     {
-                        TestName = mi.Name,
-                        Message = BuildExceptionMessage(ex),
-                        Type = TestResultType.Fail,
-                        Exception = ex,
+                        testName = mi.Name,
+                        message = BuildExceptionMessage(ex),
+                        type = TestResultType.Fail,
+                        exception = ex,
                     };
                 }
             }
@@ -264,7 +261,7 @@ namespace NovaSharp.Interpreter.Tests
 
         internal static void Skip()
         {
-            if (TestRunner.IsRunning)
+            if (IsRunning)
             {
                 throw new SkipThisTestException();
             }

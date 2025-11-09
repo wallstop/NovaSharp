@@ -1,11 +1,11 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using lua_Integer = System.Int32;
-
 namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 {
+#pragma warning disable 1591
+
+    using System;
+    using lua_Integer = System.Int32;
+
     /// <summary>
     /// Classes using the classic interface should inherit from this class.
     /// This class defines only static methods and is really meant to be used only
@@ -34,21 +34,21 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         protected const string LUA_INTFRMLEN = "l";
 
-        protected static DynValue GetArgument(LuaState L, lua_Integer pos)
+        protected static DynValue GetArgument(LuaState l, lua_Integer pos)
         {
-            return L.At(pos);
+            return l.At(pos);
         }
 
         protected static DynValue ArgAsType(
-            LuaState L,
+            LuaState l,
             lua_Integer pos,
             DataType type,
             bool allowNil = false
         )
         {
-            return GetArgument(L, pos)
+            return GetArgument(l, pos)
                 .CheckType(
-                    L.FunctionName,
+                    l.FunctionName,
                     type,
                     pos - 1,
                     allowNil
@@ -57,9 +57,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 );
         }
 
-        protected static lua_Integer LuaType(LuaState L, lua_Integer p)
+        protected static lua_Integer LuaType(LuaState l, lua_Integer p)
         {
-            switch (GetArgument(L, p).Type)
+            switch (GetArgument(l, p).Type)
             {
                 case DataType.Void:
                     return LUA_TNONE;
@@ -89,21 +89,21 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             }
         }
 
-        protected static string LuaLCheckLString(LuaState L, lua_Integer argNum, out uint l)
+        protected static string LuaLCheckLString(LuaState l, lua_Integer argNum, out uint length)
         {
-            string str = ArgAsType(L, argNum, DataType.String, false).String;
-            l = (uint)str.Length;
+            string str = ArgAsType(l, argNum, DataType.String, false).String;
+            length = (uint)str.Length;
             return str;
         }
 
-        protected static void LuaPushInteger(LuaState L, lua_Integer val)
+        protected static void LuaPushInteger(LuaState l, lua_Integer val)
         {
-            L.Push(DynValue.NewNumber(val));
+            l.Push(DynValue.NewNumber(val));
         }
 
-        protected static lua_Integer LuaToBoolean(LuaState L, lua_Integer p)
+        protected static lua_Integer LuaToBoolean(LuaState l, lua_Integer p)
         {
-            return GetArgument(L, p).CastToBool() ? 1 : 0;
+            return GetArgument(l, p).CastToBool() ? 1 : 0;
         }
 
         protected static string LuaToLString(LuaState luaState, lua_Integer p, out uint l)
@@ -132,9 +132,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             b.StringBuilder.Append(s.ToString());
         }
 
-        protected static lua_Integer LuaLOptInteger(LuaState L, lua_Integer pos, lua_Integer def)
+        protected static lua_Integer LuaLOptInteger(LuaState l, lua_Integer pos, lua_Integer def)
         {
-            DynValue v = ArgAsType(L, pos, DataType.Number, true);
+            DynValue v = ArgAsType(l, pos, DataType.Number, true);
 
             if (v.IsNil())
             {
@@ -146,14 +146,14 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             }
         }
 
-        protected static lua_Integer LuaLCheckInteger(LuaState L, lua_Integer pos)
+        protected static lua_Integer LuaLCheckInteger(LuaState l, lua_Integer pos)
         {
-            DynValue v = ArgAsType(L, pos, DataType.Number, false);
+            DynValue v = ArgAsType(l, pos, DataType.Number, false);
             return (int)v.Number;
         }
 
         protected static void LuaLArgCheck(
-            LuaState L,
+            LuaState l,
             bool condition,
             lua_Integer argNum,
             string message
@@ -161,18 +161,18 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             if (!condition)
             {
-                LuaLArgError(L, argNum, message);
+                LuaLArgError(l, argNum, message);
             }
         }
 
-        protected static lua_Integer LuaLCheckInt(LuaState L, lua_Integer argNum)
+        protected static lua_Integer LuaLCheckInt(LuaState l, lua_Integer argNum)
         {
-            return LuaLCheckInteger(L, argNum);
+            return LuaLCheckInteger(l, argNum);
         }
 
-        protected static lua_Integer LuaGetTop(LuaState L)
+        protected static lua_Integer LuaGetTop(LuaState l)
         {
-            return L.Count;
+            return l.Count;
         }
 
         protected static lua_Integer LuaLError(
@@ -189,11 +189,11 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             b.StringBuilder.Append(p);
         }
 
-        protected static void LuaLBuffInit(LuaState L, LuaLBuffer b) { }
+        protected static void LuaLBuffInit(LuaState l, LuaLBuffer b) { }
 
-        protected static void LuaPushLiteral(LuaState L, string literalString)
+        protected static void LuaPushLiteral(LuaState l, string literalString)
         {
-            L.Push(DynValue.NewString(literalString));
+            l.Push(DynValue.NewString(literalString));
         }
 
         protected static void LuaLPushResult(LuaLBuffer b)
@@ -201,13 +201,13 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             LuaPushLiteral(b.LuaState, b.StringBuilder.ToString());
         }
 
-        protected static void LuaPushLString(LuaState L, CharPtr s, uint len)
+        protected static void LuaPushLString(LuaState l, CharPtr s, uint len)
         {
             string ss = s.ToString((int)len);
-            L.Push(DynValue.NewString(ss));
+            l.Push(DynValue.NewString(ss));
         }
 
-        protected static void LuaLCheckStack(LuaState L, lua_Integer n, string message)
+        protected static void LuaLCheckStack(LuaState l, lua_Integer n, string message)
         {
             // nop ?
         }
@@ -217,9 +217,9 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             return "'" + p + "'";
         }
 
-        protected static void LuaPushNil(LuaState L)
+        protected static void LuaPushNil(LuaState l)
         {
-            L.Push(DynValue.Nil);
+            l.Push(DynValue.Nil);
         }
 
         protected static void LuaAssert(bool p)
@@ -231,30 +231,30 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             //	throw new InternalErrorException("LuaAssert failed!");
         }
 
-        protected static string LuaLTypeName(LuaState L, lua_Integer p)
+        protected static string LuaLTypeName(LuaState l, lua_Integer p)
         {
-            return L.At(p).Type.ToErrorTypeString();
+            return l.At(p).Type.ToErrorTypeString();
         }
 
-        protected static lua_Integer LuaIsString(LuaState L, lua_Integer p)
+        protected static lua_Integer LuaIsString(LuaState l, lua_Integer p)
         {
-            DynValue v = L.At(p);
+            DynValue v = l.At(p);
             return (v.Type == DataType.String || v.Type == DataType.Number) ? 1 : 0;
         }
 
-        protected static void LuaPop(LuaState L, lua_Integer p)
+        protected static void LuaPop(LuaState l, lua_Integer p)
         {
             for (int i = 0; i < p; i++)
             {
-                L.Pop();
+                l.Pop();
             }
         }
 
-        protected static void LuaGetTable(LuaState L, lua_Integer p)
+        protected static void LuaGetTable(LuaState l, lua_Integer p)
         {
             // DEBT: this should call metamethods, now it performs raw access
-            DynValue key = L.Pop();
-            DynValue table = L.At(p);
+            DynValue key = l.Pop();
+            DynValue table = l.At(p);
 
             if (table.Type != DataType.Table)
             {
@@ -262,41 +262,41 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
             }
 
             DynValue v = table.Table.Get(key);
-            L.Push(v);
+            l.Push(v);
         }
 
-        protected static int LuaLOptInt(LuaState L, lua_Integer pos, lua_Integer def)
+        protected static int LuaLOptInt(LuaState l, lua_Integer pos, lua_Integer def)
         {
-            return LuaLOptInteger(L, pos, def);
+            return LuaLOptInteger(l, pos, def);
         }
 
-        protected static CharPtr LuaLCheckString(LuaState L, lua_Integer p)
-        {
-            uint dummy;
-            return LuaLCheckLString(L, p, out dummy);
-        }
-
-        protected static string LuaLCheckStringStr(LuaState L, lua_Integer p)
+        protected static CharPtr LuaLCheckString(LuaState l, lua_Integer p)
         {
             uint dummy;
-            return LuaLCheckLString(L, p, out dummy);
+            return LuaLCheckLString(l, p, out dummy);
         }
 
-        protected static void LuaLArgError(LuaState L, lua_Integer arg, string p)
+        protected static string LuaLCheckStringStr(LuaState l, lua_Integer p)
         {
-            throw ScriptRuntimeException.BadArgument(arg - 1, L.FunctionName, p);
+            uint dummy;
+            return LuaLCheckLString(l, p, out dummy);
         }
 
-        protected static double LuaLCheckNumber(LuaState L, lua_Integer pos)
+        protected static void LuaLArgError(LuaState l, lua_Integer arg, string p)
         {
-            DynValue v = ArgAsType(L, pos, DataType.Number, false);
+            throw ScriptRuntimeException.BadArgument(arg - 1, l.FunctionName, p);
+        }
+
+        protected static double LuaLCheckNumber(LuaState l, lua_Integer pos)
+        {
+            DynValue v = ArgAsType(l, pos, DataType.Number, false);
             return v.Number;
         }
 
-        protected static void LuaPushValue(LuaState L, lua_Integer arg)
+        protected static void LuaPushValue(LuaState l, lua_Integer arg)
         {
-            DynValue v = L.At(arg);
-            L.Push(v);
+            DynValue v = l.At(arg);
+            l.Push(v);
         }
 
         /// <summary>
@@ -310,23 +310,23 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         /// pushed onto the stack in direct order (the first result is pushed first), so that after the call the last result is on
         /// the top of the stack.
         /// </summary>
-        /// <param name="L">The LuaState</param>
+        /// <param name="l">The LuaState</param>
         /// <param name="nargs">The number of arguments.</param>
         /// <param name="nresults">The number of expected results.</param>
         /// <exception cref="System.NotImplementedException"></exception>
         protected static void LuaCall(
-            LuaState L,
+            LuaState l,
             lua_Integer nargs,
             lua_Integer nresults = LUA_MULTRET
         )
         {
-            DynValue[] args = L.GetTopArray(nargs);
+            DynValue[] args = l.GetTopArray(nargs);
 
-            L.Discard(nargs);
+            l.Discard(nargs);
 
-            DynValue func = L.Pop();
+            DynValue func = l.Pop();
 
-            DynValue ret = L.ExecutionContext.Call(func, args);
+            DynValue ret = l.ExecutionContext.Call(func, args);
 
             if (nresults != 0)
             {
@@ -342,12 +342,12 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
                 for (int i = 0; i < vals.Length && copied < nresults; i++, copied++)
                 {
-                    L.Push(vals[i]);
+                    l.Push(vals[i]);
                 }
 
                 while (copied < nresults)
                 {
-                    L.Push(DynValue.Nil);
+                    l.Push(DynValue.Nil);
                 }
             }
         }

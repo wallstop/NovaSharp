@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class LabelStatement : Statement
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+
+    internal class LabelStatement : Statement
     {
         public string Label { get; private set; }
         public int Address { get; private set; }
@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
         internal int DefinedVarsCount { get; private set; }
         internal string LastDefinedVarName { get; private set; }
 
-        List<GotoStatement> m_Gotos = new();
-        RuntimeScopeBlock m_StackFrame;
+        private readonly List<GotoStatement> _gotos = new();
+        private RuntimeScopeBlock _stackFrame;
 
         public LabelStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
@@ -38,24 +38,24 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         internal void RegisterGoto(GotoStatement gotostat)
         {
-            m_Gotos.Add(gotostat);
+            _gotos.Add(gotostat);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Clean(m_StackFrame);
+            bc.Emit_Clean(_stackFrame);
 
             Address = bc.GetJumpPointForLastInstruction();
 
-            foreach (GotoStatement gotostat in m_Gotos)
+            foreach (GotoStatement gotostat in _gotos)
             {
-                gotostat.SetAddress(this.Address);
+                gotostat.SetAddress(Address);
             }
         }
 
         internal void SetScope(RuntimeScopeBlock runtimeScopeBlock)
         {
-            m_StackFrame = runtimeScopeBlock;
+            _stackFrame = runtimeScopeBlock;
         }
     }
 }

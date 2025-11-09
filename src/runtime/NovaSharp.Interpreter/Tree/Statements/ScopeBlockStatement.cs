@@ -1,43 +1,45 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class ScopeBlockStatement : Statement
+    using Debugging;
+    using Execution;
+
+    internal class ScopeBlockStatement : Statement
     {
-        Statement m_Block;
-        RuntimeScopeBlock m_StackFrame;
-        SourceRef m_Do,
-            m_End;
+        private readonly Statement _block;
+        private readonly RuntimeScopeBlock _stackFrame;
+
+        private readonly SourceRef _do;
+
+        private readonly SourceRef _end;
 
         public ScopeBlockStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             lcontext.Scope.PushBlock();
 
-            m_Do = CheckTokenType(lcontext, TokenType.Do).GetSourceRef();
+            _do = CheckTokenType(lcontext, TokenType.Do).GetSourceRef();
 
-            m_Block = new CompositeStatement(lcontext);
+            _block = new CompositeStatement(lcontext);
 
-            m_End = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
+            _end = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
 
-            m_StackFrame = lcontext.Scope.PopBlock();
-            lcontext.Source.Refs.Add(m_Do);
-            lcontext.Source.Refs.Add(m_End);
+            _stackFrame = lcontext.Scope.PopBlock();
+            lcontext.Source.Refs.Add(_do);
+            lcontext.Source.Refs.Add(_end);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            using (bc.EnterSource(m_Do))
+            using (bc.EnterSource(_do))
             {
-                bc.Emit_Enter(m_StackFrame);
+                bc.Emit_Enter(_stackFrame);
             }
 
-            m_Block.Compile(bc);
+            _block.Compile(bc);
 
-            using (bc.EnterSource(m_End))
+            using (bc.EnterSource(_end))
             {
-                bc.Emit_Leave(m_StackFrame);
+                bc.Emit_Leave(_stackFrame);
             }
         }
     }

@@ -5,17 +5,18 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public struct TablePair
     {
-        private static TablePair s_NilNode = new(DynValue.Nil, DynValue.Nil);
-        private DynValue key,
-            value;
+        private static readonly TablePair SNilNode = new(DynValue.Nil, DynValue.Nil);
+        private readonly DynValue _key;
+
+        private readonly DynValue _value;
 
         /// <summary>
         /// Gets the key.
         /// </summary>
         public DynValue Key
         {
-            get { return key; }
-            private set { Key = key; }
+            get { return _key; }
+            private set { Key = _key; }
         }
 
         /// <summary>
@@ -23,10 +24,10 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public DynValue Value
         {
-            get { return value; }
+            get { return _value; }
             set
             {
-                if (key.IsNotNil())
+                if (_key.IsNotNil())
                 {
                     Value = value;
                 }
@@ -40,8 +41,8 @@ namespace NovaSharp.Interpreter
         /// <param name="val">The value.</param>
         public TablePair(DynValue key, DynValue val)
         {
-            this.key = key;
-            this.value = val;
+            _key = key;
+            _value = val;
         }
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static TablePair Nil
         {
-            get { return s_NilNode; }
+            get { return SNilNode; }
         }
     }
 }

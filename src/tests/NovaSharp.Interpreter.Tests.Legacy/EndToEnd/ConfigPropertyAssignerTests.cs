@@ -1,12 +1,12 @@
-using NovaSharp.Interpreter.Interop;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using Interop;
+    using NUnit.Framework;
+
     [TestFixture]
     public class ConfigPropertyAssignerTests
     {
-        private class MySubclass
+        private sealed class MySubclass
         {
             [NovaSharpProperty]
             public string MyString { get; set; }
@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public int MyNumber { get; private set; }
         }
 
-        private class MyClass
+        private sealed class MyClass
         {
             [NovaSharpProperty]
             public string MyString { get; set; }
@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue table = s.DoString("return " + tableDef);
 
-            Assert.AreEqual(DataType.Table, table.Type);
+            Assert.That(table.Type, Is.EqualTo(DataType.Table));
 
             PropertyTableAssigner<MyClass> pta = new("class");
             PropertyTableAssigner<MySubclass> pta2 = new();
@@ -68,12 +68,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				}"
             );
 
-            Assert.AreEqual(x.MyNumber, 3);
-            Assert.AreEqual(x.MyString, "ciao");
-            Assert.AreEqual(x.NativeValue.Type, DataType.Function);
-            Assert.AreEqual(x.SubObj.MyNumber, 15);
-            Assert.AreEqual(x.SubObj.MyString, "hi");
-            Assert.IsNotNull(x.SomeTable);
+            Assert.That(3, Is.EqualTo(x.MyNumber));
+            Assert.That("ciao", Is.EqualTo(x.MyString));
+            Assert.That(DataType.Function, Is.EqualTo(x.NativeValue.Type));
+            Assert.That(15, Is.EqualTo(x.SubObj.MyNumber));
+            Assert.That("hi", Is.EqualTo(x.SubObj.MyString));
+            Assert.That(x.SomeTable, Is.Not.Null);
         }
 
         [Test]
@@ -92,10 +92,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				}"
             );
 
-            Assert.AreEqual(x.MyNumber, 3);
-            Assert.AreEqual(x.MyString, "ciao");
-            Assert.AreEqual(x.NativeValue.Type, DataType.Function);
-            Assert.IsNotNull(x.SomeTable);
+            Assert.That(3, Is.EqualTo(x.MyNumber));
+            Assert.That("ciao", Is.EqualTo(x.MyString));
+            Assert.That(DataType.Function, Is.EqualTo(x.NativeValue.Type));
+            Assert.That(x.SomeTable, Is.Not.Null);
         }
     }
 }

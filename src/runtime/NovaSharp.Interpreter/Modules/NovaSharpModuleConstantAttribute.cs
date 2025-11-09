@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// In a module type, mark fields with this attribute to have them exposed as a module constant.
     ///

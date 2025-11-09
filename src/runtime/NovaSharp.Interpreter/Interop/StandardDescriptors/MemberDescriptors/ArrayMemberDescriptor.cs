@@ -1,15 +1,15 @@
-using System;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using BasicDescriptors;
+    using Converters;
+
     /// <summary>
     /// Member descriptor for indexer of array types
     /// </summary>
     public class ArrayMemberDescriptor : ObjectCallbackMemberDescriptor, IWireableDescriptor
     {
-        bool m_IsSetter;
+        private readonly bool _isSetter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArrayMemberDescriptor"/> class.
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Interop
                 indexerParams
             )
         {
-            m_IsSetter = isSetter;
+            _isSetter = isSetter;
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Interop
                         ArrayIndexerGet
             )
         {
-            m_IsSetter = isSetter;
+            _isSetter = isSetter;
         }
 
         /// <summary>
@@ -60,11 +60,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
+            t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("name", DynValue.NewString(Name));
-            t.Set("setter", DynValue.NewBoolean(m_IsSetter));
+            t.Set("setter", DynValue.NewBoolean(_isSetter));
 
-            if (this.Parameters != null)
+            if (Parameters != null)
             {
                 DynValue pars = DynValue.NewPrimeTable();
 
@@ -101,7 +101,7 @@ namespace NovaSharp.Interpreter.Interop
         {
             Array array = (Array)arrayObj;
             int[] indices = BuildArrayIndices(args, args.Count - 1);
-            DynValue value = args[args.Count - 1];
+            DynValue value = args[^1];
 
             Type elemType = array.GetType().GetElementType();
 

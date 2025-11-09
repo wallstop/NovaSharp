@@ -1,13 +1,13 @@
-using System.CodeDom.Compiler;
-using NovaSharp.Hardwire.Languages;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Hardwire
 {
+    using System.CodeDom.Compiler;
+    using Interpreter;
+    using Languages;
+
     public class HardwireGenerator
     {
-        readonly HardwireCodeGenerationContext m_Context;
-        readonly HardwireCodeGenerationLanguage m_Language;
+        private readonly HardwireCodeGenerationContext _context;
+        private readonly HardwireCodeGenerationLanguage _language;
 
         public HardwireGenerator(
             string namespaceName,
@@ -16,8 +16,8 @@ namespace NovaSharp.Hardwire
             HardwireCodeGenerationLanguage language = null
         )
         {
-            m_Language = language ?? HardwireCodeGenerationLanguage.CSharp;
-            m_Context = new HardwireCodeGenerationContext(
+            _language = language ?? HardwireCodeGenerationLanguage.CSharp;
+            _context = new HardwireCodeGenerationContext(
                 namespaceName,
                 entryClassName,
                 logger,
@@ -27,29 +27,27 @@ namespace NovaSharp.Hardwire
 
         public void BuildCodeModel(Table table)
         {
-            m_Context.GenerateCode(table);
+            _context.GenerateCode(table);
         }
 
         public string GenerateSourceCode()
         {
-            CodeDomProvider codeDomProvider = m_Language.CodeDomProvider;
+            CodeDomProvider codeDomProvider = _language.CodeDomProvider;
             CodeGeneratorOptions codeGeneratorOptions = new();
 
-            using (StringWriter sourceWriter = new())
-            {
-                codeDomProvider.GenerateCodeFromCompileUnit(
-                    m_Context.CompileUnit,
-                    sourceWriter,
-                    codeGeneratorOptions
-                );
-                return sourceWriter.ToString();
-            }
+            using StringWriter sourceWriter = new();
+            codeDomProvider.GenerateCodeFromCompileUnit(
+                _context.CompileUnit,
+                sourceWriter,
+                codeGeneratorOptions
+            );
+            return sourceWriter.ToString();
         }
 
         public bool AllowInternals
         {
-            get { return m_Context.AllowInternals; }
-            set { m_Context.AllowInternals = value; }
+            get { return _context.AllowInternals; }
+            set { _context.AllowInternals = value; }
         }
     }
 }

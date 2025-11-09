@@ -1,8 +1,8 @@
-using System.IO;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Platforms
 {
+    using System.IO;
+    using System.Text;
+
     /// <summary>
     /// Interface to abstract all accesses made to the underlying platform (OS, framework) by the scripting engine.
     /// Can be used both to support "non-standard" platforms (i.e. non-posix, non-windows) and/or to sandbox the behaviour
@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        CoreModules FilterSupportedCoreModules(CoreModules module);
+        public CoreModules FilterSupportedCoreModules(CoreModules module);
 
         /// <summary>
         /// Gets an environment variable. Must be implemented, but an implementation is allowed
@@ -30,31 +30,31 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns>
         /// The environment variable value, or null if not found
         /// </returns>
-        string GetEnvironmentVariable(string envvarname);
+        public string GetEnvironmentVariable(string envvarname);
 
         /// <summary>
         /// Determines whether the application is running in AOT (ahead-of-time) mode
         /// </summary>
-        bool IsRunningOnAOT();
+        public bool IsRunningOnAOT();
 
         /// <summary>
         /// Gets the name of the platform (used for debug purposes).
         /// </summary>
         /// <returns>The name of the platform (used for debug purposes)</returns>
-        string GetPlatformName();
+        public string GetPlatformName();
 
         /// <summary>
         /// Default handler for 'print' calls. Can be customized in ScriptOptions
         /// </summary>
         /// <param name="content">The content.</param>
-        void DefaultPrint(string content);
+        public void DefaultPrint(string content);
 
         /// <summary>
         /// Default handler for interactive line input calls. Can be customized in ScriptOptions.
         /// If a meaningful implementation cannot be provided, this method should return null.
         /// </summary>
         /// <returns></returns>
-        string DefaultInput(string prompt);
+        public string DefaultInput(string prompt);
 
         /// <summary>
         /// A function used to open files in the 'io' module.
@@ -66,28 +66,28 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="encoding">The encoding.</param>
         /// <param name="mode">The mode (as per Lua usage - e.g. 'w+', 'rb', etc.).</param>
         /// <returns></returns>
-        Stream IO_OpenFile(Script script, string filename, Encoding encoding, string mode);
+        public Stream IO_OpenFile(Script script, string filename, Encoding encoding, string mode);
 
         /// <summary>
         /// Gets a standard stream (stdin, stdout, stderr).
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns></returns>
-        Stream IO_GetStandardStream(StandardFileType type);
+        public Stream IO_GetStandardStream(StandardFileType type);
 
         /// <summary>
         /// Gets a temporary filename. Used in 'io' and 'os' modules.
         /// Can have an invalid implementation if 'io' and 'os' modules are filtered out.
         /// </summary>
         /// <returns></returns>
-        string IO_OS_GetTempFilename();
+        public string IO_OS_GetTempFilename();
 
         /// <summary>
         /// Exits the process, returning the specified exit code.
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="exitCode">The exit code.</param>
-        void OS_ExitFast(int exitCode);
+        public void OS_ExitFast(int exitCode);
 
         /// <summary>
         /// Checks if a file exists. Used by the 'os' module.
@@ -95,14 +95,14 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns>True if the file exists, false otherwise.</returns>
-        bool OS_FileExists(string file);
+        public bool OS_FileExists(string file);
 
         /// <summary>
         /// Deletes the specified file. Used by the 'os' module.
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="file">The file.</param>
-        void OS_FileDelete(string file);
+        public void OS_FileDelete(string file);
 
         /// <summary>
         /// Moves the specified file. Used by the 'os' module.
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="src">The source.</param>
         /// <param name="dst">The DST.</param>
-        void OS_FileMove(string src, string dst);
+        public void OS_FileMove(string src, string dst);
 
         /// <summary>
         /// Executes the specified command line, returning the child process exit code and blocking in the meantime.
@@ -118,6 +118,6 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="cmdline">The cmdline.</param>
         /// <returns></returns>
-        int OS_Execute(string cmdline);
+        public int OS_Execute(string cmdline);
     }
 }

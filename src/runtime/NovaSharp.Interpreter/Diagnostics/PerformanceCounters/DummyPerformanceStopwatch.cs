@@ -1,15 +1,15 @@
-using System;
-
 namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
-    class DummyPerformanceStopwatch : IPerformanceStopwatch, IDisposable
+    using System;
+
+    internal class DummyPerformanceStopwatch : IPerformanceStopwatch, IDisposable
     {
         public static DummyPerformanceStopwatch Instance = new();
-        PerformanceResult m_Result;
+        private readonly PerformanceResult _result;
 
         private DummyPerformanceStopwatch()
         {
-            m_Result = new PerformanceResult()
+            _result = new PerformanceResult()
             {
                 Counter = 0,
                 Global = true,
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 
         public PerformanceResult GetResult()
         {
-            return m_Result;
+            return _result;
         }
 
         public void Dispose() { }

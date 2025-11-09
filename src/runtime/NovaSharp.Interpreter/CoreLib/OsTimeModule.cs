@@ -1,20 +1,20 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
     /// </summary>
     [NovaSharpModule(Namespace = "os")]
     public class OsTimeModule
     {
-        static DateTime Time0 = DateTime.UtcNow;
-        static DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime Time0 = DateTime.UtcNow;
+        private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
@@ -34,8 +34,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return Epoch + ts;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue clock(
+        [NovaSharpModuleMethod(Name = "clock")]
+        public static DynValue Clock(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -49,8 +49,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return t;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue difftime(
+        [NovaSharpModuleMethod(Name = "difftime")]
+        public static DynValue Difftime(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -66,8 +66,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(t2.Number - t1.Number);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue time(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "time")]
+        public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DateTime date = DateTime.UtcNow;
 
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return GetUnixTime(date);
         }
 
-        static DateTime ParseTimeTable(Table t)
+        private static DateTime ParseTimeTable(Table t)
         {
             int sec = GetTimeTableField(t, "sec") ?? 0;
             int min = GetTimeTableField(t, "min") ?? 0;
@@ -123,8 +123,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return null;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue date(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "date")]
+        public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DateTime reference = DateTime.UtcNow;
 
@@ -187,7 +187,7 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             // ref: http://www.cplusplus.com/reference/ctime/strftime/
 
-            Dictionary<char, string> STANDARD_PATTERNS = new()
+            Dictionary<char, string> standardPatterns = new()
             {
                 { 'a', "ddd" },
                 { 'A', "dddd" },
@@ -253,9 +253,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 isEscapeSequence = false;
 
-                if (STANDARD_PATTERNS.ContainsKey(c))
+                if (standardPatterns.ContainsKey(c))
                 {
-                    sb.Append(d.ToString(STANDARD_PATTERNS[c]));
+                    sb.Append(d.ToString(standardPatterns[c]));
                 }
                 else if (c == 'e')
                 {

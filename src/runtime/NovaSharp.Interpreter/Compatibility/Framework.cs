@@ -1,14 +1,14 @@
-using NovaSharp.Interpreter.Compatibility.Frameworks;
-
 namespace NovaSharp.Interpreter.Compatibility
 {
+    using Frameworks;
+
     public static class Framework
     {
-        static FrameworkCurrent s_FrameworkCurrent = new();
+        private static readonly FrameworkCurrent SFrameworkCurrent = new();
 
         public static FrameworkBase Do
         {
-            get { return s_FrameworkCurrent; }
+            get { return SFrameworkCurrent; }
         }
     }
 }

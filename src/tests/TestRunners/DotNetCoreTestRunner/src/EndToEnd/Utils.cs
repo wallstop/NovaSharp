@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     public static class Utils
     {
         public static void DynAssert(DynValue result, params object[] args)
@@ -17,8 +17,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
             else
             {
-                Assert.AreEqual(DataType.Tuple, result.Type);
-                Assert.AreEqual(args.Length, result.Tuple.Length);
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.EqualTo(args.Length));
 
                 for (int i = 0; i < args.Length; i++)
                 {
@@ -31,26 +31,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             if (reference == (object)DataType.Void)
             {
-                Assert.AreEqual(DataType.Void, dynValue.Type);
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.Void));
             }
             else if (reference == null)
             {
-                Assert.AreEqual(DataType.Nil, dynValue.Type);
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.Nil));
             }
-            else if (reference is double)
+            else if (reference is double d)
             {
-                Assert.AreEqual(DataType.Number, dynValue.Type);
-                Assert.AreEqual((double)reference, dynValue.Number);
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.Number));
+                Assert.That(dynValue.Number, Is.EqualTo(d));
             }
-            else if (reference is int)
+            else if (reference is int i)
             {
-                Assert.AreEqual(DataType.Number, dynValue.Type);
-                Assert.AreEqual((int)reference, dynValue.Number);
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.Number));
+                Assert.That(dynValue.Number, Is.EqualTo(i));
             }
-            else if (reference is string)
+            else if (reference is string s)
             {
-                Assert.AreEqual(DataType.String, dynValue.Type);
-                Assert.AreEqual((string)reference, dynValue.String);
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.String));
+                Assert.That(dynValue.String, Is.EqualTo(s));
             }
         }
     }

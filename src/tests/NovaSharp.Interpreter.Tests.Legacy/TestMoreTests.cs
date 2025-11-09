@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class TestMoreTests
     {
@@ -213,36 +213,10 @@ namespace NovaSharp.Interpreter.Tests
             TapRunner.Run(@"TestMore/307-bit.t");
         }
 
-        [Test]
-        [Ignore("Relies on direct IO/OS interactions; covered by managed replacements.")]
-        public void TestMore_308_io()
-        {
-            if (TestRunner.IsRunning)
-            {
-                TestRunner.Skip();
-                return;
-            }
-
-            Assert.Ignore("Relies on direct IO/OS interactions; covered by managed replacements.");
-        }
-
         private bool AreCoreModulesFullySupported(CoreModules modules)
         {
             CoreModules supp = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
             return supp == modules;
-        }
-
-        [Test]
-        [Ignore("Relies on direct IO/OS interactions; covered by managed replacements.")]
-        public void TestMore_309_os()
-        {
-            if (TestRunner.IsRunning)
-            {
-                TestRunner.Skip();
-                return;
-            }
-
-            Assert.Ignore("Relies on direct IO/OS interactions; covered by managed replacements.");
         }
 
         //[Test]

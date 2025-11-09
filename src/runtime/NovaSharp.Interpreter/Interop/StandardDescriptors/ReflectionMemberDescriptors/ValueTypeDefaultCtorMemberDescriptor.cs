@@ -1,10 +1,10 @@
-using System;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+
     /// <summary>
     /// Member descriptor for the default constructor of value types.
     /// </summary>
@@ -75,8 +75,8 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentException("valueType is not a value type");
             }
 
-            this.Name = "__new";
-            this.Parameters = new ParameterDescriptor[0];
+            Name = "__new";
+            Parameters = new ParameterDescriptor[0];
 
             ValueTypeDefaultCtor = valueType;
         }
@@ -160,9 +160,9 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("type", DynValue.NewString(this.ValueTypeDefaultCtor.FullName));
-            t.Set("name", DynValue.NewString(this.Name));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("type", DynValue.NewString(ValueTypeDefaultCtor.FullName));
+            t.Set("name", DynValue.NewString(Name));
         }
     }
 }

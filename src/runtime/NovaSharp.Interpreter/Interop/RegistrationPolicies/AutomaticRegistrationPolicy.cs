@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
+    using System;
+
     /// <summary>
     /// Similar to <see cref="DefaultRegistrationPolicy"/>, but with automatic type registration is disabled.
     /// </summary>

@@ -1,32 +1,36 @@
-using System.Diagnostics;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using NUnit.Framework;
+
     [TestFixture]
     public class CollectionsRegisteredTests
     {
         public class RegCollItem
         {
-            public int Value;
+            public int value;
 
             public RegCollItem(int v)
             {
-                Value = v;
+                value = v;
             }
         }
 
         public class RegCollMethods
         {
-            List<RegCollItem> m_Items = new()
+            private readonly List<RegCollItem> _items = new()
             {
                 new RegCollItem(7),
                 new RegCollItem(8),
                 new RegCollItem(9),
             };
-            List<int> m_List = new() { 1, 2, 3 };
-            int[] m_Array = new int[3] { 2, 4, 6 };
-            int[,] m_MultiArray = new int[2, 3]
+
+            private readonly List<int> _list = new() { 1, 2, 3 };
+            private readonly int[] _array = new int[3] { 2, 4, 6 };
+
+            private readonly int[,] _multiArray = new int[2, 3]
             {
                 { 2, 4, 6 },
                 { 7, 8, 9 },
@@ -34,22 +38,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public int[,] GetMultiArray()
             {
-                return m_MultiArray;
+                return _multiArray;
             }
 
             public int[] GetArray()
             {
-                return m_Array;
+                return _array;
             }
 
             public List<RegCollItem> GetItems()
             {
-                return m_Items;
+                return _items;
             }
 
             public List<int> GetList()
             {
-                return m_List;
+                return _list;
             }
 
             public IEnumerator<int> GetEnumerator()
@@ -58,12 +62,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        void Do(string code, Action<DynValue> asserts)
+        private void Do(string code, Action<DynValue> asserts)
         {
             Do(code, (d, o) => asserts(d));
         }
 
-        void Do(string code, Action<DynValue, RegCollMethods> asserts)
+        private void Do(string code, Action<DynValue, RegCollMethods> asserts)
         {
             try
             {
@@ -116,8 +120,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(6, r.Number);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(6));
                 }
             );
         }
@@ -147,8 +151,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(6, r.Number);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(6));
                 }
             );
         }
@@ -170,11 +174,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r, o) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(9, r.Number);
-                    Assert.AreEqual(1, o.GetList()[0]);
-                    Assert.AreEqual(5, o.GetList()[1]);
-                    Assert.AreEqual(3, o.GetList()[2]);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(9));
+                    Assert.That(o.GetList()[0], Is.EqualTo(1));
+                    Assert.That(o.GetList()[1], Is.EqualTo(5));
+                    Assert.That(o.GetList()[2], Is.EqualTo(3));
                 }
             );
         }
@@ -193,8 +197,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x;			",
                 (r) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(12, r.Number);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(12));
                 }
             );
         }
@@ -216,11 +220,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r, o) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(13, r.Number);
-                    Assert.AreEqual(2, o.GetArray()[0]);
-                    Assert.AreEqual(5, o.GetArray()[1]);
-                    Assert.AreEqual(6, o.GetArray()[2]);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(13));
+                    Assert.That(o.GetArray()[0], Is.EqualTo(2));
+                    Assert.That(o.GetArray()[1], Is.EqualTo(5));
+                    Assert.That(o.GetArray()[2], Is.EqualTo(6));
                 }
             );
         }
@@ -242,14 +246,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r, o) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(41, r.Number);
-                    Assert.AreEqual(2, o.GetMultiArray()[0, 0]);
-                    Assert.AreEqual(9, o.GetMultiArray()[0, 1]);
-                    Assert.AreEqual(6, o.GetMultiArray()[0, 2]);
-                    Assert.AreEqual(7, o.GetMultiArray()[1, 0]);
-                    Assert.AreEqual(8, o.GetMultiArray()[1, 1]);
-                    Assert.AreEqual(9, o.GetMultiArray()[1, 2]);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(41));
+                    Assert.That(o.GetMultiArray()[0, 0], Is.EqualTo(2));
+                    Assert.That(o.GetMultiArray()[0, 1], Is.EqualTo(9));
+                    Assert.That(o.GetMultiArray()[0, 2], Is.EqualTo(6));
+                    Assert.That(o.GetMultiArray()[1, 0], Is.EqualTo(7));
+                    Assert.That(o.GetMultiArray()[1, 1], Is.EqualTo(8));
+                    Assert.That(o.GetMultiArray()[1, 2], Is.EqualTo(9));
                 }
             );
         }
@@ -269,8 +273,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(24, r.Number);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(24));
                 }
             );
         }
@@ -300,8 +304,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(24, r.Number);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(24));
                 }
             );
         }
@@ -323,11 +327,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			",
                 (r, o) =>
                 {
-                    Assert.AreEqual(DataType.Number, r.Type);
-                    Assert.AreEqual(7 + 17 + 9, r.Number);
-                    Assert.AreEqual(7, o.GetItems()[0].Value);
-                    Assert.AreEqual(17, o.GetItems()[1].Value);
-                    Assert.AreEqual(9, o.GetItems()[2].Value);
+                    Assert.That(r.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(r.Number, Is.EqualTo(7 + 17 + 9));
+                    Assert.That(o.GetItems()[0].value, Is.EqualTo(7));
+                    Assert.That(o.GetItems()[1].value, Is.EqualTo(17));
+                    Assert.That(o.GetItems()[2].value, Is.EqualTo(9));
                 }
             );
         }

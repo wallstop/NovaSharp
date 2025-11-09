@@ -1,6 +1,6 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
+    internal sealed partial class Processor
     {
         internal Table GetMetatable(DynValue value)
         {
@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
             else if (value.Type.CanHaveTypeMetatables())
             {
-                return m_Script.GetTypeMetatable(value.Type);
+                return _script.GetTypeMetatable(value.Type);
             }
             else
             {
@@ -20,20 +20,20 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
-            Table op1_MetaTable = GetMetatable(op1);
-            if (op1_MetaTable != null)
+            Table op1MetaTable = GetMetatable(op1);
+            if (op1MetaTable != null)
             {
-                DynValue meta1 = op1_MetaTable.RawGet(eventName);
+                DynValue meta1 = op1MetaTable.RawGet(eventName);
                 if (meta1 != null && meta1.IsNotNil())
                 {
                     return meta1;
                 }
             }
 
-            Table op2_MetaTable = GetMetatable(op2);
-            if (op2_MetaTable != null)
+            Table op2MetaTable = GetMetatable(op2);
+            if (op2MetaTable != null)
             {
-                DynValue meta2 = op2_MetaTable.RawGet(eventName);
+                DynValue meta2 = op2MetaTable.RawGet(eventName);
                 if (meta2 != null && meta2.IsNotNil())
                 {
                     return meta2;
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             if (op1.Type == DataType.UserData)
             {
                 DynValue meta = op1.UserData.Descriptor.MetaIndex(
-                    this.m_Script,
+                    _script,
                     op1.UserData.Object,
                     eventName
                 );
@@ -57,7 +57,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             if (op2.Type == DataType.UserData)
             {
                 DynValue meta = op2.UserData.Descriptor.MetaIndex(
-                    this.m_Script,
+                    _script,
                     op2.UserData.Object,
                     eventName
                 );
@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             if (value.Type == DataType.UserData)
             {
                 DynValue v = value.UserData.Descriptor.MetaIndex(
-                    m_Script,
+                    _script,
                     value.UserData.Object,
                     metamethod
                 );
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal Script GetScript()
         {
-            return m_Script;
+            return _script;
         }
     }
 }

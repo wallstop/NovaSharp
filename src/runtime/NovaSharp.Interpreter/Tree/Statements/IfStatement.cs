@@ -1,99 +1,103 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class IfStatement : Statement
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+    using Execution.VM;
+
+    internal class IfStatement : Statement
     {
         private class IfBlock
         {
-            public Expression Exp;
-            public Statement Block;
-            public RuntimeScopeBlock StackFrame;
-            public SourceRef Source;
+            public Expression exp;
+            public Statement block;
+            public RuntimeScopeBlock stackFrame;
+            public SourceRef source;
         }
 
-        List<IfBlock> m_Ifs = new();
-        IfBlock m_Else = null;
-        SourceRef m_End;
+        private readonly List<IfBlock> _ifs = new();
+        private readonly IfBlock _else = null;
+        private readonly SourceRef _end;
 
         public IfStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             while (
-                lcontext.Lexer.Current.Type != TokenType.Else
-                && lcontext.Lexer.Current.Type != TokenType.End
+                lcontext.Lexer.Current.type != TokenType.Else
+                && lcontext.Lexer.Current.type != TokenType.End
             )
             {
-                m_Ifs.Add(CreateIfBlock(lcontext));
+                _ifs.Add(CreateIfBlock(lcontext));
             }
 
-            if (lcontext.Lexer.Current.Type == TokenType.Else)
+            if (lcontext.Lexer.Current.type == TokenType.Else)
             {
-                m_Else = CreateElseBlock(lcontext);
+                _else = CreateElseBlock(lcontext);
             }
 
-            m_End = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
-            lcontext.Source.Refs.Add(m_End);
+            _end = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
+            lcontext.Source.Refs.Add(_end);
         }
 
-        IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
+        private IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.If, TokenType.ElseIf);
 
             lcontext.Scope.PushBlock();
 
-            IfBlock ifblock = new();
+            IfBlock ifblock = new()
+            {
+                exp = Expression.Expr(lcontext),
+                source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then)),
+                block = new CompositeStatement(lcontext),
+                stackFrame = lcontext.Scope.PopBlock(),
+            };
 
-            ifblock.Exp = Expression.Expr(lcontext);
-            ifblock.Source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then));
-            ifblock.Block = new CompositeStatement(lcontext);
-            ifblock.StackFrame = lcontext.Scope.PopBlock();
-            lcontext.Source.Refs.Add(ifblock.Source);
+            lcontext.Source.Refs.Add(ifblock.source);
 
             return ifblock;
         }
 
-        IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
+        private IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.Else);
 
             lcontext.Scope.PushBlock();
 
-            IfBlock ifblock = new();
-            ifblock.Block = new CompositeStatement(lcontext);
-            ifblock.StackFrame = lcontext.Scope.PopBlock();
-            ifblock.Source = type.GetSourceRef();
-            lcontext.Source.Refs.Add(ifblock.Source);
+            IfBlock ifblock = new()
+            {
+                block = new CompositeStatement(lcontext),
+                stackFrame = lcontext.Scope.PopBlock(),
+                source = type.GetSourceRef(),
+            };
+            lcontext.Source.Refs.Add(ifblock.source);
             return ifblock;
         }
 
-        public override void Compile(Execution.VM.ByteCode bc)
+        public override void Compile(ByteCode bc)
         {
             List<Instruction> endJumps = new();
 
             Instruction lastIfJmp = null;
 
-            foreach (IfBlock ifblock in m_Ifs)
+            foreach (IfBlock ifblock in _ifs)
             {
-                using (bc.EnterSource(ifblock.Source))
+                using (bc.EnterSource(ifblock.source))
                 {
                     if (lastIfJmp != null)
                     {
                         lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
                     }
 
-                    ifblock.Exp.Compile(bc);
+                    ifblock.exp.Compile(bc);
                     lastIfJmp = bc.Emit_Jump(OpCode.Jf, -1);
-                    bc.Emit_Enter(ifblock.StackFrame);
-                    ifblock.Block.Compile(bc);
+                    bc.Emit_Enter(ifblock.stackFrame);
+                    ifblock.block.Compile(bc);
                 }
 
-                using (bc.EnterSource(m_End))
+                using (bc.EnterSource(_end))
                 {
-                    bc.Emit_Leave(ifblock.StackFrame);
+                    bc.Emit_Leave(ifblock.stackFrame);
                 }
 
                 endJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
@@ -101,17 +105,17 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
 
-            if (m_Else != null)
+            if (_else != null)
             {
-                using (bc.EnterSource(m_Else.Source))
+                using (bc.EnterSource(_else.source))
                 {
-                    bc.Emit_Enter(m_Else.StackFrame);
-                    m_Else.Block.Compile(bc);
+                    bc.Emit_Enter(_else.stackFrame);
+                    _else.block.Compile(bc);
                 }
 
-                using (bc.EnterSource(m_End))
+                using (bc.EnterSource(_end))
                 {
-                    bc.Emit_Leave(m_Else.StackFrame);
+                    bc.Emit_Leave(_else.stackFrame);
                 }
             }
 

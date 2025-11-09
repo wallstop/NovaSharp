@@ -1,15 +1,15 @@
-using System.CodeDom;
-using System.CodeDom.Compiler;
-
 namespace NovaSharp.Hardwire.Languages
 {
+    using System.CodeDom;
+    using System.CodeDom.Compiler;
+
     public class VbHardwireCodeGenerationLanguage : HardwireCodeGenerationLanguage
     {
-        private CodeDomProvider m_CodeDomProvider;
+        private readonly CodeDomProvider _codeDomProvider;
 
         public VbHardwireCodeGenerationLanguage()
         {
-            m_CodeDomProvider = CodeDomProvider.CreateProvider("VB");
+            _codeDomProvider = CodeDomProvider.CreateProvider("VB");
         }
 
         public override string Name
@@ -19,7 +19,7 @@ namespace NovaSharp.Hardwire.Languages
 
         public override CodeDomProvider CodeDomProvider
         {
-            get { return m_CodeDomProvider; }
+            get { return _codeDomProvider; }
         }
 
         public override CodeExpression UnaryPlus(CodeExpression arg)

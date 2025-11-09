@@ -15,8 +15,8 @@ namespace Tutorials.Chapters
 
         class BreakAfterManyInstructionsDebugger : IDebugger
         {
-            int m_InstructionCounter = 0;
-            List<DynamicExpression> m_Dynamics = new List<DynamicExpression>();
+            int _InstructionCounter = 0;
+            List<DynamicExpression> _Dynamics = new List<DynamicExpression>();
 
             public void SetSourceCode(SourceCode sourceCode) { }
 
@@ -39,12 +39,12 @@ namespace Tutorials.Chapters
 
             public DebuggerAction GetAction(int ip, SourceRef sourceref)
             {
-                m_InstructionCounter += 1;
+                _InstructionCounter += 1;
 
-                if ((m_InstructionCounter % 1000) == 0)
+                if ((_InstructionCounter % 1000) == 0)
                     Console.Write(".");
 
-                if (m_InstructionCounter > 50000)
+                if (_InstructionCounter > 50000)
                     throw new MyException();
 
                 return new DebuggerAction() { Action = DebuggerAction.ActionType.StepIn };
@@ -56,7 +56,7 @@ namespace Tutorials.Chapters
 
             public List<DynamicExpression> GetWatchItems()
             {
-                return m_Dynamics;
+                return _Dynamics;
             }
 
             public void RefreshBreakpoints(IEnumerable<SourceRef> refs) { }

@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// Implementation of IProxyFactory taking two delegates for simple instancing of proxies.
     /// </summary>
@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Interop
         where TProxy : class
         where TTarget : class
     {
-        Func<TTarget, TProxy> wrapDelegate;
+        private readonly Func<TTarget, TProxy> _wrapDelegate;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegateProxyFactory{TProxy, TTarget}"/> class.
@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="unwrapDelegate">The deproxy.</param>
         public DelegateProxyFactory(Func<TTarget, TProxy> wrapDelegate)
         {
-            this.wrapDelegate = wrapDelegate;
+            _wrapDelegate = wrapDelegate;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public TProxy CreateProxyObject(TTarget target)
         {
-            return wrapDelegate(target);
+            return _wrapDelegate(target);
         }
 
         /// <summary>

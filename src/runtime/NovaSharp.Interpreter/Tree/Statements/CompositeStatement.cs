@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class CompositeStatement : Statement
+    using System.Collections.Generic;
+    using Execution;
+
+    internal class CompositeStatement : Statement
     {
-        List<Statement> m_Statements = new();
+        private readonly List<Statement> _statements = new();
 
         public CompositeStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
@@ -18,10 +18,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
                     break;
                 }
 
-                bool forceLast;
-
-                Statement s = Statement.CreateStatement(lcontext, out forceLast);
-                m_Statements.Add(s);
+                Statement s = CreateStatement(lcontext, out bool forceLast);
+                _statements.Add(s);
 
                 if (forceLast)
                 {
@@ -30,7 +28,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             // eat away all superfluos ';'s
-            while (lcontext.Lexer.Current.Type == TokenType.SemiColon)
+            while (lcontext.Lexer.Current.type == TokenType.SemiColon)
             {
                 lcontext.Lexer.Next();
             }
@@ -38,9 +36,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            if (m_Statements != null)
+            if (_statements != null)
             {
-                foreach (Statement s in m_Statements)
+                foreach (Statement s in _statements)
                 {
                     s.Compile(bc);
                 }

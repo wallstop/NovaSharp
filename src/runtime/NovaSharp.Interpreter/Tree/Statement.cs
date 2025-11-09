@@ -1,10 +1,10 @@
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Tree.Expressions;
-using NovaSharp.Interpreter.Tree.Statements;
-
 namespace NovaSharp.Interpreter.Tree
 {
-    abstract class Statement : NodeBase
+    using Execution;
+    using Expressions;
+    using Statements;
+
+    internal abstract class Statement : NodeBase
     {
         public Statement(ScriptLoadingContext lcontext)
             : base(lcontext) { }
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tree
 
             forceLast = false;
 
-            switch (tkn.Type)
+            switch (tkn.type)
             {
                 case TokenType.DoubleColon:
                     return new LabelStatement(lcontext);
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tree
                 case TokenType.Local:
                     Token localToken = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
-                    if (lcontext.Lexer.Current.Type == TokenType.Function)
+                    if (lcontext.Lexer.Current.type == TokenType.Function)
                     {
                         return new FunctionDefinitionStatement(lcontext, true, localToken);
                     }
@@ -59,9 +59,8 @@ namespace NovaSharp.Interpreter.Tree
                 {
                     Token l = lcontext.Lexer.Current;
                     Expression exp = Expression.PrimaryExp(lcontext);
-                    FunctionCallExpression fnexp = exp as FunctionCallExpression;
 
-                    if (fnexp != null)
+                    if (exp is FunctionCallExpression fnexp)
                     {
                         return new FunctionCallStatement(lcontext, fnexp);
                     }
@@ -82,7 +81,7 @@ namespace NovaSharp.Interpreter.Tree
 
             Token name = CheckTokenType(lcontext, TokenType.Name);
 
-            if (lcontext.Lexer.Current.Type == TokenType.Op_Assignment)
+            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
             {
                 return new ForLoopStatement(lcontext, name, forTkn);
             }

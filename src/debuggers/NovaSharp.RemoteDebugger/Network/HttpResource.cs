@@ -1,7 +1,7 @@
-using System.Text;
-
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System.Text;
+
     public class HttpResource
     {
         public HttpResourceType Type { get; private set; }

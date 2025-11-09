@@ -1,8 +1,8 @@
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class EmptyStatement : Statement
+    using Execution;
+
+    internal class EmptyStatement : Statement
     {
         public EmptyStatement(ScriptLoadingContext lcontext)
             : base(lcontext) { }

@@ -1,10 +1,10 @@
-using System;
-using System.Linq;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Linq;
+    using BasicDescriptors;
+    using Compatibility;
+
     /// <summary>
     /// Standard descriptor for Enum values
     /// </summary>
@@ -25,10 +25,10 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public bool IsFlags { get; private set; }
 
-        Func<object, ulong> m_EnumToULong = null;
-        Func<ulong, object> m_ULongToEnum = null;
-        Func<object, long> m_EnumToLong = null;
-        Func<long, object> m_LongToEnum = null;
+        private Func<object, ulong> _enumToULong = null;
+        private Func<ulong, object> _uLongToEnum = null;
+        private Func<object, long> _enumToLong = null;
+        private Func<long, object> _longToEnum = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StandardEnumUserDataDescriptor"/> class.
@@ -58,8 +58,8 @@ namespace NovaSharp.Interpreter.Interop
                 || (UnderlyingType == typeof(ulong))
             );
 
-            names = names ?? Enum.GetNames(this.Type);
-            values = values ?? Enum.GetValues(this.Type).OfType<object>().ToArray();
+            names = names ?? Enum.GetNames(Type);
+            values = values ?? Enum.GetValues(Type).OfType<object>().ToArray();
 
             FillMemberList(names, values);
         }
@@ -75,11 +75,11 @@ namespace NovaSharp.Interpreter.Interop
                 object value = values.GetValue(i);
                 DynValue cvalue = UserData.Create(value, this);
 
-                base.AddDynValue(name, cvalue);
+                AddDynValue(name, cvalue);
             }
 
             Attribute[] attrs = Framework.Do.GetCustomAttributes(
-                this.Type,
+                Type,
                 typeof(FlagsAttribute),
                 true
             );
@@ -138,7 +138,7 @@ namespace NovaSharp.Interpreter.Interop
                 );
             }
 
-            return m_EnumToLong(dv.UserData.Object);
+            return _enumToLong(dv.UserData.Object);
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace NovaSharp.Interpreter.Interop
                 );
             }
 
-            return m_EnumToULong(dv.UserData.Object);
+            return _enumToULong(dv.UserData.Object);
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace NovaSharp.Interpreter.Interop
         private DynValue CreateValueSigned(long value)
         {
             CreateSignedConversionFunctions();
-            return UserData.Create(m_LongToEnum(value), this);
+            return UserData.Create(_longToEnum(value), this);
         }
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace NovaSharp.Interpreter.Interop
         private DynValue CreateValueUnsigned(ulong value)
         {
             CreateUnsignedConversionFunctions();
-            return UserData.Create(m_ULongToEnum(value), this);
+            return UserData.Create(_uLongToEnum(value), this);
         }
 
         /// <summary>
@@ -190,27 +190,27 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         private void CreateSignedConversionFunctions()
         {
-            if (m_EnumToLong == null || m_LongToEnum == null)
+            if (_enumToLong == null || _longToEnum == null)
             {
                 if (UnderlyingType == typeof(sbyte))
                 {
-                    m_EnumToLong = o => (long)((sbyte)o);
-                    m_LongToEnum = o => (sbyte)(o);
+                    _enumToLong = o => (long)((sbyte)o);
+                    _longToEnum = o => (sbyte)(o);
                 }
                 else if (UnderlyingType == typeof(short))
                 {
-                    m_EnumToLong = o => (long)((short)o);
-                    m_LongToEnum = o => (short)(o);
+                    _enumToLong = o => (long)((short)o);
+                    _longToEnum = o => (short)(o);
                 }
                 else if (UnderlyingType == typeof(int))
                 {
-                    m_EnumToLong = o => (long)((int)o);
-                    m_LongToEnum = o => (int)(o);
+                    _enumToLong = o => (long)((int)o);
+                    _longToEnum = o => (int)(o);
                 }
                 else if (UnderlyingType == typeof(long))
                 {
-                    m_EnumToLong = o => (long)(o);
-                    m_LongToEnum = o => (long)(o);
+                    _enumToLong = o => (long)(o);
+                    _longToEnum = o => (long)(o);
                 }
                 else
                 {
@@ -227,27 +227,27 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         private void CreateUnsignedConversionFunctions()
         {
-            if (m_EnumToULong == null || m_ULongToEnum == null)
+            if (_enumToULong == null || _uLongToEnum == null)
             {
                 if (UnderlyingType == typeof(byte))
                 {
-                    m_EnumToULong = o => (ulong)((byte)o);
-                    m_ULongToEnum = o => (byte)(o);
+                    _enumToULong = o => (ulong)((byte)o);
+                    _uLongToEnum = o => (byte)(o);
                 }
                 else if (UnderlyingType == typeof(ushort))
                 {
-                    m_EnumToULong = o => (ulong)((ushort)o);
-                    m_ULongToEnum = o => (ushort)(o);
+                    _enumToULong = o => (ulong)((ushort)o);
+                    _uLongToEnum = o => (ushort)(o);
                 }
                 else if (UnderlyingType == typeof(uint))
                 {
-                    m_EnumToULong = o => (ulong)((uint)o);
-                    m_ULongToEnum = o => (uint)(o);
+                    _enumToULong = o => (ulong)((uint)o);
+                    _uLongToEnum = o => (uint)(o);
                 }
                 else if (UnderlyingType == typeof(ulong))
                 {
-                    m_EnumToULong = o => (ulong)(o);
-                    m_ULongToEnum = o => (ulong)(o);
+                    _enumToULong = o => (ulong)(o);
+                    _uLongToEnum = o => (ulong)(o);
                 }
                 else
                 {

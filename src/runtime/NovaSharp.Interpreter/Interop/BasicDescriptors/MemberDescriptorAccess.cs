@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using System;
+
     /// <summary>
     /// Permissions for members access
     /// </summary>

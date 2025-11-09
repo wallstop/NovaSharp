@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Lists a userdata member not to be exposed to scripts referencing it by name.
     /// </summary>

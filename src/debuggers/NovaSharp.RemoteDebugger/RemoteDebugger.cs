@@ -1,97 +1,94 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter;
-using NovaSharp.RemoteDebugger.Network;
-
 namespace NovaSharp.RemoteDebugger
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using Interpreter;
+    using Network;
+
     public class RemoteDebuggerService : IDisposable
     {
-        RemoteDebuggerOptions m_Options;
-        DebugWebHost m_HttpServer;
-        string m_JumpPage;
-        int m_RpcPortMax;
-        List<DebugServer> m_DebugServers = new();
+        private readonly RemoteDebuggerOptions _options;
+        private readonly DebugWebHost _httpServer;
+        private readonly string _jumpPage;
+        private readonly int _rpcPortMax;
+        private readonly List<DebugServer> _debugServers = new();
 
-        object m_Lock = new();
+        private readonly object _lock = new();
 
         public RemoteDebuggerService()
             : this(RemoteDebuggerOptions.Default) { }
 
         public RemoteDebuggerService(RemoteDebuggerOptions options)
         {
-            m_Options = options;
+            _options = options;
 
-            if (options.HttpPort.HasValue)
+            if (options.httpPort.HasValue)
             {
                 Utf8TcpServerOptions httpopts =
-                    options.NetworkOptions & (~Network.Utf8TcpServerOptions.SingleClientOnly);
-                m_HttpServer = new DebugWebHost(options.HttpPort.Value, httpopts);
+                    options.networkOptions & (~Utf8TcpServerOptions.SingleClientOnly);
+                _httpServer = new DebugWebHost(options.httpPort.Value, httpopts);
 
-                if (options.SingleScriptMode)
+                if (options.singleScriptMode)
                 {
-                    m_HttpServer.RegisterResource(
+                    _httpServer.RegisterResource(
                         "/",
                         HttpResource.CreateText(
                             HttpResourceType.Html,
                             string.Format(
                                 "<html><body><iframe height='100%' width='100%' src='Debugger?port={0}'>Please follow <a href='{0}'>link</a>.</iframe></body></html>",
-                                options.RpcPortBase
+                                options.rpcPortBase
                             )
                         )
                     );
                 }
                 else
                 {
-                    m_JumpPage = m_HttpServer.GetJumpPageText();
+                    _jumpPage = _httpServer.GetJumpPageText();
 
-                    m_HttpServer.RegisterResource(
-                        "/",
-                        HttpResource.CreateCallback(GetJumpPageData)
-                    );
+                    _httpServer.RegisterResource("/", HttpResource.CreateCallback(GetJumpPageData));
                 }
 
-                m_HttpServer.Start();
+                _httpServer.Start();
             }
 
-            m_RpcPortMax = options.RpcPortBase;
+            _rpcPortMax = options.rpcPortBase;
         }
 
         private HttpResource GetJumpPageData(Dictionary<string, string> arg)
         {
-            lock (m_Lock)
+            lock (_lock)
             {
                 return HttpResource.CreateText(
                     HttpResourceType.Html,
-                    string.Format(m_JumpPage, GetJumpHtmlFragment())
+                    string.Format(_jumpPage, GetJumpHtmlFragment())
                 );
             }
         }
 
-        public void Attach(Script S, string scriptName, bool freeRunAfterAttach = false)
+        public void Attach(Script s, string scriptName, bool freeRunAfterAttach = false)
         {
-            lock (m_Lock)
+            lock (_lock)
             {
                 DebugServer d = new(
                     scriptName,
-                    S,
-                    m_RpcPortMax,
-                    m_Options.NetworkOptions,
+                    s,
+                    _rpcPortMax,
+                    _options.networkOptions,
                     freeRunAfterAttach
                 );
-                S.AttachDebugger(d);
-                m_DebugServers.Add(d);
+                s.AttachDebugger(d);
+                _debugServers.Add(d);
             }
         }
 
         public string GetJumpHtmlFragment()
         {
             StringBuilder sb = new();
-            lock (m_Lock)
+            lock (_lock)
             {
-                foreach (DebugServer d in m_DebugServers)
+                foreach (DebugServer d in _debugServers)
                 {
                     sb.AppendFormat(
                         "<tr><td><a href=\"Debugger?port={0}\">{1}</a></td><td>{2}</td><td>{3}</td><td>{0}</td></tr>\n",
@@ -107,17 +104,17 @@ namespace NovaSharp.RemoteDebugger
 
         public void Dispose()
         {
-            m_HttpServer.Dispose();
-            m_DebugServers.ForEach(s => s.Dispose());
+            _httpServer.Dispose();
+            _debugServers.ForEach(s => s.Dispose());
         }
 
         public string HttpUrlStringLocalHost
         {
             get
             {
-                if (m_HttpServer != null)
+                if (_httpServer != null)
                 {
-                    return string.Format("http://127.0.0.1:{0}/", m_Options.HttpPort.Value);
+                    return $"http://127.0.0.1:{_options.httpPort.Value}/";
                 }
                 return null;
             }

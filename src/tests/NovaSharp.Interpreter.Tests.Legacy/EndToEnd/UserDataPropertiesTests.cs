@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Interop;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Collections.Generic;
+    using Interop;
+    using NUnit.Framework;
+
     [TestFixture]
     public class UserDataPropertiesTests
     {
@@ -62,19 +59,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.IntProp;
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(321, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(321));
         }
 
         public void Test_NIntPropertyGetter(InteropAccessMode opt)
@@ -85,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				y = myobj2.NIntProp;
 				return x,y;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj1 = new() { NIntProp = 321 };
             SomeClass obj2 = new() { NIntProp = null };
@@ -93,15 +90,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj1", UserData.Create(obj1));
-            S.Globals.Set("myobj2", UserData.Create(obj2));
+            s.Globals.Set("myobj1", UserData.Create(obj1));
+            s.Globals.Set("myobj2", UserData.Create(obj2));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(321.0, res.Tuple[0].Number);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Nil, res.Tuple[1].Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(321.0));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Nil));
         }
 
         public void Test_ObjPropertyGetter(InteropAccessMode opt)
@@ -113,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				z = myobj2.ObjProp.ObjProp;
 				return x,y,z;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj1 = new() { ObjProp = "ciao" };
             SomeClass obj2 = new() { ObjProp = obj1 };
@@ -121,18 +118,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj1", UserData.Create(obj1));
-            S.Globals.Set("myobj2", UserData.Create(obj2));
+            s.Globals.Set("myobj1", UserData.Create(obj1));
+            s.Globals.Set("myobj2", UserData.Create(obj2));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-            Assert.AreEqual("ciao", res.Tuple[0].String);
-            Assert.AreEqual(DataType.String, res.Tuple[2].Type);
-            Assert.AreEqual("ciao", res.Tuple[2].String);
-            Assert.AreEqual(DataType.UserData, res.Tuple[1].Type);
-            Assert.AreEqual(obj1, res.Tuple[1].UserData.Object);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[0].String, Is.EqualTo("ciao"));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[2].String, Is.EqualTo("ciao"));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.UserData));
+            Assert.That(res.Tuple[1].UserData.Object, Is.EqualTo(obj1));
         }
 
         public void Test_IntPropertySetter(InteropAccessMode opt)
@@ -141,20 +138,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = 19;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            Assert.AreEqual(321, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(19, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
         public void Test_NIntPropertySetter(InteropAccessMode opt)
@@ -164,7 +161,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj1.NIntProp = nil;
 				myobj2.NIntProp = 19;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj1 = new() { NIntProp = 321 };
             SomeClass obj2 = new() { NIntProp = null };
@@ -172,16 +169,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj1", UserData.Create(obj1));
-            S.Globals.Set("myobj2", UserData.Create(obj2));
+            s.Globals.Set("myobj1", UserData.Create(obj1));
+            s.Globals.Set("myobj2", UserData.Create(obj2));
 
-            Assert.AreEqual(321, obj1.NIntProp);
-            Assert.AreEqual(null, obj2.NIntProp);
+            Assert.That(obj1.NIntProp, Is.EqualTo(321));
+            Assert.That(obj2.NIntProp, Is.EqualTo(null));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(null, obj1.NIntProp);
-            Assert.AreEqual(19, obj2.NIntProp);
+            Assert.That(obj1.NIntProp, Is.EqualTo(null));
+            Assert.That(obj2.NIntProp, Is.EqualTo(19));
         }
 
         public void Test_ObjPropertySetter(InteropAccessMode opt)
@@ -191,7 +188,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj1.ObjProp = myobj2;
 				myobj2.ObjProp = 'hello';";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj1 = new() { ObjProp = "ciao" };
             SomeClass obj2 = new() { ObjProp = obj1 };
@@ -199,16 +196,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj1", UserData.Create(obj1));
-            S.Globals.Set("myobj2", UserData.Create(obj2));
+            s.Globals.Set("myobj1", UserData.Create(obj1));
+            s.Globals.Set("myobj2", UserData.Create(obj2));
 
-            Assert.AreEqual("ciao", obj1.ObjProp);
-            Assert.AreEqual(obj1, obj2.ObjProp);
+            Assert.That(obj1.ObjProp, Is.EqualTo("ciao"));
+            Assert.That(obj2.ObjProp, Is.EqualTo(obj1));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(obj2, obj1.ObjProp);
-            Assert.AreEqual("hello", obj2.ObjProp);
+            Assert.That(obj1.ObjProp, Is.EqualTo(obj2));
+            Assert.That(obj2.ObjProp, Is.EqualTo("hello"));
         }
 
         public void Test_InvalidPropertySetter(InteropAccessMode opt)
@@ -217,20 +214,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = '19';";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            Assert.AreEqual(321, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(19, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
         public void Test_StaticPropertyAccess(InteropAccessMode opt)
@@ -239,20 +236,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				static.StaticProp = 'asdasd' .. static.StaticProp;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass.StaticProp = "qweqwe";
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
 
-            Assert.AreEqual("qweqwe", SomeClass.StaticProp);
+            Assert.That(SomeClass.StaticProp, Is.EqualTo("qweqwe"));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual("asdasdqweqwe", SomeClass.StaticProp);
+            Assert.That(SomeClass.StaticProp, Is.EqualTo("asdasdqweqwe"));
         }
 
         public void Test_IteratorPropertyGetter(InteropAccessMode opt)
@@ -266,19 +263,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         public void Test_RoIntPropertyGetter(InteropAccessMode opt)
@@ -288,19 +285,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.RoIntProp;
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(5, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(5));
         }
 
         public void Test_RoIntProperty2Getter(InteropAccessMode opt)
@@ -310,19 +307,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.RoIntProp2;
 				return x;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1234, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1234));
         }
 
         public void Test_RoIntPropertySetter(InteropAccessMode opt)
@@ -335,16 +332,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.RoIntProp;
 			";
 
-                Script S = new();
+                Script s = new();
 
                 SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
             }
             catch (ScriptRuntimeException)
             {
@@ -364,16 +361,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.RoIntProp2;
 			";
 
-                Script S = new();
+                Script s = new();
 
                 SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
             }
             catch (ScriptRuntimeException)
             {
@@ -390,18 +387,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj.WoIntProp = 19;
 			";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(19, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
         public void Test_WoIntProperty2Setter(InteropAccessMode opt)
@@ -411,18 +408,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				myobj.WoIntProp2 = 19;
 			";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new();
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
-            S.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(19, obj.WoIntProp2);
+            Assert.That(obj.WoIntProp2, Is.EqualTo(19));
         }
 
         public void Test_WoIntPropertyGetter(InteropAccessMode opt)
@@ -434,19 +431,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.WoIntProp;
 				return x;";
 
-                Script S = new();
+                Script s = new();
 
                 SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
 
-                Assert.AreEqual(DataType.Number, res.Type);
-                Assert.AreEqual(5, res.Number);
+                Assert.That(res.Type, Is.EqualTo(DataType.Number));
+                Assert.That(res.Number, Is.EqualTo(5));
             }
             catch (ScriptRuntimeException)
             {
@@ -465,19 +462,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = myobj.WoIntProp2;
 				return x;";
 
-                Script S = new();
+                Script s = new();
 
                 SomeClass obj = new();
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
 
-                Assert.AreEqual(DataType.Number, res.Type);
-                Assert.AreEqual(1234, res.Number);
+                Assert.That(res.Type, Is.EqualTo(DataType.Number));
+                Assert.That(res.Number, Is.EqualTo(1234));
             }
             catch (ScriptRuntimeException)
             {
@@ -499,20 +496,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return myobj.AccessOverrProp;
 			";
 
-                Script S = new();
+                Script s = new();
 
                 obj.AccessOverrProp = 13;
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
 
-                S.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("myobj", UserData.Create(obj));
 
-                DynValue res = S.DoString(script);
+                DynValue res = s.DoString(script);
             }
             catch (ScriptRuntimeException)
             {
-                Assert.AreEqual(19, obj.AccessOverrProp);
+                Assert.That(obj.AccessOverrProp, Is.EqualTo(19));
                 return;
             }
 
@@ -853,21 +850,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 @"    
 				myobj.IntProp = 19;";
 
-            Script S = new();
+            Script s = new();
 
             SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>();
 
-            S.Globals["myobj"] = obj;
+            s.Globals["myobj"] = obj;
 
-            Assert.AreEqual(321, obj.IntProp);
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(obj, S.Globals["myobj"]);
-            Assert.AreEqual(19, obj.IntProp);
+            Assert.That(s.Globals["myobj"], Is.EqualTo(obj));
+            Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
         [Test]
@@ -875,8 +872,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             Script s = new();
             long big = long.MaxValue;
-            DynValue? v = DynValue.FromObject(s, big);
-            Assert.IsNotNull(v);
+            DynValue v = DynValue.FromObject(s, big);
+            Assert.That(v, Is.Not.Null);
         }
     }
 }

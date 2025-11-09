@@ -1,63 +1,63 @@
-using NovaSharp.Interpreter.Serialization.Json;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+    using Serialization.Json;
+
     [TestFixture]
     public class JsonSerializationTests
     {
-        void AssertTableValues(Table t)
+        private void AssertTableValues(Table t)
         {
-            Assert.AreEqual(DataType.Number, t.Get("aNumber").Type);
-            Assert.AreEqual(1, t.Get("aNumber").Number);
+            Assert.That(t.Get("aNumber").Type, Is.EqualTo(DataType.Number));
+            Assert.That(t.Get("aNumber").Number, Is.EqualTo(1));
 
-            Assert.AreEqual(DataType.String, t.Get("aString").Type);
-            Assert.AreEqual("2", t.Get("aString").String);
+            Assert.That(t.Get("aString").Type, Is.EqualTo(DataType.String));
+            Assert.That(t.Get("aString").String, Is.EqualTo("2"));
 
-            Assert.AreEqual(DataType.Table, t.Get("anObject").Type);
-            Assert.AreEqual(DataType.Table, t.Get("anArray").Type);
+            Assert.That(t.Get("anObject").Type, Is.EqualTo(DataType.Table));
+            Assert.That(t.Get("anArray").Type, Is.EqualTo(DataType.Table));
 
-            Assert.AreEqual(DataType.String, t.Get("slash").Type);
-            Assert.AreEqual("a/b", t.Get("slash").String);
+            Assert.That(t.Get("slash").Type, Is.EqualTo(DataType.String));
+            Assert.That(t.Get("slash").String, Is.EqualTo("a/b"));
 
             Table o = t.Get("anObject").Table;
 
-            Assert.AreEqual(DataType.Number, o.Get("aNumber").Type);
-            Assert.AreEqual(3, o.Get("aNumber").Number);
+            Assert.That(o.Get("aNumber").Type, Is.EqualTo(DataType.Number));
+            Assert.That(o.Get("aNumber").Number, Is.EqualTo(3));
 
-            Assert.AreEqual(DataType.String, o.Get("aString").Type);
-            Assert.AreEqual("4", o.Get("aString").String);
+            Assert.That(o.Get("aString").Type, Is.EqualTo(DataType.String));
+            Assert.That(o.Get("aString").String, Is.EqualTo("4"));
 
             Table a = t.Get("anArray").Table;
 
             //				'anArray' : [ 5, '6', true, null, { 'aNumber' : 7, 'aString' : '8' } ]
 
-            Assert.AreEqual(DataType.Number, a.Get(1).Type);
-            Assert.AreEqual(5, a.Get(1).Number);
+            Assert.That(a.Get(1).Type, Is.EqualTo(DataType.Number));
+            Assert.That(a.Get(1).Number, Is.EqualTo(5));
 
-            Assert.AreEqual(DataType.String, a.Get(2).Type);
-            Assert.AreEqual("6", a.Get(2).String);
+            Assert.That(a.Get(2).Type, Is.EqualTo(DataType.String));
+            Assert.That(a.Get(2).String, Is.EqualTo("6"));
 
-            Assert.AreEqual(DataType.Boolean, a.Get(3).Type);
-            Assert.IsTrue(a.Get(3).Boolean);
+            Assert.That(a.Get(3).Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(a.Get(3).Boolean, Is.True);
 
-            Assert.AreEqual(DataType.Boolean, a.Get(3).Type);
-            Assert.IsTrue(a.Get(3).Boolean);
+            Assert.That(a.Get(3).Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(a.Get(3).Boolean, Is.True);
 
-            Assert.AreEqual(DataType.UserData, a.Get(4).Type);
-            Assert.IsTrue(JsonNull.IsJsonNull(a.Get(4)));
+            Assert.That(a.Get(4).Type, Is.EqualTo(DataType.UserData));
+            Assert.That(JsonNull.IsJsonNull(a.Get(4)), Is.True);
 
-            Assert.AreEqual(DataType.Table, a.Get(5).Type);
+            Assert.That(a.Get(5).Type, Is.EqualTo(DataType.Table));
             Table s = a.Get(5).Table;
 
-            Assert.AreEqual(DataType.Number, s.Get("aNumber").Type);
-            Assert.AreEqual(7, s.Get("aNumber").Number);
+            Assert.That(s.Get("aNumber").Type, Is.EqualTo(DataType.Number));
+            Assert.That(s.Get("aNumber").Number, Is.EqualTo(7));
 
-            Assert.AreEqual(DataType.String, s.Get("aString").Type);
-            Assert.AreEqual("8", s.Get("aString").String);
+            Assert.That(s.Get("aString").Type, Is.EqualTo(DataType.String));
+            Assert.That(s.Get("aString").String, Is.EqualTo("8"));
 
-            Assert.AreEqual(DataType.Number, t.Get("aNegativeNumber").Type);
-            Assert.AreEqual(-9, t.Get("aNegativeNumber").Number);
+            Assert.That(t.Get("aNegativeNumber").Type, Is.EqualTo(DataType.Number));
+            Assert.That(t.Get("aNegativeNumber").Number, Is.EqualTo(-9));
         }
 
         [Test]

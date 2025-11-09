@@ -1,14 +1,14 @@
-using System;
-
 namespace NovaSharp.Interpreter.REPL
 {
+    using System;
+
     /// <summary>
     /// This class provides a simple REPL intepreter ready to be reused in a simple way.
     /// </summary>
     public class ReplInterpreter
     {
-        Script m_Script;
-        string m_CurrentCommand = string.Empty;
+        private Script _script;
+        private string _currentCommand = string.Empty;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReplInterpreter"/> class.
@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.REPL
         /// <param name="script">The script.</param>
         public ReplInterpreter(Script script)
         {
-            this.m_Script = script;
+            _script = script;
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public virtual bool HasPendingCommand
         {
-            get { return m_CurrentCommand.Length > 0; }
+            get { return _currentCommand.Length > 0; }
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public virtual string CurrentPendingCommand
         {
-            get { return m_CurrentCommand; }
+            get { return _currentCommand; }
         }
 
         /// <summary>
@@ -68,49 +68,49 @@ namespace NovaSharp.Interpreter.REPL
 
             bool forced = (input == "");
 
-            m_CurrentCommand += input;
+            _currentCommand += input;
 
-            if (m_CurrentCommand.Length == 0)
+            if (_currentCommand.Length == 0)
             {
                 return DynValue.Void;
             }
 
-            m_CurrentCommand += "\n";
+            _currentCommand += "\n";
 
             try
             {
                 DynValue result = null;
 
-                if (isFirstLine && HandleClassicExprsSyntax && m_CurrentCommand.StartsWith("="))
+                if (isFirstLine && HandleClassicExprsSyntax && _currentCommand.StartsWith("="))
                 {
-                    m_CurrentCommand = "return " + m_CurrentCommand.Substring(1);
+                    _currentCommand = "return " + _currentCommand.Substring(1);
                 }
 
-                if (isFirstLine && HandleDynamicExprs && m_CurrentCommand.StartsWith("?"))
+                if (isFirstLine && HandleDynamicExprs && _currentCommand.StartsWith("?"))
                 {
-                    string code = m_CurrentCommand.Substring(1).Trim();
+                    string code = _currentCommand.Substring(1).Trim();
                     if (code.Length == 0)
                     {
                         return DynValue.Void;
                     }
 
-                    DynamicExpression exp = m_Script.CreateDynamicExpression(code);
+                    DynamicExpression exp = _script.CreateDynamicExpression(code);
                     result = exp.Evaluate();
                 }
                 else
                 {
-                    DynValue v = m_Script.LoadString(m_CurrentCommand, null, "stdin");
-                    result = m_Script.Call(v);
+                    DynValue v = _script.LoadString(_currentCommand, null, "stdin");
+                    result = _script.Call(v);
                 }
 
-                m_CurrentCommand = "";
+                _currentCommand = "";
                 return result;
             }
             catch (SyntaxErrorException ex)
             {
                 if (forced || !ex.IsPrematureStreamTermination)
                 {
-                    m_CurrentCommand = "";
+                    _currentCommand = "";
                     ex.Rethrow();
                     throw;
                 }
@@ -121,13 +121,13 @@ namespace NovaSharp.Interpreter.REPL
             }
             catch (ScriptRuntimeException sre)
             {
-                m_CurrentCommand = "";
+                _currentCommand = "";
                 sre.Rethrow();
                 throw;
             }
             catch (Exception)
             {
-                m_CurrentCommand = "";
+                _currentCommand = "";
                 throw;
             }
         }

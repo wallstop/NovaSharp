@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Exception thrown when an inconsistent state is reached in the interpreter
     /// </summary>

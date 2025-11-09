@@ -1,12 +1,14 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Platforms;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Compatibility;
+    using CoreLib;
+    using Interop;
+    using Platforms;
+
     /// <summary>
     /// Class managing modules (mostly as extension methods)
     /// </summary>
@@ -59,7 +61,7 @@ namespace NovaSharp.Interpreter
 
             if (modules.Has(CoreModules.Table))
             {
-                RegisterModuleType<TableModule_Globals>(table);
+                RegisterModuleType<TableModuleGlobals>(table);
             }
 
             if (modules.Has(CoreModules.ErrorHandling))
@@ -87,17 +89,17 @@ namespace NovaSharp.Interpreter
                 RegisterModuleType<DynamicModule>(table);
             }
 
-            if (modules.Has(CoreModules.OS_System))
+            if (modules.Has(CoreModules.OsSystem))
             {
                 RegisterModuleType<OsSystemModule>(table);
             }
 
-            if (modules.Has(CoreModules.OS_Time))
+            if (modules.Has(CoreModules.OsTime))
             {
                 RegisterModuleType<OsTimeModule>(table);
             }
 
-            if (modules.Has(CoreModules.IO))
+            if (modules.Has(CoreModules.Io))
             {
                 RegisterModuleType<IoModule>(table);
             }
@@ -122,15 +124,12 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static Table RegisterConstants(this Table table)
         {
-            DynValue NovaSharp_table = DynValue.NewTable(table.OwnerScript);
-            Table m = NovaSharp_table.Table;
+            DynValue novaSharpTable = DynValue.NewTable(table.OwnerScript);
+            Table m = novaSharpTable.Table;
 
             table.Set("_G", DynValue.NewTable(table));
-            table.Set(
-                "_VERSION",
-                DynValue.NewString(string.Format("NovaSharp {0}", Script.VERSION))
-            );
-            table.Set("_NovaSharp", NovaSharp_table);
+            table.Set("_VERSION", DynValue.NewString($"NovaSharp {Script.VERSION}"));
+            table.Set("_NovaSharp", novaSharpTable);
 
             m.Set("version", DynValue.NewString(Script.VERSION));
             m.Set("luacompat", DynValue.NewString(Script.LUA_VERSION));
@@ -156,7 +155,7 @@ namespace NovaSharp.Interpreter
         {
             Table table = CreateModuleNamespace(gtable, t);
 
-            foreach (MethodInfo mi in Framework.Do.GetMethods(t).Where(__mi => __mi.IsStatic))
+            foreach (MethodInfo mi in Framework.Do.GetMethods(t).Where(mi => mi.IsStatic))
             {
                 if (
                     mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
@@ -171,7 +170,7 @@ namespace NovaSharp.Interpreter
                     if (!CallbackFunction.CheckCallbackSignature(mi, true))
                     {
                         throw new ArgumentException(
-                            string.Format("Method {0} does not have the right signature.", mi.Name)
+                            $"Method {mi.Name} does not have the right signature."
                         );
                     }
 
@@ -189,9 +188,10 @@ namespace NovaSharp.Interpreter
                     Func<ScriptExecutionContext, CallbackArguments, DynValue> func =
                         (Func<ScriptExecutionContext, CallbackArguments, DynValue>)deleg;
 
-                    string name = (!string.IsNullOrEmpty(attr.Name)) ? attr.Name : mi.Name;
-
-                    table.Set(name, DynValue.NewCallback(func, name));
+                    foreach (string name in GetModuleNameVariants(attr.Name, mi.Name))
+                    {
+                        table.Set(name, DynValue.NewCallback(func, name));
+                    }
                 }
                 else if (mi.Name == "NovaSharpInit")
                 {
@@ -203,9 +203,9 @@ namespace NovaSharp.Interpreter
             foreach (
                 FieldInfo fi in Framework
                     .Do.GetFields(t)
-                    .Where(_mi =>
-                        _mi.IsStatic
-                        && _mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
+                    .Where(mi =>
+                        mi.IsStatic
+                        && mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
                             .ToArray()
                             .Length > 0
                     )
@@ -213,17 +213,15 @@ namespace NovaSharp.Interpreter
             {
                 NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                     fi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false).First();
-                string name = (!string.IsNullOrEmpty(attr.Name)) ? attr.Name : fi.Name;
-
-                RegisterScriptField(fi, null, table, t, name);
+                RegisterScriptField(fi, null, table, t, attr.Name, fi.Name);
             }
 
             foreach (
                 FieldInfo fi in Framework
                     .Do.GetFields(t)
-                    .Where(_mi =>
-                        _mi.IsStatic
-                        && _mi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false)
+                    .Where(mi =>
+                        mi.IsStatic
+                        && mi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false)
                             .ToArray()
                             .Length > 0
                     )
@@ -247,24 +245,26 @@ namespace NovaSharp.Interpreter
             string name
         )
         {
+            DynValue constant;
+
             if (fi.FieldType == typeof(string))
             {
-                string val = fi.GetValue(o) as string;
-                table.Set(name, DynValue.NewString(val));
+                constant = DynValue.NewString(fi.GetValue(o) as string);
             }
             else if (fi.FieldType == typeof(double))
             {
-                double val = (double)fi.GetValue(o);
-                table.Set(name, DynValue.NewNumber(val));
+                constant = DynValue.NewNumber((double)fi.GetValue(o));
             }
             else
             {
                 throw new ArgumentException(
-                    string.Format(
-                        "Field {0} does not have the right type - it must be string or double.",
-                        name
-                    )
+                    $"Field {name} does not have the right type - it must be string or double."
                 );
+            }
+
+            foreach (string alias in GetModuleNameVariants(name, fi.Name))
+            {
+                table.Set(alias, constant);
             }
         }
 
@@ -273,24 +273,27 @@ namespace NovaSharp.Interpreter
             object o,
             Table table,
             Type t,
-            string name
+            string explicitName,
+            string memberName
         )
         {
             if (fi.FieldType != typeof(string))
             {
                 throw new ArgumentException(
-                    string.Format(
-                        "Field {0} does not have the right type - it must be string.",
-                        name
-                    )
+                    $"Field {memberName} does not have the right type - it must be string."
                 );
             }
 
             string val = fi.GetValue(o) as string;
 
-            DynValue fn = table.OwnerScript.LoadFunction(val, table, name);
+            string primaryName = !string.IsNullOrEmpty(explicitName) ? explicitName : memberName;
 
-            table.Set(name, fn);
+            DynValue fn = table.OwnerScript.LoadFunction(val, table, primaryName);
+
+            foreach (string alias in GetModuleNameVariants(explicitName, memberName))
+            {
+                table.Set(alias, fn);
+            }
         }
 
         private static Table CreateModuleNamespace(Table gtable, Type t)
@@ -349,6 +352,59 @@ namespace NovaSharp.Interpreter
         public static Table RegisterModuleType<T>(this Table table)
         {
             return RegisterModuleType(table, typeof(T));
+        }
+
+        private static IEnumerable<string> GetModuleNameVariants(
+            string explicitName,
+            string memberName
+        )
+        {
+            HashSet<string> names = new(StringComparer.Ordinal);
+
+            void AddCandidate(string candidate)
+            {
+                if (!string.IsNullOrEmpty(candidate))
+                {
+                    names.Add(candidate);
+                }
+            }
+
+            AddCandidate(explicitName);
+            AddCandidate(memberName);
+
+            if (!string.IsNullOrEmpty(memberName))
+            {
+                string normalized = DescriptorHelpers.NormalizeUppercaseRuns(memberName);
+                AddCandidate(normalized);
+
+                if (memberName.Length > 0)
+                {
+                    string lowerFirst =
+                        char.ToLowerInvariant(memberName[0]) + memberName.Substring(1);
+                    AddCandidate(lowerFirst);
+
+                    string normalizedLowerFirst =
+                        char.ToLowerInvariant(normalized[0]) + normalized.Substring(1);
+                    AddCandidate(normalizedLowerFirst);
+                }
+
+                AddCandidate(memberName.ToLowerInvariant());
+            }
+
+            if (!string.IsNullOrEmpty(explicitName) && explicitName != memberName)
+            {
+                string normalizedExplicit = DescriptorHelpers.NormalizeUppercaseRuns(explicitName);
+                AddCandidate(normalizedExplicit);
+
+                if (explicitName.Length > 0)
+                {
+                    string lowerFirstExplicit =
+                        char.ToLowerInvariant(explicitName[0]) + explicitName.Substring(1);
+                    AddCandidate(lowerFirstExplicit);
+                }
+            }
+
+            return names;
         }
     }
 }

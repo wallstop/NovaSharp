@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class ErrorHandlingTests
     {
@@ -10,15 +10,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = @"return pcall(function() return 1,2,3 end)";
 
-            Script S = new();
-            DynValue res = S.DoString(script);
+            Script s = new();
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(4, res.Tuple.Length);
-            Assert.AreEqual(true, res.Tuple[0].Boolean);
-            Assert.AreEqual(1, res.Tuple[1].Number);
-            Assert.AreEqual(2, res.Tuple[2].Number);
-            Assert.AreEqual(3, res.Tuple[3].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(4));
+            Assert.That(res.Tuple[0].Boolean, Is.EqualTo(true));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            Assert.That(res.Tuple[3].Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -32,11 +32,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Boolean, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[1].Type);
-            Assert.AreEqual(false, res.Tuple[0].Boolean);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[0].Boolean, Is.EqualTo(false));
         }
 
         [Test]
@@ -76,8 +76,8 @@ return a()
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("!cba", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("!cba"));
         }
 
         [Test]
@@ -104,27 +104,31 @@ end
 
 return a()
 ";
-            Script S = new(CoreModules.None);
-
-            S.Globals["try"] = DynValue.NewCallback(
-                (c, a) =>
+            Script s = new(CoreModules.None)
+            {
+                Globals =
                 {
-                    try
-                    {
-                        DynValue v = a[0].Function.Call();
-                        return v;
-                    }
-                    catch (ScriptRuntimeException)
-                    {
-                        return DynValue.NewString("!");
-                    }
-                }
-            );
+                    ["try"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            try
+                            {
+                                DynValue v = a[0].Function.Call();
+                                return v;
+                            }
+                            catch (ScriptRuntimeException)
+                            {
+                                return DynValue.NewString("!");
+                            }
+                        }
+                    ),
+                },
+            };
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("!cba", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("!cba"));
         }
     }
 }

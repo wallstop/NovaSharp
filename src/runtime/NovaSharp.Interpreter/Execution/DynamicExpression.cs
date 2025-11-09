@@ -1,32 +1,32 @@
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter
 {
+    using Tree.Expressions;
+
     /// <summary>
     /// Represents a dynamic expression in the script
     /// </summary>
     public class DynamicExpression : IScriptPrivateResource
     {
-        DynamicExprExpression m_Exp;
-        DynValue m_Constant;
+        private readonly DynamicExprExpression _exp;
+        private readonly DynValue _constant;
 
         /// <summary>
         /// The code which generated this expression
         /// </summary>
-        public readonly string ExpressionCode;
+        public readonly string expressionCode;
 
-        internal DynamicExpression(Script S, string strExpr, DynamicExprExpression expr)
+        internal DynamicExpression(Script s, string strExpr, DynamicExprExpression expr)
         {
-            ExpressionCode = strExpr;
-            OwnerScript = S;
-            m_Exp = expr;
+            expressionCode = strExpr;
+            OwnerScript = s;
+            _exp = expr;
         }
 
-        internal DynamicExpression(Script S, string strExpr, DynValue constant)
+        internal DynamicExpression(Script s, string strExpr, DynValue constant)
         {
-            ExpressionCode = strExpr;
-            OwnerScript = S;
-            m_Constant = constant;
+            expressionCode = strExpr;
+            OwnerScript = s;
+            _constant = constant;
         }
 
         /// <summary>
@@ -40,12 +40,12 @@ namespace NovaSharp.Interpreter
 
             this.CheckScriptOwnership(context.GetScript());
 
-            if (m_Constant != null)
+            if (_constant != null)
             {
-                return m_Constant;
+                return _constant;
             }
 
-            return m_Exp.Eval(context);
+            return _exp.Eval(context);
         }
 
         /// <summary>
@@ -57,9 +57,9 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(context.GetScript());
 
-            if (m_Exp != null)
+            if (_exp != null)
             {
-                return m_Exp.FindDynamic(context);
+                return _exp.FindDynamic(context);
             }
             else
             {
@@ -81,7 +81,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public bool IsConstant()
         {
-            return m_Constant != null;
+            return _constant != null;
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace NovaSharp.Interpreter
         /// </returns>
         public override int GetHashCode()
         {
-            return ExpressionCode.GetHashCode();
+            return expressionCode.GetHashCode();
         }
 
         /// <summary>
@@ -104,14 +104,12 @@ namespace NovaSharp.Interpreter
         /// </returns>
         public override bool Equals(object obj)
         {
-            DynamicExpression o = obj as DynamicExpression;
-
-            if (o == null)
+            if (obj is not DynamicExpression o)
             {
                 return false;
             }
 
-            return o.ExpressionCode == this.ExpressionCode;
+            return o.expressionCode == expressionCode;
         }
     }
 }

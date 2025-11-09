@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-using NovaSharp.Interpreter.Interop.StandardDescriptors;
-using NovaSharp.Interpreter.Interop.UserDataRegistries;
-using NovaSharp.Interpreter.Serialization.Json;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Interop;
+    using Interop.BasicDescriptors;
+    using Interop.RegistrationPolicies;
+    using Interop.StandardDescriptors;
+    using Interop.UserDataRegistries;
+    using Serialization.Json;
+
     /// <summary>
     /// Class exposing C# objects as Lua userdata.
     /// For efficiency, a global registry of types is maintained, instead of a per-script one.
@@ -265,9 +265,9 @@ namespace NovaSharp.Interpreter
             IUserDataDescriptor descr = GetDescriptorForObject(o);
             if (descr == null)
             {
-                if (o is Type)
+                if (o is Type type)
                 {
-                    return CreateStatic((Type)o);
+                    return CreateStatic(type);
                 }
 
                 return null;
@@ -417,9 +417,7 @@ namespace NovaSharp.Interpreter
 
             foreach (KeyValuePair<Type, IUserDataDescriptor> descpair in registeredTypesPairs)
             {
-                IWireableDescriptor sd = descpair.Value as IWireableDescriptor;
-
-                if (sd != null)
+                if (descpair.Value is IWireableDescriptor sd)
                 {
                     DynValue t = DynValue.NewPrimeTable();
                     output.Table.Set(descpair.Key.FullName, t);

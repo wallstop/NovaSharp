@@ -1,8 +1,8 @@
-using System;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using Compatibility;
+
     /// <summary>
     /// Standard user data descriptor used to instantiate generics.
     /// </summary>
@@ -30,8 +30,8 @@ namespace NovaSharp.Interpreter.Interop
             }
 
             AccessMode = accessMode;
-            this.Type = type;
-            this.Name = "@@" + type.FullName;
+            Type = type;
+            Name = "@@" + type.FullName;
         }
 
         /// <inheritdoc/>

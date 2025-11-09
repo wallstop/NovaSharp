@@ -1,8 +1,8 @@
-using System.CodeDom;
-using System.CodeDom.Compiler;
-
 namespace NovaSharp.Hardwire.Languages
 {
+    using System.CodeDom;
+    using System.CodeDom.Compiler;
+
     public abstract class HardwireCodeGenerationLanguage
     {
         public static HardwireCodeGenerationLanguage CSharp
@@ -10,7 +10,7 @@ namespace NovaSharp.Hardwire.Languages
             get { return new CSharpHardwireCodeGenerationLanguage(); }
         }
 
-        public static HardwireCodeGenerationLanguage VB
+        public static HardwireCodeGenerationLanguage Vb
         {
             get { return new VbHardwireCodeGenerationLanguage(); }
         }
@@ -35,15 +35,13 @@ namespace NovaSharp.Hardwire.Languages
 
         protected string ExpressionToString(CodeExpression exp)
         {
-            using (StringWriter sourceWriter = new())
-            {
-                CodeDomProvider.GenerateCodeFromExpression(
-                    exp,
-                    sourceWriter,
-                    new CodeGeneratorOptions()
-                );
-                return sourceWriter.ToString();
-            }
+            using StringWriter sourceWriter = new();
+            CodeDomProvider.GenerateCodeFromExpression(
+                exp,
+                sourceWriter,
+                new CodeGeneratorOptions()
+            );
+            return sourceWriter.ToString();
         }
 
         protected CodeExpression SnippetExpression(string format, params CodeExpression[] args)

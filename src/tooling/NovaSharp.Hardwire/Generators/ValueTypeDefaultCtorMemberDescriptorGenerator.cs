@@ -1,9 +1,9 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Hardwire.Generators
 {
-    class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
+    using System.CodeDom;
+    using Interpreter;
+
+    internal class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
@@ -18,16 +18,17 @@ namespace NovaSharp.Hardwire.Generators
         {
             MethodMemberDescriptorGenerator mgen = new("VTDC");
 
-            Table mt = new(null);
-
-            mt["params"] = new Table(null);
-            mt["name"] = "__new";
-            mt["type"] = table["type"];
-            mt["ctor"] = true;
-            mt["extension"] = false;
-            mt["decltype"] = table["type"];
-            mt["ret"] = table["type"];
-            mt["special"] = false;
+            Table mt = new(null)
+            {
+                ["params"] = new Table(null),
+                ["name"] = "__new",
+                ["type"] = table["type"],
+                ["ctor"] = true,
+                ["extension"] = false,
+                ["decltype"] = table["type"],
+                ["ret"] = table["type"],
+                ["special"] = false,
+            };
 
             return mgen.Generate(mt, generator, members);
         }

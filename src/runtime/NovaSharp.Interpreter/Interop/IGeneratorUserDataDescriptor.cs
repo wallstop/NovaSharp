@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// An interface for type descriptors having the ability to generate other descriptors on the fly.
     /// </summary>
@@ -36,6 +36,6 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>Null, this object instance or a new descriptor.</returns>
-        IUserDataDescriptor Generate(Type type);
+        public IUserDataDescriptor Generate(Type type);
     }
 }

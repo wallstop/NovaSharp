@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Debugging;
+
     internal class Instruction
     {
         internal OpCode OpCode;
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public override string ToString()
         {
-            string append = this.OpCode.ToString().ToUpperInvariant();
+            string append = OpCode.ToString().ToUpperInvariant();
 
             int usage = (int)OpCode.GetFieldUsage();
 
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             if (
-                (this.OpCode == VM.OpCode.Meta)
+                (OpCode == OpCode.Meta)
                 || (
                     (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
                     == (int)InstructionFieldUsage.NumValAsCodeAddress
@@ -76,19 +76,19 @@ namespace NovaSharp.Interpreter.Execution.VM
             return append;
         }
 
-        private string PurifyFromNewLines(DynValue Value)
+        private string PurifyFromNewLines(DynValue value)
         {
-            if (Value == null)
+            if (value == null)
             {
                 return "";
             }
 
-            return Value.ToString().Replace('\n', ' ').Replace('\r', ' ');
+            return value.ToString().Replace('\n', ' ').Replace('\r', ' ');
         }
 
         private string GenSpaces()
         {
-            return new string(' ', 10 - this.OpCode.ToString().Length);
+            return new string(' ', 10 - OpCode.ToString().Length);
         }
 
         internal void WriteBinary(
@@ -97,7 +97,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             Dictionary<SymbolRef, int> symbolMap
         )
         {
-            wr.Write((byte)this.OpCode);
+            wr.Write((byte)OpCode);
 
             int usage = (int)OpCode.GetFieldUsage();
 
@@ -106,16 +106,16 @@ namespace NovaSharp.Interpreter.Execution.VM
                 == (int)InstructionFieldUsage.NumValAsCodeAddress
             )
             {
-                wr.Write(this.NumVal - baseAddress);
+                wr.Write(NumVal - baseAddress);
             }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
             {
-                wr.Write(this.NumVal);
+                wr.Write(NumVal);
             }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
             {
-                wr.Write(this.NumVal2);
+                wr.Write(NumVal2);
             }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
@@ -135,8 +135,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if ((usage & ((int)InstructionFieldUsage.SymbolList)) != 0)
             {
-                wr.Write(this.SymbolList.Length);
-                for (int i = 0; i < this.SymbolList.Length; i++)
+                wr.Write(SymbolList.Length);
+                for (int i = 0; i < SymbolList.Length; i++)
                 {
                     WriteSymbol(wr, SymbolList[i], symbolMap);
                 }
@@ -173,9 +173,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             SymbolRef[] deserializedSymbols
         )
         {
-            Instruction that = new(chunkRef);
-
-            that.OpCode = (OpCode)rd.ReadByte();
+            Instruction that = new(chunkRef) { OpCode = (OpCode)rd.ReadByte() };
 
             int usage = (int)that.OpCode.GetFieldUsage();
 
@@ -251,9 +249,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 case DataType.Table:
                     return DynValue.NewTable(envTable);
                 default:
-                    throw new NotSupportedException(
-                        string.Format("Unsupported type in chunk dump : {0}", dt)
-                    );
+                    throw new NotSupportedException($"Unsupported type in chunk dump : {dt}");
             }
         }
 
@@ -285,7 +281,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     break;
                 default:
                     throw new NotSupportedException(
-                        string.Format("Unsupported type in chunk dump : {0}", value.Type)
+                        $"Unsupported type in chunk dump : {value.Type}"
                     );
             }
         }
@@ -299,12 +295,12 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
             {
-                symbol = this.Symbol;
+                symbol = Symbol;
             }
 
             if ((usage & ((int)InstructionFieldUsage.SymbolList)) != 0)
             {
-                symbolList = this.SymbolList;
+                symbolList = SymbolList;
             }
         }
     }

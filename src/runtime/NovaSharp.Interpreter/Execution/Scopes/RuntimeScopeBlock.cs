@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Execution
 {
+    using System;
+
     internal class RuntimeScopeBlock
     {
         public int From { get; internal set; }
@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Execution
 
         public override string ToString()
         {
-            return String.Format("ScopeBlock : {0} -> {1} --> {2}", From, To, ToInclusive);
+            return $"ScopeBlock : {From} -> {To} --> {ToInclusive}";
         }
     }
 }

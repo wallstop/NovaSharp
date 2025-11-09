@@ -1,26 +1,25 @@
-using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Hardwire.Utils;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-
 namespace NovaSharp.Hardwire.Generators
 {
-    class MethodMemberDescriptorGenerator : IHardwireGenerator
+    using System;
+    using System.CodeDom;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Interpreter;
+    using Interpreter.Interop;
+    using Interpreter.Interop.BasicDescriptors;
+    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using Utils;
+
+    internal class MethodMemberDescriptorGenerator : IHardwireGenerator
     {
-        string m_Prefix;
+        private readonly string _prefix;
 
         public MethodMemberDescriptorGenerator()
             : this("MTHD") { }
 
         public MethodMemberDescriptorGenerator(string prefix)
         {
-            m_Prefix = prefix;
+            _prefix = prefix;
         }
 
         public string ManagedType
@@ -47,17 +46,18 @@ namespace NovaSharp.Hardwire.Generators
             }
 
             // Create the descriptor class
-            string className = m_Prefix + "_" + Guid.NewGuid().ToString("N");
+            string className = _prefix + "_" + Guid.NewGuid().ToString("N");
 
-            CodeTypeDeclaration classCode = new(className);
-            classCode.TypeAttributes =
-                System.Reflection.TypeAttributes.NestedPrivate
-                | System.Reflection.TypeAttributes.Sealed;
+            CodeTypeDeclaration classCode = new(className)
+            {
+                TypeAttributes =
+                    System.Reflection.TypeAttributes.NestedPrivate
+                    | System.Reflection.TypeAttributes.Sealed,
+            };
             classCode.BaseTypes.Add(typeof(HardwiredMethodMemberDescriptor));
 
             // Create the class constructor
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Assembly;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Assembly };
             classCode.Members.Add(ctor);
 
             // Create the parameters
@@ -96,10 +96,12 @@ namespace NovaSharp.Hardwire.Generators
 
             // Create the Invoke method : protected override object Invoke(Script script, object obj, object[] pars, int argscount);
 
-            CodeMemberMethod m = new();
-            m.Name = "Invoke";
-            m.Attributes = MemberAttributes.Override | MemberAttributes.Family;
-            m.ReturnType = new CodeTypeReference(typeof(object));
+            CodeMemberMethod m = new()
+            {
+                Name = "Invoke",
+                Attributes = MemberAttributes.Override | MemberAttributes.Family,
+                ReturnType = new CodeTypeReference(typeof(object)),
+            };
             m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Script), "script"));
             m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "obj"));
             m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object[]), "pars"));
@@ -125,27 +127,27 @@ namespace NovaSharp.Hardwire.Generators
             List<CodeExpression> paramExps = new();
             for (int i = 0; i < paramDescs.Count; i++)
             {
-                HardwireParameterDescriptor? P = paramDescs[i];
+                HardwireParameterDescriptor p = paramDescs[i];
 
                 CodeExpression paramExp = new CodeCastExpression(
                     paramDescs[i].ParamType,
                     new CodeArrayIndexerExpression(paramArray, new CodePrimitiveExpression(i))
                 );
 
-                if (P.IsOut)
+                if (p.IsOut)
                 {
                     string varName = GenerateRefParamVariable(refparCount++);
-                    CodeVariableDeclarationStatement vd = new(P.ParamType, varName);
+                    CodeVariableDeclarationStatement vd = new(p.ParamType, varName);
                     m.Statements.Add(vd);
                     paramExp = new CodeDirectionExpression(
                         FieldDirection.Out,
                         new CodeVariableReferenceExpression(varName)
                     );
                 }
-                else if (P.IsRef)
+                else if (p.IsRef)
                 {
                     string varName = GenerateRefParamVariable(refparCount++);
-                    CodeVariableDeclarationStatement vd = new(P.ParamType, varName, paramExp);
+                    CodeVariableDeclarationStatement vd = new(p.ParamType, varName, paramExp);
                     m.Statements.Add(vd);
                     paramExp = new CodeDirectionExpression(
                         FieldDirection.Ref,
@@ -214,7 +216,7 @@ namespace NovaSharp.Hardwire.Generators
                     isCtor,
                     isStatic,
                     isExtension,
-                    calls[calls.Count - 1],
+                    calls[^1],
                     paramThis,
                     declType,
                     specialName,
@@ -230,7 +232,7 @@ namespace NovaSharp.Hardwire.Generators
 
         private string GenerateRefParamVariable(int refparIdx)
         {
-            return string.Format("refp_{0}", refparIdx);
+            return $"refp_{refparIdx}";
         }
 
         private CodeStatementCollection GenerateCall(
@@ -473,10 +475,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support decrement operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support decrement operators."
                         );
                     }
 
@@ -498,10 +497,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support XOR operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support XOR operators."
                         );
                     }
 
@@ -523,10 +519,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support increment operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support increment operators."
                         );
                     }
 
@@ -555,10 +548,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support logical NOT operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support logical NOT operators."
                         );
                     }
 
@@ -576,10 +566,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support bitwise NOT operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support bitwise NOT operators."
                         );
                     }
 
@@ -594,10 +581,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support negation operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support negation operators."
                         );
                     }
 
@@ -609,10 +593,7 @@ namespace NovaSharp.Hardwire.Generators
                         EmitInvalid(
                             generator,
                             coll,
-                            string.Format(
-                                "Language {0} does not support unary + operators.",
-                                generator.TargetLanguage.Name
-                            )
+                            $"Language {generator.TargetLanguage.Name} does not support unary + operators."
                         );
                     }
 

@@ -11,10 +11,10 @@ namespace NovaSharp.Interpreter
         /// <value>
         /// The script owning this resource.
         /// </value>
-        Script OwnerScript { get; }
+        public Script OwnerScript { get; }
     }
 
-    internal static class ScriptPrivateResource_Extension
+    internal static class ScriptPrivateResourceExtension
     {
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,

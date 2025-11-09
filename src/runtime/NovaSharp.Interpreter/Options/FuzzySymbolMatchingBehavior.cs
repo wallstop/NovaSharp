@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// A flag that controls if/how symbols (method, property, userdata) are fuzzily matched when they do not exist. Flags can be combined for multiple checks.
     /// </summary>

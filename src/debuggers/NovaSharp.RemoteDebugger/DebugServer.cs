@@ -1,30 +1,30 @@
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.RemoteDebugger.Network;
-using NovaSharp.RemoteDebugger.Threading;
-
 namespace NovaSharp.RemoteDebugger
 {
+    using System.Reflection;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Xml;
+    using Interpreter;
+    using Interpreter.Debugging;
+    using Network;
+    using Threading;
+
     public class DebugServer : IDebugger, IDisposable
     {
-        readonly List<DynamicExpression> _watches = new();
-        readonly HashSet<string> _watchesChanging = new();
-        readonly Utf8TcpServer _server;
-        readonly Script _script;
-        readonly string _appName;
-        readonly object _lock = new();
-        readonly BlockingQueue<DebuggerAction> _queuedActions = new();
-        readonly SourceRef _lastSentSourceRef = null;
-        bool _inGetActionLoop = false;
-        bool _hostBusySent = false;
+        private readonly List<DynamicExpression> _watches = new();
+        private readonly HashSet<string> _watchesChanging = new();
+        private readonly Utf8TcpServer _server;
+        private readonly Script _script;
+        private readonly string _appName;
+        private readonly object _lock = new();
+        private readonly BlockingQueue<DebuggerAction> _queuedActions = new();
+        private readonly SourceRef _lastSentSourceRef = null;
+        private bool _inGetActionLoop = false;
+        private bool _hostBusySent = false;
         private bool _requestPause = false;
-        readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
-        bool _freeRunAfterAttach;
-        Regex _errorRegEx = new(@"\A.*\Z");
+        private readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
+        private bool _freeRunAfterAttach;
+        private Regex _errorRegEx = new(@"\A.*\Z");
 
         public DebugServer(
             string appName,
@@ -38,7 +38,7 @@ namespace NovaSharp.RemoteDebugger
 
             _server = new Utf8TcpServer(port, 1 << 20, '\0', options);
             _server.Start();
-            _server.DataReceived += _Server_DataReceived;
+            _server.OnDataReceived += _Server_DataReceived;
             _script = script;
             _freeRunAfterAttach = freeRunAfterAttach;
         }
@@ -81,7 +81,7 @@ namespace NovaSharp.RemoteDebugger
             {
                 using (xw.Element("source-code"))
                 {
-                    xw.Attribute("id", sourceCode.SourceID).Attribute("name", sourceCode.Name);
+                    xw.Attribute("id", sourceCode.SourceId).Attribute("name", sourceCode.Name);
 
                     foreach (string line in sourceCode.Lines)
                     {
@@ -258,10 +258,10 @@ namespace NovaSharp.RemoteDebugger
                             HashSet<string> existing = new();
 
                             // remove all not present anymore
-                            _watches.RemoveAll(de => !_watchesChanging.Contains(de.ExpressionCode));
+                            _watches.RemoveAll(de => !_watchesChanging.Contains(de.expressionCode));
 
                             // add all missing
-                            existing.UnionWith(_watches.Select(de => de.ExpressionCode));
+                            existing.UnionWith(_watches.Select(de => de.expressionCode));
 
                             _watches.AddRange(
                                 _watchesChanging
@@ -302,7 +302,7 @@ namespace NovaSharp.RemoteDebugger
             }
             catch (Exception ex)
             {
-                SendMessage(string.Format("Error setting watch {0} :\n{1}", code, ex.Message));
+                SendMessage($"Error setting watch {code} :\n{ex.Message}");
                 return _script.CreateConstantDynamicExpression(
                     code,
                     DynValue.NewString(ex.Message)
@@ -322,7 +322,7 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
-        void _Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
+        private void _Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
             XmlDocument xdoc = new();
             xdoc.LoadXml(e.Message);
@@ -440,7 +440,7 @@ namespace NovaSharp.RemoteDebugger
                             new DebuggerAction()
                             {
                                 Action = action,
-                                SourceID = int.Parse(xdoc.DocumentElement.GetAttribute("src")),
+                                SourceId = int.Parse(xdoc.DocumentElement.GetAttribute("src")),
                                 SourceLine = int.Parse(xdoc.DocumentElement.GetAttribute("line")),
                                 SourceCol = int.Parse(xdoc.DocumentElement.GetAttribute("col")),
                             }
@@ -511,7 +511,7 @@ namespace NovaSharp.RemoteDebugger
 
         public bool SignalRuntimeException(ScriptRuntimeException ex)
         {
-            SendMessage(string.Format("Error: {0}", ex.DecoratedMessage));
+            SendMessage($"Error: {ex.DecoratedMessage}");
             _requestPause = _errorRegEx.IsMatch(ex.Message);
             return IsPauseRequested();
         }

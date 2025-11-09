@@ -1,90 +1,90 @@
-#if (PCL) || (UNITY_5) || NETFX_CORE
-// Dummy implementation for PCL and Unity targets
-using System;
-using System.IO;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Platforms
 {
-    /// <summary>
-    /// Class providing the IPlatformAccessor interface for standard full-feaured implementations.
-    /// </summary>
-    public class StandardPlatformAccessor : PlatformAccessorBase
+#if (PCL) || (UNITY_5) || NETFX_CORE
+    // Dummy implementation for PCL and Unity targets
+    using System;
+    using System.IO;
+    using System.Text;
+
+    namespace NovaSharp.Interpreter.Platforms
     {
-        public override void DefaultPrint(string content)
+        /// <summary>
+        /// Class providing the IPlatformAccessor interface for standard full-feaured implementations.
+        /// </summary>
+        public class StandardPlatformAccessor : PlatformAccessorBase
         {
-            throw new NotImplementedException();
-        }
+            public override void DefaultPrint(string content)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override CoreModules FilterSupportedCoreModules(CoreModules module)
-        {
-            throw new NotImplementedException();
-        }
+            public override CoreModules FilterSupportedCoreModules(CoreModules module)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override string GetEnvironmentVariable(string envvarname)
-        {
-            throw new NotImplementedException();
-        }
+            public override string GetEnvironmentVariable(string envvarname)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override string GetPlatformNamePrefix()
-        {
-            throw new NotImplementedException();
-        }
+            public override string GetPlatformNamePrefix()
+            {
+                throw new NotImplementedException();
+            }
 
-        public override Stream IO_GetStandardStream(StandardFileType type)
-        {
-            throw new NotImplementedException();
-        }
+            public override Stream IO_GetStandardStream(StandardFileType type)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override Stream IO_OpenFile(
-            Script script,
-            string filename,
-            Encoding encoding,
-            string mode
-        )
-        {
-            throw new NotImplementedException();
-        }
+            public override Stream IO_OpenFile(
+                Script script,
+                string filename,
+                Encoding encoding,
+                string mode
+            )
+            {
+                throw new NotImplementedException();
+            }
 
-        public override string IO_OS_GetTempFilename()
-        {
-            throw new NotImplementedException();
-        }
+            public override string IO_OS_GetTempFilename()
+            {
+                throw new NotImplementedException();
+            }
 
-        public override int OS_Execute(string cmdline)
-        {
-            throw new NotImplementedException();
-        }
+            public override int OS_Execute(string cmdline)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override void OS_ExitFast(int exitCode)
-        {
-            throw new NotImplementedException();
-        }
+            public override void OS_ExitFast(int exitCode)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override void OS_FileDelete(string file)
-        {
-            throw new NotImplementedException();
-        }
+            public override void OS_FileDelete(string file)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override bool OS_FileExists(string file)
-        {
-            throw new NotImplementedException();
-        }
+            public override bool OS_FileExists(string file)
+            {
+                throw new NotImplementedException();
+            }
 
-        public override void OS_FileMove(string src, string dst)
-        {
-            throw new NotImplementedException();
+            public override void OS_FileMove(string src, string dst)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
-}
 #else
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
+    using System;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Text;
 
-namespace NovaSharp.Interpreter.Platforms
-{
     /// <summary>
     /// Class providing the IPlatformAccessor interface for standard full-feaured implementations.
     /// </summary>
@@ -286,8 +286,7 @@ namespace NovaSharp.Interpreter.Platforms
         public override int OS_Execute(string cmdline)
         {
             // This is windows only!
-            ProcessStartInfo psi = new("cmd.exe", string.Format("/C {0}", cmdline));
-            psi.ErrorDialog = false;
+            ProcessStartInfo psi = new("cmd.exe", $"/C {cmdline}") { ErrorDialog = false };
 
             Process proc = Process.Start(psi);
             proc.WaitForExit();
@@ -316,5 +315,5 @@ namespace NovaSharp.Interpreter.Platforms
             return "std";
         }
     }
-}
 #endif
+}

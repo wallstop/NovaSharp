@@ -48,8 +48,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // or to "=(load)" otherwise.
         //
         // The string mode is ignored, and assumed to be "t";
-        [NovaSharpModuleMethod]
-        public static DynValue load(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "load")]
+        public static DynValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return load_impl(executionContext, args, null);
         }
@@ -58,8 +58,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------
         // Same as load, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
-        [NovaSharpModuleMethod]
-        public static DynValue loadsafe(
+        [NovaSharpModuleMethod(Name = "loadsafe")]
+        public static DynValue Loadsafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             try
             {
-                Script S = executionContext.GetScript();
+                Script s = executionContext.GetScript();
                 DynValue ld = args[0];
                 string script = "";
 
@@ -113,7 +113,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 DynValue source = args.AsType(1, "load", DataType.String, true);
                 DynValue env = args.AsType(3, "load", DataType.Table, true);
 
-                DynValue fn = S.LoadString(
+                DynValue fn = s.LoadString(
                     script,
                     !env.IsNil() ? env.Table : defaultEnv,
                     !source.IsNil() ? source.String : "=(load)"
@@ -134,8 +134,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------
         // Similar to load, but gets the chunk from file filename or from the standard input,
         // if no file name is given. INCOMPAT: stdin not supported, mode ignored
-        [NovaSharpModuleMethod]
-        public static DynValue loadfile(
+        [NovaSharpModuleMethod(Name = "loadfile")]
+        public static DynValue Loadfile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -147,8 +147,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------
         // Same as loadfile, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
-        [NovaSharpModuleMethod]
-        public static DynValue loadfilesafe(
+        [NovaSharpModuleMethod(Name = "loadfilesafe")]
+        public static DynValue Loadfilesafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -164,11 +164,11 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             try
             {
-                Script S = executionContext.GetScript();
+                Script s = executionContext.GetScript();
                 DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
                 DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
 
-                DynValue fn = S.LoadFile(filename.String, env.IsNil() ? defaultEnv : env.Table);
+                DynValue fn = s.LoadFile(filename.String, env.IsNil() ? defaultEnv : env.Table);
 
                 return fn;
             }
@@ -198,18 +198,18 @@ namespace NovaSharp.Interpreter.CoreLib
         //Opens the named file and executes its contents as a Lua chunk. When called without arguments,
         //dofile executes the contents of the standard input (stdin). Returns all values returned by the chunk.
         //In case of errors, dofile propagates the error to its caller (that is, dofile does not run in protected mode).
-        [NovaSharpModuleMethod]
-        public static DynValue dofile(
+        [NovaSharpModuleMethod(Name = "dofile")]
+        public static DynValue Dofile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             try
             {
-                Script S = executionContext.GetScript();
+                Script s = executionContext.GetScript();
                 DynValue v = args.AsType(0, "dofile", DataType.String, false);
 
-                DynValue fn = S.LoadFile(v.String);
+                DynValue fn = s.LoadFile(v.String);
 
                 return DynValue.NewTailCallReq(fn); // tail call to dofile
             }
@@ -240,22 +240,22 @@ namespace NovaSharp.Interpreter.CoreLib
         //
         //If there is any error loading or running the module, or if it cannot find any loader for the module, then require
         //signals an error.
-        [NovaSharpModuleMethod]
+        [NovaSharpModuleMethod(Name = "__require_clr_impl")]
         public static DynValue __require_clr_impl(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            Script S = executionContext.GetScript();
+            Script s = executionContext.GetScript();
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 
-            DynValue fn = S.RequireModule(v.String);
+            DynValue fn = s.RequireModule(v.String);
 
             return fn; // tail call to dofile
         }
 
-        [NovaSharpModuleMethod]
-        public const string require =
+        [NovaSharpModuleMethod(Name = "require")]
+        public const string REQUIRE =
             @"
 function(modulename)
 	if (package == nil) then package = { }; end

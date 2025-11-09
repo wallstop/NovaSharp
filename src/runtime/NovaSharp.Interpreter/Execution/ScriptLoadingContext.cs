@@ -1,9 +1,9 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Tree;
-
 namespace NovaSharp.Interpreter.Execution
 {
-    class ScriptLoadingContext
+    using Debugging;
+    using Tree;
+
+    internal class ScriptLoadingContext
     {
         public Script Script { get; private set; }
         public BuildTimeScope Scope { get; set; }

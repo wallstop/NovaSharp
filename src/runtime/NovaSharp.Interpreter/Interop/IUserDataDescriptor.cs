@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// Interface used by NovaSharp to access objects of a given type from scripts.
     /// </summary>
@@ -10,12 +10,12 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Gets the name of the descriptor (usually, the name of the type described).
         /// </summary>
-        string Name { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the type this descriptor refers to
         /// </summary>
-        Type Type { get; }
+        public Type Type { get; }
 
         /// <summary>
         /// Performs an "index" "get" operation.
@@ -25,7 +25,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing);
+        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing);
 
         /// <summary>
         /// Performs an "index" "set" operation.
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="value">The value to be set</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        bool SetIndex(
+        public bool SetIndex(
             Script script,
             object obj,
             DynValue index,
@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        string AsString(object obj);
+        public string AsString(object obj);
 
         /// <summary>
         ///
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="obj">The object (null if a static request is done)</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        DynValue MetaIndex(Script script, object obj, string metaname);
+        public DynValue MetaIndex(Script script, object obj, string metaname);
 
         /// <summary>
         /// Determines whether the specified object is compatible with the specified type.
@@ -79,6 +79,6 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="type">The type.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        bool IsTypeCompatible(Type type, object obj);
+        public bool IsTypeCompatible(Type type, object obj);
     }
 }

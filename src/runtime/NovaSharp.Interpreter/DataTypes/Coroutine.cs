@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Debugging;
+    using Execution.VM;
+
     /// <summary>
     /// A class representing a script coroutine
     /// </summary>
@@ -42,21 +42,21 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public CoroutineType Type { get; private set; }
 
-        private CallbackFunction m_ClrCallback;
-        private Processor m_Processor;
+        private readonly CallbackFunction _clrCallback;
+        private readonly Processor _processor;
 
         internal Coroutine(CallbackFunction function)
         {
             Type = CoroutineType.ClrCallback;
-            m_ClrCallback = function;
+            _clrCallback = function;
             OwnerScript = null;
         }
 
         internal Coroutine(Processor proc)
         {
             Type = CoroutineType.Coroutine;
-            m_Processor = proc;
-            m_Processor.AssociatedCoroutine = this;
+            _processor = proc;
+            _processor.AssociatedCoroutine = this;
             OwnerScript = proc.GetScript();
         }
 
@@ -73,7 +73,7 @@ namespace NovaSharp.Interpreter
         internal DynValue Recycle(Processor mainProcessor, Closure closure)
         {
             Type = CoroutineType.Recycled;
-            return m_Processor.Coroutine_Recycle(mainProcessor, closure);
+            return _processor.Coroutine_Recycle(mainProcessor, closure);
         }
 
         /// <summary>
@@ -92,9 +92,9 @@ namespace NovaSharp.Interpreter
             }
 
             while (
-                this.State == CoroutineState.NotStarted
-                || this.State == CoroutineState.Suspended
-                || this.State == CoroutineState.ForceSuspended
+                State == CoroutineState.NotStarted
+                || State == CoroutineState.Suspended
+                || State == CoroutineState.ForceSuspended
             )
             {
                 yield return Resume();
@@ -162,7 +162,7 @@ namespace NovaSharp.Interpreter
 
             if (Type == CoroutineType.Coroutine)
             {
-                return m_Processor.Coroutine_Resume(args);
+                return _processor.Coroutine_Resume(args);
             }
             else
             {
@@ -185,11 +185,11 @@ namespace NovaSharp.Interpreter
 
             if (Type == CoroutineType.Coroutine)
             {
-                return m_Processor.Coroutine_Resume(args);
+                return _processor.Coroutine_Resume(args);
             }
             else if (Type == CoroutineType.ClrCallback)
             {
-                DynValue ret = m_ClrCallback.Invoke(context, args);
+                DynValue ret = _clrCallback.Invoke(context, args);
                 MarkClrCallbackAsDead();
                 return ret;
             }
@@ -240,7 +240,7 @@ namespace NovaSharp.Interpreter
 
             for (int i = 0; i < dargs.Length; i++)
             {
-                dargs[i] = DynValue.FromObject(this.OwnerScript, args[i]);
+                dargs[i] = DynValue.FromObject(OwnerScript, args[i]);
             }
 
             return Resume(dargs);
@@ -281,7 +281,7 @@ namespace NovaSharp.Interpreter
                 }
                 else
                 {
-                    return m_Processor.State;
+                    return _processor.State;
                 }
             }
         }
@@ -294,12 +294,12 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public WatchItem[] GetStackTrace(int skip, SourceRef entrySourceRef = null)
         {
-            if (this.State != CoroutineState.Running)
+            if (State != CoroutineState.Running)
             {
-                entrySourceRef = m_Processor.GetCoroutineSuspendedLocation();
+                entrySourceRef = _processor.GetCoroutineSuspendedLocation();
             }
 
-            List<WatchItem> stack = m_Processor.Debugger_GetCallStack(entrySourceRef);
+            List<WatchItem> stack = _processor.Debugger_GetCallStack(entrySourceRef);
             return stack.Skip(skip).ToArray();
         }
 
@@ -320,8 +320,8 @@ namespace NovaSharp.Interpreter
         /// </value>
         public long AutoYieldCounter
         {
-            get { return m_Processor.AutoYieldCounter; }
-            set { m_Processor.AutoYieldCounter = value; }
+            get { return _processor.AutoYieldCounter; }
+            set { _processor.AutoYieldCounter = value; }
         }
     }
 }

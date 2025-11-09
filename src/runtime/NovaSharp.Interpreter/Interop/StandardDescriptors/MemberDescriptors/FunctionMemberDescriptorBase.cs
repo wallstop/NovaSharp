@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+
     /// <summary>
     /// Class providing easier marshalling of CLR functions
     /// </summary>
@@ -65,19 +65,19 @@ namespace NovaSharp.Interpreter.Interop
             bool isExtensionMethod
         )
         {
-            this.Name = funcName;
-            this.IsStatic = isStatic;
-            this.Parameters = parameters;
+            Name = funcName;
+            IsStatic = isStatic;
+            Parameters = parameters;
 
             if (isExtensionMethod)
             {
-                this.ExtensionMethodType = Parameters[0].Type;
+                ExtensionMethodType = Parameters[0].Type;
             }
 
-            if (Parameters.Length > 0 && Parameters[Parameters.Length - 1].IsVarArgs)
+            if (Parameters.Length > 0 && Parameters[^1].IsVarArgs)
             {
-                VarArgsArrayType = Parameters[Parameters.Length - 1].Type;
-                VarArgsElementType = Parameters[Parameters.Length - 1].Type.GetElementType();
+                VarArgsArrayType = Parameters[^1].Type;
+                VarArgsElementType = Parameters[^1].Type.GetElementType();
             }
 
             SortDiscriminant = string.Join(
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public CallbackFunction GetCallbackFunction(Script script, object obj = null)
         {
-            return new CallbackFunction(GetCallback(script, obj), this.Name);
+            return new CallbackFunction(GetCallback(script, obj), Name);
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public DynValue GetCallbackAsDynValue(Script script, object obj = null)
         {
-            return DynValue.NewCallback(this.GetCallbackFunction(script, obj));
+            return DynValue.NewCallback(GetCallbackFunction(script, obj));
         }
 
         /// <summary>
@@ -299,7 +299,7 @@ namespace NovaSharp.Interpreter.Interop
             {
                 DynValue[] rets = new DynValue[outParams.Count + 1];
 
-                if (retv is DynValue && ((DynValue)retv).IsVoid())
+                if (retv is DynValue value && value.IsVoid())
                 {
                     rets[0] = DynValue.Nil;
                 }
@@ -354,7 +354,7 @@ namespace NovaSharp.Interpreter.Interop
         public virtual DynValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
-            return this.GetCallbackAsDynValue(script, obj);
+            return GetCallbackAsDynValue(script, obj);
         }
 
         /// <summary>

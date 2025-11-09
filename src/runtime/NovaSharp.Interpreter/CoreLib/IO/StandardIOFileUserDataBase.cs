@@ -1,27 +1,27 @@
-using System.IO;
-
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
+    using System.IO;
+
     /// <summary>
     /// Abstract class implementing an unclosable file Lua userdata. Methods are meant to be called by Lua code.
     /// </summary>
-    internal class StandardIOFileUserDataBase : StreamFileUserDataBase
+    internal class StandardIoFileUserDataBase : StreamFileUserDataBase
     {
         protected override string Close()
         {
             return ("cannot close standard file");
         }
 
-        public static StandardIOFileUserDataBase CreateInputStream(Stream stream)
+        public static StandardIoFileUserDataBase CreateInputStream(Stream stream)
         {
-            StandardIOFileUserDataBase f = new();
+            StandardIoFileUserDataBase f = new();
             f.Initialize(stream, new StreamReader(stream), null);
             return f;
         }
 
-        public static StandardIOFileUserDataBase CreateOutputStream(Stream stream)
+        public static StandardIoFileUserDataBase CreateOutputStream(Stream stream)
         {
-            StandardIOFileUserDataBase f = new();
+            StandardIoFileUserDataBase f = new();
             f.Initialize(stream, null, new StreamWriter(stream));
             return f;
         }

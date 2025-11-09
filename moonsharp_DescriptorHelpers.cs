@@ -1,12 +1,12 @@
-namespace NovaSharp.Interpreter.Interop
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Text;
-    using Compatibility;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using MoonSharp.Interpreter.Compatibility;
 
+namespace MoonSharp.Interpreter.Interop
+{
     /// <summary>
     /// Helper extension methods used to simplify some parts of userdata descriptor implementations
     /// </summary>
@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop
     {
         /// <summary>
         /// Determines whether a
-        /// <see cref="NovaSharpVisibleAttribute" /> or a <see cref="NovaSharpHiddenAttribute" />  is changing visibility of a member
+        /// <see cref="MoonSharpVisibleAttribute" /> or a <see cref="MoonSharpHiddenAttribute" />  is changing visibility of a member
         /// to scripts.
         /// </summary>
         /// <param name="mi">The member to check.</param>
@@ -23,39 +23,32 @@ namespace NovaSharp.Interpreter.Interop
         /// <c>false</c> if visibility is forced hidden or the specified MemberInfo is null,
         /// <c>if no attribute was found</c>
         /// </returns>
-        /// <exception cref="System.InvalidOperationException">If both NovaSharpHiddenAttribute and NovaSharpVisibleAttribute are specified and they convey different messages.</exception>
+        /// <exception cref="System.InvalidOperationException">If both MoonSharpHiddenAttribute and MoonSharpVisibleAttribute are specified and they convey different messages.</exception>
         public static bool? GetVisibilityFromAttributes(this MemberInfo mi)
         {
             if (mi == null)
-            {
                 return false;
-            }
 
-            NovaSharpVisibleAttribute va = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpVisibleAttribute>()
+            MoonSharpVisibleAttribute va = mi.GetCustomAttributes(true)
+                .OfType<MoonSharpVisibleAttribute>()
                 .SingleOrDefault();
-            NovaSharpHiddenAttribute ha = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpHiddenAttribute>()
+            MoonSharpHiddenAttribute ha = mi.GetCustomAttributes(true)
+                .OfType<MoonSharpHiddenAttribute>()
                 .SingleOrDefault();
 
             if (va != null && ha != null && va.Visible)
-            {
                 throw new InvalidOperationException(
-                    $"A member ('{mi.Name}') can't have discording NovaSharpHiddenAttribute and NovaSharpVisibleAttribute."
+                    string.Format(
+                        "A member ('{0}') can't have discording MoonSharpHiddenAttribute and MoonSharpVisibleAttribute.",
+                        mi.Name
+                    )
                 );
-            }
             else if (ha != null)
-            {
                 return false;
-            }
             else if (va != null)
-            {
                 return va.Visible;
-            }
             else
-            {
                 return null;
-            }
         }
 
         public static bool IsDelegateType(this Type t)
@@ -74,30 +67,15 @@ namespace NovaSharp.Interpreter.Interop
             Type t = type;
 #endif
             if (t.IsPublic || t.IsNestedPublic)
-            {
                 return "public";
-            }
-
             if ((t.IsNotPublic && (!t.IsNested)) || (t.IsNestedAssembly))
-            {
                 return "internal";
-            }
-
             if (t.IsNestedFamORAssem)
-            {
                 return "protected-internal";
-            }
-
             if (t.IsNestedFamANDAssem || t.IsNestedFamily)
-            {
                 return "protected";
-            }
-
             if (t.IsNestedPrivate)
-            {
                 return "private";
-            }
-
             return "unknown";
         }
 
@@ -107,29 +85,15 @@ namespace NovaSharp.Interpreter.Interop
         public static string GetClrVisibility(this FieldInfo info)
         {
             if (info.IsPublic)
-            {
                 return "public";
-            }
-
             if (info.IsAssembly)
-            {
                 return "internal";
-            }
-
             if (info.IsFamilyOrAssembly)
-            {
                 return "protected-internal";
-            }
-
             if (info.IsFamilyAndAssembly || info.IsFamily)
-            {
                 return "protected";
-            }
-
             if (info.IsPrivate)
-            {
                 return "private";
-            }
 
             return "unknown";
         }
@@ -146,17 +110,11 @@ namespace NovaSharp.Interpreter.Interop
             string sv = (sm != null) ? GetClrVisibility(sm) : "private";
 
             if (gv == "public" || sv == "public")
-            {
                 return "public";
-            }
             else if (gv == "internal" || sv == "internal")
-            {
                 return "internal";
-            }
             else
-            {
                 return gv;
-            }
         }
 
         /// <summary>
@@ -165,29 +123,15 @@ namespace NovaSharp.Interpreter.Interop
         public static string GetClrVisibility(this MethodBase info)
         {
             if (info.IsPublic)
-            {
                 return "public";
-            }
-
             if (info.IsAssembly)
-            {
                 return "internal";
-            }
-
             if (info.IsFamilyOrAssembly)
-            {
                 return "protected-internal";
-            }
-
             if (info.IsFamilyAndAssembly || info.IsFamily)
-            {
                 return "protected";
-            }
-
             if (info.IsPrivate)
-            {
                 return "private";
-            }
 
             return "unknown";
         }
@@ -207,14 +151,14 @@ namespace NovaSharp.Interpreter.Interop
 
         /// <summary>
         /// Gets the list of metamethod names from attributes - in practice the list of metamethods declared through
-        /// <see cref="NovaSharpUserDataMetamethodAttribute" /> .
+        /// <see cref="MoonSharpUserDataMetamethodAttribute" /> .
         /// </summary>
         /// <param name="mi">The mi.</param>
         /// <returns></returns>
         public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
-            return mi.GetCustomAttributes(typeof(NovaSharpUserDataMetamethodAttribute), true)
-                .OfType<NovaSharpUserDataMetamethodAttribute>()
+            return mi.GetCustomAttributes(typeof(MoonSharpUserDataMetamethodAttribute), true)
+                .OfType<MoonSharpUserDataMetamethodAttribute>()
                 .Select(a => a.Name)
                 .ToList();
         }
@@ -243,15 +187,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string GetConversionMethodName(this Type type)
         {
-            StringBuilder sb = new(type.Name);
+            StringBuilder sb = new StringBuilder(type.Name);
 
             for (int i = 0; i < sb.Length; i++)
-            {
                 if (!char.IsLetterOrDigit(sb[i]))
-                {
                     sb[i] = '_';
-                }
-            }
 
             return "__to" + sb.ToString();
         }
@@ -264,14 +204,10 @@ namespace NovaSharp.Interpreter.Interop
         public static IEnumerable<Type> GetAllImplementedTypes(this Type t)
         {
             for (Type ot = t; ot != null; ot = Framework.Do.GetBaseType(ot))
-            {
                 yield return ot;
-            }
 
             foreach (Type it in Framework.Do.GetInterfaces(t))
-            {
                 yield return it;
-            }
         }
 
         /// <summary>
@@ -281,22 +217,14 @@ namespace NovaSharp.Interpreter.Interop
         public static bool IsValidSimpleIdentifier(string str)
         {
             if (string.IsNullOrEmpty(str))
-            {
                 return false;
-            }
 
             if (str[0] != '_' && !char.IsLetter(str[0]))
-            {
                 return false;
-            }
 
             for (int i = 1; i < str.Length; i++)
-            {
                 if (str[i] != '_' && !char.IsLetterOrDigit(str[i]))
-                {
                     return false;
-                }
-            }
 
             return true;
         }
@@ -308,24 +236,16 @@ namespace NovaSharp.Interpreter.Interop
         public static string ToValidSimpleIdentifier(string str)
         {
             if (string.IsNullOrEmpty(str))
-            {
                 return "_";
-            }
 
             if (str[0] != '_' && !char.IsLetter(str[0]))
-            {
                 str = "_" + str;
-            }
 
-            StringBuilder sb = new(str);
+            StringBuilder sb = new StringBuilder(str);
 
             for (int i = 0; i < sb.Length; i++)
-            {
                 if (sb[i] != '_' && !char.IsLetterOrDigit(sb[i]))
-                {
                     sb[i] = '_';
-                }
-            }
 
             return sb.ToString();
         }
@@ -337,93 +257,23 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string Camelify(string name)
         {
-            StringBuilder sb = new(name.Length);
+            StringBuilder sb = new StringBuilder(name.Length);
 
-            bool first = true;
             bool lastWasUnderscore = false;
             for (int i = 0; i < name.Length; i++)
             {
-                char ch = name[i];
-
-                if (ch == '_')
+                if (name[i] == '_' && i != 0)
                 {
-                    if (!first)
-                    {
-                        lastWasUnderscore = true;
-                    }
-                    continue;
+                    lastWasUnderscore = true;
                 }
-
-                if (first)
+                else
                 {
-                    sb.Append(char.ToLowerInvariant(ch));
-                    first = false;
+                    if (lastWasUnderscore)
+                        sb.Append(char.ToUpperInvariant(name[i]));
+                    else
+                        sb.Append(name[i]);
+
                     lastWasUnderscore = false;
-                    continue;
-                }
-
-                if (lastWasUnderscore)
-                {
-                    sb.Append(char.ToUpperInvariant(ch));
-                }
-                else
-                {
-                    sb.Append(char.ToLowerInvariant(ch));
-                }
-
-                lastWasUnderscore = false;
-            }
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Converts the specified name from camelCase/PascalCase to SNAKE_CASE.
-        /// </summary>
-        public static string ToUpperUnderscore(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return name;
-            }
-
-            StringBuilder sb = new(name.Length * 2);
-
-            for (int i = 0; i < name.Length; i++)
-            {
-                char ch = name[i];
-
-                if (char.IsLetterOrDigit(ch))
-                {
-                    if (sb.Length > 0)
-                    {
-                        char prev = name[i - 1];
-
-                        bool prevIsLetter = char.IsLetter(prev);
-                        bool prevIsLowerOrDigit = char.IsLower(prev) || char.IsDigit(prev);
-                        bool prevIsUpper = char.IsUpper(prev);
-                        bool curIsUpper = char.IsUpper(ch);
-                        bool curIsDigit = char.IsDigit(ch);
-                        bool nextIsLower = i + 1 < name.Length && char.IsLower(name[i + 1]);
-
-                        if (
-                            (curIsUpper && prevIsLowerOrDigit)
-                            || (curIsUpper && prevIsUpper && nextIsLower)
-                            || (curIsDigit && prevIsLetter)
-                        )
-                        {
-                            sb.Append('_');
-                        }
-                    }
-
-                    sb.Append(char.ToUpperInvariant(ch));
-                }
-                else
-                {
-                    if (sb.Length > 0 && sb[^1] != '_')
-                    {
-                        sb.Append('_');
-                    }
                 }
             }
 
@@ -438,64 +288,9 @@ namespace NovaSharp.Interpreter.Interop
         public static string UpperFirstLetter(string name)
         {
             if (!string.IsNullOrEmpty(name))
-            {
                 return char.ToUpperInvariant(name[0]) + name.Substring(1);
-            }
 
             return name;
-        }
-
-        /// <summary>
-        /// Normalizes consecutive uppercase runs so that only the first character remains uppercase.
-        /// </summary>
-        public static string NormalizeUppercaseRuns(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return name;
-            }
-
-            StringBuilder sb = new(name.Length);
-            int i = 0;
-
-            while (i < name.Length)
-            {
-                char ch = name[i];
-
-                if (char.IsUpper(ch))
-                {
-                    int runStart = i;
-
-                    while (i + 1 < name.Length && char.IsUpper(name[i + 1]))
-                    {
-                        i++;
-                    }
-
-                    int runEnd = i;
-
-                    if (runEnd > runStart)
-                    {
-                        sb.Append(name[runStart]);
-                        for (int j = runStart + 1; j <= runEnd; j++)
-                        {
-                            sb.Append(char.ToLowerInvariant(name[j]));
-                        }
-                    }
-                    else
-                    {
-                        sb.Append(ch);
-                    }
-
-                    i++;
-                }
-                else
-                {
-                    sb.Append(ch);
-                    i++;
-                }
-            }
-
-            return sb.ToString();
         }
     }
 }

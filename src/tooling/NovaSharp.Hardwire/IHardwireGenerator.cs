@@ -1,8 +1,8 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Hardwire
 {
+    using System.CodeDom;
+    using Interpreter;
+
     /// <summary>
     /// Interface to be implemented by all hardwire code generators
     /// </summary>
@@ -12,7 +12,7 @@ namespace NovaSharp.Hardwire
         /// Gets the type which is managed by this generator. Should be an exact match with the 'class' entry in the
         /// codegen table.
         /// </summary>
-        string ManagedType { get; }
+        public string ManagedType { get; }
 
         /// <summary>
         /// Generates code from a dump of the type.
@@ -21,7 +21,7 @@ namespace NovaSharp.Hardwire
         /// <param name="generatorContext">The generator context.</param>
         /// <param name="members">The CodeTypeMemberCollection which can be used to add newly defined types.</param>
         /// <returns>Zero or more expressions which can be used by the parent generator to use the generated code.</returns>
-        CodeExpression[] Generate(
+        public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members

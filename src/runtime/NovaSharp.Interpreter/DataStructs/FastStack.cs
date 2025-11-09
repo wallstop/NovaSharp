@@ -1,60 +1,60 @@
-#if !USE_DYNAMIC_STACKS
-
-using System;
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.DataStructs
 {
+#if !USE_DYNAMIC_STACKS
+
+    using System;
+    using System.Collections.Generic;
+
     /// <summary>
     /// A preallocated, non-resizable, stack
     /// </summary>
     /// <typeparam name="T"></typeparam>
     internal class FastStack<T> : IList<T>
     {
-        T[] m_Storage;
-        int m_HeadIdx = 0;
+        private readonly T[] _storage;
+        private int _headIdx = 0;
 
         public FastStack(int maxCapacity)
         {
-            m_Storage = new T[maxCapacity];
+            _storage = new T[maxCapacity];
         }
 
         public T this[int index]
         {
-            get { return m_Storage[index]; }
-            set { m_Storage[index] = value; }
+            get { return _storage[index]; }
+            set { _storage[index] = value; }
         }
 
         public T Push(T item)
         {
-            m_Storage[m_HeadIdx++] = item;
+            _storage[_headIdx++] = item;
             return item;
         }
 
         public void Expand(int size)
         {
-            m_HeadIdx += size;
+            _headIdx += size;
         }
 
         private void Zero(int from, int to)
         {
-            Array.Clear(m_Storage, from, to - from + 1);
+            Array.Clear(_storage, from, to - from + 1);
         }
 
         private void Zero(int index)
         {
-            m_Storage[index] = default(T);
+            _storage[index] = default(T);
         }
 
         public T Peek(int idxofs = 0)
         {
-            T item = m_Storage[m_HeadIdx - 1 - idxofs];
+            T item = _storage[_headIdx - 1 - idxofs];
             return item;
         }
 
         public void Set(int idxofs, T item)
         {
-            m_Storage[m_HeadIdx - 1 - idxofs] = item;
+            _storage[_headIdx - 1 - idxofs] = item;
         }
 
         public void CropAtCount(int p)
@@ -66,40 +66,40 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             if (cnt == 1)
             {
-                --m_HeadIdx;
-                m_Storage[m_HeadIdx] = default(T);
+                --_headIdx;
+                _storage[_headIdx] = default(T);
             }
             else
             {
-                int oldhead = m_HeadIdx;
-                m_HeadIdx -= cnt;
-                Zero(m_HeadIdx, oldhead);
+                int oldhead = _headIdx;
+                _headIdx -= cnt;
+                Zero(_headIdx, oldhead);
             }
         }
 
         public T Pop()
         {
-            --m_HeadIdx;
-            T retval = m_Storage[m_HeadIdx];
-            m_Storage[m_HeadIdx] = default(T);
+            --_headIdx;
+            T retval = _storage[_headIdx];
+            _storage[_headIdx] = default(T);
             return retval;
         }
 
         public void Clear()
         {
-            Array.Clear(m_Storage, 0, m_Storage.Length);
-            m_HeadIdx = 0;
+            Array.Clear(_storage, 0, _storage.Length);
+            _headIdx = 0;
         }
 
         public void ClearUsed()
         {
-            Array.Clear(m_Storage, 0, m_HeadIdx);
-            m_HeadIdx = 0;
+            Array.Clear(_storage, 0, _headIdx);
+            _headIdx = 0;
         }
 
         public int Count
         {
-            get { return m_HeadIdx; }
+            get { return _headIdx; }
         }
 
         #region IList<T> Impl.
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.DataStructs
 
         int ICollection<T>.Count
         {
-            get { return this.Count; }
+            get { return Count; }
         }
 
         bool ICollection<T>.IsReadOnly

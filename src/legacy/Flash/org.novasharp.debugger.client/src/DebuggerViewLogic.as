@@ -18,15 +18,15 @@ package
 
 	public class DebuggerViewLogic
 	{
-		private var m_View : Main;
-		private var m_Socket : XMLSocket;
+		private var _View : Main;
+		private var _Socket : XMLSocket;
 		
-		private var m_Sources : Dictionary = new Dictionary();
-		private var m_SourceList : ArrayList = new ArrayList();
+		private var _Sources : Dictionary = new Dictionary();
+		private var _SourceList : ArrayList = new ArrayList();
 		
-		private var m_InstructionPtrHighlight : Highlight = null;
+		private var _InstructionPtrHighlight : Highlight = null;
 		
-		private var m_ErrorRx:String;
+		private var _ErrorRx:String;
 		
 		
 		public function DebuggerViewLogic(view : Main, loaderInfo: LoaderInfo)
@@ -99,7 +99,7 @@ package
 				var s : SourceCode = new SourceCode(xml);
 				m_Sources[s.getId()] = s;
 				m_SourceList.addItem(s);
-				m_View.refreshSourceCode(s, m_SourceList);
+				m_View.refreshSourceCode(s, _SourceList);
 			}
 			else if (cmd == "source-loc")
 			{
@@ -138,7 +138,7 @@ package
 		
 		public function getInstructionPtrHighlight():Highlight
 		{
-			return m_InstructionPtrHighlight;	
+			return _InstructionPtrHighlight;	
 		}
 		
 		private function parseWatchData(xml:XML):ArrayList
@@ -165,9 +165,9 @@ package
 			var lf:int = xml.@lf;	
 			var lt:int = xml.@lt;	
 			
-			if (m_Sources.hasOwnProperty(srcid))
+			if (_Sources.hasOwnProperty(srcid))
 			{			
-				var src:SourceCode = m_Sources[srcid] as SourceCode;
+				var src:SourceCode = _Sources[srcid] as SourceCode;
 				
 				var from:int = src.flattenLocation(lf, cf);
 				var to:int = src.flattenLocation(lt, ct);
@@ -191,7 +191,7 @@ package
 		{
 			logMessage(text);
 			
-			Alert.show("An error occurred while communicating with the scripting host.\n\nPress OK to reload and retry.\n\nError was:" + text, "Error", Alert.OK, m_View, function():void
+			Alert.show("An error occurred while communicating with the scripting host.\n\nPress OK to reload and retry.\n\nError was:" + text, "Error", Alert.OK, _View, function():void
 			{
 				ExternalInterface.call("document.location.reload", true);
 			});
@@ -211,7 +211,7 @@ package
 		
 		private function refreshBreakpoints(xml : XML): void
 		{
-			for(var i:int = 0; i < m_SourceList.length; i++)
+			for(var i:int = 0; i < _SourceList.length; i++)
 				m_SourceList.getItemAt(i).Breakpoints= new Vector.<Highlight>();
 			
 			for each(var x:XML in xml.elements())
@@ -282,7 +282,7 @@ package
 		
 		public function getErrorRx():String
 		{
-			return m_ErrorRx;	
+			return _ErrorRx;	
 		}
 		
 		public function setErrorRx(val:String):void

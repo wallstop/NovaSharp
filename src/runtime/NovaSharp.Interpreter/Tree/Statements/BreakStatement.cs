@@ -1,43 +1,43 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class BreakStatement : Statement
+    using Debugging;
+    using Execution;
+    using Execution.VM;
+
+    internal class BreakStatement : Statement
     {
-        SourceRef m_Ref;
+        private readonly SourceRef _ref;
 
         public BreakStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            m_Ref = CheckTokenType(lcontext, TokenType.Break).GetSourceRef();
-            lcontext.Source.Refs.Add(m_Ref);
+            _ref = CheckTokenType(lcontext, TokenType.Break).GetSourceRef();
+            lcontext.Source.Refs.Add(_ref);
         }
 
         public override void Compile(ByteCode bc)
         {
-            using (bc.EnterSource(m_Ref))
+            using (bc.EnterSource(_ref))
             {
-                if (bc.LoopTracker.Loops.Count == 0)
+                if (bc.LoopTracker.loops.Count == 0)
                 {
                     throw new SyntaxErrorException(
-                        this.Script,
-                        m_Ref,
+                        Script,
+                        _ref,
                         "<break> at line {0} not inside a loop",
-                        m_Ref.FromLine
+                        _ref.FromLine
                     );
                 }
 
-                ILoop loop = bc.LoopTracker.Loops.Peek();
+                ILoop loop = bc.LoopTracker.loops.Peek();
 
                 if (loop.IsBoundary())
                 {
                     throw new SyntaxErrorException(
-                        this.Script,
-                        m_Ref,
+                        Script,
+                        _ref,
                         "<break> at line {0} not inside a loop",
-                        m_Ref.FromLine
+                        _ref.FromLine
                     );
                 }
 

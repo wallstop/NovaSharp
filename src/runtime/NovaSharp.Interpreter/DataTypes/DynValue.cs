@@ -1,32 +1,32 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
+    using System.Text;
+
     /// <summary>
     /// A class representing a value in a Lua/NovaSharp script.
     /// </summary>
     public sealed class DynValue
     {
-        static int s_RefIDCounter = 0;
+        private static int _sRefIdCounter = 0;
 
-        private int m_RefID = ++s_RefIDCounter;
-        private int m_HashCode = -1;
+        private readonly int _refId = ++_sRefIdCounter;
+        private int _hashCode = -1;
 
-        private bool m_ReadOnly;
-        private double m_Number;
-        private object m_Object;
-        private DataType m_Type;
+        private bool _readOnly;
+        private double _number;
+        private object _object;
+        private DataType _type;
 
         /// <summary>
         /// Gets a unique reference identifier. This is guaranteed to be unique only for dynvalues created in a single thread as it's not thread-safe.
         /// </summary>
-        public int ReferenceID
+        public int ReferenceId
         {
-            get { return m_RefID; }
+            get { return _refId; }
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public DataType Type
         {
-            get { return m_Type; }
+            get { return _type; }
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Closure Function
         {
-            get { return m_Object as Closure; }
+            get { return _object as Closure; }
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public double Number
         {
-            get { return m_Number; }
+            get { return _number; }
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public DynValue[] Tuple
         {
-            get { return m_Object as DynValue[]; }
+            get { return _object as DynValue[]; }
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Coroutine Coroutine
         {
-            get { return m_Object as Coroutine; }
+            get { return _object as Coroutine; }
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Table Table
         {
-            get { return m_Object as Table; }
+            get { return _object as Table; }
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public string String
         {
-            get { return m_Object as string; }
+            get { return _object as string; }
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public CallbackFunction Callback
         {
-            get { return m_Object as CallbackFunction; }
+            get { return _object as CallbackFunction; }
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public TailCallData TailCallData
         {
-            get { return m_Object as TailCallData; }
+            get { return _object as TailCallData; }
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public YieldRequest YieldRequest
         {
-            get { return m_Object as YieldRequest; }
+            get { return _object as YieldRequest; }
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public UserData UserData
         {
-            get { return m_Object as UserData; }
+            get { return _object as UserData; }
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool ReadOnly
         {
-            get { return m_ReadOnly; }
+            get { return _readOnly; }
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewBoolean(bool v)
         {
-            return new DynValue() { m_Number = v ? 1 : 0, m_Type = DataType.Boolean };
+            return new DynValue() { _number = v ? 1 : 0, _type = DataType.Boolean };
         }
 
         /// <summary>
@@ -157,9 +157,9 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Number = num,
-                m_Type = DataType.Number,
-                m_HashCode = -1,
+                _number = num,
+                _type = DataType.Number,
+                _hashCode = -1,
             };
         }
 
@@ -168,7 +168,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewString(string str)
         {
-            return new DynValue() { m_Object = str, m_Type = DataType.String };
+            return new DynValue() { _object = str, _type = DataType.String };
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewString(StringBuilder sb)
         {
-            return new DynValue() { m_Object = sb.ToString(), m_Type = DataType.String };
+            return new DynValue() { _object = sb.ToString(), _type = DataType.String };
         }
 
         /// <summary>
@@ -186,8 +186,8 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Object = string.Format(format, args),
-                m_Type = DataType.String,
+                _object = string.Format(format, args),
+                _type = DataType.String,
             };
         }
 
@@ -199,7 +199,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static DynValue NewCoroutine(Coroutine coroutine)
         {
-            return new DynValue() { m_Object = coroutine, m_Type = DataType.Thread };
+            return new DynValue() { _object = coroutine, _type = DataType.Thread };
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewClosure(Closure function)
         {
-            return new DynValue() { m_Object = function, m_Type = DataType.Function };
+            return new DynValue() { _object = function, _type = DataType.Function };
         }
 
         /// <summary>
@@ -220,8 +220,8 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Object = new CallbackFunction(callBack, name),
-                m_Type = DataType.ClrFunction,
+                _object = new CallbackFunction(callBack, name),
+                _type = DataType.ClrFunction,
             };
         }
 
@@ -231,7 +231,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewCallback(CallbackFunction function)
         {
-            return new DynValue() { m_Object = function, m_Type = DataType.ClrFunction };
+            return new DynValue() { _object = function, _type = DataType.ClrFunction };
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewTable(Table table)
         {
-            return new DynValue() { m_Object = table, m_Type = DataType.Table };
+            return new DynValue() { _object = table, _type = DataType.Table };
         }
 
         /// <summary>
@@ -282,8 +282,8 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Object = new TailCallData() { Args = args, Function = tailFn },
-                m_Type = DataType.TailCallRequest,
+                _object = new TailCallData() { Args = args, Function = tailFn },
+                _type = DataType.TailCallRequest,
             };
         }
 
@@ -298,7 +298,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static DynValue NewTailCallReq(TailCallData tailCallData)
         {
-            return new DynValue() { m_Object = tailCallData, m_Type = DataType.TailCallRequest };
+            return new DynValue() { _object = tailCallData, _type = DataType.TailCallRequest };
         }
 
         /// <summary>
@@ -310,8 +310,8 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Object = new YieldRequest() { ReturnValues = args },
-                m_Type = DataType.YieldRequest,
+                _object = new YieldRequest() { returnValues = args },
+                _type = DataType.YieldRequest,
             };
         }
 
@@ -324,8 +324,8 @@ namespace NovaSharp.Interpreter
         {
             return new DynValue()
             {
-                m_Object = new YieldRequest() { Forced = true },
-                m_Type = DataType.YieldRequest,
+                _object = new YieldRequest() { Forced = true },
+                _type = DataType.YieldRequest,
             };
         }
 
@@ -336,7 +336,7 @@ namespace NovaSharp.Interpreter
         {
             if (values.Length == 0)
             {
-                return DynValue.NewNil();
+                return NewNil();
             }
 
             if (values.Length == 1)
@@ -344,7 +344,7 @@ namespace NovaSharp.Interpreter
                 return values[0];
             }
 
-            return new DynValue() { m_Object = values, m_Type = DataType.Tuple };
+            return new DynValue() { _object = values, _type = DataType.Tuple };
         }
 
         /// <summary>
@@ -376,7 +376,7 @@ namespace NovaSharp.Interpreter
                 }
             }
 
-            return new DynValue() { m_Object = vals.ToArray(), m_Type = DataType.Tuple };
+            return new DynValue() { _object = vals.ToArray(), _type = DataType.Tuple };
         }
 
         /// <summary>
@@ -384,7 +384,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public static DynValue NewUserData(UserData userData)
         {
-            return new DynValue() { m_Object = userData, m_Type = DataType.UserData };
+            return new DynValue() { _object = userData, _type = DataType.UserData };
         }
 
         /// <summary>
@@ -408,7 +408,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue Clone()
         {
-            return Clone(this.ReadOnly);
+            return Clone(ReadOnly);
         }
 
         /// <summary>
@@ -418,12 +418,14 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue Clone(bool readOnly)
         {
-            DynValue v = new();
-            v.m_Object = this.m_Object;
-            v.m_Number = this.m_Number;
-            v.m_HashCode = this.m_HashCode;
-            v.m_Type = this.m_Type;
-            v.m_ReadOnly = readOnly;
+            DynValue v = new()
+            {
+                _object = _object,
+                _number = _number,
+                _hashCode = _hashCode,
+                _type = _type,
+                _readOnly = readOnly,
+            };
             return v;
         }
 
@@ -458,10 +460,10 @@ namespace NovaSharp.Interpreter
 
         static DynValue()
         {
-            Nil = new DynValue() { m_Type = DataType.Nil }.AsReadOnly();
-            Void = new DynValue() { m_Type = DataType.Void }.AsReadOnly();
-            True = DynValue.NewBoolean(true).AsReadOnly();
-            False = DynValue.NewBoolean(false).AsReadOnly();
+            Nil = new DynValue() { _type = DataType.Nil }.AsReadOnly();
+            Void = new DynValue() { _type = DataType.Void }.AsReadOnly();
+            True = NewBoolean(true).AsReadOnly();
+            False = NewBoolean(false).AsReadOnly();
         }
 
         /// <summary>
@@ -469,15 +471,12 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public string ToPrintString()
         {
-            if (this.m_Object != null && this.m_Object is RefIdObject)
+            if (_object != null && _object is RefIdObject refid)
             {
-                RefIdObject refid = (RefIdObject)m_Object;
+                string typeString = Type.ToLuaTypeString();
 
-                string typeString = this.Type.ToLuaTypeString();
-
-                if (m_Object is UserData)
+                if (_object is UserData ud)
                 {
-                    UserData ud = (UserData)m_Object;
                     string str = ud.Descriptor.AsString(ud.Object);
                     if (str != null)
                     {
@@ -508,15 +507,12 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public string ToDebugPrintString()
         {
-            if (this.m_Object != null && this.m_Object is RefIdObject)
+            if (_object != null && _object is RefIdObject refid)
             {
-                RefIdObject refid = (RefIdObject)m_Object;
+                string typeString = Type.ToLuaTypeString();
 
-                string typeString = this.Type.ToLuaTypeString();
-
-                if (m_Object is UserData)
+                if (_object is UserData ud)
                 {
-                    UserData ud = (UserData)m_Object;
                     string str = ud.Descriptor.AsString(ud.Object);
                     if (str != null)
                     {
@@ -561,7 +557,7 @@ namespace NovaSharp.Interpreter
                 case DataType.String:
                     return "\"" + String + "\"";
                 case DataType.Function:
-                    return string.Format("(Function {0:X8})", Function.EntryPointByteCodeLocation);
+                    return $"(Function {Function.EntryPointByteCodeLocation:X8})";
                 case DataType.ClrFunction:
                     return string.Format("(Function CLR)", Function);
                 case DataType.Table:
@@ -575,7 +571,7 @@ namespace NovaSharp.Interpreter
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
-                    return string.Format("(Coroutine {0:X8})", this.Coroutine.ReferenceID);
+                    return $"(Coroutine {Coroutine.ReferenceId:X8})";
                 default:
                     return "(???)";
             }
@@ -589,9 +585,9 @@ namespace NovaSharp.Interpreter
         /// </returns>
         public override int GetHashCode()
         {
-            if (m_HashCode != -1)
+            if (_hashCode != -1)
             {
-                return m_HashCode;
+                return _hashCode;
             }
 
             int baseValue = ((int)(Type)) << 27;
@@ -600,38 +596,38 @@ namespace NovaSharp.Interpreter
             {
                 case DataType.Void:
                 case DataType.Nil:
-                    m_HashCode = 0;
+                    _hashCode = 0;
                     break;
                 case DataType.Boolean:
-                    m_HashCode = Boolean ? 1 : 2;
+                    _hashCode = Boolean ? 1 : 2;
                     break;
                 case DataType.Number:
-                    m_HashCode = baseValue ^ Number.GetHashCode();
+                    _hashCode = baseValue ^ Number.GetHashCode();
                     break;
                 case DataType.String:
-                    m_HashCode = baseValue ^ String.GetHashCode();
+                    _hashCode = baseValue ^ String.GetHashCode();
                     break;
                 case DataType.Function:
-                    m_HashCode = baseValue ^ Function.GetHashCode();
+                    _hashCode = baseValue ^ Function.GetHashCode();
                     break;
                 case DataType.ClrFunction:
-                    m_HashCode = baseValue ^ Callback.GetHashCode();
+                    _hashCode = baseValue ^ Callback.GetHashCode();
                     break;
                 case DataType.Table:
-                    m_HashCode = baseValue ^ Table.GetHashCode();
+                    _hashCode = baseValue ^ Table.GetHashCode();
                     break;
                 case DataType.Tuple:
                 case DataType.TailCallRequest:
-                    m_HashCode = baseValue ^ Tuple.GetHashCode();
+                    _hashCode = baseValue ^ Tuple.GetHashCode();
                     break;
                 case DataType.UserData:
                 case DataType.Thread:
                 default:
-                    m_HashCode = 999;
+                    _hashCode = 999;
                     break;
             }
 
-            return m_HashCode;
+            return _hashCode;
         }
 
         /// <summary>
@@ -643,22 +639,20 @@ namespace NovaSharp.Interpreter
         /// </returns>
         public override bool Equals(object obj)
         {
-            DynValue other = obj as DynValue;
-
-            if (other == null)
+            if (obj is not DynValue other)
             {
                 return false;
             }
 
             if (
-                (other.Type == DataType.Nil && this.Type == DataType.Void)
-                || (other.Type == DataType.Void && this.Type == DataType.Nil)
+                (other.Type == DataType.Nil && Type == DataType.Void)
+                || (other.Type == DataType.Void && Type == DataType.Nil)
             )
             {
                 return true;
             }
 
-            if (other.Type != this.Type)
+            if (other.Type != Type)
             {
                 return false;
             }
@@ -687,7 +681,7 @@ namespace NovaSharp.Interpreter
                     return Coroutine == other.Coroutine;
                 case DataType.UserData:
                 {
-                    UserData ud1 = this.UserData;
+                    UserData ud1 = UserData;
                     UserData ud2 = other.UserData;
 
                     if (ud1 == null || ud2 == null)
@@ -713,7 +707,7 @@ namespace NovaSharp.Interpreter
                     return false;
                 }
                 default:
-                    return object.ReferenceEquals(this, other);
+                    return ReferenceEquals(this, other);
             }
         }
 
@@ -748,13 +742,12 @@ namespace NovaSharp.Interpreter
             }
             else if (rv.Type == DataType.String)
             {
-                double num;
                 if (
                     double.TryParse(
                         rv.String,
                         NumberStyles.Any,
                         CultureInfo.InvariantCulture,
-                        out num
+                        out double num
                     )
                 )
                 {
@@ -788,7 +781,7 @@ namespace NovaSharp.Interpreter
         /// <returns>False if value is false or nil, true otherwise.</returns>
         public IScriptPrivateResource GetAsPrivateResource()
         {
-            return m_Object as IScriptPrivateResource;
+            return _object as IScriptPrivateResource;
         }
 
         /// <summary>
@@ -803,7 +796,7 @@ namespace NovaSharp.Interpreter
 
             if (Tuple.Length == 0)
             {
-                return DynValue.Void;
+                return Void;
             }
 
             return Tuple[0].ToScalar();
@@ -816,15 +809,15 @@ namespace NovaSharp.Interpreter
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
         public void Assign(DynValue value)
         {
-            if (this.ReadOnly)
+            if (ReadOnly)
             {
                 throw new ScriptRuntimeException("Assigning on r-value");
             }
 
-            this.m_Number = value.m_Number;
-            this.m_Object = value.m_Object;
-            this.m_Type = value.Type;
-            this.m_HashCode = -1;
+            _number = value._number;
+            _object = value._object;
+            _type = value.Type;
+            _hashCode = -1;
         }
 
         /// <summary>
@@ -834,17 +827,17 @@ namespace NovaSharp.Interpreter
         /// <exception cref="ScriptRuntimeException">Value is not a table or string.</exception>
         public DynValue GetLength()
         {
-            if (this.Type == DataType.Table)
+            if (Type == DataType.Table)
             {
-                return DynValue.NewNumber(this.Table.Length);
+                return NewNumber(Table.Length);
             }
 
-            if (this.Type == DataType.String)
+            if (Type == DataType.String)
             {
-                return DynValue.NewNumber(this.String.Length);
+                return NewNumber(String.Length);
             }
 
-            throw new ScriptRuntimeException("Can't get length of type {0}", this.Type);
+            throw new ScriptRuntimeException("Can't get length of type {0}", Type);
         }
 
         /// <summary>
@@ -852,7 +845,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool IsNil()
         {
-            return this.Type == DataType.Nil || this.Type == DataType.Void;
+            return Type == DataType.Nil || Type == DataType.Void;
         }
 
         /// <summary>
@@ -860,7 +853,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool IsNotNil()
         {
-            return this.Type != DataType.Nil && this.Type != DataType.Void;
+            return Type != DataType.Nil && Type != DataType.Void;
         }
 
         /// <summary>
@@ -868,7 +861,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool IsVoid()
         {
-            return this.Type == DataType.Void;
+            return Type == DataType.Void;
         }
 
         /// <summary>
@@ -876,7 +869,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool IsNotVoid()
         {
-            return this.Type != DataType.Void;
+            return Type != DataType.Void;
         }
 
         /// <summary>
@@ -884,9 +877,9 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool IsNilOrNan()
         {
-            return (this.Type == DataType.Nil)
-                || (this.Type == DataType.Void)
-                || (this.Type == DataType.Number && double.IsNaN(this.Number));
+            return (Type == DataType.Nil)
+                || (Type == DataType.Void)
+                || (Type == DataType.Number && double.IsNaN(Number));
         }
 
         /// <summary>
@@ -894,17 +887,17 @@ namespace NovaSharp.Interpreter
         /// </summary>
         internal void AssignNumber(double num)
         {
-            if (this.ReadOnly)
+            if (ReadOnly)
             {
                 throw new InternalErrorException(null, "Writing on r-value");
             }
 
-            if (this.Type != DataType.Number)
+            if (Type != DataType.Number)
             {
-                throw new InternalErrorException("Can't assign number to type {0}", this.Type);
+                throw new InternalErrorException("Can't assign number to type {0}", Type);
             }
 
-            this.m_Number = num;
+            _number = num;
         }
 
         /// <summary>
@@ -915,10 +908,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static DynValue FromObject(Script script, object obj)
         {
-            return NovaSharp.Interpreter.Interop.Converters.ClrToScriptConversions.ObjectToDynValue(
-                script,
-                obj
-            );
+            return Interop.Converters.ClrToScriptConversions.ObjectToDynValue(script, obj);
         }
 
         /// <summary>
@@ -926,9 +916,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public object ToObject()
         {
-            return NovaSharp.Interpreter.Interop.Converters.ScriptToClrConversions.DynValueToObject(
-                this
-            );
+            return Interop.Converters.ScriptToClrConversions.DynValueToObject(this);
         }
 
         /// <summary>
@@ -937,7 +925,7 @@ namespace NovaSharp.Interpreter
         public object ToObject(Type desiredType)
         {
             //Contract.Requires(desiredType != null);
-            return NovaSharp.Interpreter.Interop.Converters.ScriptToClrConversions.DynValueToObjectOfType(
+            return Interop.Converters.ScriptToClrConversions.DynValueToObjectOfType(
                 this,
                 desiredType,
                 null,
@@ -991,14 +979,14 @@ namespace NovaSharp.Interpreter
             TypeValidationFlags flags = TypeValidationFlags.Default
         )
         {
-            if (this.Type == desiredType)
+            if (Type == desiredType)
             {
                 return this;
             }
 
             bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
 
-            if (allowNil && this.IsNil())
+            if (allowNil && IsNil())
             {
                 return this;
             }
@@ -1009,40 +997,34 @@ namespace NovaSharp.Interpreter
             {
                 if (desiredType == DataType.Boolean)
                 {
-                    return DynValue.NewBoolean(this.CastToBool());
+                    return NewBoolean(CastToBool());
                 }
 
                 if (desiredType == DataType.Number)
                 {
-                    double? v = this.CastToNumber();
+                    double? v = CastToNumber();
                     if (v.HasValue)
                     {
-                        return DynValue.NewNumber(v.Value);
+                        return NewNumber(v.Value);
                     }
                 }
 
                 if (desiredType == DataType.String)
                 {
-                    string v = this.CastToString();
+                    string v = CastToString();
                     if (v != null)
                     {
-                        return DynValue.NewString(v);
+                        return NewString(v);
                     }
                 }
             }
 
-            if (this.IsVoid())
+            if (IsVoid())
             {
                 throw ScriptRuntimeException.BadArgumentNoValue(argNum, funcName, desiredType);
             }
 
-            throw ScriptRuntimeException.BadArgument(
-                argNum,
-                funcName,
-                desiredType,
-                this.Type,
-                allowNil
-            );
+            throw ScriptRuntimeException.BadArgument(argNum, funcName, desiredType, Type, allowNil);
         }
 
         /// <summary>
@@ -1059,7 +1041,7 @@ namespace NovaSharp.Interpreter
             TypeValidationFlags flags = TypeValidationFlags.Default
         )
         {
-            DynValue v = this.CheckType(funcName, DataType.UserData, argNum, flags);
+            DynValue v = CheckType(funcName, DataType.UserData, argNum, flags);
             bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
 
             if (v.IsNil())
@@ -1068,9 +1050,9 @@ namespace NovaSharp.Interpreter
             }
 
             object o = v.UserData.Object;
-            if (o != null && o is T)
+            if (o != null && o is T o1)
             {
-                return (T)o;
+                return o1;
             }
 
             throw ScriptRuntimeException.BadArgumentUserData(

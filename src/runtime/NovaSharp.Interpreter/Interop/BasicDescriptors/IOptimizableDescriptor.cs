@@ -9,6 +9,6 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <summary>
         /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
         /// </summary>
-        void Optimize();
+        public void Optimize();
     }
 }

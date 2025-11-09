@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace NovaSharp.Interpreter
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     /// <summary>
     /// LINQ helper methods
     /// </summary>

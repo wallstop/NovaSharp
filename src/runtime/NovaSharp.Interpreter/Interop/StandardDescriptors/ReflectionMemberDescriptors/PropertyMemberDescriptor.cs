@@ -1,14 +1,14 @@
-using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Linq.Expressions;
+    using System.Reflection;
+    using System.Threading;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+    using Diagnostics;
+
     /// <summary>
     /// Class providing easier marshalling of CLR properties
     /// </summary>
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </value>
         public bool CanRead
         {
-            get { return m_Getter != null; }
+            get { return _getter != null; }
         }
 
         /// <summary>
@@ -56,13 +56,15 @@ namespace NovaSharp.Interpreter.Interop
         /// </value>
         public bool CanWrite
         {
-            get { return m_Setter != null; }
+            get { return _setter != null; }
         }
 
-        private MethodInfo m_Getter,
-            m_Setter;
-        Func<object, object> m_OptimizedGetter = null;
-        Action<object, object> m_OptimizedSetter = null;
+        private readonly MethodInfo _getter;
+
+        private readonly MethodInfo _setter;
+
+        private Func<object, object> _optimizedGetter = null;
+        private Action<object, object> _optimizedSetter = null;
 
         /// <summary>
         /// Tries to create a new StandardUserDataPropertyDescriptor, returning <c>null</c> in case the property is not
@@ -85,7 +87,7 @@ namespace NovaSharp.Interpreter.Interop
 
             if (pvisible.HasValue)
             {
-                return PropertyMemberDescriptor.TryCreate(
+                return TryCreate(
                     pi,
                     accessMode,
                     (gvisible ?? pvisible.Value) ? getter : null,
@@ -94,7 +96,7 @@ namespace NovaSharp.Interpreter.Interop
             }
             else
             {
-                return PropertyMemberDescriptor.TryCreate(
+                return TryCreate(
                     pi,
                     accessMode,
                     (gvisible ?? getter.IsPublic) ? getter : null,
@@ -154,19 +156,19 @@ namespace NovaSharp.Interpreter.Interop
                 accessMode = InteropAccessMode.Reflection;
             }
 
-            this.PropertyInfo = pi;
-            this.AccessMode = accessMode;
-            this.Name = pi.Name;
+            PropertyInfo = pi;
+            AccessMode = accessMode;
+            Name = pi.Name;
 
-            m_Getter = getter;
-            m_Setter = setter;
+            _getter = getter;
+            _setter = setter;
 
-            this.IsStatic = (m_Getter ?? m_Setter).IsStatic;
+            IsStatic = (_getter ?? _setter).IsStatic;
 
             if (AccessMode == InteropAccessMode.Preoptimized)
             {
-                this.OptimizeGetter();
-                this.OptimizeSetter();
+                OptimizeGetter();
+                OptimizeSetter();
             }
         }
 
@@ -180,29 +182,29 @@ namespace NovaSharp.Interpreter.Interop
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
 
-            if (m_Getter == null)
+            if (_getter == null)
             {
                 throw new ScriptRuntimeException(
                     "userdata property '{0}.{1}' cannot be read from.",
-                    this.PropertyInfo.DeclaringType.Name,
-                    this.Name
+                    PropertyInfo.DeclaringType.Name,
+                    Name
                 );
             }
 
-            if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
+            if (AccessMode == InteropAccessMode.LazyOptimized && _optimizedGetter == null)
             {
                 OptimizeGetter();
             }
 
             object result = null;
 
-            if (m_OptimizedGetter != null)
+            if (_optimizedGetter != null)
             {
-                result = m_OptimizedGetter(obj);
+                result = _optimizedGetter(obj);
             }
             else
             {
-                result = m_Getter.Invoke(IsStatic ? null : obj, null); // convoluted workaround for --full-aot Mono execution
+                result = _getter.Invoke(IsStatic ? null : obj, null); // convoluted workaround for --full-aot Mono execution
             }
 
             return ClrToScriptConversions.ObjectToDynValue(script, result);
@@ -214,7 +216,7 @@ namespace NovaSharp.Interpreter.Interop
                 PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
             )
             {
-                if (m_Getter != null)
+                if (_getter != null)
                 {
                     if (IsStatic)
                     {
@@ -230,14 +232,14 @@ namespace NovaSharp.Interpreter.Interop
                         Expression<Func<object, object>> lambda = Expression.Lambda<
                             Func<object, object>
                         >(castPropAccess, paramExp);
-                        Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
+                        Interlocked.Exchange(ref _optimizedGetter, lambda.Compile());
                     }
                     else
                     {
                         ParameterExpression paramExp = Expression.Parameter(typeof(object), "obj");
                         UnaryExpression castParamExp = Expression.Convert(
                             paramExp,
-                            this.PropertyInfo.DeclaringType
+                            PropertyInfo.DeclaringType
                         );
                         MemberExpression propAccess = Expression.Property(
                             castParamExp,
@@ -250,7 +252,7 @@ namespace NovaSharp.Interpreter.Interop
                         Expression<Func<object, object>> lambda = Expression.Lambda<
                             Func<object, object>
                         >(castPropAccess, paramExp);
-                        Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
+                        Interlocked.Exchange(ref _optimizedGetter, lambda.Compile());
                     }
                 }
             }
@@ -262,7 +264,7 @@ namespace NovaSharp.Interpreter.Interop
                 PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
             )
             {
-                if (m_Setter != null && !(Framework.Do.IsValueType(PropertyInfo.DeclaringType)))
+                if (_setter != null && !(Framework.Do.IsValueType(PropertyInfo.DeclaringType)))
                 {
                     MethodInfo setterMethod = Framework.Do.GetSetMethod(PropertyInfo);
 
@@ -278,7 +280,7 @@ namespace NovaSharp.Interpreter.Interop
                         );
                         UnaryExpression castParamValExp = Expression.Convert(
                             paramValExp,
-                            this.PropertyInfo.PropertyType
+                            PropertyInfo.PropertyType
                         );
                         MethodCallExpression callExpression = Expression.Call(
                             setterMethod,
@@ -287,7 +289,7 @@ namespace NovaSharp.Interpreter.Interop
                         Expression<Action<object, object>> lambda = Expression.Lambda<
                             Action<object, object>
                         >(callExpression, paramExp, paramValExp);
-                        Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
+                        Interlocked.Exchange(ref _optimizedSetter, lambda.Compile());
                     }
                     else
                     {
@@ -298,11 +300,11 @@ namespace NovaSharp.Interpreter.Interop
                         );
                         UnaryExpression castParamExp = Expression.Convert(
                             paramExp,
-                            this.PropertyInfo.DeclaringType
+                            PropertyInfo.DeclaringType
                         );
                         UnaryExpression castParamValExp = Expression.Convert(
                             paramValExp,
-                            this.PropertyInfo.PropertyType
+                            PropertyInfo.PropertyType
                         );
                         MethodCallExpression callExpression = Expression.Call(
                             castParamExp,
@@ -312,7 +314,7 @@ namespace NovaSharp.Interpreter.Interop
                         Expression<Action<object, object>> lambda = Expression.Lambda<
                             Action<object, object>
                         >(callExpression, paramExp, paramValExp);
-                        Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
+                        Interlocked.Exchange(ref _optimizedSetter, lambda.Compile());
                     }
                 }
             }
@@ -328,44 +330,41 @@ namespace NovaSharp.Interpreter.Interop
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
-            if (m_Setter == null)
+            if (_setter == null)
             {
                 throw new ScriptRuntimeException(
                     "userdata property '{0}.{1}' cannot be written to.",
-                    this.PropertyInfo.DeclaringType.Name,
-                    this.Name
+                    PropertyInfo.DeclaringType.Name,
+                    Name
                 );
             }
 
             object value = ScriptToClrConversions.DynValueToObjectOfType(
                 v,
-                this.PropertyInfo.PropertyType,
+                PropertyInfo.PropertyType,
                 null,
                 false
             );
 
             try
             {
-                if (value is double)
+                if (value is double d)
                 {
-                    value = NumericConversions.DoubleToType(
-                        PropertyInfo.PropertyType,
-                        (double)value
-                    );
+                    value = NumericConversions.DoubleToType(PropertyInfo.PropertyType, d);
                 }
 
-                if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedSetter == null)
+                if (AccessMode == InteropAccessMode.LazyOptimized && _optimizedSetter == null)
                 {
                     OptimizeSetter();
                 }
 
-                if (m_OptimizedSetter != null)
+                if (_optimizedSetter != null)
                 {
-                    m_OptimizedSetter(obj, value);
+                    _optimizedSetter(obj, value);
                 }
                 else
                 {
-                    m_Setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
+                    _setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
                 }
             }
             catch (ArgumentException)
@@ -395,12 +394,12 @@ namespace NovaSharp.Interpreter.Interop
             {
                 MemberDescriptorAccess access = 0;
 
-                if (m_Setter != null)
+                if (_setter != null)
                 {
                     access |= MemberDescriptorAccess.CanWrite;
                 }
 
-                if (m_Getter != null)
+                if (_getter != null)
                 {
                     access |= MemberDescriptorAccess.CanRead;
                 }
@@ -414,8 +413,8 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         void IOptimizableDescriptor.Optimize()
         {
-            this.OptimizeGetter();
-            this.OptimizeSetter();
+            OptimizeGetter();
+            OptimizeSetter();
         }
 
         /// <summary>
@@ -425,18 +424,18 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("visibility", DynValue.NewString(this.PropertyInfo.GetClrVisibility()));
-            t.Set("name", DynValue.NewString(this.Name));
-            t.Set("static", DynValue.NewBoolean(this.IsStatic));
-            t.Set("read", DynValue.NewBoolean(this.CanRead));
-            t.Set("write", DynValue.NewBoolean(this.CanWrite));
-            t.Set("decltype", DynValue.NewString(this.PropertyInfo.DeclaringType.FullName));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("visibility", DynValue.NewString(PropertyInfo.GetClrVisibility()));
+            t.Set("name", DynValue.NewString(Name));
+            t.Set("static", DynValue.NewBoolean(IsStatic));
+            t.Set("read", DynValue.NewBoolean(CanRead));
+            t.Set("write", DynValue.NewBoolean(CanWrite));
+            t.Set("decltype", DynValue.NewString(PropertyInfo.DeclaringType.FullName));
             t.Set(
                 "declvtype",
-                DynValue.NewBoolean(Framework.Do.IsValueType(this.PropertyInfo.DeclaringType))
+                DynValue.NewBoolean(Framework.Do.IsValueType(PropertyInfo.DeclaringType))
             );
-            t.Set("type", DynValue.NewString(this.PropertyInfo.PropertyType.FullName));
+            t.Set("type", DynValue.NewString(PropertyInfo.PropertyType.FullName));
         }
     }
 }

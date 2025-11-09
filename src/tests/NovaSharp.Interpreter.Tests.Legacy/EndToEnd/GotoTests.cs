@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class GotoTests
     {
@@ -23,8 +23,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -50,8 +50,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -109,8 +109,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -129,8 +129,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -146,8 +146,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -179,8 +179,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
 
             DynValue res = Script.RunString(script);
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -218,8 +218,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
 
             DynValue res = Script.RunString(script);
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(67, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(67));
         }
     }
 }

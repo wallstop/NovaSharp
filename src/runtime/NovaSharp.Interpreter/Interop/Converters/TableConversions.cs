@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System;
+    using System.Collections.Generic;
+    using Compatibility;
+
     internal static class TableConversions
     {
         /// <summary>

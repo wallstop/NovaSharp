@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Tree;
-
 namespace NovaSharp.Interpreter.Serialization.Json
 {
+    using System.Text;
+    using Tree;
+
     /// <summary>
     /// Class performing conversions between Tables and Json.
     /// NOTE : the conversions are done respecting json syntax but using Lua constructs. This means mostly that:
@@ -89,7 +86,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
                 obj,
                 JsonNull.Create()
             );
-            return JsonTableConverter.TableToJson(v.Table);
+            return TableToJson(v.Table);
         }
 
         private static void ValueToJson(StringBuilder sb, DynValue value)
@@ -148,152 +145,149 @@ namespace NovaSharp.Interpreter.Serialization.Json
         /// <returns>A table containing the representation of the given json.</returns>
         public static Table JsonToTable(string json, Script script = null)
         {
-            Lexer L = new(0, json, false);
+            Lexer l = new(0, json, false);
 
-            if (L.Current.Type == TokenType.Brk_Open_Curly)
+            if (l.Current.type == TokenType.BrkOpenCurly)
             {
-                return ParseJsonObject(L, script);
+                return ParseJsonObject(l, script);
             }
-            else if (L.Current.Type == TokenType.Brk_Open_Square)
+            else if (l.Current.type == TokenType.BrkOpenSquare)
             {
-                return ParseJsonArray(L, script);
+                return ParseJsonArray(l, script);
             }
             else
             {
                 throw new SyntaxErrorException(
-                    L.Current,
+                    l.Current,
                     "Unexpected token : '{0}'",
-                    L.Current.Text
+                    l.Current.Text
                 );
             }
         }
 
-        private static void AssertToken(Lexer L, TokenType type)
+        private static void AssertToken(Lexer l, TokenType type)
         {
-            if (L.Current.Type != type)
+            if (l.Current.type != type)
             {
                 throw new SyntaxErrorException(
-                    L.Current,
+                    l.Current,
                     "Unexpected token : '{0}'",
-                    L.Current.Text
+                    l.Current.Text
                 );
             }
         }
 
-        private static Table ParseJsonArray(Lexer L, Script script)
+        private static Table ParseJsonArray(Lexer l, Script script)
         {
             Table t = new(script);
 
-            L.Next();
+            l.Next();
 
-            while (L.Current.Type != TokenType.Brk_Close_Square)
+            while (l.Current.type != TokenType.BrkCloseSquare)
             {
-                DynValue v = ParseJsonValue(L, script);
+                DynValue v = ParseJsonValue(l, script);
                 t.Append(v);
-                L.Next();
+                l.Next();
 
-                if (L.Current.Type == TokenType.Comma)
+                if (l.Current.type == TokenType.Comma)
                 {
-                    L.Next();
+                    l.Next();
                 }
             }
 
             return t;
         }
 
-        private static Table ParseJsonObject(Lexer L, Script script)
+        private static Table ParseJsonObject(Lexer l, Script script)
         {
             Table t = new(script);
 
-            L.Next();
+            l.Next();
 
-            while (L.Current.Type != TokenType.Brk_Close_Curly)
+            while (l.Current.type != TokenType.BrkCloseCurly)
             {
-                AssertToken(L, TokenType.String);
-                string key = L.Current.Text;
-                L.Next();
-                AssertToken(L, TokenType.Colon);
-                L.Next();
-                DynValue v = ParseJsonValue(L, script);
+                AssertToken(l, TokenType.String);
+                string key = l.Current.Text;
+                l.Next();
+                AssertToken(l, TokenType.Colon);
+                l.Next();
+                DynValue v = ParseJsonValue(l, script);
                 t.Set(key, v);
-                L.Next();
+                l.Next();
 
-                if (L.Current.Type == TokenType.Comma)
+                if (l.Current.type == TokenType.Comma)
                 {
-                    L.Next();
+                    l.Next();
                 }
             }
 
             return t;
         }
 
-        private static DynValue ParseJsonValue(Lexer L, Script script)
+        private static DynValue ParseJsonValue(Lexer l, Script script)
         {
-            if (L.Current.Type == TokenType.Brk_Open_Curly)
+            if (l.Current.type == TokenType.BrkOpenCurly)
             {
-                Table t = ParseJsonObject(L, script);
+                Table t = ParseJsonObject(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (L.Current.Type == TokenType.Brk_Open_Square)
+            else if (l.Current.type == TokenType.BrkOpenSquare)
             {
-                Table t = ParseJsonArray(L, script);
+                Table t = ParseJsonArray(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (L.Current.Type == TokenType.String)
+            else if (l.Current.type == TokenType.String)
             {
-                return DynValue.NewString(L.Current.Text);
+                return DynValue.NewString(l.Current.Text);
             }
-            else if (
-                L.Current.Type == TokenType.Number
-                || L.Current.Type == TokenType.Op_MinusOrSub
-            )
+            else if (l.Current.type == TokenType.Number || l.Current.type == TokenType.OpMinusOrSub)
             {
-                return ParseJsonNumberValue(L, script);
+                return ParseJsonNumberValue(l, script);
             }
-            else if (L.Current.Type == TokenType.True)
+            else if (l.Current.type == TokenType.True)
             {
                 return DynValue.True;
             }
-            else if (L.Current.Type == TokenType.False)
+            else if (l.Current.type == TokenType.False)
             {
                 return DynValue.False;
             }
-            else if (L.Current.Type == TokenType.Name && L.Current.Text == "null")
+            else if (l.Current.type == TokenType.Name && l.Current.Text == "null")
             {
                 return JsonNull.Create();
             }
             else
             {
                 throw new SyntaxErrorException(
-                    L.Current,
+                    l.Current,
                     "Unexpected token : '{0}'",
-                    L.Current.Text
+                    l.Current.Text
                 );
             }
         }
 
-        private static DynValue ParseJsonNumberValue(Lexer L, Script script)
+        private static DynValue ParseJsonNumberValue(Lexer l, Script script)
         {
             bool negative;
-            if (L.Current.Type == TokenType.Op_MinusOrSub)
+            if (l.Current.type == TokenType.OpMinusOrSub)
             {
                 // Negative number consists of 2 tokens.
-                L.Next();
+                l.Next();
                 negative = true;
             }
             else
             {
                 negative = false;
             }
-            if (L.Current.Type != TokenType.Number)
+            if (l.Current.type != TokenType.Number)
             {
                 throw new SyntaxErrorException(
-                    L.Current,
+                    l.Current,
                     "Unexpected token : '{0}'",
-                    L.Current.Text
+                    l.Current.Text
                 );
             }
-            double numberValue = L.Current.GetNumberValue();
+            double numberValue = l.Current.GetNumberValue();
             if (negative)
             {
                 numberValue = -numberValue;

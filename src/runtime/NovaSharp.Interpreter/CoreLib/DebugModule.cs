@@ -1,14 +1,13 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.Text;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.REPL;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.Text;
+    using Debugging;
     using Execution;
+    using REPL;
 
     /// <summary>
     /// Class implementing debug Lua functions. Support for the debug module is partial.
@@ -16,8 +15,8 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "debug")]
     public class DebugModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue debug(
+        [NovaSharpModuleMethod(Name = "debug")]
+        public static DynValue Debug(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -47,24 +46,22 @@ namespace NovaSharp.Interpreter.CoreLib
 
                     if (result != null && result.Type != DataType.Void)
                     {
-                        script.Options.DebugPrint(string.Format("{0}", result));
+                        script.Options.DebugPrint($"{result}");
                     }
                 }
                 catch (InterpreterException ex)
                 {
-                    script.Options.DebugPrint(
-                        string.Format("{0}", ex.DecoratedMessage ?? ex.Message)
-                    );
+                    script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
                 }
                 catch (Exception ex)
                 {
-                    script.Options.DebugPrint(string.Format("{0}", ex.Message));
+                    script.Options.DebugPrint($"{ex.Message}");
                 }
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue getuservalue(
+        [NovaSharpModuleMethod(Name = "getuservalue")]
+        public static DynValue Getuservalue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -79,8 +76,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return v.UserData.UserValue ?? DynValue.Nil;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue setuservalue(
+        [NovaSharpModuleMethod(Name = "setuservalue")]
+        public static DynValue Setuservalue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -91,8 +88,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return v.UserData.UserValue = t;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue getregistry(
+        [NovaSharpModuleMethod(Name = "getregistry")]
+        public static DynValue Getregistry(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -100,18 +97,18 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTable(executionContext.GetScript().Registry);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue getmetatable(
+        [NovaSharpModuleMethod(Name = "getmetatable")]
+        public static DynValue Getmetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             DynValue v = args[0];
-            Script S = executionContext.GetScript();
+            Script s = executionContext.GetScript();
 
             if (v.Type.CanHaveTypeMetatables())
             {
-                return DynValue.NewTable(S.GetTypeMetatable(v.Type));
+                return DynValue.NewTable(s.GetTypeMetatable(v.Type));
             }
             else if (v.Type == DataType.Table)
             {
@@ -123,8 +120,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue setmetatable(
+        [NovaSharpModuleMethod(Name = "setmetatable")]
+        public static DynValue Setmetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -132,11 +129,11 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue v = args[0];
             DynValue t = args.AsType(1, "setmetatable", DataType.Table, true);
             Table m = (t.IsNil()) ? null : t.Table;
-            Script S = executionContext.GetScript();
+            Script s = executionContext.GetScript();
 
             if (v.Type.CanHaveTypeMetatables())
             {
-                S.SetTypeMetatable(v.Type, m);
+                s.SetTypeMetatable(v.Type, m);
             }
             else if (v.Type == DataType.Table)
             {
@@ -153,8 +150,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue getupvalue(
+        [NovaSharpModuleMethod(Name = "getupvalue")]
+        public static DynValue Getupvalue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -178,8 +175,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(DynValue.NewString(closure.Symbols[index]), closure[index]);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue upvalueid(
+        [NovaSharpModuleMethod(Name = "upvalueid")]
+        public static DynValue Upvalueid(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -200,11 +197,11 @@ namespace NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            return DynValue.NewNumber(closure[index].ReferenceID);
+            return DynValue.NewNumber(closure[index].ReferenceId);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue setupvalue(
+        [NovaSharpModuleMethod(Name = "setupvalue")]
+        public static DynValue Setupvalue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -230,8 +227,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(closure.Symbols[index]);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue upvaluejoin(
+        [NovaSharpModuleMethod(Name = "upvaluejoin")]
+        public static DynValue Upvaluejoin(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -259,8 +256,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Void;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue traceback(
+        [NovaSharpModuleMethod(Name = "traceback")]
+        public static DynValue Traceback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -334,7 +331,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(sb);
         }
 
-        //[NovaSharpModuleMethod]
+        //[NovaSharpModuleMethod(Name = "getlocal")]
         //public static DynValue getlocal(ScriptExecutionContext executionContext, CallbackArguments args)
         //{
         //	Coroutine c;

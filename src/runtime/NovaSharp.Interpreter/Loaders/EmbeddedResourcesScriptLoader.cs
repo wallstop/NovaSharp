@@ -1,18 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
 namespace NovaSharp.Interpreter.Loaders
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+
     /// <summary>
     /// A script loader loading scripts from an assembly resources
     /// </summary>
     public class EmbeddedResourcesScriptLoader : ScriptLoaderBase
     {
-        Assembly m_ResourceAssembly;
-        HashSet<string> m_ResourceNames;
-        string m_Namespace;
+        private readonly Assembly _resourceAssembly;
+        private readonly HashSet<string> _resourceNames;
+        private readonly string _namespace;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmbeddedResourcesScriptLoader"/> class.
@@ -31,16 +31,16 @@ namespace NovaSharp.Interpreter.Loaders
 #endif
             }
 
-            m_ResourceAssembly = resourceAssembly;
-            m_Namespace = m_ResourceAssembly.FullName.Split(',').First();
-            m_ResourceNames = new HashSet<string>(m_ResourceAssembly.GetManifestResourceNames());
+            _resourceAssembly = resourceAssembly;
+            _namespace = _resourceAssembly.FullName.Split(',').First();
+            _resourceNames = new HashSet<string>(_resourceAssembly.GetManifestResourceNames());
         }
 
         private string FileNameToResource(string file)
         {
             file = file.Replace('/', '.');
             file = file.Replace('\\', '.');
-            return m_Namespace + "." + file;
+            return _namespace + "." + file;
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace NovaSharp.Interpreter.Loaders
         public override bool ScriptFileExists(string name)
         {
             name = FileNameToResource(name);
-            return m_ResourceNames.Contains(name);
+            return _resourceNames.Contains(name);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Loaders
         public override object LoadFile(string file, Table globalContext)
         {
             file = FileNameToResource(file);
-            return m_ResourceAssembly.GetManifestResourceStream(file);
+            return _resourceAssembly.GetManifestResourceStream(file);
         }
     }
 }

@@ -1,31 +1,31 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class TableConstructor : Expression
+    using System.Collections.Generic;
+    using Execution;
+
+    internal class TableConstructor : Expression
     {
-        bool m_Shared = false;
-        List<Expression> m_PositionalValues = new();
-        List<KeyValuePair<Expression, Expression>> m_CtorArgs = new();
+        private readonly bool _shared = false;
+        private readonly List<Expression> _positionalValues = new();
+        private readonly List<KeyValuePair<Expression, Expression>> _ctorArgs = new();
 
         public TableConstructor(ScriptLoadingContext lcontext, bool shared)
             : base(lcontext)
         {
-            m_Shared = shared;
+            _shared = shared;
 
             // here lexer is at the '{', go on
-            CheckTokenType(lcontext, TokenType.Brk_Open_Curly, TokenType.Brk_Open_Curly_Shared);
+            CheckTokenType(lcontext, TokenType.BrkOpenCurly, TokenType.BrkOpenCurlyShared);
 
-            while (lcontext.Lexer.Current.Type != TokenType.Brk_Close_Curly)
+            while (lcontext.Lexer.Current.type != TokenType.BrkCloseCurly)
             {
-                switch (lcontext.Lexer.Current.Type)
+                switch (lcontext.Lexer.Current.type)
                 {
                     case TokenType.Name:
                         {
                             Token assign = lcontext.Lexer.PeekNext();
 
-                            if (assign.Type == TokenType.Op_Assignment)
+                            if (assign.type == TokenType.OpAssignment)
                             {
                                 StructField(lcontext);
                             }
@@ -35,7 +35,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                             }
                         }
                         break;
-                    case TokenType.Brk_Open_Square:
+                    case TokenType.BrkOpenSquare:
                         MapField(lcontext);
                         break;
                     default:
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 Token curr = lcontext.Lexer.Current;
 
-                if (curr.Type == TokenType.Comma || curr.Type == TokenType.SemiColon)
+                if (curr.type == TokenType.Comma || curr.type == TokenType.SemiColon)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            CheckTokenType(lcontext, TokenType.Brk_Close_Curly);
+            CheckTokenType(lcontext, TokenType.BrkCloseCurly);
         }
 
         private void MapField(ScriptLoadingContext lcontext)
@@ -64,13 +64,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             Expression key = Expr(lcontext);
 
-            CheckTokenType(lcontext, TokenType.Brk_Close_Square);
+            CheckTokenType(lcontext, TokenType.BrkCloseSquare);
 
-            CheckTokenType(lcontext, TokenType.Op_Assignment);
+            CheckTokenType(lcontext, TokenType.OpAssignment);
 
             Expression value = Expr(lcontext);
 
-            m_CtorArgs.Add(new KeyValuePair<Expression, Expression>(key, value));
+            _ctorArgs.Add(new KeyValuePair<Expression, Expression>(key, value));
         }
 
         private void StructField(ScriptLoadingContext lcontext)
@@ -81,40 +81,40 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             );
             lcontext.Lexer.Next();
 
-            CheckTokenType(lcontext, TokenType.Op_Assignment);
+            CheckTokenType(lcontext, TokenType.OpAssignment);
 
             Expression value = Expr(lcontext);
 
-            m_CtorArgs.Add(new KeyValuePair<Expression, Expression>(key, value));
+            _ctorArgs.Add(new KeyValuePair<Expression, Expression>(key, value));
         }
 
         private void ArrayField(ScriptLoadingContext lcontext)
         {
             Expression e = Expr(lcontext);
-            m_PositionalValues.Add(e);
+            _positionalValues.Add(e);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_NewTable(m_Shared);
+            bc.Emit_NewTable(_shared);
 
-            foreach (KeyValuePair<Expression, Expression> kvp in m_CtorArgs)
+            foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
                 kvp.Key.Compile(bc);
                 kvp.Value.Compile(bc);
                 bc.Emit_TblInitN();
             }
 
-            for (int i = 0; i < m_PositionalValues.Count; i++)
+            for (int i = 0; i < _positionalValues.Count; i++)
             {
-                m_PositionalValues[i].Compile(bc);
-                bc.Emit_TblInitI(i == m_PositionalValues.Count - 1);
+                _positionalValues[i].Compile(bc);
+                bc.Emit_TblInitI(i == _positionalValues.Count - 1);
             }
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            if (!this.m_Shared)
+            if (!_shared)
             {
                 throw new DynamicExpressionException(
                     "Dynamic Expressions cannot define new non-prime tables."
@@ -125,12 +125,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Table t = tval.Table;
 
             int idx = 0;
-            foreach (Expression e in m_PositionalValues)
+            foreach (Expression e in _positionalValues)
             {
                 t.Set(++idx, e.Eval(context));
             }
 
-            foreach (KeyValuePair<Expression, Expression> kvp in this.m_CtorArgs)
+            foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
                 t.Set(kvp.Key.Eval(context), kvp.Value.Eval(context));
             }

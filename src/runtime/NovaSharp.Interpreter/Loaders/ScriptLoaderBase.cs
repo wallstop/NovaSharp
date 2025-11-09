@@ -1,8 +1,8 @@
-using System;
-using System.Linq;
-
 namespace NovaSharp.Interpreter.Loaders
 {
+    using System;
+    using System.Linq;
+
     /// <summary>
     /// A base implementation of IScriptLoader, offering resolution of module names.
     /// </summary>
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         public virtual string ResolveModuleName(string modname, Table globalContext)
         {
-            if (!this.IgnoreLuaPathGlobal)
+            if (!IgnoreLuaPathGlobal)
             {
                 DynValue s = globalContext.RawGet("LUA_PATH");
 
@@ -77,7 +77,7 @@ namespace NovaSharp.Interpreter.Loaders
                 }
             }
 
-            return ResolveModuleName(modname, this.ModulePaths);
+            return ResolveModuleName(modname, ModulePaths);
         }
 
         /// <summary>

@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace NovaSharp.Interpreter.Execution
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     /// <summary>
     /// The scope of a closure (container of upvalues)
     /// </summary>
@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Execution
         internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)
         {
             Symbols = symbols.Select(s => s.i_Name).ToArray();
-            this.AddRange(values);
+            AddRange(values);
         }
 
         internal ClosureContext()

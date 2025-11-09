@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// Interface for debuggers to implement, in order to provide debugging facilities to Scripts.
     /// </summary>
@@ -10,31 +10,31 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets the debugger caps.
         /// </summary>
-        DebuggerCaps GetDebuggerCaps();
+        public DebuggerCaps GetDebuggerCaps();
 
         /// <summary>
         /// Sets the debug service for this debugger
         /// </summary>
         /// <param name="debugService">The debug service.</param>
-        void SetDebugService(DebugService debugService);
+        public void SetDebugService(DebugService debugService);
 
         /// <summary>
         /// Called by the script engine  when a source code is added or changed.
         /// </summary>
         /// <param name="sourceCode">The source code object.</param>
-        void SetSourceCode(SourceCode sourceCode);
+        public void SetSourceCode(SourceCode sourceCode);
 
         /// <summary>
         /// Called by the script engine  when the bytecode changes.
         /// </summary>
         /// <param name="byteCode">The bytecode source</param>
-        void SetByteCode(string[] byteCode);
+        public void SetByteCode(string[] byteCode);
 
         /// <summary>
         /// Called by the script engine at execution time to check if a break has
         /// been requested. Should return pretty fast as it's called A LOT.
         /// </summary>
-        bool IsPauseRequested();
+        public bool IsPauseRequested();
 
         /// <summary>
         /// Called by the script engine when a runtime error occurs.
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         /// <param name="ex">The runtime exception.</param>
         /// <returns>True if this error should break execution.</returns>
-        bool SignalRuntimeException(ScriptRuntimeException ex);
+        public bool SignalRuntimeException(ScriptRuntimeException ex);
 
         /// <summary>
         /// Called by the script engine to get what action to do next.
@@ -52,12 +52,12 @@ namespace NovaSharp.Interpreter.Debugging
         /// <param name="ip">The instruction pointer in bytecode.</param>
         /// <param name="sourceref">The source reference.</param>
         /// <returns>T</returns>
-        DebuggerAction GetAction(int ip, SourceRef sourceref);
+        public DebuggerAction GetAction(int ip, SourceRef sourceref);
 
         /// <summary>
         /// Called by the script engine when the execution ends.
         /// </summary>
-        void SignalExecutionEnded();
+        public void SignalExecutionEnded();
 
         /// <summary>
         /// Called by the script engine to update watches of a given type. Note
@@ -66,18 +66,18 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         /// <param name="watchType">Type of the watch.</param>
         /// <param name="items">The items.</param>
-        void Update(WatchType watchType, IEnumerable<WatchItem> items);
+        public void Update(WatchType watchType, IEnumerable<WatchItem> items);
 
         /// <summary>
         /// Called by the script engine to get which expressions are active
         /// watches in the debugger.
         /// </summary>
         /// <returns>A list of watches</returns>
-        List<DynamicExpression> GetWatchItems();
+        public List<DynamicExpression> GetWatchItems();
 
         /// <summary>
         /// Called by the script engine to refresh the breakpoint list.
         /// </summary>
-        void RefreshBreakpoints(IEnumerable<SourceRef> refs);
+        public void RefreshBreakpoints(IEnumerable<SourceRef> refs);
     }
 }

@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using NovaSharp.VsCodeDebugger.DebuggerLogic;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Debugging;
@@ -15,19 +16,17 @@ using NovaSharp.VsCodeDebugger.SDK;
 
 namespace NovaSharp.VsCodeDebugger
 {
-    using System.Threading.Tasks;
-
     /// <summary>
     /// Class implementing a debugger allowing attaching from a Visual Studio Code debugging session.
     /// </summary>
     public class NovaSharpVsCodeDebugServer : IDisposable
     {
-        object m_Lock = new();
-        List<AsyncDebugger> m_DebuggerList = new();
-        AsyncDebugger m_Current = null;
-        ManualResetEvent m_StopEvent = new(false);
-        bool m_Started = false;
-        int m_Port;
+        private readonly object _lock = new object();
+        private readonly List<AsyncDebugger> _debuggerList = new List<AsyncDebugger>();
+        private AsyncDebugger _current = null;
+        private readonly ManualResetEvent _stopEvent = new ManualResetEvent(false);
+        private bool _started = false;
+        private readonly int _port;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NovaSharpVsCodeDebugServer" /> class.
@@ -35,7 +34,7 @@ namespace NovaSharp.VsCodeDebugger
         /// <param name="port">The port on which the debugger listens. It's recommended to use 41912.</param>
         public NovaSharpVsCodeDebugServer(int port = 41912)
         {
-            m_Port = port;
+            _port = port;
         }
 
         /// <summary>
@@ -54,9 +53,9 @@ namespace NovaSharp.VsCodeDebugger
             Func<SourceCode, string> sourceFinder = null
         )
         {
-            m_Port = port;
-            m_Current = new AsyncDebugger(script, sourceFinder ?? (s => s.Name), "Default script");
-            m_DebuggerList.Add(m_Current);
+            _port = port;
+            _current = new AsyncDebugger(script, sourceFinder ?? (s => s.Name), "Default script");
+            _debuggerList.Add(_current);
         }
 
         /// <summary>
@@ -74,20 +73,24 @@ namespace NovaSharp.VsCodeDebugger
             Func<SourceCode, string> sourceFinder = null
         )
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                if (m_DebuggerList.Any(d => d.Script == script))
+                if (_debuggerList.Any(d => d.Script == script))
                 {
                     throw new ArgumentException("Script already attached to this debugger.");
                 }
 
-                AsyncDebugger debugger = new(script, sourceFinder ?? (s => s.Name), name);
+                AsyncDebugger debugger = new AsyncDebugger(
+                    script,
+                    sourceFinder ?? (s => s.Name),
+                    name
+                );
                 script.AttachDebugger(debugger);
-                m_DebuggerList.Add(debugger);
+                _debuggerList.Add(debugger);
 
-                if (m_Current == null)
+                if (_current == null)
                 {
-                    m_Current = debugger;
+                    _current = debugger;
                 }
             }
         }
@@ -97,9 +100,9 @@ namespace NovaSharp.VsCodeDebugger
         /// </summary>
         public IEnumerable<KeyValuePair<int, string>> GetAttachedDebuggersByIdAndName()
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                return m_DebuggerList
+                return _debuggerList
                     .OrderBy(d => d.Id)
                     .Select(d => new KeyValuePair<int, string>(d.Id, d.Name))
                     .ToArray();
@@ -115,29 +118,29 @@ namespace NovaSharp.VsCodeDebugger
         {
             get
             {
-                lock (m_Lock)
+                lock (_lock)
                 {
-                    return m_Current != null ? m_Current.Id : (int?)null;
+                    return _current != null ? _current.Id : (int?)null;
                 }
             }
             set
             {
-                lock (m_Lock)
+                lock (_lock)
                 {
                     if (value == null)
                     {
-                        m_Current = null;
+                        _current = null;
                         return;
                     }
 
-                    AsyncDebugger current = (m_DebuggerList.FirstOrDefault(d => d.Id == value));
+                    AsyncDebugger current = (_debuggerList.FirstOrDefault(d => d.Id == value));
 
                     if (current == null)
                     {
                         throw new ArgumentException("Cannot find debugger with given Id.");
                     }
 
-                    m_Current = current;
+                    _current = current;
                 }
             }
         }
@@ -150,22 +153,22 @@ namespace NovaSharp.VsCodeDebugger
         {
             get
             {
-                lock (m_Lock)
+                lock (_lock)
                 {
-                    return m_Current != null ? m_Current.Script : null;
+                    return _current != null ? _current.Script : null;
                 }
             }
             set
             {
-                lock (m_Lock)
+                lock (_lock)
                 {
                     if (value == null)
                     {
-                        m_Current = null;
+                        _current = null;
                         return;
                     }
 
-                    AsyncDebugger current = (m_DebuggerList.FirstOrDefault(d => d.Script == value));
+                    AsyncDebugger current = (_debuggerList.FirstOrDefault(d => d.Script == value));
 
                     if (current == null)
                     {
@@ -174,7 +177,7 @@ namespace NovaSharp.VsCodeDebugger
                         );
                     }
 
-                    m_Current = current;
+                    _current = current;
                 }
             }
         }
@@ -186,9 +189,9 @@ namespace NovaSharp.VsCodeDebugger
         /// <exception cref="ArgumentException">Thrown if the script cannot be found.</exception>
         public void Detach(Script script)
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                AsyncDebugger removed = m_DebuggerList.FirstOrDefault(d => d.Script == script);
+                AsyncDebugger removed = _debuggerList.FirstOrDefault(d => d.Script == script);
 
                 if (removed == null)
                 {
@@ -197,17 +200,17 @@ namespace NovaSharp.VsCodeDebugger
 
                 removed.Client = null;
 
-                m_DebuggerList.Remove(removed);
+                _debuggerList.Remove(removed);
 
-                if (m_Current == removed)
+                if (_current == removed)
                 {
-                    if (m_DebuggerList.Count > 0)
+                    if (_debuggerList.Count > 0)
                     {
-                        m_Current = m_DebuggerList[m_DebuggerList.Count - 1];
+                        _current = _debuggerList[_debuggerList.Count - 1];
                     }
                     else
                     {
-                        m_Current = null;
+                        _current = null;
                     }
                 }
             }
@@ -224,9 +227,9 @@ namespace NovaSharp.VsCodeDebugger
         [Obsolete("Use the Attach method instead.")]
         public IDebugger GetDebugger()
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                return m_Current;
+                return _current;
             }
         }
 
@@ -236,7 +239,7 @@ namespace NovaSharp.VsCodeDebugger
         /// <exception cref="InvalidOperationException">Cannot stop; server was not started.</exception>
         public void Dispose()
         {
-            m_StopEvent.Set();
+            _stopEvent.Set();
         }
 
         /// <summary>
@@ -244,27 +247,27 @@ namespace NovaSharp.VsCodeDebugger
         /// </summary>
         public NovaSharpVsCodeDebugServer Start()
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                if (m_Started)
+                if (_started)
                 {
                     throw new InvalidOperationException(
                         "Cannot start; server has already been started."
                     );
                 }
 
-                m_StopEvent.Reset();
+                _stopEvent.Reset();
 
                 TcpListener serverSocket = null;
-                serverSocket = new TcpListener(IPAddress.Parse("127.0.0.1"), m_Port);
+                serverSocket = new TcpListener(IPAddress.Parse("127.0.0.1"), _port);
                 serverSocket.Start();
 
                 SpawnThread(
-                    "VsCodeDebugServer_" + m_Port.ToString(),
+                    "VsCodeDebugServer_" + _port.ToString(),
                     () => ListenThread(serverSocket)
                 );
 
-                m_Started = true;
+                _started = true;
 
                 return this;
             }
@@ -274,7 +277,7 @@ namespace NovaSharp.VsCodeDebugger
         {
             try
             {
-                while (!m_StopEvent.WaitOne(0))
+                while (!_stopEvent.WaitOne(0))
                 {
 #if DOTNET_CORE
                     Task<Socket> task = serverSocket.AcceptSocketAsync();
@@ -284,40 +287,37 @@ namespace NovaSharp.VsCodeDebugger
                     var clientSocket = serverSocket.AcceptSocket();
 #endif
 
-                    if (clientSocket != null)
-                    {
-                        string sessionId = Guid.NewGuid().ToString("N");
-                        Log(
-                            "[{0}] : Accepted connection from client {1}",
-                            sessionId,
-                            clientSocket.RemoteEndPoint
-                        );
+                    string sessionId = Guid.NewGuid().ToString("N");
+                    Log(
+                        "[{0}] : Accepted connection from client {1}",
+                        sessionId,
+                        clientSocket.RemoteEndPoint
+                    );
 
-                        SpawnThread(
-                            "VsCodeDebugSession_" + sessionId,
-                            () =>
+                    SpawnThread(
+                        "VsCodeDebugSession_" + sessionId,
+                        () =>
+                        {
+                            using (NetworkStream networkStream = new NetworkStream(clientSocket))
                             {
-                                using (NetworkStream networkStream = new(clientSocket))
+                                try
                                 {
-                                    try
-                                    {
-                                        RunSession(sessionId, networkStream);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Log("[{0}] : Error : {1}", ex.Message);
-                                    }
+                                    RunSession(sessionId, networkStream);
                                 }
+                                catch (Exception ex)
+                                {
+                                    Log("[{0}] : Error : {1}", ex.Message);
+                                }
+                            }
 
 #if DOTNET_CORE
-                                clientSocket.Dispose();
+                            clientSocket.Dispose();
 #else
-                                clientSocket.Close();
+                            clientSocket.Close();
 #endif
-                                Log("[{0}] : Client connection closed", sessionId);
-                            }
-                        );
-                    }
+                            Log("[{0}] : Client connection closed", sessionId);
+                        }
+                    );
                 }
             }
             catch (Exception e)
@@ -337,11 +337,11 @@ namespace NovaSharp.VsCodeDebugger
         {
             DebugSession debugSession = null;
 
-            lock (m_Lock)
+            lock (_lock)
             {
-                if (m_Current != null)
+                if (_current != null)
                 {
-                    debugSession = new NovaSharpDebugSession(this, m_Current);
+                    debugSession = new NovaSharpDebugSession(this, _current);
                 }
                 else
                 {
@@ -366,7 +366,7 @@ namespace NovaSharp.VsCodeDebugger
         private static void SpawnThread(string name, Action threadProc)
         {
 #if DOTNET_CORE
-            System.Threading.Tasks.Task.Run(() => threadProc());
+            Task.Run(() => threadProc());
 #else
             new System.Threading.Thread(() => threadProc())
             {

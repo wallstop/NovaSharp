@@ -1,20 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace NovaSharp.Interpreter.DataStructs
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     /// <summary>
     /// Provides facility to create a "sliced" view over an existing IList<typeparamref name="T"/>
     /// </summary>
     /// <typeparam name="T">The type of the items contained in the collection</typeparam>
     internal class Slice<T> : IEnumerable<T>, IList<T>
     {
-        IList<T> m_SourceList;
-        int m_From,
-            m_Length;
-        bool m_Reversed;
+        private readonly IList<T> _sourceList;
+
+        private readonly int _from;
+
+        private readonly int _length;
+
+        private readonly bool _reversed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Slice{T}"/> class.
@@ -25,10 +28,10 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="reversed">if set to <c>true</c> the view is in reversed order.</param>
         public Slice(IList<T> list, int from, int length, bool reversed)
         {
-            m_SourceList = list;
-            m_From = from;
-            m_Length = length;
-            m_Reversed = reversed;
+            _sourceList = list;
+            _from = from;
+            _length = length;
+            _reversed = reversed;
         }
 
         /// <summary>
@@ -38,8 +41,8 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <returns></returns>
         public T this[int index]
         {
-            get { return m_SourceList[CalcRealIndex(index)]; }
-            set { m_SourceList[CalcRealIndex(index)] = value; }
+            get { return _sourceList[CalcRealIndex(index)]; }
+            set { _sourceList[CalcRealIndex(index)] = value; }
         }
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public int From
         {
-            get { return m_From; }
+            get { return _from; }
         }
 
         /// <summary>
@@ -56,7 +59,7 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <returns>The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.</returns>
         public int Count
         {
-            get { return m_Length; }
+            get { return _length; }
         }
 
         /// <summary>
@@ -67,7 +70,7 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </value>
         public bool Reversed
         {
-            get { return m_Reversed; }
+            get { return _reversed; }
         }
 
         /// <summary>
@@ -75,18 +78,18 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         private int CalcRealIndex(int index)
         {
-            if (index < 0 || index >= m_Length)
+            if (index < 0 || index >= _length)
             {
                 throw new ArgumentOutOfRangeException("index");
             }
 
-            if (m_Reversed)
+            if (_reversed)
             {
-                return m_From + m_Length - index - 1;
+                return _from + _length - index - 1;
             }
             else
             {
-                return m_From + index;
+                return _from + index;
             }
         }
 
@@ -98,9 +101,9 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </returns>
         public IEnumerator<T> GetEnumerator()
         {
-            for (int i = 0; i < m_Length; i++)
+            for (int i = 0; i < _length; i++)
             {
-                yield return m_SourceList[CalcRealIndex(i)];
+                yield return _sourceList[CalcRealIndex(i)];
             }
         }
 
@@ -112,9 +115,9 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </returns>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            for (int i = 0; i < m_Length; i++)
+            for (int i = 0; i < _length; i++)
             {
-                yield return m_SourceList[CalcRealIndex(i)];
+                yield return _sourceList[CalcRealIndex(i)];
             }
         }
 
@@ -123,11 +126,11 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public T[] ToArray()
         {
-            T[] array = new T[m_Length];
+            T[] array = new T[_length];
 
-            for (int i = 0; i < m_Length; i++)
+            for (int i = 0; i < _length; i++)
             {
-                array[i] = m_SourceList[CalcRealIndex(i)];
+                array[i] = _sourceList[CalcRealIndex(i)];
             }
 
             return array;
@@ -138,11 +141,11 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public List<T> ToList()
         {
-            List<T> list = new(m_Length);
+            List<T> list = new(_length);
 
-            for (int i = 0; i < m_Length; i++)
+            for (int i = 0; i < _length; i++)
             {
-                list.Add(m_SourceList[CalcRealIndex(i)]);
+                list.Add(_sourceList[CalcRealIndex(i)]);
             }
 
             return list;
@@ -157,7 +160,7 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </returns>
         public int IndexOf(T item)
         {
-            for (int i = 0; i < this.Count; i++)
+            for (int i = 0; i < Count; i++)
             {
                 if (this[i].Equals(item))
                 {

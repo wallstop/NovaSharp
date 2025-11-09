@@ -1,8 +1,8 @@
-using System;
-using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using RegistrationPolicies;
+
     /// <summary>
     /// Collection of the standard policies to handle UserData type registrations.
     /// Provided mostly for compile-time backward compatibility with old code.

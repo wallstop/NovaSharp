@@ -1,10 +1,10 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-
 namespace NovaSharp.Hardwire.Utils
 {
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop.BasicDescriptors;
+    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+
     public class HardwireParameterDescriptor
     {
         public CodeExpression Expression { get; private set; }

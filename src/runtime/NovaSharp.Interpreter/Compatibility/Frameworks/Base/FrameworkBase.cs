@@ -1,8 +1,8 @@
-using System;
-using System.Reflection;
-
 namespace NovaSharp.Interpreter.Compatibility.Frameworks
 {
+    using System;
+    using System.Reflection;
+
     public abstract class FrameworkBase
     {
         public abstract bool StringContainsChar(string str, char chr);

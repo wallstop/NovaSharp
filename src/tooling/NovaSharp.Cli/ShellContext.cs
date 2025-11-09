@@ -1,7 +1,7 @@
-using NovaSharp.Interpreter;
-
 namespace NovaSharp
 {
+    using Interpreter;
+
     public class ShellContext
     {
         public Script Script { get; private set; }

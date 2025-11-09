@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
     /// </summary>
     public sealed class JsonNull
     {
-        public static bool isNull()
+        public static bool IsNull()
         {
             return true;
         }

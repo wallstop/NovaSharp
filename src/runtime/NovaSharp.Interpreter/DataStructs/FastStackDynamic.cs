@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.DataStructs
 {
+    using System.Collections.Generic;
+
 #if USE_DYNAMIC_STACKS
     internal class FastStack<T> : FastStackDynamic<T>
     {
@@ -22,12 +21,12 @@ namespace NovaSharp.Interpreter.DataStructs
 
         public void Set(int idxofs, T item)
         {
-            this[this.Count - 1 - idxofs] = item;
+            this[Count - 1 - idxofs] = item;
         }
 
         public T Push(T item)
         {
-            this.Add(item);
+            Add(item);
             return item;
         }
 
@@ -35,7 +34,7 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             for (int i = 0; i < size; i++)
             {
-                this.Add(default(T));
+                Add(default(T));
             }
         }
 
@@ -46,7 +45,7 @@ namespace NovaSharp.Interpreter.DataStructs
 
         public T Peek(int idxofs = 0)
         {
-            T item = this[this.Count - 1 - idxofs];
+            T item = this[Count - 1 - idxofs];
             return item;
         }
 
@@ -59,18 +58,18 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             if (cnt == 1)
             {
-                this.RemoveAt(this.Count - 1);
+                RemoveAt(Count - 1);
             }
             else
             {
-                this.RemoveRange(this.Count - cnt, cnt);
+                RemoveRange(Count - cnt, cnt);
             }
         }
 
         public T Pop()
         {
-            T retval = this[this.Count - 1];
-            this.RemoveAt(this.Count - 1);
+            T retval = this[Count - 1];
+            RemoveAt(Count - 1);
             return retval;
         }
     }

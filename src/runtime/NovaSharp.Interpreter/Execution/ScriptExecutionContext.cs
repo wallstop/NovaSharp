@@ -1,17 +1,17 @@
-using System;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution.VM;
-using NovaSharp.Interpreter.Interop.LuaStateInterop;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using Debugging;
+    using Execution.VM;
+    using Interop.LuaStateInterop;
+
     /// <summary>
     /// Class giving access to details of the environment where the script is executing
     /// </summary>
     public class ScriptExecutionContext : IScriptPrivateResource
     {
-        Processor m_Processor;
-        CallbackFunction m_Callback;
+        private readonly Processor _processor;
+        private readonly CallbackFunction _callback;
 
         internal ScriptExecutionContext(
             Processor p,
@@ -21,8 +21,8 @@ namespace NovaSharp.Interpreter
         )
         {
             IsDynamicExecution = isDynamic;
-            m_Processor = p;
-            m_Callback = callBackFunction;
+            _processor = p;
+            _callback = callBackFunction;
             CallingLocation = sourceRef;
         }
 
@@ -43,17 +43,17 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public object AdditionalData
         {
-            get { return (m_Callback != null) ? m_Callback.AdditionalData : null; }
+            get { return (_callback != null) ? _callback.AdditionalData : null; }
             set
             {
-                if (m_Callback == null)
+                if (_callback == null)
                 {
                     throw new InvalidOperationException(
                         "Cannot set additional data on a context which has no callback"
                     );
                 }
 
-                m_Callback.AdditionalData = value;
+                _callback.AdditionalData = value;
             }
         }
 
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public Table GetMetatable(DynValue value)
         {
-            return m_Processor.GetMetatable(value);
+            return _processor.GetMetatable(value);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue GetMetamethod(DynValue value, string metamethod)
         {
-            return m_Processor.GetMetamethod(value, metamethod);
+            return _processor.GetMetamethod(value, metamethod);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter
             params DynValue[] args
         )
         {
-            DynValue meta = this.GetMetamethod(value, metamethod);
+            DynValue meta = GetMetamethod(value, metamethod);
             if (meta == null)
             {
                 return null;
@@ -101,7 +101,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
-            return m_Processor.GetBinaryMetamethod(op1, op2, eventName);
+            return _processor.GetBinaryMetamethod(op1, op2, eventName);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public Script GetScript()
         {
-            return m_Processor.GetScript();
+            return _processor.GetScript();
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Coroutine GetCallingCoroutine()
         {
-            return m_Processor.AssociatedCoroutine;
+            return _processor.AssociatedCoroutine;
         }
 
         /// <summary>
@@ -138,9 +138,9 @@ namespace NovaSharp.Interpreter
             Func<LuaState, int> callback
         )
         {
-            LuaState L = new(this, args, functionName);
-            int retvals = callback(L);
-            return L.GetReturnValue(retvals);
+            LuaState l = new(this, args, functionName);
+            int retvals = callback(l);
+            return l.GetReturnValue(retvals);
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace NovaSharp.Interpreter
         {
             if (func.Type == DataType.Function)
             {
-                return this.GetScript().Call(func, args);
+                return GetScript().Call(func, args);
             }
             else if (func.Type == DataType.ClrFunction)
             {
@@ -194,7 +194,7 @@ namespace NovaSharp.Interpreter
 
                 while (maxloops > 0)
                 {
-                    DynValue v = this.GetMetamethod(func, "__call");
+                    DynValue v = GetMetamethod(func, "__call");
 
                     if (v == null && v.IsNil())
                     {
@@ -223,7 +223,7 @@ namespace NovaSharp.Interpreter
                 return DynValue.Nil;
             }
 
-            return m_Processor.GetGenericSymbol(symref);
+            return _processor.GetGenericSymbol(symref);
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public DynValue EvaluateSymbolByName(string symbol)
         {
-            return this.EvaluateSymbol(this.FindSymbolByName(symbol));
+            return EvaluateSymbol(FindSymbolByName(symbol));
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public SymbolRef FindSymbolByName(string symbol)
         {
-            return m_Processor.FindSymbolByName(symbol);
+            return _processor.FindSymbolByName(symbol);
         }
 
         /// <summary>
@@ -274,7 +274,7 @@ namespace NovaSharp.Interpreter
         {
             if (messageHandler != null)
             {
-                exception.DecoratedMessage = m_Processor.PerformMessageDecorationBeforeUnwind(
+                exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
                     messageHandler,
                     exception.Message,
                     CallingLocation
@@ -294,7 +294,7 @@ namespace NovaSharp.Interpreter
         /// </value>
         public Script OwnerScript
         {
-            get { return this.GetScript(); }
+            get { return GetScript(); }
         }
     }
 }

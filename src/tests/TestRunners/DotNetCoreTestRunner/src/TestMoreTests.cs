@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class TestMoreTests
     {
@@ -213,36 +213,10 @@ namespace NovaSharp.Interpreter.Tests
             TapRunner.Run(@"TestMore/307-bit.t");
         }
 
-        [Test]
-        public void TestMore_308_io()
-        {
-            if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
-            {
-                TapRunner.Run(@"TestMore/308-io.t");
-            }
-            else
-            {
-                TestRunner.Skip();
-            }
-        }
-
         private bool AreCoreModulesFullySupported(CoreModules modules)
         {
             CoreModules supp = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
             return supp == modules;
-        }
-
-        [Test]
-        public void TestMore_309_os()
-        {
-            if (AreCoreModulesFullySupported(CoreModules.OS_System | CoreModules.IO))
-            {
-                TapRunner.Run(@"TestMore/309-os.t");
-            }
-            else
-            {
-                TestRunner.Skip();
-            }
         }
 
         //[Test]

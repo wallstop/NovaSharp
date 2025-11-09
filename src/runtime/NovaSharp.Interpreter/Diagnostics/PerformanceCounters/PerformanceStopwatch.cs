@@ -1,44 +1,44 @@
-using System;
-using System.Diagnostics;
-
 namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
+    using System;
+    using System.Diagnostics;
+
     /// <summary>
     /// This class is not *really* IDisposable.. it's just use to have a RAII like pattern.
     /// You are free to reuse this instance after calling Dispose.
     /// </summary>
     internal class PerformanceStopwatch : IDisposable, IPerformanceStopwatch
     {
-        Stopwatch m_Stopwatch = new();
-        int m_Count = 0;
-        int m_Reentrant = 0;
-        PerformanceCounter m_Counter;
+        private readonly Stopwatch _stopwatch = new();
+        private int _count = 0;
+        private int _reentrant = 0;
+        private readonly PerformanceCounter _counter;
 
         public PerformanceStopwatch(PerformanceCounter perfcounter)
         {
-            m_Counter = perfcounter;
+            _counter = perfcounter;
         }
 
         public IDisposable Start()
         {
-            if (m_Reentrant == 0)
+            if (_reentrant == 0)
             {
-                m_Count += 1;
-                m_Stopwatch.Start();
+                _count += 1;
+                _stopwatch.Start();
             }
 
-            m_Reentrant += 1;
+            _reentrant += 1;
 
             return this;
         }
 
         public void Dispose()
         {
-            m_Reentrant -= 1;
+            _reentrant -= 1;
 
-            if (m_Reentrant == 0)
+            if (_reentrant == 0)
             {
-                m_Stopwatch.Stop();
+                _stopwatch.Stop();
             }
         }
 
@@ -48,9 +48,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             {
                 Type = PerformanceCounterType.TimeMilliseconds,
                 Global = false,
-                Name = m_Counter.ToString(),
-                Instances = m_Count,
-                Counter = m_Stopwatch.ElapsedMilliseconds,
+                Name = _counter.ToString(),
+                Instances = _count,
+                Counter = _stopwatch.ElapsedMilliseconds,
             };
         }
     }

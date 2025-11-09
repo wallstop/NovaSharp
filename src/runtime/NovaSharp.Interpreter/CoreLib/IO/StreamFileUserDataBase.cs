@@ -1,27 +1,27 @@
-using System.IO;
-
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
+    using System.IO;
+
     /// <summary>
     /// Abstract class implementing a file Lua userdata. Methods are meant to be called by Lua code.
     /// </summary>
     internal abstract class StreamFileUserDataBase : FileUserDataBase
     {
-        protected Stream m_Stream;
-        protected StreamReader m_Reader;
-        protected StreamWriter m_Writer;
-        protected bool m_Closed = false;
+        protected Stream _Stream;
+        protected StreamReader _Reader;
+        protected StreamWriter _Writer;
+        protected bool _Closed = false;
 
         protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)
         {
-            m_Stream = stream;
-            m_Reader = reader;
-            m_Writer = writer;
+            _Stream = stream;
+            _Reader = reader;
+            _Writer = writer;
         }
 
         private void CheckFileIsNotClosed()
         {
-            if (m_Closed)
+            if (_Closed)
             {
                 throw new ScriptRuntimeException("attempt to use a closed file");
             }
@@ -31,9 +31,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
 
-            if (m_Reader != null)
+            if (_Reader != null)
             {
-                return m_Reader.EndOfStream;
+                return _Reader.EndOfStream;
             }
             else
             {
@@ -44,84 +44,84 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override string ReadLine()
         {
             CheckFileIsNotClosed();
-            return m_Reader.ReadLine();
+            return _Reader.ReadLine();
         }
 
         protected override string ReadToEnd()
         {
             CheckFileIsNotClosed();
-            return m_Reader.ReadToEnd();
+            return _Reader.ReadToEnd();
         }
 
         protected override string ReadBuffer(int p)
         {
             CheckFileIsNotClosed();
             char[] buffer = new char[p];
-            int length = m_Reader.ReadBlock(buffer, 0, p);
+            int length = _Reader.ReadBlock(buffer, 0, p);
             return new string(buffer, 0, length);
         }
 
         protected override char Peek()
         {
             CheckFileIsNotClosed();
-            return (char)m_Reader.Peek();
+            return (char)_Reader.Peek();
         }
 
         protected override void Write(string value)
         {
             CheckFileIsNotClosed();
-            m_Writer.Write(value);
+            _Writer.Write(value);
         }
 
         protected override string Close()
         {
             CheckFileIsNotClosed();
 
-            if (m_Writer != null)
+            if (_Writer != null)
             {
-                m_Writer.Dispose();
+                _Writer.Dispose();
             }
 
-            if (m_Reader != null)
+            if (_Reader != null)
             {
-                m_Reader.Dispose();
+                _Reader.Dispose();
             }
 
-            m_Stream.Dispose();
+            _Stream.Dispose();
 
-            m_Closed = true;
+            _Closed = true;
 
             return null;
         }
 
-        public override bool flush()
+        public override bool Flush()
         {
             CheckFileIsNotClosed();
 
-            if (m_Writer != null)
+            if (_Writer != null)
             {
-                m_Writer.Flush();
+                _Writer.Flush();
             }
 
             return true;
         }
 
-        public override long seek(string whence, long offset = 0)
+        public override long Seek(string whence, long offset = 0)
         {
             CheckFileIsNotClosed();
             if (whence != null)
             {
                 if (whence == "set")
                 {
-                    m_Stream.Seek(offset, SeekOrigin.Begin);
+                    _Stream.Seek(offset, SeekOrigin.Begin);
                 }
                 else if (whence == "cur")
                 {
-                    m_Stream.Seek(offset, SeekOrigin.Current);
+                    _Stream.Seek(offset, SeekOrigin.Current);
                 }
                 else if (whence == "end")
                 {
-                    m_Stream.Seek(offset, SeekOrigin.End);
+                    _Stream.Seek(offset, SeekOrigin.End);
                 }
                 else
                 {
@@ -133,23 +133,23 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 }
             }
 
-            return m_Stream.Position;
+            return _Stream.Position;
         }
 
-        public override bool setvbuf(string mode)
+        public override bool Setvbuf(string mode)
         {
             CheckFileIsNotClosed();
-            if (m_Writer != null)
+            if (_Writer != null)
             {
-                m_Writer.AutoFlush = (mode == "no" || mode == "line");
+                _Writer.AutoFlush = (mode == "no" || mode == "line");
             }
 
             return true;
         }
 
-        protected internal override bool isopen()
+        protected internal override bool Isopen()
         {
-            return !m_Closed;
+            return !_Closed;
         }
     }
 }

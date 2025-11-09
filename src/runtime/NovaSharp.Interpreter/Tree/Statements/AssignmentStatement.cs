@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class AssignmentStatement : Statement
+    using System;
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+    using Expressions;
+
+    internal class AssignmentStatement : Statement
     {
-        List<IVariable> m_LValues = new();
-        List<Expression> m_RValues;
-        SourceRef m_Ref;
+        private readonly List<IVariable> _lValues = new();
+        private readonly List<Expression> _rValues;
+        private readonly SourceRef _ref;
 
         public AssignmentStatement(ScriptLoadingContext lcontext, Token startToken)
             : base(lcontext)
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 Token name = CheckTokenType(lcontext, TokenType.Name);
                 names.Add(name.Text);
 
-                if (lcontext.Lexer.Current.Type != TokenType.Comma)
+                if (lcontext.Lexer.Current.type != TokenType.Comma)
                 {
                     break;
                 }
@@ -32,26 +32,26 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 lcontext.Lexer.Next();
             }
 
-            if (lcontext.Lexer.Current.Type == TokenType.Op_Assignment)
+            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
             {
-                CheckTokenType(lcontext, TokenType.Op_Assignment);
-                m_RValues = Expression.ExprList(lcontext);
+                CheckTokenType(lcontext, TokenType.OpAssignment);
+                _rValues = Expression.ExprList(lcontext);
             }
             else
             {
-                m_RValues = new List<Expression>();
+                _rValues = new List<Expression>();
             }
 
             foreach (string name in names)
             {
                 SymbolRef localVar = lcontext.Scope.TryDefineLocal(name);
                 SymbolRefExpression symbol = new(lcontext, localVar);
-                m_LValues.Add(symbol);
+                _lValues.Add(symbol);
             }
 
             Token last = lcontext.Lexer.Current;
-            m_Ref = first.GetSourceRefUpTo(last);
-            lcontext.Source.Refs.Add(m_Ref);
+            _ref = first.GetSourceRefUpTo(last);
+            lcontext.Source.Refs.Add(_ref);
         }
 
         public AssignmentStatement(
@@ -61,29 +61,27 @@ namespace NovaSharp.Interpreter.Tree.Statements
         )
             : base(lcontext)
         {
-            m_LValues.Add(CheckVar(lcontext, firstExpression));
+            _lValues.Add(CheckVar(lcontext, firstExpression));
 
-            while (lcontext.Lexer.Current.Type == TokenType.Comma)
+            while (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Expression e = Expression.PrimaryExp(lcontext);
-                m_LValues.Add(CheckVar(lcontext, e));
+                _lValues.Add(CheckVar(lcontext, e));
             }
 
-            CheckTokenType(lcontext, TokenType.Op_Assignment);
+            CheckTokenType(lcontext, TokenType.OpAssignment);
 
-            m_RValues = Expression.ExprList(lcontext);
+            _rValues = Expression.ExprList(lcontext);
 
             Token last = lcontext.Lexer.Current;
-            m_Ref = first.GetSourceRefUpTo(last);
-            lcontext.Source.Refs.Add(m_Ref);
+            _ref = first.GetSourceRefUpTo(last);
+            lcontext.Source.Refs.Add(_ref);
         }
 
         private IVariable CheckVar(ScriptLoadingContext lcontext, Expression firstExpression)
         {
-            IVariable v = firstExpression as IVariable;
-
-            if (v == null)
+            if (firstExpression is not IVariable v)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -97,24 +95,24 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            using (bc.EnterSource(m_Ref))
+            using (bc.EnterSource(_ref))
             {
-                foreach (Expression exp in m_RValues)
+                foreach (Expression exp in _rValues)
                 {
                     exp.Compile(bc);
                 }
 
-                for (int i = 0; i < m_LValues.Count; i++)
+                for (int i = 0; i < _lValues.Count; i++)
                 {
-                    m_LValues[i]
+                    _lValues[i]
                         .CompileAssignment(
                             bc,
-                            Math.Max(m_RValues.Count - 1 - i, 0), // index of r-value
-                            i - Math.Min(i, m_RValues.Count - 1)
+                            Math.Max(_rValues.Count - 1 - i, 0), // index of r-value
+                            i - Math.Min(i, _rValues.Count - 1)
                         ); // index in last tuple
                 }
 
-                bc.Emit_Pop(m_RValues.Count);
+                bc.Emit_Pop(_rValues.Count);
             }
         }
     }

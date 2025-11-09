@@ -1,17 +1,17 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+
     /// <summary>
     /// Class implementing bit32 Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "bit32")]
     public class Bit32Module
     {
-        static readonly uint[] MASKS = new uint[]
+        private static readonly uint[] Masks = new uint[]
         {
             0x1,
             0x3,
@@ -47,21 +47,21 @@ namespace NovaSharp.Interpreter.CoreLib
             0xFFFFFFFF,
         };
 
-        static uint ToUInt32(DynValue v)
+        private static uint ToUInt32(DynValue v)
         {
             double d = v.Number;
             d = Math.IEEERemainder(d, Math.Pow(2.0, 32.0));
             return (uint)d;
         }
 
-        static int ToInt32(DynValue v)
+        private static int ToInt32(DynValue v)
         {
             double d = v.Number;
             d = Math.IEEERemainder(d, Math.Pow(2.0, 32.0));
             return (int)d;
         }
 
-        static uint NBitMask(int bits)
+        private static uint NBitMask(int bits)
         {
             if (bits <= 0)
             {
@@ -70,10 +70,10 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (bits >= 32)
             {
-                return MASKS[31];
+                return Masks[31];
             }
 
-            return MASKS[bits - 1];
+            return Masks[bits - 1];
         }
 
         public static uint Bitwise(
@@ -93,20 +93,20 @@ namespace NovaSharp.Interpreter.CoreLib
             return accum;
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue extract(
+        [NovaSharpModuleMethod(Name = "extract")]
+        public static DynValue Extract(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "extract", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "extract", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_pos = args.AsType(1, "extract", DataType.Number);
-            DynValue v_width = args.AsType(2, "extract", DataType.Number, true);
+            DynValue vPos = args.AsType(1, "extract", DataType.Number);
+            DynValue vWidth = args.AsType(2, "extract", DataType.Number, true);
 
-            int pos = (int)v_pos.Number;
-            int width = (v_width).IsNilOrNan() ? 1 : (int)v_width.Number;
+            int pos = (int)vPos.Number;
+            int width = (vWidth).IsNilOrNan() ? 1 : (int)vWidth.Number;
 
             ValidatePosWidth("extract", 2, pos, width);
 
@@ -114,22 +114,22 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(res);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue replace(
+        [NovaSharpModuleMethod(Name = "replace")]
+        public static DynValue Replace(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "replace", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "replace", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_u = args.AsType(1, "replace", DataType.Number);
-            uint u = ToUInt32(v_u);
-            DynValue v_pos = args.AsType(2, "replace", DataType.Number);
-            DynValue v_width = args.AsType(3, "replace", DataType.Number, true);
+            DynValue vU = args.AsType(1, "replace", DataType.Number);
+            uint u = ToUInt32(vU);
+            DynValue vPos = args.AsType(2, "replace", DataType.Number);
+            DynValue vWidth = args.AsType(3, "replace", DataType.Number, true);
 
-            int pos = (int)v_pos.Number;
-            int width = (v_width).IsNilOrNan() ? 1 : (int)v_width.Number;
+            int pos = (int)vPos.Number;
+            int width = (vWidth).IsNilOrNan() ? 1 : (int)vWidth.Number;
 
             ValidatePosWidth("replace", 3, pos, width);
 
@@ -167,18 +167,18 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue arshift(
+        [NovaSharpModuleMethod(Name = "arshift")]
+        public static DynValue Arshift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "arshift", DataType.Number);
-            int v = ToInt32(v_v);
+            DynValue vV = args.AsType(0, "arshift", DataType.Number);
+            int v = ToInt32(vV);
 
-            DynValue v_a = args.AsType(1, "arshift", DataType.Number);
+            DynValue vA = args.AsType(1, "arshift", DataType.Number);
 
-            int a = (int)v_a.Number;
+            int a = (int)vA.Number;
 
             if (a < 0)
             {
@@ -192,18 +192,18 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue rshift(
+        [NovaSharpModuleMethod(Name = "rshift")]
+        public static DynValue Rshift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "rshift", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "rshift", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_a = args.AsType(1, "rshift", DataType.Number);
+            DynValue vA = args.AsType(1, "rshift", DataType.Number);
 
-            int a = (int)v_a.Number;
+            int a = (int)vA.Number;
 
             if (a < 0)
             {
@@ -217,18 +217,18 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue lshift(
+        [NovaSharpModuleMethod(Name = "lshift")]
+        public static DynValue Lshift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "lshift", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "lshift", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_a = args.AsType(1, "lshift", DataType.Number);
+            DynValue vA = args.AsType(1, "lshift", DataType.Number);
 
-            int a = (int)v_a.Number;
+            int a = (int)vA.Number;
 
             if (a < 0)
             {
@@ -242,14 +242,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue band(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "band")]
+        public static DynValue Band(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return DynValue.NewNumber(Bitwise("band", args, (x, y) => x & y));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue btest(
+        [NovaSharpModuleMethod(Name = "btest")]
+        public static DynValue Btest(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -257,38 +257,38 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewBoolean(0 != Bitwise("btest", args, (x, y) => x & y));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue bor(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "bor")]
+        public static DynValue Bor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return DynValue.NewNumber(Bitwise("bor", args, (x, y) => x | y));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue bnot(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "bnot")]
+        public static DynValue Bnot(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DynValue v_v = args.AsType(0, "bnot", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "bnot", DataType.Number);
+            uint v = ToUInt32(vV);
             return DynValue.NewNumber(~v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue bxor(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "bxor")]
+        public static DynValue Bxor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return DynValue.NewNumber(Bitwise("bxor", args, (x, y) => x ^ y));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue lrotate(
+        [NovaSharpModuleMethod(Name = "lrotate")]
+        public static DynValue Lrotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "lrotate", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "lrotate", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_a = args.AsType(1, "lrotate", DataType.Number);
+            DynValue vA = args.AsType(1, "lrotate", DataType.Number);
 
-            int a = ((int)v_a.Number) % 32;
+            int a = ((int)vA.Number) % 32;
 
             if (a < 0)
             {
@@ -302,18 +302,18 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue rrotate(
+        [NovaSharpModuleMethod(Name = "rrotate")]
+        public static DynValue Rrotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue v_v = args.AsType(0, "rrotate", DataType.Number);
-            uint v = ToUInt32(v_v);
+            DynValue vV = args.AsType(0, "rrotate", DataType.Number);
+            uint v = ToUInt32(vV);
 
-            DynValue v_a = args.AsType(1, "rrotate", DataType.Number);
+            DynValue vA = args.AsType(1, "rrotate", DataType.Number);
 
-            int a = ((int)v_a.Number) % 32;
+            int a = ((int)vA.Number) % 32;
 
             if (a < 0)
             {

@@ -1,24 +1,24 @@
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class SymbolRefExpression : Expression, IVariable
-    {
-        SymbolRef m_Ref;
-        string m_VarName;
+    using Execution;
 
-        public SymbolRefExpression(Token T, ScriptLoadingContext lcontext)
+    internal class SymbolRefExpression : Expression, IVariable
+    {
+        private readonly SymbolRef _ref;
+        private readonly string _varName;
+
+        public SymbolRefExpression(Token t, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            m_VarName = T.Text;
+            _varName = t.Text;
 
-            if (T.Type == TokenType.VarArgs)
+            if (t.type == TokenType.VarArgs)
             {
-                m_Ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
+                _ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
 
                 if (!lcontext.Scope.CurrentFunctionHasVarArgs())
                 {
-                    throw new SyntaxErrorException(T, "cannot use '...' outside a vararg function");
+                    throw new SyntaxErrorException(t, "cannot use '...' outside a vararg function");
                 }
 
                 if (lcontext.IsDynamicExpression)
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             {
                 if (!lcontext.IsDynamicExpression)
                 {
-                    m_Ref = lcontext.Scope.Find(m_VarName);
+                    _ref = lcontext.Scope.Find(_varName);
                 }
             }
 
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public SymbolRefExpression(ScriptLoadingContext lcontext, SymbolRef refr)
             : base(lcontext)
         {
-            m_Ref = refr;
+            _ref = refr;
 
             if (lcontext.IsDynamicExpression)
             {
@@ -54,22 +54,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Load(m_Ref);
+            bc.Emit_Load(_ref);
         }
 
         public void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx)
         {
-            bc.Emit_Store(m_Ref, stackofs, tupleidx);
+            bc.Emit_Store(_ref, stackofs, tupleidx);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            return context.EvaluateSymbolByName(m_VarName);
+            return context.EvaluateSymbolByName(_varName);
         }
 
         public override SymbolRef FindDynamic(ScriptExecutionContext context)
         {
-            return context.FindSymbolByName(m_VarName);
+            return context.FindSymbolByName(_varName);
         }
     }
 }

@@ -1,8 +1,8 @@
-using System;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using NUnit.Framework;
+
 #pragma warning disable 169 // unused private field
 
     [TestFixture]
@@ -10,14 +10,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class SomeClass
         {
-            public event EventHandler MyEvent;
-            public static event EventHandler MySEvent;
+            public event EventHandler OnMyEvent;
+            public static event EventHandler OnMySEvent;
 
             public bool Trigger_MyEvent()
             {
-                if (MyEvent != null)
+                if (OnMyEvent != null)
                 {
-                    MyEvent(this, EventArgs.Empty);
+                    OnMyEvent(this, EventArgs.Empty);
                     return true;
                 }
                 return false;
@@ -25,9 +25,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public static bool Trigger_MySEvent()
             {
-                if (MySEvent != null)
+                if (OnMySEvent != null)
                 {
-                    MySEvent(null, EventArgs.Empty);
+                    OnMySEvent(null, EventArgs.Empty);
                     return true;
                 }
                 return false;
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             obj.Trigger_MyEvent();
 
-            Assert.AreEqual(1, invocationCount);
+            Assert.That(invocationCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -102,7 +102,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             obj.Trigger_MyEvent();
             obj2.Trigger_MyEvent();
 
-            Assert.AreEqual(1, invocationCount);
+            Assert.That(invocationCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             obj.Trigger_MyEvent();
 
-            Assert.AreEqual(2, invocationCount);
+            Assert.That(invocationCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -173,7 +173,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            Assert.AreEqual(3, invocationCount);
+            Assert.That(invocationCount, Is.EqualTo(3));
         }
 
         [Test]
@@ -210,8 +210,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            Assert.IsFalse(obj.Trigger_MyEvent(), "deregistration");
-            Assert.AreEqual(3, invocationCount);
+            Assert.That(obj.Trigger_MyEvent(), Is.False, "deregistration");
+            Assert.That(invocationCount, Is.EqualTo(3));
         }
 
         [Test]
@@ -221,16 +221,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(CoreModules.None);
-
-            s.Globals["myobj"] = typeof(SomeClass);
-            s.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
+            Script s = new(CoreModules.None)
+            {
+                Globals =
                 {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
+                    ["myobj"] = typeof(SomeClass),
+                    ["ext"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            invocationCount += 1;
+                            return DynValue.Void;
+                        }
+                    ),
+                },
+            };
 
             s.DoString(
                 @"
@@ -247,8 +251,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            Assert.IsFalse(SomeClass.Trigger_MySEvent(), "deregistration");
-            Assert.AreEqual(3, invocationCount);
+            Assert.That(SomeClass.Trigger_MySEvent(), Is.False, "deregistration");
+            Assert.That(invocationCount, Is.EqualTo(3));
         }
 
         [Test]
@@ -258,16 +262,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(CoreModules.None);
-
-            s.Globals["myobj"] = typeof(SomeClass);
-            s.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
+            Script s = new(CoreModules.None)
+            {
+                Globals =
                 {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
+                    ["myobj"] = typeof(SomeClass),
+                    ["ext"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            invocationCount += 1;
+                            return DynValue.Void;
+                        }
+                    ),
+                },
+            };
 
             s.DoString(
                 @"
@@ -284,8 +292,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			"
             );
 
-            Assert.AreEqual(2, invocationCount);
-            Assert.IsTrue(SomeClass.Trigger_MySEvent(), "deregistration");
+            Assert.That(invocationCount, Is.EqualTo(2));
+            Assert.That(SomeClass.Trigger_MySEvent(), Is.True, "deregistration");
         }
     }
 }

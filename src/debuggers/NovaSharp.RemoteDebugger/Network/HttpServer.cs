@@ -1,8 +1,8 @@
-using System.Reflection;
-using System.Text;
-
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System.Reflection;
+    using System.Text;
+
     /// <summary>
     /// This is a very very (very!) simplified and light http server. It exists to run on platforms where
     /// more standard methods offered by .NET BCL are not available and/or if priviledges cannot be
@@ -11,63 +11,64 @@ namespace NovaSharp.RemoteDebugger.Network
     /// </summary>
     public class HttpServer : IDisposable
     {
-        Utf8TcpServer m_Server;
-        Dictionary<string, List<string>> m_HttpData = new();
-        Dictionary<string, HttpResource> m_Resources = new();
-        object m_Lock = new();
+        private readonly Utf8TcpServer _server;
+        private readonly Dictionary<string, List<string>> _httpData = new();
+        private readonly Dictionary<string, HttpResource> _resources = new();
+        private readonly object _lock = new();
 
-        const string ERROR_TEMPLATE =
+        private const string ERROR_TEMPLATE =
             "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>{0}</title></head><body><h1>{0}</h1>{1}<hr><address>NovaSharp Remote Debugger / {2}</address></body></html><!-- This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. -->";
 
-        static readonly string VERSION = Assembly
+        private static readonly string Version = Assembly
             .GetExecutingAssembly()
             .GetName()
             .Version.ToString();
-        readonly string ERROR_401 = string.Format(
+
+        private readonly string _error401 = string.Format(
             ERROR_TEMPLATE,
             "401 Unauthorized",
             "Please login.",
-            VERSION
+            Version
         );
-        readonly string ERROR_404 = string.Format(
+
+        private readonly string _error404 = string.Format(
             ERROR_TEMPLATE,
             "404 Not Found",
             "The specified resource cannot be found.",
-            VERSION
+            Version
         );
-        readonly string ERROR_500 = string.Format(
+
+        private readonly string _error500 = string.Format(
             ERROR_TEMPLATE,
             "500 Internal Server Error",
             "An internal server error occurred.",
-            VERSION
+            Version
         );
 
         public HttpServer(int port, Utf8TcpServerOptions options)
         {
-            m_Server = new Utf8TcpServer(port, 100 << 10, '\n', options);
-            m_Server.DataReceived += OnDataReceivedAny;
-            m_Server.ClientDisconnected += OnClientDisconnected;
+            _server = new Utf8TcpServer(port, 100 << 10, '\n', options);
+            _server.OnDataReceived += OnDataReceivedAny;
+            _server.OnClientDisconnected += OnClientDisconnected;
         }
 
         public Func<string, string, bool> Authenticator { get; set; }
 
         public void Start()
         {
-            m_Server.Start();
+            _server.Start();
         }
 
-        void OnDataReceivedAny(object sender, Utf8TcpPeerEventArgs e)
+        private void OnDataReceivedAny(object sender, Utf8TcpPeerEventArgs e)
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                List<string> httpdata;
-
                 string msg = e.Message.Replace("\n", "").Replace("\r", "");
 
-                if (!m_HttpData.TryGetValue(e.Peer.Id, out httpdata))
+                if (!_httpData.TryGetValue(e.Peer.Id, out List<string> httpdata))
                 {
                     httpdata = new List<string>();
-                    m_HttpData.Add(e.Peer.Id, httpdata);
+                    _httpData.Add(e.Peer.Id, httpdata);
                 }
 
                 if (msg.Length == 0)
@@ -102,7 +103,7 @@ namespace NovaSharp.RemoteDebugger.Network
         )
         {
             peer.Send("HTTP/1.0 {0}", responseCode);
-            peer.Send("Server: NovaSharp-remote-debugger/{0}", VERSION);
+            peer.Send("Server: NovaSharp-remote-debugger/{0}", Version);
             peer.Send("Content-Type: {0}", contentType);
             peer.Send("Content-Length: {0}", data.Length);
             peer.Send("Connection: close");
@@ -128,9 +129,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
                     if (authstr != null)
                     {
-                        string user,
-                            password;
-                        ParseAuthenticationString(authstr, out user, out password);
+                        ParseAuthenticationString(authstr, out string user, out string password);
                         authorized = Authenticator(user, password);
                     }
 
@@ -140,7 +139,7 @@ namespace NovaSharp.RemoteDebugger.Network
                             peer,
                             "401 Not Authorized",
                             "text/html",
-                            ERROR_401,
+                            _error401,
                             "WWW-Authenticate: Basic realm=\"NovaSharp-remote-debugger\""
                         );
                         return;
@@ -151,7 +150,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
                 if (res == null)
                 {
-                    SendHttp(peer, "404 Not Found", "text/html", ERROR_404);
+                    SendHttp(peer, "404 Not Found", "text/html", _error404);
                 }
                 else
                 {
@@ -160,15 +159,15 @@ namespace NovaSharp.RemoteDebugger.Network
             }
             catch (Exception ex)
             {
-                m_Server.Logger(ex.Message);
+                _server.Logger(ex.Message);
 
                 try
                 {
-                    SendHttp(peer, "500 Internal Server Error", "text/html", ERROR_500);
+                    SendHttp(peer, "500 Internal Server Error", "text/html", _error500);
                 }
                 catch (Exception ex2)
                 {
-                    m_Server.Logger(ex2.Message);
+                    _server.Logger(ex2.Message);
                 }
             }
         }
@@ -268,8 +267,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 uri = uri.TrimEnd('/');
             }
 
-            HttpResource ret;
-            if (m_Resources.TryGetValue(uri, out ret))
+            if (_resources.TryGetValue(uri, out HttpResource ret))
             {
                 if (ret.Type == HttpResourceType.Callback)
                 {
@@ -290,13 +288,13 @@ namespace NovaSharp.RemoteDebugger.Network
             return null;
         }
 
-        void OnClientDisconnected(object sender, Utf8TcpPeerEventArgs e)
+        private void OnClientDisconnected(object sender, Utf8TcpPeerEventArgs e)
         {
-            lock (m_Lock)
+            lock (_lock)
             {
-                if (m_HttpData.ContainsKey(e.Peer.Id))
+                if (_httpData.ContainsKey(e.Peer.Id))
                 {
-                    m_HttpData.Remove(e.Peer.Id);
+                    _httpData.Remove(e.Peer.Id);
                 }
             }
         }
@@ -308,12 +306,12 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <param name="resource">The resource.</param>
         public void RegisterResource(string path, HttpResource resource)
         {
-            m_Resources.Add(path, resource);
+            _resources.Add(path, resource);
         }
 
         public void Dispose()
         {
-            m_Server.Dispose();
+            _server.Dispose();
         }
     }
 }

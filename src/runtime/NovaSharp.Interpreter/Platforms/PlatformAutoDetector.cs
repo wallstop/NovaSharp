@@ -1,20 +1,19 @@
-using System;
-using System.Linq;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Loaders;
-
 namespace NovaSharp.Interpreter.Platforms
 {
+    using System;
+    using System.Linq;
     using System.Linq.Expressions;
+    using Interop;
+    using Loaders;
 
     /// <summary>
     /// A static class offering properties for autodetection of system/platform details
     /// </summary>
     public static class PlatformAutoDetector
     {
-        private static bool? m_IsRunningOnAOT = null;
+        private static bool? _isRunningOnAot = null;
 
-        private static bool m_AutoDetectionsDone = false;
+        private static bool _autoDetectionsDone = false;
 
         /// <summary>
         /// Gets a value indicating whether this instance is running on mono.
@@ -44,13 +43,13 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Gets a value indicating whether this instance has been compiled natively in Unity AND is using IL2CPP
         /// </summary>
-        public static bool IsUnityIL2CPP { get; private set; }
+        public static bool IsUnityIl2Cpp { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance is running a system using Ahead-Of-Time compilation
         /// and not supporting JIT.
         /// </summary>
-        public static bool IsRunningOnAOT
+        public static bool IsRunningOnAot
         {
             // We do a lazy eval here, so we can wire out this code by not calling it, if necessary..
             get
@@ -59,32 +58,29 @@ namespace NovaSharp.Interpreter.Platforms
                 return true;
 #else
 
-                if (!m_IsRunningOnAOT.HasValue)
+                if (!_isRunningOnAot.HasValue)
                 {
                     try
                     {
-                        System.Linq.Expressions.Expression e =
-                            System.Linq.Expressions.Expression.Constant(5, typeof(int));
-                        Expression<Func<int>> lambda = System.Linq.Expressions.Expression.Lambda<
-                            Func<int>
-                        >(e);
+                        Expression e = Expression.Constant(5, typeof(int));
+                        Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
                         lambda.Compile();
-                        m_IsRunningOnAOT = false;
+                        _isRunningOnAot = false;
                     }
                     catch (Exception)
                     {
-                        m_IsRunningOnAOT = true;
+                        _isRunningOnAot = true;
                     }
                 }
 
-                return m_IsRunningOnAOT.Value;
+                return _isRunningOnAot.Value;
 #endif
             }
         }
 
         private static void AutoDetectPlatformFlags()
         {
-            if (m_AutoDetectionsDone)
+            if (_autoDetectionsDone)
             {
                 return;
             }
@@ -114,7 +110,7 @@ namespace NovaSharp.Interpreter.Platforms
 
             IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
 
-            m_AutoDetectionsDone = true;
+            _autoDetectionsDone = true;
         }
 
         internal static IPlatformAccessor GetDefaultPlatform()

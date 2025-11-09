@@ -1,10 +1,10 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+
     /// <summary>
     /// Class implementing system related Lua functions from the 'os' module.
     /// Proper support requires a compatible IPlatformAccessor
@@ -12,8 +12,8 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "os")]
     public class OsSystemModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue execute(
+        [NovaSharpModuleMethod(Name = "execute")]
+        public static DynValue Execute(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -44,15 +44,15 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue exit(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "exit")]
+        public static DynValue Exit(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DynValue v_exitCode = args.AsType(0, "exit", DataType.Number, true);
+            DynValue vExitCode = args.AsType(0, "exit", DataType.Number, true);
             int exitCode = 0;
 
-            if (v_exitCode.IsNotNil())
+            if (vExitCode.IsNotNil())
             {
-                exitCode = (int)v_exitCode.Number;
+                exitCode = (int)vExitCode.Number;
             }
 
             Script.GlobalOptions.Platform.OS_ExitFast(exitCode);
@@ -60,8 +60,8 @@ namespace NovaSharp.Interpreter.CoreLib
             throw new InvalidOperationException("Unreachable code.. reached.");
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue getenv(
+        [NovaSharpModuleMethod(Name = "getenv")]
+        public static DynValue Getenv(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -80,8 +80,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue remove(
+        [NovaSharpModuleMethod(Name = "remove")]
+        public static DynValue Remove(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -114,8 +114,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue rename(
+        [NovaSharpModuleMethod(Name = "rename")]
+        public static DynValue Rename(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -147,8 +147,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue setlocale(
+        [NovaSharpModuleMethod(Name = "setlocale")]
+        public static DynValue Setlocale(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -156,8 +156,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString("n/a");
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue tmpname(
+        [NovaSharpModuleMethod(Name = "tmpname")]
+        public static DynValue Tmpname(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

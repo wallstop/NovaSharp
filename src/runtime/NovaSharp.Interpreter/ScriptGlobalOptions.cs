@@ -1,8 +1,8 @@
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Platforms;
-
 namespace NovaSharp.Interpreter
 {
+    using Interop;
+    using Platforms;
+
     /// <summary>
     /// Class containing script global options, that is options which cannot be customized per-script.
     /// <see cref="Script.GlobalOptions"/>

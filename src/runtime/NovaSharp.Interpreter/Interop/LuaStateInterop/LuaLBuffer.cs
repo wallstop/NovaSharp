@@ -1,10 +1,10 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System.Text;
-
 namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 {
+#pragma warning disable 1591
+
+    using System.Text;
+
     public class LuaLBuffer
     {
         public StringBuilder StringBuilder { get; private set; }

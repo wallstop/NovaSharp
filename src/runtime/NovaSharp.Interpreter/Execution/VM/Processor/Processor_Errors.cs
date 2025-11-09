@@ -1,14 +1,14 @@
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
+    using Debugging;
+
+    internal sealed partial class Processor
     {
         private SourceRef GetCurrentSourceRef(int instructionPtr)
         {
-            if (instructionPtr >= 0 && instructionPtr < m_RootChunk.Code.Count)
+            if (instructionPtr >= 0 && instructionPtr < _rootChunk.code.Count)
             {
-                return m_RootChunk.Code[instructionPtr].SourceCodeRef;
+                return _rootChunk.code[instructionPtr].SourceCodeRef;
             }
             return null;
         }
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             // adjust IP
             if (ip == YIELD_SPECIAL_TRAP)
             {
-                ip = m_SavedInstructionPtr;
+                ip = _savedInstructionPtr;
             }
             else
             {
@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             SourceRef sref = GetCurrentSourceRef(ip);
 
-            ex.DecorateMessage(m_Script, sref, ip);
+            ex.DecorateMessage(_script, sref, ip);
 
             ex.CallStack = Debugger_GetCallStack(sref);
         }

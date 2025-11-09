@@ -1,8 +1,8 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Hardwire.Generators
 {
+    using System.CodeDom;
+    using Interpreter;
+
     internal class NullGenerator : IHardwireGenerator
     {
         public NullGenerator()

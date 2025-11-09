@@ -1,53 +1,52 @@
-#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
-
-/*---------------------------------------------------------------------------------------------
-Copyright (c) Microsoft Corporation
-
-All rights reserved.
-
-MIT License
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- *--------------------------------------------------------------------------------------------*/
-using System;
-using System.Text;
-using System.IO;
-using System.Text.RegularExpressions;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Serialization.Json;
-using NovaSharp.Interpreter.Serialization;
-
 namespace NovaSharp.VsCodeDebugger.SDK
 {
+#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
+
+    /*---------------------------------------------------------------------------------------------
+    Copyright (c) Microsoft Corporation
+
+    All rights reserved.
+
+    MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+     *--------------------------------------------------------------------------------------------*/
+    using System;
+    using System.Text;
+    using System.IO;
+    using System.Text.RegularExpressions;
+    using Interpreter;
+    using Interpreter.Serialization.Json;
+
     public class ProtocolMessage
     {
         public int seq;
-        public string type { get; private set; }
+        public string Type { get; private set; }
 
         public ProtocolMessage(string typ)
         {
-            type = typ;
+            Type = typ;
         }
 
         public ProtocolMessage(string typ, int sq)
         {
-            type = typ;
+            Type = typ;
             seq = sq;
         }
     }
@@ -76,44 +75,44 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class Response : ProtocolMessage
     {
-        public bool success { get; private set; }
-        public string message { get; private set; }
-        public int request_seq { get; private set; }
-        public string command { get; private set; }
-        public ResponseBody body { get; private set; }
+        public bool Success { get; private set; }
+        public string Message { get; private set; }
+        public int RequestSeq { get; private set; }
+        public string Command { get; private set; }
+        public ResponseBody Body { get; private set; }
 
         public Response(Table req)
             : base("response")
         {
-            success = true;
-            request_seq = req.Get("seq").ToObject<int>();
-            command = req.Get("command").ToObject<string>();
+            Success = true;
+            RequestSeq = req.Get("seq").ToObject<int>();
+            Command = req.Get("command").ToObject<string>();
         }
 
         public void SetBody(ResponseBody bdy)
         {
-            success = true;
-            body = bdy;
+            Success = true;
+            Body = bdy;
         }
 
         public void SetErrorBody(string msg, ResponseBody bdy = null)
         {
-            success = false;
-            message = msg;
-            body = bdy;
+            Success = false;
+            Message = msg;
+            Body = bdy;
         }
     }
 
     public class Event : ProtocolMessage
     {
-        public string @event { get; private set; }
-        public object body { get; private set; }
+        public readonly string @event;
+        public readonly object body;
 
         public Event(string type, object bdy = null)
             : base("event")
         {
             @event = type;
-            body = bdy;
+            this.body = bdy;
         }
     }
 
@@ -122,20 +121,20 @@ namespace NovaSharp.VsCodeDebugger.SDK
      */
     public abstract class ProtocolServer
     {
-        public bool TRACE;
-        public bool TRACE_RESPONSE;
+        public bool trace;
+        public bool traceResponse;
 
         protected const int BUFFER_SIZE = 4096;
         protected const string TWO_CRLF = "\r\n\r\n";
-        protected static readonly Regex CONTENT_LENGTH_MATCHER = new(@"Content-Length: (\d+)");
+        protected static readonly Regex ContentLengthMatcher = new(@"Content-Length: (\d+)");
 
-        protected static readonly Encoding Encoding = System.Text.Encoding.UTF8;
+        protected static readonly Encoding Encoding = Encoding.UTF8;
 
         private int _sequenceNumber;
 
         private Stream _outputStream;
 
-        private ByteBuffer _rawData;
+        private readonly ByteBuffer _rawData;
         private int _bodyLength;
 
         private bool _stopRequested;
@@ -209,7 +208,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     int idx = s.IndexOf(TWO_CRLF);
                     if (idx != -1)
                     {
-                        Match m = CONTENT_LENGTH_MATCHER.Match(s);
+                        Match m = ContentLengthMatcher.Match(s);
                         if (m.Success && m.Groups.Count == 2)
                         {
                             _bodyLength = Convert.ToInt32(m.Groups[1].ToString());
@@ -231,11 +230,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 Table request = JsonTableConverter.JsonToTable(req);
                 if (request != null && request["type"].ToString() == "request")
                 {
-                    if (TRACE)
+                    if (trace)
                     {
-                        Console.Error.WriteLine(
-                            string.Format("C {0}: {1}", request["command"], req)
-                        );
+                        Console.Error.WriteLine($"C {request["command"]}: {req}");
                     }
 
                     Response response = new(request);
@@ -249,25 +246,24 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     SendMessage(response);
                 }
             }
-            catch { }
+            catch
+            {
+                // Swallow
+            }
         }
 
         protected void SendMessage(ProtocolMessage message)
         {
             message.seq = _sequenceNumber++;
 
-            if (TRACE_RESPONSE && message.type == "response")
+            if (traceResponse && message.Type == "response")
             {
-                Console.Error.WriteLine(
-                    string.Format(" R: {0}", JsonTableConverter.ObjectToJson(message))
-                );
+                Console.Error.WriteLine($" R: {JsonTableConverter.ObjectToJson(message)}");
             }
-            if (TRACE && message.type == "event")
+            if (trace && message.Type == "event")
             {
                 Event e = (Event)message;
-                Console.Error.WriteLine(
-                    string.Format("E {0}: {1}", e.@event, JsonTableConverter.ObjectToJson(e.body))
-                );
+                Console.Error.WriteLine($"E {e.@event}: {JsonTableConverter.ObjectToJson(e.body)}");
             }
 
             byte[] data = ConvertToBytes(message);
@@ -287,12 +283,12 @@ namespace NovaSharp.VsCodeDebugger.SDK
             string asJson = JsonTableConverter.ObjectToJson(request);
             byte[] jsonBytes = Encoding.GetBytes(asJson);
 
-            string header = string.Format("Content-Length: {0}{1}", jsonBytes.Length, TWO_CRLF);
+            string header = $"Content-Length: {jsonBytes.Length}{TWO_CRLF}";
             byte[] headerBytes = Encoding.GetBytes(header);
 
             byte[] data = new byte[headerBytes.Length + jsonBytes.Length];
-            System.Buffer.BlockCopy(headerBytes, 0, data, 0, headerBytes.Length);
-            System.Buffer.BlockCopy(jsonBytes, 0, data, headerBytes.Length, jsonBytes.Length);
+            Buffer.BlockCopy(headerBytes, 0, data, 0, headerBytes.Length);
+            Buffer.BlockCopy(jsonBytes, 0, data, headerBytes.Length, jsonBytes.Length);
 
             return data;
         }
@@ -300,7 +296,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     //--------------------------------------------------------------------------------------
 
-    class ByteBuffer
+    internal class ByteBuffer
     {
         private byte[] _buffer;
 
@@ -322,17 +318,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public void Append(byte[] b, int length)
         {
             byte[] newBuffer = new byte[_buffer.Length + length];
-            System.Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _buffer.Length);
-            System.Buffer.BlockCopy(b, 0, newBuffer, _buffer.Length, length);
+            Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _buffer.Length);
+            Buffer.BlockCopy(b, 0, newBuffer, _buffer.Length, length);
             _buffer = newBuffer;
         }
 
         public byte[] RemoveFirst(int n)
         {
             byte[] b = new byte[n];
-            System.Buffer.BlockCopy(_buffer, 0, b, 0, n);
+            Buffer.BlockCopy(_buffer, 0, b, 0, n);
             byte[] newBuffer = new byte[_buffer.Length - n];
-            System.Buffer.BlockCopy(_buffer, n, newBuffer, 0, _buffer.Length - n);
+            Buffer.BlockCopy(_buffer, n, newBuffer, 0, _buffer.Length - n);
             _buffer = newBuffer;
             return b;
         }

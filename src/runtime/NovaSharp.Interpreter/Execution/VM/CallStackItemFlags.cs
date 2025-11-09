@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
+
     [Flags]
     internal enum CallStackItemFlags
     {

@@ -1,8 +1,8 @@
-using System;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Execution
 {
+    using System;
+    using VM;
+
     [Flags]
     internal enum InstructionFieldUsage
     {
@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Execution
         NumValAsCodeAddress = 0x8010,
     }
 
-    internal static class InstructionFieldUsage_Extensions
+    internal static class InstructionFieldUsageExtensions
     {
         internal static InstructionFieldUsage GetFieldUsage(this OpCode op)
         {
@@ -105,7 +105,7 @@ namespace NovaSharp.Interpreter.Execution
                         | InstructionFieldUsage.Name;
                 default:
                     throw new NotImplementedException(
-                        string.Format("InstructionFieldUsage for instruction {0}", (int)op)
+                        $"InstructionFieldUsage for instruction {(int)op}"
                     );
             }
         }

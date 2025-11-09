@@ -1,11 +1,11 @@
-using System;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
+    using System;
+    using BasicDescriptors;
+
     public abstract class HardwiredUserDataDescriptor : DispatchingUserDataDescriptor
     {
-        protected HardwiredUserDataDescriptor(Type T)
-            : base(T, "::hardwired::" + T.Name) { }
+        protected HardwiredUserDataDescriptor(Type t)
+            : base(t, "::hardwired::" + t.Name) { }
     }
 }

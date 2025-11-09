@@ -1,14 +1,14 @@
 //#define DEBUG_OVERLOAD_RESOLVER
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+
     /// <summary>
     /// Class providing easier marshalling of overloaded CLR functions
     /// </summary>
@@ -29,23 +29,23 @@ namespace NovaSharp.Interpreter.Interop
             }
         }
 
-        const int CACHE_SIZE = 5;
+        private const int CACHE_SIZE = 5;
 
         private class OverloadCacheItem
         {
-            public bool HasObject;
-            public IOverloadableMemberDescriptor Method;
-            public List<DataType> ArgsDataType;
-            public List<Type> ArgsUserDataType;
-            public int HitIndexAtLastHit;
+            public bool hasObject;
+            public IOverloadableMemberDescriptor method;
+            public List<DataType> argsDataType;
+            public List<Type> argsUserDataType;
+            public int hitIndexAtLastHit;
         }
 
-        private List<IOverloadableMemberDescriptor> m_Overloads = new();
-        private List<IOverloadableMemberDescriptor> m_ExtOverloads = new();
-        private bool m_Unsorted = true;
-        private OverloadCacheItem[] m_Cache = new OverloadCacheItem[CACHE_SIZE];
-        private int m_CacheHits = 0;
-        private int m_ExtensionMethodVersion = 0;
+        private readonly List<IOverloadableMemberDescriptor> _overloads = new();
+        private List<IOverloadableMemberDescriptor> _extOverloads = new();
+        private bool _unsorted = true;
+        private OverloadCacheItem[] _cache = new OverloadCacheItem[CACHE_SIZE];
+        private int _cacheHits = 0;
+        private int _extensionMethodVersion = 0;
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance ignores extension methods.
@@ -74,7 +74,7 @@ namespace NovaSharp.Interpreter.Interop
         )
             : this(name, declaringType)
         {
-            m_Overloads.Add(descriptor);
+            _overloads.Add(descriptor);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Interop
         )
             : this(name, declaringType)
         {
-            m_Overloads.AddRange(descriptors);
+            _overloads.AddRange(descriptors);
         }
 
         /// <summary>
@@ -103,8 +103,8 @@ namespace NovaSharp.Interpreter.Interop
             List<IOverloadableMemberDescriptor> extMethods
         )
         {
-            m_ExtOverloads = extMethods;
-            m_ExtensionMethodVersion = version;
+            _extOverloads = extMethods;
+            _extensionMethodVersion = version;
         }
 
         /// <summary>
@@ -123,8 +123,8 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="overload">The overload.</param>
         public void AddOverload(IOverloadableMemberDescriptor overload)
         {
-            m_Overloads.Add(overload);
-            m_Unsorted = true;
+            _overloads.Add(overload);
+            _unsorted = true;
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </value>
         public int OverloadCount
         {
-            get { return m_Overloads.Count; }
+            get { return _overloads.Count; }
         }
 
         /// <summary>
@@ -157,36 +157,32 @@ namespace NovaSharp.Interpreter.Interop
             bool extMethodCacheNotExpired =
                 IgnoreExtensionMethods
                 || (obj == null)
-                || m_ExtensionMethodVersion == UserData.GetExtensionMethodsChangeVersion();
+                || _extensionMethodVersion == UserData.GetExtensionMethodsChangeVersion();
 
             // common case, let's optimize for it
-            if (m_Overloads.Count == 1 && m_ExtOverloads.Count == 0 && extMethodCacheNotExpired)
+            if (_overloads.Count == 1 && _extOverloads.Count == 0 && extMethodCacheNotExpired)
             {
-                return m_Overloads[0].Execute(script, obj, context, args);
+                return _overloads[0].Execute(script, obj, context, args);
             }
 
-            if (m_Unsorted)
+            if (_unsorted)
             {
-                m_Overloads.Sort(new OverloadableMemberDescriptorComparer());
-                m_Unsorted = false;
+                _overloads.Sort(new OverloadableMemberDescriptorComparer());
+                _unsorted = false;
             }
 
             if (extMethodCacheNotExpired)
             {
-                for (int i = 0; i < m_Cache.Length; i++)
+                for (int i = 0; i < _cache.Length; i++)
                 {
-                    if (m_Cache[i] != null && CheckMatch(obj != null, args, m_Cache[i]))
+                    if (_cache[i] != null && CheckMatch(obj != null, args, _cache[i]))
                     {
 #if DEBUG_OVERLOAD_RESOLVER
                         System.Diagnostics.Debug.WriteLine(
-                            string.Format(
-                                "[OVERLOAD] : CACHED! slot {0}, hits: {1}",
-                                i,
-                                m_CacheHits
-                            )
+                            string.Format("[OVERLOAD] : CACHED! slot {0}, hits: {1}", i, _CacheHits)
                         );
 #endif
-                        return m_Cache[i].Method.Execute(script, obj, context, args);
+                        return _cache[i].method.Execute(script, obj, context, args);
                     }
                 }
             }
@@ -195,16 +191,16 @@ namespace NovaSharp.Interpreter.Interop
             int maxScore = 0;
             IOverloadableMemberDescriptor bestOverload = null;
 
-            for (int i = 0; i < m_Overloads.Count; i++)
+            for (int i = 0; i < _overloads.Count; i++)
             {
-                if (obj != null || m_Overloads[i].IsStatic)
+                if (obj != null || _overloads[i].IsStatic)
                 {
-                    int score = CalcScoreForOverload(context, args, m_Overloads[i], false);
+                    int score = CalcScoreForOverload(context, args, _overloads[i], false);
 
                     if (score > maxScore)
                     {
                         maxScore = score;
-                        bestOverload = m_Overloads[i];
+                        bestOverload = _overloads[i];
                     }
                 }
             }
@@ -213,21 +209,18 @@ namespace NovaSharp.Interpreter.Interop
             {
                 if (!extMethodCacheNotExpired)
                 {
-                    m_ExtensionMethodVersion = UserData.GetExtensionMethodsChangeVersion();
-                    m_ExtOverloads = UserData.GetExtensionMethodsByNameAndType(
-                        this.Name,
-                        this.DeclaringType
-                    );
+                    _extensionMethodVersion = UserData.GetExtensionMethodsChangeVersion();
+                    _extOverloads = UserData.GetExtensionMethodsByNameAndType(Name, DeclaringType);
                 }
 
-                for (int i = 0; i < m_ExtOverloads.Count; i++)
+                for (int i = 0; i < _extOverloads.Count; i++)
                 {
-                    int score = CalcScoreForOverload(context, args, m_ExtOverloads[i], true);
+                    int score = CalcScoreForOverload(context, args, _extOverloads[i], true);
 
                     if (score > maxScore)
                     {
                         maxScore = score;
-                        bestOverload = m_ExtOverloads[i];
+                        bestOverload = _extOverloads[i];
                     }
                 }
             }
@@ -249,54 +242,54 @@ namespace NovaSharp.Interpreter.Interop
         {
             int lowestHits = int.MaxValue;
             OverloadCacheItem found = null;
-            for (int i = 0; i < m_Cache.Length; i++)
+            for (int i = 0; i < _cache.Length; i++)
             {
-                if (m_Cache[i] == null)
+                if (_cache[i] == null)
                 {
                     found = new OverloadCacheItem()
                     {
-                        ArgsDataType = new List<DataType>(),
-                        ArgsUserDataType = new List<Type>(),
+                        argsDataType = new List<DataType>(),
+                        argsUserDataType = new List<Type>(),
                     };
-                    m_Cache[i] = found;
+                    _cache[i] = found;
                     break;
                 }
-                else if (m_Cache[i].HitIndexAtLastHit < lowestHits)
+                else if (_cache[i].hitIndexAtLastHit < lowestHits)
                 {
-                    lowestHits = m_Cache[i].HitIndexAtLastHit;
-                    found = m_Cache[i];
+                    lowestHits = _cache[i].hitIndexAtLastHit;
+                    found = _cache[i];
                 }
             }
 
             if (found == null)
             {
                 // overflow..
-                m_Cache = new OverloadCacheItem[CACHE_SIZE];
+                _cache = new OverloadCacheItem[CACHE_SIZE];
                 found = new OverloadCacheItem()
                 {
-                    ArgsDataType = new List<DataType>(),
-                    ArgsUserDataType = new List<Type>(),
+                    argsDataType = new List<DataType>(),
+                    argsUserDataType = new List<Type>(),
                 };
-                m_Cache[0] = found;
-                m_CacheHits = 0;
+                _cache[0] = found;
+                _cacheHits = 0;
             }
 
-            found.Method = bestOverload;
-            found.HitIndexAtLastHit = ++m_CacheHits;
-            found.ArgsDataType.Clear();
-            found.HasObject = hasObject;
+            found.method = bestOverload;
+            found.hitIndexAtLastHit = ++_cacheHits;
+            found.argsDataType.Clear();
+            found.hasObject = hasObject;
 
             for (int i = 0; i < args.Count; i++)
             {
-                found.ArgsDataType.Add(args[i].Type);
+                found.argsDataType.Add(args[i].Type);
 
                 if (args[i].Type == DataType.UserData)
                 {
-                    found.ArgsUserDataType.Add(args[i].UserData.Descriptor.Type);
+                    found.argsUserDataType.Add(args[i].UserData.Descriptor.Type);
                 }
                 else
                 {
-                    found.ArgsUserDataType.Add(null);
+                    found.argsUserDataType.Add(null);
                 }
             }
         }
@@ -307,33 +300,33 @@ namespace NovaSharp.Interpreter.Interop
             OverloadCacheItem overloadCacheItem
         )
         {
-            if (overloadCacheItem.HasObject && !hasObject)
+            if (overloadCacheItem.hasObject && !hasObject)
             {
                 return false;
             }
 
-            if (args.Count != overloadCacheItem.ArgsDataType.Count)
+            if (args.Count != overloadCacheItem.argsDataType.Count)
             {
                 return false;
             }
 
             for (int i = 0; i < args.Count; i++)
             {
-                if (args[i].Type != overloadCacheItem.ArgsDataType[i])
+                if (args[i].Type != overloadCacheItem.argsDataType[i])
                 {
                     return false;
                 }
 
                 if (args[i].Type == DataType.UserData)
                 {
-                    if (args[i].UserData.Descriptor.Type != overloadCacheItem.ArgsUserDataType[i])
+                    if (args[i].UserData.Descriptor.Type != overloadCacheItem.argsUserDataType[i])
                     {
                         return false;
                     }
                 }
             }
 
-            overloadCacheItem.HitIndexAtLastHit = ++m_CacheHits;
+            overloadCacheItem.hitIndexAtLastHit = ++_cacheHits;
             return true;
         }
 
@@ -530,7 +523,7 @@ namespace NovaSharp.Interpreter.Interop
 
         void IOptimizableDescriptor.Optimize()
         {
-            foreach (IOptimizableDescriptor d in m_Overloads.OfType<IOptimizableDescriptor>())
+            foreach (IOptimizableDescriptor d in _overloads.OfType<IOptimizableDescriptor>())
             {
                 d.Optimize();
             }
@@ -544,7 +537,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public CallbackFunction GetCallbackFunction(Script script, object obj = null)
         {
-            return new CallbackFunction(GetCallback(script, obj), this.Name);
+            return new CallbackFunction(GetCallback(script, obj), Name);
         }
 
         /// <summary>
@@ -553,7 +546,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <exception cref="System.NotImplementedException"></exception>
         public bool IsStatic
         {
-            get { return m_Overloads.Any(o => o.IsStatic); }
+            get { return _overloads.Any(o => o.IsStatic); }
         }
 
         /// <summary>
@@ -574,7 +567,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </returns>
         public DynValue GetValue(Script script, object obj)
         {
-            return DynValue.NewCallback(this.GetCallbackFunction(script, obj));
+            return DynValue.NewCallback(GetCallbackFunction(script, obj));
         }
 
         /// <summary>
@@ -596,19 +589,17 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("name", DynValue.NewString(this.Name));
-            t.Set("decltype", DynValue.NewString(this.DeclaringType.FullName));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("name", DynValue.NewString(Name));
+            t.Set("decltype", DynValue.NewString(DeclaringType.FullName));
             DynValue mst = DynValue.NewPrimeTable();
             t.Set("overloads", mst);
 
             int i = 0;
 
-            foreach (IOverloadableMemberDescriptor m in this.m_Overloads)
+            foreach (IOverloadableMemberDescriptor m in _overloads)
             {
-                IWireableDescriptor sd = m as IWireableDescriptor;
-
-                if (sd != null)
+                if (m is IWireableDescriptor sd)
                 {
                     DynValue mt = DynValue.NewPrimeTable();
                     mst.Table.Set(++i, mt);
@@ -619,10 +610,7 @@ namespace NovaSharp.Interpreter.Interop
                     mst.Table.Set(
                         ++i,
                         DynValue.NewString(
-                            string.Format(
-                                "unsupported - {0} is not serializable",
-                                m.GetType().FullName
-                            )
+                            $"unsupported - {m.GetType().FullName} is not serializable"
                         )
                     );
                 }

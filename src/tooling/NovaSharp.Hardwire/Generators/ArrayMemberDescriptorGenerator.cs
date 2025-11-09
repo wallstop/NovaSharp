@@ -1,11 +1,11 @@
-using System.CodeDom;
-using NovaSharp.Hardwire.Utils;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Hardwire.Generators
 {
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop;
+    using Interpreter.Interop.BasicDescriptors;
+    using Utils;
+
     public class ArrayMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
@@ -23,16 +23,16 @@ namespace NovaSharp.Hardwire.Generators
             string name = table.Get("name").String;
             bool setter = table.Get("setter").Boolean;
 
-            CodeTypeDeclaration classCode = new(className);
-
-            classCode.TypeAttributes =
-                System.Reflection.TypeAttributes.NestedPrivate
-                | System.Reflection.TypeAttributes.Sealed;
+            CodeTypeDeclaration classCode = new(className)
+            {
+                TypeAttributes =
+                    System.Reflection.TypeAttributes.NestedPrivate
+                    | System.Reflection.TypeAttributes.Sealed,
+            };
 
             classCode.BaseTypes.Add(typeof(ArrayMemberDescriptor));
 
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Assembly;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Assembly };
             classCode.Members.Add(ctor);
 
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(name));

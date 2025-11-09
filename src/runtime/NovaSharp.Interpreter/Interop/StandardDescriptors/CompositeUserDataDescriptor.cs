@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using Compatibility;
+
     /// <summary>
     /// A user data descriptor which aggregates multiple descriptors and tries dispatching members
     /// on them, in order.
@@ -13,8 +13,8 @@ namespace NovaSharp.Interpreter.Interop
     /// </summary>
     public class CompositeUserDataDescriptor : IUserDataDescriptor
     {
-        private List<IUserDataDescriptor> m_Descriptors;
-        private Type m_Type;
+        private readonly List<IUserDataDescriptor> _descriptors;
+        private readonly Type _type;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompositeUserDataDescriptor"/> class.
@@ -23,8 +23,8 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="type">The type.</param>
         public CompositeUserDataDescriptor(List<IUserDataDescriptor> descriptors, Type type)
         {
-            m_Descriptors = descriptors;
-            m_Type = type;
+            _descriptors = descriptors;
+            _type = type;
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public IList<IUserDataDescriptor> Descriptors
         {
-            get { return m_Descriptors; }
+            get { return _descriptors; }
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public string Name
         {
-            get { return "^" + m_Type.FullName; }
+            get { return "^" + _type.FullName; }
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public Type Type
         {
-            get { return m_Type; }
+            get { return _type; }
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isNameIndex)
         {
-            foreach (IUserDataDescriptor dd in m_Descriptors)
+            foreach (IUserDataDescriptor dd in _descriptors)
             {
                 DynValue v = dd.Index(script, obj, index, isNameIndex);
 
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Interop
             bool isNameIndex
         )
         {
-            foreach (IUserDataDescriptor dd in m_Descriptors)
+            foreach (IUserDataDescriptor dd in _descriptors)
             {
                 if (dd.SetIndex(script, obj, index, value, isNameIndex))
                 {
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            foreach (IUserDataDescriptor dd in m_Descriptors)
+            foreach (IUserDataDescriptor dd in _descriptors)
             {
                 DynValue v = dd.MetaIndex(script, obj, metaname);
 

@@ -1,13 +1,13 @@
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using BasicDescriptors;
+
     /// <summary>
     /// Class providing a simple descriptor for constant DynValues in userdata
     /// </summary>
     public class DynValueMemberDescriptor : IMemberDescriptor, IWireableDescriptor
     {
-        private DynValue m_Value;
+        private readonly DynValue _value;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DynValueMemberDescriptor" /> class.
@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Interop
             DynamicExpression exp = s.CreateDynamicExpression(serializedTableValue);
             DynValue val = exp.Evaluate(null);
 
-            m_Value = val.Table.Get(1);
+            _value = val.Table.Get(1);
             Name = name;
             MemberAccess = MemberDescriptorAccess.CanRead;
         }
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Interop
         protected DynValueMemberDescriptor(string name)
         {
             MemberAccess = MemberDescriptorAccess.CanRead;
-            m_Value = null;
+            _value = null;
             Name = name;
         }
 
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="value">The value.</param>
         public DynValueMemberDescriptor(string name, DynValue value)
         {
-            m_Value = value;
+            _value = value;
             Name = name;
 
             if (value.Type == DataType.ClrFunction)
@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public virtual DynValue Value
         {
-            get { return m_Value; }
+            get { return _value; }
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <exception cref="ScriptRuntimeException">userdata '{0}' cannot be written to.</exception>
         public void SetValue(Script script, object obj, DynValue value)
         {
-            throw new ScriptRuntimeException("userdata '{0}' cannot be written to.", this.Name);
+            throw new ScriptRuntimeException("userdata '{0}' cannot be written to.", Name);
         }
 
         /// <summary>
@@ -114,8 +114,8 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("name", DynValue.NewString(this.Name));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("name", DynValue.NewString(Name));
 
             switch (Value.Type)
             {
@@ -170,10 +170,7 @@ namespace NovaSharp.Interpreter.Interop
                     t.Set(
                         "error",
                         DynValue.NewString(
-                            string.Format(
-                                "Wiring of '{0}' value members not supported.",
-                                Value.Type.ToErrorTypeString()
-                            )
+                            $"Wiring of '{Value.Type.ToErrorTypeString()}' value members not supported."
                         )
                     );
                     break;

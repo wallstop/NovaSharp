@@ -1,18 +1,18 @@
-#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
-
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
+
+    using Interpreter;
+    using Interpreter.Debugging;
+
     internal interface IAsyncDebuggerClient
     {
-        void SendStopEvent();
-        void OnWatchesUpdated(WatchType watchType);
-        void OnSourceCodeChanged(int sourceID);
-        void OnExecutionEnded();
-        void OnException(ScriptRuntimeException ex);
-        void Unbind();
+        public void SendStopEvent();
+        public void OnWatchesUpdated(WatchType watchType);
+        public void OnSourceCodeChanged(int sourceId);
+        public void OnExecutionEnded();
+        public void OnException(ScriptRuntimeException ex);
+        public void Unbind();
     }
 }
 

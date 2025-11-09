@@ -1,15 +1,15 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class StructAssignmentTechnique
     {
         public struct Vector3
         {
-            public float X;
-            public float Y;
-            public float Z;
+            public float x;
+            public float y;
+            public float z;
         }
 
         public class Transform
@@ -17,31 +17,31 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public Vector3 position;
         }
 
-        public class Vector3_Accessor
+        public class Vector3Accessor
         {
-            Transform transf;
+            private readonly Transform _transf;
 
-            public Vector3_Accessor(Transform t)
+            public Vector3Accessor(Transform t)
             {
-                transf = t;
+                _transf = t;
             }
 
             public float X
             {
-                get { return transf.position.X; }
-                set { transf.position.X = value; }
+                get { return _transf.position.x; }
+                set { _transf.position.x = value; }
             }
 
             public float Y
             {
-                get { return transf.position.Y; }
-                set { transf.position.Y = value; }
+                get { return _transf.position.y; }
+                set { _transf.position.y = value; }
             }
 
             public float Z
             {
-                get { return transf.position.Z; }
-                set { transf.position.Z = value; }
+                get { return _transf.position.z; }
+                set { _transf.position.z = value; }
             }
         }
 
@@ -77,17 +77,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             UserData.RegisterType<Transform>();
             UserData.RegisterType<Vector3>();
 
-            Script S = new();
+            Script s = new();
 
-            Transform T = new();
+            Transform t = new();
 
-            T.position.X = 3;
+            t.position.x = 3;
 
-            S.Globals["transform"] = T;
+            s.Globals["transform"] = t;
 
-            S.DoString("transform.position.X = 15;");
+            s.DoString("transform.position.X = 15;");
 
-            Assert.AreEqual(3, (int)T.position.X);
+            Assert.That((int)t.position.x, Is.EqualTo(3));
             UserData.UnregisterType<Transform>();
             UserData.UnregisterType<Vector3>();
         }

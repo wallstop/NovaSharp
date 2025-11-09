@@ -1,9 +1,9 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-
 namespace NovaSharp.Hardwire.Generators
 {
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+
     public class StandardUserDataDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
@@ -36,8 +36,7 @@ namespace NovaSharp.Hardwire.Generators
 
             classCode.BaseTypes.Add(typeof(HardwiredUserDataDescriptor));
 
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Assembly;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Assembly };
             ctor.BaseConstructorArgs.Add(new CodeTypeOfExpression(type));
 
             classCode.Members.Add(ctor);

@@ -1,9 +1,9 @@
-using System;
-using System.Globalization;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System;
+    using System.Globalization;
+    using Compatibility;
+
     internal static class ScriptToClrConversions
     {
         internal const int WEIGHT_MAX_VALUE = 100;
@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
             Func<DynValue, object> converter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
                     value.Type,
-                    typeof(System.Object)
+                    typeof(Object)
                 );
             if (converter != null)
             {

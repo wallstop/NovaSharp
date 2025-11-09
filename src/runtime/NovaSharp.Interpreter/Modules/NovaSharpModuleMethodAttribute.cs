@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// In a module type, mark methods or fields with this attribute to have them exposed as module functions.
     /// Methods must have the signature "public static DynValue ...(ScriptExecutionContextCallbackArguments)".

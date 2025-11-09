@@ -1,20 +1,20 @@
 #define EMIT_DEBUG_OPS
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Text;
+    using Debugging;
+
     internal class ByteCode : RefIdObject
     {
-        public List<Instruction> Code = new();
+        public List<Instruction> code = new();
         public Script Script { get; private set; }
-        private List<SourceRef> m_SourceRefStack = new();
-        private SourceRef m_CurrentSourceRef = null;
+        private readonly List<SourceRef> _sourceRefStack = new();
+        private SourceRef _currentSourceRef = null;
 
         internal LoopTracker LoopTracker = new();
 
@@ -30,31 +30,30 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private class SourceCodeStackGuard : IDisposable
         {
-            ByteCode m_Bc;
+            private readonly ByteCode _bc;
 
             public SourceCodeStackGuard(SourceRef sref, ByteCode bc)
             {
-                m_Bc = bc;
-                m_Bc.PushSourceRef(sref);
+                _bc = bc;
+                _bc.PushSourceRef(sref);
             }
 
             public void Dispose()
             {
-                m_Bc.PopSourceRef();
+                _bc.PopSourceRef();
             }
         }
 
         public void PushSourceRef(SourceRef sref)
         {
-            m_SourceRefStack.Add(sref);
-            m_CurrentSourceRef = sref;
+            _sourceRefStack.Add(sref);
+            _currentSourceRef = sref;
         }
 
         public void PopSourceRef()
         {
-            m_SourceRefStack.RemoveAt(m_SourceRefStack.Count - 1);
-            m_CurrentSourceRef =
-                (m_SourceRefStack.Count > 0) ? m_SourceRefStack[m_SourceRefStack.Count - 1] : null;
+            _sourceRefStack.RemoveAt(_sourceRefStack.Count - 1);
+            _currentSourceRef = (_sourceRefStack.Count > 0) ? _sourceRefStack[^1] : null;
         }
 
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
@@ -62,15 +61,15 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             StringBuilder sb = new();
 
-            for (int i = 0; i < Code.Count; i++)
+            for (int i = 0; i < code.Count; i++)
             {
-                if (Code[i].OpCode == OpCode.Debug)
+                if (code[i].OpCode == OpCode.Debug)
                 {
-                    sb.AppendFormat("    {0}\n", Code[i]);
+                    sb.AppendFormat("    {0}\n", code[i]);
                 }
                 else
                 {
-                    sb.AppendFormat("{0:X8}  {1}\n", i, Code[i]);
+                    sb.AppendFormat("{0:X8}  {1}\n", i, code[i]);
                 }
             }
 
@@ -80,50 +79,50 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public int GetJumpPointForNextInstruction()
         {
-            return Code.Count;
+            return code.Count;
         }
 
         public int GetJumpPointForLastInstruction()
         {
-            return Code.Count - 1;
+            return code.Count - 1;
         }
 
         public Instruction GetLastInstruction()
         {
-            return Code[Code.Count - 1];
+            return code[^1];
         }
 
         private Instruction AppendInstruction(Instruction c)
         {
-            Code.Add(c);
+            code.Add(c);
             return c;
         }
 
         public Instruction Emit_Nop(string comment)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Nop, Name = comment }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Nop, Name = comment }
             );
         }
 
         public Instruction Emit_Invalid(string type)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Invalid, Name = type }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Invalid, Name = type }
             );
         }
 
         public Instruction Emit_Pop(int num = 1)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Pop, NumVal = num }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Pop, NumVal = num }
             );
         }
 
         public void Emit_Call(int argCount, string debugName)
         {
             AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Call,
                     NumVal = argCount,
@@ -135,7 +134,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public void Emit_ThisCall(int argCount, string debugName)
         {
             AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.ThisCall,
                     NumVal = argCount,
@@ -147,14 +146,14 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Literal(DynValue value)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Literal, Value = value }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Literal, Value = value }
             );
         }
 
         public Instruction Emit_Jump(OpCode jumpOpCode, int idx, int optPar = 0)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = jumpOpCode,
                     NumVal = idx,
@@ -166,24 +165,24 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_MkTuple(int cnt)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.MkTuple, NumVal = cnt }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.MkTuple, NumVal = cnt }
             );
         }
 
         public Instruction Emit_Operator(OpCode opcode)
         {
             Instruction i = AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = opcode }
+                new Instruction(_currentSourceRef) { OpCode = opcode }
             );
 
             if (opcode == OpCode.LessEq)
             {
-                AppendInstruction(new Instruction(m_CurrentSourceRef) { OpCode = OpCode.CNot });
+                AppendInstruction(new Instruction(_currentSourceRef) { OpCode = OpCode.CNot });
             }
 
             if (opcode == OpCode.Eq || opcode == OpCode.Less)
             {
-                AppendInstruction(new Instruction(m_CurrentSourceRef) { OpCode = OpCode.ToBool });
+                AppendInstruction(new Instruction(_currentSourceRef) { OpCode = OpCode.ToBool });
             }
 
             return i;
@@ -193,7 +192,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public void Emit_Debug(string str)
         {
             AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Debug,
                     Name = str.Substring(0, Math.Min(32, str.Length)),
@@ -204,7 +203,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Enter(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Clean,
                     NumVal = runtimeScopeBlock.From,
@@ -216,7 +215,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Leave(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Clean,
                     NumVal = runtimeScopeBlock.From,
@@ -228,7 +227,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Exit(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Clean,
                     NumVal = runtimeScopeBlock.From,
@@ -240,7 +239,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Clean(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Clean,
                     NumVal = runtimeScopeBlock.To + 1,
@@ -252,7 +251,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Closure(SymbolRef[] symbols, int jmpnum)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Closure,
                     SymbolList = symbols,
@@ -264,35 +263,35 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Args(params SymbolRef[] symbols)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Args, SymbolList = symbols }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Args, SymbolList = symbols }
             );
         }
 
         public Instruction Emit_Ret(int retvals)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Ret, NumVal = retvals }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Ret, NumVal = retvals }
             );
         }
 
         public Instruction Emit_ToNum(int stage = 0)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.ToNum, NumVal = stage }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.ToNum, NumVal = stage }
             );
         }
 
         public Instruction Emit_Incr(int i)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Incr, NumVal = i }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Incr, NumVal = i }
             );
         }
 
         public Instruction Emit_NewTable(bool shared)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.NewTable,
                     NumVal = shared ? 1 : 0,
@@ -303,14 +302,14 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_IterPrep()
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.IterPrep }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.IterPrep }
             );
         }
 
         public Instruction Emit_ExpTuple(int stackOffset)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.ExpTuple,
                     NumVal = stackOffset,
@@ -321,7 +320,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_IterUpd()
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.IterUpd }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.IterUpd }
             );
         }
 
@@ -332,7 +331,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         )
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Meta,
                     Name = funcName,
@@ -345,7 +344,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_BeginFn(RuntimeScopeFrame stackFrame)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.BeginFn,
                     SymbolList = stackFrame.DebugSymbols.ToArray(),
@@ -357,9 +356,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public Instruction Emit_Scalar()
         {
-            return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Scalar }
-            );
+            return AppendInstruction(new Instruction(_currentSourceRef) { OpCode = OpCode.Scalar });
         }
 
         public int Emit_Load(SymbolRef sym)
@@ -369,7 +366,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 case SymbolRefType.Global:
                     Emit_Load(sym.i_Env);
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef)
+                        new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.Index,
                             Value = DynValue.NewString(sym.i_Name),
@@ -378,16 +375,12 @@ namespace NovaSharp.Interpreter.Execution.VM
                     return 2;
                 case SymbolRefType.Local:
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Local, Symbol = sym }
+                        new Instruction(_currentSourceRef) { OpCode = OpCode.Local, Symbol = sym }
                     );
                     return 1;
                 case SymbolRefType.Upvalue:
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef)
-                        {
-                            OpCode = OpCode.Upvalue,
-                            Symbol = sym,
-                        }
+                        new Instruction(_currentSourceRef) { OpCode = OpCode.Upvalue, Symbol = sym }
                     );
                     return 1;
                 default:
@@ -402,7 +395,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 case SymbolRefType.Global:
                     Emit_Load(sym.i_Env);
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef)
+                        new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.IndexSet,
                             Symbol = sym,
@@ -414,7 +407,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     return 2;
                 case SymbolRefType.Local:
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef)
+                        new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.StoreLcl,
                             Symbol = sym,
@@ -425,7 +418,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     return 1;
                 case SymbolRefType.Upvalue:
                     AppendInstruction(
-                        new Instruction(m_CurrentSourceRef)
+                        new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.StoreUpv,
                             Symbol = sym,
@@ -442,14 +435,14 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_TblInitN()
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.TblInitN }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.TblInitN }
             );
         }
 
         public Instruction Emit_TblInitI(bool lastpos)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.TblInitI,
                     NumVal = lastpos ? 1 : 0,
@@ -478,7 +471,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = o, Value = index }
+                new Instruction(_currentSourceRef) { OpCode = o, Value = index }
             );
         }
 
@@ -505,7 +498,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = o,
                     NumVal = stackofs,
@@ -518,14 +511,14 @@ namespace NovaSharp.Interpreter.Execution.VM
         public Instruction Emit_Copy(int numval)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef) { OpCode = OpCode.Copy, NumVal = numval }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Copy, NumVal = numval }
             );
         }
 
         public Instruction Emit_Swap(int p1, int p2)
         {
             return AppendInstruction(
-                new Instruction(m_CurrentSourceRef)
+                new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Swap,
                     NumVal = p1,

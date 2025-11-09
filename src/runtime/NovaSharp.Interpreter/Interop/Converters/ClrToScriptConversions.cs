@@ -1,11 +1,9 @@
-using System;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System;
     using System.Collections;
+    using System.Reflection;
+    using System.Text;
 
     internal static class ClrToScriptConversions
     {
@@ -21,16 +19,16 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.Nil;
             }
 
-            if (obj is DynValue)
+            if (obj is DynValue value)
             {
-                return (DynValue)obj;
+                return value;
             }
 
             Type t = obj.GetType();
 
-            if (obj is bool)
+            if (obj is bool b)
             {
-                return DynValue.NewBoolean((bool)obj);
+                return DynValue.NewBoolean(b);
             }
 
             if (obj is string || obj is StringBuilder || obj is char)
@@ -43,9 +41,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
             }
 
-            if (obj is Table)
+            if (obj is Table table)
             {
-                return DynValue.NewTable((Table)obj);
+                return DynValue.NewTable(table);
             }
 
             return null;
@@ -62,9 +60,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.Nil;
             }
 
-            if (obj is DynValue)
+            if (obj is DynValue value)
             {
-                return (DynValue)obj;
+                return value;
             }
 
             Func<Script, object, DynValue> converter =
@@ -80,9 +78,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
 
             Type t = obj.GetType();
 
-            if (obj is bool)
+            if (obj is bool b)
             {
-                return DynValue.NewBoolean((bool)obj);
+                return DynValue.NewBoolean(b);
             }
 
             if (obj is string || obj is StringBuilder || obj is char)
@@ -90,9 +88,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewString(obj.ToString());
             }
 
-            if (obj is Closure)
+            if (obj is Closure closure)
             {
-                return DynValue.NewClosure((Closure)obj);
+                return DynValue.NewClosure(closure);
             }
 
             if (NumericConversions.NumericTypes.Contains(t))
@@ -100,30 +98,28 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
             }
 
-            if (obj is Table)
+            if (obj is Table table)
             {
-                return DynValue.NewTable((Table)obj);
+                return DynValue.NewTable(table);
             }
 
-            if (obj is CallbackFunction)
+            if (obj is CallbackFunction function)
             {
-                return DynValue.NewCallback((CallbackFunction)obj);
+                return DynValue.NewCallback(function);
             }
 
-            if (obj is Delegate)
+            if (obj is Delegate @delegate)
             {
-                Delegate d = (Delegate)obj;
-
 #if NETFX_CORE
                 MethodInfo mi = d.GetMethodInfo();
 #else
-                MethodInfo mi = d.Method;
+                MethodInfo mi = @delegate.Method;
 #endif
 
                 if (CallbackFunction.CheckCallbackSignature(mi, false))
                 {
                     return DynValue.NewCallback(
-                        (Func<ScriptExecutionContext, CallbackArguments, DynValue>)d
+                        (Func<ScriptExecutionContext, CallbackArguments, DynValue>)@delegate
                     );
                 }
             }
@@ -149,9 +145,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return v;
             }
 
-            if (obj is Type)
+            if (obj is Type type)
             {
-                v = UserData.CreateStatic(obj as Type);
+                v = UserData.CreateStatic(type);
             }
 
             // unregistered enums go as integers
@@ -167,36 +163,28 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return v;
             }
 
-            if (obj is Delegate)
+            if (obj is Delegate @delegate)
             {
-                return DynValue.NewCallback(CallbackFunction.FromDelegate(script, (Delegate)obj));
+                return DynValue.NewCallback(CallbackFunction.FromDelegate(script, @delegate));
             }
 
-            if (obj is MethodInfo)
+            if (obj is MethodInfo mi)
             {
-                MethodInfo mi = (MethodInfo)obj;
-
                 if (mi.IsStatic)
                 {
                     return DynValue.NewCallback(CallbackFunction.FromMethodInfo(script, mi));
                 }
             }
 
-            if (obj is System.Collections.IList)
+            if (obj is IList list)
             {
-                Table t = TableConversions.ConvertIListToTable(
-                    script,
-                    (System.Collections.IList)obj
-                );
+                Table t = TableConversions.ConvertIListToTable(script, list);
                 return DynValue.NewTable(t);
             }
 
-            if (obj is System.Collections.IDictionary)
+            if (obj is IDictionary dictionary)
             {
-                Table t = TableConversions.ConvertIDictionaryToTable(
-                    script,
-                    (System.Collections.IDictionary)obj
-                );
+                Table t = TableConversions.ConvertIDictionaryToTable(script, dictionary);
                 return DynValue.NewTable(t);
             }
 
@@ -217,15 +205,13 @@ namespace NovaSharp.Interpreter.Interop.Converters
         /// <returns></returns>
         public static DynValue EnumerationToDynValue(Script script, object obj)
         {
-            if (obj is System.Collections.IEnumerable)
+            if (obj is IEnumerable enumerable)
             {
-                IEnumerable enumer = (System.Collections.IEnumerable)obj;
-                return EnumerableWrapper.ConvertIterator(script, enumer.GetEnumerator());
+                return EnumerableWrapper.ConvertIterator(script, enumerable.GetEnumerator());
             }
 
-            if (obj is System.Collections.IEnumerator)
+            if (obj is IEnumerator enumer)
             {
-                IEnumerator enumer = (System.Collections.IEnumerator)obj;
                 return EnumerableWrapper.ConvertIterator(script, enumer);
             }
 

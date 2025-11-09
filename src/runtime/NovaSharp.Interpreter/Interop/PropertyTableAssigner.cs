@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Compatibility;
+
     /// <summary>
     /// Utility class which may be used to set properties on an object of type T, from values contained in a Lua table.
     /// Properties must be decorated with the <see cref="NovaSharpPropertyAttribute"/>.
@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop
     /// <typeparam name="T">The type of the object.</typeparam>
     public class PropertyTableAssigner<T> : IPropertyTableAssigner
     {
-        PropertyTableAssigner m_InternalAssigner;
+        private readonly PropertyTableAssigner _internalAssigner;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyTableAssigner{T}"/> class.
@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="expectedMissingProperties">The expected missing properties, that is expected fields in the table with no corresponding property in the object.</param>
         public PropertyTableAssigner(params string[] expectedMissingProperties)
         {
-            m_InternalAssigner = new PropertyTableAssigner(typeof(T), expectedMissingProperties);
+            _internalAssigner = new PropertyTableAssigner(typeof(T), expectedMissingProperties);
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="name">The name.</param>
         public void AddExpectedMissingProperty(string name)
         {
-            m_InternalAssigner.AddExpectedMissingProperty(name);
+            _internalAssigner.AddExpectedMissingProperty(name);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <exception cref="ScriptRuntimeException">A field does not correspond to any property and that property is not one of the expected missing ones.</exception>
         public void AssignObject(T obj, Table data)
         {
-            m_InternalAssigner.AssignObject(obj, data);
+            _internalAssigner.AssignObject(obj, data);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public PropertyTableAssigner GetTypeUnsafeAssigner()
         {
-            return m_InternalAssigner;
+            return _internalAssigner;
         }
 
         /// <summary>
@@ -62,17 +62,19 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="assigner">The property assigner.</param>
         public void SetSubassignerForType(Type propertyType, IPropertyTableAssigner assigner)
         {
-            m_InternalAssigner.SetSubassignerForType(propertyType, assigner);
+            _internalAssigner.SetSubassignerForType(propertyType, assigner);
         }
 
         /// <summary>
         /// Sets the subassigner for the given type
         /// </summary>
-        /// <typeparam name="SubassignerType">Type of the property for which the subassigner will be used.</typeparam>
+        /// <typeparam name="TSubassignerType">Type of the property for which the subassigner will be used.</typeparam>
         /// <param name="assigner">The property assigner.</param>
-        public void SetSubassigner<SubassignerType>(PropertyTableAssigner<SubassignerType> assigner)
+        public void SetSubassigner<TSubassignerType>(
+            PropertyTableAssigner<TSubassignerType> assigner
+        )
         {
-            m_InternalAssigner.SetSubassignerForType(typeof(SubassignerType), assigner);
+            _internalAssigner.SetSubassignerForType(typeof(TSubassignerType), assigner);
         }
 
         /// <summary>
@@ -93,9 +95,9 @@ namespace NovaSharp.Interpreter.Interop
     /// </summary>
     public class PropertyTableAssigner : IPropertyTableAssigner
     {
-        Type m_Type;
-        Dictionary<string, PropertyInfo> m_PropertyMap = new();
-        Dictionary<Type, IPropertyTableAssigner> m_SubAssigners = new();
+        private readonly Type _type;
+        private readonly Dictionary<string, PropertyInfo> _propertyMap = new();
+        private readonly Dictionary<Type, IPropertyTableAssigner> _subAssigners = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyTableAssigner"/> class.
@@ -107,19 +109,19 @@ namespace NovaSharp.Interpreter.Interop
         /// </exception>
         public PropertyTableAssigner(Type type, params string[] expectedMissingProperties)
         {
-            m_Type = type;
+            _type = type;
 
-            if (Framework.Do.IsValueType(m_Type))
+            if (Framework.Do.IsValueType(_type))
             {
                 throw new ArgumentException("Type cannot be a value type.");
             }
 
             foreach (string property in expectedMissingProperties)
             {
-                m_PropertyMap.Add(property, null);
+                _propertyMap.Add(property, null);
             }
 
-            foreach (PropertyInfo pi in Framework.Do.GetProperties(m_Type))
+            foreach (PropertyInfo pi in Framework.Do.GetProperties(_type))
             {
                 foreach (
                     NovaSharpPropertyAttribute attr in pi.GetCustomAttributes(true)
@@ -128,19 +130,19 @@ namespace NovaSharp.Interpreter.Interop
                 {
                     string name = attr.Name ?? pi.Name;
 
-                    if (m_PropertyMap.ContainsKey(name))
+                    if (_propertyMap.ContainsKey(name))
                     {
                         throw new ArgumentException(
                             string.Format(
                                 "Type {0} has two definitions for NovaSharp property {1}",
-                                m_Type.FullName,
+                                _type.FullName,
                                 name
                             )
                         );
                     }
                     else
                     {
-                        m_PropertyMap.Add(name, pi);
+                        _propertyMap.Add(name, pi);
                     }
                 }
             }
@@ -152,28 +154,28 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="name">The name.</param>
         public void AddExpectedMissingProperty(string name)
         {
-            m_PropertyMap.Add(name, null);
+            _propertyMap.Add(name, null);
         }
 
         private bool TryAssignProperty(object obj, string name, DynValue value)
         {
-            if (m_PropertyMap.ContainsKey(name))
+            if (_propertyMap.ContainsKey(name))
             {
-                PropertyInfo pi = m_PropertyMap[name];
+                PropertyInfo pi = _propertyMap[name];
 
                 if (pi != null)
                 {
                     object o;
 
-                    if (value.Type == DataType.Table && m_SubAssigners.ContainsKey(pi.PropertyType))
+                    if (value.Type == DataType.Table && _subAssigners.ContainsKey(pi.PropertyType))
                     {
-                        IPropertyTableAssigner subassigner = m_SubAssigners[pi.PropertyType];
+                        IPropertyTableAssigner subassigner = _subAssigners[pi.PropertyType];
                         o = Activator.CreateInstance(pi.PropertyType);
                         subassigner.AssignObjectUnchecked(o, value.Table);
                     }
                     else
                     {
-                        o = Interop.Converters.ScriptToClrConversions.DynValueToObjectOfType(
+                        o = Converters.ScriptToClrConversions.DynValueToObjectOfType(
                             value,
                             pi.PropertyType,
                             null,
@@ -248,13 +250,13 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentNullException("Object is null");
             }
 
-            if (!Framework.Do.IsInstanceOfType(m_Type, obj))
+            if (!Framework.Do.IsInstanceOfType(_type, obj))
             {
                 throw new ArgumentException(
                     string.Format(
                         "Invalid type of object : got '{0}', expected {1}",
                         obj.GetType().FullName,
-                        m_Type.FullName
+                        _type.FullName
                     )
                 );
             }
@@ -290,7 +292,7 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentException("propertyType must be a concrete, reference type");
             }
 
-            m_SubAssigners[propertyType] = assigner;
+            _subAssigners[propertyType] = assigner;
         }
 
         /// <summary>
@@ -300,7 +302,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="data">The data.</param>
         void IPropertyTableAssigner.AssignObjectUnchecked(object obj, Table data)
         {
-            this.AssignObject(obj, data);
+            AssignObject(obj, data);
         }
     }
 
@@ -314,6 +316,6 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="o">The object.</param>
         /// <param name="data">The data.</param>
-        void AssignObjectUnchecked(object o, Table data);
+        public void AssignObjectUnchecked(object o, Table data);
     }
 }

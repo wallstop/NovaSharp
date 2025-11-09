@@ -1,14 +1,14 @@
-using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+    using System.Linq.Expressions;
+    using System.Reflection;
+    using System.Threading;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+    using Diagnostics;
+
     /// <summary>
     /// Class providing easier marshalling of CLR fields
     /// </summary>
@@ -47,9 +47,9 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public bool IsReadonly { get; private set; }
 
-        object m_ConstValue = null;
+        private readonly object _constValue = null;
 
-        Func<object, object> m_OptimizedGetter = null;
+        private Func<object, object> _optimizedGetter = null;
 
         /// <summary>
         /// Tries to create a new StandardUserDataFieldDescriptor, returning <c>null</c> in case the field is not
@@ -83,24 +83,24 @@ namespace NovaSharp.Interpreter.Interop
                 accessMode = InteropAccessMode.Reflection;
             }
 
-            this.FieldInfo = fi;
-            this.AccessMode = accessMode;
-            this.Name = fi.Name;
-            this.IsStatic = this.FieldInfo.IsStatic;
+            FieldInfo = fi;
+            AccessMode = accessMode;
+            Name = fi.Name;
+            IsStatic = FieldInfo.IsStatic;
 
-            if (this.FieldInfo.IsLiteral)
+            if (FieldInfo.IsLiteral)
             {
                 IsConst = true;
-                m_ConstValue = FieldInfo.GetValue(null);
+                _constValue = FieldInfo.GetValue(null);
             }
             else
             {
-                IsReadonly = this.FieldInfo.IsInitOnly;
+                IsReadonly = FieldInfo.IsInitOnly;
             }
 
             if (AccessMode == InteropAccessMode.Preoptimized)
             {
-                this.OptimizeGetter();
+                OptimizeGetter();
             }
         }
 
@@ -117,19 +117,19 @@ namespace NovaSharp.Interpreter.Interop
             // optimization+workaround of Unity bug..
             if (IsConst)
             {
-                return ClrToScriptConversions.ObjectToDynValue(script, m_ConstValue);
+                return ClrToScriptConversions.ObjectToDynValue(script, _constValue);
             }
 
-            if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
+            if (AccessMode == InteropAccessMode.LazyOptimized && _optimizedGetter == null)
             {
                 OptimizeGetter();
             }
 
             object result = null;
 
-            if (m_OptimizedGetter != null)
+            if (_optimizedGetter != null)
             {
-                result = m_OptimizedGetter(obj);
+                result = _optimizedGetter(obj);
             }
             else
             {
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Interop
 
         internal void OptimizeGetter()
         {
-            if (this.IsConst)
+            if (IsConst)
             {
                 return;
             }
@@ -158,21 +158,21 @@ namespace NovaSharp.Interpreter.Interop
                     Expression<Func<object, object>> lambda = Expression.Lambda<
                         Func<object, object>
                     >(castPropAccess, paramExp);
-                    Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
+                    Interlocked.Exchange(ref _optimizedGetter, lambda.Compile());
                 }
                 else
                 {
                     ParameterExpression paramExp = Expression.Parameter(typeof(object), "obj");
                     UnaryExpression castParamExp = Expression.Convert(
                         paramExp,
-                        this.FieldInfo.DeclaringType
+                        FieldInfo.DeclaringType
                     );
                     MemberExpression propAccess = Expression.Field(castParamExp, FieldInfo);
                     UnaryExpression castPropAccess = Expression.Convert(propAccess, typeof(object));
                     Expression<Func<object, object>> lambda = Expression.Lambda<
                         Func<object, object>
                     >(castPropAccess, paramExp);
-                    Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
+                    Interlocked.Exchange(ref _optimizedGetter, lambda.Compile());
                 }
             }
         }
@@ -191,23 +191,23 @@ namespace NovaSharp.Interpreter.Interop
             {
                 throw new ScriptRuntimeException(
                     "userdata field '{0}.{1}' cannot be written to.",
-                    this.FieldInfo.DeclaringType.Name,
-                    this.Name
+                    FieldInfo.DeclaringType.Name,
+                    Name
                 );
             }
 
             object value = ScriptToClrConversions.DynValueToObjectOfType(
                 v,
-                this.FieldInfo.FieldType,
+                FieldInfo.FieldType,
                 null,
                 false
             );
 
             try
             {
-                if (value is double)
+                if (value is double d)
                 {
-                    value = NumericConversions.DoubleToType(FieldInfo.FieldType, (double)value);
+                    value = NumericConversions.DoubleToType(FieldInfo.FieldType, d);
                 }
 
                 FieldInfo.SetValue(IsStatic ? null : obj, value);
@@ -256,9 +256,9 @@ namespace NovaSharp.Interpreter.Interop
 
         void IOptimizableDescriptor.Optimize()
         {
-            if (m_OptimizedGetter == null)
+            if (_optimizedGetter == null)
             {
-                this.OptimizeGetter();
+                OptimizeGetter();
             }
         }
 
@@ -269,21 +269,21 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
-            t.Set("class", DynValue.NewString(this.GetType().FullName));
-            t.Set("visibility", DynValue.NewString(this.FieldInfo.GetClrVisibility()));
+            t.Set("class", DynValue.NewString(GetType().FullName));
+            t.Set("visibility", DynValue.NewString(FieldInfo.GetClrVisibility()));
 
-            t.Set("name", DynValue.NewString(this.Name));
-            t.Set("static", DynValue.NewBoolean(this.IsStatic));
-            t.Set("const", DynValue.NewBoolean(this.IsConst));
-            t.Set("readonly", DynValue.NewBoolean(this.IsReadonly));
-            t.Set("decltype", DynValue.NewString(this.FieldInfo.DeclaringType.FullName));
+            t.Set("name", DynValue.NewString(Name));
+            t.Set("static", DynValue.NewBoolean(IsStatic));
+            t.Set("const", DynValue.NewBoolean(IsConst));
+            t.Set("readonly", DynValue.NewBoolean(IsReadonly));
+            t.Set("decltype", DynValue.NewString(FieldInfo.DeclaringType.FullName));
             t.Set(
                 "declvtype",
-                DynValue.NewBoolean(Framework.Do.IsValueType(this.FieldInfo.DeclaringType))
+                DynValue.NewBoolean(Framework.Do.IsValueType(FieldInfo.DeclaringType))
             );
-            t.Set("type", DynValue.NewString(this.FieldInfo.FieldType.FullName));
+            t.Set("type", DynValue.NewString(FieldInfo.FieldType.FullName));
             t.Set("read", DynValue.NewBoolean(true));
-            t.Set("write", DynValue.NewBoolean(!(this.IsConst || this.IsReadonly)));
+            t.Set("write", DynValue.NewBoolean(!(IsConst || IsReadonly)));
         }
     }
 }

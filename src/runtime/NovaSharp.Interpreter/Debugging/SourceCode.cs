@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
     /// <summary>
     /// Class representing the source code of a given script
     /// </summary>
@@ -32,11 +32,11 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets the source identifier inside a script
         /// </summary>
-        public int SourceID { get; private set; }
+        public int SourceId { get; private set; }
 
         internal List<SourceRef> Refs { get; private set; }
 
-        internal SourceCode(string name, string code, int sourceID, Script ownerScript)
+        internal SourceCode(string name, string code, int sourceId, Script ownerScript)
         {
             Refs = new List<SourceRef>();
 
@@ -45,14 +45,14 @@ namespace NovaSharp.Interpreter.Debugging
             Name = name;
             Code = code;
 
-            lines.Add(string.Format("-- Begin of chunk : {0} ", name));
+            lines.Add($"-- Begin of chunk : {name} ");
 
             lines.AddRange(Code.Split('\n'));
 
             Lines = lines.ToArray();
 
             OwnerScript = ownerScript;
-            SourceID = sourceID;
+            SourceId = sourceId;
         }
 
         /// <summary>

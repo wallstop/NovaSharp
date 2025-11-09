@@ -16,7 +16,7 @@
 			
 			import spark.events.TextOperationEvent;
 			
-			private var m_Closed:Boolean = false;
+			private var _Closed:Boolean = false;
 			
 			public static function show(parentDisplayObject:DisplayObject):AboutBox
 			{
@@ -73,7 +73,7 @@
 			
 			private function closeBox():void
 			{
-				if (!m_Closed) PopUpManager.removePopUp(this); 
+				if (!_Closed) PopUpManager.removePopUp(this); 
 				m_Closed = true; 
 			}
 

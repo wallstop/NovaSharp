@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.Execution
 {
+    using System.Collections.Generic;
+
     internal class RuntimeScopeFrame
     {
         public List<SymbolRef> DebugSymbols { get; private set; }
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Execution
 
         public override string ToString()
         {
-            return string.Format("ScopeFrame : #{0}", Count);
+            return $"ScopeFrame : #{Count}";
         }
     }
 }

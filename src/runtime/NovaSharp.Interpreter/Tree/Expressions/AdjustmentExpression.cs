@@ -1,26 +1,26 @@
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class AdjustmentExpression : Expression
+    using Execution;
+
+    internal class AdjustmentExpression : Expression
     {
-        private Expression expression;
+        private readonly Expression _expression;
 
         public AdjustmentExpression(ScriptLoadingContext lcontext, Expression exp)
             : base(lcontext)
         {
-            expression = exp;
+            _expression = exp;
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            expression.Compile(bc);
+            _expression.Compile(bc);
             bc.Emit_Scalar();
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            return expression.Eval(context).ToScalar();
+            return _expression.Eval(context).ToScalar();
         }
     }
 }

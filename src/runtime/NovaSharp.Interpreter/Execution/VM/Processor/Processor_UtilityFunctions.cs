@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
+    using System.Collections.Generic;
+
+    internal sealed partial class Processor
     {
         private DynValue[] Internal_AdjustTuple(IList<DynValue> values)
         {
@@ -11,9 +11,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 return new DynValue[0];
             }
 
-            if (values[values.Count - 1].Type == DataType.Tuple)
+            if (values[^1].Type == DataType.Tuple)
             {
-                int baseLen = values.Count - 1 + values[values.Count - 1].Tuple.Length;
+                int baseLen = values.Count - 1 + values[^1].Tuple.Length;
                 DynValue[] result = new DynValue[baseLen];
 
                 for (int i = 0; i < values.Count - 1; i++)
@@ -21,12 +21,12 @@ namespace NovaSharp.Interpreter.Execution.VM
                     result[i] = values[i].ToScalar();
                 }
 
-                for (int i = 0; i < values[values.Count - 1].Tuple.Length; i++)
+                for (int i = 0; i < values[^1].Tuple.Length; i++)
                 {
-                    result[values.Count + i - 1] = values[values.Count - 1].Tuple[i];
+                    result[values.Count + i - 1] = values[^1].Tuple[i];
                 }
 
-                if (result[result.Length - 1].Type == DataType.Tuple)
+                if (result[^1].Type == DataType.Tuple)
                 {
                     return Internal_AdjustTuple(result);
                 }
@@ -58,16 +58,16 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (op1.Type == DataType.UserData)
             {
-                m = op1.UserData.Descriptor.MetaIndex(m_Script, op1.UserData.Object, eventName);
+                m = op1.UserData.Descriptor.MetaIndex(_script, op1.UserData.Object, eventName);
             }
 
             if (m == null)
             {
-                Table op1_MetaTable = GetMetatable(op1);
+                Table op1MetaTable = GetMetatable(op1);
 
-                if (op1_MetaTable != null)
+                if (op1MetaTable != null)
                 {
-                    DynValue meta1 = op1_MetaTable.RawGet(eventName);
+                    DynValue meta1 = op1MetaTable.RawGet(eventName);
                     if (meta1 != null && meta1.IsNotNil())
                     {
                         m = meta1;
@@ -77,8 +77,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (m != null)
             {
-                m_ValueStack.Push(m);
-                m_ValueStack.Push(op1);
+                _valueStack.Push(m);
+                _valueStack.Push(op1);
                 return Internal_ExecCall(1, instructionPtr);
             }
             else
@@ -101,12 +101,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 if (extraPush != null)
                 {
-                    m_ValueStack.Push(extraPush);
+                    _valueStack.Push(extraPush);
                 }
 
-                m_ValueStack.Push(m);
-                m_ValueStack.Push(l);
-                m_ValueStack.Push(r);
+                _valueStack.Push(m);
+                _valueStack.Push(l);
+                _valueStack.Push(r);
                 return Internal_ExecCall(2, instructionPtr);
             }
             else
@@ -123,14 +123,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 for (int i = 0; i < items; i++)
                 {
-                    values[i] = m_ValueStack.Pop();
+                    values[i] = _valueStack.Pop();
                 }
             }
             else
             {
                 for (int i = 0; i < items; i++)
                 {
-                    values[i] = m_ValueStack[m_ValueStack.Count - 1 - i];
+                    values[i] = _valueStack[_valueStack.Count - 1 - i];
                 }
             }
 
@@ -145,14 +145,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 for (int i = 0; i < items; i++)
                 {
-                    values[items - 1 - i] = m_ValueStack.Pop();
+                    values[items - 1 - i] = _valueStack.Pop();
                 }
             }
             else
             {
                 for (int i = 0; i < items; i++)
                 {
-                    values[items - 1 - i] = m_ValueStack[m_ValueStack.Count - 1 - i];
+                    values[items - 1 - i] = _valueStack[_valueStack.Count - 1 - i];
                 }
             }
 

@@ -1,16 +1,16 @@
-using System;
-using System.CodeDom;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Hardwire.Languages;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Hardwire
 {
+    using System;
+    using System.CodeDom;
+    using System.CodeDom.Compiler;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Text;
+    using Interpreter;
+    using Languages;
+
     /// <summary>
     /// The context under which code is generated.
     /// </summary>
@@ -21,12 +21,12 @@ namespace NovaSharp.Hardwire
         /// </summary>
         internal CodeCompileUnit CompileUnit { get; private set; }
 
-        CodeStatementCollection m_InitStatements;
-        CodeTypeDeclaration m_KickstarterClass;
-        CodeNamespace m_Namespace;
-        ICodeGenerationLogger m_Logger;
+        private CodeStatementCollection _initStatements;
+        private CodeTypeDeclaration _kickstarterClass;
+        private readonly CodeNamespace _namespace;
+        private readonly ICodeGenerationLogger _logger;
 
-        Stack<string> m_NestStack = new();
+        private readonly Stack<string> _nestStack = new();
 
         public HardwireCodeGenerationLanguage TargetLanguage { get; private set; }
 
@@ -41,12 +41,12 @@ namespace NovaSharp.Hardwire
         {
             TargetLanguage = language;
 
-            m_Logger = logger;
+            _logger = logger;
 
             CompileUnit = new CodeCompileUnit();
 
-            m_Namespace = new CodeNamespace(namespaceName);
-            CompileUnit.Namespaces.Add(m_Namespace);
+            _namespace = new CodeNamespace(namespaceName);
+            CompileUnit.Namespaces.Add(_namespace);
 
             Comment("----------------------------------------------------------");
             Comment(
@@ -88,9 +88,9 @@ namespace NovaSharp.Hardwire
             {
                 DispatchTablePairs(
                     table,
-                    m_KickstarterClass.Members,
+                    _kickstarterClass.Members,
                     exp =>
-                        m_InitStatements.Add(
+                        _initStatements.Add(
                             new CodeMethodInvokeExpression(
                                 new CodeTypeReferenceExpression(typeof(UserData)),
                                 "RegisterType",
@@ -101,9 +101,7 @@ namespace NovaSharp.Hardwire
             }
             catch (Exception ex)
             {
-                m_Logger.LogError(
-                    string.Format("Internal error, code generation aborted : {0}", ex)
-                );
+                _logger.LogError($"Internal error, code generation aborted : {ex}");
             }
         }
 
@@ -121,8 +119,8 @@ namespace NovaSharp.Hardwire
         {
             foreach (TablePair pair in table.Pairs)
             {
-                DynValue? key = pair.Key;
-                DynValue? value = pair.Value;
+                DynValue key = pair.Key;
+                DynValue value = pair.Value;
 
                 if (value.Type == DataType.Table && value.Table.Get("error").IsNotNil())
                 {
@@ -148,7 +146,7 @@ namespace NovaSharp.Hardwire
                         continue;
                     }
 
-                    CodeExpression[]? exp = DispatchTable(key.String, value.Table, members);
+                    CodeExpression[] exp = DispatchTable(key.String, value.Table, members);
 
                     if (action != null && exp != null)
                     {
@@ -183,7 +181,7 @@ namespace NovaSharp.Hardwire
 
         public string GetStackTrace()
         {
-            return string.Join(" - ", m_NestStack.ToArray());
+            return string.Join(" - ", _nestStack.ToArray());
         }
 
         /// <summary>
@@ -225,14 +223,14 @@ namespace NovaSharp.Hardwire
 
             //m_NestStack.Push(string.Format("{0}[{1}]", key, d.String));
 
-            m_NestStack.Push((key ?? d.String) ?? "(null)");
+            _nestStack.Push((key ?? d.String) ?? "(null)");
 
             table.Set("$key", DynValue.NewString(key));
 
             IHardwireGenerator gen = HardwireGeneratorRegistry.GetGenerator(d.String);
             CodeExpression[] result = gen.Generate(table, this, members);
 
-            m_NestStack.Pop();
+            _nestStack.Pop();
 
             return result;
         }
@@ -245,7 +243,7 @@ namespace NovaSharp.Hardwire
         public void Comment(string format, params object[] args)
         {
             string str = string.Format(format, args);
-            m_Namespace.Comments.Add(new CodeCommentStatement(str));
+            _namespace.Comments.Add(new CodeCommentStatement(str));
         }
 
         /// <summary>
@@ -256,8 +254,8 @@ namespace NovaSharp.Hardwire
         public void Error(string format, params object[] args)
         {
             string str = string.Format(format, args);
-            m_Namespace.Comments.Add(new CodeCommentStatement("ERROR : " + str));
-            m_Logger.LogError(str);
+            _namespace.Comments.Add(new CodeCommentStatement("ERROR : " + str));
+            _logger.LogError(str);
         }
 
         /// <summary>
@@ -268,8 +266,8 @@ namespace NovaSharp.Hardwire
         public void Warning(string format, params object[] args)
         {
             string str = string.Format(format, args);
-            m_Namespace.Comments.Add(new CodeCommentStatement("WARNING : " + str));
-            m_Logger.LogWarning(str);
+            _namespace.Comments.Add(new CodeCommentStatement("WARNING : " + str));
+            _logger.LogWarning(str);
         }
 
         /// <summary>
@@ -280,8 +278,8 @@ namespace NovaSharp.Hardwire
         public void Minor(string format, params object[] args)
         {
             string str = string.Format(format, args);
-            m_Namespace.Comments.Add(new CodeCommentStatement("Minor : " + str));
-            m_Logger.LogMinor(str);
+            _namespace.Comments.Add(new CodeCommentStatement("Minor : " + str));
+            _logger.LogMinor(str);
         }
 
         public bool IsVisibilityAccepted(Table t)
@@ -308,24 +306,26 @@ namespace NovaSharp.Hardwire
 
         private void GenerateKickstarter(string className)
         {
-            CodeTypeDeclaration cl = new(className);
-            cl.TypeAttributes =
-                System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Abstract;
+            CodeTypeDeclaration cl = new(className)
+            {
+                TypeAttributes = TypeAttributes.Public | TypeAttributes.Abstract,
+            };
 
-            m_Namespace.Types.Add(cl);
+            _namespace.Types.Add(cl);
 
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Private;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Private };
             cl.Members.Add(ctor);
 
-            CodeMemberMethod m = new();
-            m.Name = "Initialize";
-            m.Attributes = MemberAttributes.Static | MemberAttributes.Public;
+            CodeMemberMethod m = new()
+            {
+                Name = "Initialize",
+                Attributes = MemberAttributes.Static | MemberAttributes.Public,
+            };
 
             cl.Members.Add(m);
 
-            this.m_InitStatements = m.Statements;
-            this.m_KickstarterClass = cl;
+            this._initStatements = m.Statements;
+            this._kickstarterClass = cl;
         }
     }
 }

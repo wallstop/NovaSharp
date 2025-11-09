@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// The return values of the coroutine
         /// </summary>
-        public DynValue[] ReturnValues;
+        public DynValue[] returnValues;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="YieldRequest"/> is a forced yield.

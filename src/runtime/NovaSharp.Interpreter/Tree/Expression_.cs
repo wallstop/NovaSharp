@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree
 {
-    abstract class Expression : NodeBase
+    using System.Collections.Generic;
+    using Execution;
+    using Expressions;
+
+    internal abstract class Expression : NodeBase
     {
         public Expression(ScriptLoadingContext lcontext)
             : base(lcontext) { }
@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Tree
 
             exps.Add(expr1);
 
-            while ((lcontext.Lexer.Current.Type == TokenType.Comma))
+            while ((lcontext.Lexer.Current.type == TokenType.Comma))
             {
                 lcontext.Lexer.Next();
                 exps.Add(Expr(lcontext));
@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Tree
             {
                 exps.Add(Expr(lcontext));
 
-                if (lcontext.Lexer.Current.Type != TokenType.Comma)
+                if (lcontext.Lexer.Current.type != TokenType.Comma)
                 {
                     break;
                 }
@@ -67,30 +67,30 @@ namespace NovaSharp.Interpreter.Tree
         {
             Expression e = null;
 
-            Token T = lcontext.Lexer.Current;
+            Token t = lcontext.Lexer.Current;
 
-            if (T.IsUnaryOperator())
+            if (t.IsUnaryOperator())
             {
                 lcontext.Lexer.Next();
                 e = SubExpr(lcontext, false);
 
                 // check for power operator -- it be damned forever and ever for being higher priority than unary ops
-                Token unaryOp = T;
-                T = lcontext.Lexer.Current;
+                Token unaryOp = t;
+                t = lcontext.Lexer.Current;
 
-                if (isPrimary && T.Type == TokenType.Op_Pwr)
+                if (isPrimary && t.type == TokenType.OpPwr)
                 {
                     List<Expression> powerChain = new();
                     powerChain.Add(e);
 
-                    while (isPrimary && T.Type == TokenType.Op_Pwr)
+                    while (isPrimary && t.type == TokenType.OpPwr)
                     {
                         lcontext.Lexer.Next();
                         powerChain.Add(SubExpr(lcontext, false));
-                        T = lcontext.Lexer.Current;
+                        t = lcontext.Lexer.Current;
                     }
 
-                    e = powerChain[powerChain.Count - 1];
+                    e = powerChain[^1];
 
                     for (int i = powerChain.Count - 2; i >= 0; i--)
                     {
@@ -109,21 +109,21 @@ namespace NovaSharp.Interpreter.Tree
                 e = SimpleExp(lcontext);
             }
 
-            T = lcontext.Lexer.Current;
+            t = lcontext.Lexer.Current;
 
-            if (isPrimary && T.IsBinaryOperator())
+            if (isPrimary && t.IsBinaryOperator())
             {
                 object chain = BinaryOperatorExpression.BeginOperatorChain();
 
                 BinaryOperatorExpression.AddExpressionToChain(chain, e);
 
-                while (T.IsBinaryOperator())
+                while (t.IsBinaryOperator())
                 {
-                    BinaryOperatorExpression.AddOperatorToChain(chain, T);
+                    BinaryOperatorExpression.AddOperatorToChain(chain, t);
                     lcontext.Lexer.Next();
                     Expression right = SubExpr(lcontext, false);
                     BinaryOperatorExpression.AddExpressionToChain(chain, right);
-                    T = lcontext.Lexer.Current;
+                    t = lcontext.Lexer.Current;
                 }
 
                 e = BinaryOperatorExpression.CommitOperatorChain(chain, lcontext);
@@ -136,25 +136,22 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
 
-            switch (t.Type)
+            switch (t.type)
             {
                 case TokenType.Number:
-                case TokenType.Number_Hex:
-                case TokenType.Number_HexFloat:
+                case TokenType.NumberHex:
+                case TokenType.NumberHexFloat:
                 case TokenType.String:
-                case TokenType.String_Long:
+                case TokenType.StringLong:
                 case TokenType.Nil:
                 case TokenType.True:
                 case TokenType.False:
                     return new LiteralExpression(lcontext, t);
                 case TokenType.VarArgs:
                     return new SymbolRefExpression(t, lcontext);
-                case TokenType.Brk_Open_Curly:
-                case TokenType.Brk_Open_Curly_Shared:
-                    return new TableConstructor(
-                        lcontext,
-                        t.Type == TokenType.Brk_Open_Curly_Shared
-                    );
+                case TokenType.BrkOpenCurly:
+                case TokenType.BrkOpenCurlyShared:
+                    return new TableConstructor(lcontext, t.type == TokenType.BrkOpenCurlyShared);
                 case TokenType.Function:
                     lcontext.Lexer.Next();
                     return new FunctionDefinitionExpression(lcontext, false, false);
@@ -176,10 +173,10 @@ namespace NovaSharp.Interpreter.Tree
 
             while (true)
             {
-                Token T = lcontext.Lexer.Current;
+                Token t = lcontext.Lexer.Current;
                 Token thisCallName = null;
 
-                switch (T.Type)
+                switch (t.type)
                 {
                     case TokenType.Dot:
                         {
@@ -188,32 +185,32 @@ namespace NovaSharp.Interpreter.Tree
                             e = new IndexExpression(e, name.Text, lcontext);
                         }
                         break;
-                    case TokenType.Brk_Open_Square:
+                    case TokenType.BrkOpenSquare:
                         {
                             Token openBrk = lcontext.Lexer.Current;
                             lcontext.Lexer.Next(); // skip bracket
                             Expression index = Expr(lcontext);
 
                             // support NovaSharp multiple indexers for userdata
-                            if (lcontext.Lexer.Current.Type == TokenType.Comma)
+                            if (lcontext.Lexer.Current.type == TokenType.Comma)
                             {
                                 List<Expression> explist = ExprListAfterFirstExpr(lcontext, index);
                                 index = new ExprListExpression(explist, lcontext);
                             }
 
-                            CheckMatch(lcontext, openBrk, TokenType.Brk_Close_Square, "]");
+                            CheckMatch(lcontext, openBrk, TokenType.BrkCloseSquare, "]");
                             e = new IndexExpression(e, index, lcontext);
                         }
                         break;
                     case TokenType.Colon:
                         lcontext.Lexer.Next();
                         thisCallName = CheckTokenType(lcontext, TokenType.Name);
-                        goto case TokenType.Brk_Open_Round;
-                    case TokenType.Brk_Open_Round:
+                        goto case TokenType.BrkOpenRound;
+                    case TokenType.BrkOpenRound:
                     case TokenType.String:
-                    case TokenType.String_Long:
-                    case TokenType.Brk_Open_Curly:
-                    case TokenType.Brk_Open_Curly_Shared:
+                    case TokenType.StringLong:
+                    case TokenType.BrkOpenCurly:
+                    case TokenType.BrkOpenCurlyShared:
                         e = new FunctionCallExpression(lcontext, e, thisCallName);
                         break;
                     default:
@@ -224,21 +221,21 @@ namespace NovaSharp.Interpreter.Tree
 
         private static Expression PrefixExp(ScriptLoadingContext lcontext)
         {
-            Token T = lcontext.Lexer.Current;
-            switch (T.Type)
+            Token t = lcontext.Lexer.Current;
+            switch (t.type)
             {
-                case TokenType.Brk_Open_Round:
+                case TokenType.BrkOpenRound:
                     lcontext.Lexer.Next();
                     Expression e = Expr(lcontext);
                     e = new AdjustmentExpression(lcontext, e);
-                    CheckMatch(lcontext, T, TokenType.Brk_Close_Round, ")");
+                    CheckMatch(lcontext, t, TokenType.BrkCloseRound, ")");
                     return e;
                 case TokenType.Name:
-                    return new SymbolRefExpression(T, lcontext);
+                    return new SymbolRefExpression(t, lcontext);
                 default:
-                    throw new SyntaxErrorException(T, "unexpected symbol near '{0}'", T.Text)
+                    throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
                     {
-                        IsPrematureStreamTermination = (T.Type == TokenType.Eof),
+                        IsPrematureStreamTermination = (t.type == TokenType.Eof),
                     };
             }
         }

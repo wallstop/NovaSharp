@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Compatibility;
+    using Converters;
+
     /// <summary>
     /// An abstract user data descriptor which accepts members described by <see cref="IMemberDescriptor"/> objects and
     /// correctly dispatches to them.
@@ -16,9 +16,13 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         : IUserDataDescriptor,
             IOptimizableDescriptor
     {
-        private int m_ExtMethodsVersion = 0;
-        private Dictionary<string, IMemberDescriptor> m_MetaMembers = new();
-        private Dictionary<string, IMemberDescriptor> m_Members = new();
+        private int _extMethodsVersion = 0;
+        private readonly Dictionary<string, IMemberDescriptor> _metaMembers = new(
+            StringComparer.OrdinalIgnoreCase
+        );
+        private readonly Dictionary<string, IMemberDescriptor> _members = new(
+            StringComparer.OrdinalIgnoreCase
+        );
 
         /// <summary>
         /// The special name used by CLR for indexer getters
@@ -79,7 +83,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (desc != null)
             {
-                AddMemberTo(m_MetaMembers, name, desc);
+                AddMemberTo(_metaMembers, name, desc);
             }
         }
 
@@ -91,7 +95,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         public void AddDynValue(string name, DynValue value)
         {
             DynValueMemberDescriptor desc = new(name, value);
-            AddMemberTo(m_Members, name, desc);
+            AddMemberTo(_members, name, desc);
         }
 
         /// <summary>
@@ -106,7 +110,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (desc != null)
             {
-                AddMemberTo(m_Members, name, desc);
+                AddMemberTo(_members, name, desc);
             }
         }
 
@@ -115,7 +119,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public IEnumerable<string> MemberNames
         {
-            get { return m_Members.Keys; }
+            get { return _members.Keys; }
         }
 
         /// <summary>
@@ -123,7 +127,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public IEnumerable<KeyValuePair<string, IMemberDescriptor>> Members
         {
-            get { return m_Members; }
+            get { return _members; }
         }
 
         /// <summary>
@@ -133,7 +137,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public IMemberDescriptor FindMember(string memberName)
         {
-            return m_Members.GetOrDefault(memberName);
+            return _members.GetOrDefault(memberName);
         }
 
         /// <summary>
@@ -142,7 +146,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="memberName">Name of the member.</param>
         public void RemoveMember(string memberName)
         {
-            m_Members.Remove(memberName);
+            _members.Remove(memberName);
         }
 
         /// <summary>
@@ -150,7 +154,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public IEnumerable<string> MetaMemberNames
         {
-            get { return m_MetaMembers.Keys; }
+            get { return _metaMembers.Keys; }
         }
 
         /// <summary>
@@ -158,7 +162,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public IEnumerable<KeyValuePair<string, IMemberDescriptor>> MetaMembers
         {
-            get { return m_MetaMembers; }
+            get { return _metaMembers; }
         }
 
         /// <summary>
@@ -167,7 +171,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="memberName">Name of the member.</param>
         public IMemberDescriptor FindMetaMember(string memberName)
         {
-            return m_MetaMembers.GetOrDefault(memberName);
+            return _metaMembers.GetOrDefault(memberName);
         }
 
         /// <summary>
@@ -176,7 +180,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="memberName">Name of the member.</param>
         public void RemoveMetaMember(string memberName)
         {
-            m_MetaMembers.Remove(memberName);
+            _metaMembers.Remove(memberName);
         }
 
         private void AddMemberTo(
@@ -185,16 +189,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             IMemberDescriptor desc
         )
         {
-            IOverloadableMemberDescriptor odesc = desc as IOverloadableMemberDescriptor;
-
-            if (odesc != null)
+            if (desc is IOverloadableMemberDescriptor odesc)
             {
                 if (members.ContainsKey(name))
                 {
-                    OverloadedMethodMemberDescriptor overloads =
-                        members[name] as OverloadedMethodMemberDescriptor;
-
-                    if (overloads != null)
+                    if (members[name] is OverloadedMethodMemberDescriptor overloads)
                     {
                         overloads.AddOverload(odesc);
                     }
@@ -204,14 +203,14 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                             string.Format(
                                 "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
                                 name,
-                                this.Type.FullName
+                                Type.FullName
                             )
                         );
                     }
                 }
                 else
                 {
-                    members.Add(name, new OverloadedMethodMemberDescriptor(name, this.Type, odesc));
+                    members.Add(name, new OverloadedMethodMemberDescriptor(name, Type, odesc));
                 }
             }
             else
@@ -222,7 +221,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                         string.Format(
                             "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
                             name,
-                            this.Type.FullName
+                            Type.FullName
                         )
                     );
                 }
@@ -250,7 +249,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (!isDirectIndexing)
             {
-                IMemberDescriptor mdesc = m_Members
+                IMemberDescriptor mdesc = _members
                     .GetOrDefault(SPECIALNAME_INDEXER_GET)
                     .WithAccessOrNull(MemberDescriptorAccess.CanExecute);
 
@@ -267,74 +266,33 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 return null;
             }
 
-            DynValue v = TryIndex(script, obj, index.String);
-            if (
-                v == null
-                && (
-                    Script.GlobalOptions.FuzzySymbolMatching
-                    & FuzzySymbolMatchingBehavior.UpperFirstLetter
-                ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
-            )
-            {
-                v = TryIndex(script, obj, UpperFirstLetter(index.String));
-            }
+            List<string> candidates = BuildMemberNameCandidates(
+                index.String,
+                Script.GlobalOptions.FuzzySymbolMatching
+            );
 
-            if (
-                v == null
-                && (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.Camelify)
-                    == FuzzySymbolMatchingBehavior.Camelify
-            )
-            {
-                v = TryIndex(script, obj, Camelify(index.String));
-            }
+            DynValue v = null;
 
-            if (
-                v == null
-                && (
-                    Script.GlobalOptions.FuzzySymbolMatching
-                    & FuzzySymbolMatchingBehavior.PascalCase
-                ) == FuzzySymbolMatchingBehavior.PascalCase
-            )
+            foreach (string candidate in candidates)
             {
-                v = TryIndex(script, obj, UpperFirstLetter(Camelify(index.String)));
-            }
-
-            if (v == null && m_ExtMethodsVersion < UserData.GetExtensionMethodsChangeVersion())
-            {
-                m_ExtMethodsVersion = UserData.GetExtensionMethodsChangeVersion();
-
-                v = TryIndexOnExtMethod(script, obj, index.String);
-                if (
-                    v == null
-                    && (
-                        Script.GlobalOptions.FuzzySymbolMatching
-                        & FuzzySymbolMatchingBehavior.UpperFirstLetter
-                    ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
-                )
+                v = TryIndex(script, obj, candidate);
+                if (v != null)
                 {
-                    v = TryIndexOnExtMethod(script, obj, UpperFirstLetter(index.String));
+                    break;
                 }
+            }
 
-                if (
-                    v == null
-                    && (
-                        Script.GlobalOptions.FuzzySymbolMatching
-                        & FuzzySymbolMatchingBehavior.Camelify
-                    ) == FuzzySymbolMatchingBehavior.Camelify
-                )
-                {
-                    v = TryIndexOnExtMethod(script, obj, Camelify(index.String));
-                }
+            if (v == null && _extMethodsVersion < UserData.GetExtensionMethodsChangeVersion())
+            {
+                _extMethodsVersion = UserData.GetExtensionMethodsChangeVersion();
 
-                if (
-                    v == null
-                    && (
-                        Script.GlobalOptions.FuzzySymbolMatching
-                        & FuzzySymbolMatchingBehavior.PascalCase
-                    ) == FuzzySymbolMatchingBehavior.PascalCase
-                )
+                foreach (string candidate in candidates)
                 {
-                    v = TryIndexOnExtMethod(script, obj, UpperFirstLetter(Camelify(index.String)));
+                    v = TryIndexOnExtMethod(script, obj, candidate);
+                    if (v != null)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -353,17 +311,17 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
                 indexName,
-                this.Type
+                Type
             );
 
             if (methods != null && methods.Count > 0)
             {
-                OverloadedMethodMemberDescriptor ext = new(indexName, this.Type);
+                OverloadedMethodMemberDescriptor ext = new(indexName, Type);
                 ext.SetExtensionMethodsSnapshot(
                     UserData.GetExtensionMethodsChangeVersion(),
                     methods
                 );
-                m_Members.Add(indexName, ext);
+                _members.Add(indexName, ext);
                 return DynValue.NewCallback(ext.GetCallback(script, obj));
             }
 
@@ -377,7 +335,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public bool HasMember(string exactName)
         {
-            return m_Members.ContainsKey(exactName);
+            return _members.ContainsKey(exactName);
         }
 
         /// <summary>
@@ -387,7 +345,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public bool HasMetaMember(string exactName)
         {
-            return m_MetaMembers.ContainsKey(exactName);
+            return _metaMembers.ContainsKey(exactName);
         }
 
         /// <summary>
@@ -399,9 +357,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         protected virtual DynValue TryIndex(Script script, object obj, string indexName)
         {
-            IMemberDescriptor desc;
-
-            if (m_Members.TryGetValue(indexName, out desc))
+            if (_members.TryGetValue(indexName, out IMemberDescriptor desc))
             {
                 return desc.GetValue(script, obj);
             }
@@ -428,7 +384,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (!isDirectIndexing)
             {
-                IMemberDescriptor mdesc = m_Members
+                IMemberDescriptor mdesc = _members
                     .GetOrDefault(SPECIALNAME_INDEXER_SET)
                     .WithAccessOrNull(MemberDescriptorAccess.CanExecute);
 
@@ -446,39 +402,20 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 return false;
             }
 
-            bool v = TrySetIndex(script, obj, index.String, value);
-            if (
-                !v
-                && (
-                    Script.GlobalOptions.FuzzySymbolMatching
-                    & FuzzySymbolMatchingBehavior.UpperFirstLetter
-                ) == FuzzySymbolMatchingBehavior.UpperFirstLetter
-            )
+            List<string> candidates = BuildMemberNameCandidates(
+                index.String,
+                Script.GlobalOptions.FuzzySymbolMatching
+            );
+
+            foreach (string candidate in candidates)
             {
-                v = TrySetIndex(script, obj, UpperFirstLetter(index.String), value);
+                if (TrySetIndex(script, obj, candidate, value))
+                {
+                    return true;
+                }
             }
 
-            if (
-                !v
-                && (Script.GlobalOptions.FuzzySymbolMatching & FuzzySymbolMatchingBehavior.Camelify)
-                    == FuzzySymbolMatchingBehavior.Camelify
-            )
-            {
-                v = TrySetIndex(script, obj, Camelify(index.String), value);
-            }
-
-            if (
-                !v
-                && (
-                    Script.GlobalOptions.FuzzySymbolMatching
-                    & FuzzySymbolMatchingBehavior.PascalCase
-                ) == FuzzySymbolMatchingBehavior.PascalCase
-            )
-            {
-                v = TrySetIndex(script, obj, UpperFirstLetter(Camelify(index.String)), value);
-            }
-
-            return v;
+            return false;
         }
 
         /// <summary>
@@ -496,7 +433,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             DynValue value
         )
         {
-            IMemberDescriptor descr = m_Members.GetOrDefault(indexName);
+            IMemberDescriptor descr = _members.GetOrDefault(indexName);
 
             if (descr != null)
             {
@@ -512,18 +449,80 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         void IOptimizableDescriptor.Optimize()
         {
             foreach (
-                IOptimizableDescriptor m in this.m_MetaMembers.Values.OfType<IOptimizableDescriptor>()
+                IOptimizableDescriptor m in _metaMembers.Values.OfType<IOptimizableDescriptor>()
             )
             {
                 m.Optimize();
             }
 
-            foreach (
-                IOptimizableDescriptor m in this.m_Members.Values.OfType<IOptimizableDescriptor>()
-            )
+            foreach (IOptimizableDescriptor m in _members.Values.OfType<IOptimizableDescriptor>())
             {
                 m.Optimize();
             }
+        }
+
+        private static List<string> BuildMemberNameCandidates(
+            string name,
+            FuzzySymbolMatchingBehavior behavior
+        )
+        {
+            List<string> results = new();
+            HashSet<string> seen = new(StringComparer.Ordinal);
+
+            void Add(string candidate)
+            {
+                if (!string.IsNullOrEmpty(candidate) && seen.Add(candidate))
+                {
+                    results.Add(candidate);
+                }
+            }
+
+            Add(name);
+
+            string camel = DescriptorHelpers.Camelify(name);
+            string upperFirst = DescriptorHelpers.UpperFirstLetter(name);
+            string pascal = DescriptorHelpers.UpperFirstLetter(camel);
+            string normalizedUpper = DescriptorHelpers.NormalizeUppercaseRuns(upperFirst);
+            string normalizedPascal = DescriptorHelpers.NormalizeUppercaseRuns(pascal);
+            string snake = DescriptorHelpers.ToUpperUnderscore(name);
+
+            if (
+                (behavior & FuzzySymbolMatchingBehavior.UpperFirstLetter)
+                == FuzzySymbolMatchingBehavior.UpperFirstLetter
+            )
+            {
+                Add(upperFirst);
+                Add(normalizedUpper);
+            }
+
+            if (
+                (behavior & FuzzySymbolMatchingBehavior.Camelify)
+                == FuzzySymbolMatchingBehavior.Camelify
+            )
+            {
+                Add(camel);
+            }
+
+            if (
+                (behavior & FuzzySymbolMatchingBehavior.PascalCase)
+                == FuzzySymbolMatchingBehavior.PascalCase
+            )
+            {
+                Add(pascal);
+                Add(normalizedPascal);
+            }
+
+            Add(snake);
+
+            if (!name.StartsWith("On", StringComparison.OrdinalIgnoreCase))
+            {
+                Add("On" + upperFirst);
+                Add("On" + pascal);
+                Add("On" + normalizedUpper);
+                Add("On" + normalizedPascal);
+            }
+
+            return results;
         }
 
         /// <summary>
@@ -644,7 +643,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public virtual DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            IMemberDescriptor desc = m_MetaMembers.GetOrDefault(metaname);
+            IMemberDescriptor desc = _metaMembers.GetOrDefault(metaname);
 
             if (desc != null)
             {
@@ -693,11 +692,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (comp != null)
             {
-                if (object.ReferenceEquals(obj, p1))
+                if (ReferenceEquals(obj, p1))
                 {
                     return comp.CompareTo(p2);
                 }
-                else if (object.ReferenceEquals(obj, p2))
+                else if (ReferenceEquals(obj, p2))
                 {
                     return -comp.CompareTo(p1);
                 }
@@ -708,8 +707,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         private DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
         {
-            IComparable comp = obj as IComparable;
-            if (comp != null)
+            if (obj is IComparable comp)
             {
                 return DynValue.NewCallback(
                     (context, args) =>
@@ -724,8 +722,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         private DynValue MultiDispatchLessThan(Script script, object obj)
         {
-            IComparable comp = obj as IComparable;
-            if (comp != null)
+            if (obj is IComparable comp)
             {
                 return DynValue.NewCallback(
                     (context, args) =>
@@ -745,13 +742,13 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 return null;
             }
 
-            IMemberDescriptor lenprop = m_Members.GetOrDefault("Length");
+            IMemberDescriptor lenprop = _members.GetOrDefault("Length");
             if (lenprop != null && lenprop.CanRead() && !lenprop.CanExecute())
             {
                 return lenprop.GetGetterCallbackAsDynValue(script, obj);
             }
 
-            IMemberDescriptor countprop = m_Members.GetOrDefault("Count");
+            IMemberDescriptor countprop = _members.GetOrDefault("Count");
             if (countprop != null && countprop.CanRead() && !countprop.CanExecute())
             {
                 return countprop.GetGetterCallbackAsDynValue(script, obj);
@@ -772,11 +769,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (obj != null)
             {
-                if (object.ReferenceEquals(obj, p1))
+                if (ReferenceEquals(obj, p1))
                 {
                     return obj.Equals(p2);
                 }
-                else if (object.ReferenceEquals(obj, p2))
+                else if (ReferenceEquals(obj, p2))
                 {
                     return obj.Equals(p1);
                 }
@@ -798,7 +795,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         private DynValue DispatchMetaOnMethod(Script script, object obj, string methodName)
         {
-            IMemberDescriptor desc = m_Members.GetOrDefault(methodName);
+            IMemberDescriptor desc = _members.GetOrDefault(methodName);
 
             if (desc != null)
             {

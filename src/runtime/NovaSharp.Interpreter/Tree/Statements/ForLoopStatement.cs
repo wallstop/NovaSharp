@@ -1,21 +1,26 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class ForLoopStatement : Statement
+    using Debugging;
+    using Execution;
+    using Execution.VM;
+    using Expressions;
+
+    internal class ForLoopStatement : Statement
     {
         //for' NAME '=' exp ',' exp (',' exp)? 'do' block 'end'
-        RuntimeScopeBlock m_StackFrame;
-        Statement m_InnerBlock;
-        SymbolRef m_VarName;
-        Expression m_Start,
-            m_End,
-            m_Step;
-        SourceRef m_RefFor,
-            m_RefEnd;
+        private readonly RuntimeScopeBlock _stackFrame;
+        private readonly Statement _innerBlock;
+        private readonly SymbolRef _varName;
+
+        private readonly Expression _start;
+
+        private readonly Expression _end;
+
+        private readonly Expression _step;
+
+        private readonly SourceRef _refFor;
+
+        private readonly SourceRef _refEnd;
 
         public ForLoopStatement(ScriptLoadingContext lcontext, Token nameToken, Token forToken)
             : base(lcontext)
@@ -23,70 +28,70 @@ namespace NovaSharp.Interpreter.Tree.Statements
             //	for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end |
 
             // lexer already at the '=' ! [due to dispatching vs for-each]
-            CheckTokenType(lcontext, TokenType.Op_Assignment);
+            CheckTokenType(lcontext, TokenType.OpAssignment);
 
-            m_Start = Expression.Expr(lcontext);
+            _start = Expression.Expr(lcontext);
             CheckTokenType(lcontext, TokenType.Comma);
-            m_End = Expression.Expr(lcontext);
+            _end = Expression.Expr(lcontext);
 
-            if (lcontext.Lexer.Current.Type == TokenType.Comma)
+            if (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
-                m_Step = Expression.Expr(lcontext);
+                _step = Expression.Expr(lcontext);
             }
             else
             {
-                m_Step = new LiteralExpression(lcontext, DynValue.NewNumber(1));
+                _step = new LiteralExpression(lcontext, DynValue.NewNumber(1));
             }
 
             lcontext.Scope.PushBlock();
-            m_VarName = lcontext.Scope.DefineLocal(nameToken.Text);
-            m_RefFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
-            m_InnerBlock = new CompositeStatement(lcontext);
-            m_RefEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
-            m_StackFrame = lcontext.Scope.PopBlock();
+            _varName = lcontext.Scope.DefineLocal(nameToken.Text);
+            _refFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
+            _innerBlock = new CompositeStatement(lcontext);
+            _refEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
+            _stackFrame = lcontext.Scope.PopBlock();
 
-            lcontext.Source.Refs.Add(m_RefFor);
-            lcontext.Source.Refs.Add(m_RefEnd);
+            lcontext.Source.Refs.Add(_refFor);
+            lcontext.Source.Refs.Add(_refEnd);
         }
 
         public override void Compile(ByteCode bc)
         {
-            bc.PushSourceRef(m_RefFor);
+            bc.PushSourceRef(_refFor);
 
-            Loop L = new() { Scope = m_StackFrame };
+            Loop l = new() { scope = _stackFrame };
 
-            bc.LoopTracker.Loops.Push(L);
+            bc.LoopTracker.loops.Push(l);
 
-            m_End.Compile(bc);
+            _end.Compile(bc);
             bc.Emit_ToNum(3);
-            m_Step.Compile(bc);
+            _step.Compile(bc);
             bc.Emit_ToNum(2);
-            m_Start.Compile(bc);
+            _start.Compile(bc);
             bc.Emit_ToNum(1);
 
             int start = bc.GetJumpPointForNextInstruction();
             Instruction jumpend = bc.Emit_Jump(OpCode.JFor, -1);
-            bc.Emit_Enter(m_StackFrame);
-            //bc.Emit_SymStorN(m_VarName);
+            bc.Emit_Enter(_stackFrame);
+            //bc.Emit_SymStorN(_VarName);
 
-            bc.Emit_Store(m_VarName, 0, 0);
+            bc.Emit_Store(_varName, 0, 0);
 
-            m_InnerBlock.Compile(bc);
+            _innerBlock.Compile(bc);
 
             bc.PopSourceRef();
-            bc.PushSourceRef(m_RefEnd);
+            bc.PushSourceRef(_refEnd);
 
             bc.Emit_Debug("..end");
-            bc.Emit_Leave(m_StackFrame);
+            bc.Emit_Leave(_stackFrame);
             bc.Emit_Incr(1);
             bc.Emit_Jump(OpCode.Jump, start);
 
-            bc.LoopTracker.Loops.Pop();
+            bc.LoopTracker.loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
-            foreach (Instruction i in L.BreakJumps)
+            foreach (Instruction i in l.breakJumps)
             {
                 i.NumVal = exitpoint;
             }

@@ -1,28 +1,33 @@
-using System;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Tree
 {
+    using System;
+    using System.Globalization;
+    using System.Text;
+    using Compatibility;
+
     internal static class LexerUtils
     {
-        public static double ParseNumber(Token T)
+        public static double ParseNumber(Token t)
         {
-            string txt = T.Text;
-            double res;
-            if (!double.TryParse(txt, NumberStyles.Float, CultureInfo.InvariantCulture, out res))
+            string txt = t.Text;
+            if (
+                !double.TryParse(
+                    txt,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double res
+                )
+            )
             {
-                throw new SyntaxErrorException(T, "malformed number near '{0}'", txt);
+                throw new SyntaxErrorException(t, "malformed number near '{0}'", txt);
             }
 
             return res;
         }
 
-        public static double ParseHexInteger(Token T)
+        public static double ParseHexInteger(Token t)
         {
-            string txt = T.Text;
+            string txt = t.Text;
             if ((txt.Length < 2) || (txt[0] != '0' && (char.ToUpper(txt[1]) != 'X')))
             {
                 throw new InternalErrorException(
@@ -31,18 +36,16 @@ namespace NovaSharp.Interpreter.Tree
                 );
             }
 
-            ulong res;
-
             if (
                 !ulong.TryParse(
                     txt.Substring(2),
                     NumberStyles.HexNumber,
                     CultureInfo.InvariantCulture,
-                    out res
+                    out ulong res
                 )
             )
             {
-                throw new SyntaxErrorException(T, "malformed number near '{0}'", txt);
+                throw new SyntaxErrorException(t, "malformed number near '{0}'", txt);
             }
 
             return (double)res;
@@ -56,9 +59,9 @@ namespace NovaSharp.Interpreter.Tree
             {
                 char c = s[i];
 
-                if (LexerUtils.CharIsHexDigit(c))
+                if (CharIsHexDigit(c))
                 {
-                    int v = LexerUtils.HexDigit2Value(c);
+                    int v = HexDigit2Value(c);
                     d *= 16.0;
                     d += v;
                     ++digits;
@@ -72,9 +75,9 @@ namespace NovaSharp.Interpreter.Tree
             return string.Empty;
         }
 
-        public static double ParseHexFloat(Token T)
+        public static double ParseHexFloat(Token t)
         {
-            string s = T.Text;
+            string s = t.Text;
 
             try
             {
@@ -106,7 +109,7 @@ namespace NovaSharp.Interpreter.Tree
                 {
                     if (s.Length == 1)
                     {
-                        throw new SyntaxErrorException(T, "invalid hex float format near '{0}'", s);
+                        throw new SyntaxErrorException(t, "invalid hex float format near '{0}'", s);
                     }
 
                     s = s.Substring(s[1] == '+' ? 2 : 1);
@@ -121,7 +124,7 @@ namespace NovaSharp.Interpreter.Tree
             }
             catch (FormatException)
             {
-                throw new SyntaxErrorException(T, "malformed number near '{0}'", s);
+                throw new SyntaxErrorException(t, "malformed number near '{0}'", s);
             }
         }
 
@@ -192,7 +195,7 @@ namespace NovaSharp.Interpreter.Tree
 
             bool escape = false;
             bool hex = false;
-            int unicode_state = 0;
+            int unicodeState = 0;
             string hexprefix = "";
             string val = "";
             bool zmode = false;
@@ -202,7 +205,7 @@ namespace NovaSharp.Interpreter.Tree
                 redo:
                 if (escape)
                 {
-                    if (val.Length == 0 && !hex && unicode_state == 0)
+                    if (val.Length == 0 && !hex && unicodeState == 0)
                     {
                         if (c == 'a')
                         {
@@ -288,7 +291,7 @@ namespace NovaSharp.Interpreter.Tree
                         }
                         else if (c == 'u')
                         {
-                            unicode_state = 1;
+                            unicodeState = 1;
                         }
                         else if (c == 'z')
                         {
@@ -310,16 +313,16 @@ namespace NovaSharp.Interpreter.Tree
                     }
                     else
                     {
-                        if (unicode_state == 1)
+                        if (unicodeState == 1)
                         {
                             if (c != '{')
                             {
                                 throw new SyntaxErrorException(token, "'{' expected near '\\u'");
                             }
 
-                            unicode_state = 2;
+                            unicodeState = 2;
                         }
-                        else if (unicode_state == 2)
+                        else if (unicodeState == 2)
                         {
                             if (c == '}')
                             {
@@ -329,7 +332,7 @@ namespace NovaSharp.Interpreter.Tree
                                     CultureInfo.InvariantCulture
                                 );
                                 sb.Append(ConvertUtf32ToChar(i));
-                                unicode_state = 0;
+                                unicodeState = 0;
                                 val = string.Empty;
                                 escape = false;
                             }

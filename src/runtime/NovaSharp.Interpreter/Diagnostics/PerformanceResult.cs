@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Diagnostics
 {
+    using System;
+
     /// <summary>
     /// The result of a performance counter
     /// </summary>
@@ -52,10 +52,10 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <summary>
         /// Converts a PerformanceCounterType to a string.
         /// </summary>
-        /// <param name="Type">The type.</param>
-        public static string PerformanceCounterTypeToString(PerformanceCounterType Type)
+        /// <param name="type">The type.</param>
+        public static string PerformanceCounterTypeToString(PerformanceCounterType type)
         {
-            switch (Type)
+            switch (type)
             {
                 case PerformanceCounterType.MemoryBytes:
                     return "bytes";
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Diagnostics
                     return "ms";
                 default:
                     throw new InvalidOperationException(
-                        "PerformanceCounterType has invalid value " + Type.ToString()
+                        "PerformanceCounterType has invalid value " + type.ToString()
                     );
             }
         }

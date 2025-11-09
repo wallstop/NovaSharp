@@ -1,18 +1,18 @@
-#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
-
-using System.Collections.Generic;
-using NovaSharp.Interpreter;
-using NovaSharp.VsCodeDebugger.SDK;
-
 namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
+
+    using System.Collections.Generic;
+    using Interpreter;
+    using SDK;
+
     internal static class VariableInspector
     {
         internal static void InspectVariable(DynValue v, List<Variable> variables)
         {
             variables.Add(new Variable("(value)", v.ToPrintString()));
             variables.Add(new Variable("(type)", v.Type.ToLuaDebuggerString()));
-            variables.Add(new Variable("(val #id)", v.ReferenceID.ToString()));
+            variables.Add(new Variable("(val #id)", v.ReferenceId.ToString()));
 
             switch (v.Type)
             {
@@ -58,14 +58,14 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         variables.Add(new Variable("(table type)", "standard"));
                     }
 
-                    variables.Add(new Variable("(table #id)", v.Table.ReferenceID.ToString()));
+                    variables.Add(new Variable("(table #id)", v.Table.ReferenceId.ToString()));
 
                     if (v.Table.MetaTable != null)
                     {
                         variables.Add(
                             new Variable(
                                 "(metatable #id)",
-                                v.Table.MetaTable.ReferenceID.ToString()
+                                v.Table.MetaTable.ReferenceId.ToString()
                             )
                         );
                     }

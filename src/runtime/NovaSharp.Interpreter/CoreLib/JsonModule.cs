@@ -1,12 +1,12 @@
-using NovaSharp.Interpreter.Serialization.Json;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using Serialization.Json;
+
     [NovaSharpModule(Namespace = "json")]
     public class JsonModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue parse(
+        [NovaSharpModuleMethod(Name = "parse")]
+        public static DynValue Parse(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -23,8 +23,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue serialize(
+        [NovaSharpModuleMethod(Name = "serialize")]
+        public static DynValue Serialize(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -41,8 +41,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue isnull(
+        [NovaSharpModuleMethod(Name = "isnull")]
+        public static DynValue Isnull(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -51,11 +51,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewBoolean((JsonNull.IsJsonNull(vs)) || (vs.IsNil()));
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue @null(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
+        [NovaSharpModuleMethod(Name = "null")]
+        public static DynValue Null(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return JsonNull.Create();
         }

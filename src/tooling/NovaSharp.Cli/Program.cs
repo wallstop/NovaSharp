@@ -1,34 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using NovaSharp.Commands;
-using NovaSharp.Commands.Implementations;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Loaders;
-using NovaSharp.Interpreter.REPL;
-using NovaSharp.Interpreter.Serialization;
-using NovaSharp.RemoteDebugger;
-using NovaSharp.RemoteDebugger.Network;
-
 namespace NovaSharp
 {
-    class Program
+    using System;
+    using Commands;
+    using Commands.Implementations;
+    using Interpreter;
+    using Interpreter.REPL;
+
+    internal sealed class Program
     {
         [STAThread]
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             CommandManager.Initialize();
 
             Script.DefaultOptions.ScriptLoader = new ReplInterpreterScriptLoader();
 
-            Script script = new(CoreModules.Preset_Complete);
-
-            script.Globals["makestatic"] = (Func<string, DynValue>)(MakeStatic);
+            Script script = new(CoreModules.PresetComplete)
+            {
+                Globals = { ["makestatic"] = (Func<string, DynValue>)(MakeStatic) },
+            };
 
             if (CheckArgs(args, new ShellContext(script)))
             {

@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
+    using System;
+
     /// <summary>
     /// A registration policy which makes registration permanent and not deletable.
     /// Deregistrations are not allowed and registrations of a new descriptor are not allowed

@@ -1,18 +1,18 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System.Collections.Generic;
+
     /// <summary>
     /// Class implementing coroutine Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "coroutine")]
     public class CoroutineModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue create(
+        [NovaSharpModuleMethod(Name = "create")]
+        public static DynValue Create(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -25,15 +25,15 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.GetScript().CreateCoroutine(args[0]);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue wrap(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "wrap")]
+        public static DynValue Wrap(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
             {
                 args.AsType(0, "wrap", DataType.Function); // this throws
             }
 
-            DynValue v = create(executionContext, args);
+            DynValue v = Create(executionContext, args);
             DynValue c = DynValue.NewCallback(__wrap_wrapper);
             c.Callback.AdditionalData = v;
             return c;
@@ -48,8 +48,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return handle.Coroutine.Resume(args.GetArray());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue resume(
+        [NovaSharpModuleMethod(Name = "resume")]
+        public static DynValue Resume(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -92,8 +92,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue yield(
+        [NovaSharpModuleMethod(Name = "yield")]
+        public static DynValue Yield(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -101,21 +101,21 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewYieldReq(args.GetArray());
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue running(
+        [NovaSharpModuleMethod(Name = "running")]
+        public static DynValue Running(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            Coroutine C = executionContext.GetCallingCoroutine();
+            Coroutine c = executionContext.GetCallingCoroutine();
             return DynValue.NewTuple(
-                DynValue.NewCoroutine(C),
-                DynValue.NewBoolean(C.State == CoroutineState.Main)
+                DynValue.NewCoroutine(c),
+                DynValue.NewBoolean(c.State == CoroutineState.Main)
             );
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue status(
+        [NovaSharpModuleMethod(Name = "status")]
+        public static DynValue Status(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

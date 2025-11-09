@@ -1,10 +1,12 @@
-using NovaSharp.Interpreter.Loaders;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests
 {
+    using System;
+    using System.IO;
+    using Loaders;
+    using NUnit.Framework;
+
 #if !EMBEDTEST
-    class TestsScriptLoader : ScriptLoaderBase
+    internal sealed class TestsScriptLoader : ScriptLoaderBase
     {
         public override bool ScriptFileExists(string name)
         {
@@ -20,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests
 
     public class TapRunner
     {
-        string m_File;
+        private readonly string _file;
 
         /// <summary>
         /// Prints the specified string.
@@ -30,24 +32,17 @@ namespace NovaSharp.Interpreter.Tests
         {
             // System.Diagnostics.Debug.WriteLine(str);
 
-            Assert.IsFalse(
-                str.Trim().StartsWith("not ok"),
-                string.Format("TAP fail ({0}) : {1}", m_File, str)
-            );
+            Assert.That(str.Trim().StartsWith("not ok"), Is.False, $"TAP fail ({_file}) : {str}");
         }
 
         public TapRunner(string filename)
         {
-            m_File = filename;
+            _file = filename;
         }
 
         public void Run()
         {
-            Script S = new();
-
-            S.Options.DebugPrint = Print;
-
-            S.Options.UseLuaErrorLocations = true;
+            Script s = new() { Options = { DebugPrint = Print, UseLuaErrorLocations = true } };
 
 #if PCL
 #if EMBEDTEST
@@ -59,15 +54,15 @@ namespace NovaSharp.Interpreter.Tests
 #endif
 #endif
 
-            S.Globals.Set("arg", DynValue.NewTable(S));
+            s.Globals.Set("arg", DynValue.NewTable(s));
 
-            ((ScriptLoaderBase)S.Options.ScriptLoader).ModulePaths = new string[]
+            ((ScriptLoaderBase)s.Options.ScriptLoader).ModulePaths = new string[]
             {
                 "TestMore/Modules/?",
                 "TestMore/Modules/?.lua",
             };
 
-            S.DoFile(m_File);
+            s.DoFile(_file);
         }
 
         public static void Run(string filename)

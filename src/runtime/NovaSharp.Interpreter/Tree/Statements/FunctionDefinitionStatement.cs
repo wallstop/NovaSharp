@@ -1,22 +1,22 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class FunctionDefinitionStatement : Statement
+    using System.Collections.Generic;
+    using Debugging;
+    using Execution;
+    using Expressions;
+
+    internal class FunctionDefinitionStatement : Statement
     {
-        SymbolRef m_FuncSymbol;
-        SourceRef m_SourceRef;
+        private readonly SymbolRef _funcSymbol;
+        private readonly SourceRef _sourceRef;
 
-        bool m_Local = false;
-        bool m_IsMethodCallingConvention = false;
-        string m_MethodName = null;
+        private readonly bool _local = false;
+        private readonly bool _isMethodCallingConvention = false;
+        private readonly string _methodName = null;
 
-        string m_FriendlyName;
-        List<string> m_TableAccessors;
-        FunctionDefinitionExpression m_FuncDef;
+        private readonly string _friendlyName;
+        private readonly List<string> _tableAccessors;
+        private readonly FunctionDefinitionExpression _funcDef;
 
         public FunctionDefinitionStatement(
             ScriptLoadingContext lcontext,
@@ -29,34 +29,34 @@ namespace NovaSharp.Interpreter.Tree.Statements
             Token funcKeyword = CheckTokenType(lcontext, TokenType.Function);
             funcKeyword = localToken ?? funcKeyword; // for debugger purposes
 
-            m_Local = local;
+            _local = local;
 
-            if (m_Local)
+            if (_local)
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
-                m_FuncSymbol = lcontext.Scope.TryDefineLocal(name.Text);
-                m_FriendlyName = string.Format("{0} (local)", name.Text);
-                m_SourceRef = funcKeyword.GetSourceRef(name);
+                _funcSymbol = lcontext.Scope.TryDefineLocal(name.Text);
+                _friendlyName = $"{name.Text} (local)";
+                _sourceRef = funcKeyword.GetSourceRef(name);
             }
             else
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
                 string firstName = name.Text;
 
-                m_SourceRef = funcKeyword.GetSourceRef(name);
+                _sourceRef = funcKeyword.GetSourceRef(name);
 
-                m_FuncSymbol = lcontext.Scope.Find(firstName);
-                m_FriendlyName = firstName;
+                _funcSymbol = lcontext.Scope.Find(firstName);
+                _friendlyName = firstName;
 
-                if (lcontext.Lexer.Current.Type != TokenType.Brk_Open_Round)
+                if (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
                 {
-                    m_TableAccessors = new List<string>();
+                    _tableAccessors = new List<string>();
 
-                    while (lcontext.Lexer.Current.Type != TokenType.Brk_Open_Round)
+                    while (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
                     {
                         Token separator = lcontext.Lexer.Current;
 
-                        if (separator.Type != TokenType.Colon && separator.Type != TokenType.Dot)
+                        if (separator.type != TokenType.Colon && separator.type != TokenType.Dot)
                         {
                             UnexpectedTokenType(separator);
                         }
@@ -65,54 +65,54 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
                         Token field = CheckTokenType(lcontext, TokenType.Name);
 
-                        m_FriendlyName += separator.Text + field.Text;
-                        m_SourceRef = funcKeyword.GetSourceRef(field);
+                        _friendlyName += separator.Text + field.Text;
+                        _sourceRef = funcKeyword.GetSourceRef(field);
 
-                        if (separator.Type == TokenType.Colon)
+                        if (separator.type == TokenType.Colon)
                         {
-                            m_MethodName = field.Text;
-                            m_IsMethodCallingConvention = true;
+                            _methodName = field.Text;
+                            _isMethodCallingConvention = true;
                             break;
                         }
                         else
                         {
-                            m_TableAccessors.Add(field.Text);
+                            _tableAccessors.Add(field.Text);
                         }
                     }
 
-                    if (m_MethodName == null && m_TableAccessors.Count > 0)
+                    if (_methodName == null && _tableAccessors.Count > 0)
                     {
-                        m_MethodName = m_TableAccessors[m_TableAccessors.Count - 1];
-                        m_TableAccessors.RemoveAt(m_TableAccessors.Count - 1);
+                        _methodName = _tableAccessors[^1];
+                        _tableAccessors.RemoveAt(_tableAccessors.Count - 1);
                     }
                 }
             }
 
-            m_FuncDef = new FunctionDefinitionExpression(
+            _funcDef = new FunctionDefinitionExpression(
                 lcontext,
-                m_IsMethodCallingConvention,
+                _isMethodCallingConvention,
                 false
             );
-            lcontext.Source.Refs.Add(m_SourceRef);
+            lcontext.Source.Refs.Add(_sourceRef);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            using (bc.EnterSource(m_SourceRef))
+            using (bc.EnterSource(_sourceRef))
             {
-                if (m_Local)
+                if (_local)
                 {
                     bc.Emit_Literal(DynValue.Nil);
-                    bc.Emit_Store(m_FuncSymbol, 0, 0);
-                    m_FuncDef.Compile(bc, () => SetFunction(bc, 2), m_FriendlyName);
+                    bc.Emit_Store(_funcSymbol, 0, 0);
+                    _funcDef.Compile(bc, () => SetFunction(bc, 2), _friendlyName);
                 }
-                else if (m_MethodName == null)
+                else if (_methodName == null)
                 {
-                    m_FuncDef.Compile(bc, () => SetFunction(bc, 1), m_FriendlyName);
+                    _funcDef.Compile(bc, () => SetFunction(bc, 1), _friendlyName);
                 }
                 else
                 {
-                    m_FuncDef.Compile(bc, () => SetMethod(bc), m_FriendlyName);
+                    _funcDef.Compile(bc, () => SetMethod(bc), _friendlyName);
                 }
             }
         }
@@ -121,22 +121,22 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             int cnt = 0;
 
-            cnt += bc.Emit_Load(m_FuncSymbol);
+            cnt += bc.Emit_Load(_funcSymbol);
 
-            foreach (string str in m_TableAccessors)
+            foreach (string str in _tableAccessors)
             {
                 bc.Emit_Index(DynValue.NewString(str), true);
                 cnt += 1;
             }
 
-            bc.Emit_IndexSet(0, 0, DynValue.NewString(m_MethodName), true);
+            bc.Emit_IndexSet(0, 0, DynValue.NewString(_methodName), true);
 
             return 1 + cnt;
         }
 
         private int SetFunction(Execution.VM.ByteCode bc, int numPop)
         {
-            int num = bc.Emit_Store(m_FuncSymbol, 0, 0);
+            int num = bc.Emit_Store(_funcSymbol, 0, 0);
             bc.Emit_Pop(numPop);
             return num + 1;
         }

@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Marks a type of automatic registration as userdata (which happens only if UserData.RegisterAssembly is called).
     /// </summary>

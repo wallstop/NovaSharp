@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Loaders
 {
+    using System;
+
     /// <summary>
     /// Class dictating how requests to read scripts from files are handled.
     ///
@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns>
         /// A string, a byte[] or a Stream.
         /// </returns>
-        object LoadFile(string file, Table globalContext);
+        public object LoadFile(string file, Table globalContext);
 
         /// <summary>
         /// Resolves a filename [applying paths, etc.]
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Loaders
         [Obsolete(
             "This serves almost no purpose. Kept here just to preserve backward compatibility."
         )]
-        string ResolveFileName(string filename, Table globalContext);
+        public string ResolveFileName(string filename, Table globalContext);
 
         /// <summary>
         /// Resolves the name of a module to a filename (which will later be passed to OpenScriptFile)
@@ -39,6 +39,6 @@ namespace NovaSharp.Interpreter.Loaders
         /// <param name="modname">The modname.</param>
         /// <param name="globalContext">The global context.</param>
         /// <returns></returns>
-        string ResolveModuleName(string modname, Table globalContext);
+        public string ResolveModuleName(string modname, Table globalContext);
     }
 }

@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.DataStructs
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// An index to accelerate operations on a LinkedList<typeparamref name="TValue"/> using a single key of type <typeparamref name="TKey"/>
     /// More than one LinkedListIndex can index the same linked list, but every node in the linked list must be indexed by one and only one
@@ -11,8 +11,8 @@ namespace NovaSharp.Interpreter.DataStructs
     /// <typeparam name="TValue">The type of the values contained in the linked list.</typeparam>
     internal class LinkedListIndex<TKey, TValue>
     {
-        LinkedList<TValue> m_LinkedList;
-        Dictionary<TKey, LinkedListNode<TValue>> m_Map = null;
+        private readonly LinkedList<TValue> _linkedList;
+        private Dictionary<TKey, LinkedListNode<TValue>> _map = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinkedListIndex{TKey, TValue}"/> class.
@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="linkedList">The linked list to be indexed.</param>
         public LinkedListIndex(LinkedList<TValue> linkedList)
         {
-            m_LinkedList = linkedList;
+            _linkedList = linkedList;
         }
 
         /// <summary>
@@ -29,14 +29,12 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="key">The key.</param>
         public LinkedListNode<TValue> Find(TKey key)
         {
-            LinkedListNode<TValue> node;
-
-            if (m_Map == null)
+            if (_map == null)
             {
                 return null;
             }
 
-            if (m_Map.TryGetValue(key, out node))
+            if (_map.TryGetValue(key, out LinkedListNode<TValue> node))
             {
                 return node;
             }
@@ -74,14 +72,14 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="value">The value.</param>
         public void Add(TKey key, TValue value)
         {
-            LinkedListNode<TValue> node = m_LinkedList.AddLast(value);
+            LinkedListNode<TValue> node = _linkedList.AddLast(value);
 
-            if (m_Map == null)
+            if (_map == null)
             {
-                m_Map = new Dictionary<TKey, LinkedListNode<TValue>>();
+                _map = new Dictionary<TKey, LinkedListNode<TValue>>();
             }
 
-            m_Map.Add(key, node);
+            _map.Add(key, node);
         }
 
         /// <summary>
@@ -94,8 +92,8 @@ namespace NovaSharp.Interpreter.DataStructs
 
             if (node != null)
             {
-                m_LinkedList.Remove(node);
-                return m_Map.Remove(key);
+                _linkedList.Remove(node);
+                return _map.Remove(key);
             }
 
             return false;
@@ -107,12 +105,12 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="key">The key.</param>
         public bool ContainsKey(TKey key)
         {
-            if (m_Map == null)
+            if (_map == null)
             {
                 return false;
             }
 
-            return m_Map.ContainsKey(key);
+            return _map.ContainsKey(key);
         }
 
         /// <summary>
@@ -120,9 +118,9 @@ namespace NovaSharp.Interpreter.DataStructs
         /// </summary>
         public void Clear()
         {
-            if (m_Map != null)
+            if (_map != null)
             {
-                m_Map.Clear();
+                _map.Clear();
             }
         }
     }

@@ -1,17 +1,17 @@
-using System;
-
 namespace NovaSharp.Interpreter.Tree
 {
-    class Token
+    using System;
+
+    internal class Token
     {
-        public readonly int SourceId;
-        public readonly int FromCol,
-            ToCol,
-            FromLine,
-            ToLine,
-            PrevCol,
-            PrevLine;
-        public readonly TokenType Type;
+        public readonly int sourceId;
+        public readonly int fromCol,
+            toCol,
+            fromLine,
+            toLine,
+            prevCol,
+            prevLine;
+        public readonly TokenType type;
 
         public string Text { get; set; }
 
@@ -26,30 +26,30 @@ namespace NovaSharp.Interpreter.Tree
             int prevCol
         )
         {
-            Type = type;
+            this.type = type;
 
-            SourceId = sourceId;
-            FromLine = fromLine;
-            FromCol = fromCol;
-            ToCol = toCol;
-            ToLine = toLine;
-            PrevCol = prevCol;
-            PrevLine = prevLine;
+            this.sourceId = sourceId;
+            this.fromLine = fromLine;
+            this.fromCol = fromCol;
+            this.toCol = toCol;
+            this.toLine = toLine;
+            this.prevCol = prevCol;
+            this.prevLine = prevLine;
         }
 
         public override string ToString()
         {
             string tokenTypeString = (
-                Type.ToString() + "                                                      "
+                type.ToString() + "                                                      "
             ).Substring(0, 16);
 
-            string location = string.Format("{0}:{1}-{2}:{3}", FromLine, FromCol, ToLine, ToCol);
+            string location = $"{fromLine}:{fromCol}-{toLine}:{toCol}";
 
             location = (
                 location + "                                                      "
             ).Substring(0, 10);
 
-            return string.Format("{0}  - {1} - '{2}'", tokenTypeString, location, this.Text ?? "");
+            return $"{tokenTypeString}  - {location} - '{Text ?? ""}'";
         }
 
         public static TokenType? GetReservedTokenType(string reservedWord)
@@ -107,15 +107,15 @@ namespace NovaSharp.Interpreter.Tree
 
         public double GetNumberValue()
         {
-            if (this.Type == TokenType.Number)
+            if (type == TokenType.Number)
             {
                 return LexerUtils.ParseNumber(this);
             }
-            else if (this.Type == TokenType.Number_Hex)
+            else if (type == TokenType.NumberHex)
             {
                 return LexerUtils.ParseHexInteger(this);
             }
-            else if (this.Type == TokenType.Number_HexFloat)
+            else if (type == TokenType.NumberHexFloat)
             {
                 return LexerUtils.ParseHexFloat(this);
             }
@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tree
 
         public bool IsEndOfBlock()
         {
-            switch (Type)
+            switch (type)
             {
                 case TokenType.Else:
                 case TokenType.ElseIf:
@@ -144,30 +144,30 @@ namespace NovaSharp.Interpreter.Tree
 
         public bool IsUnaryOperator()
         {
-            return Type == TokenType.Op_MinusOrSub
-                || Type == TokenType.Not
-                || Type == TokenType.Op_Len;
+            return type == TokenType.OpMinusOrSub
+                || type == TokenType.Not
+                || type == TokenType.OpLen;
         }
 
         public bool IsBinaryOperator()
         {
-            switch (Type)
+            switch (type)
             {
                 case TokenType.And:
                 case TokenType.Or:
-                case TokenType.Op_Equal:
-                case TokenType.Op_LessThan:
-                case TokenType.Op_LessThanEqual:
-                case TokenType.Op_GreaterThanEqual:
-                case TokenType.Op_GreaterThan:
-                case TokenType.Op_NotEqual:
-                case TokenType.Op_Concat:
-                case TokenType.Op_Pwr:
-                case TokenType.Op_Mod:
-                case TokenType.Op_Div:
-                case TokenType.Op_Mul:
-                case TokenType.Op_MinusOrSub:
-                case TokenType.Op_Add:
+                case TokenType.OpEqual:
+                case TokenType.OpLessThan:
+                case TokenType.OpLessThanEqual:
+                case TokenType.OpGreaterThanEqual:
+                case TokenType.OpGreaterThan:
+                case TokenType.OpNotEqual:
+                case TokenType.OpConcat:
+                case TokenType.OpPwr:
+                case TokenType.OpMod:
+                case TokenType.OpDiv:
+                case TokenType.OpMul:
+                case TokenType.OpMinusOrSub:
+                case TokenType.OpAdd:
                     return true;
                 default:
                     return false;
@@ -176,24 +176,17 @@ namespace NovaSharp.Interpreter.Tree
 
         internal Debugging.SourceRef GetSourceRef(bool isStepStop = true)
         {
-            return new Debugging.SourceRef(
-                this.SourceId,
-                this.FromCol,
-                this.ToCol,
-                this.FromLine,
-                this.ToLine,
-                isStepStop
-            );
+            return new Debugging.SourceRef(sourceId, fromCol, toCol, fromLine, toLine, isStepStop);
         }
 
         internal Debugging.SourceRef GetSourceRef(Token to, bool isStepStop = true)
         {
             return new Debugging.SourceRef(
-                this.SourceId,
-                this.FromCol,
-                to.ToCol,
-                this.FromLine,
-                to.ToLine,
+                sourceId,
+                fromCol,
+                to.toCol,
+                fromLine,
+                to.toLine,
                 isStepStop
             );
         }
@@ -201,11 +194,11 @@ namespace NovaSharp.Interpreter.Tree
         internal Debugging.SourceRef GetSourceRefUpTo(Token to, bool isStepStop = true)
         {
             return new Debugging.SourceRef(
-                this.SourceId,
-                this.FromCol,
-                to.PrevCol,
-                this.FromLine,
-                to.PrevLine,
+                sourceId,
+                fromCol,
+                to.prevCol,
+                fromLine,
+                to.prevLine,
                 isStepStop
             );
         }

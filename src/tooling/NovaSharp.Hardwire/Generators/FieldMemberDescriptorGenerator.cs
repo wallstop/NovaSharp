@@ -1,8 +1,8 @@
-using System.CodeDom;
-
 namespace NovaSharp.Hardwire.Generators
 {
-    class FieldMemberDescriptorGenerator : AssignableMemberDescriptorGeneratorBase
+    using System.CodeDom;
+
+    internal class FieldMemberDescriptorGenerator : AssignableMemberDescriptorGeneratorBase
     {
         public override string ManagedType
         {

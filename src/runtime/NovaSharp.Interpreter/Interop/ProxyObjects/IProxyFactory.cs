@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// Interface for proxy objects (type unsafe version)
     /// </summary>
@@ -10,17 +10,17 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Takes an instance of a target object and returns a proxy object wrapping it
         /// </summary>
-        object CreateProxyObject(object o);
+        public object CreateProxyObject(object o);
 
         /// <summary>
         /// Gets the proxied type
         /// </summary>
-        Type TargetType { get; }
+        public Type TargetType { get; }
 
         /// <summary>
         /// Gets the proxy type
         /// </summary>
-        Type ProxyType { get; }
+        public Type ProxyType { get; }
     }
 
     /// <summary>
@@ -35,6 +35,6 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Takes an instance of a target object and returns a proxy object wrapping it
         /// </summary>
-        TProxy CreateProxyObject(TTarget target);
+        public TProxy CreateProxyObject(TTarget target);
     }
 }

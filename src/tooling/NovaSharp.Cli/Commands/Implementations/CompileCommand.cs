@@ -1,8 +1,10 @@
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Commands.Implementations
 {
-    class CompileCommand : ICommand
+    using System;
+    using System.IO;
+    using Interpreter;
+
+    internal sealed class CompileCommand : ICommand
     {
         public string Name
         {
@@ -25,16 +27,12 @@ namespace NovaSharp.Commands.Implementations
         {
             string targetFileName = p + "-compiled";
 
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue chunk = S.LoadFile(p);
+            DynValue chunk = s.LoadFile(p);
 
-            using (
-                Stream stream = new FileStream(targetFileName, FileMode.Create, FileAccess.Write)
-            )
-            {
-                S.Dump(chunk, stream);
-            }
+            using Stream stream = new FileStream(targetFileName, FileMode.Create, FileAccess.Write);
+            s.Dump(chunk, stream);
         }
     }
 }

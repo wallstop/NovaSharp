@@ -1,11 +1,12 @@
-using System.Diagnostics;
-using NovaSharp.RemoteDebugger;
-
 namespace NovaSharp.Commands.Implementations
 {
-    class DebugCommand : ICommand
+    using System;
+    using System.Diagnostics;
+    using RemoteDebugger;
+
+    internal sealed class DebugCommand : ICommand
     {
-        private RemoteDebuggerService m_Debugger;
+        private RemoteDebuggerService _debugger;
 
         public string Name
         {
@@ -26,11 +27,11 @@ namespace NovaSharp.Commands.Implementations
 
         public void Execute(ShellContext context, string arguments)
         {
-            if (m_Debugger == null)
+            if (_debugger == null)
             {
-                m_Debugger = new RemoteDebuggerService();
-                m_Debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
-                Process.Start(m_Debugger.HttpUrlStringLocalHost);
+                _debugger = new RemoteDebuggerService();
+                _debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
+                Process.Start(_debugger.HttpUrlStringLocalHost);
             }
         }
     }

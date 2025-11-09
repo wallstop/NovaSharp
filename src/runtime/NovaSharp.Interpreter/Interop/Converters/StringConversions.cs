@@ -1,8 +1,8 @@
-using System;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System;
+    using System.Text;
+
     internal static class StringConversions
     {
         internal enum StringSubtype

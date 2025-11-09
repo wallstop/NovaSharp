@@ -1,10 +1,10 @@
-using System.IO;
-using System.Text;
-using NovaSharp.Interpreter.IO;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System.IO;
+    using System.Text;
+    using IO;
+    using NUnit.Framework;
+
     [TestFixture]
     public class BinDumpStreamTests
     {
@@ -26,27 +26,25 @@ namespace NovaSharp.Interpreter.Tests.Units
                 int.MaxValue,
             };
 
-            using (MemoryStream ms_orig = new())
+            using MemoryStream msOrig = new();
+            UndisposableStream ms = new(msOrig);
+
+            using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
             {
-                UndisposableStream ms = new(ms_orig);
-
-                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        bdbw.Write(values[i]);
-                    }
+                    bdbw.Write(values[i]);
                 }
+            }
 
-                ms.Seek(0, SeekOrigin.Begin);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            {
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        int v = bdbr.ReadInt32();
-                        Assert.AreEqual(values[i], v, "i = " + i.ToString());
-                    }
+                    int v = bdbr.ReadInt32();
+                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
                 }
             }
         }
@@ -67,27 +65,25 @@ namespace NovaSharp.Interpreter.Tests.Units
                 uint.MaxValue,
             };
 
-            using (MemoryStream ms_orig = new())
+            using MemoryStream msOrig = new();
+            UndisposableStream ms = new(msOrig);
+
+            using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
             {
-                UndisposableStream ms = new(ms_orig);
-
-                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        bdbw.Write(values[i]);
-                    }
+                    bdbw.Write(values[i]);
                 }
+            }
 
-                ms.Seek(0, SeekOrigin.Begin);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            {
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        uint v = bdbr.ReadUInt32();
-                        Assert.AreEqual(values[i], v, "i = " + i.ToString());
-                    }
+                    uint v = bdbr.ReadUInt32();
+                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
                 }
             }
         }
@@ -97,27 +93,25 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string[] values = new string[] { "hello", "you", "fool", "hello", "I", "love", "you" };
 
-            using (MemoryStream ms_orig = new())
+            using MemoryStream msOrig = new();
+            UndisposableStream ms = new(msOrig);
+
+            using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
             {
-                UndisposableStream ms = new(ms_orig);
-
-                using (BinDumpBinaryWriter bdbw = new(ms, Encoding.UTF8))
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        bdbw.Write(values[i]);
-                    }
+                    bdbw.Write(values[i]);
                 }
+            }
 
-                ms.Seek(0, SeekOrigin.Begin);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            using (BinDumpBinaryReader bdbr = new(ms, Encoding.UTF8))
+            {
+                for (int i = 0; i < values.Length; i++)
                 {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        string v = bdbr.ReadString();
-                        Assert.AreEqual(values[i], v, "i = " + i.ToString());
-                    }
+                    string v = bdbr.ReadString();
+                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
                 }
             }
         }

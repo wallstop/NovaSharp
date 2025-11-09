@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Loaders;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Collections.Generic;
     using Interop.RegistrationPolicies;
+    using NUnit.Framework;
 
     [TestFixture]
     public class SimpleTests
@@ -15,15 +11,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void EmptyLongComment()
         {
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString("--[[]]");
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString("--[[]]");
         }
 
         [Test]
         public void EmptyChunk()
         {
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString("");
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString("");
         }
 
         [Test]
@@ -33,9 +29,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "print(\"hello\", \"world\");";
 
-            Script S = new();
+            Script s = new();
 
-            S.Globals.Set(
+            s.Globals.Set(
                 "print",
                 DynValue.NewCallback(
                     new CallbackFunction(
@@ -48,14 +44,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Void, res.Type);
-            Assert.AreEqual(2, args.Count);
-            Assert.AreEqual(DataType.String, args[0].Type);
-            Assert.AreEqual("hello", args[0].String);
-            Assert.AreEqual(DataType.String, args[1].Type);
-            Assert.AreEqual("world", args[1].String);
+            Assert.That(res.Type, Is.EqualTo(DataType.Void));
+            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[0].String, Is.EqualTo("hello"));
+            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[1].String, Is.EqualTo("world"));
         }
 
         [Test]
@@ -65,12 +61,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "local print = print; print(\"hello\", \"world\");";
 
-            Script S = new();
-            S.Globals.Set(
+            Script s = new();
+            s.Globals.Set(
                 "print",
                 DynValue.NewCallback(
                     new CallbackFunction(
-                        (_x, a) =>
+                        (x, a) =>
                         {
                             args = a.GetArray();
                             return DynValue.NewNumber(1234.0);
@@ -79,14 +75,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(2, args.Count);
-            Assert.AreEqual(DataType.String, args[0].Type);
-            Assert.AreEqual("hello", args[0].String);
-            Assert.AreEqual(DataType.String, args[1].Type);
-            Assert.AreEqual("world", args[1].String);
-            Assert.AreEqual(DataType.Void, res.Type);
+            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[0].String, Is.EqualTo("hello"));
+            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[1].String, Is.EqualTo("world"));
+            Assert.That(res.Type, Is.EqualTo(DataType.Void));
         }
 
         [Test]
@@ -94,30 +90,30 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return callback()();";
 
-            DynValue? callback2 = DynValue.NewCallback(
+            DynValue callback2 = DynValue.NewCallback(
                 new CallbackFunction(
-                    (_x, a) =>
+                    (x, a) =>
                     {
                         return DynValue.NewNumber(1234.0);
                     }
                 )
             );
-            DynValue? callback = DynValue.NewCallback(
+            DynValue callback = DynValue.NewCallback(
                 new CallbackFunction(
-                    (_x, a) =>
+                    (x, a) =>
                     {
                         return callback2;
                     }
                 )
             );
 
-            Script S = new();
-            S.Globals.Set("callback", callback);
+            Script s = new();
+            s.Globals.Set("callback", callback);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1234.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
         [Test]
@@ -125,22 +121,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return callback();";
 
-            DynValue? callback = DynValue.NewCallback(
+            DynValue callback = DynValue.NewCallback(
                 new CallbackFunction(
-                    (_x, a) =>
+                    (x, a) =>
                     {
                         return DynValue.NewNumber(1234.0);
                     }
                 )
             );
 
-            Script S = new();
-            S.Globals.Set("callback", callback);
+            Script s = new();
+            s.Globals.Set("callback", callback);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1234.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
         [Test]
@@ -150,12 +146,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "return callback 'hello';";
 
-            Script S = new();
-            S.Globals.Set(
+            Script s = new();
+            s.Globals.Set(
                 "callback",
                 DynValue.NewCallback(
                     new CallbackFunction(
-                        (_x, a) =>
+                        (x, a) =>
                         {
                             args = a.GetArray();
                             return DynValue.NewNumber(1234.0);
@@ -164,13 +160,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(1, args.Count);
-            Assert.AreEqual(DataType.String, args[0].Type);
-            Assert.AreEqual("hello", args[0].String);
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1234.0, res.Number);
+            Assert.That(args.Count, Is.EqualTo(1));
+            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[0].String, Is.EqualTo("hello"));
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
         [Test]
@@ -180,12 +176,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             string script = "return print(\"hello\", \"world\");";
 
-            Script S = new();
-            S.Globals.Set(
+            Script s = new();
+            s.Globals.Set(
                 "print",
                 DynValue.NewCallback(
                     new CallbackFunction(
-                        (_x, a) =>
+                        (x, a) =>
                         {
                             args = a.GetArray();
                             return DynValue.NewNumber(1234.0);
@@ -194,15 +190,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(2, args.Count);
-            Assert.AreEqual(DataType.String, args[0].Type);
-            Assert.AreEqual("hello", args[0].String);
-            Assert.AreEqual(DataType.String, args[1].Type);
-            Assert.AreEqual("world", args[1].String);
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1234.0, res.Number);
+            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[0].String, Is.EqualTo("hello"));
+            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(args[1].String, Is.EqualTo("world"));
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
         [Test]
@@ -223,13 +219,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(3, res.Tuple.Length);
-            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[2].Type);
-            Assert.AreEqual("\t\t\t\t\tciao\n\t\t\t\t", res.Tuple[0].String);
-            Assert.AreEqual(" [[uh]] ", res.Tuple[1].String);
-            Assert.AreEqual("[==[[=[[[eheh]]=]=]", res.Tuple[2].String);
+            Assert.That(res.Tuple.Length, Is.EqualTo(3));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[0].String, Is.EqualTo("\t\t\t\t\tciao\n\t\t\t\t"));
+            Assert.That(res.Tuple[1].String, Is.EqualTo(" [[uh]] "));
+            Assert.That(res.Tuple[2].String, Is.EqualTo("[==[[=[[[eheh]]=]=]"));
         }
 
         [Test]
@@ -242,8 +238,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("ciaoA", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("ciaoA"));
         }
 
         [Test]
@@ -264,16 +260,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             string keywrd =
                 "and break do else elseif end false end for function end goto if ::in:: in local nil not [or][[][==][[]] repeat return { then 0 end return; }; then true (x != 5 or == * 3 - 5) x";
 
-            string script = string.Format(
-                @"    
-				x = '{0}';
-				return x;",
-                keywrd
-            );
+            string script =
+                $@"    
+				x = '{keywrd}';
+				return x;";
 
             DynValue res = Script.RunString(script);
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual(keywrd, res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo(keywrd));
         }
 
         [Test]
@@ -293,10 +287,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             catch (SyntaxErrorException ex)
             {
                 caught = true;
-                Assert.That(ex.Message, Is.Not.Null.And.Not.Empty);
+                Assert.That(string.IsNullOrEmpty(ex.Message), Is.False, ex.Message);
             }
 
-            Assert.IsTrue(caught);
+            Assert.That(caught, Is.True);
         }
 
         [Test]
@@ -310,7 +304,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
         }
 
         [Test]
@@ -324,7 +318,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
         }
 
         [Test]
@@ -342,8 +336,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.Globals.Get("boh").Function.Call(82);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1994, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1994));
         }
 
         [Test]
@@ -353,8 +347,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(-42, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(-42));
         }
 
         [Test]
@@ -364,8 +358,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(42, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(42));
         }
 
         [Test]
@@ -375,8 +369,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(42, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(42));
         }
 
         [Test]
@@ -388,12 +382,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				y = false and crash();
 			";
 
-            Script S = new();
-            S.Globals.Set(
+            Script s = new();
+            s.Globals.Set(
                 "crash",
                 DynValue.NewCallback(
                     new CallbackFunction(
-                        (_x, a) =>
+                        (x, a) =>
                         {
                             throw new Exception("FAIL!");
                         }
@@ -401,7 +395,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            S.DoString(script);
+            s.DoString(script);
         }
 
         [Test]
@@ -414,10 +408,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return loadstring;
 			";
 
-            Script S = new();
-            DynValue res = S.DoString(script);
+            Script s = new();
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.ClrFunction, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.ClrFunction));
         }
 
         [Test]
@@ -428,11 +422,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return select(-1,'a','b','c');
 			";
 
-            Script S = new();
-            DynValue res = S.DoString(script);
+            Script s = new();
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("c", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("c"));
         }
 
         [Test]
@@ -454,17 +448,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(5, res.Tuple.Length);
-            Assert.AreEqual(DataType.String, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Boolean, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.Boolean, res.Tuple[2].Type);
-            Assert.AreEqual(DataType.String, res.Tuple[3].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[4].Type);
-            Assert.AreEqual("!", res.Tuple[0].String);
-            Assert.AreEqual(true, res.Tuple[1].Boolean);
-            Assert.AreEqual(false, res.Tuple[2].Boolean);
-            Assert.AreEqual("!", res.Tuple[3].String);
-            Assert.AreEqual(2, res.Tuple[4].Number);
+            Assert.That(res.Tuple.Length, Is.EqualTo(5));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(res.Tuple[3].Type, Is.EqualTo(DataType.String));
+            Assert.That(res.Tuple[4].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].String, Is.EqualTo("!"));
+            Assert.That(res.Tuple[1].Boolean, Is.EqualTo(true));
+            Assert.That(res.Tuple[2].Boolean, Is.EqualTo(false));
+            Assert.That(res.Tuple[3].String, Is.EqualTo("!"));
+            Assert.That(res.Tuple[4].Number, Is.EqualTo(2));
         }
 
         [Test]
@@ -503,8 +497,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
         [Test]
@@ -523,11 +517,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(6, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -545,11 +539,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(6, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -568,8 +562,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -607,12 +601,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(6, res.Tuple[0].Number);
-            Assert.AreEqual(12, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(6));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(12));
         }
 
         [Test]
@@ -646,12 +640,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(21, res.Tuple[0].Number);
-            Assert.AreEqual(42, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(21));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(42));
         }
 
         [Test]
@@ -666,12 +660,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(4, res.Tuple[0].Number);
-            Assert.AreEqual(3, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -693,11 +687,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(2, res.Tuple.Length);
-            Assert.AreEqual(DataType.Nil, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(6, res.Tuple[1].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(2));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -717,8 +711,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
         [Test]
@@ -728,8 +722,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(7, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(7));
         }
 
         [Test]
@@ -740,8 +734,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new(CoreModules.None);
             DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(7, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(7));
         }
 
         [Test]
@@ -751,8 +745,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(7, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(7));
         }
 
         [Test]
@@ -762,68 +756,68 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(512, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(512));
         }
 
         [Test]
         public void OperatorPrecedence3()
         {
             string script = @"return 5-3-2";
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(0));
         }
 
         [Test]
         public void OperatorPrecedence4()
         {
             string script = @"return 3 + -1";
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(2, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(2));
         }
 
         [Test]
         public void OperatorPrecedence5()
         {
             string script = @"return 3 * -1 + 5 * 3";
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(12, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(12));
         }
 
         [Test]
         public void OperatorPrecedence6()
         {
             string script = @"return -2^2";
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(-4, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(-4));
         }
 
         [Test]
         public void OperatorPrecedence7()
         {
             string script = @"return -7 / 0.5";
-            Script S = new(CoreModules.None);
+            Script s = new(CoreModules.None);
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(-14, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(-14));
         }
 
         [Test]
@@ -833,8 +827,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(528, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(528));
         }
 
         [Test]
@@ -844,8 +838,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(110, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(110));
         }
 
         [Test]
@@ -855,8 +849,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -878,8 +872,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(6, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(6));
         }
 
         [Test]
@@ -900,8 +894,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
         [Test]
@@ -924,8 +918,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new(CoreModules.None);
             DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
         [Test]
@@ -943,8 +937,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(6.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(6.0));
         }
 
         [Test]
@@ -960,8 +954,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -983,8 +977,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(120.0, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
         [Test]
@@ -1001,7 +995,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Function, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Function));
         }
 
         [Test]
@@ -1022,8 +1016,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("ciao", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("ciao"));
         }
 
         [Test]
@@ -1044,8 +1038,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("ciao", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("ciao"));
         }
 
         [Test]
@@ -1066,7 +1060,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Table, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Table));
         }
 
         [Test]
@@ -1085,13 +1079,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[2].Type);
-            Assert.AreEqual(1, res.Tuple[0].Number);
-            Assert.AreEqual(1, res.Tuple[1].Number);
-            Assert.AreEqual(2, res.Tuple[2].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(1));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
         }
 
         [Test]
@@ -1164,8 +1158,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = (new Script(CoreModules.None)).DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -1182,8 +1176,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(4, res.Tuple.Length);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(4));
         }
 
         [Test]
@@ -1205,13 +1199,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(3, res.Tuple.Length);
-            Assert.AreEqual(DataType.Number, res.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[1].Type);
-            Assert.AreEqual(DataType.Number, res.Tuple[2].Type);
-            Assert.AreEqual(11, res.Tuple[0].Number);
-            Assert.AreEqual(1, res.Tuple[1].Number);
-            Assert.AreEqual(2, res.Tuple[2].Number);
+            Assert.That(res.Tuple.Length, Is.EqualTo(3));
+            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(11));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
         }
 
         [Test]
@@ -1232,8 +1226,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(1, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -1257,8 +1251,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -1282,8 +1276,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(50, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(50));
         }
 
         [Test]
@@ -1307,8 +1301,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -1327,12 +1321,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(4, res.Tuple.Length);
-            Assert.AreEqual(4, res.Tuple[0].Number);
-            Assert.AreEqual(3, res.Tuple[1].Number);
-            Assert.AreEqual(2, res.Tuple[2].Number);
-            Assert.AreEqual(1, res.Tuple[3].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(4));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -1351,12 +1345,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Tuple, res.Type);
-            Assert.AreEqual(4, res.Tuple.Length);
-            Assert.AreEqual(4, res.Tuple[0].Number);
-            Assert.AreEqual(3, res.Tuple[1].Number);
-            Assert.AreEqual(2, res.Tuple[2].Number);
-            Assert.AreEqual(1, res.Tuple[3].Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(res.Tuple.Length, Is.EqualTo(4));
+            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
+            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
+            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
         }
 
         [Test]
@@ -1392,26 +1386,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Table, res.Type);
+            Assert.That(res.Type, Is.EqualTo(DataType.Table));
 
-            Table T = res.Table;
+            Table t = res.Table;
 
-            Assert.AreEqual(DataType.Boolean, T.Get("T1").Type, "T1-Type");
-            Assert.AreEqual(true, T.Get("T1").Boolean, "T1-Val");
+            Assert.That(t.Get("T1").Type, Is.EqualTo(DataType.Boolean), "T1-Type");
+            Assert.That(t.Get("T1").Boolean, Is.EqualTo(true), "T1-Val");
 
-            Assert.AreEqual(DataType.Boolean, T.Get("T2").Type, "T2-Type");
-            Assert.AreEqual(true, T.Get("T2").Boolean, "T2-Val");
+            Assert.That(t.Get("T2").Type, Is.EqualTo(DataType.Boolean), "T2-Type");
+            Assert.That(t.Get("T2").Boolean, Is.EqualTo(true), "T2-Val");
 
-            Assert.AreEqual(DataType.Number, T.Get("T3").Type, "T3-Type");
-            Assert.AreEqual(1, T.Get("T3").Number, "T3-Val");
+            Assert.That(t.Get("T3").Type, Is.EqualTo(DataType.Number), "T3-Type");
+            Assert.That(t.Get("T3").Number, Is.EqualTo(1), "T3-Val");
 
-            Assert.AreEqual(DataType.Nil, T.Get("T4").Type, "T4");
+            Assert.That(t.Get("T4").Type, Is.EqualTo(DataType.Nil), "T4");
 
-            Assert.AreEqual(DataType.Number, T.Get("T5").Type, "T5-Type");
-            Assert.AreEqual(2, T.Get("T5").Number, "T5-Val");
+            Assert.That(t.Get("T5").Type, Is.EqualTo(DataType.Number), "T5-Type");
+            Assert.That(t.Get("T5").Number, Is.EqualTo(2), "T5-Val");
 
-            Assert.AreEqual(DataType.Number, T.Get("T6").Type, "T6-Type");
-            Assert.AreEqual(3, T.Get("T6").Number, "T6-Val");
+            Assert.That(t.Get("T6").Type, Is.EqualTo(DataType.Number), "T6-Type");
+            Assert.That(t.Get("T6").Number, Is.EqualTo(3), "T6-Val");
         }
 
         [Test]
@@ -1426,11 +1420,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x() == 3;	
 			";
 
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString(script);
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Boolean, res.Type);
-            Assert.AreEqual(true, res.Boolean);
+            Assert.That(res.Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(res.Boolean, Is.EqualTo(true));
         }
 
         [Test]
@@ -1442,11 +1436,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x;	
 			";
 
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString(script);
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("aABCz", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("aABCz"));
         }
 
         [Test]
@@ -1459,11 +1453,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return test(1, 2, 3);	
 			";
 
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString(script);
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(3, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(3));
         }
 
         [Test]
@@ -1485,8 +1479,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = fn.Function.Call(1, 2, 3, 4);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(10, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
@@ -1517,7 +1511,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return 0x0.1E";
             DynValue result = Script.RunString(script);
-            Assert.AreEqual((double)0x1E / (double)0x100, result.Number);
+            Assert.That(result.Number, Is.EqualTo((double)0x1E / (double)0x100));
         }
 
         [Test]
@@ -1525,7 +1519,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return 0xA23p-4";
             DynValue result = Script.RunString(script);
-            Assert.AreEqual((double)0xA23 / 16.0, result.Number);
+            Assert.That(result.Number, Is.EqualTo((double)0xA23 / 16.0));
         }
 
         [Test]
@@ -1533,9 +1527,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script = "return 0X1.921FB54442D18P+1";
             DynValue result = Script.RunString(script);
-            Assert.AreEqual(
-                (1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2,
-                result.Number
+            Assert.That(
+                result.Number,
+                Is.EqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
             );
         }
 
@@ -1543,26 +1537,24 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public void Simple_Delegate_Interop_1()
         {
             int a = 3;
-            Script script = new();
-            script.Globals["action"] = new Action(() => a = 5);
+            Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
             script.DoString("action()");
-            Assert.AreEqual(5, a);
+            Assert.That(a, Is.EqualTo(5));
         }
 
         [Test]
         public void Simple_Delegate_Interop_2()
         {
-            IRegistrationPolicy? oldPolicy = UserData.RegistrationPolicy;
+            IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
 
             try
             {
                 UserData.RegistrationPolicy = Interop.InteropRegistrationPolicy.Automatic;
 
                 int a = 3;
-                Script script = new();
-                script.Globals["action"] = new Action(() => a = 5);
+                Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
                 script.DoString("action()");
-                Assert.AreEqual(5, a);
+                Assert.That(a, Is.EqualTo(5));
             }
             finally
             {
@@ -1573,8 +1565,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void MissingArgsDefaultToNil()
         {
-            Script S = new(CoreModules.None);
-            DynValue res = S.DoString(
+            Script s = new(CoreModules.None);
+            DynValue res = s.DoString(
                 @"
 				function test(a)
 					return a;
@@ -1588,8 +1580,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void ParsingTest()
         {
-            Script S = new(CoreModules.None);
-            DynValue res = S.LoadString(
+            Script s = new(CoreModules.None);
+            DynValue res = s.LoadString(
                 @"
 				t = {'a', 'b', 'c', ['d'] = 'f', ['e'] = 5, [65] = true, [true] = false}
 				function myFunc()
@@ -1636,13 +1628,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void NumericConversionFailsIfOutOfBounds()
         {
-            Script S = new();
-
-            S.Globals["my_function_takes_byte"] = (Action<byte>)(p => { });
+            Script s = new()
+            {
+                Globals = { ["my_function_takes_byte"] = (Action<byte>)(p => { }) },
+            };
 
             try
             {
-                S.DoString(
+                s.DoString(
                     "my_function_takes_byte(2010191) -- a huge number that is definitely not a byte"
                 );
 

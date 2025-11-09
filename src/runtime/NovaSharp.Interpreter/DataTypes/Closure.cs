@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter
 {
+    using System.Collections.Generic;
+    using Execution;
+
     /// <summary>
     /// A class representing a script function
     /// </summary>
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Shortcut for an empty closure
         /// </summary>
-        private static ClosureContext emptyClosure = new();
+        private static readonly ClosureContext EmptyClosure = new();
 
         /// <summary>
         /// The current closure context
@@ -73,7 +73,7 @@ namespace NovaSharp.Interpreter
             }
             else
             {
-                ClosureContext = emptyClosure;
+                ClosureContext = EmptyClosure;
             }
         }
 
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public ScriptFunctionDelegate GetDelegate()
         {
-            return args => this.Call(args).ToObject();
+            return args => Call(args).ToObject();
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public ScriptFunctionDelegate<T> GetDelegate<T>()
         {
-            return args => this.Call(args).ToObject<T>();
+            return args => Call(args).ToObject<T>();
         }
 
         /// <summary>

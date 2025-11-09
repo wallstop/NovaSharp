@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+
     /// <summary>
     /// Forces a class member visibility to scripts. Can be used to hide public members. Equivalent to NovaSharpVisible(false).
     /// </summary>

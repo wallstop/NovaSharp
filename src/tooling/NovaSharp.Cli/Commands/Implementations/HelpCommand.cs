@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace NovaSharp.Commands
 {
-    class HelpCommand : ICommand
+    using System;
+
+    internal class HelpCommand : ICommand
     {
         public string Name
         {
@@ -28,7 +25,7 @@ namespace NovaSharp.Commands
         {
             if (arguments.Length > 0)
             {
-                ICommand? cmd = CommandManager.Find(arguments);
+                ICommand cmd = CommandManager.Find(arguments);
                 if (cmd != null)
                 {
                     cmd.DisplayLongHelp();

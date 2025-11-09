@@ -1,50 +1,50 @@
-using System;
-using System.Diagnostics;
-
 namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
+    using System;
+    using System.Diagnostics;
+
     /// <summary>
     /// This class is not *really* IDisposable.. it's just use to have a RAII like pattern.
     /// You are free to reuse this instance after calling Dispose.
     /// </summary>
     internal class GlobalPerformanceStopwatch : IPerformanceStopwatch
     {
-        private class GlobalPerformanceStopwatch_StopwatchObject : IDisposable
+        private class GlobalPerformanceStopwatchStopwatchObject : IDisposable
         {
-            Stopwatch m_Stopwatch;
-            GlobalPerformanceStopwatch m_Parent;
+            private readonly Stopwatch _stopwatch;
+            private readonly GlobalPerformanceStopwatch _parent;
 
-            public GlobalPerformanceStopwatch_StopwatchObject(GlobalPerformanceStopwatch parent)
+            public GlobalPerformanceStopwatchStopwatchObject(GlobalPerformanceStopwatch parent)
             {
-                m_Parent = parent;
-                m_Stopwatch = Stopwatch.StartNew();
+                _parent = parent;
+                _stopwatch = Stopwatch.StartNew();
             }
 
             public void Dispose()
             {
-                m_Stopwatch.Stop();
-                m_Parent.SignalStopwatchTerminated(m_Stopwatch);
+                _stopwatch.Stop();
+                _parent.SignalStopwatchTerminated(_stopwatch);
             }
         }
 
-        int m_Count = 0;
-        long m_Elapsed = 0;
-        PerformanceCounter m_Counter;
+        private int _count = 0;
+        private long _elapsed = 0;
+        private readonly PerformanceCounter _counter;
 
         public GlobalPerformanceStopwatch(PerformanceCounter perfcounter)
         {
-            m_Counter = perfcounter;
+            _counter = perfcounter;
         }
 
         private void SignalStopwatchTerminated(Stopwatch sw)
         {
-            m_Elapsed += sw.ElapsedMilliseconds;
-            m_Count += 1;
+            _elapsed += sw.ElapsedMilliseconds;
+            _count += 1;
         }
 
         public IDisposable Start()
         {
-            return new GlobalPerformanceStopwatch_StopwatchObject(this);
+            return new GlobalPerformanceStopwatchStopwatchObject(this);
         }
 
         public PerformanceResult GetResult()
@@ -53,9 +53,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             {
                 Type = PerformanceCounterType.TimeMilliseconds,
                 Global = false,
-                Name = m_Counter.ToString(),
-                Instances = m_Count,
-                Counter = m_Elapsed,
+                Name = _counter.ToString(),
+                Instances = _count,
+                Counter = _elapsed,
             };
         }
     }

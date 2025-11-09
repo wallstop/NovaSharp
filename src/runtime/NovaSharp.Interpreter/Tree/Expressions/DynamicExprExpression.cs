@@ -1,22 +1,22 @@
-using System;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class DynamicExprExpression : Expression
+    using System;
+    using Execution;
+
+    internal class DynamicExprExpression : Expression
     {
-        Expression m_Exp;
+        private readonly Expression _exp;
 
         public DynamicExprExpression(Expression exp, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             lcontext.Anonymous = true;
-            m_Exp = exp;
+            _exp = exp;
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            return m_Exp.Eval(context);
+            return _exp.Eval(context);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override SymbolRef FindDynamic(ScriptExecutionContext context)
         {
-            return m_Exp.FindDynamic(context);
+            return _exp.FindDynamic(context);
         }
     }
 }

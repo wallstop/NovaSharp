@@ -1,10 +1,11 @@
-using System;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Serialization
 {
+    using System;
+    using System.Collections;
+    using System.Reflection;
+    using Compatibility;
+    using Interop.Converters;
+
     public static class ObjectValueConverter
     {
         public static DynValue SerializeObjectToDynValue(
@@ -34,9 +35,7 @@ namespace NovaSharp.Interpreter.Serialization
 
             Table t = new(script);
 
-            System.Collections.IEnumerable ienum = o as System.Collections.IEnumerable;
-
-            if (ienum != null)
+            if (o is IEnumerable ienum)
             {
                 foreach (object obj in ienum)
                 {

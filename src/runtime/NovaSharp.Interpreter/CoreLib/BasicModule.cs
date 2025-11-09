@@ -1,14 +1,14 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Text;
+    using Debugging;
+
     /// <summary>
     /// Class implementing basic Lua functions (print, type, tostring, etc) as a NovaSharp module.
     /// </summary>
@@ -19,8 +19,8 @@ namespace NovaSharp.Interpreter.CoreLib
         //----------------------------------------------------------------------------------------------------------------
         //Returns the type of its only argument, coded as a string. The possible results of this function are "nil"
         //(a string, not the value nil), "number", "string", "boolean", "table", "function", "thread", and "userdata".
-        [NovaSharpModuleMethod]
-        public static DynValue type(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "type")]
+        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args.Count < 1)
             {
@@ -35,8 +35,8 @@ namespace NovaSharp.Interpreter.CoreLib
         //----------------------------------------------------------------------------------------------------------------
         //Issues an error when the value of its argument v is false (i.e., nil or false);
         //otherwise, returns all its arguments. message is an error message; when absent, it defaults to "assertion failed!"
-        [NovaSharpModuleMethod]
-        public static DynValue assert(
+        [NovaSharpModuleMethod(Name = "assert")]
+        public static DynValue Assert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -62,8 +62,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // collectgarbage  ([opt [, arg]])
         // ----------------------------------------------------------------------------------------------------------------
         // This function is mostly a stub towards the CLR GC. If mode is nil, "collect" or "restart", a GC is forced.
-        [NovaSharpModuleMethod]
-        public static DynValue collectgarbage(
+        [NovaSharpModuleMethod(Name = "collectgarbage")]
+        public static DynValue Collectgarbage(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -92,8 +92,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // With level 1 (the default), the error position is where the error function was called.
         // Level 2 points the error to where the function that called error was called; and so on.
         // Passing a level 0 avoids the addition of error position information to the message.
-        [NovaSharpModuleMethod]
-        public static DynValue error(
+        [NovaSharpModuleMethod(Name = "error")]
+        public static DynValue Error(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -135,8 +135,8 @@ namespace NovaSharp.Interpreter.CoreLib
         //
         // If the metatable of v has a "__tostring" field, then tostring calls the corresponding value with v as argument,
         // and uses the result of the call as its result.
-        [NovaSharpModuleMethod]
-        public static DynValue tostring(
+        [NovaSharpModuleMethod(Name = "tostring")]
+        public static DynValue Tostring(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -187,17 +187,17 @@ namespace NovaSharp.Interpreter.CoreLib
         // If index is a number, returns all arguments after argument number index; a negative number indexes from
         // the end (-1 is the last argument). Otherwise, index must be the string "#", and select returns the total
         // number of extra arguments it received.
-        [NovaSharpModuleMethod]
-        public static DynValue select(
+        [NovaSharpModuleMethod(Name = "select")]
+        public static DynValue Select(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
-                if (args[args.Count - 1].Type == DataType.Tuple)
+                if (args[^1].Type == DataType.Tuple)
                 {
-                    return DynValue.NewNumber(args.Count - 1 + args[args.Count - 1].Tuple.Length);
+                    return DynValue.NewNumber(args.Count - 1 + args[^1].Tuple.Length);
                 }
                 else
                 {
@@ -205,8 +205,8 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            DynValue v_num = args.AsType(0, "select", DataType.Number, false);
-            int num = (int)v_num.Number;
+            DynValue vNum = args.AsType(0, "select", DataType.Number, false);
+            int num = (int)vNum.Number;
 
             List<DynValue> values = new();
 
@@ -249,8 +249,8 @@ namespace NovaSharp.Interpreter.CoreLib
         // The base may be any integer between 2 and 36, inclusive. In bases above 10, the letter 'A' (in either
         // upper or lower case) represents 10, 'B' represents 11, and so forth, with 'Z' representing 35. If the
         // string e is not a valid numeral in the given base, the function returns nil.
-        [NovaSharpModuleMethod]
-        public static DynValue tonumber(
+        [NovaSharpModuleMethod(Name = "tonumber")]
+        public static DynValue Tonumber(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -275,9 +275,13 @@ namespace NovaSharp.Interpreter.CoreLib
                     return DynValue.Nil;
                 }
 
-                double d;
                 if (
-                    double.TryParse(e.String, NumberStyles.Any, CultureInfo.InvariantCulture, out d)
+                    double.TryParse(
+                        e.String,
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out double d
+                    )
                 )
                 {
                     return DynValue.NewNumber(d);
@@ -333,8 +337,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue print(
+        [NovaSharpModuleMethod(Name = "print")]
+        public static DynValue Print(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

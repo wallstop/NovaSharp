@@ -1,8 +1,8 @@
-using System.Text;
-
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
-    class BinaryEncoding : Encoding
+    using System.Text;
+
+    internal class BinaryEncoding : Encoding
     {
         public BinaryEncoding()
             : base() { }

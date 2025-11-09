@@ -1,11 +1,11 @@
-using System.CodeDom;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-
 namespace NovaSharp.Hardwire.Generators
 {
-    abstract class AssignableMemberDescriptorGeneratorBase : IHardwireGenerator
+    using System.CodeDom;
+    using Interpreter;
+    using Interpreter.Interop.BasicDescriptors;
+    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+
+    internal abstract class AssignableMemberDescriptorGeneratorBase : IHardwireGenerator
     {
         public abstract string ManagedType { get; }
 
@@ -53,18 +53,18 @@ namespace NovaSharp.Hardwire.Generators
 
             string className = GetPrefix() + "_" + Guid.NewGuid().ToString("N");
 
-            CodeTypeDeclaration classCode = new(className);
-
-            classCode.TypeAttributes =
-                System.Reflection.TypeAttributes.NestedPrivate
-                | System.Reflection.TypeAttributes.Sealed;
+            CodeTypeDeclaration classCode = new(className)
+            {
+                TypeAttributes =
+                    System.Reflection.TypeAttributes.NestedPrivate
+                    | System.Reflection.TypeAttributes.Sealed,
+            };
 
             classCode.BaseTypes.Add(typeof(HardwiredMemberDescriptor));
 
             // protected HardwiredMemberDescriptor(Type memberType, string name, bool isStatic, MemberDescriptorAccess access)
 
-            CodeConstructor ctor = new();
-            ctor.Attributes = MemberAttributes.Assembly;
+            CodeConstructor ctor = new() { Attributes = MemberAttributes.Assembly };
             ctor.BaseConstructorArgs.Add(new CodeTypeOfExpression(memberType));
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(name));
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(isStatic));

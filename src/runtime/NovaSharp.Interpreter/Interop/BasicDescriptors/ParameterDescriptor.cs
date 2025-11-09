@@ -1,10 +1,10 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using NovaSharp.Interpreter.Compatibility;
-
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using System;
+    using System.Linq;
+    using System.Reflection;
+    using Compatibility;
+
     /// <summary>
     /// Descriptor of parameters used in <see cref="IOverloadableMemberDescriptor"/> implementations.
     /// </summary>
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public bool HasBeenRestricted
         {
-            get { return m_OriginalType != null; }
+            get { return _originalType != null; }
         }
 
         /// <summary>
@@ -58,13 +58,13 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public Type OriginalType
         {
-            get { return m_OriginalType ?? Type; }
+            get { return _originalType ?? Type; }
         }
 
         /// <summary>
         /// If the type got restricted, the original type before the restriction.
         /// </summary>
-        private Type m_OriginalType = null;
+        private Type _originalType = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ParameterDescriptor" /> class.
@@ -157,7 +157,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </returns>
         public override string ToString()
         {
-            return string.Format("{0} {1}{2}", Type.Name, Name, HasDefaultValue ? " = ..." : "");
+            return $"{Type.Name} {Name}{(HasDefaultValue ? " = ..." : "")}";
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new InvalidOperationException("Specified operation is not a restriction");
             }
 
-            m_OriginalType = Type;
+            _originalType = Type;
             Type = type;
         }
 

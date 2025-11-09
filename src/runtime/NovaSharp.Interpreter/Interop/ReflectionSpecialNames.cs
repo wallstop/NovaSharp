@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Interop
             if (name.Contains("."))
             {
                 string[] split = name.Split('.');
-                name = split[split.Length - 1];
+                name = split[^1];
             }
 
             switch (name)

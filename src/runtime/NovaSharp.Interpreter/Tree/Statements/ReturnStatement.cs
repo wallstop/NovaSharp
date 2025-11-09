@@ -1,19 +1,19 @@
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class ReturnStatement : Statement
+    using Debugging;
+    using Execution;
+    using Expressions;
+
+    internal class ReturnStatement : Statement
     {
-        Expression m_Expression = null;
-        SourceRef m_Ref;
+        private readonly Expression _expression = null;
+        private readonly SourceRef _ref;
 
         public ReturnStatement(ScriptLoadingContext lcontext, Expression e, SourceRef sref)
             : base(lcontext)
         {
-            m_Expression = e;
-            m_Ref = sref;
+            _expression = e;
+            _ref = sref;
             lcontext.Source.Refs.Add(sref);
         }
 
@@ -26,26 +26,26 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             Token cur = lcontext.Lexer.Current;
 
-            if (cur.IsEndOfBlock() || cur.Type == TokenType.SemiColon)
+            if (cur.IsEndOfBlock() || cur.type == TokenType.SemiColon)
             {
-                m_Expression = null;
-                m_Ref = ret.GetSourceRef();
+                _expression = null;
+                _ref = ret.GetSourceRef();
             }
             else
             {
-                m_Expression = new ExprListExpression(Expression.ExprList(lcontext), lcontext);
-                m_Ref = ret.GetSourceRefUpTo(lcontext.Lexer.Current);
+                _expression = new ExprListExpression(Expression.ExprList(lcontext), lcontext);
+                _ref = ret.GetSourceRefUpTo(lcontext.Lexer.Current);
             }
-            lcontext.Source.Refs.Add(m_Ref);
+            lcontext.Source.Refs.Add(_ref);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            using (bc.EnterSource(m_Ref))
+            using (bc.EnterSource(_ref))
             {
-                if (m_Expression != null)
+                if (_expression != null)
                 {
-                    m_Expression.Compile(bc);
+                    _expression.Compile(bc);
                     bc.Emit_Ret(1);
                 }
                 else

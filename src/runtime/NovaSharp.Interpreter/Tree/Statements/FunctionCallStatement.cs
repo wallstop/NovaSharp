@@ -1,12 +1,12 @@
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-using NovaSharp.Interpreter.Tree.Expressions;
-
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    class FunctionCallStatement : Statement
+    using Execution;
+    using Execution.VM;
+    using Expressions;
+
+    internal class FunctionCallStatement : Statement
     {
-        FunctionCallExpression m_FunctionCallExpression;
+        private readonly FunctionCallExpression _functionCallExpression;
 
         public FunctionCallStatement(
             ScriptLoadingContext lcontext,
@@ -14,15 +14,15 @@ namespace NovaSharp.Interpreter.Tree.Statements
         )
             : base(lcontext)
         {
-            m_FunctionCallExpression = functionCallExpression;
-            lcontext.Source.Refs.Add(m_FunctionCallExpression.SourceRef);
+            _functionCallExpression = functionCallExpression;
+            lcontext.Source.Refs.Add(_functionCallExpression.SourceRef);
         }
 
         public override void Compile(ByteCode bc)
         {
-            using (bc.EnterSource(m_FunctionCallExpression.SourceRef))
+            using (bc.EnterSource(_functionCallExpression.SourceRef))
             {
-                m_FunctionCallExpression.Compile(bc);
+                _functionCallExpression.Compile(bc);
                 RemoveBreakpointStop(bc.Emit_Pop());
             }
         }

@@ -1,7 +1,8 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Collections.Generic;
+    using NUnit.Framework;
+
     public static class OverloadsExtMethods
     {
         public static string Method1(
@@ -22,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
     public static class OverloadsExtMethods2
     {
-        public static string MethodXXX(
+        public static string MethodXxx(
             this UserDataOverloadsTests.OverloadsTestClass obj,
             string x,
             bool b
@@ -95,25 +96,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void RunTestOverload(string code, string expected, bool tupleExpected = false)
         {
-            Script S = new();
+            Script s = new();
 
             OverloadsTestClass obj = new();
 
             UserData.RegisterType<OverloadsTestClass>();
 
-            S.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
-            S.Globals.Set("o", UserData.Create(obj));
+            s.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
+            s.Globals.Set("o", UserData.Create(obj));
 
-            DynValue v = S.DoString("return " + code);
+            DynValue v = s.DoString("return " + code);
 
             if (tupleExpected)
             {
-                Assert.AreEqual(DataType.Tuple, v.Type);
+                Assert.That(v.Type, Is.EqualTo(DataType.Tuple));
                 v = v.Tuple[0];
             }
 
-            Assert.AreEqual(DataType.String, v.Type);
-            Assert.AreEqual(expected, v.String);
+            Assert.That(v.Type, Is.EqualTo(DataType.String));
+            Assert.That(v.String, Is.EqualTo(expected));
         }
 
         [Test]
@@ -124,8 +125,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             try
             {
-                Script lua = new();
-                lua.Globals["DictionaryIntInt"] = typeof(Dictionary<int, int>);
+                Script lua = new()
+                {
+                    Globals = { ["DictionaryIntInt"] = typeof(Dictionary<int, int>) },
+                };
 
                 string script =
                     @"local dict = DictionaryIntInt.__new(); local res, v = dict.TryGetValue(0)";
@@ -312,11 +315,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             // Execute and check the results.
             DynValue result = s.DoString("return func(), func(17)");
 
-            Assert.AreEqual(DataType.Tuple, result.Type);
-            Assert.AreEqual(DataType.Number, result.Tuple[0].Type);
-            Assert.AreEqual(DataType.Number, result.Tuple[1].Type);
-            Assert.AreEqual(1, result.Tuple[0].Number);
-            Assert.AreEqual(22, result.Tuple[1].Number);
+            Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(result.Tuple[0].Type, Is.EqualTo(DataType.Number));
+            Assert.That(result.Tuple[1].Type, Is.EqualTo(DataType.Number));
+            Assert.That(result.Tuple[0].Number, Is.EqualTo(1));
+            Assert.That(result.Tuple[1].Number, Is.EqualTo(22));
         }
 #endif
     }

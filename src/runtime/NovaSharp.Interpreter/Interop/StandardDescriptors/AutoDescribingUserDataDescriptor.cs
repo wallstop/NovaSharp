@@ -1,16 +1,16 @@
-using System;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using Compatibility;
+    using Interop;
+
     /// <summary>
     /// Descriptor which acts as a non-containing adapter from IUserDataType to IUserDataDescriptor
     /// </summary>
     public class AutoDescribingUserDataDescriptor : IUserDataDescriptor
     {
-        private string m_FriendlyName;
-        private Type m_Type;
+        private readonly string _friendlyName;
+        private readonly Type _type;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AutoDescribingUserDataDescriptor"/> class.
@@ -19,8 +19,8 @@ namespace NovaSharp.Interpreter
         /// <param name="friendlyName">Name of the friendly.</param>
         public AutoDescribingUserDataDescriptor(Type type, string friendlyName)
         {
-            m_FriendlyName = friendlyName;
-            m_Type = type;
+            _friendlyName = friendlyName;
+            _type = type;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public string Name
         {
-            get { return m_FriendlyName; }
+            get { return _friendlyName; }
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Type Type
         {
-            get { return m_Type; }
+            get { return _type; }
         }
 
         /// <summary>
@@ -49,9 +49,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
-            IUserDataType u = obj as IUserDataType;
-
-            if (u != null)
+            if (obj is IUserDataType u)
             {
                 return u.Index(script, index, isDirectIndexing);
             }
@@ -76,9 +74,7 @@ namespace NovaSharp.Interpreter
             bool isDirectIndexing
         )
         {
-            IUserDataType u = obj as IUserDataType;
-
-            if (u != null)
+            if (obj is IUserDataType u)
             {
                 return u.SetIndex(script, index, value, isDirectIndexing);
             }
@@ -119,9 +115,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            IUserDataType u = obj as IUserDataType;
-
-            if (u != null)
+            if (obj is IUserDataType u)
             {
                 return u.MetaIndex(script, metaname);
             }

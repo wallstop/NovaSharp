@@ -1,16 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using NovaSharp.Interpreter.Interop;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using Interop;
+
     /// <summary>
     /// This class wraps a CLR function
     /// </summary>
     public sealed class CallbackFunction : RefIdObject
     {
-        private static InteropAccessMode m_DefaultAccessMode = InteropAccessMode.LazyOptimized;
+        private static InteropAccessMode _defaultAccessMode = InteropAccessMode.LazyOptimized;
 
         /// <summary>
         /// Gets the name of the function
@@ -84,7 +83,7 @@ namespace NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Default, HideMembers and BackgroundOptimized are NOT supported.</exception>
         public static InteropAccessMode DefaultAccessMode
         {
-            get { return m_DefaultAccessMode; }
+            get { return _defaultAccessMode; }
             set
             {
                 if (
@@ -96,7 +95,7 @@ namespace NovaSharp.Interpreter
                     throw new ArgumentException("DefaultAccessMode");
                 }
 
-                m_DefaultAccessMode = value;
+                _defaultAccessMode = value;
             }
         }
 
@@ -115,7 +114,7 @@ namespace NovaSharp.Interpreter
         {
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = m_DefaultAccessMode;
+                accessMode = _defaultAccessMode;
             }
 
 #if NETFX_CORE
@@ -147,7 +146,7 @@ namespace NovaSharp.Interpreter
         {
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = m_DefaultAccessMode;
+                accessMode = _defaultAccessMode;
             }
 
             MethodMemberDescriptor descr = new(mi, accessMode);

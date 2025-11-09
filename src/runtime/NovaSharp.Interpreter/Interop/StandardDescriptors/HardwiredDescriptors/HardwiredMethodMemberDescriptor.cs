@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
+    using System.Collections.Generic;
+    using BasicDescriptors;
+
     public abstract class HardwiredMethodMemberDescriptor : FunctionMemberDescriptorBase
     {
         public override DynValue Execute(

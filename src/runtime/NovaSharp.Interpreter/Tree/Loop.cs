@@ -1,18 +1,18 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree
 {
+    using System.Collections.Generic;
+    using Execution;
+    using Execution.VM;
+
     internal class Loop : ILoop
     {
-        public RuntimeScopeBlock Scope;
-        public List<Instruction> BreakJumps = new();
+        public RuntimeScopeBlock scope;
+        public List<Instruction> breakJumps = new();
 
         public void CompileBreak(ByteCode bc)
         {
-            bc.Emit_Exit(Scope);
-            BreakJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
+            bc.Emit_Exit(scope);
+            breakJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
         }
 
         public bool IsBoundary()

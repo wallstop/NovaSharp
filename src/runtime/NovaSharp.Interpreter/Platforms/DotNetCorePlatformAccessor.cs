@@ -1,10 +1,10 @@
-#if DOTNET_CORE
-using System;
-using System.Text;
-using System.IO;
-
 namespace NovaSharp.Interpreter.Platforms
 {
+#if DOTNET_CORE
+    using System;
+    using System.Text;
+    using System.IO;
+
     /// <summary>
     /// Class providing the IPlatformAccessor interface for .NET Core builds
     /// </summary>
@@ -238,6 +238,5 @@ namespace NovaSharp.Interpreter.Platforms
             return "core";
         }
     }
-}
-
 #endif
+}

@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Commands.Implementations
 {
-    class RegisterCommand : ICommand
+    using System;
+    using Interpreter;
+
+    internal class RegisterCommand : ICommand
     {
         public string Name
         {
@@ -43,7 +40,7 @@ namespace NovaSharp.Commands.Implementations
             }
             else
             {
-                foreach (Type? type in UserData.GetRegisteredTypes())
+                foreach (Type type in UserData.GetRegisteredTypes())
                 {
                     Console.WriteLine(type.FullName);
                 }

@@ -1,18 +1,19 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Collections.Generic;
+    using NUnit.Framework;
+
     [TestFixture]
     public class UserDataIndexerTests
     {
         public class IndexerTestClass
         {
-            Dictionary<int, int> mymap = new();
+            private readonly Dictionary<int, int> _mymap = new();
 
             public int this[int idx]
             {
-                get { return mymap[idx]; }
-                set { mymap[idx] = value; }
+                get { return _mymap[idx]; }
+                set { _mymap[idx] = value; }
             }
 
             public int this[int idx1, int idx2, int idx3]
@@ -20,30 +21,30 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 get
                 {
                     int idx = (idx1 + idx2) * idx3;
-                    return mymap[idx];
+                    return _mymap[idx];
                 }
                 set
                 {
                     int idx = (idx1 + idx2) * idx3;
-                    mymap[idx] = value;
+                    _mymap[idx] = value;
                 }
             }
         }
 
         private void IndexerTest(string code, int expected)
         {
-            Script S = new();
+            Script s = new();
 
             IndexerTestClass obj = new();
 
             UserData.RegisterType<IndexerTestClass>();
 
-            S.Globals.Set("o", UserData.Create(obj));
+            s.Globals.Set("o", UserData.Create(obj));
 
-            DynValue v = S.DoString(code);
+            DynValue v = s.DoString(code);
 
-            Assert.AreEqual(DataType.Number, v.Type);
-            Assert.AreEqual(expected, v.Number);
+            Assert.That(v.Type, Is.EqualTo(DataType.Number));
+            Assert.That(v.Number, Is.EqualTo(expected));
         }
 
         [Test]
@@ -123,8 +124,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(98, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(98));
         }
 
         [Test]
@@ -139,8 +140,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.Number, res.Type);
-            Assert.AreEqual(98, res.Number);
+            Assert.That(res.Type, Is.EqualTo(DataType.Number));
+            Assert.That(res.Number, Is.EqualTo(98));
         }
     }
 }

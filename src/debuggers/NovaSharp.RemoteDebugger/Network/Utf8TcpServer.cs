@@ -1,33 +1,33 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading;
+
     public class Utf8TcpServer : IDisposable
     {
-        int m_PortNumber = 1912;
-        IPAddress m_IPAddress;
-        TcpListener m_Listener = null;
-        Action<string> m_Logger;
-        List<Utf8TcpPeer> m_PeerList = new();
-        object m_PeerListLock = new();
+        private readonly int _portNumber = 1912;
+        private readonly IPAddress _ipAddress;
+        private TcpListener _listener = null;
+        private Action<string> _logger;
+        private readonly List<Utf8TcpPeer> _peerList = new();
+        private readonly object _peerListLock = new();
         public char PacketSeparator { get; private set; }
 
         public Utf8TcpServerOptions Options { get; private set; }
 
-        public event EventHandler<Utf8TcpPeerEventArgs> ClientConnected;
-        public event EventHandler<Utf8TcpPeerEventArgs> DataReceived;
-        public event EventHandler<Utf8TcpPeerEventArgs> ClientDisconnected;
+        public event EventHandler<Utf8TcpPeerEventArgs> OnClientConnected;
+        public event EventHandler<Utf8TcpPeerEventArgs> OnDataReceived;
+        public event EventHandler<Utf8TcpPeerEventArgs> OnClientDisconnected;
 
         public int PortNumber
         {
-            get { return m_PortNumber; }
+            get { return _portNumber; }
         }
 
         public Utf8TcpServer(
@@ -37,12 +37,12 @@ namespace NovaSharp.RemoteDebugger.Network
             Utf8TcpServerOptions options
         )
         {
-            m_IPAddress =
+            _ipAddress =
                 ((options & Utf8TcpServerOptions.LocalHostOnly) != 0)
                     ? IPAddress.Loopback
                     : IPAddress.Any;
-            m_PortNumber = port;
-            m_Logger = s => System.Diagnostics.Debug.WriteLine(s);
+            _portNumber = port;
+            _logger = s => System.Diagnostics.Debug.WriteLine(s);
             PacketSeparator = packetSeparator;
             BufferSize = bufferSize;
             Options = options;
@@ -50,15 +50,15 @@ namespace NovaSharp.RemoteDebugger.Network
 
         public Action<string> Logger
         {
-            get { return m_Logger; }
-            set { m_Logger = value ?? (s => Console.WriteLine(s)); }
+            get { return _logger; }
+            set { _logger = value ?? (s => Console.WriteLine(s)); }
         }
 
         public void Start()
         {
-            m_Listener = new TcpListener(m_IPAddress, m_PortNumber);
-            m_Listener.Start();
-            m_Listener.BeginAcceptSocket(OnAcceptSocket, null);
+            _listener = new TcpListener(_ipAddress, _portNumber);
+            _listener.Start();
+            _listener.BeginAcceptSocket(OnAcceptSocket, null);
         }
 
         public int BufferSize { get; private set; }
@@ -67,9 +67,9 @@ namespace NovaSharp.RemoteDebugger.Network
         {
             try
             {
-                Socket s = m_Listener.EndAcceptSocket(ar);
+                Socket s = _listener.EndAcceptSocket(ar);
                 AddNewClient(s);
-                m_Listener.BeginAcceptSocket(OnAcceptSocket, null);
+                _listener.BeginAcceptSocket(OnAcceptSocket, null);
             }
             catch (SocketException ex)
             {
@@ -83,9 +83,9 @@ namespace NovaSharp.RemoteDebugger.Network
 
         public int GetConnectedClients()
         {
-            lock (m_PeerListLock)
+            lock (_peerListLock)
             {
-                return m_PeerList.Count;
+                return _peerList.Count;
             }
         }
 
@@ -93,9 +93,9 @@ namespace NovaSharp.RemoteDebugger.Network
         {
             if ((Options & Utf8TcpServerOptions.SingleClientOnly) != 0)
             {
-                lock (m_PeerListLock)
+                lock (_peerListLock)
                 {
-                    foreach (Utf8TcpPeer? pp in m_PeerList)
+                    foreach (Utf8TcpPeer pp in _peerList)
                     {
                         pp.Disconnect();
                     }
@@ -104,17 +104,17 @@ namespace NovaSharp.RemoteDebugger.Network
 
             Utf8TcpPeer peer = new(this, socket);
 
-            lock (m_PeerListLock)
+            lock (_peerListLock)
             {
-                m_PeerList.Add(peer);
-                peer.ConnectionClosed += OnPeerDisconnected;
-                peer.DataReceived += OnPeerDataReceived;
+                _peerList.Add(peer);
+                peer.OnConnectionClosed += OnPeerDisconnected;
+                peer.OnDataReceived += OnPeerDataReceived;
             }
 
-            if (ClientConnected != null)
+            if (OnClientConnected != null)
             {
                 Utf8TcpPeerEventArgs args = new(peer);
-                ClientConnected(this, args);
+                OnClientConnected(this, args);
             }
 
             peer.Start();
@@ -122,26 +122,20 @@ namespace NovaSharp.RemoteDebugger.Network
 
         private void OnPeerDataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
-            if (DataReceived != null)
-            {
-                DataReceived(this, e);
-            }
+            OnDataReceived?.Invoke(this, e);
         }
 
-        void OnPeerDisconnected(object sender, Utf8TcpPeerEventArgs e)
+        private void OnPeerDisconnected(object sender, Utf8TcpPeerEventArgs e)
         {
             try
             {
-                if (ClientDisconnected != null)
-                {
-                    ClientDisconnected(this, e);
-                }
+                OnClientDisconnected?.Invoke(this, e);
 
-                lock (m_PeerListLock)
+                lock (_peerListLock)
                 {
-                    m_PeerList.Remove(e.Peer);
-                    e.Peer.ConnectionClosed -= OnPeerDisconnected;
-                    e.Peer.DataReceived -= OnPeerDataReceived;
+                    _peerList.Remove(e.Peer);
+                    e.Peer.OnConnectionClosed -= OnPeerDisconnected;
+                    e.Peer.OnDataReceived -= OnPeerDataReceived;
                 }
             }
             catch { }
@@ -151,9 +145,9 @@ namespace NovaSharp.RemoteDebugger.Network
         {
             List<Utf8TcpPeer> peers;
 
-            lock (m_PeerListLock)
+            lock (_peerListLock)
             {
-                peers = m_PeerList.ToList();
+                peers = _peerList.ToList();
             }
 
             message = CompleteMessage(message);
@@ -180,7 +174,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 return PacketSeparator.ToString();
             }
 
-            if (message[message.Length - 1] != PacketSeparator)
+            if (message[^1] != PacketSeparator)
             {
                 message = message + PacketSeparator;
             }
@@ -190,7 +184,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
         public void Stop()
         {
-            m_Listener.Stop();
+            _listener.Stop();
         }
 
         public void Dispose()

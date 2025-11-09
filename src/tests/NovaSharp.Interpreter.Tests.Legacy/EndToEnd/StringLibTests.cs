@@ -1,7 +1,7 @@
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NUnit.Framework;
+
     [TestFixture]
     public class StringLibTests
     {
@@ -21,8 +21,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.AreEqual(DataType.String, res.Type);
-            Assert.AreEqual("HelloLuauser", res.String);
+            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            Assert.That(res.String, Is.EqualTo("HelloLuauser"));
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return s:find(date);
 			";
             DynValue res = Script.RunString(script);
-            Assert.IsTrue(res.IsNil());
+            Assert.That(res.IsNil(), Is.True);
         }
 
         [Test]
@@ -149,8 +149,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return s, s == 'hello hello world world'
 			";
             DynValue res = Script.RunString(script);
-            Assert.AreEqual(res.Tuple[0].String, "hello hello world world");
-            Assert.AreEqual(res.Tuple[1].Boolean, true);
+            Assert.That("hello hello world world", Is.EqualTo(res.Tuple[0].String));
+            Assert.That(true, Is.EqualTo(res.Tuple[1].Boolean));
         }
 
         [Test]
@@ -162,17 +162,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
             string printed = null;
 
-            Script S = new();
-            DynValue main = S.LoadString(script);
+            Script s = new();
+            DynValue main = s.LoadString(script);
 
-            S.Options.DebugPrint = s =>
+            s.Options.DebugPrint = s =>
             {
                 printed = s;
             };
 
-            S.Call(main);
+            s.Call(main);
 
-            Assert.AreEqual("ciao\t1", printed);
+            Assert.That(printed, Is.EqualTo("ciao\t1"));
         }
 
         [Test]
@@ -193,17 +193,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			";
             string printed = null;
 
-            Script S = new();
-            DynValue main = S.LoadString(script);
+            Script s = new();
+            DynValue main = s.LoadString(script);
 
-            S.Options.DebugPrint = s =>
+            s.Options.DebugPrint = s =>
             {
                 printed = s;
             };
 
-            S.Call(main);
+            s.Call(main);
 
-            Assert.AreEqual("ciao\t1", printed);
+            Assert.That(printed, Is.EqualTo("ciao\t1"));
         }
 
         [Test]
@@ -236,16 +236,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void String_GSub_3()
         {
-            Script S = new();
-            S.Globals["a"] =
-                @"                  'C:\temp\test.lua:68: bad argument #1 to 'date' (invalid conversion specifier '%Ja')'
-    doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'";
+            Script s = new()
+            {
+                Globals =
+                {
+                    ["a"] =
+                        @"                  'C:\temp\test.lua:68: bad argument #1 to 'date' (invalid conversion specifier '%Ja')'
+    doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'",
+                },
+            };
 
             string script =
                 @"
 				string.gsub(a, '\n', '\n #')
 			";
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
         }
 
         [Test]
@@ -259,12 +264,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void TestMatch(string s, string p, bool expected)
         {
-            Script S = new(CoreModules.String);
-            S.Globals["s"] = s;
-            S.Globals["p"] = p;
-            DynValue res = S.DoString("return string.match(s, p)");
+            Script script = new(CoreModules.String);
+            script.Globals["s"] = s;
+            script.Globals["p"] = p;
+            DynValue res = script.DoString("return string.match(s, p)");
 
-            Assert.AreEqual(expected, !res.IsNil());
+            Assert.That(!res.IsNil(), Is.EqualTo(expected));
         }
     }
 }

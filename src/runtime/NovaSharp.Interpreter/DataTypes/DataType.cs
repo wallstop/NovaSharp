@@ -78,8 +78,8 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public static class LuaTypeExtensions
     {
-        internal const DataType MaxMetaTypes = DataType.Table;
-        internal const DataType MaxConvertibleTypes = DataType.ClrFunction;
+        internal const DataType MAX_META_TYPES = DataType.Table;
+        internal const DataType MAX_CONVERTIBLE_TYPES = DataType.ClrFunction;
 
         /// <summary>
         /// Determines whether this data type can have type metatables.
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public static bool CanHaveTypeMetatables(this DataType type)
         {
-            return (int)type < (int)MaxMetaTypes;
+            return (int)type < (int)MAX_META_TYPES;
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter
                 case DataType.TailCallRequest:
                 case DataType.YieldRequest:
                 default:
-                    return string.Format("internal<{0}>", type.ToLuaDebuggerString());
+                    return $"internal<{type.ToLuaDebuggerString()}>";
             }
         }
 

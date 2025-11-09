@@ -1,19 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.CoreLib;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Execution.VM;
-using NovaSharp.Interpreter.IO;
-using NovaSharp.Interpreter.Platforms;
-using NovaSharp.Interpreter.Tree.Expressions;
-using NovaSharp.Interpreter.Tree.Fast_Interface;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using CoreLib;
+    using Debugging;
+    using Diagnostics;
+    using Execution.VM;
+    using IO;
+    using Platforms;
+    using Tree.Expressions;
+    using Tree.Fast_Interface;
+
     /// <summary>
     /// This class implements a NovaSharp scripting session. Multiple Script objects can coexist in the same program but cannot share
     /// data among themselves unless some mechanism is put in place.
@@ -30,12 +30,12 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public const string LUA_VERSION = "5.2";
 
-        Processor m_MainProcessor = null;
-        ByteCode m_ByteCode;
-        List<SourceCode> m_Sources = new();
-        Table m_GlobalTable;
-        IDebugger m_Debugger;
-        Table[] m_TypeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
+        private readonly Processor _mainProcessor = null;
+        private readonly ByteCode _byteCode;
+        private readonly List<SourceCode> _sources = new();
+        private readonly Table _globalTable;
+        private IDebugger _debugger;
+        private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MAX_META_TYPES];
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -48,11 +48,11 @@ namespace NovaSharp.Interpreter
             {
                 DebugPrint = s =>
                 {
-                    Script.GlobalOptions.Platform.DefaultPrint(s);
+                    GlobalOptions.Platform.DefaultPrint(s);
                 },
                 DebugInput = s =>
                 {
-                    return Script.GlobalOptions.Platform.DefaultInput(s);
+                    return GlobalOptions.Platform.DefaultInput(s);
                 },
                 CheckThreadAccess = true,
                 ScriptLoader = PlatformAutoDetector.GetDefaultScriptLoader(),
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter
         /// Initializes a new instance of the <see cref="Script"/> clas.s
         /// </summary>
         public Script()
-            : this(CoreModules.Preset_Default) { }
+            : this(CoreModules.PresetDefault) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Script"/> class.
@@ -76,9 +76,9 @@ namespace NovaSharp.Interpreter
             PerformanceStats = new PerformanceStatistics();
             Registry = new Table(this);
 
-            m_ByteCode = new ByteCode(this);
-            m_MainProcessor = new Processor(this, m_GlobalTable, m_ByteCode);
-            m_GlobalTable = new Table(this).RegisterCoreModules(coreModules);
+            _byteCode = new ByteCode(this);
+            _mainProcessor = new Processor(this, _globalTable, _byteCode);
+            _globalTable = new Table(this).RegisterCoreModules(coreModules);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public Table Globals
         {
-            get { return m_GlobalTable; }
+            get { return _globalTable; }
         }
 
         /// <summary>
@@ -128,41 +128,38 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            string chunkName = string.Format(
-                "libfunc_{0}",
-                funcFriendlyName ?? m_Sources.Count.ToString()
-            );
+            string chunkName = $"libfunc_{funcFriendlyName ?? _sources.Count.ToString()}";
 
-            SourceCode source = new(chunkName, code, m_Sources.Count, this);
+            SourceCode source = new(chunkName, code, _sources.Count, this);
 
-            m_Sources.Add(source);
+            _sources.Add(source);
 
-            int address = Loader_Fast.LoadFunction(
+            int address = LoaderFast.LoadFunction(
                 this,
                 source,
-                m_ByteCode,
-                globalTable != null || m_GlobalTable != null
+                _byteCode,
+                globalTable != null || _globalTable != null
             );
 
             SignalSourceCodeChange(source);
             SignalByteCodeChange();
 
-            return MakeClosure(address, globalTable ?? m_GlobalTable);
+            return MakeClosure(address, globalTable ?? _globalTable);
         }
 
         private void SignalByteCodeChange()
         {
-            if (m_Debugger != null)
+            if (_debugger != null)
             {
-                m_Debugger.SetByteCode(m_ByteCode.Code.Select(s => s.ToString()).ToArray());
+                _debugger.SetByteCode(_byteCode.code.Select(s => s.ToString()).ToArray());
             }
         }
 
         private void SignalSourceCodeChange(SourceCode source)
         {
-            if (m_Debugger != null)
+            if (_debugger != null)
             {
-                m_Debugger.SetSourceCode(source);
+                _debugger.SetSourceCode(source);
             }
         }
 
@@ -187,27 +184,22 @@ namespace NovaSharp.Interpreter
             {
                 code = code.Substring(StringModule.BASE64_DUMP_HEADER.Length);
                 byte[] data = Convert.FromBase64String(code);
-                using (MemoryStream ms = new(data))
-                {
-                    return LoadStream(ms, globalTable, codeFriendlyName);
-                }
+                using MemoryStream ms = new(data);
+                return LoadStream(ms, globalTable, codeFriendlyName);
             }
 
-            string chunkName = string.Format(
-                "{0}",
-                codeFriendlyName ?? "chunk_" + m_Sources.Count.ToString()
-            );
+            string chunkName = $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString()}";
 
-            SourceCode source = new(codeFriendlyName ?? chunkName, code, m_Sources.Count, this);
+            SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
-            m_Sources.Add(source);
+            _sources.Add(source);
 
-            int address = Loader_Fast.LoadChunk(this, source, m_ByteCode);
+            int address = LoaderFast.LoadChunk(this, source, _byteCode);
 
             SignalSourceCodeChange(source);
             SignalByteCodeChange();
 
-            return MakeClosure(address, globalTable ?? m_GlobalTable);
+            return MakeClosure(address, globalTable ?? _globalTable);
         }
 
         /// <summary>
@@ -231,37 +223,28 @@ namespace NovaSharp.Interpreter
 
             if (!Processor.IsDumpStream(codeStream))
             {
-                using (StreamReader sr = new(codeStream))
-                {
-                    string scriptCode = sr.ReadToEnd();
-                    return LoadString(scriptCode, globalTable, codeFriendlyName);
-                }
+                using StreamReader sr = new(codeStream);
+                string scriptCode = sr.ReadToEnd();
+                return LoadString(scriptCode, globalTable, codeFriendlyName);
             }
             else
             {
-                string chunkName = string.Format(
-                    "{0}",
-                    codeFriendlyName ?? "dump_" + m_Sources.Count.ToString()
-                );
+                string chunkName = $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString()}";
 
                 SourceCode source = new(
                     codeFriendlyName ?? chunkName,
-                    string.Format(
-                        "-- This script was decoded from a binary dump - dump_{0}",
-                        m_Sources.Count
-                    ),
-                    m_Sources.Count,
+                    $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
+                    _sources.Count,
                     this
                 );
 
-                m_Sources.Add(source);
+                _sources.Add(source);
 
-                bool hasUpvalues;
-                int address = m_MainProcessor.Undump(
+                int address = _mainProcessor.Undump(
                     codeStream,
-                    m_Sources.Count - 1,
-                    globalTable ?? m_GlobalTable,
-                    out hasUpvalues
+                    _sources.Count - 1,
+                    globalTable ?? _globalTable,
+                    out bool hasUpvalues
                 );
 
                 SignalSourceCodeChange(source);
@@ -269,7 +252,7 @@ namespace NovaSharp.Interpreter
 
                 if (hasUpvalues)
                 {
-                    return MakeClosure(address, globalTable ?? m_GlobalTable);
+                    return MakeClosure(address, globalTable ?? _globalTable);
                 }
                 else
                 {
@@ -312,7 +295,7 @@ namespace NovaSharp.Interpreter
             }
 
             UndisposableStream outStream = new(stream);
-            m_MainProcessor.Dump(
+            _mainProcessor.Dump(
                 outStream,
                 function.Function.EntryPointByteCodeLocation,
                 upvaluesType == Closure.UpvaluesType.Environment
@@ -339,32 +322,30 @@ namespace NovaSharp.Interpreter
 #pragma warning disable 618
             filename = Options.ScriptLoader.ResolveFileName(
                 filename,
-                globalContext ?? m_GlobalTable
+                globalContext ?? _globalTable
             );
 #pragma warning restore 618
 
-            object code = Options.ScriptLoader.LoadFile(filename, globalContext ?? m_GlobalTable);
+            object code = Options.ScriptLoader.LoadFile(filename, globalContext ?? _globalTable);
 
-            if (code is string)
+            if (code is string s)
             {
-                return LoadString((string)code, globalContext, friendlyFilename ?? filename);
+                return LoadString(s, globalContext, friendlyFilename ?? filename);
             }
-            else if (code is byte[])
+            else if (code is byte[] bytes)
             {
-                using (MemoryStream ms = new((byte[])code))
-                {
-                    return LoadStream(ms, globalContext, friendlyFilename ?? filename);
-                }
+                using MemoryStream ms = new(bytes);
+                return LoadStream(ms, globalContext, friendlyFilename ?? filename);
             }
-            else if (code is Stream)
+            else if (code is Stream stream)
             {
                 try
                 {
-                    return LoadStream((Stream)code, globalContext, friendlyFilename ?? filename);
+                    return LoadStream(stream, globalContext, friendlyFilename ?? filename);
                 }
                 finally
                 {
-                    ((Stream)code).Dispose();
+                    stream.Dispose();
                 }
             }
             else
@@ -376,10 +357,7 @@ namespace NovaSharp.Interpreter
                 else
                 {
                     throw new InvalidCastException(
-                        string.Format(
-                            "Unsupported return type from IScriptLoader.LoadFile : {0}",
-                            code.GetType()
-                        )
+                        $"Unsupported return type from IScriptLoader.LoadFile : {code.GetType()}"
                     );
                 }
             }
@@ -449,8 +427,8 @@ namespace NovaSharp.Interpreter
         /// A DynValue containing the result of the processing of the executed script.
         public static DynValue RunFile(string filename)
         {
-            Script S = new();
-            return S.DoFile(filename);
+            Script s = new();
+            return s.DoFile(filename);
         }
 
         /// <summary>
@@ -460,8 +438,8 @@ namespace NovaSharp.Interpreter
         /// A DynValue containing the result of the processing of the executed script.
         public static DynValue RunString(string code)
         {
-            Script S = new();
-            return S.DoString(code);
+            Script s = new();
+            return s.DoString(code);
         }
 
         /// <summary>
@@ -477,7 +455,7 @@ namespace NovaSharp.Interpreter
 
             if (envTable == null)
             {
-                Instruction meta = m_MainProcessor.FindMeta(ref address);
+                Instruction meta = _mainProcessor.FindMeta(ref address);
 
                 // if we find the meta for a new chunk, we use the value in the meta for the _ENV upvalue
                 if ((meta != null) && (meta.NumVal2 == (int)OpCodeMetadataType.ChunkEntrypoint))
@@ -544,7 +522,7 @@ namespace NovaSharp.Interpreter
 
             if (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
-                DynValue metafunction = m_MainProcessor.GetMetamethod(function, "__call");
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, "__call");
 
                 if (metafunction != null)
                 {
@@ -568,12 +546,12 @@ namespace NovaSharp.Interpreter
             else if (function.Type == DataType.ClrFunction)
             {
                 return function.Callback.ClrCallback(
-                    this.CreateDynamicExecutionContext(function.Callback),
+                    CreateDynamicExecutionContext(function.Callback),
                     new CallbackArguments(args, false)
                 );
             }
 
-            return m_MainProcessor.Call(function, args);
+            return _mainProcessor.Call(function, args);
         }
 
         /// <summary>
@@ -634,7 +612,7 @@ namespace NovaSharp.Interpreter
 
             if (function.Type == DataType.Function)
             {
-                return m_MainProcessor.Coroutine_Create(function.Function);
+                return _mainProcessor.Coroutine_Create(function.Function);
             }
             else if (function.Type == DataType.ClrFunction)
             {
@@ -678,7 +656,7 @@ namespace NovaSharp.Interpreter
                 );
             }
 
-            return coroutine.Recycle(m_MainProcessor, function.Function);
+            return coroutine.Recycle(_mainProcessor, function.Function);
         }
 
         /// <summary>
@@ -703,8 +681,8 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public bool DebuggerEnabled
         {
-            get { return m_MainProcessor.DebuggerEnabled; }
-            set { m_MainProcessor.DebuggerEnabled = value; }
+            get { return _mainProcessor.DebuggerEnabled; }
+            set { _mainProcessor.DebuggerEnabled = value; }
         }
 
         /// <summary>
@@ -714,10 +692,10 @@ namespace NovaSharp.Interpreter
         public void AttachDebugger(IDebugger debugger)
         {
             DebuggerEnabled = true;
-            m_Debugger = debugger;
-            m_MainProcessor.AttachDebugger(debugger);
+            _debugger = debugger;
+            _mainProcessor.AttachDebugger(debugger);
 
-            foreach (SourceCode src in m_Sources)
+            foreach (SourceCode src in _sources)
             {
                 SignalSourceCodeChange(src);
             }
@@ -728,11 +706,11 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets the source code.
         /// </summary>
-        /// <param name="sourceCodeID">The source code identifier.</param>
+        /// <param name="sourceCodeId">The source code identifier.</param>
         /// <returns></returns>
-        public SourceCode GetSourceCode(int sourceCodeID)
+        public SourceCode GetSourceCode(int sourceCodeId)
         {
-            return m_Sources[sourceCodeID];
+            return _sources[sourceCodeId];
         }
 
         /// <summary>
@@ -743,7 +721,7 @@ namespace NovaSharp.Interpreter
         /// </value>
         public int SourceCodeCount
         {
-            get { return m_Sources.Count; }
+            get { return _sources.Count; }
         }
 
         /// <summary>
@@ -757,7 +735,7 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalContext);
 
-            Table globals = globalContext ?? m_GlobalTable;
+            Table globals = globalContext ?? _globalTable;
             string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
 
             if (filename == null)
@@ -778,9 +756,9 @@ namespace NovaSharp.Interpreter
         {
             int t = (int)type;
 
-            if (t >= 0 && t < m_TypeMetatables.Length)
+            if (t >= 0 && t < _typeMetatables.Length)
             {
-                return m_TypeMetatables[t];
+                return _typeMetatables[t];
             }
 
             return null;
@@ -798,9 +776,9 @@ namespace NovaSharp.Interpreter
 
             int t = (int)type;
 
-            if (t >= 0 && t < m_TypeMetatables.Length)
+            if (t >= 0 && t < _typeMetatables.Length)
             {
-                m_TypeMetatables[t] = metatable;
+                _typeMetatables[t] = metatable;
             }
             else
             {
@@ -824,7 +802,7 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynamicExpression CreateDynamicExpression(string code)
         {
-            DynamicExprExpression dee = Loader_Fast.LoadDynamicExpr(
+            DynamicExprExpression dee = LoaderFast.LoadDynamicExpr(
                 this,
                 new SourceCode("__dynamic", code, -1, this)
             );
@@ -851,7 +829,7 @@ namespace NovaSharp.Interpreter
         /// </summary>
         internal ScriptExecutionContext CreateDynamicExecutionContext(CallbackFunction func = null)
         {
-            return new ScriptExecutionContext(m_MainProcessor, func, null, isDynamic: true);
+            return new ScriptExecutionContext(_mainProcessor, func, null, isDynamic: true);
         }
 
         /// <summary>
@@ -876,8 +854,8 @@ namespace NovaSharp.Interpreter
                 string.Format(
                     "NovaSharp {0}{1} [{2}]",
                     subproduct,
-                    Script.VERSION,
-                    Script.GlobalOptions.Platform.GetPlatformName()
+                    VERSION,
+                    GlobalOptions.Platform.GetPlatformName()
                 )
             );
             sb.AppendLine("Copyright (C) 2014-2016 Marco Mastropaolo");

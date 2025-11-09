@@ -1,7 +1,7 @@
 namespace NovaSharp.Interpreter.Tree
 {
-    interface IVariable
+    internal interface IVariable
     {
-        void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx);
+        public void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx);
     }
 }

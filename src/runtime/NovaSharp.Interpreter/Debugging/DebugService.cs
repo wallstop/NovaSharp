@@ -1,20 +1,20 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System.Collections.Generic;
+    using Execution.VM;
+
     /// <summary>
     /// Class providing services specific to debugger implementations.
     /// </summary>
     /// <seealso cref="NovaSharp.Interpreter.IScriptPrivateResource" />
     public sealed class DebugService : IScriptPrivateResource
     {
-        Processor m_Processor;
+        private readonly Processor _processor;
 
         internal DebugService(Script script, Processor processor)
         {
             OwnerScript = script;
-            m_Processor = processor;
+            _processor = processor;
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// <returns>The lines for which breakpoints have been set</returns>
         public HashSet<int> ResetBreakPoints(SourceCode src, HashSet<int> lines)
         {
-            return m_Processor.ResetBreakPoints(src, lines);
+            return _processor.ResetBreakPoints(src, lines);
         }
     }
 }

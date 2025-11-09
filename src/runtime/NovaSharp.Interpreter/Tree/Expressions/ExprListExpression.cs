@@ -1,41 +1,41 @@
-using System.Collections.Generic;
-using NovaSharp.Interpreter.Execution;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class ExprListExpression : Expression
+    using System.Collections.Generic;
+    using Execution;
+
+    internal class ExprListExpression : Expression
     {
-        List<Expression> expressions;
+        private readonly List<Expression> _expressions;
 
         public ExprListExpression(List<Expression> exps, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            expressions = exps;
+            _expressions = exps;
         }
 
         public Expression[] GetExpressions()
         {
-            return expressions.ToArray();
+            return _expressions.ToArray();
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            foreach (Expression exp in expressions)
+            foreach (Expression exp in _expressions)
             {
                 exp.Compile(bc);
             }
 
-            if (expressions.Count > 1)
+            if (_expressions.Count > 1)
             {
-                bc.Emit_MkTuple(expressions.Count);
+                bc.Emit_MkTuple(_expressions.Count);
             }
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            if (expressions.Count >= 1)
+            if (_expressions.Count >= 1)
             {
-                return expressions[0].Eval(context);
+                return _expressions[0].Eval(context);
             }
 
             return DynValue.Void;

@@ -1,35 +1,35 @@
-namespace NovaSharp.Benchmarks;
-
-public enum RuntimeScenario
+namespace NovaSharp.Benchmarks
 {
-    NumericLoops,
-    TableMutation,
-    CoroutinePipeline,
-    UserDataInterop,
-}
+    public enum RuntimeScenario
+    {
+        NumericLoops,
+        TableMutation,
+        CoroutinePipeline,
+        UserDataInterop,
+    }
 
-internal static class LuaRuntimeSuites
-{
-    public const int LoopIterations = 2_000;
-    public const int TableEntryCount = 128;
-    public const int CoroutineSteps = 64;
-    public const int UserDataIterations = 256;
+    internal static class LuaRuntimeSuites
+    {
+        public const int LOOP_ITERATIONS = 2_000;
+        public const int TABLE_ENTRY_COUNT = 128;
+        public const int COROUTINE_STEPS = 64;
+        public const int USER_DATA_ITERATIONS = 256;
 
-    public static string GetScript(RuntimeScenario scenario) =>
-        scenario switch
-        {
-            RuntimeScenario.NumericLoops => NumericLoopScript,
-            RuntimeScenario.TableMutation => TableMutationScript,
-            RuntimeScenario.CoroutinePipeline => CoroutinePipelineScript,
-            RuntimeScenario.UserDataInterop => UserDataInteropScript,
-            _ => NumericLoopScript,
-        };
+        public static string GetScript(RuntimeScenario scenario) =>
+            scenario switch
+            {
+                RuntimeScenario.NumericLoops => NumericLoopScript,
+                RuntimeScenario.TableMutation => TABLE_MUTATION_SCRIPT,
+                RuntimeScenario.CoroutinePipeline => COROUTINE_PIPELINE_SCRIPT,
+                RuntimeScenario.UserDataInterop => USER_DATA_INTEROP_SCRIPT,
+                _ => NumericLoopScript,
+            };
 
-    private static readonly string NumericLoopScript =
-        $@"
+        private static readonly string NumericLoopScript =
+            $@"
 return function ()
     local sum = 0.0
-    for i = 1, {LoopIterations} do
+    for i = 1, {LOOP_ITERATIONS} do
         sum = sum + math.sin(i) * math.cos(i * 0.5)
         if (i % 7) == 0 then
             sum = sum / 2.0
@@ -38,8 +38,8 @@ return function ()
     return sum
 end";
 
-    private const string TableMutationScript =
-        $@"
+        private const string TABLE_MUTATION_SCRIPT =
+            $@"
 return function (source)
     local acc = 0
     for i = 1, #source do
@@ -52,8 +52,8 @@ return function (source)
     return acc
 end";
 
-    private const string CoroutinePipelineScript =
-        $@"
+        private const string COROUTINE_PIPELINE_SCRIPT =
+            $@"
 return function (steps)
     local producer = coroutine.create(function(n)
         local value = 0
@@ -73,8 +73,8 @@ return function (steps)
     return last
 end";
 
-    private const string UserDataInteropScript =
-        $@"
+        private const string USER_DATA_INTEROP_SCRIPT =
+            $@"
 return function (host, iterations)
     local value = 0
     for i = 1, iterations do
@@ -83,4 +83,5 @@ return function (host, iterations)
     host:Store(value)
     return value
 end";
+    }
 }

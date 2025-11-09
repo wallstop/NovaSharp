@@ -1,18 +1,20 @@
-#if !NETFX_CORE || DOTNET_CORE
-
-using System;
-using System.Reflection;
-
 namespace NovaSharp.Interpreter.Compatibility.Frameworks
 {
-    abstract class FrameworkClrBase : FrameworkReflectionBase
+#if !NETFX_CORE || DOTNET_CORE
+
+    using System;
+    using System.Reflection;
+
+    internal abstract class FrameworkClrBase : FrameworkReflectionBase
     {
-        BindingFlags BINDINGFLAGS_MEMBER =
+        private readonly BindingFlags _bindingflagsMember =
             BindingFlags.Public
             | BindingFlags.NonPublic
             | BindingFlags.Instance
             | BindingFlags.Static;
-        BindingFlags BINDINGFLAGS_INNERCLASS = BindingFlags.Public | BindingFlags.NonPublic;
+
+        private readonly BindingFlags _bindingflagsInnerclass =
+            BindingFlags.Public | BindingFlags.NonPublic;
 
         public override MethodInfo GetAddMethod(EventInfo ei)
         {
@@ -21,17 +23,17 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
 
         public override ConstructorInfo[] GetConstructors(Type type)
         {
-            return GetTypeInfoFromType(type).GetConstructors(BINDINGFLAGS_MEMBER);
+            return GetTypeInfoFromType(type).GetConstructors(_bindingflagsMember);
         }
 
         public override EventInfo[] GetEvents(Type type)
         {
-            return GetTypeInfoFromType(type).GetEvents(BINDINGFLAGS_MEMBER);
+            return GetTypeInfoFromType(type).GetEvents(_bindingflagsMember);
         }
 
         public override FieldInfo[] GetFields(Type type)
         {
-            return GetTypeInfoFromType(type).GetFields(BINDINGFLAGS_MEMBER);
+            return GetTypeInfoFromType(type).GetFields(_bindingflagsMember);
         }
 
         public override Type[] GetGenericArguments(Type type)
@@ -56,17 +58,17 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
 
         public override MethodInfo[] GetMethods(Type type)
         {
-            return GetTypeInfoFromType(type).GetMethods(BINDINGFLAGS_MEMBER);
+            return GetTypeInfoFromType(type).GetMethods(_bindingflagsMember);
         }
 
         public override Type[] GetNestedTypes(Type type)
         {
-            return GetTypeInfoFromType(type).GetNestedTypes(BINDINGFLAGS_INNERCLASS);
+            return GetTypeInfoFromType(type).GetNestedTypes(_bindingflagsInnerclass);
         }
 
         public override PropertyInfo[] GetProperties(Type type)
         {
-            return GetTypeInfoFromType(type).GetProperties(BINDINGFLAGS_MEMBER);
+            return GetTypeInfoFromType(type).GetProperties(_bindingflagsMember);
         }
 
         public override PropertyInfo GetProperty(Type type, string name)

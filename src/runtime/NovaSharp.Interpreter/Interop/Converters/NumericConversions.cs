@@ -1,8 +1,8 @@
-using System;
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.Interop.Converters
 {
+    using System;
+    using System.Collections.Generic;
+
     /// <summary>
     /// Static functions to handle conversions of numeric types
     /// </summary>

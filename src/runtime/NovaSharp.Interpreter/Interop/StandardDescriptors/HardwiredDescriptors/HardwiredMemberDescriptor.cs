@@ -1,9 +1,9 @@
-using System;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.Converters;
-
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
+    using System;
+    using BasicDescriptors;
+    using Converters;
+
     public abstract class HardwiredMemberDescriptor : IMemberDescriptor
     {
         public Type MemberType { get; private set; }

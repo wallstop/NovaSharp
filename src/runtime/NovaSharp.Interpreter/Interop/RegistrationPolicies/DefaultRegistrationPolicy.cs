@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
+    using System;
+
     /// <summary>
     /// The default registration policy used by NovaSharp unless explicitely replaced.
     /// Deregistrations are allowed, but registration of a new descriptor are not allowed

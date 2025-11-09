@@ -1,9 +1,9 @@
-using System;
-using NovaSharp.Interpreter.Interop;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using Interop;
+    using Interop.BasicDescriptors;
+
     /// <summary>
     /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods
     /// generating more "standard" Lua errors.
@@ -27,8 +27,8 @@ namespace NovaSharp.Interpreter
         public ScriptRuntimeException(ScriptRuntimeException ex)
             : base(ex, ex.DecoratedMessage)
         {
-            this.DecoratedMessage = Message;
-            this.DoNotDecorateMessage = true;
+            DecoratedMessage = Message;
+            DoNotDecorateMessage = true;
         }
 
         /// <summary>

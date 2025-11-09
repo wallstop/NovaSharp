@@ -1,27 +1,25 @@
-using System;
-
 namespace NovaSharp.Interpreter.Loaders
 {
+    using System;
+
     /// <summary>
     /// A script loader used for platforms we cannot initialize in any better way..
     /// </summary>
     internal class InvalidScriptLoader : IScriptLoader
     {
-        string m_Error;
+        private readonly string _error;
 
         internal InvalidScriptLoader(string frameworkname)
         {
-            m_Error = string.Format(
-                @"Loading scripts from files is not automatically supported on {0}. 
+            _error =
+                $@"Loading scripts from files is not automatically supported on {frameworkname}. 
 Please implement your own IScriptLoader (possibly, extending ScriptLoaderBase for easier implementation),
-use a preexisting loader like EmbeddedResourcesScriptLoader or UnityAssetsScriptLoader or load scripts from strings.",
-                frameworkname
-            );
+use a preexisting loader like EmbeddedResourcesScriptLoader or UnityAssetsScriptLoader or load scripts from strings.";
         }
 
         public object LoadFile(string file, Table globalContext)
         {
-            throw new PlatformNotSupportedException(m_Error);
+            throw new PlatformNotSupportedException(_error);
         }
 
         public string ResolveFileName(string filename, Table globalContext)
@@ -31,7 +29,7 @@ use a preexisting loader like EmbeddedResourcesScriptLoader or UnityAssetsScript
 
         public string ResolveModuleName(string modname, Table globalContext)
         {
-            throw new PlatformNotSupportedException(m_Error);
+            throw new PlatformNotSupportedException(_error);
         }
     }
 }

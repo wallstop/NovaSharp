@@ -1,12 +1,12 @@
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class UnaryOperatorExpression : Expression
+    using Execution;
+    using Execution.VM;
+
+    internal class UnaryOperatorExpression : Expression
     {
-        Expression m_Exp;
-        string m_OpText;
+        private readonly Expression _exp;
+        private readonly string _opText;
 
         public UnaryOperatorExpression(
             ScriptLoadingContext lcontext,
@@ -15,15 +15,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
             : base(lcontext)
         {
-            m_OpText = unaryOpToken.Text;
-            m_Exp = subExpression;
+            _opText = unaryOpToken.Text;
+            _exp = subExpression;
         }
 
         public override void Compile(ByteCode bc)
         {
-            m_Exp.Compile(bc);
+            _exp.Compile(bc);
 
-            switch (m_OpText)
+            switch (_opText)
             {
                 case "not":
                     bc.Emit_Operator(OpCode.Not);
@@ -35,15 +35,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     bc.Emit_Operator(OpCode.Neg);
                     break;
                 default:
-                    throw new InternalErrorException("Unexpected unary operator '{0}'", m_OpText);
+                    throw new InternalErrorException("Unexpected unary operator '{0}'", _opText);
             }
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            DynValue v = m_Exp.Eval(context).ToScalar();
+            DynValue v = _exp.Eval(context).ToScalar();
 
-            switch (m_OpText)
+            switch (_opText)
             {
                 case "not":
                     return DynValue.NewBoolean(!v.CastToBool());
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 default:
                     throw new DynamicExpressionException(
                         "Unexpected unary operator '{0}'",
-                        m_OpText
+                        _opText
                     );
             }
         }

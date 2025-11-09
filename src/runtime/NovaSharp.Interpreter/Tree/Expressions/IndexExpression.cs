@@ -1,13 +1,13 @@
-using NovaSharp.Interpreter.Execution;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    class IndexExpression : Expression, IVariable
+    using Execution;
+    using Execution.VM;
+
+    internal class IndexExpression : Expression, IVariable
     {
-        Expression m_BaseExp;
-        Expression m_IndexExp;
-        string m_Name;
+        private readonly Expression _baseExp;
+        private readonly Expression _indexExp;
+        private readonly string _name;
 
         public IndexExpression(
             Expression baseExp,
@@ -16,64 +16,60 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
             : base(lcontext)
         {
-            m_BaseExp = baseExp;
-            m_IndexExp = indexExp;
+            _baseExp = baseExp;
+            _indexExp = indexExp;
         }
 
         public IndexExpression(Expression baseExp, string name, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            m_BaseExp = baseExp;
-            m_Name = name;
+            _baseExp = baseExp;
+            _name = name;
         }
 
         public override void Compile(ByteCode bc)
         {
-            m_BaseExp.Compile(bc);
+            _baseExp.Compile(bc);
 
-            if (m_Name != null)
+            if (_name != null)
             {
-                bc.Emit_Index(DynValue.NewString(m_Name), true);
+                bc.Emit_Index(DynValue.NewString(_name), true);
             }
-            else if (m_IndexExp is LiteralExpression)
+            else if (_indexExp is LiteralExpression lit)
             {
-                LiteralExpression lit = (LiteralExpression)m_IndexExp;
                 bc.Emit_Index(lit.Value);
             }
             else
             {
-                m_IndexExp.Compile(bc);
-                bc.Emit_Index(isExpList: (m_IndexExp is ExprListExpression));
+                _indexExp.Compile(bc);
+                bc.Emit_Index(isExpList: (_indexExp is ExprListExpression));
             }
         }
 
         public void CompileAssignment(ByteCode bc, int stackofs, int tupleidx)
         {
-            m_BaseExp.Compile(bc);
+            _baseExp.Compile(bc);
 
-            if (m_Name != null)
+            if (_name != null)
             {
-                bc.Emit_IndexSet(stackofs, tupleidx, DynValue.NewString(m_Name), isNameIndex: true);
+                bc.Emit_IndexSet(stackofs, tupleidx, DynValue.NewString(_name), isNameIndex: true);
             }
-            else if (m_IndexExp is LiteralExpression)
+            else if (_indexExp is LiteralExpression lit)
             {
-                LiteralExpression lit = (LiteralExpression)m_IndexExp;
                 bc.Emit_IndexSet(stackofs, tupleidx, lit.Value);
             }
             else
             {
-                m_IndexExp.Compile(bc);
-                bc.Emit_IndexSet(stackofs, tupleidx, isExpList: (m_IndexExp is ExprListExpression));
+                _indexExp.Compile(bc);
+                bc.Emit_IndexSet(stackofs, tupleidx, isExpList: (_indexExp is ExprListExpression));
             }
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
         {
-            DynValue b = m_BaseExp.Eval(context).ToScalar();
+            DynValue b = _baseExp.Eval(context).ToScalar();
             DynValue i =
-                m_IndexExp != null
-                    ? m_IndexExp.Eval(context).ToScalar()
-                    : DynValue.NewString(m_Name);
+                _indexExp != null ? _indexExp.Eval(context).ToScalar() : DynValue.NewString(_name);
 
             if (b.Type != DataType.Table)
             {

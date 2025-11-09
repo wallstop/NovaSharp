@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
+
     /// <summary>
     /// Class representing a reference to source code interval
     /// </summary>
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets a value indicating whether this instance is a breakpoint
         /// </summary>
-        public bool Breakpoint;
+        public bool breakpoint;
 
         /// <summary>
         /// Gets a value indicating whether this instance cannot be set as a breakpoint
@@ -98,7 +98,7 @@ namespace NovaSharp.Interpreter.Debugging
 
         internal int GetLocationDistance(int sourceIdx, int line, int col)
         {
-            const int PER_LINE_FACTOR = 1600; // we avoid computing real lines length and approximate with heuristics..
+            const int PerLineFactor = 1600; // we avoid computing real lines length and approximate with heuristics..
 
             if (sourceIdx != SourceIdx)
             {
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Debugging
                 }
                 else
                 {
-                    return Math.Abs(line - FromLine) * PER_LINE_FACTOR;
+                    return Math.Abs(line - FromLine) * PerLineFactor;
                 }
             }
             else if (line == FromLine)
@@ -155,11 +155,11 @@ namespace NovaSharp.Interpreter.Debugging
             }
             else if (line < FromLine)
             {
-                return (FromLine - line) * PER_LINE_FACTOR;
+                return (FromLine - line) * PerLineFactor;
             }
             else
             {
-                return (line - ToLine) * PER_LINE_FACTOR;
+                return (line - ToLine) * PerLineFactor;
             }
         }
 
@@ -213,28 +213,28 @@ namespace NovaSharp.Interpreter.Debugging
         /// <returns></returns>
         public string FormatLocation(Script script, bool forceClassicFormat = false)
         {
-            SourceCode sc = script.GetSourceCode(this.SourceIdx);
+            SourceCode sc = script.GetSourceCode(SourceIdx);
 
-            if (this.IsClrLocation)
+            if (IsClrLocation)
             {
                 return "[clr]";
             }
 
             if (script.Options.UseLuaErrorLocations || forceClassicFormat)
             {
-                return string.Format("{0}:{1}", sc.Name, this.FromLine);
+                return $"{sc.Name}:{FromLine}";
             }
-            else if (this.FromLine == this.ToLine)
+            else if (FromLine == ToLine)
             {
-                if (this.FromChar == this.ToChar)
+                if (FromChar == ToChar)
                 {
                     return string.Format(
                         "{0}:({1},{2})",
                         sc.Name,
-                        this.FromLine,
-                        this.FromChar,
-                        this.ToLine,
-                        this.ToChar
+                        FromLine,
+                        FromChar,
+                        ToLine,
+                        ToChar
                     );
                 }
                 else
@@ -242,10 +242,10 @@ namespace NovaSharp.Interpreter.Debugging
                     return string.Format(
                         "{0}:({1},{2}-{4})",
                         sc.Name,
-                        this.FromLine,
-                        this.FromChar,
-                        this.ToLine,
-                        this.ToChar
+                        FromLine,
+                        FromChar,
+                        ToLine,
+                        ToChar
                     );
                 }
             }
@@ -254,10 +254,10 @@ namespace NovaSharp.Interpreter.Debugging
                 return string.Format(
                     "{0}:({1},{2}-{3},{4})",
                     sc.Name,
-                    this.FromLine,
-                    this.FromChar,
-                    this.ToLine,
-                    this.ToChar
+                    FromLine,
+                    FromChar,
+                    ToLine,
+                    ToChar
                 );
             }
         }

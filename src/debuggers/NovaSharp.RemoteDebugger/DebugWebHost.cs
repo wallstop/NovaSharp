@@ -1,9 +1,9 @@
-using System.Reflection;
-using System.Text;
-using NovaSharp.RemoteDebugger.Network;
-
 namespace NovaSharp.RemoteDebugger
 {
+    using System.Reflection;
+    using System.Text;
+    using Network;
+
     public class DebugWebHost : HttpServer
     {
         public DebugWebHost(int port, Utf8TcpServerOptions options)
@@ -41,16 +41,12 @@ namespace NovaSharp.RemoteDebugger
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
-            using (
-                Stream stream = assembly.GetManifestResourceStream(
-                    "NovaSharp.RemoteDebugger.Resources." + resourceName
-                )
-            )
-            {
-                byte[] data = new byte[stream.Length];
-                stream.Read(data, 0, data.Length);
-                return data;
-            }
+            using Stream stream = assembly.GetManifestResourceStream(
+                "NovaSharp.RemoteDebugger.Resources." + resourceName
+            );
+            byte[] data = new byte[stream.Length];
+            stream.Read(data, 0, data.Length);
+            return data;
         }
 
         public string GetJumpPageText()

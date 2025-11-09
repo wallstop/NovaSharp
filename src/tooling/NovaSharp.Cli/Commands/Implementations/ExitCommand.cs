@@ -1,6 +1,8 @@
 namespace NovaSharp.Commands.Implementations
 {
-    class ExitCommand : ICommand
+    using System;
+
+    internal sealed class ExitCommand : ICommand
     {
         public string Name
         {

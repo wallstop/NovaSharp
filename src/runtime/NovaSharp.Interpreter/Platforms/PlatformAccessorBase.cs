@@ -1,9 +1,9 @@
-using System;
-using System.IO;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Platforms
 {
+    using System;
+    using System.IO;
+    using System.Text;
+
     /// <summary>
     /// An abstract class which offers basic services on top of IPlatformAccessor to provide easier implementation of platforms.
     /// </summary>
@@ -71,7 +71,7 @@ namespace NovaSharp.Interpreter.Platforms
             suffix += ".netcore";
 #endif
 
-            if (PlatformAutoDetector.IsRunningOnAOT)
+            if (PlatformAutoDetector.IsRunningOnAot)
             {
                 suffix = suffix + ".aot";
             }
@@ -273,7 +273,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         public virtual bool IsRunningOnAOT()
         {
-            return PlatformAutoDetector.IsRunningOnAOT;
+            return PlatformAutoDetector.IsRunningOnAot;
         }
     }
 }

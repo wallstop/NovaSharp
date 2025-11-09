@@ -1,27 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NovaSharp.Interpreter.Diagnostics;
-using NovaSharp.Interpreter.Execution;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using NUnit.Framework;
+
     /// <summary>
     /// Selected tests extracted from Lua test suite
     /// </summary>
     [TestFixture]
-    class LuaTestSuiteExtract
+    internal sealed class LuaTestSuiteExtract
     {
-        void RunTest(string script)
+        private void RunTest(string script)
         {
             HashSet<string> failedTests = new();
             int i = 0;
 
-            Script S = new();
+            Script s = new();
 
-            Table? globalCtx = S.Globals;
+            Table globalCtx = s.Globals;
             globalCtx.Set(
                 DynValue.NewString("xassert"),
                 DynValue.NewCallback(
@@ -48,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                             if (!a[0].CastToBool())
                             {
-                                failedTests.Add(string.Format("assert #{0}", i));
+                                failedTests.Add($"assert #{i}");
                             }
 
                             return DynValue.Nil;
@@ -70,14 +66,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 )
             );
 
-            DynValue res = S.DoString(script);
+            DynValue res = s.DoString(script);
 
-            Assert.IsFalse(
+            Assert.That(
                 failedTests.Any(),
-                string.Format(
-                    "Failed asserts {0}",
-                    string.Join(", ", failedTests.Select(xi => xi.ToString()).ToArray())
-                )
+                Is.False,
+                $"Failed asserts {string.Join(", ", failedTests.Select(xi => xi.ToString()).ToArray())}"
             );
         }
 

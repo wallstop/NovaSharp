@@ -1,18 +1,18 @@
 // Disable warnings about XML documentation
-#pragma warning disable 1591
-
-using System.Collections.Generic;
-
 namespace NovaSharp.Interpreter.CoreLib
 {
+#pragma warning disable 1591
+
+    using System.Collections.Generic;
+
     /// <summary>
     /// Class implementing error handling Lua functions (pcall and xpcall)
     /// </summary>
     [NovaSharpModule]
     public class ErrorHandlingModule
     {
-        [NovaSharpModuleMethod]
-        public static DynValue pcall(
+        [NovaSharpModuleMethod(Name = "pcall")]
+        public static DynValue Pcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -137,8 +137,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return MakeReturnTuple(false, args);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue xpcall(
+        [NovaSharpModuleMethod(Name = "xpcall")]
+        public static DynValue Xpcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

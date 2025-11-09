@@ -1,8 +1,9 @@
-using NovaSharp.Interpreter.Interop;
-using NUnit.Framework;
-
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using Interop;
+    using NUnit.Framework;
+
     [TestFixture]
     public class ProxyObjectsTests
     {
@@ -28,26 +29,30 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             UserData.RegisterProxyType<Proxy, Random>(r => new Proxy(r));
 
-            Script S = new();
+            Script s = new()
+            {
+                Globals =
+                {
+                    ["R"] = new Random(),
+                    ["func"] =
+                        (Action<Random>)(
+                            r =>
+                            {
+                                Assert.That(r, Is.Not.Null);
+                                Assert.That(r is Random, Is.True);
+                            }
+                        ),
+                },
+            };
 
-            S.Globals["R"] = new Random();
-            S.Globals["func"] =
-                (Action<Random>)(
-                    r =>
-                    {
-                        Assert.IsNotNull(r);
-                        Assert.IsTrue(r is Random);
-                    }
-                );
-
-            S.DoString(
+            s.DoString(
                 @"
 				x = R.GetValue();
 				func(R);
 			"
             );
 
-            Assert.AreEqual(3.0, S.Globals.Get("x").Number);
+            Assert.That(s.Globals.Get("x").Number, Is.EqualTo(3.0));
         }
     }
 }

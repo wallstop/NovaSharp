@@ -1,24 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using NovaSharp.Interpreter.Compatibility;
-using NovaSharp.Interpreter.Interop.BasicDescriptors;
-using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-
 namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
+    using BasicDescriptors;
+    using Compatibility;
+    using RegistrationPolicies;
+
     /// <summary>
     /// Registry of all type descriptors. Use UserData statics to access these.
     /// </summary>
     internal static class TypeDescriptorRegistry
     {
-        private static object s_Lock = new();
-        private static Dictionary<Type, IUserDataDescriptor> s_TypeRegistry = new();
-        private static Dictionary<Type, IUserDataDescriptor> s_TypeRegistryHistory = new();
-        private static InteropAccessMode s_DefaultAccessMode;
+        private static readonly object SLock = new();
+        private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistry = new();
+        private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistryHistory = new();
+        private static InteropAccessMode _sDefaultAccessMode;
 
         /// <summary>
         /// Registers all types marked with a NovaSharpUserDataAttribute that ar contained in an assembly.
@@ -87,9 +87,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         internal static bool IsTypeRegistered(Type type)
         {
-            lock (s_Lock)
+            lock (SLock)
             {
-                return s_TypeRegistry.ContainsKey(type);
+                return STypeRegistry.ContainsKey(type);
             }
         }
 
@@ -102,11 +102,11 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="t">The The type to be unregistered</param>
         internal static void UnregisterType(Type t)
         {
-            lock (s_Lock)
+            lock (SLock)
             {
-                if (s_TypeRegistry.ContainsKey(t))
+                if (STypeRegistry.ContainsKey(t))
                 {
-                    PerformRegistration(t, null, s_TypeRegistry[t]);
+                    PerformRegistration(t, null, STypeRegistry[t]);
                 }
             }
         }
@@ -120,7 +120,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <exception cref="System.ArgumentException">InteropAccessMode is InteropAccessMode.Default</exception>
         internal static InteropAccessMode DefaultAccessMode
         {
-            get { return s_DefaultAccessMode; }
+            get { return _sDefaultAccessMode; }
             set
             {
                 if (value == InteropAccessMode.Default)
@@ -128,7 +128,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     throw new ArgumentException("InteropAccessMode is InteropAccessMode.Default");
                 }
 
-                s_DefaultAccessMode = value;
+                _sDefaultAccessMode = value;
             }
         }
 
@@ -176,10 +176,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             accessMode = ResolveDefaultAccessModeForType(accessMode, type);
 
-            lock (s_Lock)
+            lock (SLock)
             {
-                IUserDataDescriptor oldDescriptor = null;
-                s_TypeRegistry.TryGetValue(type, out oldDescriptor);
+                STypeRegistry.TryGetValue(type, out IUserDataDescriptor oldDescriptor);
 
                 if (descriptor == null)
                 {
@@ -246,12 +245,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             {
                 if (result == null)
                 {
-                    s_TypeRegistry.Remove(type);
+                    STypeRegistry.Remove(type);
                 }
                 else
                 {
-                    s_TypeRegistry[type] = result;
-                    s_TypeRegistryHistory[type] = result;
+                    STypeRegistry[type] = result;
+                    STypeRegistryHistory[type] = result;
                 }
             }
 
@@ -284,7 +283,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = s_DefaultAccessMode;
+                accessMode = _sDefaultAccessMode;
             }
 
             return accessMode;
@@ -298,14 +297,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         internal static IUserDataDescriptor GetDescriptorForType(Type type, bool searchInterfaces)
         {
-            lock (s_Lock)
+            lock (SLock)
             {
                 IUserDataDescriptor typeDescriptor = null;
 
                 // if the type has been explicitly registered, return its descriptor as it's complete
-                if (s_TypeRegistry.ContainsKey(type))
+                if (STypeRegistry.ContainsKey(type))
                 {
-                    return s_TypeRegistry[type];
+                    return STypeRegistry[type];
                 }
 
                 if (RegistrationPolicy.AllowTypeAutoRegistration(type))
@@ -320,16 +319,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 // search for the base object descriptors
                 for (Type t = type; t != null; t = Framework.Do.GetBaseType(t))
                 {
-                    IUserDataDescriptor u;
-
-                    if (s_TypeRegistry.TryGetValue(t, out u))
+                    if (STypeRegistry.TryGetValue(t, out IUserDataDescriptor u))
                     {
                         typeDescriptor = u;
                         break;
                     }
                     else if (Framework.Do.IsGenericType(t))
                     {
-                        if (s_TypeRegistry.TryGetValue(t.GetGenericTypeDefinition(), out u))
+                        if (STypeRegistry.TryGetValue(t.GetGenericTypeDefinition(), out u))
                         {
                             typeDescriptor = u;
                             break;
@@ -337,9 +334,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     }
                 }
 
-                if (typeDescriptor is IGeneratorUserDataDescriptor)
+                if (typeDescriptor is IGeneratorUserDataDescriptor descriptor)
                 {
-                    typeDescriptor = ((IGeneratorUserDataDescriptor)typeDescriptor).Generate(type);
+                    typeDescriptor = descriptor.Generate(type);
                 }
 
                 // we should not search interfaces (for example, it's just for statics..), no need to look further
@@ -359,15 +356,16 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 {
                     foreach (Type interfaceType in Framework.Do.GetInterfaces(type))
                     {
-                        IUserDataDescriptor interfaceDescriptor;
-
-                        if (s_TypeRegistry.TryGetValue(interfaceType, out interfaceDescriptor))
+                        if (
+                            STypeRegistry.TryGetValue(
+                                interfaceType,
+                                out IUserDataDescriptor interfaceDescriptor
+                            )
+                        )
                         {
-                            if (interfaceDescriptor is IGeneratorUserDataDescriptor)
+                            if (interfaceDescriptor is IGeneratorUserDataDescriptor dataDescriptor)
                             {
-                                interfaceDescriptor = (
-                                    (IGeneratorUserDataDescriptor)interfaceDescriptor
-                                ).Generate(type);
+                                interfaceDescriptor = dataDescriptor.Generate(type);
                             }
 
                             if (interfaceDescriptor != null)
@@ -378,17 +376,18 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                         else if (Framework.Do.IsGenericType(interfaceType))
                         {
                             if (
-                                s_TypeRegistry.TryGetValue(
+                                STypeRegistry.TryGetValue(
                                     interfaceType.GetGenericTypeDefinition(),
                                     out interfaceDescriptor
                                 )
                             )
                             {
-                                if (interfaceDescriptor is IGeneratorUserDataDescriptor)
+                                if (
+                                    interfaceDescriptor
+                                    is IGeneratorUserDataDescriptor dataDescriptor
+                                )
                                 {
-                                    interfaceDescriptor = (
-                                        (IGeneratorUserDataDescriptor)interfaceDescriptor
-                                    ).Generate(type);
+                                    interfaceDescriptor = dataDescriptor.Generate(type);
                                 }
 
                                 if (interfaceDescriptor != null)
@@ -451,9 +450,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             get
             {
-                lock (s_Lock)
+                lock (SLock)
                 {
-                    return s_TypeRegistry.ToArray();
+                    return STypeRegistry.ToArray();
                 }
             }
         }
@@ -468,9 +467,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             get
             {
-                lock (s_Lock)
+                lock (SLock)
                 {
-                    return s_TypeRegistryHistory.ToArray();
+                    return STypeRegistryHistory.ToArray();
                 }
             }
         }

@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         private class DynamicExprWrapper
         {
-            public DynamicExpression Expr;
+            public DynamicExpression expr;
         }
 
         public static void NovaSharpInit(Table globalTable, Table stringTable)
@@ -19,17 +19,17 @@ namespace NovaSharp.Interpreter.CoreLib
             UserData.RegisterType<DynamicExprWrapper>(InteropAccessMode.HideMembers);
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue eval(ScriptExecutionContext executionContext, CallbackArguments args)
+        [NovaSharpModuleMethod(Name = "eval")]
+        public static DynValue Eval(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
                 if (args[0].Type == DataType.UserData)
                 {
                     UserData ud = args[0].UserData;
-                    if (ud.Object is DynamicExprWrapper)
+                    if (ud.Object is DynamicExprWrapper wrapper)
                     {
-                        return ((DynamicExprWrapper)ud.Object).Expr.Evaluate(executionContext);
+                        return wrapper.expr.Evaluate(executionContext);
                     }
                     else
                     {
@@ -55,8 +55,8 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        [NovaSharpModuleMethod]
-        public static DynValue prepare(
+        [NovaSharpModuleMethod(Name = "prepare")]
+        public static DynValue Prepare(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 DynamicExpression expr = executionContext
                     .GetScript()
                     .CreateDynamicExpression(vs.String);
-                return UserData.Create(new DynamicExprWrapper() { Expr = expr });
+                return UserData.Create(new DynamicExprWrapper() { expr = expr });
             }
             catch (SyntaxErrorException ex)
             {

@@ -1,31 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using NovaSharp.Hardwire;
-using NovaSharp.Hardwire.Languages;
-using NovaSharp.Interpreter;
-
 namespace NovaSharp.Commands.Implementations
 {
-    class HardWireCommand : ICommand
+    using System;
+    using System.IO;
+    using Hardwire;
+    using Hardwire.Languages;
+    using Interpreter;
+
+    internal sealed class HardWireCommand : ICommand
     {
-        class ConsoleLogger : ICodeGenerationLogger
+        private class ConsoleLogger : ICodeGenerationLogger
         {
-            public int Errors = 0;
-            public int Warnings = 0;
+            public int errors = 0;
+            public int warnings = 0;
 
             public void LogError(string message)
             {
                 Console.WriteLine("[EE] - " + message);
-                ++Errors;
+                ++errors;
             }
 
             public void LogWarning(string message)
             {
                 Console.WriteLine("[ww] - " + message);
-                ++Warnings;
+                ++warnings;
             }
 
             public void LogMinor(string message)
@@ -176,7 +173,7 @@ namespace NovaSharp.Commands.Implementations
                     classname ?? "HardwireTypes",
                     logger,
                     language == "vb"
-                        ? HardwireCodeGenerationLanguage.VB
+                        ? HardwireCodeGenerationLanguage.Vb
                         : HardwireCodeGenerationLanguage.CSharp
                 )
                 {
@@ -195,10 +192,10 @@ namespace NovaSharp.Commands.Implementations
             }
 
             Console.WriteLine();
-            Console.WriteLine("done: {0} errors, {1} warnings.", logger.Errors, logger.Warnings);
+            Console.WriteLine("done: {0} errors, {1} warnings.", logger.errors, logger.warnings);
         }
 
-        string AskQuestion(
+        private string AskQuestion(
             string prompt,
             string defval,
             Func<string, bool> validator,

@@ -1,15 +1,15 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace NovaSharp.Interpreter.Serialization
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     /// <summary>
     ///
     /// </summary>
     public static class SerializationExtensions
     {
-        static HashSet<string> LUAKEYWORDS = new()
+        private static readonly HashSet<string> Luakeywords = new()
         {
             "and",
             "break",
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Serialization
                 return false;
             }
 
-            if (LUAKEYWORDS.Contains(dynValue.String))
+            if (Luakeywords.Contains(dynValue.String))
             {
                 return false;
             }

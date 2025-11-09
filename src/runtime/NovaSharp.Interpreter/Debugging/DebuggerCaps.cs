@@ -1,7 +1,7 @@
-using System;
-
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
+
     /// <summary>
     /// Enumeration of capabilities for a debugger
     /// </summary>

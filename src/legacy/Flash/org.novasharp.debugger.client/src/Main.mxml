@@ -38,7 +38,7 @@
 			[Bindable][Embed (source="assets/step_current.gif" )] public var  step_current:Class;
 			[Bindable][Embed (source="assets/watch.gif" )] public var  watch:Class;
 			
-			private var m_DisableKeys : Boolean = false;
+			private var _DisableKeys : Boolean = false;
 			
 			
 			private var menubarXML:XMLList =
@@ -83,7 +83,7 @@
 			}
 			
 			
-			private var m_Debugger : DebuggerViewLogic; 
+			private var _Debugger : DebuggerViewLogic; 
 			
 			protected function application_applicationCompleteHandler(event:FlexEvent):void
 			{
@@ -93,7 +93,7 @@
 			
 			private function shortcutListener(e:KeyboardEvent):void
 			{
-				if (m_DisableKeys) return;
+				if (_DisableKeys) return;
 				
 				switch(e.keyCode)
 				{
@@ -152,9 +152,9 @@
 			
 			public function refreshInstructionPtrHighlight(switchToSource:Boolean) : void
 			{
-				var hl:Highlight = m_Debugger.getInstructionPtrHighlight();
+				var hl:Highlight = _Debugger.getInstructionPtrHighlight();
 				
-				if (switchToSource && hl !== null && hl.Source !== m_CurrentSrc)
+				if (switchToSource && hl !== null && hl.Source !== _CurrentSrc)
 				{
 					selectSource(hl.Source);
 				}
@@ -164,7 +164,7 @@
 				
 				txtCode.setFormatOfRange(tlf, 0, txtCode.text.length - 1);
 				
-				if (hl !== null && hl.Source === m_CurrentSrc)
+				if (hl !== null && hl.Source === _CurrentSrc)
 				{
 					var tlf2:TextLayoutFormat = new TextLayoutFormat();
 					tlf2.backgroundColor = 0x645ef5;
@@ -176,7 +176,7 @@
 			
 			public function refreshBreakpoints() : void
 			{
-				if (m_CurrentSrc == null) return;
+				if (_CurrentSrc == null) return;
 				
 				var tlf:TextLayoutFormat = new TextLayoutFormat();
 				tlf.color = 0xEEEEEE;
@@ -186,14 +186,14 @@
 				var tlf2:TextLayoutFormat = new TextLayoutFormat();
 				tlf2.color = 0xff0000;
 				
-				for(var i:int = 0; i < m_CurrentSrc.Breakpoints.length; i++)
+				for(var i:int = 0; i < _CurrentSrc.Breakpoints.length; i++)
 				{
-					var hl:Highlight =  m_CurrentSrc.Breakpoints[i];
+					var hl:Highlight =  _CurrentSrc.Breakpoints[i];
 					txtCode.setFormatOfRange(tlf2, hl.From, hl.To);
 				}
 			}
 			
-			private var m_CurrentSrc:SourceCode = null;
+			private var _CurrentSrc:SourceCode = null;
 			
 			public function refreshCallStack(l : ArrayList):void
 			{
@@ -245,13 +245,13 @@
 			
 			protected function toggleBreakpoint(cmdType:String) : void
 			{
-				if (m_CurrentSrc == null) return;
+				if (_CurrentSrc == null) return;
 				
 				var cursor:int = txtCode.selectionActivePosition;
-				var line:int = m_CurrentSrc.inflateLocationLine(cursor);
-				var col:int = m_CurrentSrc.inflateLocationColumn(cursor, line);
+				var line:int = _CurrentSrc.inflateLocationLine(cursor);
+				var col:int = _CurrentSrc.inflateLocationColumn(cursor, line);
 				
-				m_Debugger.toggleBreakpoint(m_CurrentSrc.getId(), line, col, cmdType);
+				m_Debugger.toggleBreakpoint(_CurrentSrc.getId(), line, col, cmdType);
 			}
 			
 			protected function moveCaret(where : int) : void
@@ -264,13 +264,13 @@
 			
 			protected function updateCaretLabel() : void
 			{
-				if (m_CurrentSrc == null) return;
+				if (_CurrentSrc == null) return;
 
 				var cursor:int = txtCode.selectionActivePosition;
-				var line:int = m_CurrentSrc.inflateLocationLine(cursor);
-				var col:int = m_CurrentSrc.inflateLocationColumn(cursor, line);
+				var line:int = _CurrentSrc.inflateLocationLine(cursor);
+				var col:int = _CurrentSrc.inflateLocationColumn(cursor, line);
 				
-				txtCaret.text = m_CurrentSrc.getName() + ":" + line.toString() + ","+col.toString();
+				txtCaret.text = _CurrentSrc.getName() + ":" + line.toString() + ","+col.toString();
 			}
 			
 			
@@ -279,11 +279,11 @@
 				var wi:WatchItem;
 				
 				if (cmd == "about") AboutBox.show(this);
-				else if (cmd == "stepin") m_Debugger.stepIn();
-				else if (cmd == "stepout") m_Debugger.stepOut();
-				else if (cmd == "stepover") m_Debugger.stepOver();
-				else if (cmd == "run") m_Debugger.run();
-				else if (cmd == "pause") m_Debugger.pause();
+				else if (cmd == "stepin") _Debugger.stepIn();
+				else if (cmd == "stepout") _Debugger.stepOut();
+				else if (cmd == "stepover") _Debugger.stepOver();
+				else if (cmd == "run") _Debugger.run();
+				else if (cmd == "pause") _Debugger.pause();
 				else if (cmd == "step_current") refreshInstructionPtrHighlight(true);
 				else if (cmd == "breakpoint") toggleBreakpoint("toggle");
 				else if (cmd == "set_breakpoint") toggleBreakpoint("set");
@@ -293,7 +293,7 @@
 					m_DisableKeys = true;
 					
 					InputBox.show(this, "Error RegEx", 
-						"Insert a regular expression which matches error messages you want to stop on.", m_Debugger.getErrorRx(), 
+						"Insert a regular expression which matches error messages you want to stop on.", _Debugger.getErrorRx(), 
 						
 					function(str:String):void
 					{

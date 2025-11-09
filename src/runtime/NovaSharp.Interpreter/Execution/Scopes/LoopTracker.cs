@@ -1,16 +1,16 @@
-using NovaSharp.Interpreter.DataStructs;
-using NovaSharp.Interpreter.Execution.VM;
-
 namespace NovaSharp.Interpreter.Execution
 {
-    interface ILoop
+    using DataStructs;
+    using VM;
+
+    internal interface ILoop
     {
-        void CompileBreak(ByteCode bc);
-        bool IsBoundary();
+        public void CompileBreak(ByteCode bc);
+        public bool IsBoundary();
     }
 
     internal class LoopTracker
     {
-        public FastStack<ILoop> Loops = new(16384);
+        public FastStack<ILoop> loops = new(16384);
     }
 }

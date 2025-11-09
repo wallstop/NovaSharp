@@ -1,88 +1,88 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using NovaSharp.Interpreter.DataStructs;
-using NovaSharp.Interpreter.Debugging;
-
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    sealed partial class Processor
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
+    using DataStructs;
+    using Debugging;
+
+    internal sealed partial class Processor
     {
-        const int STACK_SIZE = 131072;
+        private const int STACK_SIZE = 131072;
 
-        ByteCode m_RootChunk;
+        private readonly ByteCode _rootChunk;
 
-        FastStack<DynValue> m_ValueStack;
-        FastStack<CallStackItem> m_ExecutionStack;
-        List<Processor> m_CoroutinesStack;
+        private readonly FastStack<DynValue> _valueStack;
+        private readonly FastStack<CallStackItem> _executionStack;
+        private List<Processor> _coroutinesStack;
 
-        Table m_GlobalTable;
-        Script m_Script;
-        Processor m_Parent = null;
-        CoroutineState m_State;
-        bool m_CanYield = true;
-        int m_SavedInstructionPtr = -1;
-        DebugContext m_Debug;
+        private Table _globalTable;
+        private readonly Script _script;
+        private readonly Processor _parent = null;
+        private CoroutineState _state;
+        private bool _canYield = true;
+        private int _savedInstructionPtr = -1;
+        private readonly DebugContext _debug;
 
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            m_ValueStack = new FastStack<DynValue>(STACK_SIZE);
-            m_ExecutionStack = new FastStack<CallStackItem>(STACK_SIZE);
-            m_CoroutinesStack = new List<Processor>();
+            _valueStack = new FastStack<DynValue>(STACK_SIZE);
+            _executionStack = new FastStack<CallStackItem>(STACK_SIZE);
+            _coroutinesStack = new List<Processor>();
 
-            m_Debug = new DebugContext();
-            m_RootChunk = byteCode;
-            m_GlobalTable = globalContext;
-            m_Script = script;
-            m_State = CoroutineState.Main;
+            _debug = new DebugContext();
+            _rootChunk = byteCode;
+            _globalTable = globalContext;
+            _script = script;
+            _state = CoroutineState.Main;
             DynValue.NewCoroutine(new Coroutine(this)); // creates an associated coroutine for the main processor
         }
 
         private Processor(Processor parentProcessor)
         {
-            m_ValueStack = new FastStack<DynValue>(STACK_SIZE);
-            m_ExecutionStack = new FastStack<CallStackItem>(STACK_SIZE);
-            m_Debug = parentProcessor.m_Debug;
-            m_RootChunk = parentProcessor.m_RootChunk;
-            m_GlobalTable = parentProcessor.m_GlobalTable;
-            m_Script = parentProcessor.m_Script;
-            m_Parent = parentProcessor;
-            m_State = CoroutineState.NotStarted;
+            _valueStack = new FastStack<DynValue>(STACK_SIZE);
+            _executionStack = new FastStack<CallStackItem>(STACK_SIZE);
+            _debug = parentProcessor._debug;
+            _rootChunk = parentProcessor._rootChunk;
+            _globalTable = parentProcessor._globalTable;
+            _script = parentProcessor._script;
+            _parent = parentProcessor;
+            _state = CoroutineState.NotStarted;
         }
 
         //Takes the value and execution stack from recycleProcessor
         internal Processor(Processor parentProcessor, Processor recycleProcessor)
         {
-            m_ValueStack = recycleProcessor.m_ValueStack;
-            m_ExecutionStack = recycleProcessor.m_ExecutionStack;
+            _valueStack = recycleProcessor._valueStack;
+            _executionStack = recycleProcessor._executionStack;
 
-            m_Debug = parentProcessor.m_Debug;
-            m_RootChunk = parentProcessor.m_RootChunk;
-            m_GlobalTable = parentProcessor.m_GlobalTable;
-            m_Script = parentProcessor.m_Script;
-            m_Parent = parentProcessor;
-            m_State = CoroutineState.NotStarted;
+            _debug = parentProcessor._debug;
+            _rootChunk = parentProcessor._rootChunk;
+            _globalTable = parentProcessor._globalTable;
+            _script = parentProcessor._script;
+            _parent = parentProcessor;
+            _state = CoroutineState.NotStarted;
         }
 
         public DynValue Call(DynValue function, DynValue[] args)
         {
             List<Processor> coroutinesStack =
-                m_Parent != null ? m_Parent.m_CoroutinesStack : this.m_CoroutinesStack;
+                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
 
-            if (coroutinesStack.Count > 0 && coroutinesStack[coroutinesStack.Count - 1] != this)
+            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[coroutinesStack.Count - 1].Call(function, args);
+                return coroutinesStack[^1].Call(function, args);
             }
 
             EnterProcessor();
 
             try
             {
-                IDisposable stopwatch = this.m_Script.PerformanceStats.StartStopwatch(
+                IDisposable stopwatch = _script.PerformanceStats.StartStopwatch(
                     Diagnostics.PerformanceCounter.Execution
                 );
 
-                m_CanYield = false;
+                _canYield = false;
 
                 try
                 {
@@ -95,7 +95,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
-                    m_CanYield = true;
+                    _canYield = true;
 
                     if (stopwatch != null)
                     {
@@ -119,62 +119,62 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (function == null)
             {
-                function = m_ValueStack.Peek();
+                function = _valueStack.Peek();
             }
             else
             {
-                m_ValueStack.Push(function); // func val
+                _valueStack.Push(function); // func val
             }
 
             args = Internal_AdjustTuple(args);
 
             for (int i = 0; i < args.Length; i++)
             {
-                m_ValueStack.Push(args[i]);
+                _valueStack.Push(args[i]);
             }
 
-            m_ValueStack.Push(DynValue.NewNumber(args.Length)); // func args count
+            _valueStack.Push(DynValue.NewNumber(args.Length)); // func args count
 
-            m_ExecutionStack.Push(
+            _executionStack.Push(
                 new CallStackItem()
                 {
-                    BasePointer = m_ValueStack.Count,
-                    Debug_EntryPoint = function.Function.EntryPointByteCodeLocation,
-                    ReturnAddress = -1,
-                    ClosureScope = function.Function.ClosureContext,
-                    CallingSourceRef = SourceRef.GetClrLocation(),
-                    Flags = flags,
+                    basePointer = _valueStack.Count,
+                    debugEntryPoint = function.Function.EntryPointByteCodeLocation,
+                    returnAddress = -1,
+                    closureScope = function.Function.ClosureContext,
+                    callingSourceRef = SourceRef.GetClrLocation(),
+                    flags = flags,
                 }
             );
 
             return function.Function.EntryPointByteCodeLocation;
         }
 
-        int m_OwningThreadID = -1;
-        int m_ExecutionNesting = 0;
+        private int _owningThreadId = -1;
+        private int _executionNesting = 0;
 
         private void LeaveProcessor()
         {
-            m_ExecutionNesting -= 1;
-            m_OwningThreadID = -1;
+            _executionNesting -= 1;
+            _owningThreadId = -1;
 
-            if (m_Parent != null)
+            if (_parent != null)
             {
-                m_Parent.m_CoroutinesStack.RemoveAt(m_Parent.m_CoroutinesStack.Count - 1);
+                _parent._coroutinesStack.RemoveAt(_parent._coroutinesStack.Count - 1);
             }
 
             if (
-                m_ExecutionNesting == 0
-                && m_Debug != null
-                && m_Debug.DebuggerEnabled
-                && m_Debug.DebuggerAttached != null
+                _executionNesting == 0
+                && _debug != null
+                && _debug.debuggerEnabled
+                && _debug.debuggerAttached != null
             )
             {
-                m_Debug.DebuggerAttached.SignalExecutionEnded();
+                _debug.debuggerAttached.SignalExecutionEnded();
             }
         }
 
-        int GetThreadId()
+        private int GetThreadId()
         {
 #if ENABLE_DOTNET || NETFX_CORE
             return 1;
@@ -185,35 +185,35 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private void EnterProcessor()
         {
-            int threadID = GetThreadId();
+            int threadId = GetThreadId();
 
             if (
-                m_OwningThreadID >= 0
-                && m_OwningThreadID != threadID
-                && m_Script.Options.CheckThreadAccess
+                _owningThreadId >= 0
+                && _owningThreadId != threadId
+                && _script.Options.CheckThreadAccess
             )
             {
                 string msg = string.Format(
                     "Cannot enter the same NovaSharp processor from two different threads : {0} and {1}",
-                    m_OwningThreadID,
-                    threadID
+                    _owningThreadId,
+                    threadId
                 );
                 throw new InvalidOperationException(msg);
             }
 
-            m_OwningThreadID = threadID;
+            _owningThreadId = threadId;
 
-            m_ExecutionNesting += 1;
+            _executionNesting += 1;
 
-            if (m_Parent != null)
+            if (_parent != null)
             {
-                m_Parent.m_CoroutinesStack.Add(this);
+                _parent._coroutinesStack.Add(this);
             }
         }
 
         internal SourceRef GetCoroutineSuspendedLocation()
         {
-            return GetCurrentSourceRef(m_SavedInstructionPtr);
+            return GetCurrentSourceRef(_savedInstructionPtr);
         }
     }
 }

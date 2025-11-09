@@ -1,11 +1,11 @@
-#if DOTNET_CORE
-
-using System;
-using System.Reflection;
-
 namespace NovaSharp.Interpreter.Compatibility.Frameworks
 {
-    class FrameworkCurrent : FrameworkClrBase
+#if DOTNET_CORE
+
+    using System;
+    using System.Reflection;
+
+    internal class FrameworkCurrent : FrameworkClrBase
     {
         public override Type GetInterface(Type type, string name)
         {
@@ -27,5 +27,5 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
             return str.Contains(chr);
         }
     }
-}
 #endif
+}

@@ -76,7 +76,7 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 `DynValue` is the **central hub** of NovaSharp's architecture:
 - Single unified type representing all Lua values (nil, boolean, number, string, table, function, etc.)
 - Used everywhere: function parameters, return values, table contents, variables
-- Contains a discriminated union: `DataType` enum + value storage (m_Number for numbers, m_Object for references)
+- Contains a discriminated union: `DataType` enum + value storage (_Number for numbers, _Object for references)
 - Provides type-safe interop via `FromObject()` and `ToObject()`
 - Factory methods for each type: `NewString()`, `NewTable()`, `NewClosure()`, etc.
 

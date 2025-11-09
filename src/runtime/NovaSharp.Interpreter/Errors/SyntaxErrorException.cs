@@ -1,9 +1,9 @@
-using System;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.Interpreter.Tree;
-
 namespace NovaSharp.Interpreter
 {
+    using System;
+    using Debugging;
+    using Tree;
+
     /// <summary>
     /// Exception for all parsing/lexing errors.
     /// </summary>
@@ -52,8 +52,8 @@ namespace NovaSharp.Interpreter
         private SyntaxErrorException(SyntaxErrorException syntaxErrorException)
             : base(syntaxErrorException, syntaxErrorException.DecoratedMessage)
         {
-            this.Token = syntaxErrorException.Token;
-            this.DecoratedMessage = Message;
+            Token = syntaxErrorException.Token;
+            DecoratedMessage = Message;
         }
 
         internal void DecorateMessage(Script script)
