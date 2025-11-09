@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_ChunkDump()
+        public void BinDumpChunkDump()
         {
             string script =
                 @"
@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_StringDump()
+        public void BinDumpStringDump()
         {
             string script =
                 @"
@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_StandardDumpFunc()
+        public void BinDumpStandardDumpFunc()
         {
             string script =
                 @"
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_FactorialDumpFunc()
+        public void BinDumpFactorialDumpFunc()
         {
             string script =
                 @"
@@ -109,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_FactorialDumpFuncGlobal()
+        public void BinDumpFactorialDumpFuncGlobal()
         {
             string script =
                 @"
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public void BinDump_FactorialDumpFuncUpvalue()
+        public void BinDumpFactorialDumpFuncUpvalue()
         {
             string script =
                 @"
@@ -154,7 +154,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void BinDump_FactorialClosure()
+        public void BinDumpFactorialClosure()
         {
             string script =
                 @"
@@ -183,7 +183,7 @@ return y;
         }
 
         [Test]
-        public void BinDump_ClosureOnParam()
+        public void BinDumpClosureOnParam()
         {
             string script =
                 @"
@@ -203,7 +203,7 @@ return y;
         }
 
         [Test]
-        public void BinDump_NestedUpvalues()
+        public void BinDumpNestedUpvalues()
         {
             string script =
                 @"
@@ -232,7 +232,7 @@ return y;
         }
 
         [Test]
-        public void BinDump_NestedOutOfScopeUpvalues()
+        public void BinDumpNestedOutOfScopeUpvalues()
         {
             string script =
                 @"
@@ -268,7 +268,7 @@ return y;
         }
 
         [Test]
-        public void Load_ChangeEnvWithDebugSetUpvalue()
+        public void LoadChangeEnvWithDebugSetUpvalue()
         {
             List<Table> list = new();
 

@@ -33,14 +33,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_NoArguments_ReturnsFalse()
+        public void CheckArgsNoArgumentsReturnsFalse()
         {
             bool handled = Program.CheckArgs(Array.Empty<string>(), NewShellContext());
             Assert.That(handled, Is.False);
         }
 
         [Test]
-        public void CheckArgs_HelpFlag_WritesUsageAndReturnsTrue()
+        public void CheckArgsHelpFlagWritesUsageAndReturnsTrue()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);
@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_ExecuteCommandFlag_RunsRequestedCommand()
+        public void CheckArgsExecuteCommandFlagRunsRequestedCommand()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);
@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_ExecuteCommandFlag_WithMissingArgument_ShowsSyntax()
+        public void CheckArgsExecuteCommandFlagWithMissingArgumentShowsSyntax()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);
@@ -85,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_ExecuteCommandFlag_WithUnknownCommand_ReportsError()
+        public void CheckArgsExecuteCommandFlagWithUnknownCommandReportsError()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);
@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_RunScript_ExecutesFile()
+        public void CheckArgsRunScriptExecutesFile()
         {
             string scriptPath = Path.Combine(Path.GetTempPath(), $"sample_{Guid.NewGuid():N}.lua");
             File.WriteAllText(scriptPath, "return 42");
@@ -120,7 +120,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void CheckArgs_HardwireFlag_WithMissingArguments_ShowsSyntax()
+        public void CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);

@@ -1507,7 +1507,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void HexFloats_1()
+        public void HexFloats1()
         {
             string script = "return 0x0.1E";
             DynValue result = Script.RunString(script);
@@ -1515,7 +1515,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void HexFloats_2()
+        public void HexFloats2()
         {
             string script = "return 0xA23p-4";
             DynValue result = Script.RunString(script);
@@ -1523,7 +1523,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void HexFloats_3()
+        public void HexFloats3()
         {
             string script = "return 0X1.921FB54442D18P+1";
             DynValue result = Script.RunString(script);
@@ -1534,7 +1534,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Simple_Delegate_Interop_1()
+        public void SimpleDelegateInterop1()
         {
             int a = 3;
             Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
@@ -1543,7 +1543,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Simple_Delegate_Interop_2()
+        public void SimpleDelegateInterop2()
         {
             IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
 

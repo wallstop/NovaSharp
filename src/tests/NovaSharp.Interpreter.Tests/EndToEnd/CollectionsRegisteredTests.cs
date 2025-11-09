@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnList_Auto()
+        public void RegCollIteratorOnListAuto()
         {
             Do(
                 @"
@@ -127,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnList_Manual()
+        public void RegCollIteratorOnListManual()
         {
             Do(
                 @"
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnList_ChangeElem()
+        public void RegCollIteratorOnListChangeElem()
         {
             Do(
                 @"
@@ -184,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnArray_Auto()
+        public void RegCollIteratorOnArrayAuto()
         {
             Do(
                 @"
@@ -204,7 +204,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnArray_ChangeElem()
+        public void RegCollIteratorOnArrayChangeElem()
         {
             Do(
                 @"
@@ -230,7 +230,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnMultiDimArray_ChangeElem()
+        public void RegCollIteratorOnMultiDimArrayChangeElem()
         {
             Do(
                 @"
@@ -259,7 +259,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnObjList_Auto()
+        public void RegCollIteratorOnObjListAuto()
         {
             Do(
                 @"
@@ -280,7 +280,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnObjList_Manual()
+        public void RegCollIteratorOnObjListManual()
         {
             Do(
                 @"
@@ -311,7 +311,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegColl_IteratorOnObjList_ChangeElem()
+        public void RegCollIteratorOnObjListChangeElem()
         {
             Do(
                 @"

@@ -48,28 +48,28 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_SingleSetterOnly()
+        public void VInteropSingleSetterOnly()
         {
             string script = @"o[1] = 1; return 13";
             IndexerTest(script, 13);
         }
 
         [Test]
-        public void VInterop_SingleIndexerGetSet()
+        public void VInteropSingleIndexerGetSet()
         {
             string script = @"o[5] = 19; return o[5];";
             IndexerTest(script, 19);
         }
 
         [Test]
-        public void VInterop_MultiIndexerGetSet()
+        public void VInteropMultiIndexerGetSet()
         {
             string script = @"o[1,2,3] = 47; return o[1,2,3];";
             IndexerTest(script, 47);
         }
 
         [Test]
-        public void VInterop_MultiIndexerMetatableGetSet()
+        public void VInteropMultiIndexerMetatableGetSet()
         {
             string script =
                 @"
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_MultiIndexerMetamethodGetSet()
+        public void VInteropMultiIndexerMetamethodGetSet()
         {
             string script =
                 @"
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_MixedIndexerGetSet()
+        public void VInteropMixedIndexerGetSet()
         {
             string script = @"o[3,2,3] = 119; return o[15];";
             IndexerTest(script, 119);
@@ -114,7 +114,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_ExpListIndexingCompilesButNotRun1()
+        public void VInteropExpListIndexingCompilesButNotRun1()
         {
             string script =
                 @"    
@@ -130,7 +130,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_ExpListIndexingCompilesButNotRun2()
+        public void VInteropExpListIndexingCompilesButNotRun2()
         {
             string script =
                 @"    

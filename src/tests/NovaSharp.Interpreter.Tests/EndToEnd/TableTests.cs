@@ -496,7 +496,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void PrimeTable_1()
+        public void PrimeTable1()
         {
             string script =
                 @"    
@@ -514,7 +514,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void PrimeTable_2()
+        public void PrimeTable2()
         {
             string script =
                 @"    
@@ -530,7 +530,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Table_Length_Calculations()
+        public void TableLengthCalculations()
         {
             Table t = new(null);
 

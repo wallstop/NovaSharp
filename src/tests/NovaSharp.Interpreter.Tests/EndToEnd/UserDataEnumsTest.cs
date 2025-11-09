@@ -83,50 +83,50 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Enum_Simple()
+        public void InteropEnumSimple()
         {
             RunTestOverload("o:MyMethod2(MyEnum.Cinque)", "(Cinque)");
         }
 
         [Test]
-        public void Interop_Enum_Simple2()
+        public void InteropEnumSimple2()
         {
             RunTestOverload("o:MyMethod2(MyEnum.cinque)", "(Cinque)");
         }
 
         [Test]
-        public void Interop_Enum_Overload1()
+        public void InteropEnumOverload1()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, MyFlags.Due))", "3");
             RunTestOverload("o:MyMethod(MyEnum.Cinque)", "[Cinque]");
         }
 
         [Test]
-        public void Interop_Enum_NumberConversion()
+        public void InteropEnumNumberConversion()
         {
             RunTestOverload("o:MyMethod2(5)", "(Cinque)");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Or()
+        public void InteropEnumFlagsOr()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, MyFlags.Due))", "3");
         }
 
         [Test]
-        public void Interop_Enum_Flags_And()
+        public void InteropEnumFlagsAnd()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsAnd(MyFlags.Uno, MyFlags.Cinque))", "1");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Xor()
+        public void InteropEnumFlagsXor()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsXor(MyFlags.Uno, MyFlags.Cinque))", "4");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Not()
+        public void InteropEnumFlagsNot()
         {
             RunTestOverload(
                 "o:MyMethod(MyFlags.flagsAnd(MyFlags.Cinque, MyFlags.flagsNot(MyFlags.Uno)))",
@@ -135,32 +135,32 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Enum_Flags_Or2()
+        public void InteropEnumFlagsOr2()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, 2))", "3");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Or3()
+        public void InteropEnumFlagsOr3()
         {
             RunTestOverload("o:MyMethod(MyFlags.flagsOr(1, MyFlags.Due))", "3");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Or_Meta()
+        public void InteropEnumFlagsOrMeta()
         {
             RunTestOverload("o:MyMethod(MyFlags.Uno .. MyFlags.Due)", "3");
         }
 
         [Test]
-        public void Interop_Enum_Flags_HasAll()
+        public void InteropEnumFlagsHasAll()
         {
             RunTestOverload("o:MyMethodB(MyFlags.hasAll(MyFlags.Uno, MyFlags.Cinque))", "F");
             RunTestOverload("o:MyMethodB(MyFlags.hasAll(MyFlags.Cinque, MyFlags.Uno))", "T");
         }
 
         [Test]
-        public void Interop_Enum_Flags_HasAny()
+        public void InteropEnumFlagsHasAny()
         {
             RunTestOverload("o:MyMethodB(MyFlags.hasAny(MyFlags.Uno, MyFlags.Cinque))", "T");
             RunTestOverload("o:MyMethodB(MyFlags.hasAny(MyFlags.Cinque, MyFlags.Uno))", "T");
@@ -168,13 +168,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Enum_Read()
+        public void InteropEnumRead()
         {
             RunTestOverload("o:MyMethod(o:get())", "[Quattro]");
         }
 
         [Test]
-        public void Interop_Enum_Flags_Or_Meta_Read()
+        public void InteropEnumFlagsOrMetaRead()
         {
             RunTestOverload("o:MyMethod(o:getF() .. MyFlags.Due)", "6");
         }

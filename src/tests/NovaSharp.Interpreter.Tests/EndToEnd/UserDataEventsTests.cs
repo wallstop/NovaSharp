@@ -35,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Event_Simple()
+        public void InteropEventSimple()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Event_TwoObjects()
+        public void InteropEventTwoObjects()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Event_Multi()
+        public void InteropEventMulti()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Event_MultiAndDetach()
+        public void InteropEventMultiAndDetach()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -177,7 +177,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_Event_DetachAndDeregister()
+        public void InteropEventDetachAndDeregister()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -215,7 +215,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_SEvent_DetachAndDeregister()
+        public void InteropSEventDetachAndDeregister()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
@@ -256,7 +256,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_SEvent_DetachAndReregister()
+        public void InteropSEventDetachAndReregister()
         {
             int invocationCount = 0;
             UserData.RegisterType<SomeClass>();

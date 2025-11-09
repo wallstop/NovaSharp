@@ -46,7 +46,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         //[Test]
-        //public void StructField_CanSetWithWorkaround()
+        //public void StructFieldCanSetWithWorkaround()
         //{
         //	UserData.RegisterType<Vector3>();
         //	UserData.RegisterType<Vector3_Accessor>();
@@ -72,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         //}
 
         [Test]
-        public void StructField_CantSet()
+        public void StructFieldCantSet()
         {
             UserData.RegisterType<Transform>();
             UserData.RegisterType<Vector3>();

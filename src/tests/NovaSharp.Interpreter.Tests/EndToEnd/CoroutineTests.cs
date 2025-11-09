@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     internal sealed class CoroutineTests
     {
         [Test]
-        public void Coroutine_Basic()
+        public void CoroutineBasic()
         {
             string script =
                 @"
@@ -46,7 +46,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Coroutine_Wrap()
+        public void CoroutineWrap()
         {
             string script =
                 @"
@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Coroutine_ClrBoundaryHandling()
+        public void CoroutineClrBoundaryHandling()
         {
             string code =
                 @"
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Coroutine_VariousErrorHandling()
+        public void CoroutineVariousErrorHandling()
         {
             string last = "";
             string code =
@@ -172,7 +172,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
         }
 
         [Test]
-        public void Coroutine_Direct_Resume()
+        public void CoroutineDirectResume()
         {
             string code =
                 @"
@@ -207,7 +207,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
         }
 
         [Test]
-        public void Coroutine_Direct_AsEnumerable()
+        public void CoroutineDirectAsEnumerable()
         {
             string code =
                 @"
@@ -242,7 +242,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
         }
 
         [Test]
-        public void Coroutine_AutoYield()
+        public void CoroutineAutoYield()
         {
             string code =
                 @"

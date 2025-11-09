@@ -72,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_NestedTypes_Public_Enum()
+        public void InteropNestedTypesPublicEnum()
         {
             Script s = new();
 
@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_NestedTypes_Public_Ref()
+        public void InteropNestedTypesPublicRef()
         {
             Script s = new();
 
@@ -101,7 +101,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_NestedTypes_Private_Ref()
+        public void InteropNestedTypesPrivateRef()
         {
             Script s = new();
 
@@ -117,7 +117,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void Interop_NestedTypes_Private_Ref_2()
+        public void InteropNestedTypesPrivateRef2()
         {
             Script s = new();
 
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_NestedTypes_Public_Val()
+        public void InteropNestedTypesPublicVal()
         {
             Script s = new();
 
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_NestedTypes_Private_Val()
+        public void InteropNestedTypesPrivateVal()
         {
             Script s = new();
 
@@ -163,7 +163,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void Interop_NestedTypes_Private_Val_2()
+        public void InteropNestedTypesPrivateVal2()
         {
             Script s = new();
 

@@ -181,7 +181,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Pairs()
+        public void VInteropMetaPairs()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -201,7 +201,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_IPairs()
+        public void VInteropMetaIPairs()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -221,7 +221,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Iterator()
+        public void VInteropMetaIterator()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -241,7 +241,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Len()
+        public void VInteropMetaOpLen()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -259,7 +259,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Equality()
+        public void VInteropMetaEquality()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -281,7 +281,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Comparisons()
+        public void VInteropMetaComparisons()
         {
             Script s = new();
             UserData.RegisterType<ArithmOperatorsTestClass>();
@@ -326,20 +326,20 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Call()
+        public void VInteropMetaCall()
         {
             OperatorTest("return o()", 5, -5);
         }
 
         [Test]
-        public void VInterop_Meta_Op_Unm()
+        public void VInteropMetaOpUnm()
         {
             OperatorTest("return -o + 5", 5, 0);
             OperatorTest("return -o + -o", 5, -10);
         }
 
         [Test]
-        public void VInterop_Meta_Op_Add()
+        public void VInteropMetaOpAdd()
         {
             OperatorTest("return o + 5", 5, 10);
             OperatorTest("return o + o", 5, 10);
@@ -347,7 +347,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Concat()
+        public void VInteropMetaOpConcat()
         {
             OperatorTest("return o .. 5", 5, 10);
             OperatorTest("return o .. o", 5, 10);
@@ -355,7 +355,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Pow()
+        public void VInteropMetaOpPow()
         {
             OperatorTest("return o ^ 5", 5, 10);
             OperatorTest("return o ^ o", 5, 10);
@@ -363,7 +363,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Sub()
+        public void VInteropMetaOpSub()
         {
             OperatorTest("return o - 5", 2, -3);
             OperatorTest("return o - o", 2, 0);
@@ -371,7 +371,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Mul()
+        public void VInteropMetaOpMul()
         {
             OperatorTest("return o * 5", 3, 15);
             OperatorTest("return o * o", 3, 9);
@@ -379,7 +379,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Div()
+        public void VInteropMetaOpDiv()
         {
             OperatorTest("return o / 5", 25, 5);
             OperatorTest("return o / o", 117, 1);
@@ -387,7 +387,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Meta_Op_Mod()
+        public void VInteropMetaOpMod()
         {
             OperatorTest("return o % 5", 16, 1);
             OperatorTest("return o % o", 3, 0);

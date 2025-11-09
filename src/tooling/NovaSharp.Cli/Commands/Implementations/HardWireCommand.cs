@@ -161,10 +161,7 @@ namespace NovaSharp.Commands.Implementations
             ConsoleLogger logger = new();
             try
             {
-                Script s = new(CoreModules.None);
-                DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(luafile));
-
-                Table t = eee.Evaluate(null).Table;
+                Table t = DumpLoader(luafile);
 
                 HardwireGeneratorRegistry.RegisterPredefined();
 
@@ -193,6 +190,15 @@ namespace NovaSharp.Commands.Implementations
 
             Console.WriteLine();
             Console.WriteLine("done: {0} errors, {1} warnings.", logger.errors, logger.warnings);
+        }
+
+        internal static Func<string, Table> DumpLoader { get; set; } = LoadDumpTable;
+
+        private static Table LoadDumpTable(string path)
+        {
+            Script s = new(CoreModules.None);
+            DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(path));
+            return eee.Evaluate(null).Table;
         }
 
         private string AskQuestion(

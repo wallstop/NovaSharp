@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Errors_PCall_ClrFunction()
+        public void ErrorsPCallClrFunction()
         {
             string script =
                 @"
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Errors_PCall_Multiples()
+        public void ErrorsPCallMultiples()
         {
             string script =
                 @"
@@ -81,7 +81,7 @@ return a()
         }
 
         [Test]
-        public void Errors_TryCatch_Multiples()
+        public void ErrorsTryCatchMultiples()
         {
             string script =
                 @"

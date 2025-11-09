@@ -51,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public void Test_IntPropertyGetter(InteropAccessMode opt)
+        public void TestIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -73,7 +73,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(321));
         }
 
-        public void Test_NIntPropertyGetter(InteropAccessMode opt)
+        public void TestNIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Nil));
         }
 
-        public void Test_ObjPropertyGetter(InteropAccessMode opt)
+        public void TestObjPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].UserData.Object, Is.EqualTo(obj1));
         }
 
-        public void Test_IntPropertySetter(InteropAccessMode opt)
+        public void TestIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -154,7 +154,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void Test_NIntPropertySetter(InteropAccessMode opt)
+        public void TestNIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -184,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(19));
         }
 
-        public void Test_InvalidPropertySetter(InteropAccessMode opt)
+        public void TestInvalidPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -206,7 +206,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
-        public void Test_StaticPropertyAccess(InteropAccessMode opt)
+        public void TestStaticPropertyAccess(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -228,7 +228,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(SomeClass.StaticProp, Is.EqualTo("asdasdqweqwe"));
         }
 
-        public void Test_IteratorPropertyGetter(InteropAccessMode opt)
+        public void TestIteratorPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -254,7 +254,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
-        public void Test_RoIntPropertyGetter(InteropAccessMode opt)
+        public void TestRoIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -276,7 +276,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(5));
         }
 
-        public void Test_RoIntProperty2Getter(InteropAccessMode opt)
+        public void TestRoIntProperty2Getter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -298,7 +298,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234));
         }
 
-        public void Test_RoIntPropertySetter(InteropAccessMode opt)
+        public void TestRoIntPropertySetter(InteropAccessMode opt)
         {
             try
             {
@@ -327,7 +327,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_RoIntProperty2Setter(InteropAccessMode opt)
+        public void TestRoIntProperty2Setter(InteropAccessMode opt)
         {
             try
             {
@@ -356,7 +356,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_WoIntPropertySetter(InteropAccessMode opt)
+        public void TestWoIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -378,7 +378,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void Test_WoIntProperty2Setter(InteropAccessMode opt)
+        public void TestWoIntProperty2Setter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -400,7 +400,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void Test_WoIntPropertyGetter(InteropAccessMode opt)
+        public void TestWoIntPropertyGetter(InteropAccessMode opt)
         {
             try
             {
@@ -431,7 +431,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_WoIntProperty2Getter(InteropAccessMode opt)
+        public void TestWoIntProperty2Getter(InteropAccessMode opt)
         {
             try
             {
@@ -462,7 +462,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_PropertyAccessOverrides(InteropAccessMode opt)
+        public void TestPropertyAccessOverrides(InteropAccessMode opt)
         {
             SomeClass obj = new();
 
@@ -495,316 +495,316 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_IntPropertyGetter_None()
+        public void VInteropIntPropertyGetterNone()
         {
-            Test_IntPropertyGetter(InteropAccessMode.Reflection);
+            TestIntPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_IntPropertyGetter_Lazy()
+        public void VInteropIntPropertyGetterLazy()
         {
-            Test_IntPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestIntPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_IntPropertyGetter_Precomputed()
+        public void VInteropIntPropertyGetterPrecomputed()
         {
-            Test_IntPropertyGetter(InteropAccessMode.Preoptimized);
+            TestIntPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_NIntPropertyGetter_None()
+        public void VInteropNIntPropertyGetterNone()
         {
-            Test_NIntPropertyGetter(InteropAccessMode.Reflection);
+            TestNIntPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_NIntPropertyGetter_Lazy()
+        public void VInteropNIntPropertyGetterLazy()
         {
-            Test_NIntPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestNIntPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_NIntPropertyGetter_Precomputed()
+        public void VInteropNIntPropertyGetterPrecomputed()
         {
-            Test_NIntPropertyGetter(InteropAccessMode.Preoptimized);
+            TestNIntPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_ObjPropertyGetter_None()
+        public void VInteropObjPropertyGetterNone()
         {
-            Test_ObjPropertyGetter(InteropAccessMode.Reflection);
+            TestObjPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_ObjPropertyGetter_Lazy()
+        public void VInteropObjPropertyGetterLazy()
         {
-            Test_ObjPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestObjPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_ObjPropertyGetter_Precomputed()
+        public void VInteropObjPropertyGetterPrecomputed()
         {
-            Test_ObjPropertyGetter(InteropAccessMode.Preoptimized);
+            TestObjPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_IntPropertySetter_None()
+        public void VInteropIntPropertySetterNone()
         {
-            Test_IntPropertySetter(InteropAccessMode.Reflection);
+            TestIntPropertySetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_IntPropertySetter_Lazy()
+        public void VInteropIntPropertySetterLazy()
         {
-            Test_IntPropertySetter(InteropAccessMode.LazyOptimized);
+            TestIntPropertySetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_IntPropertySetter_Precomputed()
+        public void VInteropIntPropertySetterPrecomputed()
         {
-            Test_IntPropertySetter(InteropAccessMode.Preoptimized);
+            TestIntPropertySetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_NIntPropertySetter_None()
+        public void VInteropNIntPropertySetterNone()
         {
-            Test_NIntPropertySetter(InteropAccessMode.Reflection);
+            TestNIntPropertySetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_NIntPropertySetter_Lazy()
+        public void VInteropNIntPropertySetterLazy()
         {
-            Test_NIntPropertySetter(InteropAccessMode.LazyOptimized);
+            TestNIntPropertySetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_NIntPropertySetter_Precomputed()
+        public void VInteropNIntPropertySetterPrecomputed()
         {
-            Test_NIntPropertySetter(InteropAccessMode.Preoptimized);
-        }
-
-        [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_InvalidPropertySetter_None()
-        {
-            Test_InvalidPropertySetter(InteropAccessMode.Reflection);
+            TestNIntPropertySetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_InvalidPropertySetter_Lazy()
+        public void VInteropInvalidPropertySetterNone()
         {
-            Test_InvalidPropertySetter(InteropAccessMode.LazyOptimized);
+            TestInvalidPropertySetter(InteropAccessMode.Reflection);
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_InvalidPropertySetter_Precomputed()
+        public void VInteropInvalidPropertySetterLazy()
         {
-            Test_InvalidPropertySetter(InteropAccessMode.Preoptimized);
+            TestInvalidPropertySetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_StaticPropertyAccess_None()
+        [ExpectedException(typeof(ScriptRuntimeException))]
+        public void VInteropInvalidPropertySetterPrecomputed()
         {
-            Test_StaticPropertyAccess(InteropAccessMode.Reflection);
+            TestInvalidPropertySetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_StaticPropertyAccess_Lazy()
+        public void VInteropStaticPropertyAccessNone()
         {
-            Test_StaticPropertyAccess(InteropAccessMode.LazyOptimized);
+            TestStaticPropertyAccess(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_StaticPropertyAccess_Precomputed()
+        public void VInteropStaticPropertyAccessLazy()
         {
-            Test_StaticPropertyAccess(InteropAccessMode.Preoptimized);
+            TestStaticPropertyAccess(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_IteratorPropertyGetter_None()
+        public void VInteropStaticPropertyAccessPrecomputed()
         {
-            Test_IteratorPropertyGetter(InteropAccessMode.Reflection);
+            TestStaticPropertyAccess(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_IteratorPropertyGetter_Lazy()
+        public void VInteropIteratorPropertyGetterNone()
         {
-            Test_IteratorPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestIteratorPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_IteratorPropertyGetter_Precomputed()
+        public void VInteropIteratorPropertyGetterLazy()
         {
-            Test_IteratorPropertyGetter(InteropAccessMode.Preoptimized);
+            TestIteratorPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_RoIntPropertyGetter_None()
+        public void VInteropIteratorPropertyGetterPrecomputed()
         {
-            Test_RoIntPropertyGetter(InteropAccessMode.Reflection);
+            TestIteratorPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_RoIntPropertyGetter_Lazy()
+        public void VInteropRoIntPropertyGetterNone()
         {
-            Test_RoIntPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestRoIntPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_RoIntPropertyGetter_Precomputed()
+        public void VInteropRoIntPropertyGetterLazy()
         {
-            Test_RoIntPropertyGetter(InteropAccessMode.Preoptimized);
+            TestRoIntPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Getter_None()
+        public void VInteropRoIntPropertyGetterPrecomputed()
         {
-            Test_RoIntProperty2Getter(InteropAccessMode.Reflection);
+            TestRoIntPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Getter_Lazy()
+        public void VInteropRoIntProperty2GetterNone()
         {
-            Test_RoIntProperty2Getter(InteropAccessMode.LazyOptimized);
+            TestRoIntProperty2Getter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Getter_Precomputed()
+        public void VInteropRoIntProperty2GetterLazy()
         {
-            Test_RoIntProperty2Getter(InteropAccessMode.Preoptimized);
+            TestRoIntProperty2Getter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_RoIntPropertySetter_None()
+        public void VInteropRoIntProperty2GetterPrecomputed()
         {
-            Test_RoIntPropertySetter(InteropAccessMode.Reflection);
+            TestRoIntProperty2Getter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_RoIntPropertySetter_Lazy()
+        public void VInteropRoIntPropertySetterNone()
         {
-            Test_RoIntPropertySetter(InteropAccessMode.LazyOptimized);
+            TestRoIntPropertySetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_RoIntPropertySetter_Precomputed()
+        public void VInteropRoIntPropertySetterLazy()
         {
-            Test_RoIntPropertySetter(InteropAccessMode.Preoptimized);
+            TestRoIntPropertySetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Setter_None()
+        public void VInteropRoIntPropertySetterPrecomputed()
         {
-            Test_RoIntProperty2Setter(InteropAccessMode.Reflection);
+            TestRoIntPropertySetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Setter_Lazy()
+        public void VInteropRoIntProperty2SetterNone()
         {
-            Test_RoIntProperty2Setter(InteropAccessMode.LazyOptimized);
+            TestRoIntProperty2Setter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_RoIntProperty2Setter_Precomputed()
+        public void VInteropRoIntProperty2SetterLazy()
         {
-            Test_RoIntProperty2Setter(InteropAccessMode.Preoptimized);
+            TestRoIntProperty2Setter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_WoIntPropertyGetter_None()
+        public void VInteropRoIntProperty2SetterPrecomputed()
         {
-            Test_WoIntPropertyGetter(InteropAccessMode.Reflection);
+            TestRoIntProperty2Setter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_WoIntPropertyGetter_Lazy()
+        public void VInteropWoIntPropertyGetterNone()
         {
-            Test_WoIntPropertyGetter(InteropAccessMode.LazyOptimized);
+            TestWoIntPropertyGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_WoIntPropertyGetter_Precomputed()
+        public void VInteropWoIntPropertyGetterLazy()
         {
-            Test_WoIntPropertyGetter(InteropAccessMode.Preoptimized);
+            TestWoIntPropertyGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Getter_None()
+        public void VInteropWoIntPropertyGetterPrecomputed()
         {
-            Test_WoIntProperty2Getter(InteropAccessMode.Reflection);
+            TestWoIntPropertyGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Getter_Lazy()
+        public void VInteropWoIntProperty2GetterNone()
         {
-            Test_WoIntProperty2Getter(InteropAccessMode.LazyOptimized);
+            TestWoIntProperty2Getter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Getter_Precomputed()
+        public void VInteropWoIntProperty2GetterLazy()
         {
-            Test_WoIntProperty2Getter(InteropAccessMode.Preoptimized);
+            TestWoIntProperty2Getter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_WoIntPropertySetter_None()
+        public void VInteropWoIntProperty2GetterPrecomputed()
         {
-            Test_WoIntPropertySetter(InteropAccessMode.Reflection);
+            TestWoIntProperty2Getter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_WoIntPropertySetter_Lazy()
+        public void VInteropWoIntPropertySetterNone()
         {
-            Test_WoIntPropertySetter(InteropAccessMode.LazyOptimized);
+            TestWoIntPropertySetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_WoIntPropertySetter_Precomputed()
+        public void VInteropWoIntPropertySetterLazy()
         {
-            Test_WoIntPropertySetter(InteropAccessMode.Preoptimized);
+            TestWoIntPropertySetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Setter_None()
+        public void VInteropWoIntPropertySetterPrecomputed()
         {
-            Test_WoIntProperty2Setter(InteropAccessMode.Reflection);
+            TestWoIntPropertySetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Setter_Lazy()
+        public void VInteropWoIntProperty2SetterNone()
         {
-            Test_WoIntProperty2Setter(InteropAccessMode.LazyOptimized);
+            TestWoIntProperty2Setter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_WoIntProperty2Setter_Precomputed()
+        public void VInteropWoIntProperty2SetterLazy()
         {
-            Test_WoIntProperty2Setter(InteropAccessMode.Preoptimized);
+            TestWoIntProperty2Setter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_PropertyAccessOverrides_None()
+        public void VInteropWoIntProperty2SetterPrecomputed()
         {
-            Test_PropertyAccessOverrides(InteropAccessMode.Reflection);
+            TestWoIntProperty2Setter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void VInterop_PropertyAccessOverrides_Lazy()
+        public void VInteropPropertyAccessOverridesNone()
         {
-            Test_PropertyAccessOverrides(InteropAccessMode.LazyOptimized);
+            TestPropertyAccessOverrides(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void VInterop_PropertyAccessOverrides_Precomputed()
+        public void VInteropPropertyAccessOverridesLazy()
         {
-            Test_PropertyAccessOverrides(InteropAccessMode.Preoptimized);
+            TestPropertyAccessOverrides(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void VInterop_IntPropertySetterWithSimplifiedSyntax()
+        public void VInteropPropertyAccessOverridesPrecomputed()
+        {
+            TestPropertyAccessOverrides(InteropAccessMode.Preoptimized);
+        }
+
+        [Test]
+        public void VInteropIntPropertySetterWithSimplifiedSyntax()
         {
             string script =
                 @"    
@@ -829,7 +829,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_OutOfRangeNumber()
+        public void VInteropOutOfRangeNumber()
         {
             Script s = new();
             long big = long.MaxValue;

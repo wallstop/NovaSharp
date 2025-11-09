@@ -112,7 +112,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_List_ExtMeth_Last()
+        public void RegCollGenListExtMethLast()
         {
             Do(
                 @"
@@ -128,7 +128,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_List_ExtMeth_Sum()
+        public void RegCollGenListExtMethSum()
         {
             Do(
                 @"
@@ -144,7 +144,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnList_Auto()
+        public void RegCollGenIteratorOnListAuto()
         {
             Do(
                 @"
@@ -165,7 +165,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnList_Manual()
+        public void RegCollGenIteratorOnListManual()
         {
             Do(
                 @"
@@ -196,7 +196,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnList_ChangeElem()
+        public void RegCollGenIteratorOnListChangeElem()
         {
             Do(
                 @"
@@ -222,7 +222,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnArray_Auto()
+        public void RegCollGenIteratorOnArrayAuto()
         {
             Do(
                 @"
@@ -242,7 +242,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnArray_ChangeElem()
+        public void RegCollGenIteratorOnArrayChangeElem()
         {
             Do(
                 @"
@@ -268,7 +268,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnMultiDimArray_ChangeElem()
+        public void RegCollGenIteratorOnMultiDimArrayChangeElem()
         {
             Do(
                 @"
@@ -297,7 +297,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnObjList_Auto()
+        public void RegCollGenIteratorOnObjListAuto()
         {
             Do(
                 @"
@@ -318,7 +318,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnObjList_Manual()
+        public void RegCollGenIteratorOnObjListManual()
         {
             Do(
                 @"
@@ -349,7 +349,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGen_IteratorOnObjList_ChangeElem()
+        public void RegCollGenIteratorOnObjListChangeElem()
         {
             Do(
                 @"

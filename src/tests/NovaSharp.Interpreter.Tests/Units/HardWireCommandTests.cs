@@ -4,6 +4,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using NovaSharp;
     using NovaSharp.Commands.Implementations;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter;
     using NUnit.Framework;
 
     [TestFixture]
@@ -11,12 +13,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private TextWriter _originalOut = null!;
         private TextReader _originalIn = null!;
+        private Func<string, Table> _originalDumpLoader = null!;
 
         [SetUp]
         public void SetUp()
         {
             _originalOut = Console.Out;
             _originalIn = Console.In;
+            _originalDumpLoader = HardWireCommand.DumpLoader;
         }
 
         [TearDown]
@@ -24,10 +28,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Console.SetOut(_originalOut);
             Console.SetIn(_originalIn);
+            HardWireCommand.DumpLoader = _originalDumpLoader;
         }
 
         [Test]
-        public void Execute_AbortOnQuit_StopsInteractiveFlow()
+        public void ExecuteAbortOnQuitStopsInteractiveFlow()
         {
             HardWireCommand command = new();
             using StringWriter writer = new();
@@ -40,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_InvalidLuaFile_PromptsForRetry()
+        public void ExecuteInvalidLuaFilePromptsForRetry()
         {
             HardWireCommand command = new();
             using StringWriter writer = new();
@@ -53,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Generate_WithMissingDumpFile_ReportsInternalError()
+        public void GenerateWithMissingDumpFileReportsInternalError()
         {
             using StringWriter writer = new();
             Console.SetOut(writer);
@@ -84,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_InvalidNamespaceRequestsRetry()
+        public void ExecuteInvalidNamespaceRequestsRetry()
         {
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
@@ -111,6 +116,198 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 File.Delete(destPath);
             }
+        }
+
+        [Test]
+        public void GenerateCreatesCSharpSourceFromDump()
+        {
+            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
+
+            HardWireCommand.DumpLoader = _ =>
+            {
+                Script script = new(CoreModules.None);
+                return CreateDescriptorTable(script, "public");
+            };
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+            string output = string.Empty;
+
+            try
+            {
+                HardWireCommand.Generate(
+                    "cs",
+                    dumpPath,
+                    destPath,
+                    false,
+                    "GeneratedTypes",
+                    "GeneratedNamespace"
+                );
+            }
+            finally
+            {
+                Console.SetOut(_originalOut);
+                output = writer.ToString();
+            }
+
+            try
+            {
+                Assert.That(
+                    File.Exists(destPath),
+                    Is.True,
+                    $"Console output:{Environment.NewLine}{output}"
+                );
+                string generated = File.ReadAllText(destPath);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(generated, Does.Contain("namespace GeneratedNamespace"));
+                    Assert.That(generated, Does.Contain("class GeneratedTypes"));
+                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(output, Does.Not.Contain("Internal error"));
+                });
+            }
+            finally
+            {
+                File.Delete(dumpPath);
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
+        [Test]
+        public void GenerateWithInternalVisibilityAndNoInternalsEmitsWarning()
+        {
+            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
+
+            HardWireCommand.DumpLoader = _ =>
+            {
+                Script script = new(CoreModules.None);
+                return CreateDescriptorTable(script, "internal");
+            };
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+            string output = string.Empty;
+
+            try
+            {
+                HardWireCommand.Generate(
+                    "cs",
+                    dumpPath,
+                    destPath,
+                    false,
+                    "GeneratedTypes",
+                    "GeneratedNamespace"
+                );
+            }
+            finally
+            {
+                Console.SetOut(_originalOut);
+                output = writer.ToString();
+            }
+
+            try
+            {
+                Assert.That(
+                    File.Exists(destPath),
+                    Is.True,
+                    $"Console output:{Environment.NewLine}{output}"
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(output, Does.Contain("visibility is 'internal'"));
+                    Assert.That(output, Does.Contain("done: 0 errors, 1 warnings."));
+                });
+            }
+            finally
+            {
+                File.Delete(dumpPath);
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
+        [Test]
+        public void GenerateCreatesVbSourceWhenRequested()
+        {
+            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
+
+            HardWireCommand.DumpLoader = _ =>
+            {
+                Script script = new(CoreModules.None);
+                return CreateDescriptorTable(script, "public");
+            };
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+            string output = string.Empty;
+
+            try
+            {
+                HardWireCommand.Generate(
+                    "vb",
+                    dumpPath,
+                    destPath,
+                    true,
+                    "GeneratedTypes",
+                    "GeneratedNamespace"
+                );
+            }
+            finally
+            {
+                Console.SetOut(_originalOut);
+                output = writer.ToString();
+            }
+
+            try
+            {
+                Assert.That(
+                    File.Exists(destPath),
+                    Is.True,
+                    $"Console output:{Environment.NewLine}{output}"
+                );
+                string generated = File.ReadAllText(destPath);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
+                    Assert.That(generated, Does.Contain("Class GeneratedTypes"));
+                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                });
+            }
+            finally
+            {
+                File.Delete(dumpPath);
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
+        private static Table CreateDescriptorTable(Script script, string visibility)
+        {
+            Table descriptor = new(script);
+            descriptor.Set(
+                "class",
+                DynValue.NewString("NovaSharp.Interpreter.Interop.StandardUserDataDescriptor")
+            );
+            descriptor.Set("visibility", DynValue.NewString(visibility));
+            descriptor.Set("members", DynValue.NewTable(script));
+            descriptor.Set("metamembers", DynValue.NewTable(script));
+
+            Table root = new(script);
+            root.Set("Sample", DynValue.NewTable(descriptor));
+            return root;
         }
     }
 }

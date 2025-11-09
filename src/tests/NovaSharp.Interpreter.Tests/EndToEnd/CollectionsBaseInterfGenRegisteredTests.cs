@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnList_Auto()
+        public void RegCollGenInterfIteratorOnListAuto()
         {
             Do(
                 @"
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnList_Manual()
+        public void RegCollGenInterfIteratorOnListManual()
         {
             Do(
                 @"
@@ -156,7 +156,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnList_ChangeElem()
+        public void RegCollGenInterfIteratorOnListChangeElem()
         {
             Do(
                 @"
@@ -182,7 +182,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnArray_Auto()
+        public void RegCollGenInterfIteratorOnArrayAuto()
         {
             Do(
                 @"
@@ -202,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnArray_ChangeElem()
+        public void RegCollGenInterfIteratorOnArrayChangeElem()
         {
             Do(
                 @"
@@ -228,7 +228,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnObjList_Auto()
+        public void RegCollGenInterfIteratorOnObjListAuto()
         {
             Do(
                 @"
@@ -249,7 +249,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnObjList_Manual()
+        public void RegCollGenInterfIteratorOnObjListManual()
         {
             Do(
                 @"
@@ -280,7 +280,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void RegCollGenInterf_IteratorOnObjList_ChangeElem()
+        public void RegCollGenInterfIteratorOnObjListChangeElem()
         {
             Do(
                 @"

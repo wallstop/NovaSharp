@@ -112,61 +112,61 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Overloads_Varargs1()
+        public void VInteropOverloadsVarargs1()
         {
             RunTestOverload("o:methodV('{0}-{1}', 15, true)", "exact:15-True");
         }
 
         [Test]
-        public void VInterop_Overloads_Varargs2()
+        public void VInteropOverloadsVarargs2()
         {
             RunTestOverload("o:methodV('{0}-{1}-{2}', 15, true, false)", "varargs:15-True-False");
         }
 
         [Test]
-        public void VInterop_Overloads_ByRef()
+        public void VInteropOverloadsByRef()
         {
             RunTestOverload("o:method2('x', 'y')", "v");
         }
 
         [Test]
-        public void VInterop_Overloads_ByRef2()
+        public void VInteropOverloadsByRef2()
         {
             RunTestOverload("o:method2('x', 'y', 5)", "R", true);
         }
 
         [Test]
-        public void VInterop_Overloads_NoParams()
+        public void VInteropOverloadsNoParams()
         {
             RunTestOverload("o:method1()", "1");
         }
 
         [Test]
-        public void VInterop_Overloads_NumDowncast()
+        public void VInteropOverloadsNumDowncast()
         {
             RunTestOverload("o:method1(5)", "3");
         }
 
         [Test]
-        public void VInterop_Overloads_NilSelectsNonOptional()
+        public void VInteropOverloadsNilSelectsNonOptional()
         {
             RunTestOverload("o:method1(5, nil)", "4");
         }
 
         [Test]
-        public void VInterop_Overloads_FullDecl()
+        public void VInteropOverloadsFullDecl()
         {
             RunTestOverload("o:method1(5, nil, 0)", "5");
         }
 
         [Test]
-        public void VInterop_Overloads_Static1()
+        public void VInteropOverloadsStatic1()
         {
             RunTestOverload("s:method1(true)", "s");
         }
 
         [Test]
-        public void VInterop_Overloads_ExtMethods()
+        public void VInteropOverloadsExtMethods()
         {
             UserData.RegisterExtensionType(typeof(VtOverloadsExtMethods));
 
@@ -176,7 +176,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_Overloads_ExtMethods2()
+        public void VInteropOverloadsExtMethods2()
         {
             UserData.RegisterExtensionType(typeof(VtOverloadsExtMethods));
             RunTestOverload("s:method3()", "X3");
@@ -184,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void VInterop_Overloads_Static2()
+        public void VInteropOverloadsStatic2()
         {
             // pollute cache
             RunTestOverload("o:method1(5)", "3");
@@ -193,7 +193,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Overloads_Cache1()
+        public void VInteropOverloadsCache1()
         {
             RunTestOverload("o:method1(5)", "3");
             RunTestOverload("o:method1(5)", "3");
@@ -202,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void VInterop_Overloads_Cache2()
+        public void VInteropOverloadsCache2()
         {
             RunTestOverload("o:method1()", "1");
             RunTestOverload("o:method1(5)", "3");

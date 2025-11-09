@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private string _privateProp;
         }
 
-        public void Test_ConstIntFieldGetter(InteropAccessMode opt)
+        public void TestConstIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(115));
         }
 
-        public void Test_ReadOnlyIntFieldGetter(InteropAccessMode opt)
+        public void TestReadOnlyIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -62,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(123));
         }
 
-        public void Test_ConstIntFieldSetter(InteropAccessMode opt)
+        public void TestConstIntFieldSetter(InteropAccessMode opt)
         {
             try
             {
@@ -93,7 +93,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_ReadOnlyIntFieldSetter(InteropAccessMode opt)
+        public void TestReadOnlyIntFieldSetter(InteropAccessMode opt)
         {
             try
             {
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void Test_IntFieldGetter(InteropAccessMode opt)
+        public void TestIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -146,7 +146,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(321));
         }
 
-        public void Test_NIntFieldGetter(InteropAccessMode opt)
+        public void TestNIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -173,7 +173,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Nil));
         }
 
-        public void Test_ObjFieldGetter(InteropAccessMode opt)
+        public void TestObjFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -204,7 +204,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].UserData.Object, Is.EqualTo(obj1));
         }
 
-        public void Test_IntFieldSetter(InteropAccessMode opt)
+        public void TestIntFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -226,7 +226,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.intProp, Is.EqualTo(19));
         }
 
-        public void Test_NIntFieldSetter(InteropAccessMode opt)
+        public void TestNIntFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -253,7 +253,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj2.nIntProp, Is.EqualTo(19));
         }
 
-        public void Test_ObjFieldSetter(InteropAccessMode opt)
+        public void TestObjFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -280,7 +280,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj2.objProp, Is.EqualTo("hello"));
         }
 
-        public void Test_InvalidFieldSetter(InteropAccessMode opt)
+        public void TestInvalidFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -302,7 +302,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.intProp, Is.EqualTo(19));
         }
 
-        public void Test_StaticFieldAccess(InteropAccessMode opt)
+        public void TestStaticFieldAccess(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -325,154 +325,154 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_IntFieldGetter_None()
+        public void InteropIntFieldGetterNone()
         {
-            Test_IntFieldGetter(InteropAccessMode.Reflection);
+            TestIntFieldGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_IntFieldGetter_Lazy()
+        public void InteropIntFieldGetterLazy()
         {
-            Test_IntFieldGetter(InteropAccessMode.LazyOptimized);
+            TestIntFieldGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_IntFieldGetter_Precomputed()
+        public void InteropIntFieldGetterPrecomputed()
         {
-            Test_IntFieldGetter(InteropAccessMode.Preoptimized);
+            TestIntFieldGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_NIntFieldGetter_None()
+        public void InteropNIntFieldGetterNone()
         {
-            Test_NIntFieldGetter(InteropAccessMode.Reflection);
+            TestNIntFieldGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_NIntFieldGetter_Lazy()
+        public void InteropNIntFieldGetterLazy()
         {
-            Test_NIntFieldGetter(InteropAccessMode.LazyOptimized);
+            TestNIntFieldGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_NIntFieldGetter_Precomputed()
+        public void InteropNIntFieldGetterPrecomputed()
         {
-            Test_NIntFieldGetter(InteropAccessMode.Preoptimized);
+            TestNIntFieldGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_ObjFieldGetter_None()
+        public void InteropObjFieldGetterNone()
         {
-            Test_ObjFieldGetter(InteropAccessMode.Reflection);
+            TestObjFieldGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ObjFieldGetter_Lazy()
+        public void InteropObjFieldGetterLazy()
         {
-            Test_ObjFieldGetter(InteropAccessMode.LazyOptimized);
+            TestObjFieldGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ObjFieldGetter_Precomputed()
+        public void InteropObjFieldGetterPrecomputed()
         {
-            Test_ObjFieldGetter(InteropAccessMode.Preoptimized);
+            TestObjFieldGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_IntFieldSetter_None()
+        public void InteropIntFieldSetterNone()
         {
-            Test_IntFieldSetter(InteropAccessMode.Reflection);
+            TestIntFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_IntFieldSetter_Lazy()
+        public void InteropIntFieldSetterLazy()
         {
-            Test_IntFieldSetter(InteropAccessMode.LazyOptimized);
+            TestIntFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_IntFieldSetter_Precomputed()
+        public void InteropIntFieldSetterPrecomputed()
         {
-            Test_IntFieldSetter(InteropAccessMode.Preoptimized);
+            TestIntFieldSetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_NIntFieldSetter_None()
+        public void InteropNIntFieldSetterNone()
         {
-            Test_NIntFieldSetter(InteropAccessMode.Reflection);
+            TestNIntFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_NIntFieldSetter_Lazy()
+        public void InteropNIntFieldSetterLazy()
         {
-            Test_NIntFieldSetter(InteropAccessMode.LazyOptimized);
+            TestNIntFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_NIntFieldSetter_Precomputed()
+        public void InteropNIntFieldSetterPrecomputed()
         {
-            Test_NIntFieldSetter(InteropAccessMode.Preoptimized);
+            TestNIntFieldSetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_ObjFieldSetter_None()
+        public void InteropObjFieldSetterNone()
         {
-            Test_ObjFieldSetter(InteropAccessMode.Reflection);
+            TestObjFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ObjFieldSetter_Lazy()
+        public void InteropObjFieldSetterLazy()
         {
-            Test_ObjFieldSetter(InteropAccessMode.LazyOptimized);
+            TestObjFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ObjFieldSetter_Precomputed()
+        public void InteropObjFieldSetterPrecomputed()
         {
-            Test_ObjFieldSetter(InteropAccessMode.Preoptimized);
-        }
-
-        [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
-        public void Interop_InvalidFieldSetter_None()
-        {
-            Test_InvalidFieldSetter(InteropAccessMode.Reflection);
+            TestObjFieldSetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void Interop_InvalidFieldSetter_Lazy()
+        public void InteropInvalidFieldSetterNone()
         {
-            Test_InvalidFieldSetter(InteropAccessMode.LazyOptimized);
+            TestInvalidFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void Interop_InvalidFieldSetter_Precomputed()
+        public void InteropInvalidFieldSetterLazy()
         {
-            Test_InvalidFieldSetter(InteropAccessMode.Preoptimized);
+            TestInvalidFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_StaticFieldAccess_None()
+        [ExpectedException(typeof(ScriptRuntimeException))]
+        public void InteropInvalidFieldSetterPrecomputed()
         {
-            Test_StaticFieldAccess(InteropAccessMode.Reflection);
+            TestInvalidFieldSetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_StaticFieldAccess_Lazy()
+        public void InteropStaticFieldAccessNone()
         {
-            Test_StaticFieldAccess(InteropAccessMode.LazyOptimized);
+            TestStaticFieldAccess(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_StaticFieldAccess_Precomputed()
+        public void InteropStaticFieldAccessLazy()
         {
-            Test_StaticFieldAccess(InteropAccessMode.Preoptimized);
+            TestStaticFieldAccess(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_IntFieldSetterWithSimplifiedSyntax()
+        public void InteropStaticFieldAccessPrecomputed()
+        {
+            TestStaticFieldAccess(InteropAccessMode.Preoptimized);
+        }
+
+        [Test]
+        public void InteropIntFieldSetterWithSimplifiedSyntax()
         {
             string script =
                 @"    
@@ -496,75 +496,75 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Interop_ConstIntFieldGetter_None()
+        public void InteropConstIntFieldGetterNone()
         {
-            Test_ConstIntFieldGetter(InteropAccessMode.Reflection);
+            TestConstIntFieldGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ConstIntFieldGetter_Lazy()
+        public void InteropConstIntFieldGetterLazy()
         {
-            Test_ConstIntFieldGetter(InteropAccessMode.LazyOptimized);
+            TestConstIntFieldGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ConstIntFieldGetter_Precomputed()
+        public void InteropConstIntFieldGetterPrecomputed()
         {
-            Test_ConstIntFieldGetter(InteropAccessMode.Preoptimized);
+            TestConstIntFieldGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_ConstIntFieldSetter_None()
+        public void InteropConstIntFieldSetterNone()
         {
-            Test_ConstIntFieldSetter(InteropAccessMode.Reflection);
+            TestConstIntFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ConstIntFieldSetter_Lazy()
+        public void InteropConstIntFieldSetterLazy()
         {
-            Test_ConstIntFieldSetter(InteropAccessMode.LazyOptimized);
+            TestConstIntFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ConstIntFieldSetter_Precomputed()
+        public void InteropConstIntFieldSetterPrecomputed()
         {
-            Test_ConstIntFieldSetter(InteropAccessMode.Preoptimized);
+            TestConstIntFieldSetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldGetter_None()
+        public void InteropReadOnlyIntFieldGetterNone()
         {
-            Test_ReadOnlyIntFieldGetter(InteropAccessMode.Reflection);
+            TestReadOnlyIntFieldGetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldGetter_Lazy()
+        public void InteropReadOnlyIntFieldGetterLazy()
         {
-            Test_ReadOnlyIntFieldGetter(InteropAccessMode.LazyOptimized);
+            TestReadOnlyIntFieldGetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldGetter_Precomputed()
+        public void InteropReadOnlyIntFieldGetterPrecomputed()
         {
-            Test_ReadOnlyIntFieldGetter(InteropAccessMode.Preoptimized);
+            TestReadOnlyIntFieldGetter(InteropAccessMode.Preoptimized);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldSetter_None()
+        public void InteropReadOnlyIntFieldSetterNone()
         {
-            Test_ReadOnlyIntFieldSetter(InteropAccessMode.Reflection);
+            TestReadOnlyIntFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldSetter_Lazy()
+        public void InteropReadOnlyIntFieldSetterLazy()
         {
-            Test_ReadOnlyIntFieldSetter(InteropAccessMode.LazyOptimized);
+            TestReadOnlyIntFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        public void Interop_ReadOnlyIntFieldSetter_Precomputed()
+        public void InteropReadOnlyIntFieldSetterPrecomputed()
         {
-            Test_ReadOnlyIntFieldSetter(InteropAccessMode.Preoptimized);
+            TestReadOnlyIntFieldSetter(InteropAccessMode.Preoptimized);
         }
     }
 }

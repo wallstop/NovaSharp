@@ -6,9 +6,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     public class TailCallTests
     {
         [Test]
-        public void TcoTest_Pre()
+        public void TcoTestPre()
         {
-            // this just verifies the algorithm for TcoTest_Big
+            // this just verifies the algorithm for TcoTestBig
             string script =
                 @"
 				function recsum(num, partial)
@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void TcoTest_Big()
+        public void TcoTestBig()
         {
             // calc the sum of the first N numbers in the most stupid way ever to waste stack and trigger TCO..
             // (this could be a simple X*(X+1) / 2... )

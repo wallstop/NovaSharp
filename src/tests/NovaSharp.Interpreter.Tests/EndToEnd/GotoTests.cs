@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     public class GotoTests
     {
         [Test]
-        public void Goto_Simple_Fwd()
+        public void GotoSimpleFwd()
         {
             string script =
                 @"
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Goto_Simple_Bwd()
+        public void GotoSimpleBwd()
         {
             string script =
                 @"
@@ -56,7 +56,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(SyntaxErrorException))]
-        public void Goto_UndefinedLabel()
+        public void GotoUndefinedLabel()
         {
             string script =
                 @"
@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(SyntaxErrorException))]
-        public void Goto_DoubleDefinedLabel()
+        public void GotoDoubleDefinedLabel()
         {
             string script =
                 @"
@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Goto_RedefinedLabel()
+        public void GotoRedefinedLabel()
         {
             string script =
                 @"
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Goto_RedefinedLabel_Goto()
+        public void GotoRedefinedLabelGoto()
         {
             string script =
                 @"
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(SyntaxErrorException))]
-        public void Goto_UndefinedLabel_2()
+        public void GotoUndefinedLabel2()
         {
             string script =
                 @"
@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(SyntaxErrorException))]
-        public void Goto_VarInScope()
+        public void GotoVarInScope()
         {
             string script =
                 @"
@@ -151,7 +151,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Goto_JumpOutOfBlocks()
+        public void GotoJumpOutOfBlocks()
         {
             string script =
                 @"
@@ -184,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void Goto_JumpOutOfScopes()
+        public void GotoJumpOutOfScopes()
         {
             string script =
                 @"

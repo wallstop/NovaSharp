@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void ConfigProp_SimpleAssign()
+        public void ConfigPropSimpleAssign()
         {
             MyClass x = Test(
                 @"
@@ -78,7 +78,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void ConfigProp_ThrowsOnInvalid()
+        public void ConfigPropThrowsOnInvalid()
         {
             MyClass x = Test(
                 @"

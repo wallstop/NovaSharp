@@ -48,7 +48,7 @@ end
         }
 
         [Test]
-        public void VarArgsTuple_Basic()
+        public void VarArgsTupleBasic()
         {
             DoTest("f(3)", "a: 3 b: nil");
             DoTest("f(3,4)", "a: 3 b: 4");
@@ -58,7 +58,7 @@ end
         }
 
         [Test]
-        public void VarArgsTuple_Intermediate()
+        public void VarArgsTupleIntermediate()
         {
             DoTest("g(3)      	", "a: 3 b: nil arg: {}");
             DoTest("g(3,4)    	", "a: 3 b: 4 arg: {}");
@@ -67,7 +67,7 @@ end
         }
 
         [Test]
-        public void VarArgsTuple_Advanced()
+        public void VarArgsTupleAdvanced()
         {
             //DoTest("h(3)      	", "a: 3 b: nil arg: {}");
             //DoTest("h(3,4)    	", "a: 3 b: 4 arg: {}");
@@ -76,7 +76,7 @@ end
         }
 
         [Test]
-        public void VarArgsTuple_Advanced2()
+        public void VarArgsTupleAdvanced2()
         {
             DoTest("i(3)      	", "a: extra b: 3 arg: {}");
             DoTest("i(3,4)    	", "a: extra b: 3 arg: {4, }");
@@ -85,7 +85,7 @@ end
         }
 
         [Test]
-        public void VarArgsTuple_DontCrash()
+        public void VarArgsTupleDontCrash()
         {
             string script =
                 @"

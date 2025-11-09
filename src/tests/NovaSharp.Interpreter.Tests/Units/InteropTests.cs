@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public class InteropTests
     {
         [Test]
-        public void Converter_FromObject_CoversPrimitiveAndNullableCases()
+        public void ConverterFromObjectCoversPrimitiveAndNullableCases()
         {
             Script script = new();
 
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Converter_FromObject_MarshalsDictionariesToLuaTables()
+        public void ConverterFromObjectMarshalsDictionariesToLuaTables()
         {
             Script script = new();
             Dictionary<string, int> dictionary = new() { ["a"] = 1, ["b"] = 2 };
@@ -51,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TableArguments_AreConvertedToClrDictionaryParameters()
+        public void TableArgumentsAreConvertedToClrDictionaryParameters()
         {
             Script script = new()
             {
@@ -71,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void ObjectRoundTrip_TableToClrObjectAndBack()
+        public void ObjectRoundTripTableToClrObjectAndBack()
         {
             Script script = new();
             DynValue payload = DynValue.FromObject(

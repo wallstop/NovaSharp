@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void LuaSuite_Calls_LocalFunctionRecursion()
+        public void LuaSuiteCallsLocalFunctionRecursion()
         {
             RunTest(
                 @"
@@ -97,7 +97,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void LuaSuite_Calls_Declarations()
+        public void LuaSuiteCallsDeclarations()
         {
             RunTest(
                 @"
@@ -145,7 +145,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void LuaSuite_Calls_Closures()
+        public void LuaSuiteCallsClosures()
         {
             RunTest(
                 @"

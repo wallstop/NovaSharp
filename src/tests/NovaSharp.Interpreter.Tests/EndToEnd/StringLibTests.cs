@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     public class StringLibTests
     {
         [Test]
-        public void String_GMatch_1()
+        public void StringGMatch1()
         {
             string script =
                 @"    
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_1()
+        public void StringFind1()
         {
             string script = @"return string.find('Hello Lua user', 'Lua');";
             DynValue res = Script.RunString(script);
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_2()
+        public void StringFind2()
         {
             string script = @"return string.find('Hello Lua user', 'banana');";
             DynValue res = Script.RunString(script);
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_3()
+        public void StringFind3()
         {
             string script = @"return string.find('Hello Lua user', 'Lua', 1);";
             DynValue res = Script.RunString(script);
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_4()
+        public void StringFind4()
         {
             string script = @"return string.find('Hello Lua user', 'Lua', 8);";
             DynValue res = Script.RunString(script);
@@ -58,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_5()
+        public void StringFind5()
         {
             string script = @"return string.find('Hello Lua user', 'e', -5);";
             DynValue res = Script.RunString(script);
@@ -66,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_6()
+        public void StringFind6()
         {
             string script = @"return string.find('Hello Lua user', '%su');";
             DynValue res = Script.RunString(script);
@@ -74,7 +74,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_7()
+        public void StringFind7()
         {
             string script = @"return string.find('Hello Lua user', '%su', 1);";
             DynValue res = Script.RunString(script);
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_8()
+        public void StringFind8()
         {
             string script = @"return string.find('Hello Lua user', '%su', 1, true);";
             DynValue res = Script.RunString(script);
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_9()
+        public void StringFind9()
         {
             string script =
                 @"
@@ -103,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_10()
+        public void StringFind10()
         {
             string script =
                 @"
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Find_11()
+        public void StringFind11()
         {
             string script =
                 @"
@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Format_1()
+        public void StringFormat1()
         {
             string script =
                 @"
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_GSub_1()
+        public void StringGSub1()
         {
             string script =
                 @"
@@ -224,7 +224,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ScriptRuntimeException))]
-        public void String_GSub_2()
+        public void StringGSub2()
         {
             string script =
                 @"
@@ -234,7 +234,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_GSub_3()
+        public void StringGSub3()
         {
             Script s = new()
             {
@@ -254,7 +254,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        public void String_Match_1()
+        public void StringMatch1()
         {
             string s = @"test.lua:185: field 'day' missing in date table";
             string p = @"^[^:]+:%d+: field 'day' missing in date table";

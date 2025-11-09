@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public class BinDumpStreamTests
     {
         [Test]
-        public void BinDumpBinaryStreams_TestIntWrites()
+        public void BinDumpBinaryStreamsTestIntWrites()
         {
             int[] values = new int[]
             {
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void BinDumpBinaryStreams_TestUIntWrites()
+        public void BinDumpBinaryStreamsTestUIntWrites()
         {
             uint[] values = new uint[]
             {
@@ -89,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void BinDumpBinaryStreams_TestStringWrites()
+        public void BinDumpBinaryStreamsTestStringWrites()
         {
             string[] values = new string[] { "hello", "you", "fool", "hello", "I", "love", "you" };
 
