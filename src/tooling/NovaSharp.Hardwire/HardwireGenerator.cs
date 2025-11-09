@@ -6,8 +6,8 @@ namespace NovaSharp.Hardwire
 {
     public class HardwireGenerator
     {
-        HardwireCodeGenerationContext m_Context;
-        HardwireCodeGenerationLanguage m_Language;
+        readonly HardwireCodeGenerationContext m_Context;
+        readonly HardwireCodeGenerationLanguage m_Language;
 
         public HardwireGenerator(
             string namespaceName,

@@ -5,7 +5,7 @@ namespace NovaSharp.Hardwire
 {
     public static class HardwireGeneratorRegistry
     {
-        static Dictionary<string, IHardwireGenerator> m_Generators = new();
+        static readonly Dictionary<string, IHardwireGenerator> m_Generators = new();
 
         public static void Register(IHardwireGenerator g)
         {

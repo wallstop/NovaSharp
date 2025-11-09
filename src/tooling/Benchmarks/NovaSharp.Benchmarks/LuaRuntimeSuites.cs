@@ -38,7 +38,7 @@ return function ()
     return sum
 end";
 
-    private static readonly string TableMutationScript =
+    private const string TableMutationScript =
         $@"
 return function (source)
     local acc = 0
@@ -52,7 +52,7 @@ return function (source)
     return acc
 end";
 
-    private static readonly string CoroutinePipelineScript =
+    private const string CoroutinePipelineScript =
         $@"
 return function (steps)
     local producer = coroutine.create(function(n)
@@ -73,7 +73,7 @@ return function (steps)
     return last
 end";
 
-    private static readonly string UserDataInteropScript =
+    private const string UserDataInteropScript =
         $@"
 return function (host, iterations)
     local value = 0

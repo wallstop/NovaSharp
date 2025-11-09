@@ -4,7 +4,7 @@ namespace NovaSharp.Commands
 {
     public static class CommandManager
     {
-        static Dictionary<string, ICommand> m_Registry = new();
+        static readonly Dictionary<string, ICommand> m_Registry = new();
 
         public static void Initialize()
         {

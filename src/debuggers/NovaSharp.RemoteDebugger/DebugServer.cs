@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,20 +11,20 @@ namespace NovaSharp.RemoteDebugger
 {
     public class DebugServer : IDebugger, IDisposable
     {
-        List<DynamicExpression> m_Watches = new();
-        HashSet<string> m_WatchesChanging = new();
-        Utf8TcpServer m_Server;
-        Script m_Script;
-        string m_AppName;
-        object m_Lock = new();
-        BlockingQueue<DebuggerAction> m_QueuedActions = new();
-        SourceRef m_LastSentSourceRef = null;
-        bool m_InGetActionLoop = false;
-        bool m_HostBusySent = false;
-        private bool m_RequestPause = false;
-        string[] m_CachedWatches = new string[(int)WatchType.MaxValue];
-        bool m_FreeRunAfterAttach;
-        Regex m_ErrorRegEx = new(@"\A.*\Z");
+        readonly List<DynamicExpression> _watches = new();
+        readonly HashSet<string> _watchesChanging = new();
+        readonly Utf8TcpServer _server;
+        readonly Script _script;
+        readonly string _appName;
+        readonly object _lock = new();
+        readonly BlockingQueue<DebuggerAction> _queuedActions = new();
+        readonly SourceRef _lastSentSourceRef = null;
+        bool _inGetActionLoop = false;
+        bool _hostBusySent = false;
+        private bool _requestPause = false;
+        readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
+        bool _freeRunAfterAttach;
+        Regex _errorRegEx = new(@"\A.*\Z");
 
         public DebugServer(
             string appName,
@@ -37,31 +34,31 @@ namespace NovaSharp.RemoteDebugger
             bool freeRunAfterAttach
         )
         {
-            m_AppName = appName;
+            _appName = appName;
 
-            m_Server = new Utf8TcpServer(port, 1 << 20, '\0', options);
-            m_Server.Start();
-            m_Server.DataReceived += m_Server_DataReceived;
-            m_Script = script;
-            m_FreeRunAfterAttach = freeRunAfterAttach;
+            _server = new Utf8TcpServer(port, 1 << 20, '\0', options);
+            _server.Start();
+            _server.DataReceived += _Server_DataReceived;
+            _script = script;
+            _freeRunAfterAttach = freeRunAfterAttach;
         }
 
         public string AppName
         {
-            get { return m_AppName; }
+            get { return _appName; }
         }
         public int Port
         {
-            get { return m_Server.PortNumber; }
+            get { return _server.PortNumber; }
         }
 
         public string GetState()
         {
-            if (m_HostBusySent)
+            if (_hostBusySent)
             {
                 return "Busy";
             }
-            else if (m_InGetActionLoop)
+            else if (_inGetActionLoop)
             {
                 return "Waiting debugger";
             }
@@ -73,7 +70,7 @@ namespace NovaSharp.RemoteDebugger
 
         public int ConnectedClients()
         {
-            return m_Server.GetConnectedClients();
+            return _server.GetConnectedClients();
         }
 
         #region Writes
@@ -118,7 +115,7 @@ namespace NovaSharp.RemoteDebugger
             xw.Close();
 
             string xml = sb.ToString();
-            m_Server.BroadcastMessage(xml);
+            _server.BroadcastMessage(xml);
         }
 
         private void SendWelcome()
@@ -127,7 +124,7 @@ namespace NovaSharp.RemoteDebugger
             {
                 using (xw.Element("welcome"))
                 {
-                    xw.Attribute("app", m_AppName)
+                    xw.Attribute("app", _appName)
                         .Attribute(
                             "NovaSharpver",
                             Assembly.GetAssembly(typeof(Script)).GetName().Version.ToString()
@@ -135,7 +132,7 @@ namespace NovaSharp.RemoteDebugger
                 }
             });
 
-            SendOption("error_rx", m_ErrorRegEx.ToString());
+            SendOption("error_rx", _errorRegEx.ToString());
         }
 
         public void Update(WatchType watchType, IEnumerable<WatchItem> items)
@@ -149,9 +146,9 @@ namespace NovaSharp.RemoteDebugger
 
             string watchHash = string.Join("|", items.Select(l => l.ToString()).ToArray());
 
-            if (m_CachedWatches[watchIdx] == null || m_CachedWatches[watchIdx] != watchHash)
+            if (_cachedWatches[watchIdx] == null || _cachedWatches[watchIdx] != watchHash)
             {
-                m_CachedWatches[watchIdx] = watchHash;
+                _cachedWatches[watchIdx] = watchHash;
 
                 Send(xw =>
                 {
@@ -217,29 +214,29 @@ namespace NovaSharp.RemoteDebugger
 
         public void QueueAction(DebuggerAction action)
         {
-            m_QueuedActions.Enqueue(action);
+            _queuedActions.Enqueue(action);
         }
 
         public DebuggerAction GetAction(int ip, SourceRef sourceref)
         {
             try
             {
-                if (m_FreeRunAfterAttach)
+                if (_freeRunAfterAttach)
                 {
-                    m_FreeRunAfterAttach = false;
+                    _freeRunAfterAttach = false;
                     return new DebuggerAction() { Action = DebuggerAction.ActionType.Run };
                 }
 
-                m_InGetActionLoop = true;
-                m_RequestPause = false;
+                _inGetActionLoop = true;
+                _requestPause = false;
 
-                if (m_HostBusySent)
+                if (_hostBusySent)
                 {
-                    m_HostBusySent = false;
+                    _hostBusySent = false;
                     SendMessage("Host ready!");
                 }
 
-                if (sourceref != m_LastSentSourceRef)
+                if (sourceref != _lastSentSourceRef)
                 {
                     Send(xw =>
                     {
@@ -249,27 +246,25 @@ namespace NovaSharp.RemoteDebugger
 
                 while (true)
                 {
-                    DebuggerAction da = m_QueuedActions.Dequeue();
+                    DebuggerAction da = _queuedActions.Dequeue();
 
                     if (
                         da.Action == DebuggerAction.ActionType.Refresh
                         || da.Action == DebuggerAction.ActionType.HardRefresh
                     )
                     {
-                        lock (m_Lock)
+                        lock (_lock)
                         {
                             HashSet<string> existing = new();
 
                             // remove all not present anymore
-                            m_Watches.RemoveAll(de =>
-                                !m_WatchesChanging.Contains(de.ExpressionCode)
-                            );
+                            _watches.RemoveAll(de => !_watchesChanging.Contains(de.ExpressionCode));
 
                             // add all missing
-                            existing.UnionWith(m_Watches.Select(de => de.ExpressionCode));
+                            existing.UnionWith(_watches.Select(de => de.ExpressionCode));
 
-                            m_Watches.AddRange(
-                                m_WatchesChanging
+                            _watches.AddRange(
+                                _watchesChanging
                                     .Where(code => !existing.Contains(code))
                                     .Select(code => CreateDynExpr(code))
                             );
@@ -295,7 +290,7 @@ namespace NovaSharp.RemoteDebugger
             }
             finally
             {
-                m_InGetActionLoop = false;
+                _inGetActionLoop = false;
             }
         }
 
@@ -303,12 +298,12 @@ namespace NovaSharp.RemoteDebugger
         {
             try
             {
-                return m_Script.CreateDynamicExpression(code);
+                return _script.CreateDynamicExpression(code);
             }
             catch (Exception ex)
             {
                 SendMessage(string.Format("Error setting watch {0} :\n{1}", code, ex.Message));
-                return m_Script.CreateConstantDynamicExpression(
+                return _script.CreateConstantDynamicExpression(
                     code,
                     DynValue.NewString(ex.Message)
                 );
@@ -327,7 +322,7 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
-        void m_Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
+        void _Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
             XmlDocument xdoc = new();
             xdoc.LoadXml(e.Message);
@@ -341,7 +336,7 @@ namespace NovaSharp.RemoteDebugger
                         using (xw.Element("allow-access-from"))
                         {
                             xw.Attribute("domain", "*");
-                            xw.Attribute("to-ports", m_Server.PortNumber);
+                            xw.Attribute("to-ports", _server.PortNumber);
                         }
                     }
                 });
@@ -358,9 +353,9 @@ namespace NovaSharp.RemoteDebugger
                     case "handshake":
                         SendWelcome();
 
-                        for (int i = 0; i < m_Script.SourceCodeCount; i++)
+                        for (int i = 0; i < _script.SourceCodeCount; i++)
                         {
-                            SetSourceCode(m_Script.GetSourceCode(i));
+                            SetSourceCode(_script.GetSourceCode(i));
                         }
 
                         break;
@@ -370,11 +365,11 @@ namespace NovaSharp.RemoteDebugger
                         );
                         break;
                     case "refresh":
-                        lock (m_Lock)
+                        lock (_lock)
                         {
                             for (int i = 0; i < (int)WatchType.MaxValue; i++)
                             {
-                                m_CachedWatches[i] = null;
+                                _cachedWatches[i] = null;
                             }
                         }
                         QueueRefresh();
@@ -395,16 +390,16 @@ namespace NovaSharp.RemoteDebugger
                         );
                         break;
                     case "pause":
-                        m_RequestPause = true;
+                        _requestPause = true;
                         break;
                     case "error_rx":
-                        m_ErrorRegEx = new Regex(arg.Trim());
-                        SendOption("error_rx", m_ErrorRegEx.ToString());
+                        _errorRegEx = new Regex(arg.Trim());
+                        SendOption("error_rx", _errorRegEx.ToString());
                         break;
                     case "addwatch":
-                        lock (m_Lock)
+                        lock (_lock)
                         {
-                            m_WatchesChanging.UnionWith(
+                            _watchesChanging.UnionWith(
                                 arg.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                                     .Select(s => s.Trim())
                             );
@@ -413,7 +408,7 @@ namespace NovaSharp.RemoteDebugger
                         QueueRefresh();
                         break;
                     case "delwatch":
-                        lock (m_Lock)
+                        lock (_lock)
                         {
                             string[] args = arg.Split(
                                 new char[] { ',' },
@@ -422,7 +417,7 @@ namespace NovaSharp.RemoteDebugger
 
                             foreach (string a in args)
                             {
-                                m_WatchesChanging.Remove(a);
+                                _watchesChanging.Remove(a);
                             }
                         }
                         QueueRefresh();
@@ -457,10 +452,10 @@ namespace NovaSharp.RemoteDebugger
 
         private void QueueRefresh()
         {
-            if (!m_InGetActionLoop)
+            if (!_inGetActionLoop)
             {
                 SendMessage("Host busy, wait for it to become ready...");
-                m_HostBusySent = true;
+                _hostBusySent = true;
             }
 
             QueueAction(new DebuggerAction() { Action = DebuggerAction.ActionType.HardRefresh });
@@ -487,12 +482,12 @@ namespace NovaSharp.RemoteDebugger
 
         public List<DynamicExpression> GetWatchItems()
         {
-            return m_Watches;
+            return _watches;
         }
 
         public bool IsPauseRequested()
         {
-            return m_RequestPause;
+            return _requestPause;
         }
 
         public void SignalExecutionEnded()
@@ -517,13 +512,13 @@ namespace NovaSharp.RemoteDebugger
         public bool SignalRuntimeException(ScriptRuntimeException ex)
         {
             SendMessage(string.Format("Error: {0}", ex.DecoratedMessage));
-            m_RequestPause = m_ErrorRegEx.IsMatch(ex.Message);
+            _requestPause = _errorRegEx.IsMatch(ex.Message);
             return IsPauseRequested();
         }
 
         public void Dispose()
         {
-            m_Server.Dispose();
+            _server.Dispose();
         }
 
         public void SetDebugService(DebugService debugService) { }
