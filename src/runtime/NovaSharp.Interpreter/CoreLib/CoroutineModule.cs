@@ -33,19 +33,10 @@ namespace NovaSharp.Interpreter.CoreLib
                 args.AsType(0, "wrap", DataType.Function); // this throws
             }
 
-            DynValue v = Create(executionContext, args);
-            DynValue c = DynValue.NewCallback(__wrap_wrapper);
-            c.Callback.AdditionalData = v;
-            return c;
-        }
-
-        public static DynValue __wrap_wrapper(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
-        {
-            DynValue handle = (DynValue)executionContext.AdditionalData;
-            return handle.Coroutine.Resume(args.GetArray());
+            DynValue handle = Create(executionContext, args);
+            return DynValue.NewCallback(
+                (ctx, callArgs) => handle.Coroutine.Resume(callArgs.GetArray())
+            );
         }
 
         [NovaSharpModuleMethod(Name = "resume")]
@@ -140,6 +131,15 @@ namespace NovaSharp.Interpreter.CoreLib
                 default:
                     throw new InternalErrorException("Unexpected coroutine state {0}", cs);
             }
+        }
+
+        [NovaSharpModuleMethod(Name = "isyieldable")]
+        public static DynValue IsYieldable(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            return DynValue.NewBoolean(executionContext.IsYieldable());
         }
     }
 }

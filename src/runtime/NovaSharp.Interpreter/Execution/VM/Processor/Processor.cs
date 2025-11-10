@@ -24,6 +24,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         private int _savedInstructionPtr = -1;
         private readonly DebugContext _debug;
 
+        internal bool CanYield
+        {
+            get { return _canYield; }
+        }
+
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
             _valueStack = new FastStack<DynValue>(STACK_SIZE);

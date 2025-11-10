@@ -1,5 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
     using NovaSharp;
     using NovaSharp.Interpreter;
     using NUnit.Framework;
@@ -95,6 +98,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("bad argument #1 to 'wrap'")
+            );
+        }
+
+        [Test]
+        public void CreateRequiresFunctionArgument()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue createFunc = script.Globals.Get("coroutine").Table.Get("create");
+
+            Assert.That(
+                () => script.Call(createFunc, DynValue.NewString("oops")),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("bad argument #1 to 'create'")
             );
         }
 
@@ -203,6 +220,464 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("bad argument #1 to 'resume'")
             );
+        }
+
+        [Test]
+        public void ResumeFlattensNestedTupleResults()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function returningTuple()
+                    return 'tag', coroutine.running()
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("returningTuple"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.EqualTo(4));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("tag"));
+                Assert.That(result.Tuple[2].Type, Is.EqualTo(DataType.Thread));
+                Assert.That(result.Tuple[3].Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void ResumeDeeplyNestedTuplesAreFlattened()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildDeepCoroutine()
+                    local function deepest()
+                        return 'deep', 'value'
+                    end
+
+                    local function middle()
+                        return coroutine.resume(coroutine.create(deepest))
+                    end
+
+                    local function top()
+                        return 'top', coroutine.resume(coroutine.create(middle))
+                    end
+
+                    return coroutine.create(top)
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.Call(script.Globals.Get("buildDeepCoroutine"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.EqualTo(6));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("top"));
+                Assert.That(result.Tuple[2].Boolean, Is.True);
+                Assert.That(result.Tuple[3].Boolean, Is.True);
+                Assert.That(result.Tuple[4].String, Is.EqualTo("deep"));
+                Assert.That(result.Tuple[5].String, Is.EqualTo("value"));
+            });
+        }
+
+        [Test]
+        public void ResumeForwardsArgumentsToCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function sum(...)
+                    local total = 0
+                    for i = 1, select('#', ...) do
+                        total = total + select(i, ...)
+                    end
+                    return total
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("sum"));
+
+            DynValue result = script.Call(
+                resumeFunc,
+                coroutineValue,
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(5)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.EqualTo(2));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].Number, Is.EqualTo(10));
+            });
+        }
+
+        [Test]
+        public void WrapForwardsArgumentsToCoroutineFunction()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildConcatWrapper()
+                    return coroutine.wrap(function(a, b, c)
+                        return table.concat({a, b, c}, '-')
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("buildConcatWrapper"));
+            DynValue result = script.Call(
+                wrapper,
+                DynValue.NewString("alpha"),
+                DynValue.NewString("beta"),
+                DynValue.NewString("gamma")
+            );
+
+            Assert.That(result.String, Is.EqualTo("alpha-beta-gamma"));
+        }
+
+        [Test]
+        public void IsYieldableReturnsFalseOnMainCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+
+            DynValue result = script.Call(isYieldableFunc);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(result.Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void IsYieldableReturnsTrueInsideCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildYieldableChecker()
+                    return coroutine.wrap(function()
+                        return coroutine.isyieldable()
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapperBuilder = script.Globals.Get("buildYieldableChecker");
+            DynValue wrapper = script.Call(wrapperBuilder);
+            DynValue result = script.Call(wrapper);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(result.Boolean, Is.True);
+            });
+        }
+
+        [Test]
+        public void WrapPropagatesErrorsToCaller()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildErrorWrapper()
+                    return coroutine.wrap(function()
+                        error('wrap boom', 0)
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("buildErrorWrapper"));
+
+            Assert.That(
+                () => script.Call(wrapper),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("wrap boom")
+            );
+        }
+
+        [Test]
+        public void WrapPropagatesErrorsAfterYield()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildDelayedErrorWrapper()
+                    return coroutine.wrap(function()
+                        coroutine.yield('first')
+                        error('wrap later', 0)
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("buildDelayedErrorWrapper"));
+            DynValue first = script.Call(wrapper);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.String));
+                Assert.That(first.String, Is.EqualTo("first"));
+            });
+
+            Assert.That(
+                () => script.Call(wrapper),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("wrap later")
+            );
+        }
+
+        [Test]
+        public void ResumeForceSuspendedCoroutineRejectsArguments()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function heavy()
+                    local sum = 0
+                    for i = 1, 200 do
+                        sum = sum + i
+                    end
+                    return sum
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavy"));
+            coroutineValue.Coroutine.AutoYieldCounter = 1;
+
+            DynValue first = script.Call(resumeFunc, coroutineValue);
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(first.Tuple[0].Boolean, Is.True);
+                Assert.That(first.Tuple[1].Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(first.Tuple[1].YieldRequest.Forced, Is.True);
+            });
+
+            Assert.That(
+                () => script.Call(resumeFunc, coroutineValue, DynValue.NewNumber(42)),
+                Throws.TypeOf<ArgumentException>().With.Message.Contains("args must be empty")
+            );
+        }
+
+        [Test]
+        public void IsYieldableReturnsFalseInsideClrCallback()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+
+            script.Globals["clrCheck"] = DynValue.NewCallback(
+                (context, _) =>
+                {
+                    DynValue value = context.Call(isYieldableFunc);
+                    return value;
+                }
+            );
+
+            script.DoString(
+                @"
+                function invokeClrCheck()
+                    return clrCheck()
+                end
+            "
+            );
+
+            DynValue result = script.Call(script.Globals.Get("invokeClrCheck"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(result.Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void WrapWithPcallCapturesErrors()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildPcallWrapper()
+                    return coroutine.wrap(function()
+                        error('wrapped failure', 0)
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("buildPcallWrapper"));
+            DynValue pcall = script.Globals.Get("pcall");
+            DynValue result = script.Call(pcall, wrapper);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.GreaterThanOrEqualTo(2));
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(result.Tuple[1].String, Does.Contain("wrapped failure"));
+            });
+        }
+
+        [Test]
+        public void WrapWithPcallReturnsYieldedValues()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function buildYieldingWrapper()
+                    local step = 0
+                    return coroutine.wrap(function()
+                        step = step + 1
+                        coroutine.yield('first')
+                        return 'complete', step
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("buildYieldingWrapper"));
+            DynValue pcall = script.Globals.Get("pcall");
+
+            DynValue first = script.Call(pcall, wrapper);
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Tuple[0].Boolean, Is.True);
+                Assert.That(first.Tuple[1].String, Is.EqualTo("first"));
+            });
+
+            DynValue second = script.Call(pcall, wrapper);
+            Assert.Multiple(() =>
+            {
+                Assert.That(second.Tuple[0].Boolean, Is.True);
+                Assert.That(second.Tuple[1].String, Is.EqualTo("complete"));
+                Assert.That(second.Tuple[2].Number, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void ResumeFromDifferentThreadThrowsInvalidOperation()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            ManualResetEventSlim entered = new(false);
+            ManualResetEventSlim allowCompletion = new(false);
+
+            script.Globals["waitForSignal"] = DynValue.NewCallback(
+                (_, _) =>
+                {
+                    entered.Set();
+                    allowCompletion.Wait();
+                    return DynValue.Nil;
+                }
+            );
+
+            script.DoString(
+                @"
+                function pause()
+                    waitForSignal()
+                    return 'done'
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
+
+            Task<DynValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
+            try
+            {
+                Assert.That(entered.Wait(TimeSpan.FromSeconds(2)), Is.True);
+
+                Assert.That(
+                    () => script.Call(resumeFunc, coroutineValue),
+                    Throws
+                        .TypeOf<InvalidOperationException>()
+                        .With.Message.Contains("Cannot enter the same NovaSharp processor")
+                );
+            }
+            finally
+            {
+                allowCompletion.Set();
+            }
+
+            DynValue result = background.GetAwaiter().GetResult();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("done"));
+            });
+        }
+
+        [Test]
+        public void ResumeDeadCoroutineReturnsErrorTuple()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function finish()
+                    return 'completed'
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("finish"));
+
+            DynValue first = script.Call(resumeFunc, coroutineValue);
+            Assert.That(first.Tuple[0].Boolean, Is.True);
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(result.Tuple[1].String, Does.Contain("cannot resume dead coroutine"));
+            });
+        }
+
+        [Test]
+        public void YieldReturnsYieldRequestWithArguments()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue yieldFunc = script.Globals.Get("coroutine").Table.Get("yield");
+
+            DynValue result = script.Call(
+                yieldFunc,
+                DynValue.NewNumber(7),
+                DynValue.NewString("value")
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(result.YieldRequest.Forced, Is.False);
+                Assert.That(result.YieldRequest.returnValues, Is.Not.Null);
+                Assert.That(result.YieldRequest.returnValues.Length, Is.EqualTo(2));
+                Assert.That(result.YieldRequest.returnValues[0].Number, Is.EqualTo(7));
+                Assert.That(result.YieldRequest.returnValues[1].String, Is.EqualTo("value"));
+            });
         }
     }
 }

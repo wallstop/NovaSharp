@@ -121,6 +121,23 @@ namespace NovaSharp.Interpreter
             return _processor.AssociatedCoroutine;
         }
 
+        internal bool IsYieldable()
+        {
+            if (_processor == null || IsDynamicExecution)
+            {
+                return false;
+            }
+
+            Coroutine coroutine = _processor.AssociatedCoroutine;
+
+            if (coroutine == null || coroutine.State == CoroutineState.Main)
+            {
+                return false;
+            }
+
+            return _processor.CanYield;
+        }
+
         /// <summary>
         /// Calls a callback function implemented in "classic way".
         /// Useful to port C code from Lua, or C# code from UniLua and KopiLua.
