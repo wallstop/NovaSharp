@@ -69,5 +69,90 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(charCount, Is.EqualTo(bytes.Length));
         }
+
+        [Test]
+        public void GetBytesThrowsWhenDestinationTooSmall()
+        {
+            BinaryEncoding encoding = new BinaryEncoding();
+            char[] chars = new[] { 'a', 'b' };
+            byte[] buffer = new byte[1];
+
+            Assert.That(
+                () => encoding.GetBytes(chars, 0, chars.Length, buffer, 0),
+                Throws.TypeOf<ArgumentException>()
+            );
+        }
+
+        [Test]
+        public void GetBytesThrowsWhenArgumentsOutOfRange()
+        {
+            BinaryEncoding encoding = new BinaryEncoding();
+            char[] chars = new[] { 'a' };
+            byte[] buffer = new byte[2];
+
+            Assert.That(
+                () => encoding.GetBytes(chars, 1, 1, buffer, 0),
+                Throws.TypeOf<ArgumentOutOfRangeException>()
+            );
+        }
+
+        [Test]
+        public void GetCharsThrowsWhenDestinationTooSmall()
+        {
+            BinaryEncoding encoding = new BinaryEncoding();
+            byte[] bytes = new byte[] { 0x01, 0x02 };
+            char[] chars = new char[1];
+
+            Assert.That(
+                () => encoding.GetChars(bytes, 0, bytes.Length, chars, 0),
+                Throws.TypeOf<ArgumentException>()
+            );
+        }
+
+        [Test]
+        public void NullBuffersThrowArgumentNullException()
+        {
+            BinaryEncoding encoding = new BinaryEncoding();
+            byte[] bytes = new byte[1];
+            char[] chars = new[] { 'a' };
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => encoding.GetBytes(null, 0, 0, bytes, 0),
+                    Throws.TypeOf<ArgumentNullException>()
+                );
+                Assert.That(
+                    () => encoding.GetBytes(chars, 0, 1, null, 0),
+                    Throws.TypeOf<ArgumentNullException>()
+                );
+                Assert.That(
+                    () => encoding.GetChars(null, 0, 0, new char[1], 0),
+                    Throws.TypeOf<ArgumentNullException>()
+                );
+                Assert.That(
+                    () => encoding.GetChars(bytes, 0, 1, null, 0),
+                    Throws.TypeOf<ArgumentNullException>()
+                );
+            });
+        }
+
+        [Test]
+        public void NegativeMaxCountsThrowArgumentOutOfRange()
+        {
+            BinaryEncoding encoding = new BinaryEncoding();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => encoding.GetMaxByteCount(-1),
+                    Throws.TypeOf<ArgumentOutOfRangeException>()
+                );
+                Assert.That(
+                    () => encoding.GetMaxCharCount(-1),
+                    Throws.TypeOf<ArgumentOutOfRangeException>()
+                );
+            });
+        }
     }
 }
