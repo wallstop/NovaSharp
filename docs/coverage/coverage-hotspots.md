@@ -13,12 +13,10 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 | Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
 |-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.CoreLib.IO.BinaryEncoding` | 0.0 | 0.0 | 0 / 11 | Runtime | Add read/write regression tests for binary IO edge cases (little/big endian conversions). |
-| `NovaSharp.Interpreter.Loaders.InvalidScriptLoader` | 0.0 | 0.0 | 0 / 9 | Tooling | Exercise failure paths to verify loader diagnostics/messages stay stable. |
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 0.0 | – | 0 / 33 | Interop | Cover hardwired property dispatch before Roslyn generator removes reflection. |
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` | 0.0 | – | 0 / 10 | Interop | Add invocation tests to validate method wiring without reflection. |
-| `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 0.0 | 0.0 | 0 / 95 | Interop | Build targeted tests for conversion/operator metadata; feeds the reflection-free effort. |
-| `NovaSharp.Interpreter.Interop.RegistrationPolicies.PermanentRegistrationPolicy` | 0.0 | – | 0 / 2 | Interop | Ensure registration policies stay covered as Roslyn-generated descriptors replace reflection.
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 0.0 | – | 0 / 33 | Interop | New unit fixtures hit read/write paths; investigate why coverage still reports 0 % (likely instrumentation quirk) and add more observable entry points if needed. |
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` | 0.0 | – | 0 / 10 | Interop | Invocation tests exist; verify instrumentation or introduce additional surface to ensure coverage reflects execution. |
+| `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 0.0 | 0.0 | 0 / 95 | Interop | Extreme-path tests now exercise qualified operator names/null guards, yet coverage remains 0 %; inspect instrumentation or adjust code to ensure lines are tracked. |
+| `NovaSharp.Interpreter.Interop.RegistrationPolicies.PermanentRegistrationPolicy` | 0.0 | – | 0 / 2 | Interop | Tests cover all decision paths; coverage still 0 %—confirm instrumentation and consider moving logic into non-inline helpers if needed.
 
 ## Yellow List (line 50–89 %)
 - `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Fresh tests now cover logarithms, power, modf, min/max, ldexp, deterministic random sequences, and NaN/overflow behaviors; remaining gaps are random range bounds and trig conversions under extreme inputs.

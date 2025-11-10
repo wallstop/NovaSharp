@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Interop
 {
+    using System;
+
     /// <summary>
     /// Helps identifying a reflection special name
     /// </summary>
@@ -58,6 +60,11 @@ namespace NovaSharp.Interpreter.Interop
         public ReflectionSpecialName(string name)
             : this()
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException("Special name cannot be null or empty.", nameof(name));
+            }
+
             if (name.Contains("."))
             {
                 string[] split = name.Split('.');
