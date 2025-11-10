@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataStructs
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -10,7 +11,7 @@ namespace NovaSharp.Interpreter.DataStructs
     internal class MultiDictionary<TK, TV>
     {
         private readonly Dictionary<TK, List<TV>> _map;
-        private readonly TV[] _defaultRet = new TV[0];
+        private readonly TV[] _defaultRet = Array.Empty<TV>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MultiDictionary{K, V}"/> class.

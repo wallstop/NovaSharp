@@ -72,7 +72,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     supportsEvaluateForHovers = false,
 
                     // This debug adapter does not support exception breakpoint filters
-                    exceptionBreakpointFilters = new object[0],
+                    exceptionBreakpointFilters = Array.Empty<object>(),
                 }
             );
 

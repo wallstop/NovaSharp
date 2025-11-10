@@ -4,6 +4,10 @@ namespace NovaSharp.Interpreter.Errors
     using Debugging;
     using NovaSharp.Interpreter.Tree.Lexer;
     using Tree;
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+    using System.Runtime.Serialization;
+#endif
+
 
     /// <summary>
     /// Exception for all parsing/lexing errors.
@@ -14,6 +18,19 @@ namespace NovaSharp.Interpreter.Errors
     public class SyntaxErrorException : InterpreterException
     {
         internal Token Token { get; private set; }
+
+        public SyntaxErrorException() { }
+
+        public SyntaxErrorException(string message)
+            : base(message) { }
+
+        public SyntaxErrorException(string message, Exception innerException)
+            : base(message, innerException) { }
+
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+        protected SyntaxErrorException(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
+#endif
 
         /// <summary>
         /// Gets or sets a value indicating whether this exception was caused by premature stream termination (that is, unexpected EOF).

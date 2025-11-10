@@ -4,6 +4,10 @@ namespace NovaSharp.Interpreter.Errors
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+    using System.Runtime.Serialization;
+#endif
+
 
     /// <summary>
     /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods
@@ -14,6 +18,14 @@ namespace NovaSharp.Interpreter.Errors
 #endif
     public class ScriptRuntimeException : InterpreterException
     {
+        public ScriptRuntimeException() { }
+
+        public ScriptRuntimeException(string message)
+            : base(message) { }
+
+        public ScriptRuntimeException(string message, Exception innerException)
+            : base(message, innerException) { }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
         /// </summary>
@@ -36,16 +48,16 @@ namespace NovaSharp.Interpreter.Errors
         /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
-        public ScriptRuntimeException(string message)
-            : base(message) { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
-        /// </summary>
-        /// <param name="format">The format.</param>
-        /// <param name="args">The arguments.</param>
         public ScriptRuntimeException(string format, params object[] args)
             : base(format, args) { }
+
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScriptRuntimeException" /> class with serialized data.
+        /// </summary>
+        protected ScriptRuntimeException(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
+#endif
 
         /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that

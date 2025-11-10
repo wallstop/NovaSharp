@@ -3,6 +3,10 @@ namespace NovaSharp.Interpreter.Errors
     using System;
     using System.Collections.Generic;
     using Debugging;
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+    using System.Runtime.Serialization;
+#endif
+
 
     /// <summary>
     /// Base type of all exceptions thrown in NovaSharp
@@ -12,6 +16,14 @@ namespace NovaSharp.Interpreter.Errors
 #endif
     public class InterpreterException : Exception
     {
+        public InterpreterException() { }
+
+        public InterpreterException(string message)
+            : base(message) { }
+
+        public InterpreterException(string message, Exception innerException)
+            : base(message, innerException) { }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
         /// </summary>
@@ -29,17 +41,20 @@ namespace NovaSharp.Interpreter.Errors
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
         /// </summary>
-        /// <param name="message">The message that describes the error.</param>
-        protected InterpreterException(string message)
-            : base(message) { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="InterpreterException"/> class.
-        /// </summary>
         /// <param name="format">The format.</param>
         /// <param name="args">The arguments.</param>
         protected InterpreterException(string format, params object[] args)
             : base(string.Format(format, args)) { }
+
+#if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InterpreterException" /> class with serialized data.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that holds the serialized object data.</param>
+        /// <param name="context">The contextual information about the source or destination.</param>
+        protected InterpreterException(SerializationInfo info, StreamingContext context)
+            : base(info, context) { }
+#endif
 
         /// <summary>
         /// Gets the instruction pointer of the execution (if it makes sense)

@@ -221,11 +221,12 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class Capabilities : ResponseBody
     {
-        public bool supportsConfigurationDoneRequest;
-        public bool supportsFunctionBreakpoints;
-        public bool supportsConditionalBreakpoints;
-        public bool supportsEvaluateForHovers;
-        public object[] exceptionBreakpointFilters;
+        public bool supportsConfigurationDoneRequest { get; init; }
+        public bool supportsFunctionBreakpoints { get; init; }
+        public bool supportsConditionalBreakpoints { get; init; }
+        public bool supportsEvaluateForHovers { get; init; }
+        public IReadOnlyList<object> exceptionBreakpointFilters { get; init; } =
+            Array.Empty<object>();
     }
 
     public class ErrorResponseBody : ResponseBody
@@ -240,68 +241,68 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class StackTraceResponseBody : ResponseBody
     {
-        public StackFrame[] StackFrames { get; private set; }
+        public IReadOnlyList<StackFrame> StackFrames { get; }
 
         public StackTraceResponseBody(List<StackFrame> frames = null)
         {
             if (frames == null)
             {
-                StackFrames = new StackFrame[0];
+                StackFrames = Array.Empty<StackFrame>();
             }
             else
             {
-                StackFrames = frames.ToArray<StackFrame>();
+                StackFrames = frames.ToArray();
             }
         }
     }
 
     public class ScopesResponseBody : ResponseBody
     {
-        public Scope[] Scopes { get; private set; }
+        public IReadOnlyList<Scope> Scopes { get; }
 
         public ScopesResponseBody(List<Scope> scps = null)
         {
             if (scps == null)
             {
-                Scopes = new Scope[0];
+                Scopes = Array.Empty<Scope>();
             }
             else
             {
-                Scopes = scps.ToArray<Scope>();
+                Scopes = scps.ToArray();
             }
         }
     }
 
     public class VariablesResponseBody : ResponseBody
     {
-        public Variable[] Variables { get; private set; }
+        public IReadOnlyList<Variable> Variables { get; }
 
         public VariablesResponseBody(List<Variable> vars = null)
         {
             if (vars == null)
             {
-                Variables = new Variable[0];
+                Variables = Array.Empty<Variable>();
             }
             else
             {
-                Variables = vars.ToArray<Variable>();
+                Variables = vars.ToArray();
             }
         }
     }
 
     public class ThreadsResponseBody : ResponseBody
     {
-        public Thread[] Threads { get; private set; }
+        public IReadOnlyList<Thread> Threads { get; }
 
         public ThreadsResponseBody(List<Thread> vars = null)
         {
             if (vars == null)
             {
-                Threads = new Thread[0];
+                Threads = Array.Empty<Thread>();
             }
             else
             {
-                Threads = vars.ToArray<Thread>();
+                Threads = vars.ToArray();
             }
         }
     }
@@ -321,17 +322,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class SetBreakpointsResponseBody : ResponseBody
     {
-        public Breakpoint[] Breakpoints { get; private set; }
+        public IReadOnlyList<Breakpoint> Breakpoints { get; }
 
         public SetBreakpointsResponseBody(List<Breakpoint> bpts = null)
         {
             if (bpts == null)
             {
-                Breakpoints = new Breakpoint[0];
+                Breakpoints = Array.Empty<Breakpoint>();
             }
             else
             {
-                Breakpoints = bpts.ToArray<Breakpoint>();
+                Breakpoints = bpts.ToArray();
             }
         }
     }
