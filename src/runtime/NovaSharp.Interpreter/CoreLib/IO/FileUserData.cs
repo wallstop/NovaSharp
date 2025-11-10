@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     {
         public FileUserData(Script script, string filename, Encoding encoding, string mode)
         {
-            Stream stream = Script.GlobalOptions.Platform.IO_OpenFile(
+            Stream stream = Script.GlobalOptions.Platform.OpenFile(
                 script,
                 filename,
                 encoding,

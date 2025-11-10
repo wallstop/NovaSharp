@@ -4,6 +4,7 @@ namespace NovaSharp.Commands.Implementations
     using System.IO;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Modules;
 
     internal sealed class CompileCommand : ICommand
     {

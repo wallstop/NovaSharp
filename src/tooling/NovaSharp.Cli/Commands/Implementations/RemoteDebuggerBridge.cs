@@ -1,12 +1,13 @@
 namespace NovaSharp.Commands.Implementations
 {
+    using NovaSharp.Interpreter;
     using RemoteDebugger;
 
-    internal interface IRemoteDebuggerBridge
+    public interface IRemoteDebuggerBridge
     {
-        void Attach(Interpreter.Script script, string scriptName, bool freeRunAfterAttach);
+        public void Attach(Script script, string scriptName, bool freeRunAfterAttach);
 
-        string HttpUrlStringLocalHost { get; }
+        public string HttpUrlStringLocalHost { get; }
     }
 
     internal sealed class RemoteDebuggerServiceBridge : IRemoteDebuggerBridge
@@ -21,7 +22,7 @@ namespace NovaSharp.Commands.Implementations
             _service = service;
         }
 
-        public void Attach(Interpreter.Script script, string scriptName, bool freeRunAfterAttach)
+        public void Attach(Script script, string scriptName, bool freeRunAfterAttach)
         {
             _service.Attach(script, scriptName, freeRunAfterAttach);
         }

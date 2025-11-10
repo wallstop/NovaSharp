@@ -1,5 +1,9 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
 #pragma warning disable 169 // unused private field

@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Modules
                 RegisterModuleType<MetaTableModule>(table);
             }
 
-            if (modules.Has(CoreModules.String))
+            if (modules.Has(CoreModules.StringLib))
             {
                 RegisterModuleType<StringModule>(table);
             }

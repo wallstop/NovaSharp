@@ -2,7 +2,8 @@ namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
 
-    internal class PropertyMemberDescriptorGenerator : AssignableMemberDescriptorGeneratorBase
+    internal sealed class PropertyMemberDescriptorGenerator
+        : AssignableMemberDescriptorGeneratorBase
     {
         public override string ManagedType
         {

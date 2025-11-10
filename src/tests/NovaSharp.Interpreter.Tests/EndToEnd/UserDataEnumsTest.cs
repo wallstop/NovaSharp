@@ -1,6 +1,9 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
     public enum MyEnum : short

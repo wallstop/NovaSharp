@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
 
     public static class Utils

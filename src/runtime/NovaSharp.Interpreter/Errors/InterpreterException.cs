@@ -7,7 +7,6 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-
     /// <summary>
     /// Base type of all exceptions thrown in NovaSharp
     /// </summary>

@@ -5,8 +5,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using System.Linq;
     using System.Text;
     using Compatibility;
-    using Interop;
-    using Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NUnit.Framework;
 
     [TestFixture]

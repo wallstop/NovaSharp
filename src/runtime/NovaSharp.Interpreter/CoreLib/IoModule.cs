@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -21,6 +22,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing io Lua functions. Proper support requires a compatible IPlatformAccessor
     /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1052:Static holder types should be static or not inheritable",
+        Justification = "Module types participate in generic registration requiring instance types."
+    )]
     [NovaSharpModule(Namespace = "io")]
     public class IoModule
     {
@@ -89,8 +95,7 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             Table r = s.Registry;
 
-            optionsStream =
-                optionsStream ?? Script.GlobalOptions.Platform.IO_GetStandardStream(file);
+            optionsStream = optionsStream ?? Script.GlobalOptions.Platform.GetStandardStream(file);
 
             FileUserDataBase udb = null;
 
@@ -258,7 +263,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 List<DynValue> readLines = new();
 
                 using (
-                    Stream stream = Script.GlobalOptions.Platform.IO_OpenFile(
+                    Stream stream = Script.GlobalOptions.Platform.OpenFile(
                         executionContext.GetScript(),
                         filename,
                         null,
@@ -412,7 +417,7 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            string tmpfilename = Script.GlobalOptions.Platform.IO_OS_GetTempFilename();
+            string tmpfilename = Script.GlobalOptions.Platform.GetTempFileName();
             FileUserDataBase file = Open(executionContext, tmpfilename, GetUtf8Encoding(), "w");
             return UserData.Create(file);
         }

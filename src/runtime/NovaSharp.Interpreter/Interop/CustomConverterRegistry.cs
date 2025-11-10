@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Interop
     /// A collection of custom converters between NovaSharp types and CLR types.
     /// If a converter function is not specified or returns null, the standard conversion path applies.
     /// </summary>
-    public class CustomConvertersCollection
+    public class CustomConverterRegistry
     {
         private readonly Dictionary<Type, Func<DynValue, object>>[] _script2Clr = new Dictionary<
             Type,
@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Interop
         >[(int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1];
         private readonly Dictionary<Type, Func<Script, object, DynValue>> _clr2Script = new();
 
-        internal CustomConvertersCollection()
+        internal CustomConverterRegistry()
         {
             for (int i = 0; i < _script2Clr.Length; i++)
             {

@@ -6,7 +6,7 @@
         <IsTestProject>true</IsTestProject>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
-        <LangVersion>9</LangVersion>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <None Remove=".editorconfig" />
@@ -36,5 +36,16 @@
     </ItemGroup>
     <ItemGroup>
         <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
+    </ItemGroup>
+    <ItemGroup>
+        <Using Include="NovaSharp.Interpreter" />
+        <Using Include="NovaSharp.Interpreter.DataTypes" />
+        <Using Include="NovaSharp.Interpreter.Modules" />
+        <Using Include="NovaSharp.Interpreter.Errors" />
+        <Using Include="NovaSharp.Interpreter.Execution" />
+        <Using Include="NovaSharp.Interpreter.Options" />
+        <Using Include="NovaSharp.Interpreter.Interop" />
+        <Using Include="NovaSharp.Interpreter.Interop.Attributes" />
+        <Using Include="NovaSharp.Interpreter.Interop.RegistrationPolicies" />
     </ItemGroup>
 </Project>

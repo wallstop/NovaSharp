@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 using NLua;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.DataTypes;
+using NovaSharp.Interpreter.Modules;
 
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]

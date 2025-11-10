@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="encoding">The encoding.</param>
         /// <param name="mode">The mode (as per Lua usage - e.g. 'w+', 'rb', etc.).</param>
         /// <returns></returns>
-        public override Stream IO_OpenFile(
+        public override Stream OpenFile(
             Script script,
             string filename,
             Encoding encoding,
@@ -118,7 +118,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="type">The type.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">type</exception>
-        public override Stream IO_GetStandardStream(StandardFileType type)
+        public override Stream GetStandardStream(StandardFileType type)
         {
             switch (type)
             {
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// Can have an invalid implementation if 'io' and 'os' modules are filtered out.
         /// </summary>
         /// <returns></returns>
-        public override string IO_OS_GetTempFilename()
+        public override string GetTempFileName()
         {
             return Path.GetTempFileName();
         }
@@ -157,7 +157,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="exitCode">The exit code.</param>
-        public override void OS_ExitFast(int exitCode)
+        public override void ExitFast(int exitCode)
         {
             Environment.Exit(exitCode);
         }
@@ -170,7 +170,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns>
         /// True if the file exists, false otherwise.
         /// </returns>
-        public override bool OS_FileExists(string file)
+        public override bool FileExists(string file)
         {
             return File.Exists(file);
         }
@@ -180,7 +180,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="file">The file.</param>
-        public override void OS_FileDelete(string file)
+        public override void DeleteFile(string file)
         {
             File.Delete(file);
         }
@@ -191,7 +191,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="src">The source.</param>
         /// <param name="dst">The DST.</param>
-        public override void OS_FileMove(string src, string dst)
+        public override void MoveFile(string src, string dst)
         {
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
             File.Move(src, dst);
@@ -204,7 +204,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="cmdline">The cmdline.</param>
         /// <returns></returns>
-        public override int OS_Execute(string cmdline)
+        public override int ExecuteCommand(string cmdline)
         {
             // This is windows only!
             throw new NotSupportedException("Not supported on .NET core");

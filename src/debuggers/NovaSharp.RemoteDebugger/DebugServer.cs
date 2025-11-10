@@ -261,10 +261,10 @@ namespace NovaSharp.RemoteDebugger
                             HashSet<string> existing = new();
 
                             // remove all not present anymore
-                            _watches.RemoveAll(de => !_watchesChanging.Contains(de.expressionCode));
+                            _watches.RemoveAll(de => !_watchesChanging.Contains(de.ExpressionCode));
 
                             // add all missing
-                            existing.UnionWith(_watches.Select(de => de.expressionCode));
+                            existing.UnionWith(_watches.Select(de => de.ExpressionCode));
 
                             _watches.AddRange(
                                 _watchesChanging

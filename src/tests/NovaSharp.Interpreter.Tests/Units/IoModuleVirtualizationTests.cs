@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
     using Platforms;
 
@@ -84,13 +85,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new(CoreModules.PresetComplete);
             script.DoString("local f = io.open('temp.txt', 'w'); f:write('payload'); f:close()");
-            Assert.That(_platform.FileExists("temp.txt"), Is.True);
+            Assert.That(_platform.HasFile("temp.txt"), Is.True);
 
             DynValue result = script.DoString("return os.remove('temp.txt')");
             Assert.Multiple(() =>
             {
                 Assert.That(result.Boolean, Is.True);
-                Assert.That(_platform.FileExists("temp.txt"), Is.False);
+                Assert.That(_platform.HasFile("temp.txt"), Is.False);
             });
         }
 
@@ -118,8 +119,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(first, Does.EndWith(".lua"));
                 Assert.That(second, Does.EndWith(".lua"));
                 Assert.That(first, Is.Not.EqualTo(second));
-                Assert.That(_platform.FileExists(first), Is.False);
-                Assert.That(_platform.FileExists(second), Is.False);
+                Assert.That(_platform.HasFile(first), Is.False);
+                Assert.That(_platform.HasFile(second), Is.False);
             });
         }
 
@@ -133,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
             Assert.That(result.Boolean, Is.True);
-            Assert.That(_platform.FileExists("old.txt"), Is.False);
+            Assert.That(_platform.HasFile("old.txt"), Is.False);
             Assert.That(_platform.ReadAllText("new.txt"), Is.EqualTo("payload"));
         }
 
@@ -183,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override bool IsRunningOnAOT() => false;
 
-            public override Stream IO_OpenFile(
+            public override Stream OpenFile(
                 Script script,
                 string filename,
                 Encoding encoding,
@@ -229,7 +230,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 throw new NotSupportedException($"Unsupported IO mode '{mode}'.");
             }
 
-            public override Stream IO_GetStandardStream(StandardFileType type) =>
+            public override Stream GetStandardStream(StandardFileType type) =>
                 new NonClosingStream(
                     type switch
                     {
@@ -240,23 +241,23 @@ namespace NovaSharp.Interpreter.Tests.Units
                     }
                 );
 
-            public override string IO_OS_GetTempFilename() => $"temp_{Guid.NewGuid():N}.lua";
+            public override string GetTempFileName() => $"temp_{Guid.NewGuid():N}.lua";
 
-            public override void OS_ExitFast(int exitCode)
+            public override void ExitFast(int exitCode)
             {
                 // No-op for tests
             }
 
-            public override bool OS_FileExists(string file) => _files.ContainsKey(file);
+            public override bool FileExists(string file) => _files.ContainsKey(file);
 
             public override CoreModules FilterSupportedCoreModules(CoreModules module) => module;
 
-            public override void OS_FileDelete(string file)
+            public override void DeleteFile(string file)
             {
                 _files.TryRemove(file, out _);
             }
 
-            public override void OS_FileMove(string src, string dst)
+            public override void MoveFile(string src, string dst)
             {
                 if (_files.TryRemove(src, out byte[] data))
                 {
@@ -264,7 +265,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 }
             }
 
-            public override int OS_Execute(string cmdline) => 0;
+            public override int ExecuteCommand(string cmdline) => 0;
 
             private static void WriteToStandardStream(MemoryStream stream, byte[] data)
             {
@@ -278,7 +279,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     ? Encoding.UTF8.GetString(data)
                     : string.Empty;
 
-            public bool FileExists(string file) => _files.ContainsKey(file);
+            public bool HasFile(string file) => _files.ContainsKey(file);
 
             public string GetStdOutText()
             {

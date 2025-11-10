@@ -2,6 +2,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;

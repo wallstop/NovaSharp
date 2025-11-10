@@ -6,6 +6,8 @@ namespace NovaSharp.Commands.Implementations
     using Hardwire.Languages;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Modules;
 
     internal sealed class HardWireCommand : ICommand
     {

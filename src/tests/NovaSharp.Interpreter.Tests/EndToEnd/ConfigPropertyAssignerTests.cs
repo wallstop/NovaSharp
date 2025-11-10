@@ -1,6 +1,11 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
-    using Interop;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]

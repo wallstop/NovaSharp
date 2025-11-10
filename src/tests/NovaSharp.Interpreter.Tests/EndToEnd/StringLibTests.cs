@@ -1,5 +1,9 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
@@ -264,7 +268,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private void TestMatch(string s, string p, bool expected)
         {
-            Script script = new(CoreModules.String);
+            Script script = new(CoreModules.StringLib);
             script.Globals["s"] = s;
             script.Globals["p"] = p;
             DynValue res = script.DoString("return string.match(s, p)");

@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="mode">The mode (as per Lua usage - e.g. 'w+', 'rb', etc.).</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override System.IO.Stream IO_OpenFile(
+        public override System.IO.Stream OpenFile(
             Script script,
             string filename,
             Encoding encoding,
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="type">The type.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override System.IO.Stream IO_GetStandardStream(StandardFileType type)
+        public override System.IO.Stream GetStandardStream(StandardFileType type)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -81,7 +81,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override string IO_OS_GetTempFilename()
+        public override string GetTempFileName()
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -95,7 +95,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="exitCode">The exit code.</param>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override void OS_ExitFast(int exitCode)
+        public override void ExitFast(int exitCode)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -112,7 +112,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// True if the file exists, false otherwise.
         /// </returns>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override bool OS_FileExists(string file)
+        public override bool FileExists(string file)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="file">The file.</param>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override void OS_FileDelete(string file)
+        public override void DeleteFile(string file)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="src">The source.</param>
         /// <param name="dst">The DST.</param>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override void OS_FileMove(string src, string dst)
+        public override void MoveFile(string src, string dst)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."
@@ -156,7 +156,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="cmdline">The cmdline.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException">The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed.</exception>
-        public override int OS_Execute(string cmdline)
+        public override int ExecuteCommand(string cmdline)
         {
             throw new NotImplementedException(
                 "The current platform accessor does not support 'io' and 'os' operations. Provide your own implementation of platform to work around this limitation, if needed."

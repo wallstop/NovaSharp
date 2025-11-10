@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Modules
         /// <summary>
         /// The string package
         /// </summary>
-        String = 0x8,
+        StringLib = 0x8,
 
         /// <summary>
         /// The load methods: "load", "loadsafe", "loadfile", "loadfilesafe", "dofile" and "require"
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Modules
         OsTime = 0x800,
 
         /// <summary>
-        /// The methods of "os" package excluding those listed for OS_Time. These are not supported under Unity.
+        /// The methods of "os" package excluding those listed for OsTime. These are not supported under Unity.
         /// </summary>
         OsSystem = 0x1000,
 
@@ -102,7 +102,8 @@ namespace NovaSharp.Interpreter.Modules
         /// <summary>
         /// A sort of "hard" sandbox preset, including string, math, table, bit32 packages, constants and table iterators.
         /// </summary>
-        PresetHardSandbox = GlobalConsts | TableIterators | String | Table | Basic | Math | Bit32,
+        PresetHardSandbox =
+            GlobalConsts | TableIterators | StringLib | Table | Basic | Math | Bit32,
 
         /// <summary>
         /// A softer sandbox preset, adding metatables support, error handling, coroutine, time functions, json parsing and dynamic evaluations.

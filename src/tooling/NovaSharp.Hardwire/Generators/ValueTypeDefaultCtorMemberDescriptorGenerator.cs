@@ -4,13 +4,13 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
 
-    internal class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
+    internal sealed class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
             get
             {
-                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.ValueTypeDefaultCtorMemberDescriptor";
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.ValueTypeDefaultCtorMemberDescriptor";
             }
         }
 

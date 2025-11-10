@@ -3,6 +3,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
     [TestFixture]

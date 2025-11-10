@@ -2,6 +2,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System.Collections.Generic;
     using System.Linq;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
 
     /// <summary>

@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using Commands;
+    using NovaSharp.Interpreter;
     using NUnit.Framework;
 
     [TestFixture]

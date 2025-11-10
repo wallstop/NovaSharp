@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests
     using System.Reflection;
     using System.Text;
     using Compatibility;
+    using NovaSharp.Interpreter;
     using NUnit.Framework;
 
     public enum TestResultType

@@ -8,7 +8,6 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-
     /// <summary>
     /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods
     /// generating more "standard" Lua errors.

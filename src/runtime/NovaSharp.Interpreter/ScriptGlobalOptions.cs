@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter
         internal ScriptGlobalOptions()
         {
             Platform = PlatformAutoDetector.GetDefaultPlatform();
-            CustomConverters = new CustomConvertersCollection();
+            CustomConverters = new CustomConverterRegistry();
             FuzzySymbolMatching =
                 FuzzySymbolMatchingBehavior.Camelify
                 | FuzzySymbolMatchingBehavior.UpperFirstLetter
@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets or sets the custom converters.
         /// </summary>
-        public CustomConvertersCollection CustomConverters { get; set; }
+        public CustomConverterRegistry CustomConverters { get; set; }
 
         /// <summary>
         /// Gets or sets the platform abstraction to use.

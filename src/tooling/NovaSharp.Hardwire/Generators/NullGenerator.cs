@@ -4,7 +4,7 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
 
-    internal class NullGenerator : IHardwireGenerator
+    internal sealed class NullGenerator : IHardwireGenerator
     {
         public NullGenerator()
         {

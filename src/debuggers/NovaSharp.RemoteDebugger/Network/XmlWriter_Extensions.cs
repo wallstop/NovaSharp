@@ -4,7 +4,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
     internal static class XmlWriterExtensions
     {
-        private class RaiiExecutor : IDisposable
+        private sealed class RaiiExecutor : IDisposable
         {
             private readonly Action _action;
 

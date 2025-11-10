@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
 
     [TestFixture]

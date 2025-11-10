@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.CoreLib
 #pragma warning disable 1591
 
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -13,6 +14,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing system related Lua functions from the 'os' module.
     /// Proper support requires a compatible IPlatformAccessor
     /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1052:Static holder types should be static or not inheritable",
+        Justification = "Module types participate in generic registration requiring instance types."
+    )]
     [NovaSharpModule(Namespace = "os")]
     public class OsSystemModule
     {
@@ -32,7 +38,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 try
                 {
-                    int exitCode = Script.GlobalOptions.Platform.OS_Execute(v.String);
+                    int exitCode = Script.GlobalOptions.Platform.ExecuteCommand(v.String);
 
                     return DynValue.NewTuple(
                         DynValue.Nil,
@@ -59,7 +65,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 exitCode = (int)vExitCode.Number;
             }
 
-            Script.GlobalOptions.Platform.OS_ExitFast(exitCode);
+            Script.GlobalOptions.Platform.ExitFast(exitCode);
 
             throw new InvalidOperationException("Unreachable code.. reached.");
         }
@@ -94,9 +100,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                if (Script.GlobalOptions.Platform.OS_FileExists(fileName))
+                if (Script.GlobalOptions.Platform.FileExists(fileName))
                 {
-                    Script.GlobalOptions.Platform.OS_FileDelete(fileName);
+                    Script.GlobalOptions.Platform.DeleteFile(fileName);
                     return DynValue.True;
                 }
                 else
@@ -129,7 +135,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                if (!Script.GlobalOptions.Platform.OS_FileExists(fileNameOld))
+                if (!Script.GlobalOptions.Platform.FileExists(fileNameOld))
                 {
                     return DynValue.NewTuple(
                         DynValue.Nil,
@@ -138,7 +144,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                Script.GlobalOptions.Platform.OS_FileMove(fileNameOld, fileNameNew);
+                Script.GlobalOptions.Platform.MoveFile(fileNameOld, fileNameNew);
                 return DynValue.True;
             }
             catch (Exception ex)
@@ -166,7 +172,7 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            return DynValue.NewString(Script.GlobalOptions.Platform.IO_OS_GetTempFilename());
+            return DynValue.NewString(Script.GlobalOptions.Platform.GetTempFileName());
         }
     }
 }

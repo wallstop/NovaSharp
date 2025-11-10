@@ -4,15 +4,15 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
-    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
 
-    internal class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
+    internal sealed class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
             get
             {
-                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.OverloadedMethodMemberDescriptor";
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.OverloadedMethodMemberDescriptor";
             }
         }
 

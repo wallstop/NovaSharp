@@ -297,7 +297,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     //--------------------------------------------------------------------------------------
 
-    internal class ByteBuffer
+    internal sealed class ByteBuffer
     {
         private byte[] _buffer;
 

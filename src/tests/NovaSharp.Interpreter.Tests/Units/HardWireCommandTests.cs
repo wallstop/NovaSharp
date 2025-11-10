@@ -5,6 +5,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp;
     using NovaSharp.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
@@ -355,7 +357,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table descriptor = new(script);
             descriptor.Set(
                 "class",
-                DynValue.NewString("NovaSharp.Interpreter.Interop.StandardUserDataDescriptor")
+                DynValue.NewString(
+                    "NovaSharp.Interpreter.Interop.StandardDescriptors.StandardUserDataDescriptor"
+                )
             );
             descriptor.Set("visibility", DynValue.NewString(visibility));
             descriptor.Set("members", DynValue.NewTable(script));

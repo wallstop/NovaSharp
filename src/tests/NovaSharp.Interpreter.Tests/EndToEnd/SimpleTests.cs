@@ -2,7 +2,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
-    using Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]

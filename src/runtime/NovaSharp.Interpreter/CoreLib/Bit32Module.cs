@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.CoreLib
 #pragma warning disable 1591
 
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -13,6 +14,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing bit32 Lua functions
     /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1052:Static holder types should be static or not inheritable",
+        Justification = "Module types participate in generic registration requiring instance types."
+    )]
     [NovaSharpModule(Namespace = "bit32")]
     public class Bit32Module
     {

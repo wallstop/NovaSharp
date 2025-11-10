@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -15,6 +16,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
     /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1052:Static holder types should be static or not inheritable",
+        Justification = "Module types participate in generic registration requiring instance types."
+    )]
     [NovaSharpModule(Namespace = "os")]
     public class OsTimeModule
     {

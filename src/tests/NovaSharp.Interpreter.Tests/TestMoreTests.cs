@@ -1,5 +1,8 @@
 namespace NovaSharp.Interpreter.Tests
 {
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]

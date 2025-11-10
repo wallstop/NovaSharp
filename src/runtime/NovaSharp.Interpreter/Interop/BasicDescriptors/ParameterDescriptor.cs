@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <summary>
         /// If the type got restricted, the original type before the restriction.
         /// </summary>
-        private Type _originalType = null;
+        private Type _originalType;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ParameterDescriptor" /> class.

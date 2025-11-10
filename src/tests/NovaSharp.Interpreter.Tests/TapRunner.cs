@@ -2,7 +2,10 @@ namespace NovaSharp.Interpreter.Tests
 {
     using System;
     using System.IO;
-    using Loaders;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
 #if !EMBEDTEST

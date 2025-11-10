@@ -3,6 +3,7 @@
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -13,6 +14,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing dynamic expression evaluations at runtime (a NovaSharp addition).
     /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1052:Static holder types should be static or not inheritable",
+        Justification = "Module types participate in generic registration requiring instance types."
+    )]
     [NovaSharpModule(Namespace = "dynamic")]
     public class DynamicModule
     {

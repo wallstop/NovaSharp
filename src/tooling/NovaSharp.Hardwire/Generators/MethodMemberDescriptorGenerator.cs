@@ -6,12 +6,13 @@ namespace NovaSharp.Hardwire.Generators
     using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using Utils;
 
-    internal class MethodMemberDescriptorGenerator : IHardwireGenerator
+    internal sealed class MethodMemberDescriptorGenerator : IHardwireGenerator
     {
         private readonly string _prefix;
 
@@ -27,7 +28,7 @@ namespace NovaSharp.Hardwire.Generators
         {
             get
             {
-                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.MethodMemberDescriptor";
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.MethodMemberDescriptor";
             }
         }
 

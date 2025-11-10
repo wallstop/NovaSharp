@@ -43,6 +43,9 @@
 // WARNING : Member 'NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests+SomeClass.StaticProp::Set' will be a no-op, as it's a member of a value type.
 namespace MyNamespace
 {
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
 
 
 	public abstract class MyClass

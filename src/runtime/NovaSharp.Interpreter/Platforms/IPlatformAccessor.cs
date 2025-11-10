@@ -67,28 +67,28 @@ namespace NovaSharp.Interpreter.Platforms
         /// <param name="encoding">The encoding.</param>
         /// <param name="mode">The mode (as per Lua usage - e.g. 'w+', 'rb', etc.).</param>
         /// <returns></returns>
-        public Stream IO_OpenFile(Script script, string filename, Encoding encoding, string mode);
+        public Stream OpenFile(Script script, string filename, Encoding encoding, string mode);
 
         /// <summary>
         /// Gets a standard stream (stdin, stdout, stderr).
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns></returns>
-        public Stream IO_GetStandardStream(StandardFileType type);
+        public Stream GetStandardStream(StandardFileType type);
 
         /// <summary>
         /// Gets a temporary filename. Used in 'io' and 'os' modules.
         /// Can have an invalid implementation if 'io' and 'os' modules are filtered out.
         /// </summary>
         /// <returns></returns>
-        public string IO_OS_GetTempFilename();
+        public string GetTempFileName();
 
         /// <summary>
         /// Exits the process, returning the specified exit code.
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="exitCode">The exit code.</param>
-        public void OS_ExitFast(int exitCode);
+        public void ExitFast(int exitCode);
 
         /// <summary>
         /// Checks if a file exists. Used by the 'os' module.
@@ -96,14 +96,14 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="file">The file.</param>
         /// <returns>True if the file exists, false otherwise.</returns>
-        public bool OS_FileExists(string file);
+        public bool FileExists(string file);
 
         /// <summary>
         /// Deletes the specified file. Used by the 'os' module.
         /// Can have an invalid implementation if the 'os' module is filtered out.
         /// </summary>
         /// <param name="file">The file.</param>
-        public void OS_FileDelete(string file);
+        public void DeleteFile(string file);
 
         /// <summary>
         /// Moves the specified file. Used by the 'os' module.
@@ -111,7 +111,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="src">The source.</param>
         /// <param name="dst">The DST.</param>
-        public void OS_FileMove(string src, string dst);
+        public void MoveFile(string src, string dst);
 
         /// <summary>
         /// Executes the specified command line, returning the child process exit code and blocking in the meantime.
@@ -119,6 +119,6 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         /// <param name="cmdline">The cmdline.</param>
         /// <returns></returns>
-        public int OS_Execute(string cmdline);
+        public int ExecuteCommand(string cmdline);
     }
 }
