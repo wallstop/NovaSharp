@@ -17,13 +17,13 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 | `NovaSharp.Interpreter.DataStructs.FastStackDynamic<T>` | 0.0 | 0.0 | 0 / 55 | Runtime | Exercise dynamic stack resize logic via unit tests to replace reflection-based call sites. |
 | `NovaSharp.Interpreter.Serialization.SerializationExtensions` | 0.0 | 0.0 | 0 / 68 | Runtime | Roundtrip tests landed; rerun coverage to capture the new baseline and confirm Lua formatter output. |
 | `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor` | 0.0 | – | 0 / 84 | Interop | Cover descriptor invocation paths ahead of Roslyn generator replacement. |
-| `NovaSharp.Interpreter.CoreLib.OsTimeModule` | 0.0 | 0.0 | 0 / 96 | Runtime | Extend OS module virtualization tests to cover time APIs. |
+| `NovaSharp.Interpreter.CoreLib.OsTimeModule` | 0.0 | 0.0 | 0 / 96 | Runtime | New NUnit regression tests exercise `os.time`, `os.difftime`, and `os.date`; rerun coverage to capture the lift. |
 | `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` | 0.0 | 0.0 | 0 / 52 | Tooling | Create Unity-focused loader tests using in-memory asset bundles. |
 | `NovaSharp.Interpreter.LinqHelpers` | 0.0 | 0.0 | 0 / 19 | Runtime | Evaluate removal / rewrite without LINQ; add regression tests if retained. |
 | `NovaSharp.Interpreter.Interop.Attributes.NovaSharpHideMemberAttribute` | 0.0 | – | 0 / 12 | Interop | Cover attribute usage via descriptor tests that assert hidden members. |
 
 ## Yellow List (line 50–89 %)
-- `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Needs tests for edge cases (NaN, modulo, randomness seeding).
+- `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Fresh tests now cover logarithms, power, modf, min/max, ldexp, and deterministic random sequences; still pending NaN/overflow edge assertions. Run `./coverage.ps1` to capture the uplift.
 - `NovaSharp.Interpreter.Tree.Expressions.FunctionDefinitionExpression` – 63 % line. Add parser/compiler unit tests covering variadic arguments + local closures.
 - `NovaSharp.Interpreter.Execution.Processors.Processor` – 71 % line. Expand VM opcode coverage, especially coroutine resume/yield sequences.
 - `NovaSharp.Commands.Program` – 57 % line. Already in CLI suite; add tests for error exit codes and argument parsing of `--interactive`.

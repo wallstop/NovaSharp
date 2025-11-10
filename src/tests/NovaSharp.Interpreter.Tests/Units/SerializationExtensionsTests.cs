@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class SerializationExtensionsTests
     {
         [Test]
-        public void Serialize_PrimeTableFormatsEntries()
+        public void SerializePrimeTableFormatsEntries()
         {
             Table table = new Table(owner: null);
             table.Set(DynValue.NewString("answer"), DynValue.NewNumber(42));
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Serialize_NestedTableRecurses()
+        public void SerializeNestedTableRecurses()
         {
             Table inner = new Table(owner: null);
             inner.Set(DynValue.NewString("value"), DynValue.NewNumber(1));
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Serialize_InvalidIdentifierUsesBracketNotation()
+        public void SerializeInvalidIdentifierUsesBracketNotation()
         {
             Table table = new Table(owner: null);
             table.Set(DynValue.NewString("with space"), DynValue.NewNumber(3));
@@ -74,7 +74,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Serialize_EmptyTableHonorsReturnPrefix()
+        public void SerializeEmptyTableHonorsReturnPrefix()
         {
             Table table = new Table(owner: null);
 
@@ -97,7 +97,30 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Serialize_NonPrimeTableThrows()
+        public void SerializeRoundtripExecutesInLua()
+        {
+            Table nested = new Table(owner: null);
+            nested.Set(DynValue.NewNumber(1), DynValue.NewString("first"));
+
+            Table table = new Table(owner: null);
+            table.Set(DynValue.NewString("answer"), DynValue.NewNumber(42));
+            table.Set(DynValue.NewString("nested"), DynValue.NewTable(nested));
+
+            string serialized = table.Serialize(prefixReturn: true);
+
+            Script script = new Script(CoreModules.Basic);
+            DynValue evaluated = script.DoString(serialized);
+
+            Assert.That(evaluated.Type, Is.EqualTo(DataType.Table));
+            Assert.That(evaluated.Table.Get("answer").Number, Is.EqualTo(42));
+
+            DynValue nestedValue = evaluated.Table.Get("nested");
+            Assert.That(nestedValue.Type, Is.EqualTo(DataType.Table));
+            Assert.That(nestedValue.Table.Get(1).String, Is.EqualTo("first"));
+        }
+
+        [Test]
+        public void SerializeNonPrimeTableThrows()
         {
             Script script = new Script(CoreModules.None);
             Table table = new Table(script);
@@ -107,7 +130,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SerializeValue_TableOwnedByScriptThrows()
+        public void SerializeValueTableOwnedByScriptThrows()
         {
             Script script = new Script(CoreModules.None);
             Table table = new Table(script);
