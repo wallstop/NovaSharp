@@ -13,8 +13,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 | Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
 |-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.REPL.ReplInterpreterScriptLoader` | 0.0 | 0.0 | 0 / 64 | Tooling | Add REPL loader tests for inline script execution and error propagation. |
-| `NovaSharp.Interpreter.DataStructs.FastStackDynamic<T>` | 0.0 | 0.0 | 0 / 55 | Runtime | Exercise dynamic stack resize logic via unit tests to replace reflection-based call sites. |
+| `NovaSharp.Interpreter.REPL.ReplInterpreterScriptLoader` | 0.0 | 0.0 | 0 / 64 | Tooling | Unit tests now cover environment path priority and `LUA_PATH` overrides; rerun coverage to capture the update. |
+| `NovaSharp.Interpreter.DataStructs.FastStackDynamic<T>` | 0.0 | 0.0 | 0 / 55 | Runtime | Stack operations (push/set/expand/remove) now under test; rerun coverage to persist the gain. |
 | `NovaSharp.Interpreter.Serialization.SerializationExtensions` | 0.0 | 0.0 | 0 / 68 | Runtime | Roundtrip tests landed; rerun coverage to capture the new baseline and confirm Lua formatter output. |
 | `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor` | 0.0 | – | 0 / 84 | Interop | Cover descriptor invocation paths ahead of Roslyn generator replacement. |
 | `NovaSharp.Interpreter.CoreLib.OsTimeModule` | 0.0 | 0.0 | 0 / 96 | Runtime | New NUnit regression tests exercise `os.time`, `os.difftime`, and `os.date`; rerun coverage to capture the lift. |

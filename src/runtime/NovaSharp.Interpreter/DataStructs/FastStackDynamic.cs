@@ -49,6 +49,23 @@ namespace NovaSharp.Interpreter.DataStructs
             return item;
         }
 
+        public bool TryPeek(out T item)
+        {
+            return TryPeek(0, out item);
+        }
+
+        public bool TryPeek(int idxofs, out T item)
+        {
+            if (idxofs < 0 || idxofs >= Count)
+            {
+                item = default;
+                return false;
+            }
+
+            item = this[Count - 1 - idxofs];
+            return true;
+        }
+
         public void CropAtCount(int p)
         {
             RemoveLast(Count - p);
@@ -71,6 +88,19 @@ namespace NovaSharp.Interpreter.DataStructs
             T retval = this[Count - 1];
             RemoveAt(Count - 1);
             return retval;
+        }
+
+        public bool TryPop(out T item)
+        {
+            if (Count == 0)
+            {
+                item = default;
+                return false;
+            }
+
+            item = this[Count - 1];
+            RemoveAt(Count - 1);
+            return true;
         }
     }
 }
