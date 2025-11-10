@@ -575,6 +575,75 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IsYieldableInsidePcallWithinCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function pcallyield()
+                    return coroutine.isyieldable()
+                end
+
+                function run_pcall_inside_coroutine()
+                    local ok, value = pcall(pcallyield)
+                    return ok, value
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("run_pcall_inside_coroutine")
+            );
+            DynValue result = coroutineValue.Coroutine.Resume();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(result.Tuple[1].Boolean, Is.True);
+            });
+        }
+
+        [Test]
+        public void WrapWithPcallHandlesTailCalls()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function tail_target(...)
+                    return 'tail', ...
+                end
+
+                function build_tail_wrapper()
+                    return coroutine.wrap(function(...)
+                        return tail_target(...)
+                    end)
+                end
+            "
+            );
+
+            DynValue wrapper = script.Call(script.Globals.Get("build_tail_wrapper"));
+            DynValue pcall = script.Globals.Get("pcall");
+
+            DynValue result = script.Call(
+                pcall,
+                wrapper,
+                DynValue.NewString("alpha"),
+                DynValue.NewNumber(42)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("tail"));
+                Assert.That(result.Tuple[2].String, Is.EqualTo("alpha"));
+                Assert.That(result.Tuple[3].Number, Is.EqualTo(42));
+            });
+        }
+
+        [Test]
         public void ResumeFromDifferentThreadThrowsInvalidOperation()
         {
             Script script = new(CoreModules.PresetComplete);
