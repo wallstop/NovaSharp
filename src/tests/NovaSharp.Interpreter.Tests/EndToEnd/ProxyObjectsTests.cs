@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using DataTypes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;

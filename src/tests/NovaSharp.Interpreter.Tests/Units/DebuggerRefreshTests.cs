@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System.Collections.Generic;
     using System.Linq;
+    using DataTypes;
     using NovaSharp;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;

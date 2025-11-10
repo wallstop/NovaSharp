@@ -2,6 +2,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Reflection;
+    using DataTypes;
+    using Errors;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Diagnostics;
     using NovaSharp.Interpreter.Execution.VM;

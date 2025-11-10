@@ -6,8 +6,33 @@ This document tracks benchmark snapshots used for regression analysis. Maintain 
 - The most recent NovaSharp benchmark run
 
 When capturing new data, replace the entire `### NovaSharp Latest` section instead of appending new content to the top of the file.
+
+
+## Benchmark Governance
+
+### Workflow
+- Restore tools once per clone with `dotnet tool restore`, then build the solution via `dotnet build src/NovaSharp.sln -c Release` to ensure dependencies are hot.
+- Run the runtime benchmarks locally with `dotnet run --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj -c Release`. The `PerformanceReportWriter` will refresh the `### NovaSharp Latest` block for the current OS.
+- Capture cross-runtime parity by executing `dotnet run --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj -c Release`. This emits the NLua/MoonSharp comparison tables consumed by this document.
+- After each run, inspect the generated markdown diff in this file and attach the raw BenchmarkDotNet artifacts (`BenchmarkDotNet.Artifacts`) to the PR when results change materially.
+
+### Thresholds
+- Treat any >5 % regression in `Mean` or `P95` for `RuntimeBenchmarks` scenarios as blocking unless a tracking issue documents the deviation.
+- Treat any >10 % growth in `Allocated` for the same scenarios as blocking; smaller regressions should at least receive a follow-up issue.
+- Record mitigations in the PR description and cross-link the relevant benchmark rows so reviewers can validate the impact.
+
+### Reporting Cadence
+- Run the governance workflow before each release branch cut, before merging large performance-sensitive features, and at least once per calendar month to keep the baseline fresh.
+- When the cadence run produces no changes, add a short note to the release journal or sprint recap so the team can confirm the guardrail fired.
+- If regressions are observed, file an issue tagged `performance-regression` within the same working session to keep the trail warm.
+
+### Comparison Runs
+- Summarize NLua parity measurements in `docs/Performance.md` by updating the comparison tables and noting the timestamp in the commit message.
+- Mirror the headline deltas (fastest/slowest scenarios and any regressions) into the release notes for the corresponding milestone so downstream consumers understand compatibility impacts.
+- Archive historical comparison snapshots in `docs/performance-history/` (create a date-stamped markdown file when results materially change) to keep the main document focused on current data.
 
 
+
 
 ## Windows
 
@@ -107,7 +132,7 @@ Then replace everything under `### NovaSharp Latest` with the new results.
 
 ---
 
-### NovaSharp Latest (captured 2025-11-09 10:44:08 -08:00)
+### NovaSharp Latest (captured 2025-11-10 13:18:25 -08:00)
 
 **Environment**
 - OS: Windows 11 Pro 25H2 (build 26200.6899, 10.0.26200)
@@ -121,24 +146,24 @@ Then replace everything under `### NovaSharp Latest` with the new results.
 
 | Summary | Method | Parameters | Nova Mean | MoonSharp Mean | Mean Δ | Mean Δ % | Nova Alloc | MoonSharp Alloc | Alloc Δ | Alloc Δ % |
 |-------- |------- |----------- |----------:|---------------:|-------:|--------:|-----------:|----------------:|-------:|----------:|
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=CoroutinePipeline | 212 ns | 247 ns | -35.7 ns | -14.43% | 1.10 KB | 1.10 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=NumericLoops | 174 ns | 195 ns | -21.7 ns | -11.13% | 928 B | 928 B | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=TableMutation | 3.238 us | 4.205 us | -968 ns | -23.01% | 30.2 KB | 30.2 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=UserDataInterop | 263 ns | 295 ns | -32.7 ns | -11.06% | 1.33 KB | 1.33 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Large | 732 ms | 779 ms | -47.2 ms | -6.06% | 2.86 GB | 2.86 GB | +170 KB | +0.01% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Medium | 44.2 ms | 46.7 ms | -2.495 ms | -5.35% | 144 MB | 143 MB | +168 KB | +0.11% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Small | 2.095 ms | 1.693 ms | +401 us | +23.7% | 2.52 MB | 2.36 MB | +169 KB | +6.99% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Tiny | 2.012 ms | 1.478 ms | +534 us | +36.12% | 2.49 MB | 2.33 MB | +163 KB | +6.81% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Large | 3.142 ms | 3.062 ms | +79.5 us | +2.59% | 2.96 MB | 2.80 MB | +159 KB | +5.56% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Medium | 2.309 ms | 2.161 ms | +148 us | +6.86% | 2.64 MB | 2.48 MB | +167 KB | +6.57% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Small | 2.128 ms | 1.614 ms | +514 us | +31.83% | 2.50 MB | 2.34 MB | +163 KB | +6.79% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Tiny | 1.957 ms | 1.522 ms | +436 us | +28.64% | 2.49 MB | 2.33 MB | +163 KB | +6.84% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Large | 684 ms | 746 ms | -62.0 ms | -8.3% | 2.86 GB | 2.86 GB | -736 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Medium | 33.5 ms | 35.6 ms | -2.050 ms | -5.77% | 141 MB | 141 MB | -27.0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Small | 7.197 us | 6.778 us | +419 ns | +6.18% | 18.7 KB | 18.7 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Tiny | 84.6 ns | 96.6 ns | -12.0 ns | -12.43% | 536 B | 536 B | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=CoroutinePipeline | 217 ns | 247 ns | -30.6 ns | -12.36% | 1.10 KB | 1.10 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=NumericLoops | 173 ns | 195 ns | -22.2 ns | -11.38% | 928 B | 928 B | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=TableMutation | 3.615 us | 4.205 us | -591 ns | -14.05% | 30.2 KB | 30.2 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=UserDataInterop | 289 ns | 295 ns | -6.545 ns | -2.22% | 1.33 KB | 1.33 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Large | 712 ms | 779 ms | -67.1 ms | -8.61% | 2.86 GB | 2.86 GB | +173 KB | +0.01% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Medium | 51.6 ms | 46.7 ms | +4.976 ms | +10.66% | 144 MB | 143 MB | +170 KB | +0.12% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Small | 2.147 ms | 1.693 ms | +453 us | +26.75% | 2.52 MB | 2.36 MB | +166 KB | +6.86% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Tiny | 2.024 ms | 1.478 ms | +546 us | +36.93% | 2.49 MB | 2.33 MB | +165 KB | +6.89% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Large | 3.034 ms | 3.062 ms | -28.9 us | -0.94% | 2.96 MB | 2.80 MB | +163 KB | +5.69% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Medium | 2.345 ms | 2.161 ms | +184 us | +8.53% | 2.64 MB | 2.48 MB | +165 KB | +6.51% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Small | 2.033 ms | 1.614 ms | +419 us | +25.94% | 2.50 MB | 2.34 MB | +164 KB | +6.84% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Tiny | 2.091 ms | 1.522 ms | +570 us | +37.46% | 2.49 MB | 2.33 MB | +166 KB | +6.95% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Large | 704 ms | 746 ms | -42.2 ms | -5.65% | 2.86 GB | 2.86 GB | -736 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Medium | 33.7 ms | 35.6 ms | -1.833 ms | -5.16% | 141 MB | 141 MB | -27.0 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Small | 6.620 us | 6.778 us | -159 ns | -2.34% | 18.7 KB | 18.7 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Tiny | 85.1 ns | 96.6 ns | -11.6 ns | -11.97% | 536 B | 536 B | 0 B | 0% |
 
-#### NovaSharp.Benchmarks.RuntimeBenchmarks-20251109-104112
+#### NovaSharp.Benchmarks.RuntimeBenchmarks-20251110-131524
 
 ```
 
@@ -152,15 +177,15 @@ Job=ShortRun  IterationCount=10  LaunchCount=1
 WarmupCount=2  
 
 ```
-| Method               | Scenario          | Mean       | Error    | StdDev   | P95        | Rank | Gen0   | Gen1   | Allocated |
-|--------------------- |------------------ |-----------:|---------:|---------:|-----------:|-----:|-------:|-------:|----------:|
-| **&#39;Scenario Execution&#39;** | **NumericLoops**      |   **173.6 ns** |  **8.22 ns** |  **5.44 ns** |   **182.1 ns** |    **1** | **0.0491** |      **-** |     **928 B** |
-| **&#39;Scenario Execution&#39;** | **TableMutation**     | **3,237.7 ns** | **61.88 ns** | **32.37 ns** | **3,268.1 ns** |    **4** | **1.6441** | **0.1488** |   **30968 B** |
-| **&#39;Scenario Execution&#39;** | **CoroutinePipeline** |   **211.5 ns** |  **5.18 ns** |  **3.43 ns** |   **215.7 ns** |    **2** | **0.0598** |      **-** |    **1128 B** |
-| **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **262.6 ns** |  **7.72 ns** |  **5.10 ns** |   **270.3 ns** |    **3** | **0.0720** |      **-** |    **1360 B** |
+| Method               | Scenario          | Mean       | Error     | StdDev    | P95        | Rank | Gen0   | Gen1   | Allocated |
+|--------------------- |------------------ |-----------:|----------:|----------:|-----------:|-----:|-------:|-------:|----------:|
+| **&#39;Scenario Execution&#39;** | **NumericLoops**      |   **173.1 ns** |   **4.67 ns** |   **3.09 ns** |   **177.3 ns** |    **1** | **0.0491** |      **-** |     **928 B** |
+| **&#39;Scenario Execution&#39;** | **TableMutation**     | **3,614.7 ns** | **474.48 ns** | **313.84 ns** | **4,067.2 ns** |    **4** | **1.6441** | **0.1488** |   **30968 B** |
+| **&#39;Scenario Execution&#39;** | **CoroutinePipeline** |   **216.6 ns** |   **8.48 ns** |   **5.04 ns** |   **221.2 ns** |    **2** | **0.0598** |      **-** |    **1128 B** |
+| **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **288.8 ns** |  **17.67 ns** |  **11.69 ns** |   **305.4 ns** |    **3** | **0.0720** |      **-** |    **1360 B** |
 
 
-#### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251109-104201
+#### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251110-131616
 
 ```
 
@@ -176,18 +201,18 @@ WarmupCount=2
 ```
 | Method                | Complexity | Mean              | Error             | StdDev            | P95               | Rank | Gen0        | Gen1      | Gen2     | Allocated    |
 |---------------------- |----------- |------------------:|------------------:|------------------:|------------------:|-----:|------------:|----------:|---------:|-------------:|
-| **&#39;Compile + Execute&#39;**   | **Tiny**       |   **2,012,028.63 ns** |    **459,471.775 ns** |    **303,912.131 ns** |   **2,486,540.51 ns** |    **3** |    **253.9063** |  **242.1875** | **234.3750** |    **2613981 B** |
-| &#39;Compile Only&#39;        | Tiny       |   1,957,367.70 ns |    445,390.140 ns |    294,598.001 ns |   2,273,840.62 ns |    3 |    238.2813 |  226.5625 | 218.7500 |    2612008 B |
-| &#39;Execute Precompiled&#39; | Tiny       |          84.61 ns |          5.651 ns |          3.363 ns |          90.01 ns |    1 |      0.0284 |         - |        - |        536 B |
-| **&#39;Compile + Execute&#39;**   | **Small**      |   **2,094,872.15 ns** |    **468,291.158 ns** |    **309,745.607 ns** |   **2,562,343.75 ns** |    **3** |    **312.5000** |  **300.7813** | **292.9688** |    **2646759 B** |
-| &#39;Compile Only&#39;        | Small      |   2,127,591.72 ns |    502,757.340 ns |    332,542.852 ns |   2,635,131.99 ns |    3 |    269.5313 |  265.6250 | 250.0000 |    2622888 B |
-| &#39;Execute Precompiled&#39; | Small      |       7,196.98 ns |        113.283 ns |         74.929 ns |       7,303.72 ns |    2 |      1.0147 |         - |        - |      19176 B |
-| **&#39;Compile + Execute&#39;**   | **Medium**     |  **44,177,987.50 ns** |  **7,809,092.325 ns** |  **5,165,231.066 ns** |  **51,255,820.00 ns** |    **6** |   **8250.0000** |  **916.6667** | **416.6667** |  **150572505 B** |
-| &#39;Compile Only&#39;        | Medium     |   2,308,774.18 ns |    294,585.581 ns |    194,850.122 ns |   2,532,041.04 ns |    3 |    296.8750 |  292.9688 | 269.5313 |    2772700 B |
-| &#39;Execute Precompiled&#39; | Medium     |  33,500,546.15 ns |  1,490,823.747 ns |    887,165.299 ns |  34,361,264.62 ns |    5 |   7846.1538 |         - |        - |  147707336 B |
-| **&#39;Compile + Execute&#39;**   | **Large**      | **731,889,100.00 ns** | **38,244,383.698 ns** | **25,296,291.881 ns** | **763,593,225.00 ns** |    **7** | **163000.0000** | **1000.0000** |        **-** | **3072237288 B** |
-| &#39;Compile Only&#39;        | Large      |   3,141,891.05 ns |    437,008.922 ns |    289,054.344 ns |   3,424,669.79 ns |    4 |    289.0625 |  277.3438 | 246.0938 |    3100710 B |
-| &#39;Execute Precompiled&#39; | Large      | 684,475,812.50 ns | 22,482,048.529 ns | 11,758,546.098 ns | 701,511,630.00 ns |    7 | 163000.0000 |         - |        - | 3069038024 B |
+| **&#39;Compile + Execute&#39;**   | **Tiny**       |   **2,024,113.91 ns** |    **420,379.519 ns** |    **250,161.109 ns** |   **2,218,665.51 ns** |    **3** |    **257.8125** |  **246.0938** | **238.2813** |    **2615807 B** |
+| &#39;Compile Only&#39;        | Tiny       |   2,091,462.42 ns |    373,756.906 ns |    247,217.052 ns |   2,470,280.84 ns |    3 |    250.0000 |  238.2813 | 230.4688 |    2614726 B |
+| &#39;Execute Precompiled&#39; | Tiny       |          85.05 ns |          1.895 ns |          1.254 ns |          87.00 ns |    1 |      0.0284 |         - |        - |        536 B |
+| **&#39;Compile + Execute&#39;**   | **Small**      |   **2,146,558.83 ns** |    **282,021.848 ns** |    **186,539.991 ns** |   **2,397,917.58 ns** |    **3** |    **257.8125** |  **250.0000** | **238.2813** |    **2643610 B** |
+| &#39;Compile Only&#39;        | Small      |   2,032,524.02 ns |    294,823.583 ns |    154,198.435 ns |   2,239,031.88 ns |    3 |    261.7188 |  257.8125 | 242.1875 |    2623982 B |
+| &#39;Execute Precompiled&#39; | Small      |       6,619.62 ns |        323.762 ns |        214.148 ns |       6,892.82 ns |    2 |      1.0147 |         - |        - |      19176 B |
+| **&#39;Compile + Execute&#39;**   | **Medium**     |  **51,648,795.00 ns** |  **6,284,174.160 ns** |  **4,156,592.117 ns** |  **54,875,033.00 ns** |    **6** |   **8200.0000** |  **900.0000** | **400.0000** |  **150574250 B** |
+| &#39;Compile Only&#39;        | Medium     |   2,344,792.40 ns |    260,559.605 ns |    155,054.841 ns |   2,581,472.50 ns |    3 |    261.7188 |  250.0000 | 234.3750 |    2770950 B |
+| &#39;Execute Precompiled&#39; | Medium     |  33,717,176.00 ns |    707,177.440 ns |    467,754.091 ns |  34,391,814.33 ns |    5 |   7800.0000 |         - |        - |  147707336 B |
+| **&#39;Compile + Execute&#39;**   | **Large**      | **712,018,266.67 ns** | **15,494,690.987 ns** |  **9,220,642.074 ns** | **726,772,920.00 ns** |    **7** | **163000.0000** | **1000.0000** |        **-** | **3072239824 B** |
+| &#39;Compile Only&#39;        | Large      |   3,033,511.60 ns |    405,626.682 ns |    268,296.936 ns |   3,380,997.05 ns |    4 |    300.7813 |  277.3438 | 253.9063 |    3104471 B |
+| &#39;Execute Precompiled&#39; | Large      | 704,252,144.44 ns | 19,412,735.082 ns | 11,552,207.270 ns | 721,282,040.00 ns |    7 | 163000.0000 |         - |        - | 3069038024 B |
 
 To refresh this section, run:
 
@@ -210,6 +235,7 @@ _No benchmark data recorded yet._
 
 
 
+
 
 ## macOS
 
@@ -221,4 +247,4 @@ _No benchmark data recorded yet._
 ---
 
 
-
+
