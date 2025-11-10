@@ -44,44 +44,53 @@ namespace NovaSharp.Interpreter.Serialization
                 throw new ScriptRuntimeException("Table is not a prime table.");
             }
 
-            string tabstr = new('\t', tabs);
-            StringBuilder sb = new();
-
-            //sb.Append(tabstr);
+            string tabString = new string('\t', tabs);
+            StringBuilder builder = new StringBuilder();
 
             if (prefixReturn)
             {
-                sb.Append("return ");
+                builder.Append("return ");
             }
 
             if (!table.Values.Any())
             {
-                sb.Append("${ }");
-                return sb.ToString();
+                builder.Append("{}");
+
+                if (tabs == 0)
+                {
+                    builder.AppendLine();
+                }
+
+                return builder.ToString();
             }
 
-            sb.AppendLine("${");
+            builder.AppendLine("{");
 
             foreach (TablePair tp in table.Pairs)
             {
-                sb.Append(tabstr);
+                builder.Append(tabString);
+                builder.Append('\t');
 
                 string key = IsStringIdentifierValid(tp.Key)
                     ? tp.Key.String
                     : "[" + SerializeValue(tp.Key, tabs + 1) + "]";
 
-                sb.AppendFormat("\t{0} = {1},\n", key, SerializeValue(tp.Value, tabs + 1));
+                builder.Append(key);
+                builder.Append(" = ");
+                builder.Append(SerializeValue(tp.Value, tabs + 1));
+                builder.Append(',');
+                builder.AppendLine();
             }
 
-            sb.Append(tabstr);
-            sb.Append("}");
+            builder.Append(tabString);
+            builder.Append('}');
 
             if (tabs == 0)
             {
-                sb.AppendLine();
+                builder.AppendLine();
             }
 
-            return sb.ToString();
+            return builder.ToString();
         }
 
         private static bool IsStringIdentifierValid(DynValue dynValue)

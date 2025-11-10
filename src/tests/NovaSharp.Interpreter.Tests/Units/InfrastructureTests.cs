@@ -57,31 +57,45 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void InternalErrorExceptionDefaultsToFallbackMessage()
+        {
+            InternalErrorException defaultCtor = new();
+            Assert.That(defaultCtor.Message, Is.EqualTo("Internal error"));
+
+            InternalErrorException nullMessage = new InternalErrorException(null);
+            Assert.That(nullMessage.Message, Is.EqualTo("Internal error"));
+
+            InternalErrorException whitespaceMessage = new InternalErrorException("  ");
+            Assert.That(whitespaceMessage.Message, Is.EqualTo("Internal error"));
+        }
+
+        [Test]
+        public void InternalErrorExceptionCapturesInnerException()
+        {
+            InvalidOperationException inner = new("boom");
+            InternalErrorException exception = new InternalErrorException("fatal", inner);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(exception.Message, Is.EqualTo("fatal"));
+                Assert.That(exception.InnerException, Is.SameAs(inner));
+            });
+        }
+
+        [Test]
         public void InternalErrorExceptionFormatsMessage()
         {
-            Type exceptionType = typeof(InternalErrorException);
-
-            InternalErrorException messageOnly = (InternalErrorException)
-                exceptionType
-                    .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        binder: null,
-                        types: new[] { typeof(string) },
-                        modifiers: null
-                    )
-                    .Invoke(new object[] { "fatal" });
+            InternalErrorException messageOnly = new InternalErrorException("fatal");
             Assert.That(messageOnly.Message, Does.Contain("fatal"));
 
-            InternalErrorException formatted = (InternalErrorException)
-                exceptionType
-                    .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        binder: null,
-                        types: new[] { typeof(string), typeof(object[]) },
-                        modifiers: null
-                    )
-                    .Invoke(new object[] { "problem {0}", new object[] { 7 } });
+            InternalErrorException formatted = new InternalErrorException("problem {0}", 7);
             Assert.That(formatted.Message, Does.Contain("problem 7"));
+
+            InternalErrorException nullFormat = new InternalErrorException(
+                null,
+                Array.Empty<object>()
+            );
+            Assert.That(nullFormat.Message, Is.EqualTo("Internal error"));
         }
 
         [Test]

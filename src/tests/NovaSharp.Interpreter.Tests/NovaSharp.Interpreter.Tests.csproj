@@ -37,4 +37,7 @@
     <ItemGroup>
         <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
     </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\embedded.lua" />
+    </ItemGroup>
 </Project>
