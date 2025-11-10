@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             InternalErrorException messageOnly = (InternalErrorException)
                 exceptionType
                     .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.NonPublic,
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         binder: null,
                         types: new[] { typeof(string) },
                         modifiers: null
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             InternalErrorException formatted = (InternalErrorException)
                 exceptionType
                     .GetConstructor(
-                        BindingFlags.Instance | BindingFlags.NonPublic,
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         binder: null,
                         types: new[] { typeof(string), typeof(object[]) },
                         modifiers: null

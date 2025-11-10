@@ -135,33 +135,34 @@ Then replace everything under `### NovaSharp Latest` with the new results.
 ### NovaSharp Latest (captured 2025-11-10 13:18:25 -08:00)
 
 **Environment**
-- OS: Windows 11 Pro 25H2 (build 26200.6899, 10.0.26200)
-- CPU: Intel(R) Core(TM) Ultra 9 285K
+- OS: Windows 11 (10.0.26200.6899)
+- CPU: Intel Core Ultra 9 285K 3.70GHz
 - Logical cores: 24
 - Runtime: .NET 8.0.21 (8.0.21, 8.0.2125.47513)
 - Approx. RAM: 195,968 MB
 - Suite: NovaSharp Benchmarks
+- BenchmarkDotNet: v0.15.6 (ShortRun; IterationCount=10; LaunchCount=1; WarmupCount=2)
 
 **Delta vs MoonSharp baseline**
 
 | Summary | Method | Parameters | Nova Mean | MoonSharp Mean | Mean Δ | Mean Δ % | Nova Alloc | MoonSharp Alloc | Alloc Δ | Alloc Δ % |
 |-------- |------- |----------- |----------:|---------------:|-------:|--------:|-----------:|----------------:|-------:|----------:|
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=CoroutinePipeline | 217 ns | 247 ns | -30.6 ns | -12.36% | 1.10 KB | 1.10 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=NumericLoops | 173 ns | 195 ns | -22.2 ns | -11.38% | 928 B | 928 B | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=TableMutation | 3.615 us | 4.205 us | -591 ns | -14.05% | 30.2 KB | 30.2 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=UserDataInterop | 289 ns | 295 ns | -6.545 ns | -2.22% | 1.33 KB | 1.33 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Large | 712 ms | 779 ms | -67.1 ms | -8.61% | 2.86 GB | 2.86 GB | +173 KB | +0.01% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Medium | 51.6 ms | 46.7 ms | +4.976 ms | +10.66% | 144 MB | 143 MB | +170 KB | +0.12% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Small | 2.147 ms | 1.693 ms | +453 us | +26.75% | 2.52 MB | 2.36 MB | +166 KB | +6.86% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Tiny | 2.024 ms | 1.478 ms | +546 us | +36.93% | 2.49 MB | 2.33 MB | +165 KB | +6.89% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Large | 3.034 ms | 3.062 ms | -28.9 us | -0.94% | 2.96 MB | 2.80 MB | +163 KB | +5.69% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Medium | 2.345 ms | 2.161 ms | +184 us | +8.53% | 2.64 MB | 2.48 MB | +165 KB | +6.51% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Small | 2.033 ms | 1.614 ms | +419 us | +25.94% | 2.50 MB | 2.34 MB | +164 KB | +6.84% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Tiny | 2.091 ms | 1.522 ms | +570 us | +37.46% | 2.49 MB | 2.33 MB | +166 KB | +6.95% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Large | 704 ms | 746 ms | -42.2 ms | -5.65% | 2.86 GB | 2.86 GB | -736 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Medium | 33.7 ms | 35.6 ms | -1.833 ms | -5.16% | 141 MB | 141 MB | -27.0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Small | 6.620 us | 6.778 us | -159 ns | -2.34% | 18.7 KB | 18.7 KB | 0 B | 0% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Tiny | 85.1 ns | 96.6 ns | -11.6 ns | -11.97% | 536 B | 536 B | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=CoroutinePipeline | 217 ns | 247 ns | -30.6 ns | -12.38% | 1.10 KB | 1.10 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=NumericLoops | 173 ns | 195 ns | -22.2 ns | -11.37% | 928 B | 928 B | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=TableMutation | 3.615 us | 4.205 us | -590.8 ns | -14.05% | 30.24 KB | 30.24 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.RuntimeBenchmarks | Scenario Execution | Scenario=UserDataInterop | 289 ns | 295 ns | -6.5 ns | -2.20% | 1.33 KB | 1.33 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Large | 712 ms | 779 ms | -67.075 ms | -8.61% | 2.86 GB | 2.86 GB | +172.95 KB | +0.01% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Medium | 51.6 ms | 46.7 ms | +4.976 ms | +10.66% | 143.60 MB | 143.43 MB | +169.82 KB | +0.12% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Small | 2.147 ms | 1.693 ms | +453.076 us | +26.75% | 2.52 MB | 2.36 MB | +165.73 KB | +6.86% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute | Complexity=Tiny | 2.024 ms | 1.478 ms | +545.947 us | +36.93% | 2.49 MB | 2.33 MB | +164.57 KB | +6.89% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Large | 3.034 ms | 3.062 ms | -28.923 us | -0.94% | 2.96 MB | 2.80 MB | +163.10 KB | +5.69% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Medium | 2.345 ms | 2.161 ms | +184.206 us | +8.53% | 2.64 MB | 2.48 MB | +165.30 KB | +6.51% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Small | 2.033 ms | 1.614 ms | +418.591 us | +25.94% | 2.50 MB | 2.34 MB | +163.99 KB | +6.84% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only | Complexity=Tiny | 2.091 ms | 1.522 ms | +569.922 us | +37.46% | 2.49 MB | 2.33 MB | +165.85 KB | +6.95% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Large | 704 ms | 746 ms | -42.196 ms | -5.65% | 2.86 GB | 2.86 GB | -736 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Medium | 33.7 ms | 35.6 ms | -1.833 ms | -5.16% | 140.86 MB | 140.86 MB | -27 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Small | 6.620 us | 6.778 us | -158.8 ns | -2.34% | 18.73 KB | 18.73 KB | 0 B | 0% |
+| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Tiny | 85 ns | 97 ns | -11.6 ns | -11.97% | 536 B | 536 B | 0 B | 0% |
 
 #### NovaSharp.Benchmarks.RuntimeBenchmarks-20251110-131524
 

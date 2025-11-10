@@ -127,7 +127,9 @@ Script.DoString("return x + 1")
 - **Formatting**: Run `dotnet csharpier .` before committing (180 char line width, 4 space indent)
 - **Lua Fixtures**: Preserve 2-space indentation for easier diffing with upstream
 - **Type Usage**: Avoid implicit `var` when type is unclear
-- **Using Directives**: Keep minimal, add explicit access modifiers
+- **Using Directives**: Keep minimal, add explicit access modifiers; refer to `.editorconfig` for spacing and ordering conventions.
+- **Explicit Typing**: Prefer explicit types over `var`; only use `var` where required (e.g., anonymous types).
+- **Internals Access**: When NovaSharp projects or tests need deeper access, prefer declaring members `internal` and using `InternalsVisibleTo` (update or create `AssemblyInfo.cs`) instead of reflection. It is fine to expose internals to sibling NovaSharp assemblies if it eliminates reflection.
 
 ## Testing Guidelines
 
