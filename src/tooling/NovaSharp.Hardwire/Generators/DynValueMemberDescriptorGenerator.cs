@@ -1,15 +1,19 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
-    using Interpreter.Interop;
-    using Interpreter.Serialization;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Serialization;
 
     public class DynValueMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.DynValueMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.DynValueMemberDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

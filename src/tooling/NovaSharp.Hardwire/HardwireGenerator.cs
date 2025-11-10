@@ -1,8 +1,9 @@
 namespace NovaSharp.Hardwire
 {
     using System.CodeDom.Compiler;
-    using Interpreter;
     using Languages;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     public class HardwireGenerator
     {

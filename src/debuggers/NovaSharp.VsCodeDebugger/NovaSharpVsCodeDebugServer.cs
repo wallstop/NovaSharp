@@ -1,19 +1,19 @@
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using NovaSharp.VsCodeDebugger.DebuggerLogic;
-using NovaSharp.Interpreter;
-using NovaSharp.Interpreter.Debugging;
-using NovaSharp.VsCodeDebugger.SDK;
-
 namespace NovaSharp.VsCodeDebugger
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.VsCodeDebugger.DebuggerLogic;
+    using NovaSharp.VsCodeDebugger.SDK;
+
     /// <summary>
     /// Class implementing a debugger allowing attaching from a Visual Studio Code debugging session.
     /// </summary>

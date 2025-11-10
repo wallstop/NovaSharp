@@ -1,6 +1,7 @@
 namespace NovaSharp
 {
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     public class ShellContext
     {

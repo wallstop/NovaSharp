@@ -1,9 +1,10 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
-    using Interpreter.Interop.BasicDescriptors;
-    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
     internal abstract class AssignableMemberDescriptorGeneratorBase : IHardwireGenerator
     {

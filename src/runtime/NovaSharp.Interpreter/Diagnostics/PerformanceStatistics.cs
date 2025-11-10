@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Diagnostics
             (int)PerformanceCounter.LastValue
         ];
 
-        private bool _enabled = false;
+        private bool _enabled;
 
         /// <summary>
         /// Gets or sets a value indicating whether this collection of performance stats is enabled.

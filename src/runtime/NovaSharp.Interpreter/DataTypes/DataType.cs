@@ -1,10 +1,16 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Enumeration of possible data types in NovaSharp
     /// </summary>
+    [SuppressMessage(
+        "Naming",
+        "CA1720:Identifier contains type name",
+        Justification = "Lua type names intentionally align with string semantics."
+    )]
     public enum DataType
     {
         // DO NOT MODIFY ORDER - IT'S SIGNIFICANT

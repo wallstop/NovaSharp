@@ -3,8 +3,9 @@ namespace NovaSharp
     using System;
     using Commands;
     using Commands.Implementations;
-    using Interpreter;
-    using Interpreter.REPL;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.REPL;
 
     internal sealed class Program
     {

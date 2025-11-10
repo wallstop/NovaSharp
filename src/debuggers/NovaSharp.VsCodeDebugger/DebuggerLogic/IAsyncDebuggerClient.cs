@@ -2,8 +2,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 {
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
-    using Interpreter;
-    using Interpreter.Debugging;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
 
     internal interface IAsyncDebuggerClient
     {

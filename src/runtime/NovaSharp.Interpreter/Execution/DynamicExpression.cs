@@ -15,18 +15,18 @@ namespace NovaSharp.Interpreter.Execution
         /// <summary>
         /// The code which generated this expression
         /// </summary>
-        public readonly string expressionCode;
+        public string ExpressionCode { get; }
 
         internal DynamicExpression(Script s, string strExpr, DynamicExprExpression expr)
         {
-            expressionCode = strExpr;
+            ExpressionCode = strExpr;
             OwnerScript = s;
             _exp = expr;
         }
 
         internal DynamicExpression(Script s, string strExpr, DynValue constant)
         {
-            expressionCode = strExpr;
+            ExpressionCode = strExpr;
             OwnerScript = s;
             _constant = constant;
         }
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Execution
         /// </returns>
         public override int GetHashCode()
         {
-            return expressionCode.GetHashCode();
+            return ExpressionCode.GetHashCode();
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace NovaSharp.Interpreter.Execution
                 return false;
             }
 
-            return o.expressionCode == expressionCode;
+            return o.ExpressionCode == ExpressionCode;
         }
     }
 }

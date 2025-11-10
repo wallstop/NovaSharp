@@ -27,8 +27,8 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             }
         }
 
-        private int _count = 0;
-        private long _elapsed = 0;
+        private int _count;
+        private long _elapsed;
         private readonly PerformanceCounter _counter;
 
         public GlobalPerformanceStopwatch(PerformanceCounter perfcounter)

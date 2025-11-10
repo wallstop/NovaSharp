@@ -1,7 +1,8 @@
 namespace NovaSharp.Commands.Implementations
 {
     using System;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class RegisterCommand : ICommand
     {

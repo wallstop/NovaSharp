@@ -1,7 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal static class ScriptTestExtensions
     {

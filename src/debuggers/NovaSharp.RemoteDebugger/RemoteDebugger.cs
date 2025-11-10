@@ -3,8 +3,9 @@ namespace NovaSharp.RemoteDebugger
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using Interpreter;
     using Network;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     public class RemoteDebuggerService : IDisposable
     {

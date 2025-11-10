@@ -1,16 +1,20 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
-    using Interpreter.Interop;
-    using Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using Utils;
 
     public class ArrayMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.ArrayMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.ArrayMemberDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

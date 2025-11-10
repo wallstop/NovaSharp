@@ -23,7 +23,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets the source code lines.
         /// </summary>
-        public string[] Lines { get; private set; }
+        private string[] _lines = Array.Empty<string>();
+
+        public IReadOnlyList<string> Lines => _lines;
 
         /// <summary>
         /// Gets the script owning this resource.
@@ -50,7 +52,7 @@ namespace NovaSharp.Interpreter.Debugging
 
             lines.AddRange(Code.Split('\n'));
 
-            Lines = lines.ToArray();
+            _lines = lines.ToArray();
 
             OwnerScript = ownerScript;
             SourceId = sourceId;

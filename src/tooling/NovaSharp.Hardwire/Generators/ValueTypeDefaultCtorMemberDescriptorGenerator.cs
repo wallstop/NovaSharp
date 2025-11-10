@@ -1,13 +1,17 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.ValueTypeDefaultCtorMemberDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

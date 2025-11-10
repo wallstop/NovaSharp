@@ -1,7 +1,8 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class NullGenerator : IHardwireGenerator
     {

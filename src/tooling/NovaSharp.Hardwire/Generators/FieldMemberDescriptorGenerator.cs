@@ -6,7 +6,10 @@ namespace NovaSharp.Hardwire.Generators
     {
         public override string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.FieldMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.FieldMemberDescriptor";
+            }
         }
 
         protected override CodeExpression GetMemberAccessExpression(

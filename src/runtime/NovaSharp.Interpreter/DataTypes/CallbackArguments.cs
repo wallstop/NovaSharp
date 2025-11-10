@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.DataTypes
     {
         private readonly IList<DynValue> _args;
         private readonly int _count;
-        private bool _lastIsTuple = false;
+        private bool _lastIsTuple;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CallbackArguments" /> class.

@@ -1,7 +1,8 @@
 namespace NovaSharp.Hardwire
 {
     using System.CodeDom;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Interface to be implemented by all hardwire code generators

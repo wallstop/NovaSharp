@@ -4,8 +4,9 @@ namespace NovaSharp.Hardwire
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Reflection;
-    using Interpreter;
     using Languages;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// The context under which code is generated.

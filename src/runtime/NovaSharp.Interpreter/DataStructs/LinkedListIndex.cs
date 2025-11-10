@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.DataStructs
     internal class LinkedListIndex<TKey, TValue>
     {
         private readonly LinkedList<TValue> _linkedList;
-        private Dictionary<TKey, LinkedListNode<TValue>> _map = null;
+        private Dictionary<TKey, LinkedListNode<TValue>> _map;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LinkedListIndex{TKey, TValue}"/> class.

@@ -7,8 +7,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
-    using Interpreter;
-    using Interpreter.Debugging;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
     using SDK;
 
     internal sealed class NovaSharpDebugSession : DebugSession, IAsyncDebuggerClient

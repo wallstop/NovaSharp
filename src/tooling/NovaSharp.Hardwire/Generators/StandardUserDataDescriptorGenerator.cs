@@ -1,14 +1,18 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
-    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
     public class StandardUserDataDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.StandardUserDataDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.StandardUserDataDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

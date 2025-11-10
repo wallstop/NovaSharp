@@ -4,9 +4,12 @@ namespace NovaSharp.RemoteDebugger
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml;
-    using Interpreter;
-    using Interpreter.Debugging;
     using Network;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using Threading;
 
     public class DebugServer : IDebugger, IDisposable

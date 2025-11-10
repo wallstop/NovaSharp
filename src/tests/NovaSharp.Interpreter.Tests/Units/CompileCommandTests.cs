@@ -3,8 +3,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using Commands.Implementations;
-    using Interpreter;
-    using Interpreter.Loaders;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
 
     [TestFixture]

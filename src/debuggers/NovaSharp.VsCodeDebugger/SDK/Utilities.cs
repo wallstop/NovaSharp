@@ -30,7 +30,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System;
     using System.Text.RegularExpressions;
     using System.Reflection;
-    using Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
 
     internal sealed class Utilities
     {

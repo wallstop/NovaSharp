@@ -1,8 +1,9 @@
 namespace NovaSharp.Comparison;
 
 using BenchmarkDotNet.Attributes;
-using Interpreter;
 using NLua;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.DataTypes;
 
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]

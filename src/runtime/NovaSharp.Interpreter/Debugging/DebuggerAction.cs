@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Debugging
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Wrapper for a debugger initiated action
@@ -111,7 +113,13 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets or sets the lines. This is used for the ResetBreakpoints and sets line-based bps only.
         /// </summary>
-        public int[] Lines { get; set; }
+        private int[] _lines = Array.Empty<int>();
+
+        public IReadOnlyList<int> Lines
+        {
+            get => _lines;
+            set => _lines = value is null ? Array.Empty<int>() : value.ToArray();
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DebuggerAction"/> class.

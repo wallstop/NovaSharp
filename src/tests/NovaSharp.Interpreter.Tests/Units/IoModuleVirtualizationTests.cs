@@ -5,7 +5,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Linq;
     using System.Text;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
     using Platforms;
 

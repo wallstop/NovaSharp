@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.DataStructs
     internal class FastStack<T> : IList<T>
     {
         private readonly T[] _storage;
-        private int _headIdx = 0;
+        private int _headIdx;
 
         public FastStack(int maxCapacity)
         {

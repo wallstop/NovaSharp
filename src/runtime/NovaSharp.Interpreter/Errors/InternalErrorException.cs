@@ -10,8 +10,14 @@ namespace NovaSharp.Interpreter.Errors
 #endif
     public class InternalErrorException : InterpreterException
     {
-        internal InternalErrorException(string message)
+        public InternalErrorException()
+            : base("Internal error") { }
+
+        public InternalErrorException(string message)
             : base(message) { }
+
+        public InternalErrorException(string message, Exception innerException)
+            : base(message, innerException) { }
 
         internal InternalErrorException(string format, params object[] args)
             : base(format, args) { }

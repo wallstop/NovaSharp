@@ -3,7 +3,8 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System.Collections.Generic;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using SDK;
 
     internal static class VariableInspector

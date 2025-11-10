@@ -1,7 +1,8 @@
 namespace NovaSharp.Benchmarks
 {
     using BenchmarkDotNet.Attributes;
-    using Interpreter;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
 
     [MemoryDiagnoser]
     public class ScriptLoadingBenchmarks

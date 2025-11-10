@@ -4,10 +4,11 @@ namespace NovaSharp.Hardwire.Generators
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Linq;
-    using Interpreter;
-    using Interpreter.Interop;
-    using Interpreter.Interop.BasicDescriptors;
-    using Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using Utils;
 
     internal class MethodMemberDescriptorGenerator : IHardwireGenerator
@@ -24,7 +25,10 @@ namespace NovaSharp.Hardwire.Generators
 
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.MethodMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.MethodMemberDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

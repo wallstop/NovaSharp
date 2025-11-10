@@ -1,15 +1,19 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
-    using Interpreter;
-    using Interpreter.Interop;
-    using Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
 
     internal class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
     {
         public string ManagedType
         {
-            get { return "NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor"; }
+            get
+            {
+                return "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.OverloadedMethodMemberDescriptor";
+            }
         }
 
         public CodeExpression[] Generate(

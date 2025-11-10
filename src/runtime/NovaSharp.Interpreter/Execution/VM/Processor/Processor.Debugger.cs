@@ -412,7 +412,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     IsError = dynExpr.IsConstant(),
                     LValue = l,
                     Value = v,
-                    Name = dynExpr.expressionCode,
+                    Name = dynExpr.ExpressionCode,
                 };
             }
             catch (Exception ex)
@@ -421,7 +421,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 {
                     IsError = true,
                     Value = DynValue.NewString(ex.Message),
-                    Name = dynExpr.expressionCode,
+                    Name = dynExpr.ExpressionCode,
                 };
             }
         }

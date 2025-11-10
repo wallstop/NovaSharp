@@ -31,8 +31,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System.Text;
     using System.IO;
     using System.Text.RegularExpressions;
-    using Interpreter;
-    using Interpreter.Serialization.Json;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Serialization.Json;
 
     public class ProtocolMessage
     {
