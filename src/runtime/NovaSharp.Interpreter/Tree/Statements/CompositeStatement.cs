@@ -1,7 +1,8 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
-    using Execution;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class CompositeStatement : Statement
     {

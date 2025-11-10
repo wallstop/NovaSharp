@@ -1,8 +1,9 @@
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
-    using Execution;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class DynamicExprExpression : Expression
     {

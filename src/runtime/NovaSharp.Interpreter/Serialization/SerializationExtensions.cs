@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Serialization
     using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     /// <summary>
     ///

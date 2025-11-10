@@ -8,9 +8,14 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.IO;
     using System.Linq;
     using System.Text;
-    using Compatibility;
     using IO;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
     using Platforms;
 
     /// <summary>

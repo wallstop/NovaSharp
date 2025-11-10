@@ -3,8 +3,8 @@ namespace NovaSharp.Interpreter.Platforms
     using System;
     using System.Linq;
     using System.Linq.Expressions;
-    using Interop;
     using Loaders;
+    using NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// A static class offering properties for autodetection of system/platform details

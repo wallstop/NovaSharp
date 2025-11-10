@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter.Tree
 {
     using System.Collections.Generic;
-    using Execution;
     using Expressions;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal abstract class Expression : NodeBase
     {

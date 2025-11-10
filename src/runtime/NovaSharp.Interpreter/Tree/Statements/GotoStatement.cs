@@ -1,8 +1,9 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using Debugging;
-    using Execution;
-    using Execution.VM;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class GotoStatement : Statement
     {

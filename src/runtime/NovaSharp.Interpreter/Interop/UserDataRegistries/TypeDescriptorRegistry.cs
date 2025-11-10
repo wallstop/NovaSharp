@@ -6,10 +6,13 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using System.Reflection;
     using System.Runtime.CompilerServices;
     using System.Threading;
-    using BasicDescriptors;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
-    using RegistrationPolicies;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.ProxyObjects;
+    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
 
     /// <summary>
     /// Registry of all type descriptors. Use UserData statics to access these.

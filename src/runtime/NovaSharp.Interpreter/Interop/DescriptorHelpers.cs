@@ -5,8 +5,9 @@ namespace NovaSharp.Interpreter.Interop
     using System.Linq;
     using System.Reflection;
     using System.Text;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.Attributes;
 
     /// <summary>
     /// Helper extension methods used to simplify some parts of userdata descriptor implementations

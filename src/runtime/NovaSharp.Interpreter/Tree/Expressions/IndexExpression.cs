@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
-    using Execution;
-    using Execution.VM;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class IndexExpression : Expression, IVariable
     {

@@ -9,6 +9,10 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Text;
     using Debugging;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class implementing basic Lua functions (print, type, tostring, etc) as a NovaSharp module.

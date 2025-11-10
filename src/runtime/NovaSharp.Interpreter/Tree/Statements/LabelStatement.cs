@@ -2,8 +2,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
     using Debugging;
-    using Execution;
     using Execution.Scopes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class LabelStatement : Statement
     {

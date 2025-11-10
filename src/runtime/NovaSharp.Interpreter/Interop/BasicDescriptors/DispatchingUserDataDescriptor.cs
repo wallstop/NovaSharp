@@ -3,10 +3,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Compatibility;
-    using Converters;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.Converters;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
+    using NovaSharp.Interpreter.Options;
 
     /// <summary>
     /// An abstract user data descriptor which accepts members described by <see cref="IMemberDescriptor"/> objects and

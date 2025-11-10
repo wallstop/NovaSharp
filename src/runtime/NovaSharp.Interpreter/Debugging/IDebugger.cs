@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Debugging
 {
     using System.Collections.Generic;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
 
     /// <summary>
     /// Interface for debuggers to implement, in order to provide debugging facilities to Scripts.

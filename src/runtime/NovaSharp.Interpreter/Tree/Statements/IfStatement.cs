@@ -2,9 +2,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
     using Debugging;
-    using Execution;
     using Execution.Scopes;
-    using Execution.VM;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class IfStatement : Statement
     {
@@ -114,7 +115,6 @@ namespace NovaSharp.Interpreter.Tree.Statements
                     _else.block.Compile(bc);
                 }
 
-                using (bc.EnterSource(_end))
                 {
                     bc.Emit_Leave(_else.stackFrame);
                 }

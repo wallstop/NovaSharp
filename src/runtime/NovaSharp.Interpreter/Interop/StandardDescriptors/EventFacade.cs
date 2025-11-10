@@ -2,6 +2,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
 
     internal class EventFacade : IUserDataType
     {

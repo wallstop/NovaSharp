@@ -3,8 +3,8 @@ namespace NovaSharp.Interpreter.Serialization
     using System;
     using System.Collections;
     using System.Reflection;
-    using Compatibility;
     using Interop.Converters;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
     public static class ObjectValueConverter

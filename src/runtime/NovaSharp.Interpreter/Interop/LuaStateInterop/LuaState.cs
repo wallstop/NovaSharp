@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
 
     /// <summary>
     ///

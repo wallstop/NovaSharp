@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Compatibility.Frameworks
+namespace NovaSharp.Interpreter.Compatibility.Frameworks.Base
 {
 #if !NETFX_CORE || DOTNET_CORE
 

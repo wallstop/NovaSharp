@@ -5,7 +5,10 @@ namespace NovaSharp.Interpreter.DataTypes
     using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
+    using NovaSharp.Interpreter.Interop.ProxyObjects;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.UserDataRegistries;

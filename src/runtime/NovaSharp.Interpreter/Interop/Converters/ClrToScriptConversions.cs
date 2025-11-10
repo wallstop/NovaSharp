@@ -5,6 +5,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
 
     internal static class ClrToScriptConversions
     {

@@ -4,8 +4,13 @@ namespace NovaSharp.Interpreter.CoreLib
 #pragma warning disable 1591
 
     using System;
-    using Interop;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class implementing math Lua functions

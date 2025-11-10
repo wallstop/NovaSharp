@@ -2,7 +2,7 @@ namespace NovaSharp.Interpreter.Execution
 {
     using System;
     using NovaSharp.Interpreter.DataTypes;
-    using VM;
+    using NovaSharp.Interpreter.Execution.VM;
 
     [Flags]
     internal enum InstructionFieldUsage

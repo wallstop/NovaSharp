@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Tree.Statements;
 
     internal class BuildTimeScope

@@ -1,8 +1,9 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    using Execution;
-    using Execution.VM;
     using Expressions;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class FunctionCallStatement : Statement
     {

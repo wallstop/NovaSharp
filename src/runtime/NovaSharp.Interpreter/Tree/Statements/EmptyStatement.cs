@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
-    using Execution;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class EmptyStatement : Statement
     {

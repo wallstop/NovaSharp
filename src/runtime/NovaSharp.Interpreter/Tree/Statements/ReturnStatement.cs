@@ -1,8 +1,9 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using Debugging;
-    using Execution;
     using Expressions;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class ReturnStatement : Statement
     {

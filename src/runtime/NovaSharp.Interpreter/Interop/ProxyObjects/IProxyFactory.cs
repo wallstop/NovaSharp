@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.ProxyObjects
 {
     using System;
 

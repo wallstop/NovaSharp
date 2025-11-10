@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors
 {
     using System;
     using System.Collections.Generic;
@@ -7,10 +7,13 @@ namespace NovaSharp.Interpreter.Interop
     using System.Reflection;
     using System.Runtime.CompilerServices;
     using System.Threading;
-    using BasicDescriptors;
-    using Compatibility;
     using Diagnostics;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
 
     /// <summary>
     /// Class providing easier marshalling of CLR functions

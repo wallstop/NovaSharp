@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System.Collections.Generic;
-    using BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
 
     public abstract class HardwiredMethodMemberDescriptor : FunctionMemberDescriptorBase
     {

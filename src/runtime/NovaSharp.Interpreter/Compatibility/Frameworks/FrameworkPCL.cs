@@ -1,5 +1,6 @@
 #if !(DOTNET_CORE || NETFX_CORE) && PCL
 
+    using NovaSharp.Interpreter.Compatibility.Frameworks.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;

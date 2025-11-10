@@ -1,8 +1,9 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.PredefinedUserData
 {
     using System.Collections;
-    using Converters;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Converters;
 
     /// <summary>
     /// Wrappers for enumerables as return types

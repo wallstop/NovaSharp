@@ -4,7 +4,7 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>

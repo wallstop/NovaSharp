@@ -1,14 +1,16 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Modules
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Compatibility;
-    using CoreLib;
-    using Interop;
+    using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
-    using Platforms;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Platforms;
 
     /// <summary>
     /// Class managing modules (mostly as extension methods)

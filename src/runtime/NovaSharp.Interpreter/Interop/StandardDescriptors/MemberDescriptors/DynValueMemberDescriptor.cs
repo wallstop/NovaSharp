@@ -1,7 +1,9 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
-    using BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
 
     /// <summary>
     /// Class providing a simple descriptor for constant DynValues in userdata

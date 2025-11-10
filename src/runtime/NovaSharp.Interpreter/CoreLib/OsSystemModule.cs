@@ -5,6 +5,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class implementing system related Lua functions from the 'os' module.

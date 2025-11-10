@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using NovaSharp.Interpreter.Errors;
+
     /// <summary>
     /// Common interface for all resources which are uniquely bound to a script.
     /// </summary>

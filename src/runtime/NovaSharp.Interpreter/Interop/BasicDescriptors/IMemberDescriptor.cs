@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Base interface to describe access to members of a given type.

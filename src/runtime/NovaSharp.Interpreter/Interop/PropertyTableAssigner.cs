@@ -4,8 +4,11 @@ namespace NovaSharp.Interpreter.Interop
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Options;
 
     /// <summary>
     /// Utility class which may be used to set properties on an object of type T, from values contained in a Lua table.

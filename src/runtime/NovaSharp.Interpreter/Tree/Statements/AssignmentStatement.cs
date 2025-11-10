@@ -3,9 +3,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using System;
     using System.Collections.Generic;
     using Debugging;
-    using Execution;
     using Expressions;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class AssignmentStatement : Statement
     {

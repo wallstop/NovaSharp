@@ -5,9 +5,12 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.Linq;
     using Debugging;
     using Execution.Scopes;
-    using Interop;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
 
     internal sealed partial class Processor
     {

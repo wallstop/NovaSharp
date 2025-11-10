@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Platforms
 {
 #if (PCL) || (UNITY_5) || NETFX_CORE
     // Dummy implementation for PCL and Unity targets
+    using NovaSharp.Interpreter.Modules;
     using System;
     using System.IO;
     using System.Text;
@@ -84,6 +85,7 @@ namespace NovaSharp.Interpreter.Platforms
     using System.Diagnostics;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class providing the IPlatformAccessor interface for standard full-feaured implementations.

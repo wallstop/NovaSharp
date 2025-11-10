@@ -5,6 +5,10 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class implementing bit32 Lua functions

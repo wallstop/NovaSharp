@@ -1,4 +1,5 @@
 #if HASDYNAMIC
+using NovaSharp.Interpreter.Execution;
 using NovaSharp.Interpreter.DataTypes;
 using System;
 using System.Collections.Generic;

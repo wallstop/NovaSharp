@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter
 {
-    using Interop;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Options;
     using Platforms;
 
     /// <summary>

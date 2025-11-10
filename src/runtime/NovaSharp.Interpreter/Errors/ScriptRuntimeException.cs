@@ -1,9 +1,9 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Errors
 {
     using System;
-    using Interop;
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods

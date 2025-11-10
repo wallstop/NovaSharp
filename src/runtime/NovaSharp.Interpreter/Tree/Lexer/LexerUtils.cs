@@ -1,9 +1,10 @@
-namespace NovaSharp.Interpreter.Tree
+namespace NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
     using System.Globalization;
     using System.Text;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Errors;
 
     internal static class LexerUtils
     {

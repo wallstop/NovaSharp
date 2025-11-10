@@ -1,11 +1,13 @@
-namespace NovaSharp.Interpreter.Tree.Fast_Interface
+namespace NovaSharp.Interpreter.Tree.FastInterface
 {
-    using Debugging;
-    using Execution;
-    using Execution.Scopes;
-    using Execution.VM;
-    using Expressions;
-    using Statements;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.Scopes;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Expressions;
+    using NovaSharp.Interpreter.Tree.Lexer;
+    using NovaSharp.Interpreter.Tree.Statements;
 
     internal static class LoaderFast
     {
@@ -124,7 +126,6 @@ namespace NovaSharp.Interpreter.Tree.Fast_Interface
                         Diagnostics.PerformanceCounter.Compilation
                     )
                 )
-                using (bytecode.EnterSource(null))
                 {
                     bytecode.Emit_Nop($"Begin function {source.Name}");
                     beginIp = fnx.CompileBody(bytecode, source.Name);

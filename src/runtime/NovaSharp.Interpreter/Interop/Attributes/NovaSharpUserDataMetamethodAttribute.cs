@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Interop.Attributes
 {
     using System;
     using NovaSharp.Interpreter.DataTypes;

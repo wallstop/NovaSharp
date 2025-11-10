@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
     using System;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using lua_Integer = System.Int32;
 
     /// <summary>

@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
 {
 #if DOTNET_CORE
 
+    using NovaSharp.Interpreter.Compatibility.Frameworks.Base;
     using System;
     using System.Reflection;
 

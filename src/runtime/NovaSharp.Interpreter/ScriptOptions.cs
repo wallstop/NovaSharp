@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter
     using System;
     using System.IO;
     using Loaders;
+    using NovaSharp.Interpreter.Options;
 
     /// <summary>
     /// This class contains options to customize behaviour of Script objects.

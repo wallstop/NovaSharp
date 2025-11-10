@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Compatibility
 {
     using Frameworks;
+    using NovaSharp.Interpreter.Compatibility.Frameworks.Base;
 
     public static class Framework
     {

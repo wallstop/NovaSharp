@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Platforms
     using System;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// An abstract class which offers basic services on top of IPlatformAccessor to provide easier implementation of platforms.

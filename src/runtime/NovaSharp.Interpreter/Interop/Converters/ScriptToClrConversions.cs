@@ -2,8 +2,10 @@ namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Globalization;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
 
     internal static class ScriptToClrConversions
     {

@@ -1,9 +1,10 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
-    using BasicDescriptors;
-    using Converters;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.Converters;
 
     /// <summary>
     /// Member descriptor for indexer of array types

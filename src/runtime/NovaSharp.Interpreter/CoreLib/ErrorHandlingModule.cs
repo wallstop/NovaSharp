@@ -5,6 +5,10 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class implementing error handling Lua functions (pcall and xpcall)

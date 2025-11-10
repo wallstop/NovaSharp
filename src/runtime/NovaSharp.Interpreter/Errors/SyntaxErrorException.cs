@@ -1,7 +1,8 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Errors
 {
     using System;
     using Debugging;
+    using NovaSharp.Interpreter.Tree.Lexer;
     using Tree;
 
     /// <summary>

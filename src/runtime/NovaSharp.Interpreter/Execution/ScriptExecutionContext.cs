@@ -1,10 +1,12 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Execution
 {
     using System;
-    using Debugging;
-    using Execution.VM;
-    using Interop.LuaStateInterop;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Interop.LuaStateInterop;
 
     /// <summary>
     /// Class giving access to details of the environment where the script is executing

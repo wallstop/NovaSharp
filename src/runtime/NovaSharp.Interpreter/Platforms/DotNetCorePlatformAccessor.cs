@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Platforms
 {
 #if DOTNET_CORE
+    using NovaSharp.Interpreter.Modules;
     using System;
     using System.Text;
     using System.IO;

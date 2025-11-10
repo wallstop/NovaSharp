@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.PredefinedUserData
 {
     /// <summary>
     /// Internal type used by <see cref="AnonWrapper{T}"/> for registration

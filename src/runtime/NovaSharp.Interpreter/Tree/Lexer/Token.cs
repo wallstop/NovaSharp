@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tree
+namespace NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
 

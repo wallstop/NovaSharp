@@ -1,14 +1,16 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using BasicDescriptors;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
-    using StandardDescriptors;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
 
     /// <summary>
     /// Class providing easier marshalling of CLR events. Handling is limited to a narrow range of handler signatures, which,

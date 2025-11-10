@@ -1,7 +1,8 @@
 namespace NovaSharp.Interpreter.Tree
 {
-    using Execution;
     using Expressions;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Lexer;
     using Statements;
 
     internal abstract class Statement : NodeBase

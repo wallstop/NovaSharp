@@ -1,10 +1,11 @@
-namespace NovaSharp.Interpreter.Interop
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors
 {
     using System;
-    using BasicDescriptors;
-    using Compatibility;
-    using Converters;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.Converters;
 
     /// <summary>
     /// Member descriptor for the default constructor of value types.

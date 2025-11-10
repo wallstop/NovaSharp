@@ -1,7 +1,8 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Execution
 {
     using NovaSharp.Interpreter.DataTypes;
-    using Tree.Expressions;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Tree.Expressions;
 
     /// <summary>
     /// Represents a dynamic expression in the script

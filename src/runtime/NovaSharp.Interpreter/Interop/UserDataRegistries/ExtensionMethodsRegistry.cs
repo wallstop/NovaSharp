@@ -5,10 +5,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using System.Linq;
     using System.Reflection;
     using System.Runtime.CompilerServices;
-    using BasicDescriptors;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
 
     /// <summary>
     /// Registry of all extension methods. Use UserData statics to access these.

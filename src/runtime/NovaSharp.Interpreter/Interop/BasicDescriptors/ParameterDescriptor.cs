@@ -3,7 +3,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     using System;
     using System.Linq;
     using System.Reflection;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>

@@ -8,12 +8,15 @@ namespace NovaSharp.Interpreter
     using CoreLib;
     using Debugging;
     using Diagnostics;
-    using Execution.VM;
     using IO;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Modules;
     using Platforms;
     using Tree.Expressions;
-    using Tree.Fast_Interface;
+    using Tree.FastInterface;
 
     /// <summary>
     /// This class implements a NovaSharp scripting session. Multiple Script objects can coexist in the same program but cannot share

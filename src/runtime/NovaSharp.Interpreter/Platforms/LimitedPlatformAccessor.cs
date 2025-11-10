@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Platforms
 {
     using System;
     using System.Text;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// A class implementing all the bits needed to have a minimal support of a platform.

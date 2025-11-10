@@ -5,6 +5,8 @@ namespace NovaSharp.Interpreter.DataTypes
     using System.Globalization;
     using System.Linq;
     using System.Text;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
 
     /// <summary>
     /// A class representing a value in a Lua/NovaSharp script.

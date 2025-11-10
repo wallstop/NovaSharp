@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Platforms
 {
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Interface to abstract all accesses made to the underlying platform (OS, framework) by the scripting engine.

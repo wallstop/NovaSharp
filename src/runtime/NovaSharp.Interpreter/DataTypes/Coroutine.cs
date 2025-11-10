@@ -4,6 +4,8 @@ namespace NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>

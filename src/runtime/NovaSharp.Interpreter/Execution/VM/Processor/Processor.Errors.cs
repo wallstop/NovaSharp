@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
     using Debugging;
+    using NovaSharp.Interpreter.Errors;
 
     internal sealed partial class Processor
     {

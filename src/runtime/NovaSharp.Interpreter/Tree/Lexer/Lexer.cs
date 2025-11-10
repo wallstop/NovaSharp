@@ -1,6 +1,7 @@
-namespace NovaSharp.Interpreter.Tree
+namespace NovaSharp.Interpreter.Tree.Lexer
 {
     using System.Text;
+    using NovaSharp.Interpreter.Errors;
 
     internal class Lexer
     {

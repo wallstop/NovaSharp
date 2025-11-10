@@ -7,6 +7,10 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.IO;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Modules;
     using StringLib;
 
     /// <summary>

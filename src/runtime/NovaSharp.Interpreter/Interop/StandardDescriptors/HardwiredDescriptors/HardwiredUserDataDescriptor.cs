@@ -1,8 +1,8 @@
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System;
-    using BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
 
     public abstract class HardwiredUserDataDescriptor : DispatchingUserDataDescriptor
     {

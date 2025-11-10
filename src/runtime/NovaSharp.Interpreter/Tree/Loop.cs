@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter.Tree
 {
     using System.Collections.Generic;
-    using Execution;
     using Execution.Scopes;
-    using Execution.VM;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class Loop : ILoop
     {

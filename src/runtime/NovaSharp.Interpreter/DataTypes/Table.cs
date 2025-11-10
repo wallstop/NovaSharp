@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// A class representing a Lua table.

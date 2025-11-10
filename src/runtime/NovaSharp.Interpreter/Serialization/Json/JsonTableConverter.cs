@@ -2,6 +2,8 @@ namespace NovaSharp.Interpreter.Serialization.Json
 {
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Tree.Lexer;
     using Tree;
 
     /// <summary>

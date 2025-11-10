@@ -1,8 +1,7 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
-    using Compatibility;
-    using Interop;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>

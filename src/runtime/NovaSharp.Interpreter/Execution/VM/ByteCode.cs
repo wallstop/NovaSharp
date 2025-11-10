@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     internal class ByteCode : RefIdObject
     {

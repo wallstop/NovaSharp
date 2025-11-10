@@ -2,7 +2,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Collections.Generic;
-    using Compatibility;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
     internal static class TableConversions
