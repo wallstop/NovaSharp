@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     using System.Linq;
     using System.Reflection;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Descriptor of parameters used in <see cref="IOverloadableMemberDescriptor"/> implementations.

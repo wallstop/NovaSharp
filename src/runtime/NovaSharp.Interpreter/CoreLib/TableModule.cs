@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class implementing table Lua functions

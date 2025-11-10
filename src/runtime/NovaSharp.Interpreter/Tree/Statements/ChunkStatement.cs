@@ -1,7 +1,9 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class ChunkStatement : Statement, IClosureBuilder
     {

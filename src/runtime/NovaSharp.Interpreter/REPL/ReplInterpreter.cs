@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.REPL
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// This class provides a simple REPL intepreter ready to be reused in a simple way.

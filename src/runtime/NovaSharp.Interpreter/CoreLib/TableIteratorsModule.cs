@@ -3,6 +3,8 @@
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Class implementing table Lua iterators (pairs, ipairs, next)
     /// </summary>

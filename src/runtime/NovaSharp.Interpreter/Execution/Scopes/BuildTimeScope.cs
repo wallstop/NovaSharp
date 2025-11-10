@@ -1,9 +1,9 @@
-namespace NovaSharp.Interpreter.Execution
+namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
     using System.Linq;
-    using Scopes;
-    using Tree.Statements;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tree.Statements;
 
     internal class BuildTimeScope
     {

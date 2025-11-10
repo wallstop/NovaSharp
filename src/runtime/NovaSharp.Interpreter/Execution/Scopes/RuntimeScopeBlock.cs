@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Execution
+namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System;
 

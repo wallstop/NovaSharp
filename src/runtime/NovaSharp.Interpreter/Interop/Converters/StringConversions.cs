@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal static class StringConversions
     {

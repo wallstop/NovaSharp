@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Generic;
     using System.IO;

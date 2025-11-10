@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 #pragma warning disable 1591
 
     using System;
+    using NovaSharp.Interpreter.DataTypes;
     using lua_Integer = System.Int32;
 
     /// <summary>

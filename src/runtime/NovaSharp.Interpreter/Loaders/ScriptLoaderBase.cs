@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Linq;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A base implementation of IScriptLoader, offering resolution of module names.

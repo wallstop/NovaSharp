@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter
     using System;
     using Compatibility;
     using Interop;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Descriptor which acts as a non-containing adapter from IUserDataType to IUserDataDescriptor

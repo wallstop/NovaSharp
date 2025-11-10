@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Enumeration of the possible watch types
     /// </summary>

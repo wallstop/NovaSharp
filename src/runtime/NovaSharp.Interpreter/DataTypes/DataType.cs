@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     /// <summary>
     /// Enumeration of possible data types in NovaSharp

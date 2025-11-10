@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter
 {
     using System.Collections.Generic;
     using System.Linq;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// LINQ helper methods

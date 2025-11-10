@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Text;
     using Compatibility;
     using IO;
+    using NovaSharp.Interpreter.DataTypes;
     using Platforms;
 
     /// <summary>

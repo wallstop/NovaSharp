@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
     using System.IO;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Abstract class implementing an unclosable file Lua userdata. Methods are meant to be called by Lua code.

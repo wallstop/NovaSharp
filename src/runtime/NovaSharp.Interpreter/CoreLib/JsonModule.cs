@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using NovaSharp.Interpreter.DataTypes;
     using Serialization.Json;
 
     [NovaSharpModule(Namespace = "json")]

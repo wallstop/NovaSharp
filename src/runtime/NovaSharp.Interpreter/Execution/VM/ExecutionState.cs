@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
-    using DataStructs;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal sealed class ExecutionState
     {

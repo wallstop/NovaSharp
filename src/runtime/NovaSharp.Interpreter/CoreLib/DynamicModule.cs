@@ -3,6 +3,8 @@
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Class implementing dynamic expression evaluations at runtime (a NovaSharp addition).
     /// </summary>

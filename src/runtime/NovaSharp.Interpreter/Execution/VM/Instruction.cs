@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.IO;
     using System.Linq;
     using Debugging;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class Instruction
     {

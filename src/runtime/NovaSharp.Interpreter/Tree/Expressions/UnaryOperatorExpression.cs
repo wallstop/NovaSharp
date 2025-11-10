@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using Execution;
     using Execution.VM;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class UnaryOperatorExpression : Expression
     {

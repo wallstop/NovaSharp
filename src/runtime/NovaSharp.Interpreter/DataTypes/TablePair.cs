@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     /// <summary>
     /// A class representing a key/value pair for Table use

@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Interop
     using BasicDescriptors;
     using Compatibility;
     using Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Member descriptor for the default constructor of value types.

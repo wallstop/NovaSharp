@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// A watch item for the debugger to consume.
     /// Most properties make or not sense depending on the WatchType.

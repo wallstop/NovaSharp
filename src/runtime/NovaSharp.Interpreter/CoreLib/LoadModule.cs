@@ -3,6 +3,8 @@
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Class implementing loading Lua functions like 'require', 'load', etc.
     /// </summary>

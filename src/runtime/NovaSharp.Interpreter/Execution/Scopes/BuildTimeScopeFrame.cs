@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.Scopes
 {
-    using Tree.Statements;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tree.Statements;
 
     internal class BuildTimeScopeFrame
     {

@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Data descriptor used for proxy objects

@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     internal enum OpCode
     {
         // Meta-opcodes

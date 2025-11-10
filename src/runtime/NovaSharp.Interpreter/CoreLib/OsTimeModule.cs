@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.

@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using Debugging;
     using Execution;
     using Expressions;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class AssignmentStatement : Statement
     {

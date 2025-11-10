@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Fast_Interface
 {
     using Debugging;
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
     using Expressions;
     using Statements;

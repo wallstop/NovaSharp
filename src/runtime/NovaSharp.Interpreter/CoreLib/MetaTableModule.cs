@@ -3,6 +3,8 @@
 
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Class implementing metatable related Lua functions (xxxmetatable and rawxxx).
     /// </summary>

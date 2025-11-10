@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using System.Collections.Generic;
     using Execution;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class TableConstructor : Expression
     {

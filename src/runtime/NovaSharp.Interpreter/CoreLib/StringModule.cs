@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
     using StringLib;
 
     /// <summary>

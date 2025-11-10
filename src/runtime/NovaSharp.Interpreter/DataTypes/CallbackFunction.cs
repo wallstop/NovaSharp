@@ -1,8 +1,8 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
-    using Interop;
+    using NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// This class wraps a CLR function

@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A script loader loading scripts from an assembly resources

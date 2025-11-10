@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     /// <summary>
     /// Class used to support "tail" continuations - a way for C# / Lua interaction which supports

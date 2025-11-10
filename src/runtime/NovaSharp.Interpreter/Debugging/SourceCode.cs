@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Debugging
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class representing the source code of a given script

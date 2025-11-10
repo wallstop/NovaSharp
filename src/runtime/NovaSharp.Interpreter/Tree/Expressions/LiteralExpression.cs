@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using Execution;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class LiteralExpression : Expression
     {

@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Interop
     using System;
     using System.Collections.Generic;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A user data descriptor which aggregates multiple descriptors and tries dispatching members

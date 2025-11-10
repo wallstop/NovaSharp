@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Interop
     using System.Linq;
     using BasicDescriptors;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Standard descriptor for Enum values

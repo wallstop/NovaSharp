@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Defines behaviour of the colon ':' operator in CLR callbacks.
     /// Default behaviour is for ':' being treated the same as a '.' if the functions is implemented on the CLR side (e.g. in C#).

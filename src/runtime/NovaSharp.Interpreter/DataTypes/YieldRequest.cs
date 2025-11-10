@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     /// <summary>
     /// Class wrapping a request to yield a coroutine

@@ -1,15 +1,15 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Interop;
-    using Interop.BasicDescriptors;
-    using Interop.RegistrationPolicies;
-    using Interop.StandardDescriptors;
-    using Interop.UserDataRegistries;
-    using Serialization.Json;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using NovaSharp.Interpreter.Interop.UserDataRegistries;
+    using NovaSharp.Interpreter.Serialization.Json;
 
     /// <summary>
     /// Class exposing C# objects as Lua userdata.

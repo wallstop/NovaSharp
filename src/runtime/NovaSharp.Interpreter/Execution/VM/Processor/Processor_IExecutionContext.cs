@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     internal sealed partial class Processor
     {
         internal Table GetMetatable(DynValue value)

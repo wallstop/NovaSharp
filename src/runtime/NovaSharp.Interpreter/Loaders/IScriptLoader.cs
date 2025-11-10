@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Loaders
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class dictating how requests to read scripts from files are handled.

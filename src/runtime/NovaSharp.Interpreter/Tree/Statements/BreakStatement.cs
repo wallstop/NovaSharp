@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 {
     using Debugging;
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
 
     internal class BreakStatement : Statement

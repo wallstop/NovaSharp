@@ -3,9 +3,11 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using DataStructs;
     using Debugging;
+    using Execution.Scopes;
     using Interop;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal sealed partial class Processor
     {

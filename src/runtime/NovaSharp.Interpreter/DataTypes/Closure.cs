@@ -1,7 +1,8 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Generic;
-    using Execution;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.Scopes;
 
     /// <summary>
     /// A class representing a script function

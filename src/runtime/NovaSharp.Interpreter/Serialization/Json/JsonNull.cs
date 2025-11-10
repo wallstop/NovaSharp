@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Serialization.Json
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// UserData representing a null value in a table converted from Json
     /// </summary>

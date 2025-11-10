@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using System.Collections.Generic;
     using Debugging;
     using Execution;
+    using Execution.Scopes;
 
     internal class LabelStatement : Statement
     {

@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Serialization
     using System.Reflection;
     using Compatibility;
     using Interop.Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     public static class ObjectValueConverter
     {

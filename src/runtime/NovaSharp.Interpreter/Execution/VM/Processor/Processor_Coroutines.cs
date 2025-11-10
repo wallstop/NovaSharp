@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.

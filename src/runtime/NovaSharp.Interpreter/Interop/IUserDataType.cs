@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Interop
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// As a convenience, every type deriving from IUserDataType is "self-described". That is, no descriptor is needed/generated
     /// and the object itself is used to describe the type for interop. See also <see cref="UserData"/>, <see cref="IUserDataDescriptor"/>

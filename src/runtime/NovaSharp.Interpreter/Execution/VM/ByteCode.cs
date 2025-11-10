@@ -8,6 +8,8 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.IO;
     using System.Text;
     using Debugging;
+    using Execution.Scopes;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class ByteCode : RefIdObject
     {

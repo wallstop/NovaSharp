@@ -1,7 +1,7 @@
-namespace NovaSharp.Interpreter.Execution
+namespace NovaSharp.Interpreter.Execution.Scopes
 {
-    using DataStructs;
-    using VM;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.Execution.VM;
 
     internal interface ILoop
     {

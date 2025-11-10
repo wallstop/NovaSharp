@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System.Collections.Generic;
     using BasicDescriptors;
+    using NovaSharp.Interpreter.DataTypes;
 
     public abstract class HardwiredMethodMemberDescriptor : FunctionMemberDescriptorBase
     {

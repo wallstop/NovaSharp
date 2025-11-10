@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Interface used by NovaSharp to access objects of a given type from scripts.

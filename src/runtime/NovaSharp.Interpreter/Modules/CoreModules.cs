@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Enumeration (combinable as flags) of all the standard library modules

@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Interface for descriptors with the capability of being serialized
     /// for later hardwiring.

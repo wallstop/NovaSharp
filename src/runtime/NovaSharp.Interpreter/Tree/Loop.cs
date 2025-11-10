@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree
 {
     using System.Collections.Generic;
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
 
     internal class Loop : ILoop

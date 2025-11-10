@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.REPL
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// An implementation of <see cref="ReplInterpreter"/> which supports a very basic history of recent input lines.
     /// </summary>

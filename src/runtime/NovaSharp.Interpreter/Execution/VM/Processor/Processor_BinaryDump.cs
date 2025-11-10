@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.Text;
     using Debugging;
     using IO;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal sealed partial class Processor
     {

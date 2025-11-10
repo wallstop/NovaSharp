@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Specialized <see cref="IMemberDescriptor"/> for members supporting overloads resolution.

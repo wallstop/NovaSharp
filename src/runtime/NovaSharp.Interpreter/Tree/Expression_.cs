@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tree
     using System.Collections.Generic;
     using Execution;
     using Expressions;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal abstract class Expression : NodeBase
     {

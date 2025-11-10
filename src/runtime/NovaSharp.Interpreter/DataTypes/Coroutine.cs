@@ -1,10 +1,10 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Debugging;
-    using Execution.VM;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>
     /// A class representing a script coroutine

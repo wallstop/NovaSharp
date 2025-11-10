@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Interop
     using BasicDescriptors;
     using Compatibility;
     using Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class providing easier marshalling of CLR functions

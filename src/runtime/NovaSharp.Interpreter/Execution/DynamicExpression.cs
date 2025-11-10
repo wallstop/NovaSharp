@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter
 {
+    using NovaSharp.Interpreter.DataTypes;
     using Tree.Expressions;
 
     /// <summary>

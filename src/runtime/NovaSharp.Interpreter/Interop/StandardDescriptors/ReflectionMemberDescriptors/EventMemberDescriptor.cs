@@ -6,7 +6,8 @@ namespace NovaSharp.Interpreter.Interop
     using System.Reflection;
     using BasicDescriptors;
     using Compatibility;
-    using DataStructs;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
     using StandardDescriptors;
 
     /// <summary>

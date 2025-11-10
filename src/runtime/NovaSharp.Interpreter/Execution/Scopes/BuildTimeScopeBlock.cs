@@ -2,7 +2,9 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System;
     using System.Collections.Generic;
-    using Tree.Statements;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tree.Statements;
 
     internal class BuildTimeScopeBlock
     {

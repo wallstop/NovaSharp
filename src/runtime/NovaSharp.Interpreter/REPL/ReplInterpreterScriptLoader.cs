@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.REPL
 {
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
+    using NovaSharp.Interpreter.DataTypes;
     using System;
     using Loaders;
 

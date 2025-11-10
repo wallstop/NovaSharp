@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Interop
     using System;
     using BasicDescriptors;
     using Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Member descriptor which allows to define new members which behave similarly to class instance members

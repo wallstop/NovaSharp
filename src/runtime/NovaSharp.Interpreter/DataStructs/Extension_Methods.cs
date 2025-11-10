@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Marks a method as the handler of metamethods of a userdata type

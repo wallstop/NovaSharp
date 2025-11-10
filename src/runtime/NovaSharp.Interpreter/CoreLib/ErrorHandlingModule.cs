@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.CoreLib
 #pragma warning disable 1591
 
     using System.Collections.Generic;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class implementing error handling Lua functions (pcall and xpcall)

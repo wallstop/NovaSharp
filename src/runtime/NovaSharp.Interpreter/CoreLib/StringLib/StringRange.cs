@@ -3,6 +3,8 @@
 
 namespace NovaSharp.Interpreter.CoreLib.StringLib
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     internal class StringRange
     {
         public int Start { get; set; }

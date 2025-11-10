@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Namespace containing all the most commonly used classes for NovaSharp operation.
     /// When in doubt, refer to <see cref="Script" /> and <see cref="DynValue" /> classes as starting points.

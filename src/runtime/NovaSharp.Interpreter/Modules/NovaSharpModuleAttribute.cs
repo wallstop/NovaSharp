@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Marks a CLR type to be a NovaSharp module.

@@ -1,6 +1,7 @@
-namespace NovaSharp.Interpreter.Execution
+namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class RuntimeScopeFrame
     {

@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
+    using Execution.Scopes;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal sealed partial class Processor
     {

@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using Interop;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class implementing math Lua functions

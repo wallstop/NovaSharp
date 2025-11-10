@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Serialization.Json
 {
     using System.Text;
+    using NovaSharp.Interpreter.DataTypes;
     using Tree;
 
     /// <summary>

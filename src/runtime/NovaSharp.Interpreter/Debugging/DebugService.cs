@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Debugging
 {
     using System.Collections.Generic;
     using Execution.VM;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class providing services specific to debugger implementations.

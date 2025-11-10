@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Base interface to describe access to members of a given type.
     /// While it's not infrastructural to implement custom type descriptors, it's needed for

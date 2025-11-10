@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Interop
     using System.Reflection;
     using BasicDescriptors;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Standard descriptor for userdata types.

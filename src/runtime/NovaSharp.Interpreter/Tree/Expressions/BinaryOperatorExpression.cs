@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using System;
     using Execution;
     using Execution.VM;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     ///

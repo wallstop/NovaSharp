@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A registration policy which makes registration permanent and not deletable.

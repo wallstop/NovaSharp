@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
     using System;
     using BasicDescriptors;
     using Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     public abstract class HardwiredMemberDescriptor : IMemberDescriptor
     {

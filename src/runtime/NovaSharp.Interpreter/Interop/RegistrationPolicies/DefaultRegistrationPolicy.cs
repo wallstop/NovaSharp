@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// The default registration policy used by NovaSharp unless explicitely replaced.

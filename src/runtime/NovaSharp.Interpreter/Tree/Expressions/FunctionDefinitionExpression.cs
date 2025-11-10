@@ -4,7 +4,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using System.Collections.Generic;
     using Debugging;
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
+    using NovaSharp.Interpreter.DataTypes;
     using Statements;
 
     internal class FunctionDefinitionExpression : Expression, IClosureBuilder

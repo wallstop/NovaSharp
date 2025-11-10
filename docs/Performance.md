@@ -6,7 +6,8 @@ This document tracks benchmark snapshots used for regression analysis. Maintain 
 - The most recent NovaSharp benchmark run
 
 When capturing new data, replace the entire `### NovaSharp Latest` section instead of appending new content to the top of the file.
-
+
+
 
 ## Windows
 
@@ -207,7 +208,8 @@ _No benchmark data recorded yet._
 
 
 
-
+
+
 
 ## macOS
 
@@ -218,4 +220,5 @@ _No benchmark data recorded yet._
 
 ---
 
-
+
+

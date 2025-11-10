@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution
 {
     using Debugging;
+    using NovaSharp.Interpreter.Execution.Scopes;
     using Tree;
 
     internal class ScriptLoadingContext

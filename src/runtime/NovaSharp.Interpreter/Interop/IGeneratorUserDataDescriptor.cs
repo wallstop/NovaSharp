@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// An interface for type descriptors having the ability to generate other descriptors on the fly.

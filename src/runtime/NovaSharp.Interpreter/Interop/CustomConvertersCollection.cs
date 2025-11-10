@@ -2,6 +2,8 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System;
     using System.Collections.Generic;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A collection of custom converters between NovaSharp types and CLR types.

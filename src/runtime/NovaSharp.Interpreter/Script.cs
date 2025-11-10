@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter
     using Diagnostics;
     using Execution.VM;
     using IO;
+    using NovaSharp.Interpreter.DataTypes;
     using Platforms;
     using Tree.Expressions;
     using Tree.Fast_Interface;

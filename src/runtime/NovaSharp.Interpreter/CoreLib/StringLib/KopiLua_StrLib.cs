@@ -50,6 +50,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
     // THE SOFTWARE.
 
     using Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.DataTypes;
     using lua_Integer = System.Int32;
     using LUA_INTFRM_T = System.Int64;
     using ptrdiff_t = System.Int32;

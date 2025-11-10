@@ -4,8 +4,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using System.Linq;
     using Debugging;
     using Execution;
+    using Execution.Scopes;
     using Execution.VM;
     using Expressions;
+    using NovaSharp.Interpreter.DataTypes;
 
     internal class ForEachLoopStatement : Statement
     {

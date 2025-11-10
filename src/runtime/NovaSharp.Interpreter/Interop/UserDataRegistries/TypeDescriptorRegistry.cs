@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using System.Threading;
     using BasicDescriptors;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
     using RegistrationPolicies;
 
     /// <summary>

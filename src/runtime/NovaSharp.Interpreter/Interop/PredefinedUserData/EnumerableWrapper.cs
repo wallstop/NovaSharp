@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System.Collections;
     using Converters;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Wrappers for enumerables as return types

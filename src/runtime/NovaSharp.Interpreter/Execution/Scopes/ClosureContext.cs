@@ -1,7 +1,8 @@
-namespace NovaSharp.Interpreter.Execution
+namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
     using System.Linq;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// The scope of a closure (container of upvalues)

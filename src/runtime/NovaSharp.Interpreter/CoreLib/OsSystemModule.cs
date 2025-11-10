@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.CoreLib
 #pragma warning disable 1591
 
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Class implementing system related Lua functions from the 'os' module.

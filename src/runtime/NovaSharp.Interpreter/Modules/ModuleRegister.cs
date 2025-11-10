@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter
     using Compatibility;
     using CoreLib;
     using Interop;
+    using NovaSharp.Interpreter.DataTypes;
     using Platforms;
 
     /// <summary>

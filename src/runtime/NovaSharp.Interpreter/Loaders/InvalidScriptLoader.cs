@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Loaders
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A script loader used for platforms we cannot initialize in any better way..

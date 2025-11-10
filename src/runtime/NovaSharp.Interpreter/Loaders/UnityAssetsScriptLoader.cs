@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Linq;
     using System.Reflection;
     using Compatibility;
+    using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A script loader which can load scripts from assets in Unity3D.

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop
 {
     using System;
+    using NovaSharp.Interpreter.DataTypes;
     using RegistrationPolicies;
 
     /// <summary>

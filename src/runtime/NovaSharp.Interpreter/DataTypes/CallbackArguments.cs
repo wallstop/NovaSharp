@@ -1,7 +1,7 @@
-namespace NovaSharp.Interpreter
+namespace NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Generic;
-    using DataStructs;
+    using NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
     /// This class is a container for arguments received by a CallbackFunction

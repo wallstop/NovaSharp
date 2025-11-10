@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter
 {
+    using NovaSharp.Interpreter.DataTypes;
+
     /// <summary>
     /// Enumerations of the possible strategies to marshal CLR objects to NovaSharp userdata and functions
     /// when using automatic descriptors.
