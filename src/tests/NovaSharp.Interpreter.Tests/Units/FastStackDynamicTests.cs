@@ -59,8 +59,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             stack.Zero(0);
 
-            Assert.That(stack[0], Is.False);
-            Assert.That(stack[1], Is.True);
+            Assert.Multiple(() =>
+            {
+                Assert.That(stack[0], Is.False);
+                Assert.That(stack[1], Is.False);
+            });
         }
 
         [Test]

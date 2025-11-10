@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
     using NUnit.Framework;
 
