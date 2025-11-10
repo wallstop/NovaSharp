@@ -78,6 +78,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SqrtOfNegativeNumberReturnsNaN()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.sqrt(-1)");
+
+            Assert.That(double.IsNaN(result.Number), Is.True);
+        }
+
+        [Test]
+        public void PowWithLargeExponentReturnsInfinity()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.pow(10, 309)");
+
+            Assert.That(double.IsPositiveInfinity(result.Number), Is.True);
+        }
+
+        [Test]
         public void RandomSeedProducesDeterministicSequence()
         {
             Script script = CreateScript();

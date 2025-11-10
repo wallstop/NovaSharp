@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter
 {
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -20,7 +19,13 @@ namespace NovaSharp.Interpreter
             DataType type
         )
         {
-            return enumerable.Where(v => v.Type == type).Select(v => v.ToObject<T>());
+            foreach (DynValue value in enumerable)
+            {
+                if (value.Type == type)
+                {
+                    yield return value.ToObject<T>();
+                }
+            }
         }
 
         /// <summary>
@@ -33,7 +38,13 @@ namespace NovaSharp.Interpreter
             DataType type
         )
         {
-            return enumerable.Where(v => v.Type == type);
+            foreach (DynValue value in enumerable)
+            {
+                if (value.Type == type)
+                {
+                    yield return value;
+                }
+            }
         }
 
         /// <summary>
@@ -42,7 +53,10 @@ namespace NovaSharp.Interpreter
         /// <param name="enumerable">The enumerable.</param>
         public static IEnumerable<object> AsObjects(this IEnumerable<DynValue> enumerable)
         {
-            return enumerable.Select(v => v.ToObject());
+            foreach (DynValue value in enumerable)
+            {
+                yield return value.ToObject();
+            }
         }
 
         /// <summary>
@@ -52,7 +66,10 @@ namespace NovaSharp.Interpreter
         /// <param name="enumerable">The enumerable.</param>
         public static IEnumerable<T> AsObjects<T>(this IEnumerable<DynValue> enumerable)
         {
-            return enumerable.Select(v => v.ToObject<T>());
+            foreach (DynValue value in enumerable)
+            {
+                yield return value.ToObject<T>();
+            }
         }
     }
 }

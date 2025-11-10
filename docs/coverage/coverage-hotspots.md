@@ -18,12 +18,12 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 | `NovaSharp.Interpreter.Serialization.SerializationExtensions` | 0.0 | 0.0 | 0 / 68 | Runtime | Roundtrip tests landed; rerun coverage to capture the new baseline and confirm Lua formatter output. |
 | `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor` | 0.0 | – | 0 / 84 | Interop | Cover descriptor invocation paths ahead of Roslyn generator replacement. |
 | `NovaSharp.Interpreter.CoreLib.OsTimeModule` | 0.0 | 0.0 | 0 / 96 | Runtime | New NUnit regression tests exercise `os.time`, `os.difftime`, and `os.date`; rerun coverage to capture the lift. |
-| `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` | 0.0 | 0.0 | 0 / 52 | Tooling | Create Unity-focused loader tests using in-memory asset bundles. |
-| `NovaSharp.Interpreter.LinqHelpers` | 0.0 | 0.0 | 0 / 19 | Runtime | Evaluate removal / rewrite without LINQ; add regression tests if retained. |
-| `NovaSharp.Interpreter.Interop.Attributes.NovaSharpHideMemberAttribute` | 0.0 | – | 0 / 12 | Interop | Cover attribute usage via descriptor tests that assert hidden members. |
+| `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` | 0.0 | 0.0 | 0 / 52 | Tooling | Unit tests now cover dictionary-backed loading, path trimming, errors, and enumeration; rerun coverage to record improvements. |
+| `NovaSharp.Interpreter.LinqHelpers` | 0.0 | 0.0 | 0 / 19 | Runtime | LINQ-free iterators landed with unit tests; rerun coverage to record the bump and verify analyzer enforcement potential. |
+| `NovaSharp.Interpreter.Interop.Attributes.NovaSharpHideMemberAttribute` | 0.0 | – | 0 / 12 | Interop | Tests now verify hidden methods/properties (with inheritance). Refresh coverage snapshot to mark complete. |
 
 ## Yellow List (line 50–89 %)
-- `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Fresh tests now cover logarithms, power, modf, min/max, ldexp, and deterministic random sequences; still pending NaN/overflow edge assertions. Run `./coverage.ps1` to capture the uplift.
+- `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Fresh tests now cover logarithms, power, modf, min/max, ldexp, deterministic random sequences, and NaN/overflow behaviors. Run `./coverage.ps1` to capture the uplift.
 - `NovaSharp.Interpreter.Tree.Expressions.FunctionDefinitionExpression` – 63 % line. Add parser/compiler unit tests covering variadic arguments + local closures.
 - `NovaSharp.Interpreter.Execution.Processors.Processor` – 71 % line. Expand VM opcode coverage, especially coroutine resume/yield sequences.
 - `NovaSharp.Commands.Program` – 57 % line. Already in CLI suite; add tests for error exit codes and argument parsing of `--interactive`.

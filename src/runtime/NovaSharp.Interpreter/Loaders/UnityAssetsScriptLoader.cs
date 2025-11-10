@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -182,7 +181,15 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).",
         /// <returns></returns>
         public string[] GetLoadedScripts()
         {
-            return _resources.Keys.ToArray();
+            string[] keys = new string[_resources.Keys.Count];
+            int index = 0;
+            foreach (string key in _resources.Keys)
+            {
+                keys[index] = key;
+                index += 1;
+            }
+
+            return keys;
         }
     }
 }
