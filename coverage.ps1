@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipBuild,
-    [string]$Configuration = "Release"
+    [string]$Configuration = "Release",
+    [double]$MinimumInterpreterCoverage = 70.0
 )
 
 $ErrorActionPreference = "Stop"
@@ -95,6 +96,28 @@ try {
     $summaryGithubPath = Join-Path $reportTarget "SummaryGithub.md"
     if (Test-Path $summaryGithubPath) {
         Write-Host "  Summary (GitHub): $summaryGithubPath"
+    }
+
+    $summaryJsonPath = Join-Path $reportTarget "Summary.json"
+    if (Test-Path $summaryJsonPath) {
+        $summaryData = Get-Content $summaryJsonPath -Raw | ConvertFrom-Json
+        $interpreterAssembly = $summaryData.coverage.assemblies |
+            Where-Object { $_.name -eq "NovaSharp.Interpreter" }
+
+        if ($null -eq $interpreterAssembly) {
+            throw "Interpreter assembly not found in coverage summary. Verify reportgenerator configuration."
+        }
+
+        $interpreterCoverage = [double]$interpreterAssembly.coverage
+        Write-Host ""
+        Write-Host ("Interpreter line coverage: {0:N1}%" -f $interpreterCoverage)
+        if ($interpreterCoverage -lt $MinimumInterpreterCoverage) {
+            throw (
+                "NovaSharp.Interpreter line coverage {0:N1}% is below the required {1:N1}% threshold." -f
+                $interpreterCoverage,
+                $MinimumInterpreterCoverage
+            )
+        }
     }
 }
 finally {
