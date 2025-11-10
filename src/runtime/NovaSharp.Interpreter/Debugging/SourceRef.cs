@@ -43,9 +43,9 @@ namespace NovaSharp.Interpreter.Debugging
         public bool IsStepStop { get; private set; }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is a breakpoint
+        /// Gets or sets a value indicating whether this instance is a breakpoint.
         /// </summary>
-        public bool breakpoint;
+        public bool Breakpoint { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance cannot be set as a breakpoint

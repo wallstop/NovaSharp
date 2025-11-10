@@ -296,7 +296,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
         void IOptimizableDescriptor.Optimize()
         {
-            ParameterDescriptor[] parameters = Parameters;
+            ParameterDescriptor[] parameters = ParameterArray;
 
             if (AccessMode == InteropAccessMode.Reflection)
             {

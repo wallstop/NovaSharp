@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         : IUserDataDescriptor,
             IOptimizableDescriptor
     {
-        private int _extMethodsVersion = 0;
+        private int _extMethodsVersion;
         private readonly Dictionary<string, IMemberDescriptor> _metaMembers = new(
             StringComparer.OrdinalIgnoreCase
         );
@@ -35,22 +35,22 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <summary>
         /// The special name used by CLR for indexer getters
         /// </summary>
-        protected const string SPECIALNAME_INDEXER_GET = "get_Item";
+        protected const string SpecialNameIndexerGet = "get_Item";
 
         /// <summary>
         /// The special name used by CLR for indexer setters
         /// </summary>
-        protected const string SPECIALNAME_INDEXER_SET = "set_Item";
+        protected const string SpecialNameIndexerSet = "set_Item";
 
         /// <summary>
         /// The special name used by CLR for explicit cast conversions
         /// </summary>
-        protected const string SPECIALNAME_CAST_EXPLICIT = "op_Explicit";
+        protected const string SpecialNameCastExplicit = "op_Explicit";
 
         /// <summary>
         /// The special name used by CLR for implicit cast conversions
         /// </summary>
-        protected const string SPECIALNAME_CAST_IMPLICIT = "op_Implicit";
+        protected const string SpecialNameCastImplicit = "op_Implicit";
 
         /// <summary>
         /// Gets the name of the descriptor (usually, the name of the type described).
@@ -258,7 +258,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
-                    .GetOrDefault(SPECIALNAME_INDEXER_GET)
+                    .GetOrDefault(SpecialNameIndexerGet)
                     .WithAccessOrNull(MemberDescriptorAccess.CanExecute);
 
                 if (mdesc != null)
@@ -393,7 +393,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
-                    .GetOrDefault(SPECIALNAME_INDEXER_SET)
+                    .GetOrDefault(SpecialNameIndexerSet)
                     .WithAccessOrNull(MemberDescriptorAccess.CanExecute);
 
                 if (mdesc != null)

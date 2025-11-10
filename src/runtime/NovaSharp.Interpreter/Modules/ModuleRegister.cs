@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Modules
             table.Set("_NovaSharp", novaSharpTable);
 
             m.Set("version", DynValue.NewString(Script.VERSION));
-            m.Set("luacompat", DynValue.NewString(Script.LUA_VERSION));
+            m.Set("luacompat", DynValue.NewString(Script.LuaVersion));
             m.Set("platform", DynValue.NewString(Script.GlobalOptions.Platform.GetPlatformName()));
             m.Set("is_aot", DynValue.NewBoolean(Script.GlobalOptions.Platform.IsRunningOnAOT()));
             m.Set("is_unity", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnUnity));

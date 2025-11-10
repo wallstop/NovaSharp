@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Loaders
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
 
@@ -35,7 +36,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// <param name="modname">The modname.</param>
         /// <param name="paths">The paths.</param>
         /// <returns></returns>
-        protected virtual string ResolveModuleName(string modname, string[] paths)
+        protected virtual string ResolveModuleName(string modname, IEnumerable<string> paths)
         {
             if (paths == null)
             {
@@ -85,12 +86,12 @@ namespace NovaSharp.Interpreter.Loaders
         /// Gets or sets the modules paths used by the "require" function. If null, the default paths are used (using
         /// environment variables etc.).
         /// </summary>
-        public string[] ModulePaths { get; set; }
+        public IReadOnlyList<string> ModulePaths { get; set; }
 
         /// <summary>
         /// Unpacks a string path in a form like "?;?.lua" to an array
         /// </summary>
-        public static string[] UnpackStringPaths(string str)
+        public static IReadOnlyList<string> UnpackStringPaths(string str)
         {
             return str.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
@@ -101,9 +102,9 @@ namespace NovaSharp.Interpreter.Loaders
         /// <summary>
         /// Gets the default environment paths.
         /// </summary>
-        public static string[] GetDefaultEnvironmentPaths()
+        public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
-            string[] modulePaths = null;
+            IReadOnlyList<string> modulePaths = null;
 
             if (modulePaths == null)
             {

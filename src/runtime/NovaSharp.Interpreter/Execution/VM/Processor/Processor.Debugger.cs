@@ -71,7 +71,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 _debug.debuggerAttached.IsPauseRequested()
                 || (
                     instr.SourceCodeRef != null
-                    && instr.SourceCodeRef.breakpoint
+                    && instr.SourceCodeRef.Breakpoint
                     && isOnDifferentRef
                 )
             )
@@ -205,9 +205,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                     continue;
                 }
 
-                srf.breakpoint = lines.Contains(srf.FromLine);
+                srf.Breakpoint = lines.Contains(srf.FromLine);
 
-                if (srf.breakpoint)
+                if (srf.Breakpoint)
                 {
                     result.Add(srf.FromLine);
                 }
@@ -236,14 +236,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                     if (state == null)
                     {
-                        srf.breakpoint = !srf.breakpoint;
+                        srf.Breakpoint = !srf.Breakpoint;
                     }
                     else
                     {
-                        srf.breakpoint = state.Value;
+                        srf.Breakpoint = state.Value;
                     }
 
-                    if (srf.breakpoint)
+                    if (srf.Breakpoint)
                     {
                         _debug.breakPoints.Add(srf);
                     }
@@ -285,14 +285,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                     if (state == null)
                     {
-                        nearest.breakpoint = !nearest.breakpoint;
+                        nearest.Breakpoint = !nearest.Breakpoint;
                     }
                     else
                     {
-                        nearest.breakpoint = state.Value;
+                        nearest.Breakpoint = state.Value;
                     }
 
-                    if (nearest.breakpoint)
+                    if (nearest.Breakpoint)
                     {
                         _debug.breakPoints.Add(nearest);
                     }

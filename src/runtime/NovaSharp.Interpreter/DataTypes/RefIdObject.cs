@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class RefIdObject
     {
-        private static int _sRefIdCounter = 0;
+        private static int _sRefIdCounter;
         private readonly int _refId = ++_sRefIdCounter;
 
         /// <summary>

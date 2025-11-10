@@ -32,9 +32,9 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// The Lua version being supported
         /// </summary>
-        public const string LUA_VERSION = "5.2";
+        public const string LuaVersion = "5.2";
 
-        private readonly Processor _mainProcessor = null;
+        private readonly Processor _mainProcessor;
         private readonly ByteCode _byteCode;
         private readonly List<SourceCode> _sources = new();
         private readonly Table _globalTable;

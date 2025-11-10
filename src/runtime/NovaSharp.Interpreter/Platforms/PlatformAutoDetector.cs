@@ -11,9 +11,9 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
-        private static bool? _isRunningOnAot = null;
+        private static bool? _isRunningOnAot;
 
-        private static bool _autoDetectionsDone = false;
+        private static bool _autoDetectionsDone;
 
         /// <summary>
         /// Gets a value indicating whether this instance is running on mono.

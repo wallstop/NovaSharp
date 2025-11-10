@@ -353,7 +353,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             int argsCnt = argsBase;
             bool varArgsUsed = false;
 
-            for (int i = 0; i < method.Parameters.Length; i++)
+            for (int i = 0; i < method.Parameters.Count; i++)
             {
                 if (isExtMethod && i == 0)
                 {
@@ -376,7 +376,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                     continue;
                 }
 
-                if (i == method.Parameters.Length - 1 && method.VarArgsArrayType != null)
+                if (i == method.Parameters.Count - 1 && method.VarArgsArrayType != null)
                 {
                     int varargCnt = 0;
                     DynValue firstArg = null;
@@ -457,7 +457,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             if (totalScore > 0)
             {
-                if ((args.Count - argsBase) <= method.Parameters.Length)
+                if ((args.Count - argsBase) <= method.Parameters.Count)
                 {
                     totalScore += ScriptToClrConversions.WEIGHT_NO_EXTRA_PARAMS_BONUS;
                     totalScore *= 1000;
@@ -472,7 +472,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                     totalScore *= 1000;
                     totalScore -=
                         ScriptToClrConversions.WEIGHT_EXTRA_PARAMS_MALUS
-                        * ((args.Count - argsBase) - method.Parameters.Length);
+                        * ((args.Count - argsBase) - method.Parameters.Count);
                     totalScore = Math.Max(1, totalScore);
                 }
             }

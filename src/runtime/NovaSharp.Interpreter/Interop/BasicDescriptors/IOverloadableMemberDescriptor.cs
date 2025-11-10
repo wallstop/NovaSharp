@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
 
@@ -34,7 +35,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <summary>
         /// Gets the type of the arguments of the underlying CLR function
         /// </summary>
-        public ParameterDescriptor[] Parameters { get; }
+        public IReadOnlyList<ParameterDescriptor> Parameters { get; }
 
         /// <summary>
         /// Gets a value indicating the type of the ParamArray parameter of a var-args function. If the function is not var-args,

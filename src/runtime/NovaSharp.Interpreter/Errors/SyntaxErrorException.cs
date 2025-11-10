@@ -8,7 +8,6 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-
     /// <summary>
     /// Exception for all parsing/lexing errors.
     /// </summary>
@@ -17,6 +16,7 @@ namespace NovaSharp.Interpreter.Errors
 #endif
     public class SyntaxErrorException : InterpreterException
     {
+        [field: NonSerialized]
         internal Token Token { get; private set; }
 
         public SyntaxErrorException() { }

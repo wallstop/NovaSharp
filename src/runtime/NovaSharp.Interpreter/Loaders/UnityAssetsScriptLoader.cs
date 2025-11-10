@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// <summary>
         /// The default path where scripts are meant to be stored (if not changed)
         /// </summary>
-        public const string DEFAULT_PATH = "NovaSharp/Scripts";
+        public const string DefaultPath = "NovaSharp/Scripts";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UnityAssetsScriptLoader"/> class.
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Loaders
         /// pass the value "Scripts". If null, "NovaSharp/Scripts" is used. </param>
         public UnityAssetsScriptLoader(string assetsPath = null)
         {
-            assetsPath = assetsPath ?? DEFAULT_PATH;
+            assetsPath ??= DefaultPath;
 #if UNITY_5
             LoadResourcesUnityNative(assetsPath);
 #else
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Loaders
 If you want scripts to be put in another directory or another way, use a custom instance of UnityAssetsScriptLoader or implement
 your own IScriptLoader (possibly extending ScriptLoaderBase).",
                     file,
-                    DEFAULT_PATH
+                    DefaultPath
                 );
 
                 throw new Exception(error);

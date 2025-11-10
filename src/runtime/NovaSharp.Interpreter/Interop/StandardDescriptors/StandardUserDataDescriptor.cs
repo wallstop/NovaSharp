@@ -120,8 +120,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                     if (
                         mi.IsSpecialName
                         && (
-                            mi.Name == SPECIALNAME_CAST_EXPLICIT
-                            || mi.Name == SPECIALNAME_CAST_IMPLICIT
+                            mi.Name == SpecialNameCastExplicit || mi.Name == SpecialNameCastImplicit
                         )
                     )
                     {
@@ -225,23 +224,23 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                     setPars[rank] = new ParameterDescriptor("value", Type.GetElementType());
 
                     AddMember(
-                        SPECIALNAME_INDEXER_SET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_SET, true, setPars)
+                        SpecialNameIndexerSet,
+                        new ArrayMemberDescriptor(SpecialNameIndexerSet, true, setPars)
                     );
                     AddMember(
-                        SPECIALNAME_INDEXER_GET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_GET, false, getPars)
+                        SpecialNameIndexerGet,
+                        new ArrayMemberDescriptor(SpecialNameIndexerGet, false, getPars)
                     );
                 }
                 else if (Type == typeof(Array))
                 {
                     AddMember(
-                        SPECIALNAME_INDEXER_SET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_SET, true)
+                        SpecialNameIndexerSet,
+                        new ArrayMemberDescriptor(SpecialNameIndexerSet, true)
                     );
                     AddMember(
-                        SPECIALNAME_INDEXER_GET,
-                        new ArrayMemberDescriptor(SPECIALNAME_INDEXER_GET, false)
+                        SpecialNameIndexerGet,
+                        new ArrayMemberDescriptor(SpecialNameIndexerGet, false)
                     );
                 }
             }

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -35,7 +36,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Gets the type of the arguments of the underlying CLR function
         /// </summary>
-        public ParameterDescriptor[] Parameters { get; private set; }
+        public IReadOnlyList<ParameterDescriptor> Parameters { get; }
 
         /// <summary>
         /// Gets the type which this extension method extends, null if this is not an extension method.
@@ -78,7 +79,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
 
             Name = "__new";
-            Parameters = new ParameterDescriptor[0];
+            Parameters = Array.Empty<ParameterDescriptor>();
 
             ValueTypeDefaultCtor = valueType;
         }

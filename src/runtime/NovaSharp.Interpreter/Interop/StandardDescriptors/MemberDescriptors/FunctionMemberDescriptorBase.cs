@@ -31,10 +31,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// </summary>
         public string SortDiscriminant { get; private set; }
 
+        private ParameterDescriptor[] _parameters = Array.Empty<ParameterDescriptor>();
+
         /// <summary>
         /// Gets the type of the arguments of the underlying CLR function
         /// </summary>
-        public ParameterDescriptor[] Parameters { get; private set; }
+        public IReadOnlyList<ParameterDescriptor> Parameters => _parameters;
+
+        protected ParameterDescriptor[] ParameterArray => _parameters;
 
         /// <summary>
         /// Gets the type which this extension method extends, null if this is not an extension method.
@@ -70,22 +74,22 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         {
             Name = funcName;
             IsStatic = isStatic;
-            Parameters = parameters;
+            _parameters = parameters ?? Array.Empty<ParameterDescriptor>();
 
             if (isExtensionMethod)
             {
-                ExtensionMethodType = Parameters[0].Type;
+                ExtensionMethodType = _parameters[0].Type;
             }
 
-            if (Parameters.Length > 0 && Parameters[^1].IsVarArgs)
+            if (_parameters.Length > 0 && _parameters[^1].IsVarArgs)
             {
-                VarArgsArrayType = Parameters[^1].Type;
-                VarArgsElementType = Parameters[^1].Type.GetElementType();
+                VarArgsArrayType = _parameters[^1].Type;
+                VarArgsElementType = _parameters[^1].Type.GetElementType();
             }
 
             SortDiscriminant = string.Join(
                 ":",
-                Parameters.Select(pi => pi.Type.FullName).ToArray()
+                _parameters.Select(pi => pi.Type.FullName).ToArray()
             );
         }
 
@@ -159,7 +163,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             out List<int> outParams
         )
         {
-            ParameterDescriptor[] parameters = Parameters;
+            ParameterDescriptor[] parameters = _parameters;
 
             object[] pars = new object[parameters.Length];
 

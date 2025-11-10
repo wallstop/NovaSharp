@@ -5,15 +5,15 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
     internal class Lexer
     {
-        private Token _current = null;
+        private Token _current;
         private readonly string _code;
-        private int _prevLineTo = 0;
+        private int _prevLineTo;
         private int _prevColTo = 1;
-        private int _cursor = 0;
+        private int _cursor;
         private int _line = 1;
-        private int _col = 0;
+        private int _col;
         private readonly int _sourceId;
-        private bool _autoSkipComments = false;
+        private bool _autoSkipComments;
 
         public Lexer(int sourceId, string scriptContent, bool autoSkipComments)
         {
