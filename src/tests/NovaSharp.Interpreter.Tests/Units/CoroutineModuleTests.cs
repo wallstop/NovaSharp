@@ -644,6 +644,101 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IsYieldableInsideXpcallErrorHandlerWithinCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                handlerYieldable = nil
+
+                function error_handler(err)
+                    handlerYieldable = coroutine.isyieldable()
+                    return err
+                end
+
+                function run_xpcall_inside_coroutine()
+                    return xpcall(function()
+                        error('boom', 0)
+                    end, error_handler)
+                end
+            "
+            );
+
+            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("run_xpcall_inside_coroutine")
+            );
+
+            DynValue result = coroutineValue.Coroutine.Resume();
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(result.Tuple[1].String, Does.Contain("boom"));
+            });
+
+            DynValue status = script.Call(statusFunc, coroutineValue);
+            Assert.That(status.String, Is.EqualTo("dead"));
+
+            DynValue handlerYieldable = script.Globals.Get("handlerYieldable");
+            Assert.That(handlerYieldable.Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(handlerYieldable.Boolean, Is.False);
+        }
+
+        [Test]
+        public void CoroutineStatusRemainsAccurateAfterNestedResumes()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                loggedStatuses = {}
+
+                function outerCoroutine()
+                    local inner = coroutine.create(function()
+                        coroutine.yield('inner-yield')
+                        return 'inner-done'
+                    end)
+
+                    local ok, value = coroutine.resume(inner)
+                    table.insert(loggedStatuses, coroutine.status(inner))
+                    coroutine.yield('outer-yield')
+                    table.insert(loggedStatuses, coroutine.status(inner))
+                    ok, value = coroutine.resume(inner)
+                    table.insert(loggedStatuses, coroutine.status(inner))
+                    return value
+                end
+            "
+            );
+
+            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("outerCoroutine"));
+
+            DynValue firstYield = coroutineValue.Coroutine.Resume();
+            Assert.That(firstYield.Type, Is.EqualTo(DataType.String));
+            Assert.That(firstYield.String, Is.EqualTo("outer-yield"));
+
+            DynValue outerStatusAfterYield = script.Call(statusFunc, coroutineValue);
+            Assert.That(outerStatusAfterYield.String, Is.EqualTo("suspended"));
+
+            DynValue secondResume = coroutineValue.Coroutine.Resume();
+            Assert.That(secondResume.Type, Is.EqualTo(DataType.String));
+            Assert.That(secondResume.String, Is.EqualTo("inner-done"));
+
+            DynValue outerStatusAfterCompletion = script.Call(statusFunc, coroutineValue);
+            Assert.That(outerStatusAfterCompletion.String, Is.EqualTo("dead"));
+
+            DynValue loggedStatuses = script.Globals.Get("loggedStatuses");
+            Assert.That(loggedStatuses.Type, Is.EqualTo(DataType.Table));
+            Assert.Multiple(() =>
+            {
+                Assert.That(loggedStatuses.Table.Length, Is.EqualTo(3));
+                Assert.That(loggedStatuses.Table.Get(1).String, Is.EqualTo("suspended"));
+                Assert.That(loggedStatuses.Table.Get(2).String, Is.EqualTo("suspended"));
+                Assert.That(loggedStatuses.Table.Get(3).String, Is.EqualTo("dead"));
+            });
+        }
+
+        [Test]
         public void ResumeFromDifferentThreadThrowsInvalidOperation()
         {
             Script script = new(CoreModules.PresetComplete);
