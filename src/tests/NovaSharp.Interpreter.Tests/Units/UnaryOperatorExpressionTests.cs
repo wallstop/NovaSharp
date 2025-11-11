@@ -52,5 +52,27 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .With.Message.Contains("Unexpected unary operator")
             );
         }
+
+        [Test]
+        public void EvalRejectsUnexpectedOperator()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewNumber(1));
+            Token unexpectedToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "~",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, unexpectedToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => expression.Eval(executionContext),
+                Throws
+                    .TypeOf<NovaSharp.Interpreter.Errors.DynamicExpressionException>()
+                    .With.Message.Contains("Unexpected unary operator")
+            );
+        }
     }
 }
