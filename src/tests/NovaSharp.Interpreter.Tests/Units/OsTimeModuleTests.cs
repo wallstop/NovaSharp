@@ -52,6 +52,77 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TimeThrowsWhenMonthFieldMissing()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                    return os.time({
+                        year = 1985,
+                        day = 12
+                    })
+                    "
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contain("field 'month' missing in date table")
+            );
+        }
+
+        [Test]
+        public void TimeThrowsWhenYearFieldMissing()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                    return os.time({
+                        month = 5,
+                        day = 12
+                    })
+                    "
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contain("field 'year' missing in date table")
+            );
+        }
+
+        [Test]
+        public void TimeReturnsNilForDatesBeforeEpoch()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                @"
+                return os.time({
+                    year = 1969,
+                    month = 12,
+                    day = 31,
+                    hour = 23,
+                    min = 59,
+                    sec = 59
+                })
+                "
+            );
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void ClockReturnsElapsedSeconds()
+        {
+            Script script = CreateScript();
+            DynValue elapsed = script.DoString("return os.clock()");
+
+            Assert.That(elapsed.Number, Is.GreaterThanOrEqualTo(0.0));
+        }
+
+        [Test]
         public void DifftimeHandlesOptionalStartArgument()
         {
             Script script = CreateScript();
@@ -123,6 +194,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = script.DoString("return os.date('%U-%V-%W', 1609459200)");
 
             Assert.That(value.String, Is.EqualTo("??-??-??"));
+        }
+
+        [Test]
+        public void DateSupportsEscapeAndExtendedSpecifiers()
+        {
+            Script script = CreateScript();
+            DynValue formatted = script.DoString(
+                "return os.date('!%e|%n|%t|%%|%C|%j|%u|%w', 1609459200)"
+            );
+
+            Assert.That(formatted.String, Is.EqualTo(" 1|\n|\t|%|20|001|5|5"));
+        }
+
+        [Test]
+        public void DateThrowsWhenConversionSpecifierUnknown()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () => script.DoString("return os.date('%Q', 1609459200)"),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contain("invalid conversion specifier")
+            );
         }
 
         private static Script CreateScript()
