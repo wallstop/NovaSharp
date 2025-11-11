@@ -3,7 +3,7 @@
 Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1`).
 
 ## Snapshot
-- Overall line coverage: **67.3 %**
+- Overall line coverage: **67.4 %**
 - NovaSharp.Interpreter line coverage: **80.5 %**
 - NovaSharp.Cli line coverage: **72.2 %**
 - NovaSharp.Hardwire line coverage: **22.3 %**
@@ -44,6 +44,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `CompositeUserDataDescriptor` now covered at 92 % via aggregate lookup, set, and metatable resolution tests (`CompositeUserDataDescriptorTests`).
 - `UndisposableStream` reaches 94 % line coverage after forwarding/guard tests ensured dispose/close suppression and async passthrough behaviour.
 - `LuaStateInterop.Tools` climbs to 94 % line coverage after adding targeted numeric checks, conversion, meta-character substitution, and formatting regressions.
+- `PlatformAccessorBase` branches (Unity, Mono, portable, AOT, prompt bridging) now covered via detector flag shims, keeping platform naming logic under regression.
 
 ## Updating the Snapshot
 ```powershell
