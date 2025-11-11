@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-11 14:03 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-11 15:03 UTC).
 
 ## Snapshot
-- Overall line coverage: **67.8 %**
-- NovaSharp.Interpreter line coverage: **81.1 %**
+- Overall line coverage: **68.5 %**
+- NovaSharp.Interpreter line coverage: **81.9 %**
 - NovaSharp.Cli line coverage: **73.7 %**
 - NovaSharp.Hardwire line coverage: **22.3 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
@@ -13,7 +13,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 - `NovaSharp.Interpreter.Platforms.PlatformAccessorBase` – 44.0 % line. Extend platform accessor tests to cover sandbox/full-trust fallbacks.
 - `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 48.1 % line. Add bytecode error-path coverage for unexpected operators (runtime guards already in place).
-- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 45.9 % line. Exercise descriptor-generated add/remove shims and duplicate subscription handling.
+- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 53.0 % line. Continue expanding dispatch tests (by-ref/value scenarios, delegate fan-out) until compatibility/error branches are covered.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -47,6 +47,12 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `PlatformAccessorBase` branches (Unity, Mono, portable, AOT, prompt bridging) now covered via detector flag shims, keeping platform naming logic under regression.
 - Added `EventFacadeTests` (happy-path add/remove, unsupported indices, setter guard) to pin runtime behaviour ahead of reflection descriptor expansion.
 - `SourceRefTests` cover FormatLocation/GetCodeSnippet heuristics (81 % line coverage) while `ExitCommandTests` drive the CLI `exit` path to 100 %, nudging NovaSharp.Cli line coverage to 73.7 %.
+- `LoadModuleTests` now exercise `require`, `load`, and `loadfilesafe` paths (LoadModule at 71 % line coverage), and `SyntaxErrorExceptionTests`/`DynamicExpressionException` assertions ensure parser errors honour nested rethrow rules and message prefixes.
+- `EventMemberDescriptorTests` expanded with compatibility guards and multi-signature dispatch checks, lifting event coverage to 53 % and validating zero-arg/multi-arg pathways.
+- `ParameterDescriptorTests` cover reflection metadata, restriction semantics, and wiring exports, pushing the descriptor to 70.8 % line coverage and guarding invalid restriction paths.
+- `AutoDescribingUserDataDescriptorTests` verify name/type exposure plus index/set/meta forwarding to IUserDataType, keeping self-describing userdata behaviour under regression tests.
+- `StandardEnumUserDataDescriptorTests` ensure flag helpers, numeric coercion, and signed/unsigned paths work correctly, raising enum descriptor coverage to 67.4 %.
+- `WatchItemTests` exercise formatting/null-handling, closing out the debugging watch surface (now 100 % covered), while `ValueTypeDefaultCtorMemberDescriptorTests` confirm validation/instantiation paths and lift the descriptor to 78.5 %.
 
 ## Updating the Snapshot
 ```powershell

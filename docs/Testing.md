@@ -32,8 +32,8 @@ dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.cs
 - Two Lua TAP suites (`TestMore_308_io`, `TestMore_309_os`) remain skipped because they require raw filesystem/OS access. Enable them manually only on trusted machines.
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Baseline (Release via `coverage.ps1`, 2025-11-11)**: 67.8 % line, 69.7 % branch, 72.1 % method coverage (interpreter module at 81.0 % line).
-- **Fixtures**: 41 `[TestFixture]` types, 1053 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
+- **Baseline (Release via `coverage.ps1`, 2025-11-11)**: 68.5 % line, 70.5 % branch, 73.0 % method coverage (interpreter module at 81.9 % line).
+- **Fixtures**: 42 `[TestFixture]` types, 1095 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 - **Gaps**: Visual Studio Code/remote debugger integration still lacks automated smoke tests; CLI tooling and dev utilities remain manual.
 

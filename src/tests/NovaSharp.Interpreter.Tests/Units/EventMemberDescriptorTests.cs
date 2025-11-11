@@ -198,6 +198,164 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
         }
 
+        [Test]
+        public void AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates()
+        {
+            SampleEventSource source = new();
+            Script script = new Script();
+            DynValue handler = script.DoString("return function() end");
+
+            EventMemberDescriptor descriptor = new(
+                typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            Assert.That(source.AddInvokeCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TryCreateIfVisibleRejectsPrivateEvents()
+        {
+            EventInfo hiddenEvent = typeof(PrivateEventSource).GetEvent(
+                "HiddenEvent",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+
+            EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
+                hiddenEvent,
+                InteropAccessMode.Default
+            );
+
+            Assert.That(descriptor, Is.Null);
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleRejectsValueTypeEvents()
+        {
+            EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
+                nameof(ValueTypeEventSource.ValueTypeEvent)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, true),
+                    Throws.ArgumentException.With.Message.Contains("value types")
+                );
+            });
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleRejectsHandlersReturningValues()
+        {
+            EventInfo returning = typeof(IncompatibleEventSource).GetEvent(
+                nameof(IncompatibleEventSource.ReturnsValue)
+            );
+
+            Assert.That(
+                () => EventMemberDescriptor.CheckEventIsCompatible(returning, true),
+                Throws.ArgumentException.With.Message.Contains("return type")
+            );
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleRejectsHandlersWithValueTypeParameters()
+        {
+            EventInfo valueParameter = typeof(IncompatibleEventSource).GetEvent(
+                nameof(IncompatibleEventSource.ValueParameter)
+            );
+
+            Assert.That(
+                () => EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
+                Throws.ArgumentException.With.Message.Contains("value type parameters")
+            );
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleRejectsHandlersWithByRefParameters()
+        {
+            EventInfo byRef = typeof(IncompatibleEventSource).GetEvent(
+                nameof(IncompatibleEventSource.ByRefParameter)
+            );
+
+            Assert.That(
+                () => EventMemberDescriptor.CheckEventIsCompatible(byRef, true),
+                Throws.ArgumentException.With.Message.Contains("by-ref type parameters")
+            );
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleRejectsHandlersExceedingMaxArguments()
+        {
+            EventInfo tooMany = typeof(IncompatibleEventSource).GetEvent(
+                nameof(IncompatibleEventSource.TooManyArguments)
+            );
+
+            Assert.That(
+                () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
+                Throws.ArgumentException.With.Message.Contains(
+                    $"{EventMemberDescriptor.MAX_ARGS_IN_DELEGATE}"
+                )
+            );
+        }
+
+        [Test]
+        public void DispatchEventInvokesZeroArgumentHandlers()
+        {
+            MultiSignatureEventSource source = new();
+            Script script = new Script();
+            script.DoString("hits = 0");
+            DynValue handler = script.DoString("return function() hits = hits + 1 end");
+
+            EventMemberDescriptor descriptor = new(
+                typeof(MultiSignatureEventSource).GetEvent(
+                    nameof(MultiSignatureEventSource.ZeroArgs)
+                )
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            source.RaiseZeroArgs();
+            source.RaiseZeroArgs();
+
+            double hits = script.Globals.Get("hits").Number;
+            Assert.That(hits, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void DispatchEventForwardsMultipleArguments()
+        {
+            MultiSignatureEventSource source = new();
+            Script script = new Script();
+            script.DoString("payload = nil");
+            DynValue handler = script.DoString(
+                "return function(a, b, c) payload = table.concat({a, b, c}, \":\") end"
+            );
+
+            EventMemberDescriptor descriptor = new(
+                typeof(MultiSignatureEventSource).GetEvent(
+                    nameof(MultiSignatureEventSource.ThreeArgs)
+                )
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            source.RaiseThreeArgs("one", "two", "three");
+
+            Assert.That(script.Globals.Get("payload").String, Is.EqualTo("one:two:three"));
+        }
+
         private sealed class SampleEventSource
         {
             private event EventHandler<DynValue> _event;
@@ -222,6 +380,72 @@ namespace NovaSharp.Interpreter.Tests.Units
             public void RaiseEvent(DynValue arg)
             {
                 _event?.Invoke(null, arg);
+            }
+        }
+
+        private struct ValueTypeEventSource
+        {
+            public event Action ValueTypeEvent;
+        }
+
+        private sealed class PrivateEventSource
+        {
+            private event Action HiddenEvent;
+
+            // ReSharper disable once UnusedMember.Local - invoked via reflection in tests.
+            public void Raise()
+            {
+                HiddenEvent?.Invoke();
+            }
+        }
+
+        private sealed class IncompatibleEventSource
+        {
+            public event Func<int> ReturnsValue;
+
+            public event Action<int> ValueParameter;
+
+            public event ByRefHandler ByRefParameter;
+
+            public event TooManyArgumentsHandler TooManyArguments;
+        }
+
+        private delegate void ByRefHandler(ref string value);
+
+        private delegate void TooManyArgumentsHandler(
+            object a1,
+            object a2,
+            object a3,
+            object a4,
+            object a5,
+            object a6,
+            object a7,
+            object a8,
+            object a9,
+            object a10,
+            object a11,
+            object a12,
+            object a13,
+            object a14,
+            object a15,
+            object a16,
+            object a17
+        );
+
+        private sealed class MultiSignatureEventSource
+        {
+            public event Action ZeroArgs;
+
+            public event Action<object, object, object> ThreeArgs;
+
+            public void RaiseZeroArgs()
+            {
+                ZeroArgs?.Invoke();
+            }
+
+            public void RaiseThreeArgs(object a, object b, object c)
+            {
+                ThreeArgs?.Invoke(a, b, c);
             }
         }
 
