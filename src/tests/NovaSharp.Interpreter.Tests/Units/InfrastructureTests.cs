@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Reflection;
     using DataTypes;
     using Errors;
     using NovaSharp.Interpreter;
@@ -15,13 +14,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PerformanceResultFormatsCounters()
         {
-            PerformanceResult result = new();
-
-            SetProperty(result, "Name", "alloc");
-            SetProperty(result, "Counter", 2048L);
-            SetProperty(result, "Instances", 4);
-            SetProperty(result, "Global", true);
-            SetProperty(result, "Type", PerformanceCounterType.MemoryBytes);
+            PerformanceResult result = new()
+            {
+                Name = "alloc",
+                Counter = 2048L,
+                Instances = 4,
+                Global = true,
+                Type = PerformanceCounterType.MemoryBytes,
+            };
 
             string formatted = result.ToString();
             Assert.Multiple(() =>
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(formatted, Does.Contain("4 times / 2048 bytes"));
             });
 
-            SetProperty(result, "Type", PerformanceCounterType.TimeMilliseconds);
+            result.Type = PerformanceCounterType.TimeMilliseconds;
             string milliseconds = PerformanceResult.PerformanceCounterTypeToString(
                 PerformanceCounterType.TimeMilliseconds
             );
@@ -101,53 +101,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecutionStateStartsSuspendedWithFreshStacks()
         {
-            Type stateType = typeof(Script).Assembly.GetType(
-                "NovaSharp.Interpreter.Execution.VM.ExecutionState",
-                true
-            );
-
-            object state = Activator.CreateInstance(stateType, nonPublic: true);
-
-            FieldInfo valueStackField = stateType.GetField(
-                "valueStack",
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            FieldInfo executionStackField = stateType.GetField(
-                "executionStack",
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            FieldInfo instructionPtrField = stateType.GetField(
-                "instructionPtr",
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            FieldInfo coroutineStateField = stateType.GetField(
-                "state",
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            ExecutionState state = new();
 
             Assert.Multiple(() =>
             {
-                Assert.That(valueStackField.GetValue(state), Is.Not.Null);
-                Assert.That(executionStackField.GetValue(state), Is.Not.Null);
-                Assert.That(instructionPtrField.GetValue(state), Is.EqualTo(0));
-                Assert.That(
-                    coroutineStateField.GetValue(state),
-                    Is.EqualTo(CoroutineState.NotStarted)
-                );
+                Assert.That(state.valueStack, Is.Not.Null);
+                Assert.That(state.executionStack, Is.Not.Null);
+                Assert.That(state.instructionPtr, Is.EqualTo(0));
+                Assert.That(state.state, Is.EqualTo(CoroutineState.NotStarted));
             });
-        }
-
-        private static void SetProperty<TInstance>(
-            TInstance instance,
-            string propertyName,
-            object value
-        )
-        {
-            PropertyInfo property = typeof(TInstance).GetProperty(
-                propertyName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-            );
-            property.SetValue(instance, value);
         }
     }
 }
