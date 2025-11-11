@@ -21,7 +21,12 @@ namespace NovaSharp.Commands.Implementations
 
         public void Execute(ShellContext context, string arguments)
         {
-            Environment.Exit(0);
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            context.RequestExit();
         }
     }
 }

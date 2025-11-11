@@ -1,11 +1,11 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1`).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-11 14:03 UTC).
 
 ## Snapshot
-- Overall line coverage: **67.4 %**
-- NovaSharp.Interpreter line coverage: **80.5 %**
-- NovaSharp.Cli line coverage: **72.2 %**
+- Overall line coverage: **67.8 %**
+- NovaSharp.Interpreter line coverage: **81.1 %**
+- NovaSharp.Cli line coverage: **73.7 %**
 - NovaSharp.Hardwire line coverage: **22.3 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
@@ -46,6 +46,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `LuaStateInterop.Tools` climbs to 94 % line coverage after adding targeted numeric checks, conversion, meta-character substitution, and formatting regressions.
 - `PlatformAccessorBase` branches (Unity, Mono, portable, AOT, prompt bridging) now covered via detector flag shims, keeping platform naming logic under regression.
 - Added `EventFacadeTests` (happy-path add/remove, unsupported indices, setter guard) to pin runtime behaviour ahead of reflection descriptor expansion.
+- `SourceRefTests` cover FormatLocation/GetCodeSnippet heuristics (81 % line coverage) while `ExitCommandTests` drive the CLI `exit` path to 100 %, nudging NovaSharp.Cli line coverage to 73.7 %.
 
 ## Updating the Snapshot
 ```powershell
@@ -53,4 +54,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-12_
+_Last updated: 2025-11-11_

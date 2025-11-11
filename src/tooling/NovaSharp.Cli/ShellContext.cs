@@ -1,15 +1,30 @@
 namespace NovaSharp
 {
+    using System;
     using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.DataTypes;
 
     public class ShellContext
     {
-        public Script Script { get; private set; }
+        private bool _exitRequested;
+
+        public Script Script { get; }
+
+        public bool IsExitRequested
+        {
+            get { return _exitRequested; }
+        }
+
+        public int ExitCode { get; private set; }
 
         public ShellContext(Script script)
         {
-            Script = script;
+            Script = script ?? throw new ArgumentNullException(nameof(script));
+        }
+
+        public void RequestExit(int exitCode = 0)
+        {
+            _exitRequested = true;
+            ExitCode = exitCode;
         }
     }
 }

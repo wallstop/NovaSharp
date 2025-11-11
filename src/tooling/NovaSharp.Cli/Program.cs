@@ -213,6 +213,11 @@ namespace NovaSharp
         private static void ExecuteCommand(ShellContext shellContext, string cmdline)
         {
             CommandManager.Execute(shellContext, cmdline);
+
+            if (shellContext.IsExitRequested)
+            {
+                Environment.Exit(shellContext.ExitCode);
+            }
         }
     }
 }
