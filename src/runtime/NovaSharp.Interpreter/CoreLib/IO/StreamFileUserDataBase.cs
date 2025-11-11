@@ -42,10 +42,12 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 if (_stream.CanSeek)
                 {
-                    long positionBeforeCheck = _stream.Position;
-                    bool endOfStream = positionBeforeCheck >= _stream.Length;
-                    ResetReaderBuffer(positionBeforeCheck);
-                    return endOfStream;
+                    if (!_reader.EndOfStream)
+                    {
+                        return false;
+                    }
+
+                    return _logicalPosition >= _stream.Length;
                 }
 
                 return _reader.EndOfStream;

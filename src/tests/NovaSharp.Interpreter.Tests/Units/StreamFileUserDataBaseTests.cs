@@ -322,6 +322,154 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadParsesNumbersWithLeadingDecimal()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new(".75 rest");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local num = f:read('*n')
+                local remainder = f:read('*a')
+                return num, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(0.75d));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("rest"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesNumbersWithExponent()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("2.5e-1 next");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local num = f:read('*n')
+                local tail = f:read('*a')
+                return num, tail
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(0.25d));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("next"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesNumbersWithLeadingWhitespace()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("   42\n");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local rest = f:read('*a')
+                return number, rest
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(42d));
+                Assert.That(tuple.Tuple[1].String, Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void ReadReturnsNilWhenOnlySignEncountered()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("+ remainder");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local rest = f:read('*a')
+                return number, rest
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Does.StartWith("+ remainder"));
+            });
+        }
+
+        [Test]
+        public void ReadLineHandlesMixedNewlines()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("first\r\nsecond\rthird\nlast");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local a = f:read('*l')
+                local b = f:read('*l')
+                local c = f:read('*l')
+                local d = f:read('*l')
+                return a, b, c, d
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("first"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("second"));
+                Assert.That(tuple.Tuple[2].String, Is.EqualTo("third"));
+                Assert.That(tuple.Tuple[3].String, Is.EqualTo("last"));
+            });
+        }
+
+        [Test]
+        public void ReadToEndAfterLineReadsReturnsRemainingContent()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("line1\nline2\nline3");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local first = f:read('*l')
+                local remainder = f:read('*a')
+                return first, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("line1"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("line2\nline3"));
+            });
+        }
+
+        [Test]
         public void ReadNumberReturnsNilWithoutConsumingNonNumericData()
         {
             Script script = CreateScript();

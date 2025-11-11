@@ -130,5 +130,33 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Throws.InstanceOf<ArgumentOutOfRangeException>()
             );
         }
+
+        [Test]
+        public void GetMaxCountsReturnRequestedSize()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(_encoding.GetMaxByteCount(5), Is.EqualTo(5));
+                Assert.That(_encoding.GetMaxCharCount(7), Is.EqualTo(7));
+            });
+        }
+
+        [Test]
+        public void GetByteCountMatchesSourceLength()
+        {
+            char[] chars = new[] { 'a', 'b', 'c', 'd' };
+            int count = _encoding.GetByteCount(chars, 0, chars.Length);
+
+            Assert.That(count, Is.EqualTo(chars.Length));
+        }
+
+        [Test]
+        public void GetCharCountMatchesSourceLength()
+        {
+            byte[] bytes = new byte[] { 0x10, 0x20, 0x30 };
+            int count = _encoding.GetCharCount(bytes, 0, bytes.Length);
+
+            Assert.That(count, Is.EqualTo(bytes.Length));
+        }
     }
 }
