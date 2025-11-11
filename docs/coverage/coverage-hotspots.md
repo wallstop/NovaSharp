@@ -11,9 +11,9 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 ## Prioritized Red List (Interpreter < 90 %)
 
-- `NovaSharp.Interpreter.IO.UndisposableStream` – 40.0 % line. Cover disposal guard behaviour and passthrough read/write paths.
 - `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` – 43.2 % line. Recreate original Lua state interop fixtures to hit the remaining pointer arithmetic / stack marshaling branches.
 - `NovaSharp.Interpreter.Platforms.PlatformAccessorBase` – 44.0 % line. Extend platform accessor tests to cover sandbox/full-trust fallbacks.
+- `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 44.4 % line. Add parser cases hitting unary expression evaluation/error paths.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -42,6 +42,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `OsTimeModule` now sits at 97 % line coverage after adding missing-field, pre-epoch, and conversion-specifier tests.
 - `DebuggerAction` coverage lifted to 100 % by testing constructor timestamps, age calculations, defensive line storage, and breakpoint formatting.
 - `CompositeUserDataDescriptor` now covered at 92 % via aggregate lookup, set, and metatable resolution tests (`CompositeUserDataDescriptorTests`).
+- `UndisposableStream` reaches 94 % line coverage after forwarding/guard tests ensured dispose/close suppression and async passthrough behaviour.
 
 ## Updating the Snapshot
 ```powershell
