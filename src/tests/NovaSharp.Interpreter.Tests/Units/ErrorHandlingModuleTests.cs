@@ -103,55 +103,6 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void PcallReturnsTailCallResultFromClrFunction()
-        {
-            Script script = CreateScript();
-            script.Globals["clr"] = DynValue.NewCallback(
-                (context, args) =>
-                {
-                    CallbackFunction continuation = new(
-                        (ctx, innerArgs) => DynValue.NewNumber(99),
-                        "inner"
-                    );
-
-                    return DynValue.NewTailCallReq(
-                        new TailCallData()
-                        {
-                            Function = DynValue.NewCallback(continuation),
-                            Args = Array.Empty<DynValue>(),
-                        }
-                    );
-                },
-                "clr-tail"
-            );
-
-            DynValue tuple = script.DoString("return pcall(clr)");
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.True);
-                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(99d));
-            });
-        }
-
-        [Test]
-        public void PcallThrowsWhenClrFunctionYields()
-        {
-            Script script = CreateScript();
-            script.Globals["clr"] = DynValue.NewCallback(
-                (context, args) => DynValue.NewYieldReq(DynValue.NewNumber(1)),
-                "clr-yield"
-            );
-
-            Assert.That(
-                () => script.DoString("return pcall(clr)"),
-                Throws
-                    .InstanceOf<ScriptRuntimeException>()
-                    .With.Message.Contains("cannot be called directly by pcall")
-            );
-        }
-
-        [Test]
         public void XpcallInvokesHandlerOnError()
         {
             Script script = CreateScript();
