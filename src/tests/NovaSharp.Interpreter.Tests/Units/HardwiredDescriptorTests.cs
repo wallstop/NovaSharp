@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -177,6 +178,142 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void DynValueMemberDescriptorReturnsStoredDynValue()
+        {
+            DynValueMemberDescriptor descriptor = new("constant", DynValue.NewNumber(123));
+
+            DynValue result = descriptor.GetValue(new Script(), obj: null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.IsStatic, Is.True);
+                Assert.That(descriptor.Name, Is.EqualTo("constant"));
+                Assert.That(descriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(result.Type, Is.EqualTo(DataType.Number));
+                Assert.That(result.Number, Is.EqualTo(123d));
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorMarksClrFunctionExecutable()
+        {
+            DynValueMemberDescriptor descriptor = new(
+                "callback",
+                DynValue.NewCallback((context, args) => DynValue.NewString("ok"), "cb")
+            );
+
+            Assert.That(
+                descriptor.MemberAccess,
+                Is.EqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute)
+            );
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorSetValueThrows()
+        {
+            DynValueMemberDescriptor descriptor = new("number", DynValue.NewNumber(1));
+
+            Assert.That(
+                () => descriptor.SetValue(new Script(), obj: null, DynValue.NewNumber(2)),
+                Throws.InstanceOf<ScriptRuntimeException>()
+            );
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringSerializesPrimitive()
+        {
+            DynValueMemberDescriptor descriptor = new("count", DynValue.NewNumber(7));
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wiring.Get("class").String, Does.Contain("DynValueMemberDescriptor"));
+                Assert.That(wiring.Get("name").String, Is.EqualTo("count"));
+                Assert.That(wiring.Get("value").Number, Is.EqualTo(7d));
+                Assert.That(wiring.Get("error").IsNil(), Is.True);
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringHandlesNonPrimeTable()
+        {
+            Script script = new();
+            Table table = new Table(script);
+            table.Set(1, DynValue.NewString("inner"));
+            DynValueMemberDescriptor descriptor = new("table", DynValue.NewTable(table));
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wiring.Get("error").String, Does.Contain("non-prime table"));
+                Assert.That(wiring.Get("value").IsNil(), Is.True);
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringHandlesStaticUserData()
+        {
+            if (!UserData.IsTypeRegistered(typeof(DummyStaticUserData)))
+            {
+                UserData.RegisterType<DummyStaticUserData>();
+            }
+            DynValueMemberDescriptor descriptor = new(
+                "userdata",
+                UserData.CreateStatic(typeof(DummyStaticUserData))
+            );
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wiring.Get("type").String, Is.EqualTo("userdata"));
+                Assert.That(
+                    wiring.Get("staticType").String,
+                    Is.EqualTo(typeof(DummyStaticUserData).FullName)
+                );
+                Assert.That(wiring.Get("visibility").String, Is.EqualTo("internal"));
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringHandlesInstanceUserDataError()
+        {
+            if (!UserData.IsTypeRegistered(typeof(DummyInstanceUserData)))
+            {
+                UserData.RegisterType<DummyInstanceUserData>();
+            }
+            DynValue instance = UserData.Create(new DummyInstanceUserData());
+            DynValueMemberDescriptor descriptor = new("userdata", instance);
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wiring.Get("error").String, Does.Contain("non-static userdata"));
+                Assert.That(wiring.Get("type").IsNil(), Is.True);
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringHandlesUnsupportedTypes()
+        {
+            Script script = new();
+            DynValue closure = script.DoString("return function() return 1 end");
+            DynValueMemberDescriptor descriptor = new("closure", closure);
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.That(wiring.Get("error").String, Does.Contain("value members not supported"));
+        }
+
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
         {
             public TrackingMemberDescriptor(
@@ -261,5 +398,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return $"{obj}:{pars[0]}:{pars[1]}:{argscount}";
             }
         }
+
+        internal sealed class DummyStaticUserData { }
+
+        private sealed class DummyInstanceUserData { }
     }
 }

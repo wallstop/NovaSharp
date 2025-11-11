@@ -3,28 +3,14 @@
 Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1`).
 
 ## Snapshot
-- Overall line coverage: **65.9 %**
-- NovaSharp.Interpreter line coverage: **78.7 %**
+- Overall line coverage: **66.3 %**
+- NovaSharp.Interpreter line coverage: **79.5 %**
 - NovaSharp.Cli line coverage: **72.2 %**
 - NovaSharp.Hardwire line coverage: **22.3 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 
-| Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
-|-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 53.6 | 72.6 | 52 / 97 | Interop | Still lacking coverage for namespace-qualified operator names and fallback behaviour—add table-driven tests to close the gap. |
-| `NovaSharp.Interpreter.CoreLib.DebugModule` | 76.6 | 65.7 | 92 / 120 | Runtime | Queued console tests landed; next step is to exercise multiline commands and coroutine-driven sessions to finish the interactive branch coverage. |
-| `NovaSharp.Interpreter.CoreLib.IO.FileUserDataBase` | 88.8 | 84.8 | 144 / 162 | Runtime | Recent tests now cover close/flush/seek tuples; push remaining error states (closed handles, invalid modes) to crest the 90 % mark. |
-| `NovaSharp.Interpreter.CoreLib.IO.StreamFileUserDataBase` | 82.5 | 82.8 | 104 / 126 | Runtime | Mixed newline and numeric read paths are green; still need binary write/seek and buffered dispose scenarios to finish the job. |
-| `NovaSharp.Interpreter.CoreLib.DynamicModule` | 72.0 | 75.0 | 18 / 25 | Runtime | Cover `dynamic.prepare`/`dynamic.eval` unhappy paths (syntax errors, sandbox exclusions) to lift the remaining uncovered lines. |
-
-## Yellow List (line 50–89 %)
-- `NovaSharp.Interpreter.CoreLib.IoModule` – 63.5 % line, 51.7 % branch. Queue tests for `io.lines`, stream reopen failures, and stderr/stdout fallbacks.
-- `NovaSharp.Interpreter.CoreLib.JsonModule` – 61.5 % line. Exercise malformed JSON, null handling, and round-trip error cases.
-- `NovaSharp.Interpreter.CoreLib.LoadModule` – 56.5 % line, 61.5 % branch. Add coverage for sandboxed `load`/`loadfile` options, mode flags, and environment overrides.
-- `NovaSharp.Interpreter.CoreLib.StringModule` – 75 % line. Extend tests for edge-case pattern matching, UTF-8 boundaries, and numeric conversions.
-- `NovaSharp.Interpreter.DataStructs.FastStack<T>` – 56.6 % line. Build tests for iterator paths, TrimExcess, and error handling when popping empty stacks.
 - `NovaSharp.Interpreter.CoreLib.OsTimeModule` – 80.1 % line. Cover locale/timezone permutations and invalid date tables.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
@@ -48,6 +34,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `SerializationExtensions` exercised with prime/nested table scenarios and tuple/string escaping; serializer fixed to emit Lua-compliant braces/newlines.
 - `ErrorHandlingModule` now sits at 100 % line / 94 % branch thanks to nested `pcall`/`xpcall` regression tests (tail-call continuations, yield requests, CLR handlers).
 - `HardwiredMemberDescriptor` base getters/setters now throw under coverage, shrinking the remaining uncovered lines to the by-ref conversion paths (currently at 100 % line coverage in the latest report).
+- `DynValueMemberDescriptor` now covered across read access, execution flags, setter guard, and wiring paths (primitive, table, userdata, unsupported types).
+- `DebugModule` interactive loop now handles returned values, CLR exceptions, and null-input exits under test, bumping branch coverage to 77 %.
 - Expanded `ReflectionSpecialName` operator mapping tests (additional arithmetic/relational cases) to drive branch coverage; rerun `coverage.ps1` to confirm the updated instrumentation.
 
 ## Updating the Snapshot

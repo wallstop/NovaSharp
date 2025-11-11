@@ -323,6 +323,68 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void DebugLoopPrintsReturnedValues()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "return 42", "return" });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            script.DoString("debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Has.Some.Contains("42"));
+            });
+        }
+
+        [Test]
+        public void DebugLoopHandlesGeneralExceptions()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "callClr()", "return" });
+            List<string> output = new();
+
+            script.Globals["callClr"] = DynValue.NewCallback(
+                (context, args) => throw new InvalidOperationException("unexpected boom"),
+                "callClr"
+            );
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            script.DoString("debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Has.Some.Contains("unexpected boom"));
+            });
+        }
+
+        [Test]
+        public void DebugLoopStopsWhenInputReturnsNullImmediately()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new string[] { null });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            DynValue result = script.DoString("return debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsNil(), Is.True);
+                Assert.That(output, Is.Empty);
+            });
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
