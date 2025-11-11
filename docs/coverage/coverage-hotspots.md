@@ -3,17 +3,17 @@
 Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1`).
 
 ## Snapshot
-- Overall line coverage: **67.0 %**
-- NovaSharp.Interpreter line coverage: **80.0 %**
+- Overall line coverage: **67.3 %**
+- NovaSharp.Interpreter line coverage: **80.5 %**
 - NovaSharp.Cli line coverage: **72.2 %**
 - NovaSharp.Hardwire line coverage: **22.3 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 
-- `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` – 43.2 % line. Recreate original Lua state interop fixtures to hit the remaining pointer arithmetic / stack marshaling branches.
 - `NovaSharp.Interpreter.Platforms.PlatformAccessorBase` – 44.0 % line. Extend platform accessor tests to cover sandbox/full-trust fallbacks.
 - `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 44.4 % line. Add parser cases hitting unary expression evaluation/error paths.
+- `NovaSharp.Interpreter.Interop.StandardDescriptors.EventFacade` – 45.4 % line. Cover event hookup/teardown paths in composite descriptors.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -43,6 +43,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `DebuggerAction` coverage lifted to 100 % by testing constructor timestamps, age calculations, defensive line storage, and breakpoint formatting.
 - `CompositeUserDataDescriptor` now covered at 92 % via aggregate lookup, set, and metatable resolution tests (`CompositeUserDataDescriptorTests`).
 - `UndisposableStream` reaches 94 % line coverage after forwarding/guard tests ensured dispose/close suppression and async passthrough behaviour.
+- `LuaStateInterop.Tools` climbs to 94 % line coverage after adding targeted numeric checks, conversion, meta-character substitution, and formatting regressions.
 
 ## Updating the Snapshot
 ```powershell
