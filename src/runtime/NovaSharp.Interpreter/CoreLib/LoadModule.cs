@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "load")]
         public static DynValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            return load_impl(executionContext, args, null);
+            return LoadImpl(executionContext, args, null);
         }
 
         // loadsafe (ld [, source [, mode [, env]]])
@@ -71,15 +71,15 @@ namespace NovaSharp.Interpreter.CoreLib
         // Same as load, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
         [NovaSharpModuleMethod(Name = "loadsafe")]
-        public static DynValue Loadsafe(
+        public static DynValue LoadSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return load_impl(executionContext, args, GetSafeDefaultEnv(executionContext));
+            return LoadImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
-        public static DynValue load_impl(
+        public static DynValue LoadImpl(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
@@ -147,12 +147,12 @@ namespace NovaSharp.Interpreter.CoreLib
         // Similar to load, but gets the chunk from file filename or from the standard input,
         // if no file name is given. INCOMPAT: stdin not supported, mode ignored
         [NovaSharpModuleMethod(Name = "loadfile")]
-        public static DynValue Loadfile(
+        public static DynValue LoadFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return loadfile_impl(executionContext, args, null);
+            return LoadFileImpl(executionContext, args, null);
         }
 
         // loadfile ([filename [, mode [, env]]])
@@ -160,15 +160,15 @@ namespace NovaSharp.Interpreter.CoreLib
         // Same as loadfile, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
         [NovaSharpModuleMethod(Name = "loadfilesafe")]
-        public static DynValue Loadfilesafe(
+        public static DynValue LoadFileSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return loadfile_impl(executionContext, args, GetSafeDefaultEnv(executionContext));
+            return LoadFileImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
-        private static DynValue loadfile_impl(
+        private static DynValue LoadFileImpl(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
@@ -211,7 +211,7 @@ namespace NovaSharp.Interpreter.CoreLib
         //dofile executes the contents of the standard input (stdin). Returns all values returned by the chunk.
         //In case of errors, dofile propagates the error to its caller (that is, dofile does not run in protected mode).
         [NovaSharpModuleMethod(Name = "dofile")]
-        public static DynValue Dofile(
+        public static DynValue DoFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

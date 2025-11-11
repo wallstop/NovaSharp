@@ -231,7 +231,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected abstract char Peek();
         protected abstract void Write(string value);
 
-        protected internal abstract bool Isopen();
+        protected internal abstract bool IsOpen();
         protected abstract string Close();
 
         public abstract bool Flush();
@@ -240,7 +240,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
         public override string ToString()
         {
-            if (Isopen())
+            if (IsOpen())
             {
                 return $"file ({ReferenceId:X8})";
             }

@@ -10,21 +10,21 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal abstract class StreamFileUserDataBase : FileUserDataBase
     {
-        protected Stream _Stream;
-        protected StreamReader _Reader;
-        protected StreamWriter _Writer;
-        protected bool _Closed = false;
+        protected Stream _stream;
+        protected StreamReader _reader;
+        protected StreamWriter _writer;
+        protected bool _closed = false;
 
         protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)
         {
-            _Stream = stream;
-            _Reader = reader;
-            _Writer = writer;
+            _stream = stream;
+            _reader = reader;
+            _writer = writer;
         }
 
         private void CheckFileIsNotClosed()
         {
-            if (_Closed)
+            if (_closed)
             {
                 throw new ScriptRuntimeException("attempt to use a closed file");
             }
@@ -34,9 +34,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
 
-            if (_Reader != null)
+            if (_reader != null)
             {
-                return _Reader.EndOfStream;
+                return _reader.EndOfStream;
             }
             else
             {
@@ -47,52 +47,52 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override string ReadLine()
         {
             CheckFileIsNotClosed();
-            return _Reader.ReadLine();
+            return _reader.ReadLine();
         }
 
         protected override string ReadToEnd()
         {
             CheckFileIsNotClosed();
-            return _Reader.ReadToEnd();
+            return _reader.ReadToEnd();
         }
 
         protected override string ReadBuffer(int p)
         {
             CheckFileIsNotClosed();
             char[] buffer = new char[p];
-            int length = _Reader.ReadBlock(buffer, 0, p);
+            int length = _reader.ReadBlock(buffer, 0, p);
             return new string(buffer, 0, length);
         }
 
         protected override char Peek()
         {
             CheckFileIsNotClosed();
-            return (char)_Reader.Peek();
+            return (char)_reader.Peek();
         }
 
         protected override void Write(string value)
         {
             CheckFileIsNotClosed();
-            _Writer.Write(value);
+            _writer.Write(value);
         }
 
         protected override string Close()
         {
             CheckFileIsNotClosed();
 
-            if (_Writer != null)
+            if (_writer != null)
             {
-                _Writer.Dispose();
+                _writer.Dispose();
             }
 
-            if (_Reader != null)
+            if (_reader != null)
             {
-                _Reader.Dispose();
+                _reader.Dispose();
             }
 
-            _Stream.Dispose();
+            _stream.Dispose();
 
-            _Closed = true;
+            _closed = true;
 
             return null;
         }
@@ -101,9 +101,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
 
-            if (_Writer != null)
+            if (_writer != null)
             {
-                _Writer.Flush();
+                _writer.Flush();
             }
 
             return true;
@@ -116,15 +116,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 if (whence == "set")
                 {
-                    _Stream.Seek(offset, SeekOrigin.Begin);
+                    _stream.Seek(offset, SeekOrigin.Begin);
                 }
                 else if (whence == "cur")
                 {
-                    _Stream.Seek(offset, SeekOrigin.Current);
+                    _stream.Seek(offset, SeekOrigin.Current);
                 }
                 else if (whence == "end")
                 {
-                    _Stream.Seek(offset, SeekOrigin.End);
+                    _stream.Seek(offset, SeekOrigin.End);
                 }
                 else
                 {
@@ -136,23 +136,23 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 }
             }
 
-            return _Stream.Position;
+            return _stream.Position;
         }
 
         public override bool Setvbuf(string mode)
         {
             CheckFileIsNotClosed();
-            if (_Writer != null)
+            if (_writer != null)
             {
-                _Writer.AutoFlush = (mode == "no" || mode == "line");
+                _writer.AutoFlush = mode == "no" || mode == "line";
             }
 
             return true;
         }
 
-        protected internal override bool Isopen()
+        protected internal override bool IsOpen()
         {
-            return !_Closed;
+            return !_closed;
         }
     }
 }

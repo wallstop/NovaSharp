@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // If the original metatable has a "__metatable" field, raises an error ("cannot change a protected metatable").
         // This function returns table.
         [NovaSharpModuleMethod(Name = "setmetatable")]
-        public static DynValue Setmetatable(
+        public static DynValue SetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -46,7 +46,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // If object does not have a metatable, returns nil. Otherwise, if the object's metatable
         // has a "__metatable" field, returns the associated value. Otherwise, returns the metatable of the given object.
         [NovaSharpModuleMethod(Name = "getmetatable")]
-        public static DynValue Getmetatable(
+        public static DynValue GetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // -------------------------------------------------------------------------------------------------------------------
         // Gets the real value of table[index], without invoking any metamethod. table must be a table; index may be any value.
         [NovaSharpModuleMethod(Name = "rawget")]
-        public static DynValue Rawget(
+        public static DynValue RawGet(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // index any value different from nil and NaN, and value any Lua value.
         // This function returns table.
         [NovaSharpModuleMethod(Name = "rawset")]
-        public static DynValue Rawset(
+        public static DynValue RawSet(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // -------------------------------------------------------------------------------------------------------------------
         // Checks whether v1 is equal to v2, without invoking any metamethod. Returns a boolean.
         [NovaSharpModuleMethod(Name = "rawequal")]
-        public static DynValue Rawequal(
+        public static DynValue RawEqual(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // -------------------------------------------------------------------------------------------------------------------
         //Returns the length of the object v, which must be a table or a string, without invoking any metamethod. Returns an integer number.
         [NovaSharpModuleMethod(Name = "rawlen")]
-        public static DynValue Rawlen(
+        public static DynValue RawLen(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

@@ -72,7 +72,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "getuservalue")]
-        public static DynValue Getuservalue(
+        public static DynValue GetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "setuservalue")]
-        public static DynValue Setuservalue(
+        public static DynValue SetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "getregistry")]
-        public static DynValue Getregistry(
+        public static DynValue GetRegistry(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -109,7 +109,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "getmetatable")]
-        public static DynValue Getmetatable(
+        public static DynValue GetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "setmetatable")]
-        public static DynValue Setmetatable(
+        public static DynValue SetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -162,7 +162,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "getupvalue")]
-        public static DynValue Getupvalue(
+        public static DynValue GetUpValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -187,7 +187,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "upvalueid")]
-        public static DynValue Upvalueid(
+        public static DynValue UpValueId(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -212,7 +212,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "setupvalue")]
-        public static DynValue Setupvalue(
+        public static DynValue SetUpValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -239,7 +239,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "upvaluejoin")]
-        public static DynValue Upvaluejoin(
+        public static DynValue UpValueJoin(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

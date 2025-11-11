@@ -384,7 +384,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.Nil;
             }
-            else if (file.Isopen())
+            else if (file.IsOpen())
             {
                 return DynValue.NewString("file");
             }
