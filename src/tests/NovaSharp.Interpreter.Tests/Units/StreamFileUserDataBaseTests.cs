@@ -506,6 +506,71 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadNumberHandlesExponentWithSignAndBuffersRemainder()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("   -12.5e-3\nrest");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                "local n = file:read('*n'); return n, file:read('*l'), file:read('*l')"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(-12.5e-3).Within(1e-12));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo(string.Empty));
+                Assert.That(tuple.Tuple[2].String, Is.EqualTo("rest"));
+            });
+        }
+
+        [Test]
+        public void ReadNumberReturnsNilForStandaloneSignAndRewinds()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("+\nvalue");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n', '*l')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("+"));
+            });
+        }
+
+        [Test]
+        public void ReadNumericCountReturnsNilWhenEofReached()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("hello");
+
+            script.Globals["file"] = UserData.Create(file);
+            script.DoString("file:read('*a')");
+
+            DynValue result = script.DoString("return file:read(4)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void ReadThrowsOnUnknownOption()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("payload");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            Assert.That(
+                () => script.DoString("file:read('*z')"),
+                Throws.InstanceOf<ScriptRuntimeException>().With.Message.Contains("invalid option")
+            );
+        }
+
+        [Test]
         public void ReadReturnsEmptyStringAtEofWithAOption()
         {
             Script script = CreateScript();
