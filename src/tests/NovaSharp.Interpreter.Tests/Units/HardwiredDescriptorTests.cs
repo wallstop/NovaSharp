@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -144,6 +145,38 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(first, Is.SameAs(second));
         }
 
+        [Test]
+        public void HardwiredMemberDescriptorDefaultGetImplementationThrowsInvalidOperationException()
+        {
+            Script script = new Script();
+            DefaultingMemberDescriptor descriptor = new(DefaultingMemberDescriptor.Mode.Read);
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+                descriptor.GetValue(script, new object())
+            );
+
+            Assert.That(
+                ex.Message,
+                Does.Contain("GetValue on write-only hardwired descriptor defaulting")
+            );
+        }
+
+        [Test]
+        public void HardwiredMemberDescriptorDefaultSetImplementationThrowsInvalidOperationException()
+        {
+            Script script = new Script();
+            DefaultingMemberDescriptor descriptor = new(DefaultingMemberDescriptor.Mode.Write);
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+                descriptor.SetValue(script, new object(), DynValue.NewNumber(1d))
+            );
+
+            Assert.That(
+                ex.Message,
+                Does.Contain("SetValue on read-only hardwired descriptor defaulting")
+            );
+        }
+
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
         {
             public TrackingMemberDescriptor(
@@ -169,6 +202,25 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 SetCallCount += 1;
                 LastAssignedValue = value;
+            }
+        }
+
+        private sealed class DefaultingMemberDescriptor : HardwiredMemberDescriptor
+        {
+            public enum Mode
+            {
+                Read,
+                Write,
+            }
+
+            public DefaultingMemberDescriptor(Mode mode)
+                : base(typeof(object), "defaulting", isStatic: false, GetAccess(mode)) { }
+
+            private static MemberDescriptorAccess GetAccess(Mode mode)
+            {
+                return mode == Mode.Read
+                    ? MemberDescriptorAccess.CanRead
+                    : MemberDescriptorAccess.CanWrite;
             }
         }
 

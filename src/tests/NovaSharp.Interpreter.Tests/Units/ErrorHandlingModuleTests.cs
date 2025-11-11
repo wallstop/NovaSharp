@@ -85,6 +85,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void PcallForwardsArgumentsToScriptFunction()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
+                @"
+                local function sum(a, b, c)
+                    return a + b + c
+                end
+
+                local ok, value = pcall(sum, 2, 4, 8)
+                return ok, value
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(14d));
+            });
+        }
+
+        [Test]
         public void PcallDecoratesClrScriptRuntimeExceptions()
         {
             Script script = CreateScript();
@@ -99,6 +122,49 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(tuple.Tuple[0].Boolean, Is.False);
                 Assert.That(tuple.Tuple[1].String, Does.Contain("fail"));
+            });
+        }
+
+        [Test]
+        public void PcallWrapsClrTailCallRequestWithoutHandlers()
+        {
+            Script script = CreateScript();
+            script.Globals["tailing"] = DynValue.NewCallback(
+                (context, args) =>
+                    DynValue.NewTailCallReq(
+                        DynValue.NewCallback((ctx, innerArgs) => DynValue.NewNumber(77), "inner")
+                    ),
+                "tailing-clr"
+            );
+
+            DynValue record = script.DoString(
+                @"
+                local ok, value = pcall(tailing)
+                return { ok = ok, value = value, valueType = type(value) }
+                "
+            );
+
+            Assert.That(record.Type, Is.EqualTo(DataType.Table));
+            Table table = record.Table;
+
+            DynValue ok = table.Get("ok");
+            DynValue valueType = table.Get("valueType");
+            DynValue value = table.Get("value");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ok.Boolean, Is.True);
+                Assert.That(valueType.String, Is.EqualTo("number").Or.EqualTo("nil"));
+
+                if (valueType.String == "number")
+                {
+                    Assert.That(value.Type, Is.EqualTo(DataType.Number));
+                    Assert.That(value.Number, Is.EqualTo(77d));
+                }
+                else
+                {
+                    Assert.That(value.IsNil(), Is.True);
+                }
             });
         }
 
@@ -202,6 +268,60 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(tuple.Tuple[0].Boolean, Is.False);
                 Assert.That(tuple.Tuple[1].String, Does.Contain("handled:"));
                 Assert.That(tuple.Tuple[1].String, Does.Contain("bad"));
+            });
+        }
+
+        [Test]
+        public void XpcallReturnsSuccessWhenFunctionSucceeds()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
+                @"
+                local function succeed()
+                    return 'done', 42
+                end
+
+                local function handler(msg)
+                    return 'handled:' .. msg
+                end
+
+                return xpcall(succeed, handler)
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("done"));
+                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(42d));
+            });
+        }
+
+        [Test]
+        public void XpcallAcceptsClrHandler()
+        {
+            Script script = CreateScript();
+            script.Globals["clrhandler"] = DynValue.NewCallback(
+                (context, args) => DynValue.NewString("handled:" + args[0].String),
+                "handler"
+            );
+
+            DynValue tuple = script.DoString(
+                @"
+                local function fail()
+                    error('boom')
+                end
+
+                return xpcall(fail, clrhandler)
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("handled:"));
+                Assert.That(tuple.Tuple[1].String, Does.Contain("boom"));
             });
         }
 
