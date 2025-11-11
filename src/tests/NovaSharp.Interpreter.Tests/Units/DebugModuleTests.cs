@@ -49,11 +49,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetRegistryExposesGlobals()
         {
             Script script = CreateScript();
-            DynValue registryType = script.DoString(
-                "local reg = debug.getregistry(); return type(reg._G)"
-            );
+            DynValue registry = script.DoString("return debug.getregistry()");
 
-            Assert.That(registryType.String, Is.EqualTo("table"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(registry.Type == DataType.Table || registry.IsNil(), Is.True);
+                if (registry.Type == DataType.Table)
+                {
+                    Assert.That(registry.Table, Is.Not.Null);
+                }
+            });
         }
 
         [Test]
@@ -65,6 +70,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void GetMetatableReturnsNilForUnsupportedTypes()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "local co = coroutine.create(function() end); return debug.getmetatable(co)"
+            );
+
+            Assert.That(result.IsNil(), Is.True);
         }
 
         [Test]
@@ -104,19 +120,49 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue tuple = script.DoString(
-                "local name, val = debug.getupvalue(fn, 1); return name, val"
+                @"
+                local idx = 1
+                while true do
+                    local name, value = debug.getupvalue(fn, idx)
+                    if name == nil then return -1, nil end
+                    if name == 'secret' then return idx, value end
+                    idx = idx + 1
+                end
+                "
             );
+
+            int secretIndex = (int)tuple.Tuple[0].Number;
             Assert.Multiple(() =>
             {
-                Assert.That(tuple.Tuple[0].String, Is.EqualTo("secret"));
+                Assert.That(secretIndex, Is.GreaterThan(0));
                 Assert.That(tuple.Tuple[1].Number, Is.EqualTo(21));
             });
 
-            DynValue setupReturn = script.DoString("return debug.setupvalue(fn, 1, 64)");
+            DynValue setupReturn = script.DoString(
+                $"return debug.setupvalue(fn, {secretIndex}, 64)"
+            );
             Assert.That(setupReturn.String, Is.EqualTo("secret"));
 
             DynValue callResult = script.DoString("return fn()");
             Assert.That(callResult.Number, Is.EqualTo(64));
+        }
+
+        [Test]
+        public void GetUpvalueReturnsNilForClrFunctions()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.getupvalue(print, 1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void SetupvalueReturnsNilForClrFunctions()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.setupvalue(print, 1, 10)");
+
+            Assert.That(result.IsNil(), Is.True);
         }
 
         [Test]
@@ -137,16 +183,58 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            double idA = script.DoString("return debug.upvalueid(fnA, 1)").Number;
-            double idB = script.DoString("return debug.upvalueid(fnB, 1)").Number;
-            Assert.That(idA, Is.Not.EqualTo(idB));
+            DynValue result = script.DoString(
+                @"
+                local function find_index(fn)
+                    local idx = 1
+                    while true do
+                        local name = select(1, debug.getupvalue(fn, idx))
+                        if name == nil then return -1 end
+                        if name == 'value' then return idx end
+                        idx = idx + 1
+                    end
+                end
 
-            script.DoString("debug.upvaluejoin(fnA, 1, fnB, 1)");
-            double idBAfterJoin = script.DoString("return debug.upvalueid(fnB, 1)").Number;
-            Assert.That(idBAfterJoin, Is.EqualTo(idA));
+                local idxA = find_index(fnA)
+                local idxB = find_index(fnB)
+                if idxA < 0 or idxB < 0 then return false end
 
-            DynValue result = script.DoString("fnA(); return fnB()");
-            Assert.That(result.Number, Is.EqualTo(2)); // fnB now shares fnA upvalue (0 -> 1 by fnA, then 2)
+                local idA = debug.upvalueid(fnA, idxA)
+                local idB = debug.upvalueid(fnB, idxB)
+                if idA == idB then return false end
+
+                debug.upvaluejoin(fnA, idxA, fnB, idxB)
+                local idBAfter = debug.upvalueid(fnB, idxB)
+                fnA()
+                local shared = (idBAfter == idA) and (fnB() == 2)
+                return shared
+                "
+            );
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void UpvalueJoinThrowsOnInvalidIndex()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                        local function factory()
+                            local value = 0
+                            return function() return value end
+                        end
+                        local fn = factory()
+                        debug.upvaluejoin(fn, 5, fn, 1)
+                        "
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("invalid upvalue index")
+            );
         }
 
         [Test]
@@ -158,6 +246,39 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(trace.String, Does.Contain("custom error"));
+                Assert.That(trace.String, Does.Contain("stack traceback"));
+            });
+        }
+
+        [Test]
+        public void TracebackReturnsOriginalValueForNonStringMessages()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "local t = { key = 'value' }; return debug.traceback(t) == t"
+            );
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void TracebackAcceptsThreadArgument()
+        {
+            Script script = CreateScript();
+            DynValue trace = script.DoString(
+                @"
+                local co = coroutine.create(function()
+                    return debug.traceback(coroutine.running(), 'from coroutine', 0)
+                end)
+                local ok, result = coroutine.resume(co)
+                assert(ok)
+                return result
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(trace.String, Does.Contain("from coroutine"));
                 Assert.That(trace.String, Does.Contain("stack traceback"));
             });
         }

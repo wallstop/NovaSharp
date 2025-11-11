@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;

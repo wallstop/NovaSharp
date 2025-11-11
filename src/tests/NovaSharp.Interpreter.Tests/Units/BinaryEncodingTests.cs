@@ -119,19 +119,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(
-                    () => encoding.GetBytes(null, 0, 0, bytes, 0),
+                    () => encoding.GetBytes((char[])null!, 0, 0, bytes, 0),
                     Throws.TypeOf<ArgumentNullException>()
                 );
                 Assert.That(
-                    () => encoding.GetBytes(chars, 0, 1, null, 0),
+                    () => encoding.GetBytes(chars, 0, 1, (byte[])null!, 0),
                     Throws.TypeOf<ArgumentNullException>()
                 );
                 Assert.That(
-                    () => encoding.GetChars(null, 0, 0, new char[1], 0),
+                    () => encoding.GetChars((byte[])null!, 0, 0, new char[1], 0),
                     Throws.TypeOf<ArgumentNullException>()
                 );
                 Assert.That(
-                    () => encoding.GetChars(bytes, 0, 1, null, 0),
+                    () => encoding.GetChars(bytes, 0, 1, (char[])null!, 0),
                     Throws.TypeOf<ArgumentNullException>()
                 );
             });
