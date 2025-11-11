@@ -3,10 +3,10 @@
 Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1`).
 
 ## Snapshot
-- Overall line coverage: **63.1 %**
-- NovaSharp.Interpreter line coverage: **75.4 %**
+- Overall line coverage: **65.5 %**
+- NovaSharp.Interpreter line coverage: **78.1 %**
 - NovaSharp.Cli line coverage: **72.2 %**
-- NovaSharp.Hardwire line coverage: **22.4 %**
+- NovaSharp.Hardwire line coverage: **22.3 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
@@ -17,8 +17,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 | `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 81.8 | – | 27 / 33 | Interop | Read/write paths covered; wrap up by validating restricted-type and by-ref conversions so instrumentation reaches ≥90 %. |
 | `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 53.6 | 72.6 | 52 / 97 | Interop | Still lacking coverage for namespace-qualified operator names and fallback behaviour—add table-driven tests to close the gap. |
 | `NovaSharp.Interpreter.CoreLib.DebugModule` | 76.6 | 65.7 | 92 / 120 | Runtime | Queued console tests landed; next step is to exercise multiline commands and coroutine-driven sessions to finish the interactive branch coverage. |
-| `NovaSharp.Interpreter.CoreLib.IO.FileUserDataBase` | 24.1 | 19.2 | 21 / 87 | Runtime | Introduce tests for `Close`, `Flush`, `Seek`, and failure surfaces (IO exceptions, closed handles) using stubbed streams. |
-| `NovaSharp.Interpreter.CoreLib.IO.StreamFileUserDataBase` | 47.2 | 36.3 | 26 / 55 | Runtime | Layer tests for buffered writes, binary/text modes, and repeated dispose calls to drive coverage and validate guard rails. |
+| `NovaSharp.Interpreter.CoreLib.IO.FileUserDataBase` | 88.8 | 84.8 | 144 / 162 | Runtime | Recent tests now cover close/flush/seek tuples; push remaining error states (closed handles, invalid modes) to crest the 90 % mark. |
+| `NovaSharp.Interpreter.CoreLib.IO.StreamFileUserDataBase` | 82.5 | 82.8 | 104 / 126 | Runtime | Mixed newline and numeric read paths are green; still need binary write/seek and buffered dispose scenarios to finish the job. |
 | `NovaSharp.Interpreter.CoreLib.DynamicModule` | 72.0 | 75.0 | 18 / 25 | Runtime | Cover `dynamic.prepare`/`dynamic.eval` unhappy paths (syntax errors, sandbox exclusions) to lift the remaining uncovered lines. |
 | `NovaSharp.Interpreter.CoreLib.ErrorHandlingModule` | 71.0 | 70.5 | 54 / 76 | Runtime | Add regression tests around nested `pcall`/`xpcall` and message handlers to close out the branch coverage debt. |
 
@@ -56,4 +56,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-10_
+_Last updated: 2025-11-11_

@@ -135,6 +135,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void DefaultValueSingletonReturnsSameInstance()
+        {
+            DefaultValue first = DefaultValue.Instance;
+            DefaultValue second = DefaultValue.Instance;
+
+            Assert.That(first, Is.SameAs(second));
+        }
+
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
         {
             public TrackingMemberDescriptor(

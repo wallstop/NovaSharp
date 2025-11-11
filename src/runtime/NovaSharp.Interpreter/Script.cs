@@ -806,11 +806,25 @@ namespace NovaSharp.Interpreter
         /// <returns></returns>
         public DynamicExpression CreateDynamicExpression(string code)
         {
-            DynamicExprExpression dee = LoaderFast.LoadDynamicExpr(
-                this,
-                new SourceCode("__dynamic", code, -1, this)
-            );
-            return new DynamicExpression(this, code, dee);
+            int sourceId = _sources.Count;
+            SourceCode source = new($"__dynamic_{sourceId}", code, sourceId, this);
+            _sources.Add(source);
+
+            try
+            {
+                DynamicExprExpression dee = LoaderFast.LoadDynamicExpr(this, source);
+                SignalSourceCodeChange(source);
+                return new DynamicExpression(this, code, dee);
+            }
+            catch
+            {
+                if (_sources.Count > sourceId)
+                {
+                    _sources.RemoveAt(sourceId);
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
