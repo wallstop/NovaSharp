@@ -12,8 +12,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 ## Prioritized Red List (Interpreter < 90 %)
 
 - `NovaSharp.Interpreter.Platforms.PlatformAccessorBase` – 44.0 % line. Extend platform accessor tests to cover sandbox/full-trust fallbacks.
-- `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 44.4 % line. Add parser cases hitting unary expression evaluation/error paths.
-- `NovaSharp.Interpreter.Interop.StandardDescriptors.EventFacade` – 45.4 % line. Cover event hookup/teardown paths in composite descriptors.
+- `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 48.1 % line. Add bytecode error-path coverage for unexpected operators (runtime guards already in place).
+- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 45.9 % line. Exercise descriptor-generated add/remove shims and duplicate subscription handling.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -45,6 +45,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `UndisposableStream` reaches 94 % line coverage after forwarding/guard tests ensured dispose/close suppression and async passthrough behaviour.
 - `LuaStateInterop.Tools` climbs to 94 % line coverage after adding targeted numeric checks, conversion, meta-character substitution, and formatting regressions.
 - `PlatformAccessorBase` branches (Unity, Mono, portable, AOT, prompt bridging) now covered via detector flag shims, keeping platform naming logic under regression.
+- Added `EventFacadeTests` (happy-path add/remove, unsupported indices, setter guard) to pin runtime behaviour ahead of reflection descriptor expansion.
 
 ## Updating the Snapshot
 ```powershell
