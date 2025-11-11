@@ -103,6 +103,88 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void PcallRejectsClrTailCallWithContinuation()
+        {
+            Script script = CreateScript();
+            script.Globals["tailing"] = DynValue.NewCallback(
+                (context, args) =>
+                {
+                    TailCallData tailCall = new()
+                    {
+                        Function = DynValue.NewCallback((ctx, innerArgs) => DynValue.True, "inner"),
+                        Args = System.Array.Empty<DynValue>(),
+                        Continuation = new CallbackFunction(
+                            (ctx, continuationArgs) => DynValue.True,
+                            "continuation"
+                        ),
+                    };
+
+                    return DynValue.NewTailCallReq(tailCall);
+                },
+                "tailing-clr"
+            );
+
+            DynValue tuple = script.DoString("return pcall(tailing)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(
+                    tuple.Tuple[1].String,
+                    Does.Contain("wrap in a script function instead")
+                );
+            });
+        }
+
+        [Test]
+        public void PcallRejectsClrYieldRequest()
+        {
+            Script script = CreateScript();
+            script.Globals["yielding"] = DynValue.NewCallback(
+                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
+                "yielding-clr"
+            );
+
+            DynValue tuple = script.DoString("return pcall(yielding)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(
+                    tuple.Tuple[1].String,
+                    Does.Contain("wrap in a script function instead")
+                );
+            });
+        }
+
+        [Test]
+        public void XpcallDecoratesClrExceptionWithHandlerBeforeUnwind()
+        {
+            Script script = CreateScript();
+            script.Globals["clr"] = DynValue.NewCallback(
+                (context, args) => throw new ScriptRuntimeException("failure"),
+                "clr-fail"
+            );
+
+            script.DoString(
+                @"
+                function decorator(message)
+                    return 'decorated:' .. message
+                end
+                "
+            );
+
+            DynValue tuple = script.DoString("return xpcall(clr, decorator)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("decorated:"));
+                Assert.That(tuple.Tuple[1].String, Does.Contain("failure"));
+            });
+        }
+
+        [Test]
         public void XpcallInvokesHandlerOnError()
         {
             Script script = CreateScript();
