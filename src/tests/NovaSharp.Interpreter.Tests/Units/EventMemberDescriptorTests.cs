@@ -5,6 +5,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NUnit.Framework;
 
@@ -98,6 +100,104 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(hits, Is.EqualTo(11), "No handlers remain after removal");
         }
 
+        [Test]
+        public void StaticEventsDispatchHandlersAndTrackSubscriptions()
+        {
+            const string HitsVariable = "staticHits";
+            StaticSampleEventSource.Reset();
+            Script script = new Script();
+            script.DoString($"{HitsVariable} = 0");
+            DynValue handler = script.DoString(
+                $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
+            );
+
+            EventMemberDescriptor descriptor = new(
+                typeof(StaticSampleEventSource).GetEvent(
+                    nameof(StaticSampleEventSource.GlobalEvent)
+                )
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.AddCallback(descriptor, context, TestHelpers.CreateArguments(handler));
+
+            Assert.That(descriptor.IsStatic, Is.True);
+            Assert.Multiple(() =>
+            {
+                Assert.That(StaticSampleEventSource.AddInvokeCount, Is.EqualTo(1));
+                Assert.That(StaticSampleEventSource.RemoveInvokeCount, Is.EqualTo(0));
+            });
+
+            StaticSampleEventSource.Raise(DynValue.NewNumber(2));
+            StaticSampleEventSource.Raise(DynValue.NewNumber(3));
+
+            double hits = script.Globals.Get(HitsVariable).Number;
+            Assert.That(hits, Is.EqualTo(5));
+
+            descriptor.RemoveCallback(descriptor, context, TestHelpers.CreateArguments(handler));
+            Assert.That(StaticSampleEventSource.RemoveInvokeCount, Is.EqualTo(1));
+
+            StaticSampleEventSource.Raise(DynValue.NewNumber(10));
+            hits = script.Globals.Get(HitsVariable).Number;
+            Assert.That(hits, Is.EqualTo(5), "Handlers removed from static event");
+            StaticSampleEventSource.Reset();
+        }
+
+        [Test]
+        public void RemovingSameCallbackTwiceDoesNotDetachDelegateAgain()
+        {
+            SampleEventSource source = new();
+            Script script = new Script();
+            DynValue handler = script.DoString("return function() end");
+
+            EventMemberDescriptor descriptor = new(
+                typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+            descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+
+            descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void RemovingUnknownCallbackLeavesDelegateAttached()
+        {
+            const string HitsVariable = "unknownRemovalHits";
+            SampleEventSource source = new();
+            Script script = new Script();
+            script.DoString($"{HitsVariable} = 0");
+            DynValue registered = script.DoString(
+                $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
+            );
+            DynValue unknown = script.DoString("return function() end");
+
+            EventMemberDescriptor descriptor = new(
+                typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.AddCallback(source, context, TestHelpers.CreateArguments(registered));
+
+            descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(unknown));
+
+            Assert.That(source.RemoveInvokeCount, Is.EqualTo(0));
+
+            source.RaiseEvent(DynValue.NewNumber(2));
+            double hits = script.Globals.Get(HitsVariable).Number;
+            Assert.That(hits, Is.EqualTo(2));
+
+            descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(registered));
+            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+        }
+
         private sealed class SampleEventSource
         {
             private event EventHandler<DynValue> _event;
@@ -121,7 +221,41 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void RaiseEvent(DynValue arg)
             {
-                _event?.Invoke(this, arg);
+                _event?.Invoke(null, arg);
+            }
+        }
+
+        private static class StaticSampleEventSource
+        {
+            private static event EventHandler<DynValue> _event;
+
+            public static int AddInvokeCount { get; private set; }
+            public static int RemoveInvokeCount { get; private set; }
+
+            public static event EventHandler<DynValue> GlobalEvent
+            {
+                add
+                {
+                    AddInvokeCount++;
+                    _event += value;
+                }
+                remove
+                {
+                    RemoveInvokeCount++;
+                    _event -= value;
+                }
+            }
+
+            public static void Raise(DynValue arg)
+            {
+                _event?.Invoke(null, arg);
+            }
+
+            public static void Reset()
+            {
+                _event = null;
+                AddInvokeCount = 0;
+                RemoveInvokeCount = 0;
             }
         }
     }

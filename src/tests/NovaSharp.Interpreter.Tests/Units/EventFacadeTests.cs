@@ -23,8 +23,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             DynValue handler = DynValue.NewCallback((_, _) => DynValue.Nil);
 
-            add.Callback.Invoke(context, TestHelpers.CreateArguments(handler));
-            remove.Callback.Invoke(context, TestHelpers.CreateArguments(handler));
+            DynValue[] args = { handler };
+
+            add.Callback.Invoke(context, args);
+            remove.Callback.Invoke(context, args);
 
             Assert.Multiple(() =>
             {
