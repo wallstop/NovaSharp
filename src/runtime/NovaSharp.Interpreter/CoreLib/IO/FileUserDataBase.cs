@@ -2,7 +2,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
+    using System.Text;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -136,7 +138,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
             catch (Exception ex)
             {
-                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
             }
         }
 
@@ -174,62 +180,213 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
         private double? ReadNumber()
         {
-            string chr = "";
+            bool canRewind = SupportsRewind;
+            long startPosition = canRewind ? GetCurrentPosition() : 0;
+            long lastConsumedPosition = startPosition;
 
-            while (!Eof())
+            StringBuilder numberBuilder = new();
+            bool hasDigits = false;
+            bool hasDecimalPoint = false;
+            bool exponentSeen = false;
+            bool exponentHasDigits = false;
+
+            ConsumeLeadingWhitespace(canRewind, ref lastConsumedPosition);
+
+            while (true)
             {
-                char c = Peek();
-                if (char.IsWhiteSpace(c))
-                {
-                    ReadBuffer(1);
-                }
-                else if (IsNumericChar(c, chr))
-                {
-                    ReadBuffer(1);
-                    chr += c;
-                }
-                else
+                int peekValue = PeekRaw();
+                if (peekValue == -1)
                 {
                     break;
                 }
+
+                char current = (char)peekValue;
+
+                if (char.IsDigit(current))
+                {
+                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    {
+                        break;
+                    }
+
+                    hasDigits = true;
+
+                    if (exponentSeen)
+                    {
+                        exponentHasDigits = true;
+                    }
+
+                    continue;
+                }
+
+                if (IsSignAllowed(numberBuilder, exponentSeen, exponentHasDigits, current))
+                {
+                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                if (current == '.' && !hasDecimalPoint && !exponentSeen)
+                {
+                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    {
+                        break;
+                    }
+
+                    hasDecimalPoint = true;
+                    continue;
+                }
+
+                if ((current == 'e' || current == 'E') && !exponentSeen && hasDigits)
+                {
+                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    {
+                        break;
+                    }
+
+                    exponentSeen = true;
+                    exponentHasDigits = false;
+                    continue;
+                }
+
+                break;
             }
 
-            if (double.TryParse(chr, out double d))
+            string numericText = numberBuilder.ToString();
+
+            bool isParsable =
+                numericText.Length > 0
+                && !IsStandaloneSignOrDot(numericText)
+                && !(exponentSeen && !exponentHasDigits);
+
+            if (!isParsable)
             {
-                return d;
-            }
-            else
-            {
+                if (canRewind)
+                {
+                    ResetToPosition(startPosition);
+                }
+
                 return null;
+            }
+
+            if (
+                !double.TryParse(
+                    numericText,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double parsedValue
+                )
+            )
+            {
+                if (canRewind)
+                {
+                    ResetToPosition(startPosition);
+                }
+
+                return null;
+            }
+
+            if (canRewind)
+            {
+                ResetToPosition(lastConsumedPosition);
+            }
+
+            return parsedValue;
+        }
+
+        private void ConsumeLeadingWhitespace(bool canRewind, ref long lastConsumedPosition)
+        {
+            while (true)
+            {
+                int peekValue = PeekRaw();
+                if (peekValue == -1)
+                {
+                    break;
+                }
+
+                char peekChar = (char)peekValue;
+                if (!char.IsWhiteSpace(peekChar))
+                {
+                    break;
+                }
+
+                string chunk = ReadBuffer(1);
+                if (chunk.Length == 0)
+                {
+                    break;
+                }
+
+                if (canRewind)
+                {
+                    lastConsumedPosition = GetCurrentPosition();
+                }
             }
         }
 
-        private bool IsNumericChar(char c, string numAsFar)
+        private bool TryConsumeChar(
+            ref long lastConsumedPosition,
+            bool canRewind,
+            StringBuilder numberBuilder
+        )
         {
-            if (char.IsDigit(c))
+            string chunk = ReadBuffer(1);
+            if (chunk.Length == 0)
+            {
+                return false;
+            }
+
+            numberBuilder.Append(chunk);
+
+            if (canRewind)
+            {
+                lastConsumedPosition = GetCurrentPosition();
+            }
+
+            return true;
+        }
+
+        private static bool IsSignAllowed(
+            StringBuilder numberBuilder,
+            bool exponentSeen,
+            bool exponentHasDigits,
+            char candidate
+        )
+        {
+            if (candidate != '+' && candidate != '-')
+            {
+                return false;
+            }
+
+            if (numberBuilder.Length == 0)
             {
                 return true;
             }
 
-            if (c == '-')
+            if (
+                exponentSeen
+                && !exponentHasDigits
+                && numberBuilder.Length > 0
+                && (numberBuilder[^1] == 'e' || numberBuilder[^1] == 'E')
+            )
             {
-                return numAsFar.Length == 0;
-            }
-
-            if (c == '.')
-            {
-                return !Framework.Do.StringContainsChar(numAsFar, '.');
-            }
-
-            if (c == 'E' || c == 'e')
-            {
-                return !(
-                    Framework.Do.StringContainsChar(numAsFar, 'E')
-                    || Framework.Do.StringContainsChar(numAsFar, 'e')
-                );
+                return true;
             }
 
             return false;
+        }
+
+        private static bool IsStandaloneSignOrDot(string numericText)
+        {
+            if (numericText.Length != 1)
+            {
+                return false;
+            }
+
+            char single = numericText[0];
+            return single == '+' || single == '-' || single == '.';
         }
 
         protected abstract bool Eof();
@@ -237,7 +394,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected abstract string ReadBuffer(int p);
         protected abstract string ReadToEnd();
         protected abstract char Peek();
+        protected abstract int PeekRaw();
         protected abstract void Write(string value);
+        protected abstract bool SupportsRewind { get; }
+        protected abstract long GetCurrentPosition();
+        protected abstract void ResetToPosition(long position);
 
         protected internal abstract bool IsOpen();
         protected abstract string Close();

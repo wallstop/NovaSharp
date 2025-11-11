@@ -66,6 +66,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
                 Assert.That(result.Tuple[0].IsNil(), Is.True);
                 Assert.That(result.Tuple[1].String, Does.Contain("write failure"));
+                Assert.That(result.Tuple[2].Number, Is.EqualTo(-1));
             });
         }
 
@@ -290,6 +291,118 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(tuple.Tuple[0].String, Is.EqualTo("first"));
                 Assert.That(tuple.Tuple[1].String, Is.EqualTo("second"));
+            });
+        }
+
+        [Test]
+        public void ReadSupportsNumericAndAllModes()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("1234\nABCDE");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local num = f:read('*n')
+                f:seek('set', 5)
+                local rest = f:read(2)
+                local all = f:read('*a')
+                return num, rest, all
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(1234));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("AB"));
+                Assert.That(tuple.Tuple[2].String, Is.EqualTo("CDE"));
+            });
+        }
+
+        [Test]
+        public void ReadNumberReturnsNilWithoutConsumingNonNumericData()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("abc123");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local first = f:read('*n')
+                local remainder = f:read(3)
+                return first, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("abc"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesNumbersWithLeadingPlus()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("+42");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue result = script.DoString("return file:read('*n')");
+            Assert.That(result.Number, Is.EqualTo(42d));
+        }
+
+        [Test]
+        public void ReadReturnsEmptyStringAtEofWithAOption()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("hi");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local first = f:read('*a')
+                local second = f:read('*a')
+                return first, second
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("hi"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo(""));
+            });
+        }
+
+        [Test]
+        public void ReadThrowsOnInvalidOption()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return file:read('*z')
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("invalid option"));
             });
         }
 

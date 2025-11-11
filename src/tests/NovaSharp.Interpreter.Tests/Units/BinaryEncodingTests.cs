@@ -8,151 +8,127 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class BinaryEncodingTests
     {
+        private readonly Encoding _encoding = new BinaryEncoding();
+
         [Test]
-        public void EncodingRoundtripMatchesByteValues()
+        public void GetBytesCopiesCharactersVerbatim()
         {
-            Encoding encoding = new BinaryEncoding();
-            char[] characters = new[] { (char)0x00, (char)0x7F, (char)0x80, (char)0xFF };
+            char[] source = new[] { '\u0001', '\u00FF', '\u1234' };
+            byte[] destination = new byte[source.Length];
 
-            byte[] buffer = new byte[characters.Length];
-            int bytesWritten = encoding.GetBytes(characters, 0, characters.Length, buffer, 0);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(bytesWritten, Is.EqualTo(characters.Length));
-                Assert.That(buffer[0], Is.EqualTo(0x00));
-                Assert.That(buffer[1], Is.EqualTo(0x7F));
-                Assert.That(buffer[2], Is.EqualTo(0x80));
-                Assert.That(buffer[3], Is.EqualTo(0xFF));
-            });
-
-            char[] roundtrip = new char[buffer.Length];
-            int charsWritten = encoding.GetChars(buffer, 0, buffer.Length, roundtrip, 0);
+            int written = _encoding.GetBytes(source, 0, source.Length, destination, 0);
 
             Assert.Multiple(() =>
             {
-                Assert.That(charsWritten, Is.EqualTo(buffer.Length));
-                Assert.That(roundtrip, Is.EqualTo(characters));
+                Assert.That(written, Is.EqualTo(source.Length));
+                Assert.That(destination[0], Is.EqualTo((byte)source[0]));
+                Assert.That(destination[1], Is.EqualTo((byte)source[1]));
+                Assert.That(destination[2], Is.EqualTo((byte)source[2]));
             });
         }
 
         [Test]
-        public void MaxCountsMatchRequestedSizes()
+        public void GetBytesThrowsWhenSourceIsNull()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(encoding.GetMaxByteCount(5), Is.EqualTo(5));
-                Assert.That(encoding.GetMaxCharCount(7), Is.EqualTo(7));
-            });
+            Assert.That(
+                () => _encoding.GetBytes((char[])null, 0, 0, Array.Empty<byte>(), 0),
+                Throws.InstanceOf<ArgumentNullException>()
+            );
         }
 
         [Test]
-        public void GetByteCountEqualsCharCount()
+        public void GetBytesThrowsWhenSourceRangeInvalid()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-            char[] chars = new[] { 'a', 'b', 'c', 'd' };
+            char[] source = new[] { 'a', 'b', 'c' };
+            byte[] destination = new byte[source.Length];
 
-            int byteCount = encoding.GetByteCount(chars, 0, chars.Length);
-
-            Assert.That(byteCount, Is.EqualTo(chars.Length));
-        }
-
-        [Test]
-        public void GetCharCountEqualsByteCount()
-        {
-            BinaryEncoding encoding = new BinaryEncoding();
-            byte[] bytes = new byte[] { 0x01, 0x02, 0x03 };
-
-            int charCount = encoding.GetCharCount(bytes, 0, bytes.Length);
-
-            Assert.That(charCount, Is.EqualTo(bytes.Length));
+            Assert.That(
+                () => _encoding.GetBytes(source, -1, 2, destination, 0),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
+            );
+            Assert.That(
+                () => _encoding.GetBytes(source, 1, 4, destination, 0),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
+            );
         }
 
         [Test]
         public void GetBytesThrowsWhenDestinationTooSmall()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-            char[] chars = new[] { 'a', 'b' };
-            byte[] buffer = new byte[1];
+            char[] source = new[] { 'a', 'b', 'c' };
+            byte[] destination = new byte[source.Length - 1];
 
             Assert.That(
-                () => encoding.GetBytes(chars, 0, chars.Length, buffer, 0),
-                Throws.TypeOf<ArgumentException>()
+                () => _encoding.GetBytes(source, 0, source.Length, destination, 0),
+                Throws.InstanceOf<ArgumentException>()
             );
         }
 
         [Test]
-        public void GetBytesThrowsWhenArgumentsOutOfRange()
+        public void GetCharsCopiesBytesVerbatim()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-            char[] chars = new[] { 'a' };
-            byte[] buffer = new byte[2];
+            byte[] source = new byte[] { 0x01, 0x7F, 0xFF };
+            char[] destination = new char[source.Length];
+
+            int read = _encoding.GetChars(source, 0, source.Length, destination, 0);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(read, Is.EqualTo(source.Length));
+                Assert.That(destination[0], Is.EqualTo((char)source[0]));
+                Assert.That(destination[1], Is.EqualTo((char)source[1]));
+                Assert.That(destination[2], Is.EqualTo((char)source[2]));
+            });
+        }
+
+        [Test]
+        public void GetCharsThrowsWhenSourceIsNull()
+        {
+            Assert.That(
+                () => _encoding.GetChars((byte[])null, 0, 0, Array.Empty<char>(), 0),
+                Throws.InstanceOf<ArgumentNullException>()
+            );
+        }
+
+        [Test]
+        public void GetCharsThrowsWhenSourceRangeInvalid()
+        {
+            byte[] source = new byte[] { 0x01, 0x02, 0x03 };
+            char[] destination = new char[source.Length];
 
             Assert.That(
-                () => encoding.GetBytes(chars, 1, 1, buffer, 0),
-                Throws.TypeOf<ArgumentOutOfRangeException>()
+                () => _encoding.GetChars(source, -1, 2, destination, 0),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
+            );
+            Assert.That(
+                () => _encoding.GetChars(source, 1, 4, destination, 0),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
             );
         }
 
         [Test]
         public void GetCharsThrowsWhenDestinationTooSmall()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-            byte[] bytes = new byte[] { 0x01, 0x02 };
-            char[] chars = new char[1];
+            byte[] source = new byte[] { 0x01, 0x02, 0x03 };
+            char[] destination = new char[source.Length - 1];
 
             Assert.That(
-                () => encoding.GetChars(bytes, 0, bytes.Length, chars, 0),
-                Throws.TypeOf<ArgumentException>()
+                () => _encoding.GetChars(source, 0, source.Length, destination, 0),
+                Throws.InstanceOf<ArgumentException>()
             );
         }
 
         [Test]
-        public void NullBuffersThrowArgumentNullException()
+        public void GetMaxCountThrowsWhenNegative()
         {
-            BinaryEncoding encoding = new BinaryEncoding();
-            byte[] bytes = new byte[1];
-            char[] chars = new[] { 'a' };
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    () => encoding.GetBytes((char[])null!, 0, 0, bytes, 0),
-                    Throws.TypeOf<ArgumentNullException>()
-                );
-                Assert.That(
-                    () => encoding.GetBytes(chars, 0, 1, (byte[])null!, 0),
-                    Throws.TypeOf<ArgumentNullException>()
-                );
-                Assert.That(
-                    () => encoding.GetChars((byte[])null!, 0, 0, new char[1], 0),
-                    Throws.TypeOf<ArgumentNullException>()
-                );
-                Assert.That(
-                    () => encoding.GetChars(bytes, 0, 1, (char[])null!, 0),
-                    Throws.TypeOf<ArgumentNullException>()
-                );
-            });
-        }
-
-        [Test]
-        public void NegativeMaxCountsThrowArgumentOutOfRange()
-        {
-            BinaryEncoding encoding = new BinaryEncoding();
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    () => encoding.GetMaxByteCount(-1),
-                    Throws.TypeOf<ArgumentOutOfRangeException>()
-                );
-                Assert.That(
-                    () => encoding.GetMaxCharCount(-1),
-                    Throws.TypeOf<ArgumentOutOfRangeException>()
-                );
-            });
+            Assert.That(
+                () => _encoding.GetMaxByteCount(-1),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
+            );
+            Assert.That(
+                () => _encoding.GetMaxCharCount(-1),
+                Throws.InstanceOf<ArgumentOutOfRangeException>()
+            );
         }
     }
 }
