@@ -71,6 +71,76 @@ jobs:
             echo "Coverage summary not found." >> "$GITHUB_STEP_SUMMARY"
           fi
         shell: bash
+      - name: Evaluate coverage threshold
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          COVERAGE_THRESHOLD: "85"
+          COVERAGE_GATING_MODE: ${{ vars.COVERAGE_GATING_MODE || 'monitor' }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'artifacts/coverage/Summary.json';
+            if (!fs.existsSync(path)) {
+              core.setFailed(`Coverage summary not available at ${path}`);
+              return;
+            }
+
+            const raw = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const summary = raw.summary ?? {};
+            const line = Number(summary.linecoverage);
+            const branch = Number(summary.branchcoverage);
+            const method = Number(summary.methodcoverage);
+            const threshold = Number(process.env.COVERAGE_THRESHOLD ?? '85');
+            let mode = (process.env.COVERAGE_GATING_MODE ?? 'monitor').trim().toLowerCase();
+
+            if (!Number.isFinite(line)) {
+              core.setFailed('Line coverage percentage missing from Summary.json.');
+              return;
+            }
+
+            if (!['monitor', 'enforce', 'disabled'].includes(mode)) {
+              core.warning(`Unknown COVERAGE_GATING_MODE "${mode}" supplied; defaulting to monitor.`);
+              mode = 'monitor';
+            }
+
+            const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+            const lines = [
+              '### Coverage Gate',
+              '',
+              `- Mode: ${mode}`,
+              `- Line: ${line.toFixed(2)}% (threshold ${threshold.toFixed(2)}%)`,
+              `- Branch: ${Number.isFinite(branch) ? branch.toFixed(2) + '%' : 'n/a'}`,
+              `- Method: ${Number.isFinite(method) ? method.toFixed(2) + '%' : 'n/a'}`,
+              ''
+            ];
+
+            if (summaryPath) {
+              fs.appendFileSync(summaryPath, `${lines.join('\n')}\n`);
+            }
+
+            if (mode === 'disabled') {
+              core.notice('Coverage gating disabled via COVERAGE_GATING_MODE.');
+              return;
+            }
+
+            const delta = line - threshold;
+            if (delta < 0) {
+              const message = `Line coverage ${line.toFixed(2)}% is ${Math.abs(delta).toFixed(2)}% below the ${threshold.toFixed(2)}% threshold.`;
+              if (mode === 'enforce') {
+                core.setFailed(`${message} Gating mode set to "enforce"; failing job.`);
+              } else {
+                core.warning(`${message} Monitoring mode active; job will continue. Set COVERAGE_GATING_MODE=enforce once sustained coverage meets the target.`);
+              }
+              return;
+            }
+
+            const success = `Line coverage ${line.toFixed(2)}% meets or exceeds the ${threshold.toFixed(2)}% threshold (mode: ${mode}).`;
+            if (mode === 'enforce') {
+              core.notice(success);
+            } else {
+              core.info(success);
+            }
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7

@@ -52,6 +52,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `ParameterDescriptorTests` cover reflection metadata, restriction semantics, and wiring exports, pushing the descriptor to 70.8 % line coverage and guarding invalid restriction paths.
 - `AutoDescribingUserDataDescriptorTests` verify name/type exposure plus index/set/meta forwarding to IUserDataType, keeping self-describing userdata behaviour under regression tests.
 - `StandardEnumUserDataDescriptorTests` ensure flag helpers, numeric coercion, and signed/unsigned paths work correctly, raising enum descriptor coverage to 67.4 %.
+- `UnityAssetsScriptLoaderTests` cover path normalization, missing-script diagnostics, and enumeration helpers, boosting loader coverage while keeping Unity packaging logic under regression.
 - `WatchItemTests` exercise formatting/null-handling, closing out the debugging watch surface (now 100 % covered), while `ValueTypeDefaultCtorMemberDescriptorTests` confirm validation/instantiation paths and lift the descriptor to 78.5 %.
 
 ## Updating the Snapshot

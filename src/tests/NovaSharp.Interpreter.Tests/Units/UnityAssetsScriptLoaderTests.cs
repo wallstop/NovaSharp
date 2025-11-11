@@ -10,77 +10,66 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class UnityAssetsScriptLoaderTests
     {
         [Test]
-        public void LoadFileReturnsScriptFromResourceMap()
+        public void LoadFileReturnsScriptBodyWhenPresent()
         {
-            Dictionary<string, string> scripts = new Dictionary<string, string>
-            {
-                { "init.lua", "return 42" },
-            };
+            Dictionary<string, string> scripts = new() { ["example.lua"] = "return 42" };
+            UnityAssetsScriptLoader loader = new(scripts);
 
-            UnityAssetsScriptLoader loader = new UnityAssetsScriptLoader(scripts);
-            object content = loader.LoadFile("init.lua", null);
+            object result = loader.LoadFile("example.lua", new Table(new Script()));
 
-            Assert.That(content, Is.EqualTo("return 42"));
+            Assert.That(result, Is.EqualTo("return 42"));
         }
 
         [Test]
-        public void LoadFileTrimsDirectorySegments()
+        public void LoadFileNormalizesPathSeparators()
         {
-            Dictionary<string, string> scripts = new Dictionary<string, string>
-            {
-                { "config.lua", "value = 10" },
-            };
+            Dictionary<string, string> scripts = new() { ["path.lua"] = "return 'ok'" };
+            UnityAssetsScriptLoader loader = new(scripts);
 
-            UnityAssetsScriptLoader loader = new UnityAssetsScriptLoader(scripts);
-            object content = loader.LoadFile("Assets/Resources/NovaSharp/Scripts/config.lua", null);
+            object result = loader.LoadFile("foo\\bar/path.lua", new Table(new Script()));
 
-            Assert.That(content, Is.EqualTo("value = 10"));
+            Assert.That(result, Is.EqualTo("return 'ok'"));
         }
 
         [Test]
-        public void LoadFileThrowsWhenScriptMissing()
+        public void LoadFileThrowsWhenMissing()
         {
-            UnityAssetsScriptLoader loader = new UnityAssetsScriptLoader(
-                new Dictionary<string, string>()
-            );
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
             Assert.That(
-                () => loader.LoadFile("missing.lua", null),
-                Throws.TypeOf<Exception>().With.Message.Contain(UnityAssetsScriptLoader.DefaultPath)
+                () => loader.LoadFile("missing.lua", new Table(new Script())),
+                Throws.Exception.With.Message.Contains("Cannot load script")
             );
         }
 
         [Test]
-        public void ScriptFileExistsMatchesStoredNames()
+        public void ScriptFileExistsRespectsNormalization()
         {
-            Dictionary<string, string> scripts = new Dictionary<string, string>
-            {
-                { "main.lua", "print('hello')" },
-            };
-
-            UnityAssetsScriptLoader loader = new UnityAssetsScriptLoader(scripts);
+            Dictionary<string, string> scripts = new() { ["script.lua"] = "return true" };
+            UnityAssetsScriptLoader loader = new(scripts);
 
             Assert.Multiple(() =>
             {
-                Assert.That(loader.ScriptFileExists("main.lua"), Is.True);
-                Assert.That(loader.ScriptFileExists("Assets/Resources/main.lua"), Is.True);
-                Assert.That(loader.ScriptFileExists("other.lua"), Is.False);
+                Assert.That(loader.ScriptFileExists("script.lua"), Is.True);
+                Assert.That(loader.ScriptFileExists("nested/script.lua"), Is.True);
+                Assert.That(loader.ScriptFileExists("missing.lua"), Is.False);
             });
         }
 
         [Test]
-        public void GetLoadedScriptsReturnsMappedKeys()
+        public void GetLoadedScriptsReturnsSnapshotOfKeys()
         {
-            Dictionary<string, string> scripts = new Dictionary<string, string>
+            Dictionary<string, string> scripts = new()
             {
-                { "one.lua", "x = 1" },
-                { "two.lua", "x = 2" },
+                ["a.lua"] = "return 1",
+                ["b.lua"] = "return 2",
+                ["c.lua"] = "return 3",
             };
+            UnityAssetsScriptLoader loader = new(scripts);
 
-            UnityAssetsScriptLoader loader = new UnityAssetsScriptLoader(scripts);
             string[] loaded = loader.GetLoadedScripts();
 
-            Assert.That(loaded, Is.EquivalentTo(new[] { "one.lua", "two.lua" }));
+            Assert.That(loaded, Is.EquivalentTo(new[] { "a.lua", "b.lua", "c.lua" }));
         }
     }
 }
