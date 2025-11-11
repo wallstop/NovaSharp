@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.CoreLib.IO
 {
+    using System;
     using System.IO;
+    using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -36,6 +38,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
             if (_reader != null)
             {
+                if (_stream.CanSeek)
+                {
+                    long positionBeforeCheck = _stream.Position;
+                    bool endOfStream = _reader.EndOfStream;
+                    ResetReaderBuffer(positionBeforeCheck);
+                    return endOfStream;
+                }
+
                 return _reader.EndOfStream;
             }
             else
@@ -59,8 +69,17 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override string ReadBuffer(int p)
         {
             CheckFileIsNotClosed();
+            long positionBeforeRead = _stream.CanSeek ? _stream.Position : 0;
             char[] buffer = new char[p];
             int length = _reader.ReadBlock(buffer, 0, p);
+            if (_stream.CanSeek && _reader != null && length > 0)
+            {
+                Encoding encoding = _reader.CurrentEncoding;
+                long expectedPosition =
+                    positionBeforeRead + encoding.GetByteCount(buffer, 0, length);
+                ResetReaderBuffer(expectedPosition);
+            }
+
             return new string(buffer, 0, length);
         }
 
@@ -101,9 +120,20 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
 
-            if (_writer != null)
+            try
             {
-                _writer.Flush();
+                if (_writer != null)
+                {
+                    _writer.Flush();
+                }
+            }
+            catch (ScriptRuntimeException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new ScriptRuntimeException(ex.Message);
             }
 
             return true;
@@ -112,39 +142,61 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         public override long Seek(string whence, long offset = 0)
         {
             CheckFileIsNotClosed();
-            if (whence != null)
+            try
             {
-                if (whence == "set")
+                if (whence != null)
                 {
-                    _stream.Seek(offset, SeekOrigin.Begin);
+                    if (whence == "set")
+                    {
+                        _stream.Seek(offset, SeekOrigin.Begin);
+                    }
+                    else if (whence == "cur")
+                    {
+                        _stream.Seek(offset, SeekOrigin.Current);
+                    }
+                    else if (whence == "end")
+                    {
+                        _stream.Seek(offset, SeekOrigin.End);
+                    }
+                    else
+                    {
+                        throw ScriptRuntimeException.BadArgument(
+                            0,
+                            "seek",
+                            "invalid option '" + whence + "'"
+                        );
+                    }
                 }
-                else if (whence == "cur")
-                {
-                    _stream.Seek(offset, SeekOrigin.Current);
-                }
-                else if (whence == "end")
-                {
-                    _stream.Seek(offset, SeekOrigin.End);
-                }
-                else
-                {
-                    throw ScriptRuntimeException.BadArgument(
-                        0,
-                        "seek",
-                        "invalid option '" + whence + "'"
-                    );
-                }
-            }
 
-            return _stream.Position;
+                return _stream.Position;
+            }
+            catch (ScriptRuntimeException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new ScriptRuntimeException(ex.Message);
+            }
         }
 
         public override bool Setvbuf(string mode)
         {
             CheckFileIsNotClosed();
-            if (_writer != null)
+            try
             {
-                _writer.AutoFlush = mode == "no" || mode == "line";
+                if (_writer != null)
+                {
+                    _writer.AutoFlush = mode == "no" || mode == "line";
+                }
+            }
+            catch (ScriptRuntimeException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new ScriptRuntimeException(ex.Message);
             }
 
             return true;
@@ -153,6 +205,23 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected internal override bool IsOpen()
         {
             return !_closed;
+        }
+
+        private void ResetReaderBuffer(long targetPosition)
+        {
+            if (_reader == null || !_stream.CanSeek)
+            {
+                return;
+            }
+
+            long currentPosition = _stream.Position;
+            if (currentPosition == targetPosition)
+            {
+                return;
+            }
+
+            _reader.DiscardBufferedData();
+            _stream.Seek(targetPosition, SeekOrigin.Begin);
         }
     }
 }

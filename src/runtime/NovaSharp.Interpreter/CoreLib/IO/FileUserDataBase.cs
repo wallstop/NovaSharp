@@ -151,7 +151,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 }
                 else
                 {
-                    return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(msg));
+                    return DynValue.NewTuple(
+                        DynValue.Nil,
+                        DynValue.NewString(msg),
+                        DynValue.NewNumber(-1)
+                    );
                 }
             }
             catch (ScriptRuntimeException)
@@ -160,7 +164,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
             catch (Exception ex)
             {
-                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
             }
         }
 
