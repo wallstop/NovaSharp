@@ -15,7 +15,6 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/tooling/Benchmarks`, `src/tooling/NovaSharp.Comparison` | Benchmark/perf harnesses | Paths aligned; scripts still assume legacy locations. |
 | `src/tests/NovaSharp.Interpreter.Tests` | Consolidated NUnit suite | Powers local + CI execution; hosts Lua TAP fixtures. |
 | `src/samples/Tutorial` | Tutorial snippets | Under dedicated samples hierarchy. |
-| `src/legacy/*` (`Flash`, `NovaSharpPreGen`, `Tools`, `NovaSharp_netcore`) | Archived assets | Confirm safe to delete or retain as read-only history. |
 | `docs/manual/NovaSharp.Documentation` | Historical documentation | Lives under docs tree; evaluate for migration to markdown. |
 
 ## 2. Target Layout (post-Milestone B/C)
@@ -39,11 +38,6 @@ src/
     Tutorial/
   docs/
     manual/                                (historical documentation)
-  legacy/
-    Flash/
-    NovaSharpPreGen/
-    Tools/
-    NovaSharp_netcore/
   packaging/
     signing/                               (e.g., `keypair.snk`, nuspecs)
 ```
@@ -53,13 +47,13 @@ Key principles:
 - **Single source of truth:** Eliminate `_Projects/*netcore` mirrors by converting main projects to multi-targeting where required.
 - **Namespace alignment:** Paths should mirror namespaces (`runtime/NovaSharp.Interpreter/...`), satisfying the new `.editorconfig` rules.
 - **Clear ownership:** Runtime vs. debugger vs. tooling content live in dedicated top-level folders, aiding discoverability.
-- **Legacy quarantine:** Old clients/tools move under `legacy/` (or are deleted) so they no longer clutter active build graphs.
+- **Legacy cleanup:** Obsolete clients/tools should be removed promptly; the former `legacy/` quarantine has been retired to keep the tree lean.
 
 ## 3. Migration Plan
 
 1. **Inventory & Deletion Pass**
-   - Confirm no build/test references to legacy assets under `src/legacy/`. Archive or remove as appropriate.
-   - Migrate any remaining useful scripts into `tooling/` or `docs/`.
+   - ✅ Removed the obsolete `src/legacy` tree (Flash debugger client, NovaSharpPreGen, Lua52 binaries) after confirming no build/test dependencies remained.
+   - Migrate any remaining useful scripts into `tooling/` or `docs/` as they surface.
 
 2. **Project Updates**
    - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `NovaSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
@@ -72,7 +66,7 @@ Key principles:
 
 4. **Tests & Pipelines**
    - Update GitHub workflows, docs, and helper scripts (`coverage.ps1`, etc.) to reference the new paths (partial work complete).
-   - Share TAP fixtures via `tests/fixtures/` to remove duplication between legacy and modern runners.
+  - Share TAP fixtures via `tests/fixtures/` to remove duplication across TAP and NUnit runners.
 
 5. **Documentation Alignment**
    - Refresh `docs/Modernization.md` and `docs/Testing.md` with the new folder map.
@@ -84,8 +78,5 @@ Key principles:
 
 ## 4. Open Questions
 
-- Do we keep `NovaSharpPreGen` for historical builds, or move it to a separate archive repository?
-- Should `NovaSharp.Interpreter.Tests` be fully migrated into the new `tests/` structure, or partially archived?
-- How much of `Tools/` is still relevant? (Needs triage; most content predates .NET Core.)
-
-These questions should be resolved during Milestone B execution before deleting any assets.
+- Should `NovaSharp.Interpreter.Tests` be further split into `unit/` vs `integration/` folders to ease discovery?
+- Are there packaging assets that should move into a dedicated `packaging/` hierarchy alongside signing resources?

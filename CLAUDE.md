@@ -156,7 +156,7 @@ Script.DoString("return x + 1")
   - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
   - **Tests**: `src/tests/NovaSharp.Interpreter.Tests/` (NUnit-based suite powering local + CI execution)
-  - **Legacy Assets**: Archived clients and scripts under `src/legacy/`
+  - **Legacy Assets**: Flash/Flex debugger, Lua52 binaries, and other historical scripts have been removed from `src/legacy`; see `docs/Modernization.md` for the deprecation summary.
 
 ## Important Implementation Notes
 

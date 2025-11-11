@@ -13,8 +13,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 | Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
 |-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 0.0 | – | 0 / 33 | Interop | New unit fixtures hit read/write paths; investigate why coverage still reports 0 % (likely instrumentation quirk) and add more observable entry points if needed. |
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` | 0.0 | – | 0 / 10 | Interop | Invocation tests exist; verify instrumentation or introduce additional surface to ensure coverage reflects execution. |
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 0.0 | – | 0 / 33 | Interop | `HardwiredDescriptorTests` now exercise read/write conversions and guard rails; rerun coverage export and, if still zero, dig into instrumentation filters for generated descriptors. |
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` | 0.0 | – | 0 / 10 | Interop | Same test suite covers argument marshalling + default handling—refresh coverage and ensure hardwired method helpers are not excluded by filters. |
 | `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 0.0 | 0.0 | 0 / 95 | Interop | Extreme-path tests now exercise qualified operator names/null guards, yet coverage remains 0 %; inspect instrumentation or adjust code to ensure lines are tracked. |
 | `NovaSharp.Interpreter.Interop.RegistrationPolicies.PermanentRegistrationPolicy` | 0.0 | – | 0 / 2 | Interop | Tests cover all decision paths; coverage still 0 %—confirm instrumentation and consider moving logic into non-inline helpers if needed. |
 | `NovaSharp.Interpreter.CoreLib.DebugModule` | 6.6 | 0.0 | 8 / 120 | Runtime | New regression suite covers user values, metatables, upvalues, and traceback; remaining work: tackle `debug.debug` (interactive loop) via injectable prompt/print hooks and cover additional metamethod helpers. |
@@ -38,6 +38,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.
 - `PerformanceStatistics` exercises enabling/disabling counters and global aggregation.
 - `ReplHistoryInterpreter` navigation (prev/next) verified via tests.
+- Hardwired descriptor helpers (member + method) now covered via `HardwiredDescriptorTests`, validating access checks, conversions, and default-argument marshalling.
 - Platform accessors (`LimitedPlatformAccessor`, `StandardPlatformAccessor`) guarded with sandbox/full IO tests.
 - `EmbeddedResourcesScriptLoader` validated against embedded Lua fixture.
 - `InternalErrorException` constructors covered by direct unit tests.

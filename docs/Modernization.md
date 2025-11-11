@@ -10,12 +10,13 @@ NovaSharp now targets `netstandard2.1` for all runtime components and `net8.0` f
 - Removed legacy `.NET 3.5`, `.NET 4.0`, Portable Class Library, Windows Phone, and Silverlight projects.
 - Rebuilt the solution around SDK-style projects with explicit `LangVersion=latest` and shared assembly metadata.
 - Retired obsolete DevTools (`SynchProjects`, legacy debugger test beds, Silverlight REPL) and Unity/Xamarin sample solutions that locked the repository to older frameworks.
+- Deleted the `src/legacy` tree (Flash Flex client, NovaSharpPreGen console, Lua52 binaries, and empty `novasharp_netcore` shell) now that modern debugger/tooling stacks supersede them.
 - Converted performance tooling to BenchmarkDotNet, writing results to `docs/Performance.md` without impacting CI.
 
 ## Pending Alignments
 - Recreate Unity onboarding instructions that reference the consolidated `netstandard2.1` packages.
 - Audit any external documentation or samples that still describe the portable40/net35 build chain.
-- Validate remote debugger assets on modern browsers now that Flash-era scaffolding has been archived.
+- Validate remote debugger assets on modern browsers now that the Flash-era implementation has been removed.
 
 Keep this page current when additional modernization steps land (e.g., nullable annotations, trimming support, native AOT testing).
 

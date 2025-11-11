@@ -68,11 +68,63 @@ try {
         "-reporttypes:$reportTypes" `
         "-assemblyfilters:+NovaSharp.*"
 
-    $summaryPath = Join-Path $reportTarget "Summary.txt"
-    if (Test-Path $summaryPath) {
-        Write-Host ""
+function ShouldEmitFullCoverageSummary {
+    $override = [System.Environment]::GetEnvironmentVariable("NOVASHARP_COVERAGE_SUMMARY")
+    if (-not [string]::IsNullOrWhiteSpace($override)) {
+        switch ($override.ToLowerInvariant()) {
+            "1" { return $true }
+            "true" { return $true }
+            "yes" { return $true }
+            "0" { return $false }
+            "false" { return $false }
+            "no" { return $false }
+        }
+    }
+
+    $ciMarkers = @(
+        "CI",
+        "GITHUB_ACTIONS",
+        "TF_BUILD",
+        "TEAMCITY_VERSION",
+        "BUILD_BUILDID",
+        "APPVEYOR"
+    )
+
+    foreach ($marker in $ciMarkers) {
+        if (-not [string]::IsNullOrWhiteSpace([System.Environment]::GetEnvironmentVariable($marker))) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+$summaryPath = Join-Path $reportTarget "Summary.txt"
+if (Test-Path $summaryPath) {
+    Write-Host ""
+
+    if (ShouldEmitFullCoverageSummary) {
         Write-Host (Get-Content $summaryPath)
     }
+    else {
+        $content = Get-Content $summaryPath
+        $header = New-Object System.Collections.Generic.List[string]
+        foreach ($line in $content) {
+            if ([string]::IsNullOrWhiteSpace($line) -and $header.Count -gt 0) {
+                break
+            }
+
+            $header.Add($line)
+        }
+
+        if ($header.Count -gt 0) {
+            Write-Host ($header -join [Environment]::NewLine)
+            Write-Host ""
+        }
+
+        Write-Host "Detailed coverage summary (assemblies/methods) saved to: $summaryPath"
+    }
+}
 
     Write-Host ""
     Write-Host "Coverage artifacts:"
