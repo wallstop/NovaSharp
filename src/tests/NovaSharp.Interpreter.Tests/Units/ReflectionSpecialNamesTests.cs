@@ -141,6 +141,36 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        [TestCase("op_Implicit", ReflectionSpecialNameType.ImplicitCast, null)]
+        [TestCase("op_BitwiseAnd", ReflectionSpecialNameType.OperatorAnd, "&")]
+        [TestCase("op_Decrement", ReflectionSpecialNameType.OperatorDec, "--")]
+        [TestCase("op_Division", ReflectionSpecialNameType.OperatorDiv, "/")]
+        [TestCase("op_Equality", ReflectionSpecialNameType.OperatorEq, "==")]
+        [TestCase("op_GreaterThan", ReflectionSpecialNameType.OperatorGt, ">")]
+        [TestCase("op_GreaterThanOrEqual", ReflectionSpecialNameType.OperatorGte, ">=")]
+        [TestCase("op_Increment", ReflectionSpecialNameType.OperatorInc, "++")]
+        [TestCase("op_Inequality", ReflectionSpecialNameType.OperatorNeq, "!=")]
+        [TestCase("op_LessThan", ReflectionSpecialNameType.OperatorLt, "<")]
+        [TestCase("op_LessThanOrEqual", ReflectionSpecialNameType.OperatorLte, "<=")]
+        [TestCase("op_Multiply", ReflectionSpecialNameType.OperatorMul, "*")]
+        [TestCase("op_Subtraction", ReflectionSpecialNameType.OperatorSub, "-")]
+        [TestCase("op_UnaryPlus", ReflectionSpecialNameType.OperatorUnaryPlus, "+")]
+        public void RecognizesAdditionalOperatorMappings(
+            string specialName,
+            ReflectionSpecialNameType expectedType,
+            string expectedArgument
+        )
+        {
+            ReflectionSpecialName name = new(specialName);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(name.Type, Is.EqualTo(expectedType));
+                Assert.That(name.Argument, Is.EqualTo(expectedArgument));
+            });
+        }
+
+        [Test]
         public void UnknownNamesLeaveTypeAtDefault()
         {
             ReflectionSpecialName unknown = new ReflectionSpecialName("CustomMethod");

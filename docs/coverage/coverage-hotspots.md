@@ -13,7 +13,6 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 | Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
 |-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 81.8 | – | 27 / 33 | Interop | Default base implementations now throw under test; finish by validating restricted-type and by-ref conversions so instrumentation reaches ≥90 %. |
 | `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 53.6 | 72.6 | 52 / 97 | Interop | Still lacking coverage for namespace-qualified operator names and fallback behaviour—add table-driven tests to close the gap. |
 | `NovaSharp.Interpreter.CoreLib.DebugModule` | 76.6 | 65.7 | 92 / 120 | Runtime | Queued console tests landed; next step is to exercise multiline commands and coroutine-driven sessions to finish the interactive branch coverage. |
 | `NovaSharp.Interpreter.CoreLib.IO.FileUserDataBase` | 88.8 | 84.8 | 144 / 162 | Runtime | Recent tests now cover close/flush/seek tuples; push remaining error states (closed handles, invalid modes) to crest the 90 % mark. |
@@ -48,7 +47,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `InternalErrorException` constructors covered by direct unit tests.
 - `SerializationExtensions` exercised with prime/nested table scenarios and tuple/string escaping; serializer fixed to emit Lua-compliant braces/newlines.
 - `ErrorHandlingModule` now sits at 100 % line / 94 % branch thanks to nested `pcall`/`xpcall` regression tests (tail-call continuations, yield requests, CLR handlers).
-- `HardwiredMemberDescriptor` base getters/setters now throw under coverage, shrinking the remaining uncovered lines to the by-ref conversion paths.
+- `HardwiredMemberDescriptor` base getters/setters now throw under coverage, shrinking the remaining uncovered lines to the by-ref conversion paths (currently at 100 % line coverage in the latest report).
+- Expanded `ReflectionSpecialName` operator mapping tests (additional arithmetic/relational cases) to drive branch coverage; rerun `coverage.ps1` to confirm the updated instrumentation.
 
 ## Updating the Snapshot
 ```powershell
