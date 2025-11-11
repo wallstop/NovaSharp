@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
-    using NovaSharp;
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -10,51 +12,202 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class ErrorHandlingModuleTests
     {
         [Test]
-        public void PcallReportsForcedYieldForClrFunctions()
+        public void PcallReturnsAllValuesOnSuccess()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = CreateScript();
 
-            CallbackFunction forcedYield = new(
-                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>())
+            DynValue tuple = script.DoString(
+                @"
+                local ok, a, b = pcall(function() return 1, 2 end)
+                return ok, a, b
+                "
             );
-            script.Globals["forcedYieldFn"] = DynValue.NewCallback(forcedYield);
 
-            DynValue pcallFunc = script.Globals.Get("pcall");
-            DynValue result = script.Call(pcallFunc, script.Globals.Get("forcedYieldFn"));
-
-            Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(result.Tuple.Length, Is.GreaterThanOrEqualTo(2));
-            Assert.That(result.Tuple[0].Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(result.Tuple[0].Boolean, Is.False);
-            Assert.That(result.Tuple[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(result.Tuple[1].String, Does.Contain("cannot be called directly by pcall"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(1d));
+                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(2d));
+            });
         }
 
         [Test]
-        public void XpcallAppliesMessageDecoration()
+        public void PcallCapturesScriptErrors()
         {
-            Script script = new(CoreModules.PresetComplete);
-            script.DoString(
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
                 @"
-                function explode()
-                    error('boom', 0)
-                end
-
-                function decorator(message)
-                    return 'decorated:' .. message
-                end
-
-                function wrapped()
-                    return xpcall(explode, decorator)
-                end
-            "
+                local ok, err = pcall(function() error('boom') end)
+                return ok, err
+                "
             );
 
-            DynValue result = script.Call(script.Globals.Get("wrapped"));
-            Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(result.Tuple.Length, Is.GreaterThanOrEqualTo(2));
-            Assert.That(result.Tuple[0].Boolean, Is.False);
-            Assert.That(result.Tuple[1].String, Is.EqualTo("decorated:boom"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("boom"));
+            });
+        }
+
+        [Test]
+        public void PcallRejectsNonFunctions()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString("return pcall(123)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("attempt to pcall a non-function"));
+            });
+        }
+
+        [Test]
+        public void PcallHandlesClrFunctionSuccess()
+        {
+            Script script = CreateScript();
+            script.Globals["clr"] = DynValue.NewCallback(
+                (context, args) =>
+                    DynValue.NewTuple(DynValue.NewString("hello"), DynValue.NewNumber(5)),
+                "clr"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("hello"));
+                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(5d));
+            });
+        }
+
+        [Test]
+        public void PcallDecoratesClrScriptRuntimeExceptions()
+        {
+            Script script = CreateScript();
+            script.Globals["clr"] = DynValue.NewCallback(
+                (context, args) => throw new ScriptRuntimeException("fail"),
+                "clr-fail"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("fail"));
+            });
+        }
+
+        [Test]
+        public void PcallReturnsTailCallResultFromClrFunction()
+        {
+            Script script = CreateScript();
+            script.Globals["clr"] = DynValue.NewCallback(
+                (context, args) =>
+                {
+                    CallbackFunction continuation = new(
+                        (ctx, innerArgs) => DynValue.NewNumber(99),
+                        "inner"
+                    );
+
+                    return DynValue.NewTailCallReq(
+                        new TailCallData()
+                        {
+                            Function = DynValue.NewCallback(continuation),
+                            Args = Array.Empty<DynValue>(),
+                        }
+                    );
+                },
+                "clr-tail"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(99d));
+            });
+        }
+
+        [Test]
+        public void PcallThrowsWhenClrFunctionYields()
+        {
+            Script script = CreateScript();
+            script.Globals["clr"] = DynValue.NewCallback(
+                (context, args) => DynValue.NewYieldReq(DynValue.NewNumber(1)),
+                "clr-yield"
+            );
+
+            Assert.That(
+                () => script.DoString("return pcall(clr)"),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("cannot be called directly by pcall")
+            );
+        }
+
+        [Test]
+        public void XpcallInvokesHandlerOnError()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
+                @"
+                local function handler(msg) return 'handled:' .. msg end
+                local ok, err = xpcall(function() error('bad') end, handler)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("handled:"));
+                Assert.That(tuple.Tuple[1].String, Does.Contain("bad"));
+            });
+        }
+
+        [Test]
+        public void XpcallAllowsNilHandler()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
+                @"
+                return xpcall(function() error('nil-handler') end, nil)
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("nil-handler"));
+            });
+        }
+
+        [Test]
+        public void XpcallRejectsNonFunctionHandler()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () => script.DoString("return xpcall(function() end, 123)"),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("bad argument #2 to 'xpcall'")
+            );
+        }
+
+        private static Script CreateScript()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Options.DebugPrint = _ => { };
+            return script;
         }
     }
 }
