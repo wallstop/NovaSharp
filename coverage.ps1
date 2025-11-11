@@ -69,6 +69,7 @@ try {
         "-assemblyfilters:+NovaSharp.*"
 
 function ShouldEmitFullCoverageSummary {
+    # NOVASHARP_COVERAGE_SUMMARY can be set to 1/true/yes (emit) or 0/false/no (suppress).
     $override = [System.Environment]::GetEnvironmentVariable("NOVASHARP_COVERAGE_SUMMARY")
     if (-not [string]::IsNullOrWhiteSpace($override)) {
         switch ($override.ToLowerInvariant()) {

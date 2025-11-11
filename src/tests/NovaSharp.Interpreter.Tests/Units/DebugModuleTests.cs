@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -280,6 +281,45 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(trace.String, Does.Contain("from coroutine"));
                 Assert.That(trace.String, Does.Contain("stack traceback"));
+            });
+        }
+
+        [Test]
+        public void DebugLoopProcessesQueuedCommands()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "print('hello')", "return" });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            DynValue result = script.DoString("return debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsNil(), Is.True);
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Has.Some.Contains("hello"));
+            });
+        }
+
+        [Test]
+        public void DebugLoopReportsErrorsAndRespectsReturnCommand()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "error('boom')", "return" });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            script.DoString("debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Has.Some.Contains("boom"));
             });
         }
 

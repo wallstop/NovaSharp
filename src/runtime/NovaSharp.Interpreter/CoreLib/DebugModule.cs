@@ -49,11 +49,28 @@ namespace NovaSharp.Interpreter.CoreLib
 
             while (true)
             {
-                string s = script.Options.DebugInput(interpreter.ClassicPrompt + " ");
+                string input = script.Options.DebugInput(interpreter.ClassicPrompt + " ");
+
+                if (input == null)
+                {
+                    break;
+                }
+
+                string trimmedInput = input.Trim();
+
+                if (trimmedInput.Length == 0)
+                {
+                    trimmedInput = string.Empty;
+                }
+
+                if (string.Equals(trimmedInput, "return", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
 
                 try
                 {
-                    DynValue result = interpreter.Evaluate(s);
+                    DynValue result = interpreter.Evaluate(input);
 
                     if (result != null && result.Type != DataType.Void)
                     {
@@ -69,6 +86,8 @@ namespace NovaSharp.Interpreter.CoreLib
                     script.Options.DebugPrint($"{ex.Message}");
                 }
             }
+
+            return DynValue.Nil;
         }
 
         [NovaSharpModuleMethod(Name = "getuservalue")]

@@ -13,18 +13,22 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 | Class | Line % | Branch % | Covered / Coverable | Owner | Notes |
 |-------|-------:|---------:|--------------------:|-------|-------|
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 0.0 | – | 0 / 33 | Interop | `HardwiredDescriptorTests` now exercise read/write conversions and guard rails; rerun coverage export and, if still zero, dig into instrumentation filters for generated descriptors. |
-| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` | 0.0 | – | 0 / 10 | Interop | Same test suite covers argument marshalling + default handling—refresh coverage and ensure hardwired method helpers are not excluded by filters. |
-| `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 0.0 | 0.0 | 0 / 95 | Interop | Extreme-path tests now exercise qualified operator names/null guards, yet coverage remains 0 %; inspect instrumentation or adjust code to ensure lines are tracked. |
-| `NovaSharp.Interpreter.Interop.RegistrationPolicies.PermanentRegistrationPolicy` | 0.0 | – | 0 / 2 | Interop | Tests cover all decision paths; coverage still 0 %—confirm instrumentation and consider moving logic into non-inline helpers if needed. |
-| `NovaSharp.Interpreter.CoreLib.DebugModule` | 6.6 | 0.0 | 8 / 120 | Runtime | New regression suite covers user values, metatables, upvalues, and traceback; remaining work: tackle `debug.debug` (interactive loop) via injectable prompt/print hooks and cover additional metamethod helpers. |
-| `NovaSharp.Interpreter.CoreLib.OsSystemModule` | 20.6 | 20.0 | 12 / 58 | Runtime | Added virtual-platform tests for execute/remove/rename/getenv/tmpname; still need `os.execute` failure surfaces involving stderr/stdout and additional platform edge cases (permissions, path separators).
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.DefaultValue` | 0.0 | – | 0 / 1 | Interop | Needs a focused unit to verify the sentinel emitted by the hardwire generator; currently dead code until we exercise defaulted CLR parameters. |
+| `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor` | 81.8 | – | 27 / 33 | Interop | Read/write paths covered; wrap up by validating restricted-type and by-ref conversions so instrumentation reaches ≥90 %. |
+| `NovaSharp.Interpreter.Interop.ReflectionSpecialName` | 53.6 | 72.6 | 52 / 97 | Interop | Still lacking coverage for namespace-qualified operator names and fallback behaviour—add table-driven tests to close the gap. |
+| `NovaSharp.Interpreter.CoreLib.DebugModule` | 76.6 | 65.7 | 92 / 120 | Runtime | Queued console tests landed; next step is to exercise multiline commands and coroutine-driven sessions to finish the interactive branch coverage. |
+| `NovaSharp.Interpreter.CoreLib.IO.FileUserDataBase` | 24.1 | 19.2 | 21 / 87 | Runtime | Introduce tests for `Close`, `Flush`, `Seek`, and failure surfaces (IO exceptions, closed handles) using stubbed streams. |
+| `NovaSharp.Interpreter.CoreLib.IO.StreamFileUserDataBase` | 47.2 | 36.3 | 26 / 55 | Runtime | Layer tests for buffered writes, binary/text modes, and repeated dispose calls to drive coverage and validate guard rails. |
+| `NovaSharp.Interpreter.CoreLib.DynamicModule` | 72.0 | 75.0 | 18 / 25 | Runtime | Cover `dynamic.prepare`/`dynamic.eval` unhappy paths (syntax errors, sandbox exclusions) to lift the remaining uncovered lines. |
+| `NovaSharp.Interpreter.CoreLib.ErrorHandlingModule` | 71.0 | 70.5 | 54 / 76 | Runtime | Add regression tests around nested `pcall`/`xpcall` and message handlers to close out the branch coverage debt. |
 
 ## Yellow List (line 50–89 %)
-- `NovaSharp.Interpreter.CoreLib.MathModule` – 55 % line, 40 % branch. Fresh tests now cover logarithms, power, modf, min/max, ldexp, deterministic random sequences, and NaN/overflow behaviors; remaining gaps are random range bounds and trig conversions under extreme inputs.
-- `NovaSharp.Interpreter.Tree.Expressions.FunctionDefinitionExpression` – 63 % line. Add parser/compiler unit tests covering variadic arguments + local closures.
-- `NovaSharp.Interpreter.Execution.Processors.Processor` – 71 % line. Expand VM opcode coverage, especially coroutine resume/yield sequences.
-- `NovaSharp.Commands.Program` – 57 % line. Already in CLI suite; add tests for error exit codes and argument parsing of `--interactive`.
+- `NovaSharp.Interpreter.CoreLib.IoModule` – 63.5 % line, 51.7 % branch. Queue tests for `io.lines`, stream reopen failures, and stderr/stdout fallbacks.
+- `NovaSharp.Interpreter.CoreLib.JsonModule` – 61.5 % line. Exercise malformed JSON, null handling, and round-trip error cases.
+- `NovaSharp.Interpreter.CoreLib.LoadModule` – 56.5 % line, 61.5 % branch. Add coverage for sandboxed `load`/`loadfile` options, mode flags, and environment overrides.
+- `NovaSharp.Interpreter.CoreLib.StringModule` – 75 % line. Extend tests for edge-case pattern matching, UTF-8 boundaries, and numeric conversions.
+- `NovaSharp.Interpreter.DataStructs.FastStack<T>` – 56.6 % line. Build tests for iterator paths, TrimExcess, and error handling when popping empty stacks.
+- `NovaSharp.Interpreter.CoreLib.OsTimeModule` – 80.1 % line. Cover locale/timezone permutations and invalid date tables.
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -39,6 +43,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `PerformanceStatistics` exercises enabling/disabling counters and global aggregation.
 - `ReplHistoryInterpreter` navigation (prev/next) verified via tests.
 - Hardwired descriptor helpers (member + method) now covered via `HardwiredDescriptorTests`, validating access checks, conversions, and default-argument marshalling.
+- `OsSystemModule` edge paths validated with platform stub tests (non-zero exits, missing files, rename/delete failures, setlocale placeholder), driving coverage to 98 %.
+- `debug.debug` loop now exercised via queued debug console hooks, confirming prompt/print wiring and error reporting without manual REPL interaction.
 - Platform accessors (`LimitedPlatformAccessor`, `StandardPlatformAccessor`) guarded with sandbox/full IO tests.
 - `EmbeddedResourcesScriptLoader` validated against embedded Lua fixture.
 - `InternalErrorException` constructors covered by direct unit tests.

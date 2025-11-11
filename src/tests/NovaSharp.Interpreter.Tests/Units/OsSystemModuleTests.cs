@@ -210,6 +210,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.String, Is.EqualTo("stub-temp"));
         }
 
+        [Test]
+        public void SetlocaleReturnsPlaceholderString()
+        {
+            Script script = CreateScript();
+
+            DynValue result = script.DoString("return os.setlocale()");
+
+            Assert.That(result.String, Is.EqualTo("n/a"));
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
