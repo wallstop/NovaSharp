@@ -86,3 +86,22 @@
 - Update `docs/Modernization.md` and `docs/Testing.md` once the generator ships.
 - Remove legacy tests that depend on CodeDom once parity is achieved.
 - Track performance of incremental generator in large solutions (>500 types).
+
+## Reflection-Free Interop Scaffold (Augmentation Study)
+
+The hardwire generator unlocks an opportunity to reduce the interpreter’s dependence on runtime reflection by emitting cached delegates up front. Inspired by Wallstop’s `ReflectionHelpers` utilities in the Unity Helpers project, the following hotspots merit targeted work once the generator is in place:
+
+| Hotspot | Current Behaviour | Proposed Direction |
+| --- | --- | --- |
+| `StandardUserDataDescriptor` + member descriptors | Builds `MemberDescriptor` instances using `System.Reflection` lookups for every member registration. | Have the generator emit resolver structs that expose the required `Func<ScriptExecutionContext, DynValue[], DynValue>` delegates directly, eliminating repeated reflection at runtime. |
+| `TypeDescriptorRegistry` | Uses `Assembly.GetCallingAssembly()` and reflection to discover registerable types. | Extend the generator to emit a compile-time type manifest (`NovaSharpGeneratedUserDataManifest`) so registries can iterate over a static array instead of scanning assemblies. |
+| `UnityAssetsScriptLoader` | Relies on `Type.GetType("UnityEngine.*")` calls to map Unity types. | Generate optional Unity shims that reference strongly-typed interfaces when the Unity assemblies are available, falling back to the reflection path otherwise. |
+| Diagnostics helpers (`PropertyTableAssigner`, `DescriptorHelpers`) | Invoke `PropertyInfo.GetValue/SetValue` (boxing) during userdata marshaling. | Emit cached field/property access delegates alongside the hardwire descriptors; use analyzer diagnostics (`NSHW00x`) to guard unsupported member signatures. |
+
+### Phased Migration Plan
+1. **Generator Outputs**: Introduce optional emission of descriptor helper structs (`GeneratedMemberDispatch`) that contain cached delegates for getters, setters, and invocations.
+2. **Runtime Opt-In**: Add internal extension methods to consume the generated helpers when the generator is enabled (`NovaSharpHardwireUseGeneratedDispatch` MSBuild flag), while keeping the reflection-backed path for legacy builds.
+3. **Unity Lift**: Provide a preprocessor symbol (`NOVASHARP_UNITY_HARDWIRE`) that swaps Unity loaders over to the generated code when Unity references are present, avoiding `Type.GetType` in production builds.
+4. **Telemetry & Benchmarks**: Capture allocation + timing improvements in the benchmark suite; gate rollout on measurable wins to avoid regressions in cold-start scenarios.
+
+Any new reflection entry points introduced during this work must be added to `docs/modernization/reflection-audit.md` so the modernization plan stays accurate.
