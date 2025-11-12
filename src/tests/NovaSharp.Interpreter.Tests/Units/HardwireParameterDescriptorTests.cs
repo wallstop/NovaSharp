@@ -61,11 +61,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void DefaultValueParameterUsesPlaceholderExpression()
+        public void DefaultValueParameterCreatesDefaultValuePlaceholder()
         {
             HardwireParameterDescriptor descriptor = CreateDescriptor(hasDefault: true);
 
             Assert.That(descriptor.HasDefaultValue, Is.True);
+
             CodeObjectCreateExpression expression = AssertCast<CodeObjectCreateExpression>(
                 descriptor.Expression
             );
@@ -74,7 +75,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Is.EqualTo(typeof(ParameterDescriptor).FullName)
             );
 
-            // Argument order: name, type, hasDefault, defaultValue, isOut, isRef, isVarArg
             CodeExpression defaultArgument = expression.Parameters[3];
             CodeObjectCreateExpression defaultValueExpression =
                 AssertCast<CodeObjectCreateExpression>(defaultArgument);
