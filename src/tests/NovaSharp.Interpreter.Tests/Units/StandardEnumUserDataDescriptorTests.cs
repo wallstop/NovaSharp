@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             SampleSignedEnum negated = (SampleSignedEnum)result.UserData.Object;
-            Assert.That(negated, Is.EqualTo((SampleSignedEnum)0));
+            Assert.That((int)negated, Is.EqualTo(0));
             Assert.That(descriptor.IsUnsigned, Is.False);
         }
 

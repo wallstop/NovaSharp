@@ -71,6 +71,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `ClosureContextTests` ensure closure symbol arrays and stored values are covered, trimming Execution.Scopes coverage debt.
 - `TablePairTests` now cover constructor, nil sentinel, and guarded setter behavior for `TablePair`.
 - `PropertyTableAssignerTests` exercise expected/missing properties, subassigners, fuzzy matching, and type guards across both generic and non-generic assigners.
+- `SliceTests` verify indexing, enumeration order, conversions, and NotSupported pathways for the slice view helper.
 
 ## Updating the Snapshot
 ```powershell
