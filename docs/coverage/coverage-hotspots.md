@@ -1,19 +1,17 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 20:25 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 15:08 UTC).
 
 ## Snapshot
-- Overall line coverage: **71.1 %**
-- NovaSharp.Interpreter line coverage: **82.8 %**
+- Overall line coverage: **73.3 %**
+- NovaSharp.Interpreter line coverage: **85.3 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 
-- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 53 % line. Keep driving delegate creation/removal edge paths (null handlers, mixed signature fan-out, stale delegate removal).
-- `NovaSharp.Interpreter.Interop.LuaStateInterop.CharPtr` – 53.3 % line. Add focused unit coverage for pointer arithmetic, comparisons, and string conversion helpers to protect the KopiLua shim.
-- `NovaSharp.Interpreter.Interop.DescriptorHelpers` – 55.7 % line. Backfill tests for conversion guard rails and invalid descriptor caching paths (ties into allocation-reduction tasks).
+(None at the moment — celebrate the win and watch the latest summary for new sub‑90 % candidates.)
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -38,6 +36,9 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `HardwiredMemberDescriptor` base getters/setters now throw under coverage, shrinking the remaining uncovered lines to the by-ref conversion paths (currently at 100 % line coverage in the latest report).
 - `DynValueMemberDescriptor` now covered across read access, execution flags, setter guard, and wiring paths (primitive, table, userdata, unsupported types).
 - `DebugModule` interactive loop now handles returned values, CLR exceptions, and null-input exits under test, bumping branch coverage to 77 %.
+- `EventMemberDescriptor` now sits at 94 %+ coverage after exercising add/remove failure paths, static facades, and assignment guards.
+- `CharPtr` climbed to 98.8 % line coverage by validating byte-array conversions, pointer arithmetic, navigation helpers, and null equality branches.
+- `DescriptorHelpers` now reports 92.9 % line / 90.1 % branch coverage after supplementing visibility, identifier shaping, and SafeGetTypes guard scenarios.
 - Expanded `ReflectionSpecialName` operator mapping tests (additional arithmetic/relational cases) to drive branch coverage; rerun `coverage.ps1` to confirm the updated instrumentation.
 - `OsTimeModule` now sits at 97 % line coverage after adding missing-field, pre-epoch, and conversion-specifier tests.
 - `DebuggerAction` coverage lifted to 100 % by testing constructor timestamps, age calculations, defensive line storage, and breakpoint formatting.

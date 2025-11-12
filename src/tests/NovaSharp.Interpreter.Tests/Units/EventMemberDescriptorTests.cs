@@ -6,6 +6,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NUnit.Framework;
@@ -166,6 +168,32 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void EventDescriptorExposesNameAndGuardsAssignments()
+        {
+            SampleEventSource source = new();
+            Script script = new Script();
+            EventMemberDescriptor descriptor = new(
+                typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Name, Is.EqualTo(nameof(SampleEventSource.PublicEvent)));
+                Assert.That(descriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(
+                    () =>
+                        descriptor.SetValue(
+                            script,
+                            source,
+                            DynValue.NewString("should fail assignment")
+                        ),
+                    Throws.TypeOf<ScriptRuntimeException>()
+                        .With.Message.Contains("cannot be assigned")
+                );
+            });
+        }
+
+        [Test]
         public void RemovingSameCallbackTwiceDoesNotDetachDelegateAgain()
         {
             SampleEventSource source = new();
@@ -256,6 +284,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TryCreateIfVisibleRejectsIncompatibleEvents()
+        {
+            EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
+                nameof(ValueTypeEventSource.ValueTypeEvent)
+            );
+
+            EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
+                valueTypeEvent,
+                InteropAccessMode.Default
+            );
+
+            Assert.That(descriptor, Is.Null);
+        }
+
+        [Test]
         public void CheckEventIsCompatibleRejectsValueTypeEvents()
         {
             EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
@@ -282,10 +325,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 nameof(IncompatibleEventSource.ReturnsValue)
             );
 
-            Assert.That(
-                () => EventMemberDescriptor.CheckEventIsCompatible(returning, true),
-                Throws.ArgumentException.With.Message.Contains("return type")
-            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    EventMemberDescriptor.CheckEventIsCompatible(returning, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => EventMemberDescriptor.CheckEventIsCompatible(returning, true),
+                    Throws.ArgumentException.With.Message.Contains("return type")
+                );
+            });
         }
 
         [Test]
@@ -295,10 +345,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 nameof(IncompatibleEventSource.ValueParameter)
             );
 
-            Assert.That(
-                () => EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
-                Throws.ArgumentException.With.Message.Contains("value type parameters")
-            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    EventMemberDescriptor.CheckEventIsCompatible(valueParameter, false),
+                    Is.False
+                );
+                Assert.That(
+                    () =>
+                        EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
+                    Throws.ArgumentException.With.Message.Contains("value type parameters")
+                );
+            });
         }
 
         [Test]
@@ -308,10 +366,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 nameof(IncompatibleEventSource.ByRefParameter)
             );
 
-            Assert.That(
-                () => EventMemberDescriptor.CheckEventIsCompatible(byRef, true),
-                Throws.ArgumentException.With.Message.Contains("by-ref type parameters")
-            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    EventMemberDescriptor.CheckEventIsCompatible(byRef, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => EventMemberDescriptor.CheckEventIsCompatible(byRef, true),
+                    Throws.ArgumentException.With.Message.Contains("by-ref type parameters")
+                );
+            });
         }
 
         [Test]
@@ -321,12 +386,19 @@ namespace NovaSharp.Interpreter.Tests.Units
                 nameof(IncompatibleEventSource.TooManyArguments)
             );
 
-            Assert.That(
-                () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
-                Throws.ArgumentException.With.Message.Contains(
-                    $"{EventMemberDescriptor.MAX_ARGS_IN_DELEGATE}"
-                )
-            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    EventMemberDescriptor.CheckEventIsCompatible(tooMany, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
+                    Throws.ArgumentException.With.Message.Contains(
+                        $"{EventMemberDescriptor.MAX_ARGS_IN_DELEGATE}"
+                    )
+                );
+            });
         }
 
         [Test]

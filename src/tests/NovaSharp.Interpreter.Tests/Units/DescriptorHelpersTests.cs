@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
@@ -76,25 +77,58 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetClrVisibilityReturnsExpectedValuesForMembers()
         {
+            FieldInfo publicField =
+                typeof(MemberVisibilityFixtures)
+                    .GetField(nameof(MemberVisibilityFixtures.PublicField), BindingFlags.Instance | BindingFlags.Public);
             FieldInfo internalField =
                 typeof(MemberVisibilityFixtures)
                     .GetField(MemberVisibilityFixtures.InternalFieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             FieldInfo protectedField =
                 typeof(MemberVisibilityFixtures)
                     .GetField(MemberVisibilityFixtures.ProtectedFieldName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            FieldInfo protectedInternalField =
+                typeof(MemberVisibilityFixtures)
+                    .GetField(nameof(MemberVisibilityFixtures.ProtectedInternalField), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             MethodBase privateMethod =
                 typeof(MemberVisibilityFixtures)
                     .GetMethod(MemberVisibilityFixtures.PrivateMethodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             MethodBase publicMethod =
                 typeof(MemberVisibilityFixtures)
                     .GetMethod(nameof(MemberVisibilityFixtures.PublicMethod), BindingFlags.Instance | BindingFlags.Public);
+            MethodBase protectedInternalMethod =
+                typeof(MemberVisibilityFixtures)
+                    .GetMethod(nameof(MemberVisibilityFixtures.ProtectedInternalMethod), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
             Assert.Multiple(() =>
             {
+                Assert.That(publicField.GetClrVisibility(), Is.EqualTo("public"));
                 Assert.That(internalField.GetClrVisibility(), Is.EqualTo("internal"));
                 Assert.That(protectedField.GetClrVisibility(), Is.EqualTo("protected"));
+                Assert.That(protectedInternalField.GetClrVisibility(), Is.EqualTo("protected-internal"));
                 Assert.That(privateMethod.GetClrVisibility(), Is.EqualTo("private"));
                 Assert.That(publicMethod.GetClrVisibility(), Is.EqualTo("public"));
+                Assert.That(protectedInternalMethod.GetClrVisibility(), Is.EqualTo("protected-internal"));
+            });
+        }
+
+        [Test]
+        public void GetClrVisibilityReturnsExpectedValuesForProperties()
+        {
+            PropertyInfo publicProperty =
+                typeof(PropertyFixtures)
+                    .GetProperty(nameof(PropertyFixtures.GetterOnly), BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo internalProperty =
+                typeof(PropertyFixtures)
+                    .GetProperty(nameof(PropertyFixtures.InternalAccessors), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            PropertyInfo protectedProperty =
+                typeof(PropertyFixtures)
+                    .GetProperty("ProtectedGetterOnly", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(publicProperty.GetClrVisibility(), Is.EqualTo("public"));
+                Assert.That(internalProperty.GetClrVisibility(), Is.EqualTo("internal"));
+                Assert.That(protectedProperty.GetClrVisibility(), Is.EqualTo("protected"));
             });
         }
 
@@ -153,6 +187,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SafeGetTypesReturnsEmptyArrayWhenAssemblyFailsToLoadTypes()
+        {
+            Assembly throwingAssembly = new ThrowingAssembly();
+
+            Type[] types = throwingAssembly.SafeGetTypes();
+
+            Assert.That(types, Is.Empty);
+        }
+
+        [Test]
         public void IdentifierHelpersValidateAndNormalizeNames()
         {
             Assert.Multiple(() =>
@@ -160,6 +204,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value_1"), Is.True);
                 Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("1value"), Is.False);
                 Assert.That(DescriptorHelpers.ToValidSimpleIdentifier("1 invalid-name"), Is.EqualTo("_1_invalid_name"));
+                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier(null), Is.False);
+                Assert.That(DescriptorHelpers.ToValidSimpleIdentifier(null), Is.EqualTo("_"));
             });
         }
 
@@ -169,8 +215,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(DescriptorHelpers.Camelify("my_sample_value"), Is.EqualTo("mySampleValue"));
+                Assert.That(DescriptorHelpers.Camelify("__Already__Mixed__"), Is.EqualTo("alreadyMixed"));
                 Assert.That(DescriptorHelpers.ToUpperUnderscore("HttpRequestV2"), Is.EqualTo("HTTP_REQUEST_V2"));
                 Assert.That(DescriptorHelpers.ToUpperUnderscore("Version42Beta"), Is.EqualTo("VERSION_42_BETA"));
+                Assert.That(DescriptorHelpers.ToUpperUnderscore("value-with-dash"), Is.EqualTo("VALUE_WITH_DASH"));
+                Assert.That(DescriptorHelpers.ToUpperUnderscore("Value123Name"), Is.EqualTo("VALUE_123_NAME"));
                 Assert.That(DescriptorHelpers.UpperFirstLetter("sample"), Is.EqualTo("Sample"));
                 Assert.That(DescriptorHelpers.NormalizeUppercaseRuns("HTTPRequestURL"), Is.EqualTo("HttpRequestUrl"));
                 Assert.That(
@@ -178,6 +227,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Is.EqualTo("GpufpsCounter"),
                     "Acronym chains remain collapsed; revisit when descriptor naming adopts full tokenization."
                 );
+                Assert.That(DescriptorHelpers.NormalizeUppercaseRuns(string.Empty), Is.EqualTo(string.Empty));
             });
         }
 
@@ -223,13 +273,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             public const string ProtectedFieldName = nameof(ProtectedField);
             public const string PrivateMethodName = nameof(PrivateMethod);
 
+            public int PublicField = 0;
+
             internal int InternalField = 0;
 
             protected int ProtectedField = 0;
 
+            protected internal int ProtectedInternalField = 0;
+
             public void PublicMethod() { }
 
             private void PrivateMethod() { }
+
+            protected internal void ProtectedInternalMethod() { }
         }
 
         public sealed class PropertyFixtures
@@ -239,6 +295,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int GetterOnly { get; private set; }
 
             public int SetterOnly { private get; set; }
+
+            internal int InternalAccessors { get; set; }
+
+            protected int ProtectedGetterOnly { get; private set; }
 
             private int PrivateBoth { get; set; }
         }
@@ -255,5 +315,89 @@ namespace NovaSharp.Interpreter.Tests.Units
         public class BaseSample : ISampleInterface { }
 
         public sealed class DerivedSample : BaseSample { }
+
+        private sealed class ThrowingAssembly : Assembly
+        {
+            public override string FullName => "NovaSharp.Tests.ThrowingAssembly";
+
+            public override string Location => string.Empty;
+
+            public override IEnumerable<CustomAttributeData> CustomAttributes => Array.Empty<CustomAttributeData>();
+
+            public override bool ReflectionOnly => false;
+
+            [Obsolete]
+            public override bool GlobalAssemblyCache => false;
+
+            public override AssemblyName GetName(bool copiedName)
+            {
+                return new AssemblyName("NovaSharp.Tests.ThrowingAssembly");
+            }
+
+            public override Type[] GetTypes()
+            {
+                throw new ReflectionTypeLoadException(Array.Empty<Type>(), Array.Empty<Exception>());
+            }
+
+            public override string[] GetManifestResourceNames()
+            {
+                return Array.Empty<string>();
+            }
+
+            public override Module[] GetModules(bool getResourceModules)
+            {
+                return Array.Empty<Module>();
+            }
+
+            public override Module GetModule(string name)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override AssemblyName GetName()
+            {
+                return GetName(false);
+            }
+
+            public override FileStream GetFile(string name)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override FileStream[] GetFiles(bool getResourceModules)
+            {
+                return Array.Empty<FileStream>();
+            }
+
+            public override Stream GetManifestResourceStream(string name)
+            {
+                return null;
+            }
+
+            public override Stream GetManifestResourceStream(Type type, string name)
+            {
+                return null;
+            }
+
+            public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+            {
+                return Array.Empty<object>();
+            }
+
+            public override object[] GetCustomAttributes(bool inherit)
+            {
+                return Array.Empty<object>();
+            }
+
+            public override bool IsDefined(Type attributeType, bool inherit)
+            {
+                return false;
+            }
+
+            public override ManifestResourceInfo GetManifestResourceInfo(string resourceName)
+            {
+                return null;
+            }
+        }
     }
 }
