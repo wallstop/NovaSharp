@@ -60,5 +60,97 @@ namespace NovaSharp.Interpreter.Tests.Units
             subject.Set("value", DynValue.NewNumber(7));
             Assert.That(subject.Get("value").Number, Is.EqualTo(7));
         }
+
+        [Test]
+        public void CallMetatableAggregatesState()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            script.DoString(
+                @"
+                subject = setmetatable({ total = 0 }, {
+                    __call = function(self, amount)
+                        self.total = self.total + amount
+                        return self.total
+                    end
+                })
+                "
+            );
+
+            DynValue first = script.DoString("return subject(3)");
+            DynValue second = script.DoString("return subject(2)");
+            DynValue total = script.DoString("return subject.total");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Number, Is.EqualTo(3));
+                Assert.That(second.Number, Is.EqualTo(5));
+                Assert.That(total.Number, Is.EqualTo(5));
+            });
+        }
+
+        [Test]
+        public void PairsMetamethodControlsIteration()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            script.DoString(
+                @"
+                subject = setmetatable({}, {
+                    __pairs = function(self)
+                        local yielded = false
+                        return function(_, state)
+                            if yielded then
+                                return nil
+                            end
+                            yielded = true
+                            return 'virtual', 42
+                        end, self, nil
+                    end
+                })
+
+                subject.a = 1
+                collected = {}
+                for k, v in pairs(subject) do
+                    table.insert(collected, k .. '=' .. v)
+                end
+                "
+            );
+
+            DynValue result = script.DoString("return table.concat(collected, ',')");
+            Assert.That(result.String, Is.EqualTo("virtual=42"));
+        }
+
+        [Test]
+        public void ProtectedMetatablePreventsMutation()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            script.DoString(
+                @"
+                subject = {}
+                setmetatable(subject, {
+                    __metatable = 'locked'
+                })
+                "
+            );
+
+            DynValue meta = script.DoString("return getmetatable(subject)");
+            Assert.That(meta.String, Is.EqualTo("locked"));
+
+            DynValue pcallResult = script.DoString(
+                "return pcall(function() setmetatable(subject, {}) end)"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(pcallResult.Tuple.Length, Is.GreaterThanOrEqualTo(2));
+                Assert.That(pcallResult.Tuple[0].Boolean, Is.False);
+                Assert.That(
+                    pcallResult.Tuple[1].String,
+                    Does.Contain("cannot change a protected metatable")
+                );
+            });
+        }
     }
 }

@@ -2,18 +2,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
+    using System.Reflection;
     using Commands;
     using Commands.Implementations;
     using NovaSharp;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.REPL;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class ProgramTests
     {
         private TextWriter _originalOut = null!;
+        private TextReader _originalIn = null!;
+        private static readonly MethodInfo InterpreterLoopMethod =
+            typeof(Program).GetMethod(
+                "InterpreterLoop",
+                BindingFlags.NonPublic | BindingFlags.Static
+            ) ?? throw new InvalidOperationException("InterpreterLoop method not found.");
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -28,12 +37,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetUp()
         {
             _originalOut = Console.Out;
+            _originalIn = Console.In;
         }
 
         [TearDown]
         public void TearDown()
         {
             Console.SetOut(_originalOut);
+            Console.SetIn(_originalIn);
         }
 
         [Test]
@@ -191,6 +202,115 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
+        [Test]
+        public void InterpreterLoopExecutesCommandsWhenNoPendingInput()
+        {
+            StubReplInterpreter interpreter = new();
+            StringWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+
+            InvokeInterpreterLoop(interpreter, NewShellContext());
+
+            string output = writer.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(interpreter.EvaluateCalled, Is.False);
+                Assert.That(output, Does.Contain("Commands:"));
+            });
+        }
+
+        [Test]
+        public void InterpreterLoopEvaluatesInputWhenCommandIsPending()
+        {
+            StubReplInterpreter interpreter = new()
+            {
+                PendingCommand = true,
+                ReturnValue = DynValue.NewString("queued"),
+            };
+            StringWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+
+            InvokeInterpreterLoop(interpreter, NewShellContext());
+
+            string output = writer.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(interpreter.EvaluateCalled, Is.True);
+                Assert.That(interpreter.LastInput, Is.EqualTo("!help"));
+                Assert.That(output, Does.Contain("queued"));
+            });
+        }
+
+        [Test]
+        public void InterpreterLoopDoesNotPrintVoidResults()
+        {
+            StubReplInterpreter interpreter = new() { ReturnValue = DynValue.Void };
+            StringWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+
+            InvokeInterpreterLoop(interpreter, NewShellContext());
+
+            string output = writer.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(interpreter.EvaluateCalled, Is.True);
+                Assert.That(output, Does.Not.Contain("Void"));
+            });
+        }
+
+        [Test]
+        public void InterpreterLoopPrintsInterpreterExceptionDecoratedMessage()
+        {
+            StubReplInterpreter interpreter = new()
+            {
+                ExceptionToThrow = new InterpreterException("boom")
+                {
+                    DecoratedMessage = "decorated message",
+                },
+            };
+            StringWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+
+            InvokeInterpreterLoop(interpreter, NewShellContext());
+
+            string output = writer.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(interpreter.EvaluateCalled, Is.True);
+                Assert.That(output, Does.Contain("decorated message"));
+            });
+        }
+
+        [Test]
+        public void InterpreterLoopPrintsGeneralExceptionMessage()
+        {
+            StubReplInterpreter interpreter = new()
+            {
+                ExceptionToThrow = new InvalidOperationException("broken"),
+            };
+            StringWriter writer = new();
+            Console.SetOut(writer);
+            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+
+            InvokeInterpreterLoop(interpreter, NewShellContext());
+
+            string output = writer.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(interpreter.EvaluateCalled, Is.True);
+                Assert.That(output, Does.Contain("broken"));
+            });
+        }
+
         private static ShellContext NewShellContext()
         {
             return new ShellContext(new Interpreter.Script());
@@ -212,6 +332,53 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table root = new(script);
             root.Set("Sample", DynValue.NewTable(descriptor));
             return root;
+        }
+
+        private static void InvokeInterpreterLoop(
+            ReplInterpreter interpreter,
+            ShellContext shellContext
+        )
+        {
+            InterpreterLoopMethod.Invoke(null, new object[] { interpreter, shellContext });
+        }
+
+        private sealed class StubReplInterpreter : ReplInterpreter
+        {
+            public StubReplInterpreter()
+                : base(new Script(CoreModules.None)) { }
+
+            public bool PendingCommand { get; set; }
+
+            public bool EvaluateCalled { get; private set; }
+
+            public string LastInput { get; private set; } = string.Empty;
+
+            public DynValue ReturnValue { get; set; } = DynValue.NewNumber(1);
+
+            public Exception ExceptionToThrow { get; set; }
+
+            public override bool HasPendingCommand
+            {
+                get { return PendingCommand; }
+            }
+
+            public override string ClassicPrompt
+            {
+                get { return ">"; }
+            }
+
+            public override DynValue Evaluate(string input)
+            {
+                EvaluateCalled = true;
+                LastInput = input;
+
+                if (ExceptionToThrow != null)
+                {
+                    throw ExceptionToThrow;
+                }
+
+                return ReturnValue;
+            }
         }
     }
 }
