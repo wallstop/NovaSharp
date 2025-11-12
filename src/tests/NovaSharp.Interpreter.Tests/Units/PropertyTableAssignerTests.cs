@@ -186,7 +186,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class BasicSample
         {
             [NovaSharpProperty("name")]
-            public string? Name { get; set; }
+            public string Name { get; set; }
 
             [NovaSharpProperty("count")]
             public int Count { get; set; }
@@ -195,19 +195,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class AddressInfo
         {
             [NovaSharpProperty("street")]
-            public string? Street { get; set; }
+            public string Street { get; set; }
         }
 
         private sealed class ParentWithAddress
         {
             [NovaSharpProperty("address")]
-            public AddressInfo? Address { get; set; }
+            public AddressInfo Address { get; set; }
         }
 
         private sealed class FuzzySample
         {
             [NovaSharpProperty]
-            public string? FirstName { get; set; }
+            public string FirstName { get; set; }
         }
 
         private sealed class IncompatibleSample { }

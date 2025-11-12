@@ -46,7 +46,7 @@ namespace NovaSharp.Benchmarks
 
         private static bool ShouldEmitSummary()
         {
-            string? overrideValue = Environment.GetEnvironmentVariable(
+            string overrideValue = Environment.GetEnvironmentVariable(
                 "NOVASHARP_BENCHMARK_SUMMARY"
             );
             if (!string.IsNullOrWhiteSpace(overrideValue))

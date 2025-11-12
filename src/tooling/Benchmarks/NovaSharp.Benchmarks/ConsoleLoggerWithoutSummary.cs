@@ -46,14 +46,14 @@ namespace NovaSharp.Benchmarks
             _inner.Flush();
         }
 
-        private static bool ShouldSuppress(LogKind logKind, string? text)
+        private static bool ShouldSuppress(LogKind logKind, string text)
         {
-            if (logKind != LogKind.Result)
+            if (logKind != LogKind.Result || text == null)
             {
                 return false;
             }
 
-            string? trimmed = text?.Trim();
+            string trimmed = text.Trim();
             if (string.IsNullOrEmpty(trimmed))
             {
                 return false;

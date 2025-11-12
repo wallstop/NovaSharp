@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [NonParallelizable]
     public sealed class OsSystemModuleTests
     {
-        private IPlatformAccessor? _originalPlatform;
-        private StubPlatformAccessor _stub = null!;
+        private IPlatformAccessor _originalPlatform;
+        private StubPlatformAccessor _stub;
 
         [SetUp]
         public void SetUp()
@@ -28,7 +28,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            Script.GlobalOptions.Platform = _originalPlatform!;
+            if (_originalPlatform != null)
+            {
+                Script.GlobalOptions.Platform = _originalPlatform;
+            }
         }
 
         [Test]

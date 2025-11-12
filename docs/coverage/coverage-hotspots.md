@@ -72,6 +72,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `TablePairTests` now cover constructor, nil sentinel, and guarded setter behavior for `TablePair`.
 - `PropertyTableAssignerTests` exercise expected/missing properties, subassigners, fuzzy matching, and type guards across both generic and non-generic assigners.
 - `SliceTests` verify indexing, enumeration order, conversions, and NotSupported pathways for the slice view helper.
+- `InteropRegistrationPolicyTests` ensure the default/automatic/explicit policy factories return the expected registration policies and that `Explicit` remains marked obsolete.
 
 ## Updating the Snapshot
 ```powershell
