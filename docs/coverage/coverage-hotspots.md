@@ -68,6 +68,9 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `FastStackTests` include negative/no-op removals, overflow guards, single-slot clearing, and full resets, covering `FastStack.RemoveLast` and `FastStack.Clear` edge paths.
 - `DotNetCorePlatformAccessorTests` validate file mode parsing, console output, filesystem helpers, and the NotSupported command path, tightening coverage for the .NET Core platform accessor shim.
 - `JsonModuleTests` exercise invalid parse/serialize inputs plus `json.isnull`/`json.null`, backfilling JsonModule’s error and null-handling branches.
+- `ClosureContextTests` ensure closure symbol arrays and stored values are covered, trimming Execution.Scopes coverage debt.
+- `TablePairTests` now cover constructor, nil sentinel, and guarded setter behavior for `TablePair`.
+- `PropertyTableAssignerTests` exercise expected/missing properties, subassigners, fuzzy matching, and type guards across both generic and non-generic assigners.
 
 ## Updating the Snapshot
 ```powershell
