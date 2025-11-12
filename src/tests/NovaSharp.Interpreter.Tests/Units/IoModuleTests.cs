@@ -146,6 +146,129 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void ReadNumberWithMissingExponentDigitsReturnsNilAndLeavesStreamIntact()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            try
+            {
+                File.WriteAllText(path, "123e");
+                string escapedPath = path.Replace("\\", "\\\\");
+                Script script = CreateScript();
+
+                DynValue tuple = script.DoString(
+                    $@"
+                local f = assert(io.open('{escapedPath}', 'r'))
+                io.input(f)
+                local number = io.read('*n')
+                local remainder = io.read('*a')
+                f:close()
+                return number, remainder
+                "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+                    Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("123e"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        [Ignore(
+            "Lua 5.4.8 gap: io.read(\"*n\") does not parse hex floats (0x..p..) like stock Lua"
+        )]
+        public void ReadNumberReturnsNilForHexLiteralInput()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            try
+            {
+                File.WriteAllText(path, "0x1p2\n");
+                string escapedPath = path.Replace("\\", "\\\\");
+                Script script = CreateScript();
+
+                DynValue tuple = script.DoString(
+                    $@"
+                local f = assert(io.open('{escapedPath}', 'r'))
+                io.input(f)
+                local number = io.read('*n')
+                local remainder = io.read('*a')
+                f:close()
+                return number, remainder
+                "
+                );
+
+                TestContext.WriteLine(
+                    $"numberType={tuple.Tuple[0].Type}, remainder='{tuple.Tuple[1].String}'"
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+                    Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("0x1p2\n"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("Lua 5.4.8 gap: io.read(\"*n\") treats huge exponents differently than Lua 5.4.8")]
+        public void ReadNumberReturnsNilForExponentOverflow()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            try
+            {
+                File.WriteAllText(path, "1e400");
+                string escapedPath = path.Replace("\\", "\\\\");
+                Script script = CreateScript();
+
+                DynValue tuple = script.DoString(
+                    $@"
+                local f = assert(io.open('{escapedPath}', 'r'))
+                io.input(f)
+                local number = io.read('*n')
+                local remainder = io.read('*a')
+                f:close()
+                return number, remainder
+                "
+                );
+
+                TestContext.WriteLine(
+                    $"numberType={tuple.Tuple[0].Type}, remainder='{tuple.Tuple[1].String}'"
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+                    Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("1e400"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);

@@ -12,7 +12,7 @@ This project is a port of [NovaSharp](http://www.NovaSharp.org). NovaSharp has n
 - Active maintenance
 - Ease of understanding: add significant documentation, making onboarding trivial
 - Modernize the stack. Remove support for old .Net versions, commonalize on .Net Standard 2.1
-- Support the latest LUA versions
+- Target Lua 5.4.8 semantics (see `docs/LuaCompatibility.md` for tracked gaps)
 - Fix all outstanding bugs
 - Significantly increase performance
 - Unity/Mono/IL2CPP-first
@@ -26,7 +26,7 @@ In order to accomplish the above, I will be utilizing AI coding assistance. I wi
 A complete Lua solution written entirely in C# for the .NET, Mono, Xamarin and Unity3D platforms.
 
 Features:
-* 99% compatible with Lua 5.2 (with the only unsupported feature being weak tables support) 
+* Designed for near-complete compatibility with Lua 5.4.8 (remaining gaps tracked in `docs/LuaCompatibility.md`) 
 * Support for metalua style anonymous functions (lambda-style)
 * Easy to use API
 * **Debugger** support for Visual Studio Code (PCL targets not supported)

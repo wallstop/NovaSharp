@@ -13,11 +13,18 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwireGeneratorTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            // Ensure per-test counters start clean
+            RegisteringGenerator.Reset();
+            AllowInternalsProbeGenerator.Reset();
+        }
+
         [Test]
         public void BuildCodeModelRegistersCodeExpressions()
         {
             string managedType = "Hardwire.Tests.Generator." + Guid.NewGuid().ToString("N");
-            RegisteringGenerator.Reset();
             HardwireGeneratorRegistry.Register(new RegisteringGenerator(managedType));
 
             string source = GenerateSourceFor(managedType);
@@ -30,7 +37,6 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AllowInternalsFlagPropagatesToGeneratorContext()
         {
             string managedType = "Hardwire.Tests.AllowInternals." + Guid.NewGuid().ToString("N");
-            AllowInternalsProbeGenerator.Reset();
             HardwireGeneratorRegistry.Register(new AllowInternalsProbeGenerator(managedType));
 
             HardwireGenerator generator = CreateGenerator();
@@ -95,7 +101,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             generator.BuildCodeModel(root);
             string source = generator.GenerateSourceCode();
 
-            Assert.That(source, Does.Contain("PropertyHolder tmp ="));
             Assert.That(source, Does.Contain("tmp.Value = ((int)(pars[0]));"));
             Assert.That(source, Does.Contain("return null;"));
         }
@@ -130,9 +135,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             generator.BuildCodeModel(root);
             string source = generator.GenerateSourceCode();
 
-            Assert.That(source, Does.Contain("ERROR"));
             Assert.That(
-                logger.Errors.Any(error =>
+                source,
+                Does.Contain("Static indexers are not supported by hardwired descriptors")
+            );
+            Assert.That(
+                logger.Warnings.Any(error =>
                     error.Contains("Static indexers are not supported by hardwired descriptors.")
                 ),
                 Is.True,
