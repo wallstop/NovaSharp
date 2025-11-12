@@ -98,6 +98,34 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfSupportsOctalAlternateZeroPadding()
+        {
+            string result = Tools.Sprintf("%#06o", 9);
+            Assert.That(result, Is.EqualTo("000011"));
+        }
+
+        [Test]
+        public void SprintfFormatsPointerAsLowercaseHex()
+        {
+            string result = Tools.Sprintf("ptr:%p", new IntPtr(0x2A));
+            Assert.That(result, Is.EqualTo("ptr:0x2a"));
+        }
+
+        [Test]
+        public void SprintfReplacesPercentNWithProcessedLength()
+        {
+            string result = Tools.Sprintf("abc%nXYZ");
+            Assert.That(result, Is.EqualTo("abc3XYZ"));
+        }
+
+        [Test]
+        public void SprintfHonoursPositiveSpaceFlag()
+        {
+            string result = Tools.Sprintf("% d", 5);
+            Assert.That(result, Is.EqualTo(" 5"));
+        }
+
+        [Test]
         public void FprintfWritesToDestination()
         {
             using StringWriter writer = new();

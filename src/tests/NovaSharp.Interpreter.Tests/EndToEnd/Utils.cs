@@ -3,7 +3,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
 
-    public static class Utils
+    public static class EndToEndUtils
     {
         public static void DynAssert(DynValue result, params object[] args)
         {

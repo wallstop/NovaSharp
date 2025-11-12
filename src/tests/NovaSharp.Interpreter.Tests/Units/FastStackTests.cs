@@ -116,5 +116,70 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(stack.Peek(), Is.EqualTo("C"));
             });
         }
+
+        [Test]
+        public void RemoveLastWithNonPositiveCountDoesNothing()
+        {
+            FastStack<int> stack = new(3);
+            stack.Push(1);
+            stack.Push(2);
+
+            stack.RemoveLast(0);
+            stack.RemoveLast(-2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(stack.Count, Is.EqualTo(2));
+                Assert.That(stack.Peek(), Is.EqualTo(2));
+                Assert.That(stack.Peek(1), Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void RemoveLastThrowsWhenCountExceeded()
+        {
+            FastStack<int> stack = new(2);
+            stack.Push(5);
+            stack.Push(6);
+
+            Assert.That(
+                () => stack.RemoveLast(3),
+                Throws.TypeOf<System.ArgumentOutOfRangeException>()
+            );
+        }
+
+        [Test]
+        public void RemoveLastSingleClearsSlot()
+        {
+            FastStack<int> stack = new(4);
+            stack.Push(8);
+            stack.Push(9);
+
+            stack.RemoveLast();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(stack.Count, Is.EqualTo(1));
+                Assert.That(stack.Peek(), Is.EqualTo(8));
+                Assert.That(stack[1], Is.EqualTo(0));
+            });
+        }
+
+        [Test]
+        public void ClearResetsAllStorage()
+        {
+            FastStack<int> stack = new(3);
+            stack.Push(11);
+            stack.Push(22);
+
+            stack.Clear();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(stack.Count, Is.EqualTo(0));
+                Assert.That(stack[0], Is.EqualTo(0));
+                Assert.That(stack[1], Is.EqualTo(0));
+            });
+        }
     }
 }

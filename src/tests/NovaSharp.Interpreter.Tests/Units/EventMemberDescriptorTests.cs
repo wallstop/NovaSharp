@@ -378,6 +378,81 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(script.Globals.Get("payload").String, Is.EqualTo("one:two:three"));
         }
 
+        [Test]
+        public void CreateDelegateHandlesWideRangeOfArgumentCounts()
+        {
+            MultiArityEventSource source = new();
+            Script script = new Script();
+            script.DoString("hits = {}");
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            foreach (ArityCase @case in MultiArityEventSource.Cases)
+            {
+                EventMemberDescriptor descriptor = new(
+                    typeof(MultiArityEventSource).GetEvent(@case.EventName)
+                );
+
+                string handlerSource = $@"
+local max = {MultiArityEventSource.MaxArity}
+return function(...)
+    local args = {{ ... }}
+    local actual = 0
+    for i = 1, max do
+        if args[i] ~= nil then
+            actual = i
+        end
+    end
+    hits['{@case.Id}'] = {{ count = actual, args = args }}
+end";
+
+                DynValue handler = script.DoString(handlerSource);
+
+                descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
+
+                @case.Raise(source);
+
+                DynValue entry = script.Globals.Get("hits").Table.Get(@case.Id);
+                Assert.That(entry.Type, Is.EqualTo(DataType.Table));
+
+                DynValue count = entry.Table.Get("count");
+                Assert.That(count.Type, Is.EqualTo(DataType.Number));
+                Assert.That(
+                    count.Number,
+                    Is.EqualTo(@case.Arity),
+                    $"Arity mismatch for {@case.EventName}"
+                );
+
+                DynValue args = entry.Table.Get("args");
+                Assert.That(args.Type, Is.EqualTo(DataType.Table));
+
+                for (int i = 1; i <= @case.Arity; i++)
+                {
+                    DynValue argValue = args.Table.Get(i);
+                    Assert.That(
+                        argValue.String,
+                        Is.EqualTo($"a{i}"),
+                        $"Unexpected argument {i} for {@case.EventName}"
+                    );
+                }
+
+                if (@case.Arity < MultiArityEventSource.MaxArity)
+                {
+                    DynValue next = args.Table.Get(@case.Arity + 1);
+                    Assert.That(
+                        next.IsNil(),
+                        Is.True,
+                        $"Trailing argument should be nil for {@case.EventName}"
+                    );
+                }
+
+                descriptor.RemoveCallback(
+                    source,
+                    context,
+                    TestHelpers.CreateArguments(handler)
+                );
+            }
+        }
+
         private sealed class SampleEventSource
         {
             private event EventHandler<DynValue> _event;
@@ -469,6 +544,333 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 ThreeArgs?.Invoke(a, b, c);
             }
+        }
+
+        private readonly struct ArityCase
+        {
+            public ArityCase(string id, string eventName, int arity, Action<MultiArityEventSource> raise)
+            {
+                Id = id;
+                EventName = eventName;
+                Arity = arity;
+                Raise = raise;
+            }
+
+            public string Id { get; }
+
+            public string EventName { get; }
+
+            public int Arity { get; }
+
+            public Action<MultiArityEventSource> Raise { get; }
+        }
+
+        private sealed class MultiArityEventSource
+        {
+            public const int MaxArity = 16;
+
+            public static readonly ArityCase[] Cases =
+                new ArityCase[]
+                {
+                    new("one", nameof(OneArg), 1, s => s.RaiseOneArg()),
+                    new("four", nameof(FourArgs), 4, s => s.RaiseFourArgs()),
+                    new("five", nameof(FiveArgs), 5, s => s.RaiseFiveArgs()),
+                    new("six", nameof(SixArgs), 6, s => s.RaiseSixArgs()),
+                    new("seven", nameof(SevenArgs), 7, s => s.RaiseSevenArgs()),
+                    new("eight", nameof(EightArgs), 8, s => s.RaiseEightArgs()),
+                    new("nine", nameof(NineArgs), 9, s => s.RaiseNineArgs()),
+                    new("ten", nameof(TenArgs), 10, s => s.RaiseTenArgs()),
+                    new("eleven", nameof(ElevenArgs), 11, s => s.RaiseElevenArgs()),
+                    new("twelve", nameof(TwelveArgs), 12, s => s.RaiseTwelveArgs()),
+                    new("thirteen", nameof(ThirteenArgs), 13, s => s.RaiseThirteenArgs()),
+                    new("fourteen", nameof(FourteenArgs), 14, s => s.RaiseFourteenArgs()),
+                    new("fifteen", nameof(FifteenArgs), 15, s => s.RaiseFifteenArgs()),
+                    new("sixteen", nameof(SixteenArgs), MaxArity, s => s.RaiseSixteenArgs()),
+                };
+
+            public event Action<object> OneArg;
+
+            public event Action<object, object, object, object> FourArgs;
+
+            public event Action<object, object, object, object, object> FiveArgs;
+
+            public event Action<object, object, object, object, object, object> SixArgs;
+
+            public event Action<object, object, object, object, object, object, object> SevenArgs;
+
+            public event Action<object, object, object, object, object, object, object, object> EightArgs;
+
+            public event Action<object, object, object, object, object, object, object, object, object> NineArgs;
+
+            public event Action<object, object, object, object, object, object, object, object, object, object> TenArgs;
+
+            public event ElevenArgsDelegate ElevenArgs;
+
+            public event TwelveArgsDelegate TwelveArgs;
+
+            public event ThirteenArgsDelegate ThirteenArgs;
+
+            public event FourteenArgsDelegate FourteenArgs;
+
+            public event FifteenArgsDelegate FifteenArgs;
+
+            public event SixteenArgsDelegate SixteenArgs;
+
+            public void RaiseOneArg()
+            {
+                OneArg?.Invoke("a1");
+            }
+
+            public void RaiseFourArgs()
+            {
+                FourArgs?.Invoke("a1", "a2", "a3", "a4");
+            }
+
+            public void RaiseFiveArgs()
+            {
+                FiveArgs?.Invoke("a1", "a2", "a3", "a4", "a5");
+            }
+
+            public void RaiseSixArgs()
+            {
+                SixArgs?.Invoke("a1", "a2", "a3", "a4", "a5", "a6");
+            }
+
+            public void RaiseSevenArgs()
+            {
+                SevenArgs?.Invoke("a1", "a2", "a3", "a4", "a5", "a6", "a7");
+            }
+
+            public void RaiseEightArgs()
+            {
+                EightArgs?.Invoke("a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8");
+            }
+
+            public void RaiseNineArgs()
+            {
+                NineArgs?.Invoke("a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9");
+            }
+
+            public void RaiseTenArgs()
+            {
+                TenArgs?.Invoke("a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10");
+            }
+
+            public void RaiseElevenArgs()
+            {
+                ElevenArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11"
+                );
+            }
+
+            public void RaiseTwelveArgs()
+            {
+                TwelveArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11",
+                    "a12"
+                );
+            }
+
+            public void RaiseThirteenArgs()
+            {
+                ThirteenArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11",
+                    "a12",
+                    "a13"
+                );
+            }
+
+            public void RaiseFourteenArgs()
+            {
+                FourteenArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11",
+                    "a12",
+                    "a13",
+                    "a14"
+                );
+            }
+
+            public void RaiseFifteenArgs()
+            {
+                FifteenArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11",
+                    "a12",
+                    "a13",
+                    "a14",
+                    "a15"
+                );
+            }
+
+            public void RaiseSixteenArgs()
+            {
+                SixteenArgs?.Invoke(
+                    "a1",
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6",
+                    "a7",
+                    "a8",
+                    "a9",
+                    "a10",
+                    "a11",
+                    "a12",
+                    "a13",
+                    "a14",
+                    "a15",
+                    "a16"
+                );
+            }
+
+            public delegate void ElevenArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11
+            );
+
+            public delegate void TwelveArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11,
+                object o12
+            );
+
+            public delegate void ThirteenArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11,
+                object o12,
+                object o13
+            );
+
+            public delegate void FourteenArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11,
+                object o12,
+                object o13,
+                object o14
+            );
+
+            public delegate void FifteenArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11,
+                object o12,
+                object o13,
+                object o14,
+                object o15
+            );
+
+            public delegate void SixteenArgsDelegate(
+                object o1,
+                object o2,
+                object o3,
+                object o4,
+                object o5,
+                object o6,
+                object o7,
+                object o8,
+                object o9,
+                object o10,
+                object o11,
+                object o12,
+                object o13,
+                object o14,
+                object o15,
+                object o16
+            );
         }
 
         private static class StaticSampleEventSource

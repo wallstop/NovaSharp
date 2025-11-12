@@ -63,6 +63,9 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `WatchItemTests` exercise formatting/null-handling, closing out the debugging watch surface (now 100 % covered), while `ValueTypeDefaultCtorMemberDescriptorTests` confirm validation/instantiation paths and lift the descriptor to 78.5 %.
 - `ScriptLoaderBaseTests` now validate LUA_PATH overrides, ignore flags, environment fallbacks, and string-path unpacking (coverage jumps to 96.9 %; rerun `./coverage.ps1` after the latest CharPtr work to capture the uplift).
 - `CharPtrTests` and `DescriptorHelpersTests` target KopiLua interop and descriptor utilities (visibility helpers, identifier normalization), with `DescriptorHelpers` now following the Wallstop string helpers’ rules so digit suffixes stay contiguous and Pascal initials are preserved.
+- `EventMemberDescriptorTests` now drive delegate creation for 1–16 parameter events, covering the previously untested switch cases in `EventMemberDescriptor.CreateDelegate`.
+- `LuaStateInteropToolsTests` exercise additional format specifiers (`%#o`, `%p`, `%n`, space flag) so `LuaStateInterop.Tools` now accounts for zero-padding, pointer, and positive-space branches.
+- `FastStackTests` include negative/no-op removals, overflow guards, single-slot clearing, and full resets, covering `FastStack.RemoveLast` and `FastStack.Clear` edge paths.
 
 ## Updating the Snapshot
 ```powershell
