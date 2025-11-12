@@ -73,7 +73,10 @@ namespace NovaSharp.Interpreter.DataStructs
             {
                 int oldhead = _headIdx;
                 _headIdx -= cnt;
-                Zero(_headIdx, oldhead);
+                if (_headIdx < oldhead)
+                {
+                    Zero(_headIdx, oldhead - 1);
+                }
             }
         }
 
