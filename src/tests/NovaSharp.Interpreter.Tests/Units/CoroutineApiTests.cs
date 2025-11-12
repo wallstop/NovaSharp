@@ -114,6 +114,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return function()
                     coroutine.yield('pause-1')
                     coroutine.yield('pause-2')
+                    return 'done'
                 end
                 "
             );
@@ -127,11 +128,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 yielded.Add(enumerator.Current);
             }
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(yielded, Is.EqualTo(new object[] { null, null }));
-                Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
-            });
+            Assert.That(yielded, Is.EqualTo(new object[] { null, null, null }));
+            Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
         }
 
         [Test]
@@ -178,22 +176,55 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void ResumeClrCallbackMarksCoroutineAsDead()
+        public void MarkClrCallbackTransitionsState()
         {
             CallbackFunction callback = DynValue
-                .NewCallback((_, _) => DynValue.NewNumber(99))
+                .NewCallback((_, _) => DynValue.NewNumber(1))
                 .Callback;
             Coroutine coroutine = new(callback);
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
-
-            DynValue result = coroutine.Resume(context);
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Number, Is.EqualTo(99d));
+                Assert.That(coroutine.Type, Is.EqualTo(Coroutine.CoroutineType.ClrCallback));
+                Assert.That(coroutine.State, Is.EqualTo(CoroutineState.NotStarted));
+            });
+
+            coroutine.MarkClrCallbackAsDead();
+
+            Assert.Multiple(() =>
+            {
                 Assert.That(coroutine.Type, Is.EqualTo(Coroutine.CoroutineType.ClrCallbackDead));
                 Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
             });
+        }
+
+        [Test]
+        public void MarkClrCallbackThrowsWhenNotClr()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 0 end");
+            Coroutine coroutine = script.CreateCoroutine(function).Coroutine;
+
+            Assert.That(
+                () => coroutine.MarkClrCallbackAsDead(),
+                Throws.TypeOf<InvalidOperationException>()
+                    .With.Message.Contains("CoroutineType.ClrCallback")
+            );
+        }
+
+        [Test]
+        public void ResumeWithoutContextThrowsForClrCallback()
+        {
+            CallbackFunction callback = DynValue
+                .NewCallback((_, _) => DynValue.NewNumber(1))
+                .Callback;
+            Coroutine coroutine = new(callback);
+
+            Assert.That(
+                () => coroutine.Resume(),
+                Throws.TypeOf<InvalidOperationException>()
+                    .With.Message.Contains("Only non-CLR coroutines")
+            );
         }
 
         [Test]
