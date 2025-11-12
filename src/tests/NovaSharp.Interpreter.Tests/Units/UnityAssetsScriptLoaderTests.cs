@@ -71,5 +71,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(loaded, Is.EquivalentTo(new[] { "a.lua", "b.lua", "c.lua" }));
         }
+
+        [Test]
+        public void ReflectionConstructorSwallowsMissingUnityAssemblies()
+        {
+            UnityAssetsScriptLoader loader = new(UnityAssetsScriptLoader.DefaultPath);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader.ScriptFileExists("missing.lua"), Is.False);
+                Assert.That(loader.GetLoadedScripts(), Is.Empty);
+            });
+        }
     }
 }
