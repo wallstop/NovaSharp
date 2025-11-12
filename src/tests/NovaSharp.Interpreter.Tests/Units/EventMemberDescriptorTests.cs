@@ -33,6 +33,28 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister()
+        {
+            SampleEventSource source = new();
+            Script script = new Script();
+            DynValue handler = script.DoString("return function() end");
+
+            EventMemberDescriptor descriptor = new(
+                typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
+            );
+
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(source.AddInvokeCount, Is.EqualTo(0));
+                Assert.That(source.RemoveInvokeCount, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
         public void GetValueReturnsFacadeGrantingAddRemove()
         {
             SampleEventSource source = new();
