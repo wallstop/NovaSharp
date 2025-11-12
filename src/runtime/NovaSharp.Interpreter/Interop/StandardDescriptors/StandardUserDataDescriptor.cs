@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -61,12 +60,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// </summary>
         private void FillMemberList()
         {
-            HashSet<string> membersToIgnore = new(
-                Framework
-                    .Do.GetCustomAttributes(Type, typeof(NovaSharpHideMemberAttribute), true)
-                    .OfType<NovaSharpHideMemberAttribute>()
-                    .Select(a => a.MemberName)
-            );
+            HashSet<string> membersToIgnore = new();
+            object[] customAttributes = Framework
+                .Do.GetCustomAttributes(Type, typeof(NovaSharpHideMemberAttribute), true);
+            for (int i = 0; i < customAttributes.Length; i++)
+            {
+                if (customAttributes[i] is NovaSharpHideMemberAttribute hideMember)
+                {
+                    membersToIgnore.Add(hideMember.MemberName);
+                }
+            }
 
             Type type = Type;
 
@@ -141,7 +144,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 if (
                     pi.IsSpecialName
-                    || pi.GetIndexParameters().Any()
+                    || pi.GetIndexParameters().Length > 0
                     || membersToIgnore.Contains(pi.Name)
                 )
                 {

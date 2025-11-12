@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.Errors;
 
@@ -727,27 +726,42 @@ namespace NovaSharp.Interpreter.DataTypes
         /// Enumerates the key/value pairs.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<TablePair> Pairs
-        {
-            get { return _values.Select(n => new TablePair(n.Key, n.Value)); }
-        }
+        public IEnumerable<TablePair> Pairs => EnumeratePairs();
 
         /// <summary>
         /// Enumerates the keys.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<DynValue> Keys
-        {
-            get { return _values.Select(n => n.Key); }
-        }
+        public IEnumerable<DynValue> Keys => EnumerateKeys();
 
         /// <summary>
         /// Enumerates the values
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<DynValue> Values
+        public IEnumerable<DynValue> Values => EnumerateValues();
+
+        private IEnumerable<TablePair> EnumeratePairs()
         {
-            get { return _values.Select(n => n.Value); }
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value;
+            }
+        }
+
+        private IEnumerable<DynValue> EnumerateKeys()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value.Key;
+            }
+        }
+
+        private IEnumerable<DynValue> EnumerateValues()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value.Value;
+            }
         }
     }
 }
