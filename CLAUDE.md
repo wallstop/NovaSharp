@@ -130,6 +130,7 @@ Script.DoString("return x + 1")
 - **Using Directives**: Keep minimal, add explicit access modifiers; refer to `.editorconfig` for spacing and ordering conventions.
 - **Explicit Typing**: Prefer explicit types over `var`; only use `var` where required (e.g., anonymous types).
 - **Internals Access**: When NovaSharp projects or tests need deeper access, prefer declaring members `internal` and using `InternalsVisibleTo` (update or create `AssemblyInfo.cs`) instead of reflection. It is fine to expose internals to sibling NovaSharp assemblies if it eliminates reflection.
+- **Reflection Policy**: Review `docs/modernization/reflection-audit.md` before adding new reflection-based code and update the catalogue if changes are necessary.
 
 ## Testing Guidelines
 
