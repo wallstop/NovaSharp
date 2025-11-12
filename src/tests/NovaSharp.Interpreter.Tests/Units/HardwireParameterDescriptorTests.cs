@@ -5,6 +5,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using NovaSharp.Hardwire.Utils;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -58,6 +60,31 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptors[1].IsOut, Is.True);
         }
 
+        [Test]
+        public void DefaultValueParameterUsesPlaceholderExpression()
+        {
+            HardwireParameterDescriptor descriptor = CreateDescriptor(hasDefault: true);
+
+            Assert.That(descriptor.HasDefaultValue, Is.True);
+            CodeObjectCreateExpression expression = AssertCast<CodeObjectCreateExpression>(
+                descriptor.Expression
+            );
+            Assert.That(
+                expression.CreateType.BaseType,
+                Is.EqualTo(typeof(ParameterDescriptor).FullName)
+            );
+
+            // Argument order: name, type, hasDefault, defaultValue, isOut, isRef, isVarArg
+            CodeExpression defaultArgument = expression.Parameters[3];
+            CodeObjectCreateExpression defaultValueExpression =
+                AssertCast<CodeObjectCreateExpression>(defaultArgument);
+
+            Assert.That(
+                defaultValueExpression.CreateType.BaseType,
+                Is.EqualTo(typeof(DefaultValue).FullName)
+            );
+        }
+
         private static HardwireParameterDescriptor CreateDescriptor(
             bool hasDefault = false,
             bool isOut = false,
@@ -92,6 +119,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set("restricted", DynValue.NewBoolean(false));
 
             return table;
+        }
+
+        private static T AssertCast<T>(CodeExpression expression)
+            where T : CodeExpression
+        {
+            Assert.That(expression, Is.TypeOf<T>());
+            return (T)expression;
         }
     }
 }
