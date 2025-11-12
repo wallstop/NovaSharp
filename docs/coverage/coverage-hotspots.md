@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 15:08 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 15:23 UTC).
 
 ## Snapshot
 - Overall line coverage: **73.3 %**
-- NovaSharp.Interpreter line coverage: **85.3 %**
+- NovaSharp.Interpreter line coverage: **85.4 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
