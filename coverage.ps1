@@ -17,21 +17,71 @@ try {
     Write-Host "Restoring local tools..."
     dotnet tool restore | Out-Null
 
-    if (-not $SkipBuild) {
-        Write-Host "Building solution (configuration: $Configuration)..."
-        dotnet build "src/NovaSharp.sln" -c $Configuration | Out-Null
-    }
-
-    $runnerProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
     $coverageRoot = Join-Path $repoRoot "artifacts/coverage"
     New-Item -ItemType Directory -Force -Path $coverageRoot | Out-Null
+    $buildLogPath = Join-Path $coverageRoot "build.log"
+
+    $buildExecuted = $false
+    $runnerProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
+
+    if (-not $SkipBuild) {
+        Write-Host "Building solution (configuration: $Configuration)..."
+        if (Test-Path $buildLogPath) {
+            Remove-Item $buildLogPath -Force
+        }
+
+        dotnet build "src/NovaSharp.sln" -c $Configuration 2>&1 |
+            Tee-Object -FilePath $buildLogPath | Out-Null
+
+        $buildExecuted = $true
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "dotnet build failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
+            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
+            throw (
+                "dotnet build src/NovaSharp.sln -c {0} failed. See {1} for full output." -f
+                $Configuration,
+                $buildLogPath
+            )
+        }
+
+        Write-Host "Building test project (configuration: $Configuration)..."
+        dotnet build $runnerProject -c $Configuration --no-restore 2>&1 |
+            Tee-Object -FilePath $buildLogPath -Append | Out-Null
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "dotnet build $runnerProject failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
+            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
+            throw (
+                "dotnet build {0} -c {1} failed. See {2} for full output." -f
+                $runnerProject,
+                $Configuration,
+                $buildLogPath
+            )
+        }
+    }
 
     $testResultsDir = Join-Path $coverageRoot "test-results"
     New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
 
     $runnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.Interpreter.Tests/bin/$Configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
     if (-not (Test-Path $runnerOutput)) {
-        throw "Runner output not found at '$runnerOutput'. Build the runner or rerun without -SkipBuild."
+        $message = "Runner output not found at '$runnerOutput'."
+        if ($SkipBuild) {
+            $message += " Rerun without -SkipBuild or build the test project manually."
+        }
+        else {
+            if (Test-Path $buildLogPath) {
+                $message += " The preceding build may have failed; inspect $buildLogPath for details."
+            }
+            else {
+                $message += " The preceding build may have failed."
+            }
+            $message += " You can also run `dotnet build src/NovaSharp.sln -c $Configuration` to confirm."
+        }
+
+        throw $message
     }
 
     $coverageBase = Join-Path $coverageRoot "coverage"

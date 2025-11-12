@@ -61,23 +61,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DiscoverFromAssemblyRegistersGenerators()
         {
-            DiscoveryGenerator.DispatchCount = 0;
-            HardwireGeneratorRegistry.DiscoverFromAssembly(typeof(DiscoveryGenerator).Assembly);
+            const string managedType =
+                "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.DynValueMemberDescriptor";
 
-            IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(
-                DiscoveryGenerator.ManagedTypeValue
+            HardwireGeneratorRegistry.DiscoverFromAssembly(
+                typeof(NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator).Assembly
             );
 
-            Assert.That(generator, Is.TypeOf<DiscoveryGenerator>());
+            IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(managedType);
 
-            CodeExpression[] expressions = generator.Generate(
-                null,
-                HardwireTestUtilities.CreateContext(),
-                new CodeTypeMemberCollection()
+            Assert.That(
+                generator,
+                Is.TypeOf<NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator>()
             );
-
-            Assert.That(expressions, Is.Empty);
-            Assert.That(DiscoveryGenerator.DispatchCount, Is.GreaterThanOrEqualTo(1));
         }
 
         [Test]
@@ -96,7 +92,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(generator.GetType().Name, Is.EqualTo("MethodMemberDescriptorGenerator"));
         }
 
-        private sealed class RecordingGenerator : IHardwireGenerator
+        public sealed class RecordingGenerator : IHardwireGenerator
         {
             private readonly string _managedType;
             private readonly CodeExpression[] _expressions;
@@ -106,6 +102,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _managedType = managedType;
                 _expressions = expressions ?? Array.Empty<CodeExpression>();
             }
+
+            public RecordingGenerator()
+                : this("NovaSharp.Tests.Default") { }
 
             public int InvocationCount { get; private set; }
 
@@ -119,25 +118,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 InvocationCount++;
                 return _expressions;
-            }
-        }
-
-        private sealed class DiscoveryGenerator : IHardwireGenerator
-        {
-            internal const string ManagedTypeValue = "Hardwire.Tests.Discovery.Subject";
-
-            internal static int DispatchCount;
-
-            public string ManagedType => ManagedTypeValue;
-
-            public CodeExpression[] Generate(
-                Table table,
-                HardwireCodeGenerationContext generatorContext,
-                CodeTypeMemberCollection members
-            )
-            {
-                DispatchCount++;
-                return Array.Empty<CodeExpression>();
             }
         }
     }

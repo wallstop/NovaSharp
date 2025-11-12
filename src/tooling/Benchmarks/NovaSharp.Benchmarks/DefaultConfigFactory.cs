@@ -9,11 +9,13 @@ namespace NovaSharp.Benchmarks
     using BenchmarkDotNet.Columns;
     using BenchmarkDotNet.Configs;
     using BenchmarkDotNet.Diagnosers;
+    using BenchmarkDotNet.EventProcessors;
     using BenchmarkDotNet.Exporters;
     using BenchmarkDotNet.Filters;
     using BenchmarkDotNet.Jobs;
     using BenchmarkDotNet.Loggers;
     using BenchmarkDotNet.Order;
+    using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
     using BenchmarkDotNet.Validators;
 
@@ -84,8 +86,6 @@ namespace NovaSharp.Benchmarks
                 _loggers = loggers?.ToArray() ?? Array.Empty<ILogger>();
             }
 
-            public IEnumerable<IColumn> GetColumns() => _inner.GetColumns();
-
             public IEnumerable<IColumnProvider> GetColumnProviders() => _inner.GetColumnProviders();
 
             public IEnumerable<ILogger> GetLoggers() => _loggers;
@@ -98,7 +98,7 @@ namespace NovaSharp.Benchmarks
 
             public IEnumerable<IValidator> GetValidators() => _inner.GetValidators();
 
-            public IEnumerable<IHardwareCounter> GetHardwareCounters() =>
+            public IEnumerable<HardwareCounter> GetHardwareCounters() =>
                 _inner.GetHardwareCounters();
 
             public IEnumerable<Job> GetJobs() => _inner.GetJobs();
@@ -108,13 +108,16 @@ namespace NovaSharp.Benchmarks
 
             public IEnumerable<IFilter> GetFilters() => _inner.GetFilters();
 
-            public IEnumerable<IOrderProvider> GetOrderProviders() => _inner.GetOrderProviders();
+            public IEnumerable<EventProcessor> GetEventProcessors() => _inner.GetEventProcessors();
+
+            public IEnumerable<IColumnHidingRule> GetColumnHidingRules() =>
+                _inner.GetColumnHidingRules();
 
             public SummaryStyle SummaryStyle => _inner.SummaryStyle;
 
             public ConfigUnionRule UnionRule => _inner.UnionRule;
 
-            public TimeSpan? BuildTimeout => _inner.BuildTimeout;
+            public TimeSpan BuildTimeout => _inner.BuildTimeout;
 
             public string ArtifactsPath => _inner.ArtifactsPath;
 
@@ -122,13 +125,14 @@ namespace NovaSharp.Benchmarks
 
             public ConfigOptions Options => _inner.Options;
 
-            public Encoding Encoding => _inner.Encoding;
+            public WakeLockType WakeLock => _inner.WakeLock;
 
-            public bool KeepBenchmarkFiles => _inner.KeepBenchmarkFiles;
+            public IReadOnlyList<Conclusion> ConfigAnalysisConclusion =>
+                _inner.ConfigAnalysisConclusion;
 
-            public bool StopOnFirstError => _inner.StopOnFirstError;
+            public IOrderer Orderer => _inner.Orderer;
 
-            public OptimizationMode OptimizationMode => _inner.OptimizationMode;
+            public ICategoryDiscoverer CategoryDiscoverer => _inner.CategoryDiscoverer;
         }
     }
 }
