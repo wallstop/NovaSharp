@@ -1,19 +1,19 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-11 15:03 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 20:25 UTC).
 
 ## Snapshot
-- Overall line coverage: **68.5 %**
-- NovaSharp.Interpreter line coverage: **81.9 %**
-- NovaSharp.Cli line coverage: **73.7 %**
-- NovaSharp.Hardwire line coverage: **22.3 %**
+- Overall line coverage: **71.1 %**
+- NovaSharp.Interpreter line coverage: **82.8 %**
+- NovaSharp.Cli line coverage: **78.0 %**
+- NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 
-- `NovaSharp.Interpreter.Platforms.PlatformAccessorBase` – 44.0 % line. Extend platform accessor tests to cover sandbox/full-trust fallbacks.
-- `NovaSharp.Interpreter.Tree.Expressions.UnaryOperatorExpression` – 48.1 % line. Add bytecode error-path coverage for unexpected operators (runtime guards already in place).
-- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 53.0 % line. Continue expanding dispatch tests (by-ref/value scenarios, delegate fan-out) until compatibility/error branches are covered.
+- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.EventMemberDescriptor` – 53 % line. Keep driving delegate creation/removal edge paths (null handlers, mixed signature fan-out, stale delegate removal).
+- `NovaSharp.Interpreter.Interop.LuaStateInterop.CharPtr` – 53.3 % line. Add focused unit coverage for pointer arithmetic, comparisons, and string conversion helpers to protect the KopiLua shim.
+- `NovaSharp.Interpreter.Interop.DescriptorHelpers` – 55.7 % line. Backfill tests for conversion guard rails and invalid descriptor caching paths (ties into allocation-reduction tasks).
 
 (Review full list in `docs/coverage/latest/Summary.json`.)
 
@@ -61,6 +61,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `StandardEnumUserDataDescriptorTests` ensure flag helpers, numeric coercion, and signed/unsigned paths work correctly, raising enum descriptor coverage to 67.4 %.
 - `UnityAssetsScriptLoaderTests` cover path normalization, missing-script diagnostics, and enumeration helpers, boosting loader coverage while keeping Unity packaging logic under regression.
 - `WatchItemTests` exercise formatting/null-handling, closing out the debugging watch surface (now 100 % covered), while `ValueTypeDefaultCtorMemberDescriptorTests` confirm validation/instantiation paths and lift the descriptor to 78.5 %.
+- `ScriptLoaderBaseTests` now validate LUA_PATH overrides, ignore flags, environment fallbacks, and string-path unpacking (coverage jumps to 96.9 %; rerun `./coverage.ps1` after the latest CharPtr work to capture the uplift).
+- `CharPtrTests` and `DescriptorHelpersTests` target KopiLua interop and descriptor utilities (visibility helpers, identifier normalization), with `DescriptorHelpers` now following the Wallstop string helpers’ rules so digit suffixes stay contiguous and Pascal initials are preserved.
 
 ## Updating the Snapshot
 ```powershell
@@ -68,4 +70,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-11_
+_Last updated: 2025-11-12_

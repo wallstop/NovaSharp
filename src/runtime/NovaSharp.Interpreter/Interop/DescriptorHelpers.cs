@@ -403,15 +403,19 @@ namespace NovaSharp.Interpreter.Interop
 
                         bool prevIsLetter = char.IsLetter(prev);
                         bool prevIsLowerOrDigit = char.IsLower(prev) || char.IsDigit(prev);
+                        bool prevIsDigit = char.IsDigit(prev);
                         bool prevIsUpper = char.IsUpper(prev);
                         bool curIsUpper = char.IsUpper(ch);
+                        bool curIsLetter = char.IsLetter(ch);
                         bool curIsDigit = char.IsDigit(ch);
                         bool nextIsLower = i + 1 < name.Length && char.IsLower(name[i + 1]);
+                        bool nextIsLetter = i + 1 < name.Length && char.IsLetter(name[i + 1]);
 
                         if (
                             (curIsUpper && prevIsLowerOrDigit)
                             || (curIsUpper && prevIsUpper && nextIsLower)
-                            || (curIsDigit && prevIsLetter)
+                            || (curIsLetter && prevIsDigit)
+                            || (curIsDigit && prevIsLetter && HasLetterAfterDigits(name, i))
                         )
                         {
                             sb.Append('_');
@@ -457,47 +461,56 @@ namespace NovaSharp.Interpreter.Interop
                 return name;
             }
 
-            StringBuilder sb = new(name.Length);
-            int i = 0;
-
-            while (i < name.Length)
+            string snake = ToUpperUnderscore(name);
+            if (string.IsNullOrEmpty(snake))
             {
-                char ch = name[i];
+                return snake;
+            }
 
-                if (char.IsUpper(ch))
+            string[] parts = snake.Split('_', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new(name.Length);
+
+            foreach (string part in parts)
+            {
+                if (part.Length == 0)
                 {
-                    int runStart = i;
-
-                    while (i + 1 < name.Length && char.IsUpper(name[i + 1]))
-                    {
-                        i++;
-                    }
-
-                    int runEnd = i;
-
-                    if (runEnd > runStart)
-                    {
-                        sb.Append(name[runStart]);
-                        for (int j = runStart + 1; j <= runEnd; j++)
-                        {
-                            sb.Append(char.ToLowerInvariant(name[j]));
-                        }
-                    }
-                    else
-                    {
-                        sb.Append(ch);
-                    }
-
-                    i++;
+                    continue;
                 }
-                else
+
+                sb.Append(char.ToUpperInvariant(part[0]));
+
+                for (int i = 1; i < part.Length; i++)
                 {
-                    sb.Append(ch);
-                    i++;
+                    sb.Append(char.ToLowerInvariant(part[i]));
                 }
             }
 
             return sb.ToString();
+        }
+
+        private static bool HasLetterAfterDigits(string name, int index)
+        {
+            for (int i = index; i < name.Length; i++)
+            {
+                char ch = name[i];
+
+                if (char.IsLetter(ch))
+                {
+                    return true;
+                }
+
+                if (!char.IsDigit(ch))
+                {
+                    break;
+                }
+            }
+
+            return false;
         }
     }
 }

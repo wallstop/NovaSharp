@@ -36,11 +36,6 @@ namespace NovaSharp.Interpreter.DataStructs
             _headIdx += size;
         }
 
-        private void Zero(int from, int to)
-        {
-            Array.Clear(_storage, from, to - from + 1);
-        }
-
         private void Zero(int index)
         {
             _storage[index] = default(T);
@@ -64,6 +59,11 @@ namespace NovaSharp.Interpreter.DataStructs
 
         public void RemoveLast(int cnt = 1)
         {
+            if (cnt <= 0)
+            {
+                return;
+            }
+
             if (cnt == 1)
             {
                 --_headIdx;
@@ -72,11 +72,13 @@ namespace NovaSharp.Interpreter.DataStructs
             else
             {
                 int oldhead = _headIdx;
-                _headIdx -= cnt;
-                if (_headIdx < oldhead)
+                if (cnt > oldhead)
                 {
-                    Zero(_headIdx, oldhead - 1);
+                    throw new ArgumentOutOfRangeException(nameof(cnt));
                 }
+
+                _headIdx -= cnt;
+                Array.Clear(_storage, _headIdx, cnt);
             }
         }
 

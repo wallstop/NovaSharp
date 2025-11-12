@@ -269,7 +269,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             StubReplInterpreter interpreter = new()
             {
-                ExceptionToThrow = new InterpreterException("boom")
+                ExceptionToThrow = new ScriptRuntimeException("boom")
                 {
                     DecoratedMessage = "decorated message",
                 },
