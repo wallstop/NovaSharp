@@ -65,6 +65,50 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetBytesThrowsWhenDestinationIsNull()
+        {
+            char[] source = new[] { 'a' };
+
+            Assert.That(
+                () => _encoding.GetBytes(source, 0, source.Length, null, 0),
+                Throws.InstanceOf<ArgumentNullException>()
+            );
+        }
+
+        [Test]
+        public void GetBytesRespectsOffsets()
+        {
+            char[] source = new[] { 'x', 'A', 'B', 'y' };
+            byte[] destination = new byte[6];
+            Array.Fill(destination, (byte)0xFF);
+
+            int written = _encoding.GetBytes(source, 1, 2, destination, 3);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(written, Is.EqualTo(2));
+                Assert.That(destination[3], Is.EqualTo((byte)'A'));
+                Assert.That(destination[4], Is.EqualTo((byte)'B'));
+                Assert.That(destination[5], Is.EqualTo(0xFF));
+            });
+        }
+
+        [Test]
+        public void GetBytesAllowsZeroCountWithoutWriting()
+        {
+            char[] source = new[] { 'a', 'b', 'c' };
+            byte[] destination = new byte[] { 1, 2, 3 };
+
+            int written = _encoding.GetBytes(source, source.Length, 0, destination, 0);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(written, Is.EqualTo(0));
+                Assert.That(destination, Is.EqualTo(new byte[] { 1, 2, 3 }));
+            });
+        }
+
+        [Test]
         public void GetCharsCopiesBytesVerbatim()
         {
             byte[] source = new byte[] { 0x01, 0x7F, 0xFF };
@@ -116,6 +160,53 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => _encoding.GetChars(source, 0, source.Length, destination, 0),
                 Throws.InstanceOf<ArgumentException>()
             );
+        }
+
+        [Test]
+        public void GetCharsThrowsWhenDestinationIsNull()
+        {
+            byte[] source = new byte[] { 0x42 };
+
+            Assert.That(
+                () => _encoding.GetChars(source, 0, source.Length, null, 0),
+                Throws.InstanceOf<ArgumentNullException>()
+            );
+        }
+
+        [Test]
+        public void GetCharsRespectsOffsets()
+        {
+            byte[] source = new byte[] { 0x10, (byte)'C', (byte)'D', 0x20 };
+            char[] destination = new char[6];
+            for (int i = 0; i < destination.Length; i++)
+            {
+                destination[i] = '\uFFFF';
+            }
+
+            int read = _encoding.GetChars(source, 1, 2, destination, 2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(read, Is.EqualTo(2));
+                Assert.That(destination[2], Is.EqualTo('C'));
+                Assert.That(destination[3], Is.EqualTo('D'));
+                Assert.That(destination[4], Is.EqualTo('\uFFFF'));
+            });
+        }
+
+        [Test]
+        public void GetCharsAllowsZeroCountWithoutWriting()
+        {
+            byte[] source = new byte[] { 0x01, 0x02 };
+            char[] destination = new char[] { 'a', 'b', 'c' };
+
+            int read = _encoding.GetChars(source, source.Length, 0, destination, 1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(read, Is.EqualTo(0));
+                Assert.That(destination, Is.EqualTo(new[] { 'a', 'b', 'c' }));
+            });
         }
 
         [Test]

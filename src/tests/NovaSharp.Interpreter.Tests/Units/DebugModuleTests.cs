@@ -385,6 +385,62 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void DebugLoopTreatsWhitespaceInputAsNoOp()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "   ", "\treturn" });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            DynValue result = script.DoString("return debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsNil(), Is.True);
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Is.Empty);
+            });
+        }
+
+        [Test]
+        public void DebugLoopHonoursReturnCommandWithDifferentCase()
+        {
+            Script script = CreateScript();
+            Queue<string> commands = new(new[] { "RETURN" });
+            List<string> output = new();
+
+            script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
+            script.Options.DebugPrint = s => output.Add(s);
+
+            DynValue result = script.DoString("return debug.debug()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsNil(), Is.True);
+                Assert.That(commands.Count, Is.EqualTo(0));
+                Assert.That(output, Is.Empty);
+            });
+        }
+
+        [Test]
+        public void DebugLoopThrowsWhenInputProviderMissing()
+        {
+            Script script = new Script(CoreModules.PresetComplete);
+            script.Options.DebugPrint = _ => { };
+            script.Options.DebugInput = null;
+
+            Assert.That(
+                () => script.DoString("debug.debug()"),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Property(nameof(ScriptRuntimeException.DecoratedMessage))
+                    .Contains("debug.debug not supported")
+            );
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
