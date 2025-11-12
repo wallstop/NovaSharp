@@ -2,7 +2,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Serialization.Json;
     using NUnit.Framework;
 
     [TestFixture]
@@ -53,6 +55,66 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple[0].String, Is.EqualTo("nova"));
                 Assert.That(result.Tuple[1].Number, Is.EqualTo(10));
                 Assert.That(result.Tuple[2].Number, Is.EqualTo(20));
+            });
+        }
+
+        [Test]
+        public void ParseThrowsScriptRuntimeExceptionOnInvalidJson()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue jsonModule = script.DoString("return require('json')");
+            DynValue parse = jsonModule.Table.Get("parse");
+
+            Assert.That(
+                () => script.Call(parse, DynValue.NewString("{invalid")),
+                Throws.TypeOf<ScriptRuntimeException>()
+            );
+        }
+
+        [Test]
+        public void SerializeThrowsScriptRuntimeExceptionOnNonTable()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue jsonModule = script.DoString("return require('json')");
+            DynValue serialize = jsonModule.Table.Get("serialize");
+
+            Assert.That(
+                () => script.Call(serialize, DynValue.NewString("oops")),
+                Throws.TypeOf<ScriptRuntimeException>()
+            );
+        }
+
+        [Test]
+        public void IsNullDetectsJsonNullAndNil()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue result = script.DoString(
+                @"
+                local json = require('json')
+                return json.isnull(json.null()),
+                       json.isnull(nil),
+                       json.isnull(false),
+                       json.isnull({})
+            "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].Boolean, Is.True);
+                Assert.That(result.Tuple[2].Boolean, Is.False);
+                Assert.That(result.Tuple[3].Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void NullReturnsJsonNullDynValue()
+        {
+            DynValue value = JsonNull.Create();
+            Assert.Multiple(() =>
+            {
+                Assert.That(value.Type, Is.EqualTo(DataType.UserData));
+                Assert.That(JsonNull.IsJsonNull(value), Is.True);
             });
         }
     }

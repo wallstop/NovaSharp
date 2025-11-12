@@ -66,6 +66,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `EventMemberDescriptorTests` now drive delegate creation for 1–16 parameter events, covering the previously untested switch cases in `EventMemberDescriptor.CreateDelegate`.
 - `LuaStateInteropToolsTests` exercise additional format specifiers (`%#o`, `%p`, `%n`, space flag) so `LuaStateInterop.Tools` now accounts for zero-padding, pointer, and positive-space branches.
 - `FastStackTests` include negative/no-op removals, overflow guards, single-slot clearing, and full resets, covering `FastStack.RemoveLast` and `FastStack.Clear` edge paths.
+- `DotNetCorePlatformAccessorTests` validate file mode parsing, console output, filesystem helpers, and the NotSupported command path, tightening coverage for the .NET Core platform accessor shim.
+- `JsonModuleTests` exercise invalid parse/serialize inputs plus `json.isnull`/`json.null`, backfilling JsonModule’s error and null-handling branches.
 
 ## Updating the Snapshot
 ```powershell
