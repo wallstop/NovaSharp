@@ -74,5 +74,81 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .With.Message.Contains("Unexpected unary operator")
             );
         }
+
+        [Test]
+        public void EvalNegatesNumberValue()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewNumber(5));
+            Token minusToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "-",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, minusToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+            DynValue result = expression.Eval(executionContext);
+
+            Assert.That(result.Number, Is.EqualTo(-5));
+        }
+
+        [Test]
+        public void EvalReturnsBooleanNegation()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.True);
+            Token notToken = new Token(TokenType.Not, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "not",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, notToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+            DynValue result = expression.Eval(executionContext);
+
+            Assert.That(result.Boolean, Is.False);
+        }
+
+        [Test]
+        public void EvalReturnsLengthOfValue()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewString("Lua"));
+            Token lenToken = new Token(TokenType.OpLen, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "#",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, lenToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+            DynValue result = expression.Eval(executionContext);
+
+            Assert.That(result.Number, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void EvalThrowsWhenNegatingNonNumberLiteral()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewString("hello"));
+            Token minusToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "-",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, minusToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => expression.Eval(executionContext),
+                Throws
+                    .TypeOf<NovaSharp.Interpreter.Errors.DynamicExpressionException>()
+                    .With.Message.Contains("Attempt to perform arithmetic")
+            );
+        }
     }
 }

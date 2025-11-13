@@ -1,18 +1,20 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 09:34 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 11:08 UTC).
 
 ## Snapshot
-- Overall line coverage: **74.9 %**
-- NovaSharp.Interpreter line coverage: **87.1 %**
+- Overall line coverage: **75.3 %**
+- NovaSharp.Interpreter line coverage: **87.6 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- `NovaSharp.Interpreter.DataTypes.Closure` — **86.6 %** (Lua `_ENV` upvalue always present; remaining gap tied to non-exercisable zero-upvalue branch).
-- `NovaSharp.Interpreter.CoreLib.StringLib.StringRange` — **78.2 %** (iterator helpers missing targeted coverage).
-- `NovaSharp.Interpreter.CoreLib.StringModule` — **75.0 %** (string option branches and locale-dependent paths remain uncovered).
+- `NovaSharp.Interpreter.Tree.Expressions.BinaryOperatorExpression` — **70.3 %** (priority chain helpers and Eval branches still under exercised; add targeted AST/Eval tests for arithmetic, concat, comparisons, and boolean short-circuiting).
+- `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.MethodMemberDescriptor` — **71.3 %** (exercise overload resolution fallbacks and exception paths).
+- `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` — **71.4 %** (cover missing-asset error flows and invalid manifest handling).
+- `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` — **72.3 %** (expand spec-driven formatting cases for flags, padding, and unsupported conversions).
+- `NovaSharp.Interpreter.DataTypes.UserData` — **74.4 %** (hit meta-table toggles, descriptor cache paths, and userdata equality combinations).
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items
@@ -22,6 +24,9 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
 
 ## Recently Covered
+- `UnaryOperatorExpression` now sits at **100 %** line/branch coverage after adding direct Eval tests for `not`, `#`, `-`, and the non-numeric failure path.
+- `StringModule` has climbed to **97.2 %** line / **94.6 %** branch coverage via spec-aligned edge cases and modulo-normalization in production.
+- `BinaryOperatorExpression` coverage jumped to **87.3 %** line / **77.5 %** branch on the back of new short-circuit, arithmetic, concatenation, and comparison unit tests (still shy of the 90 % green line).
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.
 - `PerformanceStatistics` exercises enabling/disabling counters and global aggregation.
 - `ReplHistoryInterpreter` navigation (prev/next) verified via tests.
