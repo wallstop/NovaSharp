@@ -79,7 +79,8 @@ namespace NovaSharp.Interpreter.CoreLib
                     d = v.Number;
                 }
 
-                sb.Append((char)(d));
+                int normalized = NormalizeByte(Math.Floor(d));
+                sb.Append((char)normalized);
             }
 
             return DynValue.NewString(sb.ToString());
@@ -92,7 +93,7 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue vi = args.AsType(1, "byte", DataType.Number, true);
             DynValue vj = args.AsType(2, "byte", DataType.Number, true);
 
-            return PerformByteLike(vs, vi, vj, i => Unicode2Ascii(i));
+            return PerformByteLike(vs, vi, vj, i => NormalizeByte(i));
         }
 
         [NovaSharpModuleMethod(Name = "unicode")]
@@ -106,16 +107,6 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue vj = args.AsType(2, "unicode", DataType.Number, true);
 
             return PerformByteLike(vs, vi, vj, i => i);
-        }
-
-        private static int Unicode2Ascii(int i)
-        {
-            if (i >= 0 && i <= 255)
-            {
-                return i;
-            }
-
-            return (int)'?';
         }
 
         private static DynValue PerformByteLike(
@@ -137,6 +128,23 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             return DynValue.NewTuple(rets);
+        }
+
+        private static int NormalizeByte(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                return 0;
+            }
+
+            long truncated = (long)Math.Floor(value);
+            int normalized = (int)(truncated % 256);
+            if (normalized < 0)
+            {
+                normalized += 256;
+            }
+
+            return normalized;
         }
 
         private static int? AdjustIndex(string s, DynValue vi, int defval)

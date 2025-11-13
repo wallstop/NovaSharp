@@ -32,6 +32,7 @@
 - Write test method names in PascalCase (no underscores); rename legacy cases when you touch them.
 - Use `Assert.Ignore` only with a linked tracking issue and add coverage for new opcodes, metatables, and debugger paths.
 - When a regression test fails, assume the production code is wrong until proven otherwise. Align fixes with the Lua 5.4 specification and keep the test unchanged unless it is demonstrably incorrect.
+- Any failing test must trigger a pass through the official Lua 5.4 reference manual (`https://www.lua.org/manual/5.4/`) to validate the expected semantics; update production code and tests together so NovaSharp behavior matches the canonical Lua specification.
 
 ## Commit & Pull Request Guidelines
 - Write concise, imperative commit messages such as “Fix parser regression” for consistent history.
