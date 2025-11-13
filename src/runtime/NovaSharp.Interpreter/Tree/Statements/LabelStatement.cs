@@ -18,6 +18,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly List<GotoStatement> _gotos = new();
         private RuntimeScopeBlock _stackFrame;
+        private BuildTimeScopeBlock _declaringBlock;
 
         public LabelStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
@@ -41,6 +42,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
         internal void RegisterGoto(GotoStatement gotostat)
         {
             _gotos.Add(gotostat);
+            List<RuntimeScopeBlock> exitScopes = BuildExitScopes(
+                gotostat.GetDeclaringBlock(),
+                _declaringBlock
+            );
+            gotostat.SetExitScopes(exitScopes);
         }
 
         public override void Compile(Execution.VM.ByteCode bc)
@@ -58,6 +64,43 @@ namespace NovaSharp.Interpreter.Tree.Statements
         internal void SetScope(RuntimeScopeBlock runtimeScopeBlock)
         {
             _stackFrame = runtimeScopeBlock;
+        }
+
+        internal void SetDeclaringBlock(BuildTimeScopeBlock block)
+        {
+            _declaringBlock = block;
+        }
+
+        private static List<RuntimeScopeBlock> BuildExitScopes(
+            BuildTimeScopeBlock gotoBlock,
+            BuildTimeScopeBlock labelBlock
+        )
+        {
+            List<RuntimeScopeBlock> scopes = new();
+
+            if (gotoBlock == null || labelBlock == null)
+            {
+                return scopes;
+            }
+
+            BuildTimeScopeBlock walker = gotoBlock;
+
+            while (walker != null && walker != labelBlock)
+            {
+                if (walker.ScopeBlock != null)
+                {
+                    scopes.Add(walker.ScopeBlock);
+                }
+
+                walker = walker.Parent;
+            }
+
+            if (walker != labelBlock)
+            {
+                scopes.Clear();
+            }
+
+            return scopes;
         }
     }
 }

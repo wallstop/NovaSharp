@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
+    using System.Collections.Generic;
     using Debugging;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class GotoStatement : Statement
@@ -16,6 +18,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private Instruction _jump;
         private int _labelAddress = -1;
+        private BuildTimeScopeBlock _declaringBlock;
+        private List<RuntimeScopeBlock> _exitScopes;
 
         public GotoStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
@@ -32,6 +36,14 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
+            if (_exitScopes != null)
+            {
+                foreach (RuntimeScopeBlock scope in _exitScopes)
+                {
+                    bc.Emit_Exit(scope);
+                }
+            }
+
             _jump = bc.Emit_Jump(OpCode.Jump, _labelAddress);
         }
 
@@ -49,6 +61,24 @@ namespace NovaSharp.Interpreter.Tree.Statements
             {
                 _jump.NumVal = labelAddress;
             }
+        }
+
+        internal void SetDeclaringBlock(BuildTimeScopeBlock block)
+        {
+            if (_declaringBlock == null)
+            {
+                _declaringBlock = block;
+            }
+        }
+
+        internal BuildTimeScopeBlock GetDeclaringBlock()
+        {
+            return _declaringBlock;
+        }
+
+        internal void SetExitScopes(List<RuntimeScopeBlock> scopes)
+        {
+            _exitScopes = scopes;
         }
     }
 }

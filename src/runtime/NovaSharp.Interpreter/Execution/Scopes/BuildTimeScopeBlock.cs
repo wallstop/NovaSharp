@@ -136,6 +136,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             {
                 _localLabels.Add(label.Label, label);
                 label.SetDefinedVars(_definedNames.Count, _lastDefinedName);
+                label.SetDeclaringBlock(this);
             }
         }
 
@@ -145,6 +146,8 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             {
                 _pendingGotos = new List<GotoStatement>();
             }
+
+            gotostat.SetDeclaringBlock(this);
 
             _pendingGotos.Add(gotostat);
             gotostat.SetDefinedVars(_definedNames.Count, _lastDefinedName);
