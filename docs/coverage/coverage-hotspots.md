@@ -1,19 +1,20 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-12 16:32 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 06:58 UTC).
 
 ## Snapshot
-- Overall line coverage: **73.7 %**
-- NovaSharp.Interpreter line coverage: **85.9 %**
+- Overall line coverage: **74.5 %**
+- NovaSharp.Interpreter line coverage: **86.6 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-
-(None at the moment — celebrate the win and watch the latest summary for new sub‑90 % candidates.)
-
-(Review full list in `docs/coverage/latest/Summary.json`.)
+- `NovaSharp.Interpreter.DataTypes.Closure` — **86.6 %** (Lua `_ENV` upvalue always present; remaining gap tied to non-exercisable zero-upvalue branch).
+- `NovaSharp.Interpreter.CoreLib.LoadModule` — **71.0 %** (loader error paths and package search variations remain untested).
+- `NovaSharp.Interpreter.CoreLib.IoModule` — **75.3 %** (filesystem wrappers + option branches still uncovered).
+- `NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor` — **70.8 %** (reflection metadata shapes + default-value fallbacks).
+- See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items
 1. Assign owners for each red-listed class (default owner noted above until explicit assignment).
@@ -38,6 +39,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `DebugModule` interactive loop now handles returned values, CLR exceptions, and null-input exits under test, bumping branch coverage to 77 %.
 - `StandardEnumUserDataDescriptor` now exercises conversion helpers, numeric backstops, argument validation, and meta operations (85.6 % line / 88.8 % branch coverage).
 - `FieldMemberDescriptor` covers pre/lazy optimized getters, null-instance guards, and metadata wiring (80.7 % line coverage).
+- `CallbackFunction` now sits at **91.3 %** line coverage thanks to colon-operator handling tests, default access mode validation, and delegate/visibility checks; closure-centric tests also cover entry-point metadata and call overloads, lifting `Closure` to **86.6 %** while documenting the remaining `_ENV` constraint.
+- `ScriptRuntimeException` factory helpers now execute under `ScriptRuntimeExceptionTests`, covering table index errors, conversion failures, coroutine guard rails, access-on-statics paths, and `Rethrow` behaviour (interpreter line coverage holds at 86.5 % with the new tests).
 - `ExprListExpression` tuple compilation/evaluation paths now run under NUnit, retiring the parser red list entry (91.6 % line coverage).
 - `ScriptExecutionContext` reached 96.2 % line / 86.3 % branch coverage after backfilling AdditionalData, Call (yield/tail/metamethod), and EvaluateSymbol edge paths.
 - `FastStack<T>` is now fully exercised (100 % line/method coverage) through explicit interface validation and reflection-based zeroing checks.

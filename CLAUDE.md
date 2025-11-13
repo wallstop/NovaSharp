@@ -30,6 +30,9 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ```bash
 # Run all interpreter tests
 dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release
+
+# Generate coverage reports (Coverlet + ReportGenerator)
+./coverage.ps1
 ```
 
 ### Code Formatting

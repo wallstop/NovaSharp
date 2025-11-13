@@ -13,6 +13,7 @@
 - Legacy environments can use `msbuild src\NovaSharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
 - Execute interpreter tests with `dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release`.
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
+- Generate coverage locally with `./coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`).
 
 ## Coding Style & Naming Conventions
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
