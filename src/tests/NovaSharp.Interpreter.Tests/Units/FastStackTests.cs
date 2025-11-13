@@ -1,5 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Reflection;
     using NUnit.Framework;
     using NovaSharp.Interpreter.DataStructs;
 
@@ -180,6 +183,64 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(stack[0], Is.EqualTo(0));
                 Assert.That(stack[1], Is.EqualTo(0));
             });
+        }
+
+        [Test]
+        public void ICollectionAddAndClearDelegateToStack()
+        {
+            FastStack<int> stack = new(2);
+            ICollection<int> collection = stack;
+
+            collection.Add(5);
+            collection.Add(6);
+
+            Assert.That(stack.Count, Is.EqualTo(2));
+            Assert.That(stack.Peek(), Is.EqualTo(6));
+
+            Assert.That(collection.Count, Is.EqualTo(2));
+            Assert.That(collection.IsReadOnly, Is.False);
+
+            collection.Clear();
+
+            Assert.That(stack.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ExplicitInterfaceMembersThrowNotImplemented()
+        {
+            FastStack<int> stack = new(1);
+            IList<int> list = stack;
+            ICollection<int> collection = stack;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(() => list.IndexOf(1), Throws.TypeOf<NotImplementedException>());
+                Assert.That(() => list.Insert(0, 1), Throws.TypeOf<NotImplementedException>());
+                Assert.That(() => list.RemoveAt(0), Throws.TypeOf<NotImplementedException>());
+                Assert.That(() => collection.Contains(1), Throws.TypeOf<NotImplementedException>());
+                Assert.That(
+                    () => collection.CopyTo(Array.Empty<int>(), 0),
+                    Throws.TypeOf<NotImplementedException>()
+                );
+                Assert.That(() => collection.Remove(1), Throws.TypeOf<NotImplementedException>());
+                stack.Push(123);
+                Assert.That(() => list[0] = 99, Throws.Nothing);
+                Assert.That(list[0], Is.EqualTo(99));
+                Assert.That(stack.Peek(), Is.EqualTo(99));
+                Assert.That(
+                    () => ((IEnumerable<int>)stack).GetEnumerator(),
+                    Throws.TypeOf<NotImplementedException>()
+                );
+                Assert.That(
+                    () => ((System.Collections.IEnumerable)stack).GetEnumerator(),
+                    Throws.TypeOf<NotImplementedException>()
+                );
+            });
+
+            // exercise private Zero via reflection to ensure storage clearing path
+            typeof(FastStack<int>)
+                .GetMethod("Zero", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(stack, new object[] { 0 });
         }
     }
 }

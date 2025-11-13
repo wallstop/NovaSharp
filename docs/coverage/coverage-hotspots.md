@@ -40,6 +40,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `FieldMemberDescriptor` covers pre/lazy optimized getters, null-instance guards, and metadata wiring (80.7 % line coverage).
 - `ExprListExpression` tuple compilation/evaluation paths now run under NUnit, retiring the parser red list entry (91.6 % line coverage).
 - `ScriptExecutionContext` reached 96.2 % line / 86.3 % branch coverage after backfilling AdditionalData, Call (yield/tail/metamethod), and EvaluateSymbol edge paths.
+- `FastStack<T>` is now fully exercised (100 % line/method coverage) through explicit interface validation and reflection-based zeroing checks.
 - `EventMemberDescriptor` now sits at 94 %+ coverage after exercising add/remove failure paths, static facades, and assignment guards.
 - `CharPtr` climbed to 98.8 % line coverage by validating byte-array conversions, pointer arithmetic, navigation helpers, and null equality branches.
 - `DescriptorHelpers` now reports 92.9 % line / 90.1 % branch coverage after supplementing visibility, identifier shaping, and SafeGetTypes guard scenarios.
