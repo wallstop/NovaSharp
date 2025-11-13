@@ -21,11 +21,12 @@ This document summarises the third-party components bundled with NovaSharp and t
 | Source | Location | License | Usage | Notes |
 | --- | --- | --- | --- | --- |
 | Lua TAP suites (`TestMore/*`) | `src/tests/NovaSharp.Interpreter.Tests/TestMore` | MIT (Lua.org) | Interpreter parity tests | Mirrors upstream Lua 5.4 TAP fixtures. |
-| (Placeholder) Real-world Lua corpus | _TBD_ | _TBD_ | Planned | Populate once the corpus is curated; include provenance URL and license. |
+| `json.lua` (rxi) | `src/tests/NovaSharp.Interpreter.Tests/Fixtures/RealWorld/rxi-json` | MIT | Real-world corpus (JSON encode/decode regression guard) | Tag v0.1.2 (`d1e3b0f5d0f3d3493c7dadd0bb54135507fcebd7`). |
+| `inspect.lua` (kikito) | `src/tests/NovaSharp.Interpreter.Tests/Fixtures/RealWorld/kikito-inspect` | MIT | Real-world corpus (table formatting regression guard) | Tag v3.1.0 (`2cc61aa5a98ea852e48fd28d39de7b335ac983c6`). |
 
 When adding new scripts:
 1. Confirm the license permits redistribution in a test context (MIT/BSD/Apache/CC0/Unlicense preferred).
-2. Copy the license text (or attribution notice) into `docs/testing/fixtures/<corpusName>/LICENSE`.
+2. Copy the license text (or attribution notice) into `src/tests/NovaSharp.Interpreter.Tests/Fixtures/RealWorld/<corpusName>/LICENSE`.
 3. Record the source URL / commit hash and the file path in the table above.
 
 ## Updating This File

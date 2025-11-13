@@ -33,6 +33,11 @@
         </None>
     </ItemGroup>
     <ItemGroup>
+        <None Update="Fixtures\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
         <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
     </ItemGroup>
     <ItemGroup>
