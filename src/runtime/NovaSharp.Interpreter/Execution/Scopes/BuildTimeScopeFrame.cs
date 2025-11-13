@@ -66,19 +66,19 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             return null;
         }
 
-        internal SymbolRef DefineLocal(string name)
+        internal SymbolRef DefineLocal(string name, SymbolRefAttributes flags = default)
         {
-            return _scopeTreeHead.Define(name);
+            return _scopeTreeHead.Define(name, flags);
         }
 
-        internal SymbolRef TryDefineLocal(string name)
+        internal SymbolRef TryDefineLocal(string name, SymbolRefAttributes flags = default)
         {
             if (_scopeTreeHead.Find(name) != null)
             {
                 _scopeTreeHead.Rename(name);
             }
 
-            return _scopeTreeHead.Define(name);
+            return _scopeTreeHead.Define(name, flags);
         }
 
         internal void ResolveLRefs()

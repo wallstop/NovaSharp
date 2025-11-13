@@ -19,24 +19,30 @@ namespace NovaSharp.Interpreter.DataTypes
         public enum CoroutineType
         {
             /// <summary>
+            /// Legacy placeholder; prefer an explicit coroutine type.
+            /// </summary>
+            [Obsolete("Use a concrete CoroutineType value.", false)]
+            Unknown = 0,
+
+            /// <summary>
             /// A valid coroutine
             /// </summary>
-            Coroutine,
+            Coroutine = 1,
 
             /// <summary>
             /// A CLR callback assigned to a coroutine.
             /// </summary>
-            ClrCallback,
+            ClrCallback = 2,
 
             /// <summary>
             /// A CLR callback assigned to a coroutine and already executed.
             /// </summary>
-            ClrCallbackDead,
+            ClrCallbackDead = 3,
 
             /// <summary>
             /// A recycled coroutine
             /// </summary>
-            Recycled,
+            Recycled = 4,
         }
 
         /// <summary>

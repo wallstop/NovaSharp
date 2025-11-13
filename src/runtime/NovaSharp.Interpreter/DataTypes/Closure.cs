@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.Scopes;
@@ -17,17 +18,18 @@ namespace NovaSharp.Interpreter.DataTypes
             /// <summary>
             /// The closure has no upvalues (thus, technically, it's a function and not a closure!)
             /// </summary>
-            None,
+            [Obsolete("Prefer explicit UpvaluesType.", false)]
+            None = 0,
 
             /// <summary>
             /// The closure has _ENV as its only upvalue
             /// </summary>
-            Environment,
+            Environment = 1,
 
             /// <summary>
             /// The closure is a "real" closure, with multiple upvalues
             /// </summary>
-            Closure,
+            Closure = 2,
         }
 
         /// <summary>
@@ -168,7 +170,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
             if (count == 0)
             {
-                return UpvaluesType.None;
+                return default;
             }
             else if (count == 1 && GetUpvalueName(0) == WellKnownSymbols.ENV)
             {

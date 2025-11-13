@@ -413,6 +413,15 @@ namespace NovaSharp.Interpreter.Errors
             return new ScriptRuntimeException("loop in call");
         }
 
+        public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
+        {
+            string typeName = value?.Type.ToLuaTypeString() ?? DataType.Nil.ToLuaTypeString();
+            return new ScriptRuntimeException(
+                "__close metamethod expected (got {0})",
+                typeName
+            );
+        }
+
         /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a table indexing operation used nil as the key.

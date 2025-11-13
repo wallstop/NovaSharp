@@ -208,9 +208,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
-                    OpCode = OpCode.Clean,
+                    OpCode = OpCode.Enter,
                     NumVal = runtimeScopeBlock.From,
                     NumVal2 = runtimeScopeBlock.ToInclusive,
+                    SymbolList = runtimeScopeBlock.ToBeClosed,
                 }
             );
         }
@@ -220,9 +221,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
-                    OpCode = OpCode.Clean,
+                    OpCode = OpCode.Leave,
                     NumVal = runtimeScopeBlock.From,
                     NumVal2 = runtimeScopeBlock.To,
+                    SymbolList = runtimeScopeBlock.ToBeClosed,
                 }
             );
         }
@@ -232,21 +234,44 @@ namespace NovaSharp.Interpreter.Execution.VM
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
-                    OpCode = OpCode.Clean,
+                    OpCode = OpCode.Exit,
                     NumVal = runtimeScopeBlock.From,
                     NumVal2 = runtimeScopeBlock.ToInclusive,
+                    SymbolList = runtimeScopeBlock.ToBeClosed,
                 }
             );
         }
 
         public Instruction Emit_Clean(RuntimeScopeBlock runtimeScopeBlock)
         {
+            SymbolRef[] closers = Array.Empty<SymbolRef>();
+
+            if (runtimeScopeBlock.ToBeClosed.Length > 0)
+            {
+                List<SymbolRef> subset = new();
+                int threshold = runtimeScopeBlock.To;
+
+                foreach (SymbolRef sym in runtimeScopeBlock.ToBeClosed)
+                {
+                    if (sym.i_Index > threshold)
+                    {
+                        subset.Add(sym);
+                    }
+                }
+
+                if (subset.Count > 0)
+                {
+                    closers = subset.ToArray();
+                }
+            }
+
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Clean,
                     NumVal = runtimeScopeBlock.To + 1,
                     NumVal2 = runtimeScopeBlock.ToInclusive,
+                    SymbolList = closers,
                 }
             );
         }

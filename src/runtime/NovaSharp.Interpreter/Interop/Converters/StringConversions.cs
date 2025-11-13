@@ -9,10 +9,11 @@ namespace NovaSharp.Interpreter.Interop.Converters
     {
         internal enum StringSubtype
         {
-            None,
-            String,
-            StringBuilder,
-            Char,
+            [Obsolete("Use a specific StringSubtype.", false)]
+            None = 0,
+            String = 1,
+            StringBuilder = 2,
+            Char = 3,
         }
 
         internal static StringSubtype GetStringSubtype(Type desiredType)
@@ -31,7 +32,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
             }
             else
             {
-                return StringSubtype.None;
+                return default;
             }
         }
 
@@ -55,7 +56,6 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     }
 
                     break;
-                case StringSubtype.None:
                 default:
                     break;
             }

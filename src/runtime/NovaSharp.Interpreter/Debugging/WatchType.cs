@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -10,36 +11,38 @@ namespace NovaSharp.Interpreter.Debugging
         /// <summary>
         /// A real variable watch
         /// </summary>
-        Watches,
+        [Obsolete("Use a specific WatchType.", false)]
+        Unknown = 0,
+        Watches = 1,
 
         /// <summary>
         /// The status of the v-stack
         /// </summary>
-        VStack,
+        VStack = 2,
 
         /// <summary>
         /// The call stack
         /// </summary>
-        CallStack,
+        CallStack = 3,
 
         /// <summary>
         /// The list of coroutines
         /// </summary>
-        Coroutines,
+        Coroutines = 4,
 
         /// <summary>
         /// Topmost local variables
         /// </summary>
-        Locals,
+        Locals = 5,
 
         /// <summary>
         /// The list of currently active coroutines
         /// </summary>
-        Threads,
+        Threads = 6,
 
         /// <summary>
         /// The maximum value of this enum
         /// </summary>
-        MaxValue,
+        MaxValue = 7,
     }
 }

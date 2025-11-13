@@ -1,7 +1,17 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
+
+    [Flags]
+    public enum SymbolRefAttributes
+    {
+        [Obsolete("Prefer specifying explicit SymbolRefAttributes flags.", false)]
+        None = 0,
+        Const = 1 << 0,
+        ToBeClosed = 1 << 1,
+    }
 
     /// <summary>
     /// This class stores a possible l-value (that is a potential target of an assignment)
@@ -15,6 +25,7 @@ namespace NovaSharp.Interpreter.DataTypes
         internal SymbolRef i_Env;
         internal int i_Index;
         internal string i_Name;
+        internal SymbolRefAttributes i_Attributes;
 
         /// <summary>
         /// Gets the type of this symbol reference
@@ -39,6 +50,15 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             get { return i_Name; }
         }
+
+        public SymbolRefAttributes Attributes
+        {
+            get { return i_Attributes; }
+        }
+
+        public bool IsConst => (i_Attributes & SymbolRefAttributes.Const) != 0;
+
+        public bool IsToBeClosed => (i_Attributes & SymbolRefAttributes.ToBeClosed) != 0;
 
         /// <summary>
         /// Gets the environment this symbol refers to (for global symbols only)
@@ -70,6 +90,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 i_Type = SymbolRefType.Global,
                 i_Env = envSymbol,
                 i_Name = name,
+                i_Attributes = default,
             };
         }
 
@@ -79,7 +100,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="name">The name.</param>
         /// <param name="index">The index of the var in local scope.</param>
         /// <returns></returns>
-        internal static SymbolRef Local(string name, int index)
+        internal static SymbolRef Local(string name, int index, SymbolRefAttributes attributes = default)
         {
             //Debug.Assert(index >= 0, "Symbol Index < 0");
             return new SymbolRef()
@@ -87,6 +108,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 i_Index = index,
                 i_Type = SymbolRefType.Local,
                 i_Name = name,
+                i_Attributes = attributes,
             };
         }
 
@@ -104,6 +126,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 i_Index = index,
                 i_Type = SymbolRefType.Upvalue,
                 i_Name = name,
+                i_Attributes = default,
             };
         }
 
@@ -137,6 +160,7 @@ namespace NovaSharp.Interpreter.DataTypes
             bw.Write((byte)i_Type);
             bw.Write(i_Index);
             bw.Write(i_Name);
+            bw.Write((int)i_Attributes);
         }
 
         /// <summary>
@@ -149,6 +173,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 i_Type = (SymbolRefType)br.ReadByte(),
                 i_Index = br.ReadInt32(),
                 i_Name = br.ReadString(),
+                i_Attributes = (SymbolRefAttributes)br.ReadInt32(),
             };
             return that;
         }

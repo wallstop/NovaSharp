@@ -232,6 +232,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.MkTuple:
                             ExecMkTuple(i);
                             break;
+                        case OpCode.Enter:
+                            ExecEnter(i);
+                            break;
+                        case OpCode.Leave:
+                            ExecLeave(i);
+                            break;
+                        case OpCode.Exit:
+                            ExecExit(i);
+                            break;
                         case OpCode.Clean:
                             ClearBlockData(i);
                             break;
@@ -399,9 +408,13 @@ namespace NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
+                DynValue closeError = DynValue.NewString(exception.DecoratedMessage);
+
                 while (_executionStack.Count > 0)
                 {
                     CallStackItem csi = PopToBasePointer();
+
+                    CloseAllPendingBlocks(csi, closeError);
 
                     if (csi.errorHandler != null)
                     {
@@ -489,13 +502,182 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             CallStackItem stackframe = _executionStack.Peek();
 
-            DynValue v = stackframe.localScope[symref.i_Index];
-            if (v == null)
+            DynValue slot = stackframe.localScope[symref.i_Index];
+            if (slot == null)
             {
-                stackframe.localScope[symref.i_Index] = v = DynValue.NewNil();
+                stackframe.localScope[symref.i_Index] = slot = DynValue.NewNil();
             }
 
-            v.Assign(value);
+            bool isToBeClosed = IsSymbolToBeClosed(stackframe, symref.i_Index);
+
+            if (isToBeClosed)
+            {
+                EnsureToBeClosedValue(symref, value);
+
+                if (!slot.IsNil())
+                {
+                    DynValue previous = slot.Clone();
+                    CloseValue(symref, previous, DynValue.Nil);
+                }
+            }
+
+            slot.Assign(value);
+        }
+
+        private static bool IsSymbolToBeClosed(CallStackItem stackframe, int index)
+        {
+            return stackframe.toBeClosedIndices != null
+                && stackframe.toBeClosedIndices.Contains(index);
+        }
+
+        private void ExecEnter(Instruction i)
+        {
+            ClearBlockData(i);
+
+            CallStackItem stackframe = _executionStack.Peek();
+
+            SymbolRef[] closers = i.SymbolList ?? Array.Empty<SymbolRef>();
+
+            if (stackframe.blocksToClose == null)
+            {
+                stackframe.blocksToClose = new List<List<SymbolRef>>();
+            }
+
+            stackframe.blocksToClose.Add(new List<SymbolRef>(closers));
+
+            if (closers.Length > 0)
+            {
+                if (stackframe.toBeClosedIndices == null)
+                {
+                    stackframe.toBeClosedIndices = new HashSet<int>();
+                }
+
+                foreach (SymbolRef sym in closers)
+                {
+                    stackframe.toBeClosedIndices.Add(sym.i_Index);
+                }
+            }
+        }
+
+        private void ExecLeave(Instruction i)
+        {
+            CallStackItem stackframe = _executionStack.Peek();
+            CloseCurrentBlock(stackframe, DynValue.Nil);
+            ClearBlockData(i);
+        }
+
+        private void ExecExit(Instruction i)
+        {
+            CallStackItem stackframe = _executionStack.Peek();
+            CloseCurrentBlock(stackframe, DynValue.Nil);
+            ClearBlockData(i);
+        }
+
+        private void EnsureToBeClosedValue(SymbolRef symbol, DynValue value)
+        {
+            DynValue candidate = value?.ToScalar() ?? DynValue.Nil;
+
+            DynValue metamethod = GetMetamethodRaw(candidate, "__close");
+
+            if (metamethod == null || metamethod.IsNil())
+            {
+                throw ScriptRuntimeException.CloseMetamethodExpected(candidate);
+            }
+        }
+
+        private void CloseValue(SymbolRef symbol, DynValue value, DynValue error)
+        {
+            DynValue scalar = value?.ToScalar() ?? DynValue.Nil;
+
+            DynValue metamethod = GetMetamethodRaw(scalar, "__close");
+
+            if (metamethod == null || metamethod.IsNil())
+            {
+                throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
+            }
+
+            DynValue err = error ?? DynValue.Nil;
+
+            GetScript().Call(metamethod, scalar, err);
+        }
+
+        private void CloseCurrentBlock(CallStackItem stackframe, DynValue error)
+        {
+            if (stackframe.blocksToClose == null || stackframe.blocksToClose.Count == 0)
+            {
+                return;
+            }
+
+            List<SymbolRef> closers = stackframe.blocksToClose[^1];
+            stackframe.blocksToClose.RemoveAt(stackframe.blocksToClose.Count - 1);
+
+            if (closers.Count == 0)
+            {
+                return;
+            }
+
+            if (stackframe.toBeClosedIndices != null)
+            {
+                foreach (SymbolRef sym in closers)
+                {
+                    stackframe.toBeClosedIndices.Remove(sym.i_Index);
+                }
+            }
+
+            for (int idx = closers.Count - 1; idx >= 0; idx--)
+            {
+                SymbolRef sym = closers[idx];
+                DynValue slot = stackframe.localScope[sym.i_Index];
+
+                if (slot != null && !slot.IsNil())
+                {
+                    DynValue previous = slot.Clone();
+                    CloseValue(sym, previous, error);
+                    slot.Assign(DynValue.Nil);
+                }
+            }
+        }
+
+        private void CloseAllPendingBlocks(CallStackItem stackframe, DynValue error)
+        {
+            if (stackframe.blocksToClose == null || stackframe.blocksToClose.Count == 0)
+            {
+                return;
+            }
+
+            while (stackframe.blocksToClose.Count > 0)
+            {
+                List<SymbolRef> closers = stackframe.blocksToClose[^1];
+                stackframe.blocksToClose.RemoveAt(stackframe.blocksToClose.Count - 1);
+
+                if (stackframe.toBeClosedIndices != null && closers.Count > 0)
+                {
+                    foreach (SymbolRef sym in closers)
+                    {
+                        stackframe.toBeClosedIndices.Remove(sym.i_Index);
+                    }
+                }
+
+                if (closers.Count == 0)
+                {
+                    continue;
+                }
+
+                for (int idx = closers.Count - 1; idx >= 0; idx--)
+                {
+                    SymbolRef sym = closers[idx];
+                    DynValue slot = stackframe.localScope[sym.i_Index];
+
+                    if (slot != null && !slot.IsNil())
+                    {
+                        DynValue previous = slot.Clone();
+                        CloseValue(sym, previous, error);
+                        slot.Assign(DynValue.Nil);
+                    }
+                }
+            }
+
+            stackframe.toBeClosedIndices?.Clear();
         }
 
         private void ExecStoreLcl(Instruction i)
@@ -750,6 +932,63 @@ namespace NovaSharp.Interpreter.Execution.VM
             cur.localScope = new DynValue[i.NumVal];
 
             ClearBlockData(i);
+
+            if (cur.blocksToClose == null)
+            {
+                cur.blocksToClose = new List<List<SymbolRef>>();
+            }
+            else
+            {
+                cur.blocksToClose.Clear();
+            }
+
+            if (cur.toBeClosedIndices == null)
+            {
+                cur.toBeClosedIndices = new HashSet<int>();
+            }
+            else
+            {
+                cur.toBeClosedIndices.Clear();
+            }
+
+            SymbolRef[] symbols = i.SymbolList;
+
+            if (symbols == null || symbols.Length == 0)
+            {
+                return;
+            }
+
+            int rootBlockLastIndex = i.NumVal2;
+            if (rootBlockLastIndex < 0)
+            {
+                return;
+            }
+
+            List<SymbolRef> rootClosers = null;
+
+            foreach (SymbolRef symbol in symbols)
+            {
+                if (symbol != null && symbol.IsToBeClosed && symbol.i_Index <= rootBlockLastIndex)
+                {
+                    rootClosers ??= new List<SymbolRef>();
+                    rootClosers.Add(symbol);
+                    cur.toBeClosedIndices.Add(symbol.i_Index);
+                }
+            }
+
+            if (rootClosers != null && rootClosers.Count > 0)
+            {
+                cur.blocksToClose.Add(rootClosers);
+            }
+            else if (cur.blocksToClose.Count == 0)
+            {
+                cur.blocksToClose = null;
+            }
+
+            if (cur.toBeClosedIndices.Count == 0)
+            {
+                cur.toBeClosedIndices = null;
+            }
         }
 
         private CallStackItem PopToBasePointer()
@@ -863,7 +1102,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             DynValue fn = _valueStack.Peek(argsCount);
             CallStackItemFlags flags = (
-                thisCall ? CallStackItemFlags.MethodCall : CallStackItemFlags.None
+                thisCall ? CallStackItemFlags.MethodCall : default
             );
 
             // if TCO threshold reached
@@ -1039,6 +1278,8 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 throw new InternalErrorException("RET supports only 0 and 1 ret val scenarios");
             }
+
+            CloseAllPendingBlocks(csi, DynValue.Nil);
 
             if (csi.continuation != null)
             {

@@ -1,4 +1,4 @@
-namespace NovaSharp.Commands.Implementations
+﻿namespace NovaSharp.Commands.Implementations
 {
     using System;
     using System.IO;
@@ -199,7 +199,7 @@ namespace NovaSharp.Commands.Implementations
 
         private static Table LoadDumpTable(string path)
         {
-            Script s = new(CoreModules.None);
+            Script s = new(default);
             DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(path));
             return eee.Evaluate(null).Table;
         }

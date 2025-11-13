@@ -17,72 +17,74 @@ namespace NovaSharp.Interpreter.Debugging
             /// <summary>
             /// Step-in at the bytecode level
             /// </summary>
-            ByteCodeStepIn,
+            [Obsolete("Use a specific Debugger action type.", false)]
+            Unknown = 0,
+            ByteCodeStepIn = 1,
 
             /// <summary>
             /// Step-over at the bytecode level
             /// </summary>
-            ByteCodeStepOver,
+            ByteCodeStepOver = 2,
 
             /// <summary>
             /// Step-out at the bytecode level
             /// </summary>
-            ByteCodeStepOut,
+            ByteCodeStepOut = 3,
 
             /// <summary>
             /// Step-in at the source level
             /// </summary>
-            StepIn,
+            StepIn = 4,
 
             /// <summary>
             /// Step-over at the source level
             /// </summary>
-            StepOver,
+            StepOver = 5,
 
             /// <summary>
             /// Step-out at the source level
             /// </summary>
-            StepOut,
+            StepOut = 6,
 
             /// <summary>
             /// Continue execution "freely"
             /// </summary>
-            Run,
+            Run = 7,
 
             /// <summary>
             /// Toggles breakpoint
             /// </summary>
-            ToggleBreakpoint,
+            ToggleBreakpoint = 8,
 
             /// <summary>
             /// Sets a breakpoint
             /// </summary>
-            SetBreakpoint,
+            SetBreakpoint = 9,
 
             /// <summary>
             /// Clears a breakpoint
             /// </summary>
-            ClearBreakpoint,
+            ClearBreakpoint = 10,
 
             /// <summary>
             /// Reset all breakpoints
             /// </summary>
-            ResetBreakpoints,
+            ResetBreakpoints = 11,
 
             /// <summary>
             /// Refresh the data
             /// </summary>
-            Refresh,
+            Refresh = 12,
 
             /// <summary>
             /// Hard refresh of data
             /// </summary>
-            HardRefresh,
+            HardRefresh = 13,
 
             /// <summary>
             /// No action
             /// </summary>
-            None,
+            None = 14,
         }
 
         /// <summary>

@@ -104,14 +104,14 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             return _closureBuilders[currentFrame + 1].CreateUpvalue(this, upvalue);
         }
 
-        public SymbolRef DefineLocal(string name)
+        public SymbolRef DefineLocal(string name, SymbolRefAttributes flags = default)
         {
-            return _frames.Last().DefineLocal(name);
+            return _frames.Last().DefineLocal(name, flags);
         }
 
-        public SymbolRef TryDefineLocal(string name)
+        public SymbolRef TryDefineLocal(string name, SymbolRefAttributes flags = default)
         {
-            return _frames.Last().TryDefineLocal(name);
+            return _frames.Last().TryDefineLocal(name, flags);
         }
 
         public bool CurrentFunctionHasVarArgs()

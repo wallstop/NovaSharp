@@ -8,19 +8,22 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     [Flags]
     public enum MemberDescriptorAccess
     {
+        [Obsolete("Prefer explicit MemberDescriptorAccess combinations.", false)]
+        None = 0,
+
         /// <summary>
         /// The member can be read from
         /// </summary>
-        CanRead = 1,
+        CanRead = 1 << 0,
 
         /// <summary>
         /// The member can be written to
         /// </summary>
-        CanWrite = 2,
+        CanWrite = 1 << 1,
 
         /// <summary>
         /// The can be invoked
         /// </summary>
-        CanExecute = 4,
+        CanExecute = 1 << 2,
     }
 }

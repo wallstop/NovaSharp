@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Diagnostics;
@@ -89,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenFileSupportsReadAndWrite()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             try
             {

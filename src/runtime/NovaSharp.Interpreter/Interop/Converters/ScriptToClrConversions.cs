@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Interop.Converters
+﻿namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Globalization;
@@ -178,7 +178,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         return value.Boolean;
                     }
 
-                    if (stringSubType != StringConversions.StringSubtype.None)
+                    if (stringSubType != default)
                     {
                         str = value.Boolean.ToString();
                     }
@@ -200,14 +200,14 @@ namespace NovaSharp.Interpreter.Interop.Converters
 
                         break;
                     }
-                    if (stringSubType != StringConversions.StringSubtype.None)
+                    if (stringSubType != default)
                     {
                         str = value.Number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     break;
                 case DataType.String:
-                    if (stringSubType != StringConversions.StringSubtype.None)
+                    if (stringSubType != default)
                     {
                         str = value.String;
                     }
@@ -249,7 +249,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                             return udObj;
                         }
 
-                        if (stringSubType != StringConversions.StringSubtype.None)
+                        if (stringSubType != default)
                         {
                             str = udDesc.AsString(udObj);
                         }
@@ -276,7 +276,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     break;
             }
 
-            if (stringSubType != StringConversions.StringSubtype.None && str != null)
+            if (stringSubType != default && str != null)
             {
                 return StringConversions.ConvertString(stringSubType, str, desiredType, value.Type);
             }
@@ -370,7 +370,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         return WEIGHT_EXACT_MATCH;
                     }
 
-                    if (stringSubType != StringConversions.StringSubtype.None)
+                    if (stringSubType != default)
                     {
                         return WEIGHT_BOOL_TO_STRING;
                     }
@@ -386,7 +386,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         return GetNumericTypeWeight(desiredType);
                     }
 
-                    if (stringSubType != StringConversions.StringSubtype.None)
+                    if (stringSubType != default)
                     {
                         return WEIGHT_NUMBER_TO_STRING;
                     }
@@ -443,7 +443,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                             return WEIGHT_EXACT_MATCH;
                         }
 
-                        if (stringSubType != StringConversions.StringSubtype.None)
+                        if (stringSubType != default)
                         {
                             return WEIGHT_USERDATA_TO_STRING;
                         }

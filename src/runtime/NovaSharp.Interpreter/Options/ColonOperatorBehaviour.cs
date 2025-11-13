@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Options
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -11,16 +12,18 @@ namespace NovaSharp.Interpreter.Options
         /// <summary>
         /// The colon is treated the same as the dot ('.') operator.
         /// </summary>
-        TreatAsDot,
+        [Obsolete("Use an explicit colon operator behaviour.", false)]
+        Unknown = 0,
+        TreatAsDot = 1,
 
         /// <summary>
         /// The colon is treated the same as the dot ('.') operator if the first argument is userdata, as a Lua colon operator otherwise.
         /// </summary>
-        TreatAsDotOnUserData,
+        TreatAsDotOnUserData = 2,
 
         /// <summary>
         /// The colon is treated in the same as the Lua colon operator works.
         /// </summary>
-        TreatAsColon,
+        TreatAsColon = 3,
     }
 }

@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System.Collections.Generic;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
@@ -22,5 +23,8 @@ namespace NovaSharp.Interpreter.Execution.VM
         public ClosureContext closureScope;
 
         public CallStackItemFlags flags;
+
+        public List<List<SymbolRef>> blocksToClose;
+        public HashSet<int> toBeClosedIndices;
     }
 }

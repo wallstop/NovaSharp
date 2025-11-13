@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.Errors;
 
@@ -18,67 +19,67 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// A nil value, as in Lua
         /// </summary>
-        Nil,
+        Nil = 0,
 
         /// <summary>
         /// A place holder for no value
         /// </summary>
-        Void,
+        Void = 1,
 
         /// <summary>
         /// A Lua boolean
         /// </summary>
-        Boolean,
+        Boolean = 2,
 
         /// <summary>
         /// A Lua number
         /// </summary>
-        Number,
+        Number = 3,
 
         /// <summary>
         /// A Lua string
         /// </summary>
-        String,
+        String = 4,
 
         /// <summary>
         /// A Lua function
         /// </summary>
-        Function,
+        Function = 5,
 
         /// <summary>
         /// A Lua table
         /// </summary>
-        Table,
+        Table = 6,
 
         /// <summary>
         /// A set of multiple values
         /// </summary>
-        Tuple,
+        Tuple = 7,
 
         /// <summary>
         /// A userdata reference - that is a wrapped CLR object
         /// </summary>
-        UserData,
+        UserData = 8,
 
         /// <summary>
         /// A coroutine handle
         /// </summary>
-        Thread,
+        Thread = 9,
 
         /// <summary>
         /// A callback function
         /// </summary>
-        ClrFunction,
+        ClrFunction = 10,
 
         /// <summary>
         /// A request to execute a tail call
         /// </summary>
-        TailCallRequest,
+        TailCallRequest = 11,
 
         /// <summary>
         /// A request to coroutine.yield
         /// </summary>
-        YieldRequest,
+        YieldRequest = 12,
     }
 
     /// <summary>

@@ -7,14 +7,15 @@ namespace NovaSharp.Interpreter.Execution
     [Flags]
     internal enum InstructionFieldUsage
     {
+        [Obsolete("Prefer explicit InstructionFieldUsage flags.", false)]
         None = 0,
-        Symbol = 0x1,
-        SymbolList = 0x2,
-        Name = 0x4,
-        Value = 0x8,
-        NumVal = 0x10,
-        NumVal2 = 0x20,
-        NumValAsCodeAddress = 0x8010,
+        Symbol = 1 << 0,
+        SymbolList = 1 << 1,
+        Name = 1 << 2,
+        Value = 1 << 3,
+        NumVal = 1 << 4,
+        NumVal2 = 1 << 5,
+        NumValAsCodeAddress = (1 << 6) | NumVal,
     }
 
     internal static class InstructionFieldUsageExtensions
@@ -43,7 +44,7 @@ namespace NovaSharp.Interpreter.Execution
                 case OpCode.Power:
                 case OpCode.CNot:
                 case OpCode.ToBool:
-                    return InstructionFieldUsage.None;
+                    return default;
                 case OpCode.Pop:
                 case OpCode.Copy:
                 case OpCode.TblInitI:
@@ -53,6 +54,12 @@ namespace NovaSharp.Interpreter.Execution
                 case OpCode.Ret:
                 case OpCode.MkTuple:
                     return InstructionFieldUsage.NumVal;
+                case OpCode.Enter:
+                case OpCode.Leave:
+                case OpCode.Exit:
+                    return InstructionFieldUsage.SymbolList
+                        | InstructionFieldUsage.NumVal
+                        | InstructionFieldUsage.NumVal2;
                 case OpCode.Jump:
                 case OpCode.Jf:
                 case OpCode.JNil:
@@ -61,8 +68,11 @@ namespace NovaSharp.Interpreter.Execution
                 case OpCode.JfOrPop:
                     return InstructionFieldUsage.NumValAsCodeAddress;
                 case OpCode.Swap:
-                case OpCode.Clean:
                     return InstructionFieldUsage.NumVal | InstructionFieldUsage.NumVal2;
+                case OpCode.Clean:
+                    return InstructionFieldUsage.SymbolList
+                        | InstructionFieldUsage.NumVal
+                        | InstructionFieldUsage.NumVal2;
                 case OpCode.Local:
                 case OpCode.Upvalue:
                     return InstructionFieldUsage.Symbol;

@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             public bool debuggerEnabled = true;
             public IDebugger debuggerAttached = null;
-            public DebuggerAction.ActionType debuggerCurrentAction = DebuggerAction.ActionType.None;
+            public DebuggerAction.ActionType debuggerCurrentAction;
             public int debuggerCurrentActionTarget = -1;
             public SourceRef lastHlRef = null;
             public int exStackDepthAtStep = -1;

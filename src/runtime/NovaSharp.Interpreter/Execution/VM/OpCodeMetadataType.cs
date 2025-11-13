@@ -1,8 +1,12 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
+
     public enum OpCodeMetadataType
     {
-        ChunkEntrypoint,
-        FunctionEntrypoint,
+        [Obsolete("Use a specific OpCodeMetadataType.", false)]
+        Unknown = 0,
+        ChunkEntrypoint = 1,
+        FunctionEntrypoint = 2,
     }
 }

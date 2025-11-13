@@ -18,14 +18,15 @@ namespace NovaSharp.Interpreter.Tree.Statements
         public AssignmentStatement(ScriptLoadingContext lcontext, Token startToken)
             : base(lcontext)
         {
-            List<string> names = new();
+            List<(Token name, SymbolRefAttributes flags)> locals = new();
 
             Token first = startToken;
 
             while (true)
             {
-                Token name = CheckTokenType(lcontext, TokenType.Name);
-                names.Add(name.Text);
+                Token nameToken = CheckTokenType(lcontext, TokenType.Name);
+                SymbolRefAttributes flags = ParseLocalAttributes(lcontext);
+                locals.Add((nameToken, flags));
 
                 if (lcontext.Lexer.Current.type != TokenType.Comma)
                 {
@@ -45,9 +46,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 _rValues = new List<Expression>();
             }
 
-            foreach (string name in names)
+            foreach ((Token nameToken, SymbolRefAttributes flags) in locals)
             {
-                SymbolRef localVar = lcontext.Scope.TryDefineLocal(name);
+                SymbolRef localVar = lcontext.Scope.TryDefineLocal(nameToken.Text, flags);
                 SymbolRefExpression symbol = new(lcontext, localVar);
                 _lValues.Add(symbol);
             }
@@ -117,6 +118,43 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
                 bc.Emit_Pop(_rValues.Count);
             }
+        }
+
+        private static SymbolRefAttributes ParseLocalAttributes(ScriptLoadingContext lcontext)
+        {
+            SymbolRefAttributes flags = default;
+
+            while (lcontext.Lexer.Current.type == TokenType.OpLessThan)
+            {
+                lcontext.Lexer.Next();
+
+                Token attr = CheckTokenType(lcontext, TokenType.Name);
+                SymbolRefAttributes attrFlag = attr.Text switch
+                {
+                    "const" => SymbolRefAttributes.Const,
+                    "close" => SymbolRefAttributes.ToBeClosed,
+                    _ => throw new SyntaxErrorException(
+                        attr,
+                        "unknown attribute '{0}'",
+                        attr.Text
+                    ),
+                };
+
+                if ((flags & attrFlag) != 0)
+                {
+                    throw new SyntaxErrorException(
+                        attr,
+                        "duplicate attribute '{0}'",
+                        attr.Text
+                    );
+                }
+
+                CheckTokenType(lcontext, TokenType.OpGreaterThan);
+
+                flags |= attrFlag;
+            }
+
+            return flags;
         }
     }
 }

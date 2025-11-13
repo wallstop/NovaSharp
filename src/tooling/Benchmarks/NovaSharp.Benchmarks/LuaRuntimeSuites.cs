@@ -1,11 +1,15 @@
 namespace NovaSharp.Benchmarks
 {
+    using System;
+
     public enum RuntimeScenario
     {
-        NumericLoops,
-        TableMutation,
-        CoroutinePipeline,
-        UserDataInterop,
+        [Obsolete("Use a specific RuntimeScenario.", false)]
+        Unknown = 0,
+        NumericLoops = 1,
+        TableMutation = 2,
+        CoroutinePipeline = 3,
+        UserDataInterop = 4,
     }
 
     internal static class LuaRuntimeSuites

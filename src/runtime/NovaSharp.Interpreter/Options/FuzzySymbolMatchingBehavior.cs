@@ -9,17 +9,18 @@ namespace NovaSharp.Interpreter.Options
     public enum FuzzySymbolMatchingBehavior
     {
         /// <summary>No fuzzy matching is performed.</summary>
+        [Obsolete("Prefer explicit FuzzySymbolMatchingBehavior combinations.", false)]
         None = 0,
 
         /// <summary>The first letter of a symbol will be uppercased (to check for common C# naming conventions). For example, testMethod() becomes TestMethod()</summary>
-        UpperFirstLetter = 1,
+        UpperFirstLetter = 1 << 0,
 
         /// <summary>Underscores in symbols are converted to camelcase. For example, test_method() becomes testMethod()</summary>
-        Camelify = 2,
+        Camelify = 1 << 1,
 
         /// <summary>
         /// Converts a symbol to pascal case. For example, test_Method_two() becomes TestMethodTwo()
         /// </summary>
-        PascalCase = 4,
+        PascalCase = 1 << 2,
     }
 }

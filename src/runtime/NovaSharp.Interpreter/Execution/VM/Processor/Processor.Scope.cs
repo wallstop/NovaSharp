@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
+    using System.Collections.Generic;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -9,14 +10,61 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         private void ClearBlockData(Instruction i)
         {
+            CallStackItem stackframe = _executionStack.Peek();
+
+            if (i.SymbolList != null && i.SymbolList.Length > 0)
+            {
+                CloseSymbolsSubset(stackframe, i.SymbolList, DynValue.Nil);
+            }
+
             int from = i.NumVal;
             int to = i.NumVal2;
 
-            DynValue[] array = _executionStack.Peek().localScope;
+            DynValue[] array = stackframe.localScope;
 
             if (to >= 0 && from >= 0 && to >= from)
             {
                 Array.Clear(array, from, to - from + 1);
+            }
+        }
+
+        private void CloseSymbolsSubset(
+            CallStackItem stackframe,
+            SymbolRef[] symbols,
+            DynValue error
+        )
+        {
+            if (symbols == null || symbols.Length == 0)
+            {
+                return;
+            }
+
+            foreach (SymbolRef sym in symbols)
+            {
+                stackframe.toBeClosedIndices?.Remove(sym.i_Index);
+
+                if (stackframe.blocksToClose != null)
+                {
+                    for (int listIndex = stackframe.blocksToClose.Count - 1; listIndex >= 0; listIndex--)
+                    {
+                        List<SymbolRef> list = stackframe.blocksToClose[listIndex];
+                        int foundIndex = list.FindIndex(s => s.i_Index == sym.i_Index);
+                        if (foundIndex >= 0)
+                        {
+                            list.RemoveAt(foundIndex);
+                            break;
+                        }
+                    }
+                }
+
+                DynValue slot = stackframe.localScope[sym.i_Index];
+
+                if (slot != null && !slot.IsNil())
+                {
+                    DynValue previous = slot.Clone();
+                    CloseValue(sym, previous, error);
+                    slot.Assign(DynValue.Nil);
+                }
             }
         }
 
@@ -69,17 +117,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     SetGlobalSymbol(GetGenericSymbol(symref.i_Env), symref.i_Name, value);
                     break;
                 case SymbolRefType.Local:
-                    {
-                        CallStackItem stackframe = GetTopNonClrFunction();
-
-                        DynValue v = stackframe.localScope[symref.i_Index];
-                        if (v == null)
-                        {
-                            stackframe.localScope[symref.i_Index] = v = DynValue.NewNil();
-                        }
-
-                        v.Assign(value);
-                    }
+                    AssignLocal(symref, value);
                     break;
                 case SymbolRefType.Upvalue:
                     {

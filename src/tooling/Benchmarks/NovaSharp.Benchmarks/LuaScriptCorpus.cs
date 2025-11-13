@@ -1,13 +1,16 @@
 namespace NovaSharp.Benchmarks
 {
+    using System;
     using System.Text;
 
     public enum ScriptComplexity
     {
-        Tiny,
-        Small,
-        Medium,
-        Large,
+        [Obsolete("Use a specific ScriptComplexity.", false)]
+        Unknown = 0,
+        Tiny = 1,
+        Small = 2,
+        Medium = 3,
+        Large = 4,
     }
 
     internal static class LuaScriptCorpus

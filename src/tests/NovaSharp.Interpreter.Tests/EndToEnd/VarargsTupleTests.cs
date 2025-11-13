@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.EndToEnd
+﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -100,7 +100,7 @@ end
 				Obj(1)
 			";
 
-            Script s = new(CoreModules.None);
+            Script s = new(default);
 
             s.DoString(script);
         }

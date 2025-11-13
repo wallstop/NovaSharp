@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 )
             )
             {
-                _debug.debuggerCurrentAction = DebuggerAction.ActionType.None;
+                _debug.debuggerCurrentAction = default;
                 _debug.debuggerCurrentActionTarget = -1;
             }
 
@@ -181,7 +181,6 @@ namespace NovaSharp.Interpreter.Execution.VM
                     case DebuggerAction.ActionType.HardRefresh:
                         RefreshDebugger(true, instructionPtr);
                         break;
-                    case DebuggerAction.ActionType.None:
                     default:
                         break;
                 }

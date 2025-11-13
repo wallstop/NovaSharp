@@ -5,13 +5,14 @@ namespace NovaSharp.Interpreter.Execution.VM
     [Flags]
     internal enum CallStackItemFlags
     {
+        [Obsolete("Prefer explicit CallStackItemFlags combinations.", false)]
         None = 0,
 
-        EntryPoint = 1,
-        ResumeEntryPoint = 3,
-        CallEntryPoint = 5,
+        EntryPoint = 1 << 0,
+        ResumeEntryPoint = EntryPoint | (1 << 1),
+        CallEntryPoint = EntryPoint | (1 << 2),
 
-        TailCall = 0x10,
-        MethodCall = 0x20,
+        TailCall = 1 << 4,
+        MethodCall = 1 << 5,
     }
 }

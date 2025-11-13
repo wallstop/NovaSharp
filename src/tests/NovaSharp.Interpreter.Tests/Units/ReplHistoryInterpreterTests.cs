@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void HistoryTracksPreviousEntries()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             ReplHistoryInterpreter interpreter = new ReplHistoryInterpreter(script, historySize: 2);
 
             interpreter.Evaluate("return 1");
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void HistoryNextMovesForwardThroughEntries()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             ReplHistoryInterpreter interpreter = new ReplHistoryInterpreter(script, historySize: 3);
 
             interpreter.Evaluate("return 1");

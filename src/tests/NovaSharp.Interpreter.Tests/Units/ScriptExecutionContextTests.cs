@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp;
     using NovaSharp.Interpreter;
@@ -174,7 +174,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AdditionalDataRequiresCallback()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
             Assert.That(
@@ -186,7 +186,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AdditionalDataFlowsThroughCallback()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             CallbackFunction callback = new((_, _) => DynValue.Nil);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext(callback);
 
@@ -202,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CallThrowsWhenClrFunctionYields()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue func = DynValue.NewCallback(
                 (_, _) => DynValue.NewYieldReq(Array.Empty<DynValue>())
@@ -217,7 +217,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CallThrowsWhenTailCallHasContinuation()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue func = DynValue.NewCallback(
                 (_, _) =>
@@ -239,7 +239,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CallFollowsTailCallWithoutContinuation()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue inner = DynValue.NewCallback(
                 (_, args) =>
@@ -267,7 +267,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CallUsesCallMetamethod()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
             Table target = new(script);
@@ -282,7 +282,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EvaluateSymbolReturnsNilWhenMissing()
         {
-            Script script = new(CoreModules.None);
+            Script script = new(default);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
             DynValue nil = context.EvaluateSymbol(null);

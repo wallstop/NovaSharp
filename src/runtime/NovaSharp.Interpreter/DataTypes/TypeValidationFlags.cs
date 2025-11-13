@@ -12,12 +12,13 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// No type validation specific behaviour
         /// </summary>
+        [Obsolete("Prefer explicit TypeValidationFlags combinations.", false)]
         None = 0,
 
         /// <summary>
         /// Nil and Void values are allowed (and returned by the call)
         /// </summary>
-        AllowNil = 0x1,
+        AllowNil = 1 << 0,
 
         /// <summary>
         /// Simple autoconversions are attempted:
@@ -26,7 +27,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// 3) Everything is convertible to boolean (with void and nil converting to 'false', everything else converting to 'true')
         /// Note: if both AutoConvert and AllowNil are specified, nils will NOT be converted to false booleans.
         /// </summary>
-        AutoConvert = 0x2,
+        AutoConvert = 1 << 1,
 
         /// <summary>
         /// The default : Autoconverting values, no nils.

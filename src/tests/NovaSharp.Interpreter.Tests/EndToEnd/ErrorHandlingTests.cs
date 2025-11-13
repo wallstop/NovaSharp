@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.EndToEnd
+﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -108,7 +108,7 @@ end
 
 return a()
 ";
-            Script s = new(CoreModules.None)
+            Script s = new(default)
             {
                 Globals =
                 {

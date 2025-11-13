@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TestReplLoader loader = new TestReplLoader();
 
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             script.Globals.Set("LUA_PATH", DynValue.NewString("./modules/?.lua;./fallback/?.lua"));
 
             loader.ResolveModuleName("feature.util", script.Globals);

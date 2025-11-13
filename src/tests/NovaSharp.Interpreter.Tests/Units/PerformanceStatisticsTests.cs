@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using System.Threading;
     using NovaSharp.Interpreter;
@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void EnabledStatisticsCaptureStopwatchResults()
         {
-            Script script = new Script(CoreModules.None) { Options = { } };
+            Script script = new Script(default) { Options = { } };
 
             script.PerformanceStats.Enabled = true;
 
@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DisablingStatisticsClearsStopwatches()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             script.PerformanceStats.Enabled = true;
 
             using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Execution))
@@ -57,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GlobalStopwatchAggregatesAcrossInstances()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
             script.PerformanceStats.Enabled = true;
 
             using (

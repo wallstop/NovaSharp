@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+﻿namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Text;
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void UnsupportedOperationsThrowNotImplemented()
         {
             LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(default);
 
             Assert.Multiple(() =>
             {

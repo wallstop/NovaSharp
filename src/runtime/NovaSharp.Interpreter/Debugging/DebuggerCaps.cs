@@ -8,19 +8,22 @@ namespace NovaSharp.Interpreter.Debugging
     [Flags]
     public enum DebuggerCaps
     {
+        [Obsolete("Prefer explicit DebuggerCaps combinations.", false)]
+        None = 0,
+
         /// <summary>
         /// Flag set if the debugger can debug source code
         /// </summary>
-        CanDebugSourceCode = 0x1,
+        CanDebugSourceCode = 1 << 0,
 
         /// <summary>
         /// Flag set if the can debug VM bytecode
         /// </summary>
-        CanDebugByteCode = 0x2,
+        CanDebugByteCode = 1 << 1,
 
         /// <summary>
         /// Flag set if the debugger uses breakpoints based on lines instead of tokens
         /// </summary>
-        HasLineBasedBreakpoints = 0x4,
+        HasLineBasedBreakpoints = 1 << 2,
     }
 }

@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.EndToEnd
+﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private MyClass Test(string tableDef)
         {
-            Script s = new(CoreModules.None);
+            Script s = new(default);
 
             DynValue table = s.DoString("return " + tableDef);
 

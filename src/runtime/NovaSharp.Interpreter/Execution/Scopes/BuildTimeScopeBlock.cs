@@ -15,6 +15,8 @@ namespace NovaSharp.Interpreter.Execution.Scopes
         internal RuntimeScopeBlock ScopeBlock { get; private set; }
 
         private readonly Dictionary<string, SymbolRef> _definedNames = new();
+        private readonly List<SymbolRef> _localsInOrder = new();
+        private readonly List<SymbolRef> _toBeClosed = new();
 
         internal void Rename(string name)
         {
@@ -42,10 +44,17 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             return _definedNames.GetOrDefault(name);
         }
 
-        internal SymbolRef Define(string name)
+        internal SymbolRef Define(string name, SymbolRefAttributes attributes)
         {
-            SymbolRef l = SymbolRef.Local(name, -1);
+            SymbolRef l = SymbolRef.Local(name, -1, attributes);
             _definedNames.Add(name, l);
+            _localsInOrder.Add(l);
+
+            if ((attributes & SymbolRefAttributes.ToBeClosed) != 0)
+            {
+                _toBeClosed.Add(l);
+            }
+
             _lastDefinedName = name;
             return l;
         }
@@ -55,7 +64,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             int firstVal = -1;
             int lastVal = -1;
 
-            foreach (SymbolRef lref in _definedNames.Values)
+            foreach (SymbolRef lref in _localsInOrder)
             {
                 int pos = buildTimeScopeFrame.AllocVar(lref);
 
@@ -81,6 +90,15 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                     ScopeBlock.ToInclusive,
                     child.ResolveLRefs(buildTimeScopeFrame)
                 );
+            }
+
+            if (_toBeClosed.Count > 0)
+            {
+                ScopeBlock.ToBeClosed = _toBeClosed.ToArray();
+            }
+            else
+            {
+                ScopeBlock.ToBeClosed = Array.Empty<SymbolRef>();
             }
 
             if (_localLabels != null)

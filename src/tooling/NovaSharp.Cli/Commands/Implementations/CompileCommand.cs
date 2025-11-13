@@ -1,4 +1,4 @@
-namespace NovaSharp.Commands.Implementations
+﻿namespace NovaSharp.Commands.Implementations
 {
     using System;
     using System.IO;
@@ -29,7 +29,7 @@ namespace NovaSharp.Commands.Implementations
         {
             string targetFileName = p + "-compiled";
 
-            Script s = new(CoreModules.None);
+            Script s = new(default);
 
             DynValue chunk = s.LoadFile(p);
 

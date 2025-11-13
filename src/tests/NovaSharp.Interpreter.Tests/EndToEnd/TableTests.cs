@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.EndToEnd
+﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -445,7 +445,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 			}
 		";
 
-            Script s = new(CoreModules.None);
+            Script s = new(default);
             s.DoString(script);
 
             Assert.That(s.Globals["t", "ciao", 1], Is.EqualTo("hello"));
