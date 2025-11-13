@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter
 {
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Options;
     using Platforms;
@@ -18,6 +19,7 @@ namespace NovaSharp.Interpreter
                 FuzzySymbolMatchingBehavior.Camelify
                 | FuzzySymbolMatchingBehavior.UpperFirstLetter
                 | FuzzySymbolMatchingBehavior.PascalCase;
+            CompatibilityVersion = LuaCompatibilityVersion.Latest;
         }
 
         /// <summary>
@@ -45,5 +47,10 @@ namespace NovaSharp.Interpreter
         /// <c>someuserdata.SomeMethod()</c> will also be tried.
         /// </summary>
         public FuzzySymbolMatchingBehavior FuzzySymbolMatching { get; set; }
+
+        /// <summary>
+        /// Gets or sets the interpreter compatibility target. Defaults to the latest supported version.
+        /// </summary>
+        public LuaCompatibilityVersion CompatibilityVersion { get; set; }
     }
 }

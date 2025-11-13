@@ -12,6 +12,10 @@ Use the matrices below to understand how close NovaSharp is to stock Lua 5.4.8, 
 
 Legend: ✅ parity, 🚧 partial/in-progress, ❌ missing, ⏸️ intentionally unsupported.
 
+## Compatibility Modes
+
+NovaSharp now exposes a version selector so applications can pin script execution to a specific Lua baseline. The global entry point is `Script.GlobalOptions.CompatibilityVersion`, and per-script overrides live on `Script.Options.CompatibilityVersion`. Both default to `LuaCompatibilityVersion.Latest`, keeping behaviour aligned with the most recent NovaSharp target (Lua 5.4.x today). Future releases can introduce compatibility shims for Lua 5.5/5.3/5.2 features without forcing a wholesale migration—set the enum to the desired version before running scripts to opt in.
+
 ## Language Syntax & Semantics
 
 | Feature | Status | Coverage / Evidence | Notes & Owner |
@@ -37,7 +41,7 @@ Legend: ✅ parity, 🚧 partial/in-progress, ❌ missing, ⏸️ intentionally 
 | `coroutine` | `coroutine.isyieldable` | ✅ | `CoroutineModuleTests.IsYieldable*` | Matches Lua semantics for main thread vs coroutine. Owner: Interpreter. |
 | `debug` | `debug.upvaluejoin`, `debug.upvalueid` | ✅ | `DebugModuleTests.UpvalueJoin*`, `UpvalueId*` | Exercises cross-function upvalue sharing. Owner: Interpreter. |
 | `debug` | `debug.getuservalue` / `setuservalue` | 🚧 | `DebugModuleTests.GetUserValueReturnsNil` | Light userdata unsupported; document limitation (⏸️). Owner: Interop. |
-| `io` | `io.read("*n")` hex/exponent parsing | 🚧 | `IoModuleTests.ReadNumberEdgeCases` (fails) | Current runtime mishandles hex exponents; keep failure noted until fixed. Owner: Runtime Modernization. |
+| `io` | `io.read("*n")` hex/exponent parsing | ✅ | `IoModuleTests.ReadNumberParsesHexLiteralInput`, `ReadNumberParsesHexVariants`, TAP `308-io.t` | Runtime parses hex floats, huge integers, and exponent overflow per Lua 5.4 rules. Owner: Runtime Modernization. |
 | `io`, `os` | `io.popen`, `os.execute` return tables | 🚧 | `OsSystemModuleTests.Execute` (simplified) | Implementation returns simplified tuple; need parity with Lua status tables. Owner: Tooling. |
 
 ## Metatables, GC, and Weak Tables

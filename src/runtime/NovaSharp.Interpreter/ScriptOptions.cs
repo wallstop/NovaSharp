@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter
     using System;
     using System.IO;
     using Loaders;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Options;
 
     /// <summary>
@@ -10,7 +11,10 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public class ScriptOptions
     {
-        internal ScriptOptions() { }
+        internal ScriptOptions()
+        {
+            CompatibilityVersion = LuaCompatibilityVersion.Latest;
+        }
 
         internal ScriptOptions(ScriptOptions defaults)
         {
@@ -26,6 +30,7 @@ namespace NovaSharp.Interpreter
             ScriptLoader = defaults.ScriptLoader;
 
             CheckThreadAccess = defaults.CheckThreadAccess;
+            CompatibilityVersion = defaults.CompatibilityVersion;
         }
 
         /// <summary>
@@ -94,5 +99,10 @@ namespace NovaSharp.Interpreter
         /// you are not calling NovaSharp execution concurrently as it is not supported.
         /// </summary>
         public bool CheckThreadAccess { get; set; }
+
+        /// <summary>
+        /// Gets or sets the compatibility version applied to this script.
+        /// </summary>
+        public LuaCompatibilityVersion CompatibilityVersion { get; set; }
     }
 }

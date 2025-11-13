@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
     using Tree.Expressions;
@@ -62,6 +63,7 @@ namespace NovaSharp.Interpreter
                 ScriptLoader = PlatformAutoDetector.GetDefaultScriptLoader(),
                 TailCallOptimizationThreshold = 65536,
             };
+            DefaultOptions.CompatibilityVersion = GlobalOptions.CompatibilityVersion;
         }
 
         /// <summary>
@@ -77,6 +79,7 @@ namespace NovaSharp.Interpreter
         public Script(CoreModules coreModules)
         {
             Options = new ScriptOptions(DefaultOptions);
+            Options.CompatibilityVersion = GlobalOptions.CompatibilityVersion;
             PerformanceStats = new PerformanceStatistics();
             Registry = new Table(this);
 
@@ -100,6 +103,14 @@ namespace NovaSharp.Interpreter
         /// Gets the global options, that is options which cannot be customized per-script.
         /// </summary>
         public static ScriptGlobalOptions GlobalOptions { get; private set; }
+
+        /// <summary>
+        /// Gets the effective Lua compatibility version for this script.
+        /// </summary>
+        public LuaCompatibilityVersion CompatibilityVersion
+        {
+            get { return Options.CompatibilityVersion; }
+        }
 
         /// <summary>
         /// Gets access to performance statistics.
