@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -184,61 +185,78 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        [Ignore(
-            "Lua 5.4.8 gap: io.read(\"*n\") does not parse hex floats (0x..p..) like stock Lua"
-        )]
-        public void ReadNumberReturnsNilForHexLiteralInput()
+        public void ReadNumberParsesHexLiteralInput()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            try
+            DynValue tuple = ReadNumberFromContent("0x1p2\n");
+
+            Assert.Multiple(() =>
             {
-                File.WriteAllText(path, "0x1p2\n");
-                string escapedPath = path.Replace("\\", "\\\\");
-                Script script = CreateScript();
+                Assert.That(tuple.Tuple[0].Type, Is.EqualTo(DataType.Number));
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(4d));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("\n"));
+            });
+        }
 
-                DynValue tuple = script.DoString(
-                    $@"
-                local f = assert(io.open('{escapedPath}', 'r'))
-                io.input(f)
-                local number = io.read('*n')
-                local remainder = io.read('*a')
-                f:close()
-                return number, remainder
-                "
-                );
+        [TestCase("0x1p1\n", 2d, "\n")]
+        [TestCase("0x1.8p1\n", 3d, "\n")]
+        [TestCase("0X.Cp+2\n", 3d, "\n")]
+        [TestCase("-0x1p1\n", -2d, "\n")]
+        [TestCase("+0xAp-1\n", 5d, "\n")]
+        public void ReadNumberParsesHexVariants(string literal, double expected, string expectedRemainder)
+        {
+            DynValue tuple = ReadNumberFromContent(literal);
 
-                TestContext.WriteLine(
-                    $"numberType={tuple.Tuple[0].Type}, remainder='{tuple.Tuple[1].String}'"
-                );
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
-                    Assert.That(tuple.Tuple[0].IsNil(), Is.True);
-                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("0x1p2\n"));
-                });
-            }
-            finally
+            Assert.Multiple(() =>
             {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
+                Assert.That(tuple.Tuple[0].Type, Is.EqualTo(DataType.Number));
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(expected));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo(expectedRemainder));
+            });
         }
 
         [Test]
-        [Ignore("Lua 5.4.8 gap: io.read(\"*n\") treats huge exponents differently than Lua 5.4.8")]
-        public void ReadNumberReturnsNilForExponentOverflow()
+        public void ReadNumberReturnsInfinityForHugeExponent()
+        {
+            DynValue tuple = ReadNumberFromContent("1e400");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Type, Is.EqualTo(DataType.Number));
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(double.PositiveInfinity));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo(string.Empty));
+            });
+        }
+
+        [Test]
+        public void ReadNumberParsesHugeInteger()
+        {
+            const string literal = "123456789012345678901234567890\n";
+            DynValue tuple = ReadNumberFromContent(literal);
+
+            double expected = double.Parse(
+                "123456789012345678901234567890",
+                CultureInfo.InvariantCulture
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Type, Is.EqualTo(DataType.Number));
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(expected));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("\n"));
+            });
+        }
+
+        private static DynValue ReadNumberFromContent(string content)
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+
             try
             {
-                File.WriteAllText(path, "1e400");
+                File.WriteAllText(path, content);
                 string escapedPath = path.Replace("\\", "\\\\");
                 Script script = CreateScript();
 
-                DynValue tuple = script.DoString(
+                return script.DoString(
                     $@"
                 local f = assert(io.open('{escapedPath}', 'r'))
                 io.input(f)
@@ -247,14 +265,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 f:close()
                 return number, remainder
                 "
-                );
-
-                TestContext.WriteLine(
-                    $"numberType={tuple.Tuple[0].Type}, remainder='{tuple.Tuple[1].String}'"
-                );
-
-                Assert.Inconclusive(
-                    "Lua 5.4.8 returns math.huge for 1e400; current behaviour differs."
                 );
             }
             finally

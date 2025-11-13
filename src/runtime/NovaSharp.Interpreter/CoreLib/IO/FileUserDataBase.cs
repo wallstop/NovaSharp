@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Abstract class implementing a file Lua userdata. Methods are meant to be called by Lua code.
@@ -184,13 +185,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             long startPosition = canRewind ? GetCurrentPosition() : 0;
             long lastConsumedPosition = startPosition;
 
-            StringBuilder numberBuilder = new();
+            ConsumeLeadingWhitespace(canRewind, ref lastConsumedPosition);
+
+            StringBuilder literal = new();
             bool hasDigits = false;
             bool hasDecimalPoint = false;
             bool exponentSeen = false;
             bool exponentHasDigits = false;
 
-            ConsumeLeadingWhitespace(canRewind, ref lastConsumedPosition);
+            bool isHex = false;
+            bool hexDigitsSeen = false;
+            bool hexExponentSeen = false;
+            bool hexExponentHasDigits = false;
+            int hexFractionDigitCount = 0;
 
             while (true)
             {
@@ -202,26 +209,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
                 char current = (char)peekValue;
 
-                if (char.IsDigit(current))
+                if (
+                    IsSignAllowed(
+                        literal,
+                        isHex,
+                        exponentSeen,
+                        exponentHasDigits,
+                        hexExponentSeen,
+                        hexExponentHasDigits,
+                        current
+                    )
+                )
                 {
-                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
-                    {
-                        break;
-                    }
-
-                    hasDigits = true;
-
-                    if (exponentSeen)
-                    {
-                        exponentHasDigits = true;
-                    }
-
-                    continue;
-                }
-
-                if (IsSignAllowed(numberBuilder, exponentSeen, exponentHasDigits, current))
-                {
-                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
                     {
                         break;
                     }
@@ -229,57 +229,158 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     continue;
                 }
 
-                if (current == '.' && !hasDecimalPoint && !exponentSeen)
+                if (isHex)
                 {
-                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    if (LexerUtils.CharIsHexDigit(current))
                     {
-                        break;
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        hexDigitsSeen = true;
+
+                        if (hasDecimalPoint && !hexExponentSeen)
+                        {
+                            hexFractionDigitCount++;
+                        }
+
+                        if (hexExponentSeen)
+                        {
+                            hexExponentHasDigits = true;
+                        }
+
+                        continue;
                     }
 
-                    hasDecimalPoint = true;
-                    continue;
+                    if (current == '.' && !hasDecimalPoint && !hexExponentSeen)
+                    {
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        hasDecimalPoint = true;
+                        continue;
+                    }
+
+                    if ((current == 'p' || current == 'P') && !hexExponentSeen && hexDigitsSeen)
+                    {
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        hexExponentSeen = true;
+                        hexExponentHasDigits = false;
+                        continue;
+                    }
+
+                    break;
                 }
-
-                if ((current == 'e' || current == 'E') && !exponentSeen && hasDigits)
+                else
                 {
-                    if (!TryConsumeChar(ref lastConsumedPosition, canRewind, numberBuilder))
+                    if (char.IsDigit(current))
                     {
-                        break;
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        hasDigits = true;
+
+                        if (exponentSeen)
+                        {
+                            exponentHasDigits = true;
+                        }
+
+                        continue;
                     }
 
-                    exponentSeen = true;
-                    exponentHasDigits = false;
-                    continue;
+                    if ((current == 'x' || current == 'X') && IsValidHexPrefix(literal))
+                    {
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        isHex = true;
+                        hexDigitsSeen = false;
+                        hasDecimalPoint = false;
+                        hexFractionDigitCount = 0;
+                        continue;
+                    }
+
+                    if (current == '.' && !hasDecimalPoint && !exponentSeen)
+                    {
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        hasDecimalPoint = true;
+                        continue;
+                    }
+
+                    if ((current == 'e' || current == 'E') && !exponentSeen && hasDigits)
+                    {
+                        if (!TryConsumeChar(ref lastConsumedPosition, canRewind, literal))
+                        {
+                            break;
+                        }
+
+                        exponentSeen = true;
+                        exponentHasDigits = false;
+                        continue;
+                    }
                 }
 
                 break;
             }
 
-            string numericText = numberBuilder.ToString();
+            string numericText = literal.ToString();
 
-            bool isParsable =
-                numericText.Length > 0
-                && !IsStandaloneSignOrDot(numericText)
-                && !(exponentSeen && !exponentHasDigits);
+            bool parsedSuccessfully = false;
+            double parsedValue = 0;
 
-            if (!isParsable)
+            if (isHex)
             {
-                if (canRewind)
+                bool hasValidDigits = hexDigitsSeen || (hasDecimalPoint && hexFractionDigitCount > 0);
+                bool isValidLiteral = numericText.Length > 0 && hasValidDigits;
+
+                if (hexExponentSeen && !hexExponentHasDigits)
                 {
-                    ResetToPosition(startPosition);
+                    isValidLiteral = false;
                 }
 
-                return null;
+                if (isValidLiteral && TryParseHexFloatLiteral(numericText, out parsedValue))
+                {
+                    parsedSuccessfully = true;
+                }
+            }
+            else
+            {
+                bool isValidLiteral =
+                    numericText.Length > 0
+                    && !IsStandaloneSignOrDot(numericText)
+                    && hasDigits
+                    && !(exponentSeen && !exponentHasDigits);
+
+                if (
+                    isValidLiteral
+                    && double.TryParse(
+                        numericText,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out parsedValue
+                    )
+                )
+                {
+                    parsedSuccessfully = true;
+                }
             }
 
-            if (
-                !double.TryParse(
-                    numericText,
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out double parsedValue
-                )
-            )
+            if (!parsedSuccessfully)
             {
                 if (canRewind)
                 {
@@ -349,9 +450,12 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         }
 
         private static bool IsSignAllowed(
-            StringBuilder numberBuilder,
+            StringBuilder literal,
+            bool isHex,
             bool exponentSeen,
             bool exponentHasDigits,
+            bool hexExponentSeen,
+            bool hexExponentHasDigits,
             char candidate
         )
         {
@@ -360,16 +464,28 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 return false;
             }
 
-            if (numberBuilder.Length == 0)
+            if (literal.Length == 0)
             {
                 return true;
             }
 
-            if (
-                exponentSeen
-                && !exponentHasDigits
-                && numberBuilder.Length > 0
-                && (numberBuilder[^1] == 'e' || numberBuilder[^1] == 'E')
+            if (!isHex)
+            {
+                if (
+                    exponentSeen
+                    && !exponentHasDigits
+                    && literal.Length > 0
+                    && (literal[^1] == 'e' || literal[^1] == 'E')
+                )
+                {
+                    return true;
+                }
+            }
+            else if (
+                hexExponentSeen
+                && !hexExponentHasDigits
+                && literal.Length > 0
+                && (literal[^1] == 'p' || literal[^1] == 'P')
             )
             {
                 return true;
@@ -387,6 +503,148 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
             char single = numericText[0];
             return single == '+' || single == '-' || single == '.';
+        }
+
+        private static bool IsValidHexPrefix(StringBuilder literal)
+        {
+            if (literal.Length == 0)
+            {
+                return false;
+            }
+
+            if (literal.Length == 1 && literal[0] == '0')
+            {
+                return true;
+            }
+
+            if (
+                literal.Length == 2
+                && (literal[0] == '+' || literal[0] == '-')
+                && literal[1] == '0'
+            )
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseHexFloatLiteral(string literal, out double value)
+        {
+            value = 0;
+
+            if (string.IsNullOrEmpty(literal))
+            {
+                return false;
+            }
+
+            int index = 0;
+            int sign = 1;
+
+            if (literal[index] == '+' || literal[index] == '-')
+            {
+                if (literal[index] == '-')
+                {
+                    sign = -1;
+                }
+
+                index++;
+
+                if (index >= literal.Length)
+                {
+                    return false;
+                }
+            }
+
+            if (
+                index + 1 >= literal.Length
+                || literal[index] != '0'
+                || (literal[index + 1] != 'x' && literal[index + 1] != 'X')
+            )
+            {
+                return false;
+            }
+
+            index += 2;
+
+            double significand = 0;
+            bool digitsSeen = false;
+            int fractionalDigits = 0;
+
+            while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
+            {
+                significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
+                index++;
+                digitsSeen = true;
+            }
+
+            if (index < literal.Length && literal[index] == '.')
+            {
+                index++;
+
+                while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
+                {
+                    significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
+                    index++;
+                    digitsSeen = true;
+                    fractionalDigits++;
+                }
+            }
+
+            if (!digitsSeen)
+            {
+                return false;
+            }
+
+            int exponent = -4 * fractionalDigits;
+
+            if (index < literal.Length && (literal[index] == 'p' || literal[index] == 'P'))
+            {
+                index++;
+                if (index >= literal.Length)
+                {
+                    return false;
+                }
+
+                int exponentSign = 1;
+                if (literal[index] == '+' || literal[index] == '-')
+                {
+                    if (literal[index] == '-')
+                    {
+                        exponentSign = -1;
+                    }
+
+                    index++;
+                }
+
+                if (index >= literal.Length || !char.IsDigit(literal[index]))
+                {
+                    return false;
+                }
+
+                int exponentValue = 0;
+                while (index < literal.Length && char.IsDigit(literal[index]))
+                {
+                    exponentValue = (exponentValue * 10) + (literal[index] - '0');
+                    index++;
+                }
+
+                exponent += exponentSign * exponentValue;
+            }
+
+            if (index != literal.Length)
+            {
+                return false;
+            }
+
+            double magnitude = significand * Math.Pow(2.0, exponent);
+            value = sign * magnitude;
+            return true;
+        }
+
+        private static int TryGetHexDigitValue(char c)
+        {
+            return LexerUtils.HexDigit2Value(c);
         }
 
         protected abstract bool Eof();
