@@ -140,6 +140,78 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void ConstructorWithTypeRestrictionAppliesRestriction()
+        {
+            ParameterDescriptor descriptor = new(
+                name: "value",
+                type: typeof(object),
+                hasDefaultValue: false,
+                defaultValue: null,
+                isOut: false,
+                isRef: false,
+                isVarArgs: false,
+                typeRestriction: typeof(string)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Type, Is.EqualTo(typeof(string)));
+                Assert.That(descriptor.OriginalType, Is.EqualTo(typeof(object)));
+                Assert.That(descriptor.HasBeenRestricted, Is.True);
+            });
+        }
+
+        [Test]
+        public void PrepareForWiringUsesElementTypeForByRefParameters()
+        {
+            Script script = new();
+            Table table = new(script);
+            ParameterDescriptor descriptor = new(
+                name: "value",
+                type: typeof(int).MakeByRefType(),
+                hasDefaultValue: false,
+                defaultValue: null,
+                isOut: false,
+                isRef: true,
+                isVarArgs: false
+            );
+
+            descriptor.PrepareForWiring(table);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(table.RawGet("type").String, Is.EqualTo(typeof(int).FullName));
+                Assert.That(table.RawGet("origtype").String, Is.EqualTo(typeof(int).FullName));
+                Assert.That(table.RawGet("ref").Boolean, Is.True);
+            });
+        }
+
+        [Test]
+        public void OriginalTypeMatchesTypeWhenNotRestricted()
+        {
+            ParameterDescriptor descriptor = new("value", typeof(double));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.HasBeenRestricted, Is.False);
+                Assert.That(descriptor.OriginalType, Is.EqualTo(typeof(double)));
+            });
+        }
+
+        [Test]
+        public void ToStringIncludesTypeNameAndDefaultFlag()
+        {
+            ParameterDescriptor descriptor = new(
+                "count",
+                typeof(int),
+                hasDefaultValue: true,
+                defaultValue: 10
+            );
+
+            Assert.That(descriptor.ToString(), Is.EqualTo("Int32 count = ..."));
+        }
+
         private sealed class SampleTarget
         {
             public void Optional(int value, string text = "fallback") { }
