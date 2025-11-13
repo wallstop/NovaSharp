@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter
         public FuzzySymbolMatchingBehavior FuzzySymbolMatching { get; set; }
 
         /// <summary>
-        /// Gets or sets the interpreter compatibility target. Defaults to the latest supported version.
+        /// Gets or sets the interpreter-wide compatibility target. Defaults to the latest supported version.
         /// </summary>
         public LuaCompatibilityVersion CompatibilityVersion { get; set; }
     }

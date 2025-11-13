@@ -101,7 +101,7 @@ namespace NovaSharp.Interpreter
         public bool CheckThreadAccess { get; set; }
 
         /// <summary>
-        /// Gets or sets the compatibility version applied to this script.
+        /// Gets or sets the compatibility version applied to this script. Defaults to <see cref="ScriptGlobalOptions.CompatibilityVersion"/>.
         /// </summary>
         public LuaCompatibilityVersion CompatibilityVersion { get; set; }
     }
