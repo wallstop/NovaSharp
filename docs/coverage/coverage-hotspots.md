@@ -1,18 +1,18 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 09:16 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 09:34 UTC).
 
 ## Snapshot
-- Overall line coverage: **74.6 %**
-- NovaSharp.Interpreter line coverage: **86.7 %**
+- Overall line coverage: **74.9 %**
+- NovaSharp.Interpreter line coverage: **87.1 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 - `NovaSharp.Interpreter.DataTypes.Closure` — **86.6 %** (Lua `_ENV` upvalue always present; remaining gap tied to non-exercisable zero-upvalue branch).
-- `NovaSharp.Interpreter.CoreLib.LoadModule` — **71.0 %** (loader error paths and package search variations remain untested).
-- `NovaSharp.Interpreter.CoreLib.IoModule` — **75.3 %** (filesystem wrappers + option branches still uncovered).
+- `NovaSharp.Interpreter.CoreLib.StringLib.StringRange` — **78.2 %** (iterator helpers missing targeted coverage).
+- `NovaSharp.Interpreter.CoreLib.StringModule` — **75.0 %** (string option branches and locale-dependent paths remain uncovered).
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items
@@ -40,6 +40,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `FieldMemberDescriptor` covers pre/lazy optimized getters, null-instance guards, and metadata wiring (80.7 % line coverage).
 - `CallbackFunction` now sits at **91.3 %** line coverage thanks to colon-operator handling tests, default access mode validation, and delegate/visibility checks; closure-centric tests also cover entry-point metadata and call overloads, lifting `Closure` to **86.6 %** while documenting the remaining `_ENV` constraint.
 - `ParameterDescriptor` is fully covered (**100 %** line) after exercising type restriction constructors, by-ref wiring, `OriginalType` fallbacks, and `ToString` formatting.
+- `LoadModule` now reports **91.3 %** line / **86.9 %** branch coverage following new NUnit cases for reader concatenation, safe-environment failure, `loadfile` error tuples, and `dofile` success/error flows.
+- `IoModule` climbed to **93.2 %** line / **88.0 %** branch coverage via expanded tests (default stream setters, flush/close, iterator API, binary encoding guardrails, tmpfile lifecycle, and `IoExceptionToLuaMessage` fallbacks).
 - `ScriptRuntimeException` factory helpers now execute under `ScriptRuntimeExceptionTests`, covering table index errors, conversion failures, coroutine guard rails, access-on-statics paths, and `Rethrow` behaviour (interpreter line coverage holds at 86.5 % with the new tests).
 - `ExprListExpression` tuple compilation/evaluation paths now run under NUnit, retiring the parser red list entry (91.6 % line coverage).
 - `ScriptExecutionContext` reached 96.2 % line / 86.3 % branch coverage after backfilling AdditionalData, Call (yield/tail/metamethod), and EvaluateSymbol edge paths.
@@ -65,7 +67,6 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `SourceRefTests` cover FormatLocation/GetCodeSnippet heuristics (81 % line coverage) while `ExitCommandTests` drive the CLI `exit` path to 100 %, nudging NovaSharp.Cli line coverage to 73.7 %.
 - `LoadModuleTests` now exercise `require`, `load`, and `loadfilesafe` paths (LoadModule at 71 % line coverage), and `SyntaxErrorExceptionTests`/`DynamicExpressionException` assertions ensure parser errors honour nested rethrow rules and message prefixes.
 - `EventMemberDescriptorTests` expanded with compatibility guards and multi-signature dispatch checks, lifting event coverage to 53 % and validating zero-arg/multi-arg pathways.
-- `ParameterDescriptorTests` cover reflection metadata, restriction semantics, and wiring exports, pushing the descriptor to 70.8 % line coverage and guarding invalid restriction paths.
 - `AutoDescribingUserDataDescriptorTests` verify name/type exposure plus index/set/meta forwarding to IUserDataType, keeping self-describing userdata behaviour under regression tests.
 - `StandardEnumUserDataDescriptorTests` ensure flag helpers, numeric coercion, and signed/unsigned paths work correctly, raising enum descriptor coverage to 67.4 %.
 - `UnityAssetsScriptLoaderTests` cover path normalization, missing-script diagnostics, and enumeration helpers, boosting loader coverage while keeping Unity packaging logic under regression.

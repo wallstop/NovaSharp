@@ -85,6 +85,28 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue result = script.DoString(
+                @"
+                local fragments = { 'return ', 'value', nil }
+                local index = 0
+                local reader = function()
+                    index = index + 1
+                    return fragments[index]
+                end
+                local env = { value = 123 }
+                local chunk, err = load(reader, 'chunk-fragments', 't', env)
+                assert(chunk ~= nil and err == nil)
+                return chunk()
+                "
+            );
+
+            Assert.That(result.Number, Is.EqualTo(123d));
+        }
+
+        [Test]
         public void LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -101,6 +123,81 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(executionResult.String, Is.EqualTo("global"));
                 Assert.That(loader.LoadCount, Is.EqualTo(1));
             });
+        }
+
+        [Test]
+        public void LoadSafeThrowsWhenEnvironmentCannotBeRetrieved()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local original_env = _ENV
+                local ls = loadsafe
+                local pc = pcall
+                _ENV = nil
+                local ok, err = pc(function() return ls('return 1') end)
+                _ENV = original_env
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(
+                    result.Tuple[1].String,
+                    Does.Contain("current environment cannot be backtracked")
+                );
+            });
+        }
+
+        [Test]
+        public void LoadFileReturnsTupleWithSyntaxErrorMessage()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
+
+            DynValue loadFileResult = script.DoString("return loadfile('broken.lua')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loadFileResult.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(loadFileResult.Tuple[0].IsNil());
+                Assert.That(
+                    loadFileResult.Tuple[1].String,
+                    Does.Contain("unexpected symbol near '('")
+                );
+            });
+        }
+
+        [Test]
+        public void DoFileExecutesLoadedChunk()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            RecordingScriptLoader loader = new() { ModuleBody = "return 777" };
+            script.Options.ScriptLoader = loader;
+
+            DynValue value = script.DoString("return dofile('script.lua')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(value.Number, Is.EqualTo(777d));
+                Assert.That(loader.LoadCount, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void DoFileWrapsSyntaxErrorsWithScriptRuntimeException()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
+
+            Assert.That(
+                () => script.DoString("dofile('broken.lua')"),
+                Throws.TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contain("unexpected symbol near '('")
+            );
         }
 
         private sealed class RecordingScriptLoader : IScriptLoader
@@ -142,6 +239,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             public string ResolveModuleName(string modname, Table globalContext)
             {
                 return null!;
+            }
+        }
+
+        private sealed class SyntaxErrorScriptLoader : IScriptLoader
+        {
+            public object LoadFile(string file, Table globalContext)
+            {
+                return "function(";
+            }
+
+            public string ResolveFileName(string filename, Table globalContext)
+            {
+                return filename;
+            }
+
+            public string ResolveModuleName(string modname, Table globalContext)
+            {
+                return modname;
             }
         }
     }

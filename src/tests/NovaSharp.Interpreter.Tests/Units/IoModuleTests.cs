@@ -246,6 +246,309 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void TypeReturnsNilForNonUserDataArguments()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return io.type(42), io.type({})");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].IsNil(), Is.True);
+            });
+        }
+
+        [Test]
+        public void TypeReturnsNilForNonFileUserData()
+        {
+            Script script = CreateScript();
+            script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
+
+            DynValue result = script.DoString("return io.type(sampleUserData)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void CloseClosesExplicitFileHandle()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'w'))
+                    local result = io.close(f)
+                    return result, io.type(f)
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("closed file"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void CloseWithoutParameterUsesCurrentOutput()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'w'))
+                    io.output(f)
+                    local closed = io.close()
+                    return closed, io.type(f)
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("closed file"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void FlushReturnsTrueForCurrentOutput()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue result = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'w'))
+                    io.output(f)
+                    io.write('buffered')
+                    local ok = io.flush()
+                    io.output():close()
+                    return ok
+                    "
+                );
+
+                Assert.That(result.Boolean, Is.True);
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void InputReturnsCurrentFileWhenNoArguments()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            File.WriteAllText(path, "data");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    io.input(f)
+                    local current = io.input()
+                    return io.type(current), io.type(f)
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("file"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("file"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void LinesIteratesOverFileContent()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            File.WriteAllText(path, "alpha\nbeta\ngamma\n");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local iter = io.lines('{escapedPath}')
+                    return iter(), iter(), iter(), iter()
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("alpha"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("beta"));
+                    Assert.That(tuple.Tuple[2].String, Is.EqualTo("gamma"));
+                    Assert.That(tuple.Tuple[3].IsNil(), Is.True);
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void LinesRaisesUsefulMessageWhenFileMissing()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function() return io.lines('missing-file.txt') end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("No such file"));
+            });
+        }
+
+        [Test]
+        public void OpenReturnsErrorTupleForUnknownEncoding()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+                .Replace("\\", "\\\\");
+
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                $@"
+                local file, message = io.open('{path}', 'w', 'does-not-exist')
+                return file, message
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("does-not-exist"));
+            });
+        }
+
+        [Test]
+        public void OpenSupportsExplicitEncoding()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            try
+            {
+                Script script = CreateScript();
+                script.DoString(
+                    $@"
+                local f = assert(io.open('{escapedPath}', 'w', 'utf-16'))
+                f:write('hello')
+                f:close()
+                "
+                );
+
+                string content = File.ReadAllText(path);
+                Assert.That(content, Does.Contain("hello"));
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void OpenRejectsEncodingWhenBinaryModeSpecified()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+                .Replace("\\", "\\\\");
+
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                $@"
+                local ok, res1, res2 = pcall(function()
+                    return io.open('{path}', 'wb', 'utf-8')
+                end)
+                return ok, res1, res2
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[2].String, Does.Contain("Can't specify encodings"));
+            });
+        }
+
+        [Test]
+        public void TmpfileCreatesWritableStream()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                @"
+                local f = io.tmpfile()
+                f:write('temp data')
+                f:seek('set')
+                local t_open = io.type(f)
+                f:close()
+                local t_closed = io.type(f)
+                return t_open, t_closed
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("file"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("closed file"));
+            });
+        }
+
         private static DynValue ReadNumberFromContent(string content)
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
@@ -282,5 +585,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.Options.DebugPrint = _ => { };
             return script;
         }
+
+        private sealed class SampleUserData { }
     }
 }
