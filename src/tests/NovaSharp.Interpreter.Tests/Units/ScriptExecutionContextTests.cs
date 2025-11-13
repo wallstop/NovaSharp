@@ -2,10 +2,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp;
     using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.DataTypes;
+    using System;
     using NUnit.Framework;
 
     [TestFixture]
@@ -168,6 +169,124 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return decorateMessage()");
             Assert.That(result.String, Is.EqualTo("decorated:boom"));
+        }
+
+        [Test]
+        public void AdditionalDataRequiresCallback()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            Assert.That(
+                () => context.AdditionalData = "payload",
+                Throws.TypeOf<InvalidOperationException>().With.Message.Contains("no callback")
+            );
+        }
+
+        [Test]
+        public void AdditionalDataFlowsThroughCallback()
+        {
+            Script script = new(CoreModules.None);
+            CallbackFunction callback = new((_, _) => DynValue.Nil);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext(callback);
+
+            context.AdditionalData = 123;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(context.AdditionalData, Is.EqualTo(123));
+                Assert.That(callback.AdditionalData, Is.EqualTo(123));
+            });
+        }
+
+        [Test]
+        public void CallThrowsWhenClrFunctionYields()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue func = DynValue.NewCallback(
+                (_, _) => DynValue.NewYieldReq(Array.Empty<DynValue>())
+            );
+
+            Assert.That(
+                () => context.Call(func),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("yield across a CLR-call boundary")
+            );
+        }
+
+        [Test]
+        public void CallThrowsWhenTailCallHasContinuation()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue func = DynValue.NewCallback(
+                (_, _) =>
+                    DynValue.NewTailCallReq(
+                        new TailCallData
+                        {
+                            Function = DynValue.NewCallback((_, _) => DynValue.NewNumber(1)),
+                            Continuation = new CallbackFunction((_, _) => DynValue.Nil),
+                        }
+                    )
+            );
+
+            Assert.That(
+                () => context.Call(func),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot be called directly")
+            );
+        }
+
+        [Test]
+        public void CallFollowsTailCallWithoutContinuation()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue inner = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    Assert.That(args.Count, Is.EqualTo(1));
+                    Assert.That(args[0].Number, Is.EqualTo(99));
+                    return DynValue.NewNumber(123);
+                }
+            );
+            DynValue func = DynValue.NewCallback(
+                (_, _) =>
+                    DynValue.NewTailCallReq(
+                        new TailCallData
+                        {
+                            Function = inner,
+                            Args = new[] { DynValue.NewNumber(99) },
+                        }
+                    )
+            );
+
+            DynValue result = context.Call(func);
+            Assert.That(result.Number, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CallUsesCallMetamethod()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            Table target = new(script);
+            Table meta = new(script);
+            meta.Set("__call", DynValue.NewCallback((_, _) => DynValue.NewString("called")));
+            target.MetaTable = meta;
+
+            DynValue result = context.Call(DynValue.NewTable(target), DynValue.NewNumber(1));
+            Assert.That(result.String, Is.EqualTo("called"));
+        }
+
+        [Test]
+        public void EvaluateSymbolReturnsNilWhenMissing()
+        {
+            Script script = new(CoreModules.None);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            DynValue nil = context.EvaluateSymbol(null);
+            Assert.That(nil, Is.EqualTo(DynValue.Nil));
         }
     }
 }

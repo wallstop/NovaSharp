@@ -1,12 +1,14 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NUnit.Framework;
+    using NovaSharp.Interpreter.Errors;
 
     [TestFixture]
     public sealed class StandardEnumUserDataDescriptorTests
@@ -120,6 +122,146 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptor.IsUnsigned, Is.False);
         }
 
+        [TestCaseSource(nameof(SignedEnumCases))]
+        public void SignedConversionSupportsAllUnderlyingTypes(Type enumType, object flagValue)
+        {
+            StandardEnumUserDataDescriptor descriptor = new(enumType);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue left = UserData.Create(flagValue, descriptor);
+            DynValue result = descriptor.Callback_And(
+                context,
+                TestHelpers.CreateArguments(left, left)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.IsUnsigned, Is.False);
+                Assert.That(Convert.ToInt64(result.UserData.Object), Is.EqualTo(Convert.ToInt64(flagValue)));
+            });
+        }
+
+        [TestCaseSource(nameof(UnsignedEnumCases))]
+        public void UnsignedConversionSupportsAllUnderlyingTypes(Type enumType, object flagValue)
+        {
+            StandardEnumUserDataDescriptor descriptor = new(enumType);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue left = UserData.Create(flagValue, descriptor);
+            DynValue result = descriptor.Callback_And(
+                context,
+                TestHelpers.CreateArguments(left, left)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.IsUnsigned, Is.True);
+                Assert.That(Convert.ToUInt64(result.UserData.Object), Is.EqualTo(Convert.ToUInt64(flagValue)));
+            });
+        }
+
+        [Test]
+        public void BinaryOperationSignedAcceptsNumericArguments()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.Callback_Or(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            );
+
+            Assert.That((int)result.UserData.Object, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void BinaryOperationRejectsInvalidOperandType()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            Assert.That(
+                () =>
+                    descriptor.Callback_Or(
+                        context,
+                        TestHelpers.CreateArguments(DynValue.NewString("bad"), DynValue.NewNumber(1))
+                    ),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("Enum userdata or number expected")
+            );
+        }
+
+        [Test]
+        public void BinaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            DynValue value = UserData.Create(SampleFlags.Fast, descriptor);
+
+            Assert.That(
+                () => descriptor.Callback_Or(context, TestHelpers.CreateArguments(value)),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("expects two arguments")
+            );
+        }
+
+        [Test]
+        public void UnaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            Assert.That(
+                () => descriptor.Callback_BwNot(context, TestHelpers.CreateArguments()),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("expects one argument")
+            );
+        }
+
+        [Test]
+        public void MetaIndexReturnsConcatForFlags()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            DynValue meta = descriptor.MetaIndex(new Script(), SampleFlags.Fast, "__concat");
+
+            Assert.That(meta.Type, Is.EqualTo(DataType.ClrFunction));
+        }
+
+        [Test]
+        public void MetaIndexReturnsNullForNonFlags()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
+
+            DynValue meta = descriptor.MetaIndex(new Script(), SampleEnum.One, "__concat");
+
+            Assert.That(meta, Is.Null);
+        }
+
+        [Test]
+        public void IsTypeCompatibleRespectsDescriptorType()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.IsTypeCompatible(typeof(SampleEnum), SampleEnum.One), Is.True);
+                Assert.That(descriptor.IsTypeCompatible(typeof(SampleEnum), null), Is.False);
+            });
+        }
+
+        private static IEnumerable<TestCaseData> SignedEnumCases()
+        {
+            yield return new TestCaseData(typeof(SByteEnum), SByteEnum.Value);
+            yield return new TestCaseData(typeof(ShortEnum), ShortEnum.Value);
+            yield return new TestCaseData(typeof(IntEnum), IntEnum.Value);
+            yield return new TestCaseData(typeof(LongEnum), LongEnum.Value);
+        }
+
+        private static IEnumerable<TestCaseData> UnsignedEnumCases()
+        {
+            yield return new TestCaseData(typeof(ByteFlags), ByteFlags.Flag);
+            yield return new TestCaseData(typeof(UShortFlags), UShortFlags.Flag);
+            yield return new TestCaseData(typeof(UIntFlags), UIntFlags.Flag);
+            yield return new TestCaseData(typeof(ULongFlags), ULongFlags.Flag);
+        }
+
         private enum SampleEnum
         {
             One,
@@ -139,6 +281,58 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Zero = 0,
             NegativeOne = -1,
+        }
+
+        private enum SByteEnum : sbyte
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum ShortEnum : short
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum IntEnum : int
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum LongEnum : long
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        [Flags]
+        private enum ByteFlags : byte
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum UShortFlags : ushort
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum UIntFlags : uint
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum ULongFlags : ulong
+        {
+            None = 0,
+            Flag = 1,
         }
     }
 }
