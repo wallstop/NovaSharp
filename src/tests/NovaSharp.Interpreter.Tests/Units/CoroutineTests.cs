@@ -37,9 +37,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             DynValue coroutine = script.CreateCoroutine(function);
 
-            List<int> results = coroutine.Coroutine.AsTypedEnumerable()
-                .Select(v => (int)v.Number)
-                .ToList();
+            List<int> results = new();
+            foreach (DynValue value in coroutine.Coroutine.AsTypedEnumerable())
+            {
+                results.Add((int)value.Number);
+            }
 
             Assert.That(results, Is.EqualTo(new[] { 1, 2, 3 }));
         }
