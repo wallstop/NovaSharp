@@ -296,11 +296,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new Script();
 
-            DynValue result = script.DoString(
-                @"
-                return 2 ^ 3 ^ 2
-            "
+            Expression expr = BuildExpressionChain(
+                script,
+                new[]
+                {
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(2),
+                },
+                new[] { (TokenType.OpPwr, "^"), (TokenType.OpPwr, "^") }
             );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             Assert.That(result.Number, Is.EqualTo(Math.Pow(2, Math.Pow(3, 2))));
         }

@@ -469,6 +469,8 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                     return mod;
                 }
+                case Operator.Power:
+                    return Math.Pow(d1, d2);
                 default:
                     throw new DynamicExpressionException("Unsupported operator {0}", _operator);
             }
