@@ -33,6 +33,7 @@
 - Write test method names in PascalCase (no underscores); rename legacy cases when you touch them.
 - Use `Assert.Ignore` only with a linked tracking issue and add coverage for new opcodes, metatables, and debugger paths.
 - When a regression test fails, assume the production code is wrong until proven otherwise. Align fixes with the Lua 5.4 specification and keep the test unchanged unless it is demonstrably incorrect.
+- If a test exposes a real runtime/spec gap, fix the production implementation (or MoonSharp carry-over design) instead of weakening the test; our target is full Lua 5.4 parity, not test green builds.
 - Any failing test must trigger a pass through the official Lua manuals for every version we target (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`). Document the consulted section/link in the test or PR notes, and update production code and expectations together so NovaSharp stays spec-faithful.
 - Spec-driven suites (e.g., string, math, table) must cite the relevant manual section (e.g., “§6.4 String Manipulation”) and assert behaviour matching the canonical Lua interpreter rather than legacy MoonSharp quirks.
 
