@@ -291,6 +291,117 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void PowerOperatorIsRightAssociative()
+        {
+            Script script = new Script();
+
+            DynValue result = script.DoString(
+                @"
+                return 2 ^ 3 ^ 2
+            "
+            );
+
+            Assert.That(result.Number, Is.EqualTo(Math.Pow(2, Math.Pow(3, 2))));
+        }
+
+        [Test]
+        public void MultiplicationHasHigherPrecedenceThanAddition()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildExpressionChain(
+                script,
+                new[]
+                {
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                },
+                new[] { (TokenType.OpAdd, "+"), (TokenType.OpMul, "*") }
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.EqualTo(7));
+        }
+
+        [Test]
+        public void CompileOrEmitsShortCircuitJump()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.Or,
+                "or",
+                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, DynValue.False)
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(byteCode.code[0].OpCode, Is.EqualTo(OpCode.Literal));
+                Instruction jump = byteCode.code[1];
+                Assert.That(jump.OpCode, Is.EqualTo(OpCode.JtOrPop));
+                Assert.That(jump.NumVal, Is.EqualTo(byteCode.code.Count));
+                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.Literal));
+            });
+        }
+
+        [Test]
+        public void CompileAndEmitsShortCircuitJump()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.And,
+                "and",
+                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, DynValue.False)
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(byteCode.code[0].OpCode, Is.EqualTo(OpCode.Literal));
+                Instruction jump = byteCode.code[1];
+                Assert.That(jump.OpCode, Is.EqualTo(OpCode.JfOrPop));
+                Assert.That(jump.NumVal, Is.EqualTo(byteCode.code.Count));
+                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.Literal));
+            });
+        }
+
+        [Test]
+        public void CompileGreaterThanInvertsComparisonResult()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpGreaterThan,
+                ">",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3))
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.LessEq));
+                Assert.That(byteCode.code[3].OpCode, Is.EqualTo(OpCode.CNot));
+                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Not));
+            });
+        }
+
         private static Expression BuildBinaryExpression(
             Script script,
             TokenType tokenType,
@@ -304,6 +415,37 @@ namespace NovaSharp.Interpreter.Tests.Units
             BinaryOperatorExpression.AddExpressionToChain(chain, leftFactory(ctx));
             BinaryOperatorExpression.AddOperatorToChain(chain, CreateToken(tokenType, tokenText));
             BinaryOperatorExpression.AddExpressionToChain(chain, rightFactory(ctx));
+            return BinaryOperatorExpression.CommitOperatorChain(chain, ctx);
+        }
+
+        private static Expression BuildExpressionChain(
+            Script script,
+            DynValue[] operands,
+            (TokenType Type, string Text)[] operators
+        )
+        {
+            if (operands.Length != operators.Length + 1)
+            {
+                throw new ArgumentException("Operator count must be operand count - 1", nameof(operators));
+            }
+
+            ScriptLoadingContext ctx = new(script);
+            object chain = BinaryOperatorExpression.BeginOperatorChain();
+
+            for (int i = 0; i < operands.Length; i++)
+            {
+                BinaryOperatorExpression.AddExpressionToChain(
+                    chain,
+                    new LiteralExpression(ctx, operands[i])
+                );
+
+                if (i < operators.Length)
+                {
+                    (TokenType type, string text) = operators[i];
+                    BinaryOperatorExpression.AddOperatorToChain(chain, CreateToken(type, text));
+                }
+            }
+
             return BinaryOperatorExpression.CommitOperatorChain(chain, ctx);
         }
 

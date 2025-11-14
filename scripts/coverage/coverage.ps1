@@ -9,9 +9,13 @@ $ErrorActionPreference = "Stop"
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptDirectory = Split-Path -Parent $scriptPath
 $repoRoot = Split-Path -Parent $scriptDirectory
+if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = Split-Path -Parent $repoRoot
+}
 if ([string]::IsNullOrWhiteSpace($repoRoot)) {
     $repoRoot = "."
 }
+$repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
 
 if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"

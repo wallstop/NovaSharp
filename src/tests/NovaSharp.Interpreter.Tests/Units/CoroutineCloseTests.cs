@@ -1,145 +1,99 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using NovaSharp;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
-    public class CoroutineCloseTests
+    public sealed class CoroutineCloseTests
     {
         [Test]
-        public void ToBeClosedAllowsNilAssignments()
+        public void CloseBeforeStartReturnsTrueAndMarksDead()
         {
-            Script script = new();
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString("function ready() return 1 end");
 
-            DynValue result = script.DoString(
-                @"
-                local function run()
-                    local _ <close> = nil
-                    return true
-                end
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("ready"));
 
-                return run()
-                "
-            );
+            DynValue closeResult = coroutineValue.Coroutine.Close();
 
-            Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(result.Boolean, Is.True);
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
         }
 
         [Test]
-        public void ToBeClosedAllowsFalseAssignments()
+        public void CloseWhileSuspendedEndsCoroutine()
         {
-            Script script = new();
-
-            DynValue result = script.DoString(
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
                 @"
-                local function run()
-                    local _ <close> = false
-                    return true
+                function pause()
+                  coroutine.yield('pause')
+                  return 'done'
                 end
-
-                return run()
-                "
+            "
             );
 
-            Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(result.Boolean, Is.True);
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
+            DynValue first = coroutineValue.Coroutine.Resume();
+
+            Assert.That(first.Type, Is.EqualTo(DataType.String));
+            Assert.That(first.String, Is.EqualTo("pause"));
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+
+            Assert.That(
+                () => coroutineValue.Coroutine.Resume(),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("cannot resume dead coroutine")
+            );
         }
 
         [Test]
-        public void CoroutineCloseFlushesPendingClosuresWhenSuspended()
+        public void CloseAfterExceptionReturnsFalseTuple()
         {
-            Script script = new();
-
-            DynValue result = script.DoString(
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
                 @"
-                local log = {}
-
-                local function newcloser()
-                    local token = {}
-                    setmetatable(token, {
-                        __close = function(_, err)
-                            table.insert(log, err or 'nil')
-                        end
-                    })
-                    return token
+                function blow()
+                  error('boom!')
                 end
-
-                local co = coroutine.create(function()
-                    local guard <close> = newcloser()
-                    coroutine.yield('pause')
-                end)
-
-                local okResume, resumeValue = coroutine.resume(co)
-                local closeOk, closeErr = coroutine.close(co)
-
-                return {
-                    resumeOk = okResume,
-                    resumeValue = resumeValue,
-                    closeOk = closeOk,
-                    closeErr = closeErr,
-                    log = log
-                }
-                "
+            "
             );
 
-            Table table = result.Table;
-            Assert.That(table.Get("resumeOk").Boolean, Is.True);
-            Assert.That(table.Get("resumeValue").String, Is.EqualTo("pause"));
-            Assert.That(table.Get("closeOk").Boolean, Is.True);
-            Assert.That(table.Get("closeErr").Type, Is.EqualTo(DataType.Nil));
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("blow"));
 
-            Table log = table.Get("log").Table;
-            Assert.That(log.Length, Is.EqualTo(1));
-            Assert.That(log.Get(1).String, Is.EqualTo("nil"));
-        }
-
-        [Test]
-        public void CoroutineCloseReturnsOriginalErrorAfterFailure()
-        {
-            Script script = new();
-
-            DynValue result = script.DoString(
-                @"
-                local log = {}
-
-                local co = coroutine.create(function()
-                    local guard <close> = setmetatable({}, {
-                        __close = function(_, err)
-                            table.insert(log, err or 'nil')
-                        end
-                    })
-                    error('kapow')
-                end)
-
-                local resumeOk, resumeErr = coroutine.resume(co)
-                local closeOk, closeErr = coroutine.close(co)
-                local closeAgainOk, closeAgainErr = coroutine.close(co)
-
-                return {
-                    resumeOk = resumeOk,
-                    resumeErr = resumeErr,
-                    closeOk = closeOk,
-                    closeErr = closeErr,
-                    closeAgainOk = closeAgainOk,
-                    closeAgainErr = closeAgainErr,
-                    log = log
-                }
-                "
+            Assert.That(
+                () => coroutineValue.Coroutine.Resume(),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("boom")
             );
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
 
-            Table table = result.Table;
-            Assert.That(table.Get("resumeOk").Boolean, Is.False);
-            Assert.That(table.Get("resumeErr").String, Does.Contain("kapow"));
-            Assert.That(table.Get("closeOk").Boolean, Is.False);
-            Assert.That(table.Get("closeErr").String, Does.Contain("kapow"));
-            Assert.That(table.Get("closeAgainOk").Boolean, Is.False);
-            Assert.That(table.Get("closeAgainErr").String, Does.Contain("kapow"));
+            DynValue closeResult = coroutineValue.Coroutine.Close();
 
-            Table log = table.Get("log").Table;
-            Assert.That(log.Length, Is.EqualTo(1));
-            Assert.That(log.Get(1).String, Does.Contain("kapow"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(closeResult.Tuple.Length, Is.EqualTo(2));
+                Assert.That(closeResult.Tuple[0].Boolean, Is.False);
+                Assert.That(closeResult.Tuple[1].String, Does.Contain("boom"));
+            });
         }
     }
 }
