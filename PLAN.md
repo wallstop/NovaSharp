@@ -38,6 +38,31 @@
 - **Enum allocation audit**: .NET `Enum.HasFlags` and default `ToString()` allocate; add follow-up to port the no-alloc helpers from DxMessaging/UnityHelpers (bitmask tests + generated name maps) so enum-heavy interpreter paths stay allocation-free while keeping user-friendly names.
 - **Warning hygiene**: Fix all existing compiler/analyzer warnings and flip `TreatWarningsAsErrors` on across every project so Release builds (and coverage.ps1) stay green without manual suppressions.
 - **Runtime security modes**: Design configurable Lua sandbox profiles that disable or stub risky primitives (file IO, env vars, OS commands, reflection hooks) and provide host-controlled policies for multi-tenant deployments.
+- **Resource/QoS sandboxing**: Add configurable ceilings for time, memory, recursion depth, table growth, and coroutine counts so runaway mods can’t stall the game loop; expose watchdog hooks for graceful termination.
+- **Deterministic execution profile**: Define and test a “deterministic mode” (stable PRNG seeding, locale-neutral formatting, deterministic iteration where Lua allows) to support lockstep networking and replays.
+- **Mod isolation lifecycle**: Provide per-mod state containers, controlled export/import mechanics, and load/reload/unload events to prevent mods from trampling each other or leaking state across sessions.
+- **Packaging & deployment pipeline**: Document and automate mod packaging (versioning, signatures, compression) and produce redistributable runtime bundles/NuGet packages plus sample integration stubs.
+- **Observability & diagnostics**: Build structured logging, per-mod profiling (time/allocations), execution tracing, and crash report surfacing so hosts can debug and monitor mods in production.
+- **Host API surface review**: Specify a stable C#/Lua interop contract (events, async bridging, error propagation), include analyzers/templates, and generate docs to keep exposed APIs safe and versionable.
+- **Lua version parity audit**: Extend spec harness/tests to cover supported Lua versions (5.1–5.4) including bit32/utf8/goto/coroutine differences, and document any intentional deviations for modders.
+- **RNG parity & quality**: Match Lua 5.4’s PCG32 sequence for `math.random`/`math.randomseed`, and expose optional higher-quality PRNGs (xoroshiro/xoshiro) without breaking deterministic mods.
+- **Math & locale neutrality**: Audit `math`/`string` formatting vs Lua spec (handling of NaN, infinity, modulo, locale) and enforce invariant culture so mod behavior is stable across hosts.
+- **Integer & bitwise semantics**: Validate 64-bit integer operations, overflow, and bit shifts against Lua’s reference behavior; align or document any differences.
+- **Coroutine & metamethod conformance**: Expand spec tests for nested yields, pcall/xpcall interactions, and metamethod trigger order to mirror the Lua VM.
+- **Table iteration determinism**: Confirm insertion/iteration behavior matches Lua’s expectations, avoiding .NET dictionary ordering surprises for modded state.
+- **GC behavior parity**: Document .NET GC differences vs Lua’s incremental collector and evaluate exposing Lua-style pause/step knobs so mods relying on GC tuning remain predictable.
+- **Debug hook fidelity**: Ensure `debug.sethook`, stack traces, and traceback formatting match Lua’s behavior so profiling tools and mod debuggers work transparently.
+- **Bytecode handling policy**: Decide whether NovaSharp loads Lua bytecode; if supported, implement version checks and sandbox hardening, otherwise document the text-only stance.
+- **Module searchers & paths**: Align `require`/`package.searchpath` resolution (case sensitivity, separators, LUA_PATH inheritance) with stock Lua for cross-platform mod portability.
+- **Numeric mode consistency**: Audit integer/float handling (wraparound, `%` on negatives, `math.tointeger`) to guarantee Lua 5.3+/5.4 semantics.
+- **UTF-8 library coverage**: Verify `utf8` API parity (surrogate handling, error returns) with Lua’s reference implementation.
+- **OS/IO abstraction parity**: Normalize newline, path separator, and timezone behaviors across platforms so mods behave consistently.
+- **Threading model guidance**: Define main-thread-only rules, provide safe queues or schedulers if background jobs are needed, and guard against multi-thread misuse.
+- **Hot-reload resilience**: Add lifecycle hooks and cleanup strategies so mod reload/unload frees resources (events, timers, coroutines) without leaking or crashing.
+- **Error surfacing parity**: Match Lua’s error objects and stack level reporting, ensuring `pcall`/`xpcall` return contracts remain intact despite C# exceptions.
+- **Floating-point determinism**: Evaluate CPU/runtime variability; consider fixed-point or deterministic options for lockstep networking scenarios.
+- **Sandbox escape audit**: Catalogue interop/reflection entry points that could bypass security modes and add mitigations or documentation.
+- **Mod SDK & docs**: Produce modder-facing SDK artifacts (API docs, templates, analyzers) and automation for keeping documentation in sync with runtime releases.
 
 ## Coverage Burn-down Checkpoint (Latest)
 • Progress
