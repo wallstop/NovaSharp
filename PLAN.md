@@ -37,6 +37,9 @@
 - **Unity onboarding**: Basic packaging workflow is documented in `docs/UnityIntegration.md`; still need automated packaging and refreshed Unity samples.
 - **Enum allocation audit**: .NET `Enum.HasFlags` and default `ToString()` allocate; add follow-up to port the no-alloc helpers from DxMessaging/UnityHelpers (bitmask tests + generated name maps) so enum-heavy interpreter paths stay allocation-free while keeping user-friendly names.
 - **Warning hygiene**: Fix all existing compiler/analyzer warnings and flip `TreatWarningsAsErrors` on across every project so Release builds (and coverage.ps1) stay green without manual suppressions.
+  - ✅ Compiler warnings (`CS*`) now fail the build via solution-wide `WarningsAsErrors`; `dotnet build src/NovaSharp.sln -c Release` succeeds with zero CS diagnostics, and `dotnet test … --no-build` passes 1 499 cases.
+  - 🔄 Triage the remaining analyzer warnings (CA*) project-by-project, land suppressions only where behaviourally required, and plan to promote CA diagnostics to errors once the backlog is cleared.
+  - 🔄 Rerun `./coverage.ps1` after the CA backlog is resolved so the regenerated reports reflect the new warning hygiene and remain publishable without manual intervention.
 - **Runtime security modes**: Design configurable Lua sandbox profiles that disable or stub risky primitives (file IO, env vars, OS commands, reflection hooks) and provide host-controlled policies for multi-tenant deployments.
 - **Resource/QoS sandboxing**: Add configurable ceilings for time, memory, recursion depth, table growth, and coroutine counts so runaway mods can’t stall the game loop; expose watchdog hooks for graceful termination.
 - **Deterministic execution profile**: Define and test a “deterministic mode” (stable PRNG seeding, locale-neutral formatting, deterministic iteration where Lua allows) to support lockstep networking and replays.
