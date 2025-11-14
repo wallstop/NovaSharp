@@ -288,9 +288,11 @@ namespace NovaSharp.Interpreter.CoreLib
         public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             DynValue arg = args.AsType(0, "modf", DataType.Number, false);
+            double integerPart = Math.Truncate(arg.Number);
+            double fractionalPart = arg.Number - integerPart;
             return DynValue.NewTuple(
-                DynValue.NewNumber(Math.Floor(arg.Number)),
-                DynValue.NewNumber(arg.Number - Math.Floor(arg.Number))
+                DynValue.NewNumber(integerPart),
+                DynValue.NewNumber(fractionalPart)
             );
         }
 

@@ -45,8 +45,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Tuple.Length, Is.EqualTo(2));
             Assert.Multiple(() =>
             {
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(-4.0));
-                Assert.That(result.Tuple[1].Number, Is.EqualTo(0.75).Within(1e-12));
+                Assert.That(result.Tuple[0].Number, Is.EqualTo(-3.0));
+                Assert.That(result.Tuple[1].Number, Is.EqualTo(-0.25).Within(1e-12));
             });
         }
 
