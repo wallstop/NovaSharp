@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -83,6 +84,84 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("resources owned by different scripts"));
+        }
+
+        [Test]
+        public void SetDynValueNaNThrows()
+        {
+            Table table = new(new Script());
+            DynValue nanKey = DynValue.NewNumber(double.NaN);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () => table.Set(nanKey, DynValue.NewNumber(1))
+            );
+
+            Assert.That(exception.Message, Does.Contain("table index is NaN"));
+        }
+
+        [Test]
+        public void SetKeysThrowsWhenPathMissing()
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () => table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
+            );
+
+            Assert.That(exception.Message, Does.Contain("did not point to anything"));
+        }
+
+        [Test]
+        public void SetKeysThrowsWhenIntermediateIsNotTable()
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () => table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
+            );
+
+            Assert.That(exception.Message, Does.Contain("did not point to a table"));
+        }
+
+        [Test]
+        public void GetParamsReturnsNestedValue()
+        {
+            Script script = new();
+            Table table = new(script);
+            DynValue child = DynValue.NewTable(script);
+            child.Table.Set(1, DynValue.NewString("inner"));
+            table.Set("child", child);
+
+            DynValue value = table.Get("child", 1);
+
+            Assert.That(value.String, Is.EqualTo("inner"));
+        }
+
+        [Test]
+        public void RemoveParamsReturnsFalseWhenNoKeys()
+        {
+            Table table = new(new Script());
+            Assert.That(table.Remove(Array.Empty<object>()), Is.False);
+        }
+
+        [Test]
+        public void RawGetObjectReturnsNullWhenKeyIsNull()
+        {
+            Table table = new(new Script());
+            Assert.That(table.RawGet((object)null), Is.Null);
+        }
+
+        [Test]
+        public void SetObjectThrowsWhenKeyIsNull()
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () => table.Set((object)null, DynValue.NewNumber(1))
+            );
+
+            Assert.That(exception.Message, Does.Contain("table index is nil"));
         }
     }
 }
