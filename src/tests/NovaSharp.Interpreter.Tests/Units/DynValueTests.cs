@@ -9,6 +9,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DynValueTests
     {
+        [OneTimeSetUp]
+        public void RegisterUserData()
+        {
+            UserData.RegisterType<SampleUserData>();
+        }
+
         [Test]
         public void NewTupleHandlesEmptyAndSingleInputs()
         {
@@ -162,6 +168,92 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("got no value"));
+        }
+
+        [Test]
+        public void CastToNumberParsesInvariantStrings()
+        {
+            DynValue numericString = DynValue.NewString("12.75");
+            double? result = numericString.CastToNumber();
+
+            Assert.That(result, Is.EqualTo(12.75));
+        }
+
+        [Test]
+        public void CastToNumberReturnsNullForNonNumericStrings()
+        {
+            Assert.That(DynValue.NewString("not-a-number").CastToNumber(), Is.Null);
+        }
+
+        [Test]
+        public void CastToStringConvertsNumbers()
+        {
+            DynValue number = DynValue.NewNumber(5.5);
+
+            Assert.That(number.CastToString(), Is.EqualTo("5.5"));
+        }
+
+        [Test]
+        public void CheckTypeAllowsNilWhenFlagSet()
+        {
+            DynValue result = DynValue.Nil.CheckType(
+                "func",
+                DataType.Table,
+                flags: TypeValidationFlags.AllowNil
+            );
+
+            Assert.That(result, Is.SameAs(DynValue.Nil));
+        }
+
+        [Test]
+        public void CheckUserDataTypeReturnsManagedInstance()
+        {
+            DynValue userData = UserData.Create(new SampleUserData("ud"));
+
+            SampleUserData result = userData.CheckUserDataType<SampleUserData>("func");
+
+            Assert.That(result.Name, Is.EqualTo("ud"));
+        }
+
+        [Test]
+        public void CheckUserDataTypeThrowsWhenTypeMismatch()
+        {
+            DynValue userData = UserData.Create(new SampleUserData("ud"));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () => userData.CheckUserDataType<string>("func")
+            );
+
+            Assert.That(exception.Message, Does.Contain("userdata"));
+        }
+
+        [Test]
+        public void ToPrintStringReflectsUserDataDescriptor()
+        {
+            DynValue userData = UserData.Create(new SampleUserData("Printable"));
+
+            Assert.That(userData.ToPrintString(), Is.EqualTo("Printable"));
+        }
+
+        [Test]
+        public void AsReadOnlyReturnsSameInstanceWhenAlreadyReadOnly()
+        {
+            Assert.That(DynValue.True.AsReadOnly(), Is.SameAs(DynValue.True));
+        }
+
+        private sealed class SampleUserData
+        {
+            public SampleUserData(string name)
+            {
+                Name = name;
+            }
+
+            public string Name { get; }
+
+            public override string ToString()
+            {
+                return Name;
+            }
         }
     }
 }
