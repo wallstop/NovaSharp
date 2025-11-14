@@ -3,6 +3,7 @@
 Helper scripts live under this directory so contributors can find tooling without hunting through the repo root. Subfolders group related commands:
 
 - `coverage/` — Coverlet + ReportGenerator wrappers (`coverage.ps1` / `coverage.sh`) that build the solution, run the interpreter tests, and publish Markdown/HTML/JSON summaries into `artifacts/coverage` + `docs/coverage/latest`.
+- `build/` — Cross-platform build helpers (`build.ps1` / `build.sh`) that restore local tools, build `src/NovaSharp.sln`, and (by default) execute the interpreter tests into `artifacts/test-results`.
 - `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to legacy MoonSharp names.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
 - Additional folders (e.g., `build/`, `dev/`, `ci/`) should follow the same pattern: descriptive folder name, script-specific README, and cross-platform shims when practical.

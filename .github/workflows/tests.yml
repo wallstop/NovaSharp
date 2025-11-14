@@ -28,12 +28,9 @@ jobs:
         run: dotnet restore src/NovaSharp.sln
       - name: Restore tools
         run: dotnet tool restore
-      - name: Build solution
-        run: dotnet build src/NovaSharp.sln -c Release --no-restore
-      - name: Run interpreter tests
-        run: |
-          mkdir -p artifacts/test-results
-          dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --logger "trx;LogFileName=NovaSharpTests.trx" --results-directory artifacts/test-results
+      - name: Build + test via helper script
+        run: ./scripts/build/build.sh --skip-tool-restore
+        shell: bash
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

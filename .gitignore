@@ -12,6 +12,8 @@
 [Rr]elease/
 x64/
 build/
+!scripts/build/
+!scripts/build/**
 [Bb]in/
 [Oo]bj/
 bin-debug/
@@ -176,4 +178,3 @@ artifacts/
 
 docs/coverage/latest/
 !docs/coverage/README.md
-

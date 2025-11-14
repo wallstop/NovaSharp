@@ -57,6 +57,7 @@ Additional documentation:
 - [Testing Guide](docs/Testing.md)
 - [Modernization Notes](docs/Modernization.md)
 - [Unity Integration](docs/UnityIntegration.md)
+- [Helper Scripts Index](scripts/README.md)
 
 
 **License**
@@ -92,7 +93,6 @@ double NovaSharpFactorial()
 ```
 
 For more in-depth tutorials, samples, etc. please refer to http://www.NovaSharp.org/getting_started.html
-
 
 
 
