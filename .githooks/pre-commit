@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -z "$repo_root" ]]; then
+  echo "Unable to locate repo root for hook." >&2
+  exit 1
+fi
+"$repo_root/scripts/dev/pre-commit.sh"

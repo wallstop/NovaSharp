@@ -10,10 +10,52 @@ permissions:
   pull-requests: write
 
 jobs:
-  dotnet-tests:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enforce NovaSharp branding
+        run: ./scripts/branding/ensure-novasharp-branding.sh
+        shell: bash
+      - name: Verify namespace alignment
+        run: python3 tools/NamespaceAudit/namespace_audit.py
+      - name: Enforce script/doc README coverage
+        run: ./scripts/ci/ensure-readme-updates.sh
+        shell: bash
+        env:
+          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Python tooling deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.tooling.txt
+      - name: Markdown formatting + links
+        env:
+          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}
+        run: ./scripts/ci/check-markdown.sh
+        shell: bash
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: CSharpier formatting gate
+        run: ./scripts/ci/check-csharpier.sh
+        shell: bash
+
+  dotnet-tests:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Enforce NovaSharp branding
         run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash
@@ -39,11 +81,67 @@ jobs:
           path: artifacts/test-results
           if-no-files-found: error
 
+  lint-autofix:
+    needs: lint
+    if: ${{ always() && github.event_name == 'pull_request' && needs.lint.result == 'failure' && github.event.pull_request.head.repo.fork == false }}
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Python tooling deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.tooling.txt
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Apply repository formatters
+        run: ./scripts/ci/apply-formatters.sh
+        shell: bash
+      - name: Detect auto-fix changes
+        id: autofix_changes
+        run: |
+          if git status --porcelain | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create auto-fix PR
+        if: steps.autofix_changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: apply lint autofixes"
+          branch: autofix/pr-${{ github.event.number }}-lint
+          base: ${{ github.head_ref }}
+          title: "Autofix lint issues for #${{ github.event.number }}"
+          body: |
+            This automated PR applies repository formatting fixes (CSharpier + markdownlint) detected in #${{ github.event.number }}.
+
+            Merge this branch into `${{ github.head_ref }}` to adopt the fixes, or close it if you prefer to address the issues manually.
+          labels: autofix, automation
+          draft: true
+      - name: No auto-fix changes detected
+        if: steps.autofix_changes.outputs.changed != 'true'
+        run: echo "Lint failures could not be auto-fixed (likely link issues)."
+
   code-coverage:
     runs-on: ubuntu-latest
     needs: dotnet-tests
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Enforce NovaSharp branding
         run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash

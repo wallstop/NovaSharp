@@ -15,7 +15,7 @@ dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.cs
 - Mirrors the execution that now powers CI, ensuring branch/line coverage is captured with the same runner configuration.
 
 ### Build Helper Scripts
-Use the scripts in `scripts/build` when you need the canonical build + test pipeline in a single command (the same layout that CI uses).
+Use the helpers in `scripts/build` when you need the canonical build + interpreter-test pipeline in a single command (matching the CI lane).
 
 ```powershell
 pwsh ./scripts/build/build.ps1
@@ -26,7 +26,7 @@ bash ./scripts/build/build.sh
 ```
 
 - Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with `dotnet test --no-build --logger "trx;LogFileName=NovaSharpTests.trx"` writing logs to `artifacts/test-results`.
-- Pass `-SkipTests`/`--skip-tests` if you only want the build, or `-Configuration Debug`/`--configuration Debug` for non-Release validation.
+- Pass `-SkipTests`/`--skip-tests` for build-only runs, or override `-Configuration`/`--configuration` to target Debug builds.
 
 ## Generating Coverage
 ```powershell
