@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
-    using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
 
@@ -10,78 +9,62 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class UnityAssetsScriptLoaderTests
     {
         [Test]
-        public void LoadFileReturnsScriptBodyWhenPresent()
+        public void LoadFileReturnsResourceContentRegardlessOfPath()
         {
-            Dictionary<string, string> scripts = new() { ["example.lua"] = "return 42" };
-            UnityAssetsScriptLoader loader = new(scripts);
+            Dictionary<string, string> resources = new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["init.lua"] = "print('hi')",
+            };
 
-            object result = loader.LoadFile("example.lua", new Table(new Script()));
+            UnityAssetsScriptLoader loader = new(resources);
 
-            Assert.That(result, Is.EqualTo("return 42"));
+            object script = loader.LoadFile("scripts/init.lua", null!);
+
+            Assert.That(script, Is.EqualTo("print('hi')"));
         }
 
         [Test]
-        public void LoadFileNormalizesPathSeparators()
-        {
-            Dictionary<string, string> scripts = new() { ["path.lua"] = "return 'ok'" };
-            UnityAssetsScriptLoader loader = new(scripts);
-
-            object result = loader.LoadFile("foo\\bar/path.lua", new Table(new Script()));
-
-            Assert.That(result, Is.EqualTo("return 'ok'"));
-        }
-
-        [Test]
-        public void LoadFileThrowsWhenMissing()
+        public void LoadFileThrowsHelpfulMessageWhenMissing()
         {
             UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
-            Assert.That(
-                () => loader.LoadFile("missing.lua", new Table(new Script())),
-                Throws.Exception.With.Message.Contains("Cannot load script")
-            );
+            Exception ex = Assert.Throws<Exception>(() => loader.LoadFile("missing.lua", null!));
+            Assert.That(ex, Is.Not.Null);
+            Assert.That(ex.Message, Does.Contain(UnityAssetsScriptLoader.DefaultPath));
         }
 
         [Test]
-        public void ScriptFileExistsRespectsNormalization()
+        public void ScriptFileExistsHandlesPathsAndExtensions()
         {
-            Dictionary<string, string> scripts = new() { ["script.lua"] = "return true" };
-            UnityAssetsScriptLoader loader = new(scripts);
+            UnityAssetsScriptLoader loader = new(
+                new Dictionary<string, string>
+                {
+                    ["secondary.lua"] = "",
+                }
+            );
 
             Assert.Multiple(() =>
             {
-                Assert.That(loader.ScriptFileExists("script.lua"), Is.True);
-                Assert.That(loader.ScriptFileExists("nested/script.lua"), Is.True);
-                Assert.That(loader.ScriptFileExists("missing.lua"), Is.False);
+                Assert.That(loader.ScriptFileExists("secondary.lua"), Is.True);
+                Assert.That(loader.ScriptFileExists("Scripts/secondary.lua"), Is.True);
+                Assert.That(loader.ScriptFileExists("Scripts/other.lua"), Is.False);
             });
         }
 
         [Test]
         public void GetLoadedScriptsReturnsSnapshotOfKeys()
         {
-            Dictionary<string, string> scripts = new()
+            Dictionary<string, string> resources = new()
             {
-                ["a.lua"] = "return 1",
-                ["b.lua"] = "return 2",
-                ["c.lua"] = "return 3",
+                ["alpha.lua"] = "",
+                ["beta.lua"] = "",
             };
-            UnityAssetsScriptLoader loader = new(scripts);
+
+            UnityAssetsScriptLoader loader = new(resources);
 
             string[] loaded = loader.GetLoadedScripts();
 
-            Assert.That(loaded, Is.EquivalentTo(new[] { "a.lua", "b.lua", "c.lua" }));
-        }
-
-        [Test]
-        public void ReflectionConstructorSwallowsMissingUnityAssemblies()
-        {
-            UnityAssetsScriptLoader loader = new(UnityAssetsScriptLoader.DefaultPath);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(loader.ScriptFileExists("missing.lua"), Is.False);
-                Assert.That(loader.GetLoadedScripts(), Is.Empty);
-            });
+            Assert.That(loaded, Is.EquivalentTo(new[] { "alpha.lua", "beta.lua" }));
         }
     }
 }

@@ -7,14 +7,21 @@ repo_root="$(cd "$script_dir/../.." && pwd)"
 skip_build=false
 configuration="Release"
 minimum_interpreter_coverage="70.0"
+minimum_interpreter_branch_coverage="0"
+minimum_interpreter_method_coverage="0"
+coverage_gating_mode="${COVERAGE_GATING_MODE:-}"
 
 usage() {
     cat <<'EOF'
 Usage: ./scripts/coverage/coverage.sh [options]
-    --skip-build                 Skip the initial dotnet build steps (assumes binaries already exist)
-    -c|--configuration <name>    Build configuration (default: Release)
-    --minimum-interpreter-coverage <value>
-                                 Minimum NovaSharp.Interpreter line coverage percentage (default: 70.0)
+    --skip-build                             Skip the initial dotnet build steps (assumes binaries already exist)
+    -c|--configuration <name>                Build configuration (default: Release)
+    --minimum-interpreter-coverage <value>   Minimum NovaSharp.Interpreter line coverage percentage (default: 70.0)
+    --minimum-interpreter-branch-coverage <value>
+                                             Minimum NovaSharp.Interpreter branch coverage percentage (default: 0)
+    --minimum-interpreter-method-coverage <value>
+                                             Minimum NovaSharp.Interpreter method coverage percentage (default: 0)
+    --coverage-gating-mode <monitor|enforce> Override COVERAGE_GATING_MODE (monitor = warn at ≥95%, enforce = fail)
 EOF
 }
 
@@ -30,6 +37,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         --minimum-interpreter-coverage)
             minimum_interpreter_coverage="$2"
+            shift 2
+            ;;
+        --minimum-interpreter-branch-coverage)
+            minimum_interpreter_branch_coverage="$2"
+            shift 2
+            ;;
+        --minimum-interpreter-method-coverage)
+            minimum_interpreter_method_coverage="$2"
+            shift 2
+            ;;
+        --coverage-gating-mode)
+            coverage_gating_mode="$2"
             shift 2
             ;;
         -h|--help)
@@ -214,14 +233,18 @@ summary_json="$report_target/Summary.json"
 python_cmd="$(ensure_python)"
 
 if [[ -f "$summary_json" ]]; then
-    interpreter_coverage="$("$python_cmd" - <<PY
+    read -r interpreter_line interpreter_branch interpreter_method <<<"$("$python_cmd" - <<'PY'
 import json, sys
-with open("$summary_json", "r", encoding="utf-8") as fh:
-    data = json.load(fh)
+from pathlib import Path
+data = json.loads(Path("$summary_json").read_text(encoding="utf-8"))
 assemblies = data.get("coverage", {}).get("assemblies", [])
 for asm in assemblies:
     if asm.get("name") == "NovaSharp.Interpreter":
-        print(asm.get("coverage"))
+        print(
+            asm.get("coverage", 0),
+            asm.get("branchcoverage", 0),
+            asm.get("methodcoverage", 0),
+        )
         break
 else:
     sys.stderr.write("Interpreter assembly not found in coverage summary.\n")
@@ -230,9 +253,49 @@ PY
 )"
 
     echo ""
-    printf "Interpreter line coverage: %.1f%%\n" "$interpreter_coverage"
-    awk -v cov="$interpreter_coverage" -v min="$minimum_interpreter_coverage" 'BEGIN { exit (cov >= min) ? 0 : 1 }' || \
-        error_exit "$(printf "NovaSharp.Interpreter line coverage %.1f%% is below the required %.1f%% threshold." "$interpreter_coverage" "$minimum_interpreter_coverage")"
+    printf "Interpreter line coverage: %.1f%%\n" "$interpreter_line"
+    printf "Interpreter branch coverage: %.1f%%\n" "$interpreter_branch"
+    printf "Interpreter method coverage: %.1f%%\n" "$interpreter_method"
+
+    gating_mode="$(echo "${coverage_gating_mode,,}" | xargs)"
+    line_threshold="$minimum_interpreter_coverage"
+    branch_threshold="$minimum_interpreter_branch_coverage"
+    method_threshold="$minimum_interpreter_method_coverage"
+    enforce_thresholds=false
+
+    if [[ "$gating_mode" == "monitor" || "$gating_mode" == "enforce" ]]; then
+        line_threshold=$(awk -v a="$line_threshold" 'BEGIN { print (a > 95 ? a : 95) }')
+        branch_threshold=$(awk -v a="$branch_threshold" 'BEGIN { print (a > 95 ? a : 95) }')
+        method_threshold=$(awk -v a="$method_threshold" 'BEGIN { print (a > 95 ? a : 95) }')
+        enforce_thresholds=[[ "$gating_mode" == "enforce" ]]
+        echo ""
+        printf "Coverage gating mode: %s (line ≥ %.1f%%, branch ≥ %.1f%%, method ≥ %.1f%%)\n" \
+            "$gating_mode" "$line_threshold" "$branch_threshold" "$method_threshold"
+    fi
+
+    violations=()
+    compare_threshold() {
+        local value="$1"
+        local threshold="$2"
+        local label="$3"
+        awk -v cov="$value" -v min="$threshold" 'BEGIN { exit (min <= 0 || cov >= min) ? 0 : 1 }'
+        if [[ $? -ne 0 ]]; then
+            violations+=("$(printf "%s coverage %.1f%% (threshold %.1f%%)" "$label" "$value" "$threshold")")
+        fi
+    }
+
+    compare_threshold "$interpreter_line" "$line_threshold" "line"
+    compare_threshold "$interpreter_branch" "$branch_threshold" "branch"
+    compare_threshold "$interpreter_method" "$method_threshold" "method"
+
+    if [[ ${#violations[@]} -gt 0 ]]; then
+        message="NovaSharp.Interpreter coverage below threshold: ${violations[*]}"
+        if [[ "$gating_mode" == "enforce" ]]; then
+            error_exit "$message"
+        else
+            echo "WARNING: $message" >&2
+        fi
+    fi
 fi
 
 log "Coverage run completed."

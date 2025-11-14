@@ -2,7 +2,11 @@
 param(
     [switch]$SkipBuild,
     [string]$Configuration = "Release",
-    [double]$MinimumInterpreterCoverage = 70.0
+    [double]$MinimumInterpreterCoverage = 70.0,
+    [double]$MinimumInterpreterBranchCoverage = 0.0,
+    [double]$MinimumInterpreterMethodCoverage = 0.0,
+    [ValidateSet("", "monitor", "enforce")]
+    [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE
 )
 
 $ErrorActionPreference = "Stop"
@@ -221,15 +225,62 @@ if (Test-Path $summaryPath) {
             throw "Interpreter assembly not found in coverage summary. Verify reportgenerator configuration."
         }
 
-        $interpreterCoverage = [double]$interpreterAssembly.coverage
+        $lineCoverage = [double]$interpreterAssembly.coverage
+        $branchCoverage = 0.0
+        $methodCoverage = 0.0
+        if ($interpreterAssembly.PSObject.Properties.Name -contains "branchcoverage") {
+            $branchCoverage = [double]$interpreterAssembly.branchcoverage
+        }
+        if ($interpreterAssembly.PSObject.Properties.Name -contains "methodcoverage") {
+            $methodCoverage = [double]$interpreterAssembly.methodcoverage
+        }
+
         Write-Host ""
-        Write-Host ("Interpreter line coverage: {0:N1}%" -f $interpreterCoverage)
-        if ($interpreterCoverage -lt $MinimumInterpreterCoverage) {
-            throw (
-                "NovaSharp.Interpreter line coverage {0:N1}% is below the required {1:N1}% threshold." -f
-                $interpreterCoverage,
-                $MinimumInterpreterCoverage
-            )
+        Write-Host ("Interpreter line coverage: {0:N1}%" -f $lineCoverage)
+        Write-Host ("Interpreter branch coverage: {0:N1}%" -f $branchCoverage)
+        Write-Host ("Interpreter method coverage: {0:N1}%" -f $methodCoverage)
+
+        $gatingMode = ($CoverageGatingMode ?? "").ToLowerInvariant()
+        $lineThreshold = $MinimumInterpreterCoverage
+        $branchThreshold = $MinimumInterpreterBranchCoverage
+        $methodThreshold = $MinimumInterpreterMethodCoverage
+        $enforceThresholds = $true
+
+        if ($gatingMode -eq "monitor" -or $gatingMode -eq "enforce") {
+            $lineThreshold = [Math]::Max($lineThreshold, 95.0)
+            $branchThreshold = [Math]::Max($branchThreshold, 95.0)
+            $methodThreshold = [Math]::Max($methodThreshold, 95.0)
+            $enforceThresholds = $gatingMode -eq "enforce"
+            Write-Host ""
+            Write-Host ("Coverage gating mode: {0} (line ≥ {1:N1}%, branch ≥ {2:N1}%, method ≥ {3:N1}%)" -f `
+                $gatingMode, $lineThreshold, $branchThreshold, $methodThreshold)
+        }
+
+        $violations = @()
+
+        if ($lineThreshold -gt 0 -and $lineCoverage -lt $lineThreshold) {
+            $violations += "line coverage {0:N1}% (threshold {1:N1}%)" -f $lineCoverage, $lineThreshold
+        }
+
+        if ($branchThreshold -gt 0 -and $branchCoverage -lt $branchThreshold) {
+            $violations += "branch coverage {0:N1}% (threshold {1:N1}%)" -f $branchCoverage, $branchThreshold
+        }
+
+        if ($methodThreshold -gt 0 -and $methodCoverage -lt $methodThreshold) {
+            $violations += "method coverage {0:N1}% (threshold {1:N1}%)" -f $methodCoverage, $methodThreshold
+        }
+
+        if ($violations.Count -gt 0) {
+            $message =
+                "NovaSharp.Interpreter coverage below threshold: {0}" -f `
+                ([string]::Join("; ", $violations))
+
+            if ($enforceThresholds) {
+                throw $message
+            }
+            else {
+                Write-Warning $message
+            }
         }
     }
 }
