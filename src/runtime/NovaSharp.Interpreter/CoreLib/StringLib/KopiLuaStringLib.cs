@@ -1001,7 +1001,7 @@ namespace NovaSharp.Interpreter.CoreLib.StringLib
                     case '\n':
                     {
                         LuaLAddChar(b, '\\');
-                        LuaLAddChar(b, s[0]);
+                        LuaLAddChar(b, 'n');
                         break;
                     }
                     case '\r':

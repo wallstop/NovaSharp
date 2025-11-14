@@ -122,6 +122,11 @@ namespace NovaSharp.Interpreter.CoreLib
             int length = s.Length;
             DynValue[] rets = new DynValue[length];
 
+            if (length == 0)
+            {
+                return DynValue.Void;
+            }
+
             for (int i = 0; i < length; ++i)
             {
                 rets[i] = DynValue.NewNumber(filter((int)s[i]));

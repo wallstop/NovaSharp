@@ -143,7 +143,8 @@ Script.DoString("return x + 1")
 - **Method Names**: Use PascalCase without underscores for `[Test]` methods; rename legacy cases when modifying them
 - **Suite Maintenance**: Update `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes; the consolidated project runs under NUnit and feeds CI coverage
 - **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
-- **Spec Alignment**: When any test fails, consult the official Lua 5.4 reference manual (`https://www.lua.org/manual/5.4/`) to confirm the correct semantics, and update both production code and expectations so NovaSharp stays faithful to upstream Lua behavior.
+- **Spec Alignment**: When any test fails, walk the official Lua manuals for every supported version (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`) to confirm the correct semantics, record the relevant section/link in the test or PR notes, and update both production code and expectations so NovaSharp stays faithful to upstream Lua behaviour.
+- **Spec Suites**: Spec-driven coverage (string/math/table/etc.) must cite the specific manual section (e.g., “§6.4 String Manipulation”) and assert behaviour that matches the canonical Lua interpreter rather than legacy MoonSharp quirks.
 
 ## Commit & Pull Request Guidelines
 
