@@ -126,9 +126,9 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
             return resourcesType.GetRuntimeMethod(name, types);
         }
 
-        public override Type[] GetAssemblyTypes(Assembly asm)
+        public override Type[] GetAssemblyTypes(Assembly assembly)
         {
-            return SafeArray(asm.DefinedTypes.Select(ti => ti.AsType()));
+            return SafeArray(assembly.DefinedTypes.Select(ti => ti.AsType()));
         }
     }
 }

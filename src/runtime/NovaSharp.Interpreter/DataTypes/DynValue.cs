@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class DynValue
     {
-        private static int _sRefIdCounter = 0;
+        private static int _sRefIdCounter;
 
         private readonly int _refId = ++_sRefIdCounter;
         private int _hashCode = -1;
@@ -312,7 +312,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             return new DynValue()
             {
-                _object = new YieldRequest() { returnValues = args },
+                _object = new YieldRequest() { ReturnValues = args },
                 _type = DataType.YieldRequest,
             };
         }

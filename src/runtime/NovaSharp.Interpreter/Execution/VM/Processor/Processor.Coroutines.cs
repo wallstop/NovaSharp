@@ -98,7 +98,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     else
                     {
                         _state = CoroutineState.Suspended;
-                        return DynValue.NewTuple(retVal.YieldRequest.returnValues);
+                        return DynValue.NewTuple(retVal.YieldRequest.ReturnValues);
                     }
                 }
                 else

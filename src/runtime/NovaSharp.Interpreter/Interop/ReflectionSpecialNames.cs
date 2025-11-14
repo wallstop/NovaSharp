@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Interop
     /// <summary>
     /// Class helping identifying special names found with reflection
     /// </summary>
-    public struct ReflectionSpecialName
+    public struct ReflectionSpecialName : IEquatable<ReflectionSpecialName>
     {
         public ReflectionSpecialNameType Type { get; private set; }
         public string Argument { get; private set; }
@@ -192,6 +192,37 @@ namespace NovaSharp.Interpreter.Interop
                 Type = ReflectionSpecialNameType.RemoveEvent;
                 Argument = name.Substring(7);
             }
+        }
+
+        public bool Equals(ReflectionSpecialName other)
+        {
+            return Type == other.Type && string.Equals(Argument, other.Argument, StringComparison.Ordinal);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ReflectionSpecialName name && Equals(name);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = (hash * 31) + Type.GetHashCode();
+                hash = (hash * 31) + (Argument != null ? Argument.GetHashCode() : 0);
+                return hash;
+            }
+        }
+
+        public static bool operator ==(ReflectionSpecialName left, ReflectionSpecialName right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ReflectionSpecialName left, ReflectionSpecialName right)
+        {
+            return !left.Equals(right);
         }
     }
 }

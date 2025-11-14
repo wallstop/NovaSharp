@@ -38,7 +38,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// The maximum number of arguments supported in an event handler delegate
         /// </summary>
-        public const int MAX_ARGS_IN_DELEGATE = 16;
+        public const int MaxArgsInDelegate = 16;
 
         private readonly object _lock = new();
 
@@ -97,7 +97,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// or
         /// The event handler has a return type which is not System.Void
         /// or
-        /// The event handler has more than MAX_ARGS_IN_DELEGATE parameters
+        /// The event handler has more than MaxArgsInDelegate parameters
         /// or
         /// The event handler has a value type parameter or a by ref parameter
         /// or
@@ -157,12 +157,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             ParameterInfo[] pars = invoke.GetParameters();
 
-            if (pars.Length > MAX_ARGS_IN_DELEGATE)
+            if (pars.Length > MaxArgsInDelegate)
             {
                 if (throwException)
                 {
                     throw new ArgumentException(
-                        $"Event handler cannot have more than {MAX_ARGS_IN_DELEGATE} parameters"
+                        $"Event handler cannot have more than {MaxArgsInDelegate} parameters"
                     );
                 }
 

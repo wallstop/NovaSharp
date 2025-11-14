@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private Table _globalTable;
         private readonly Script _script;
-        private readonly Processor _parent = null;
+        private readonly Processor _parent;
         private CoroutineState _state;
         private bool _canYield = true;
         private int _savedInstructionPtr = -1;
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         }
 
         private int _owningThreadId = -1;
-        private int _executionNesting = 0;
+        private int _executionNesting;
 
         private void LeaveProcessor()
         {

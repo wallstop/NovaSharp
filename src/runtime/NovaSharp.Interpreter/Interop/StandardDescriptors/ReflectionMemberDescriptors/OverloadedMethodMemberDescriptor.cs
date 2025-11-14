@@ -47,8 +47,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         private List<IOverloadableMemberDescriptor> _extOverloads = new();
         private bool _unsorted = true;
         private OverloadCacheItem[] _cache = new OverloadCacheItem[CACHE_SIZE];
-        private int _cacheHits = 0;
-        private int _extensionMethodVersion = 0;
+        private int _cacheHits;
+        private int _extensionMethodVersion;
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance ignores extension methods.

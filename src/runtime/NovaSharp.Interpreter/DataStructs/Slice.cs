@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             if (index < 0 || index >= _length)
             {
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             }
 
             if (_reversed)

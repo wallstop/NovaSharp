@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected Stream _stream;
         protected StreamReader _reader;
         protected StreamWriter _writer;
-        protected bool _closed = false;
+        protected bool _closed;
         protected long _logicalPosition;
 
         protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)

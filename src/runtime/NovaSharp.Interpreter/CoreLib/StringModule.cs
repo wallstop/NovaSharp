@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing string Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "string")]
-    public class StringModule
+public class StringModule
     {
         public const string BASE64_DUMP_HEADER = "NovaSharp_dump_b64::";
 

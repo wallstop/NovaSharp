@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         }
 
         private readonly List<IfBlock> _ifs = new();
-        private readonly IfBlock _else = null;
+        private readonly IfBlock _else;
         private readonly SourceRef _end;
 
         public IfStatement(ScriptLoadingContext lcontext)

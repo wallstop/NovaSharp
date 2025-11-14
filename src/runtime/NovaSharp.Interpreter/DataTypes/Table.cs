@@ -15,9 +15,9 @@ namespace NovaSharp.Interpreter.DataTypes
         private readonly LinkedListIndex<int, TablePair> _arrayMap;
         private readonly Script _owner;
 
-        private int _initArray = 0;
+        private int _initArray;
         private int _cachedLength = -1;
-        private bool _containsNilEntries = false;
+        private bool _containsNilEntries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Table"/> class.

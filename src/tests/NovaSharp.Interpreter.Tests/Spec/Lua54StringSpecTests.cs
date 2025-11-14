@@ -56,7 +56,10 @@ namespace NovaSharp.Interpreter.Tests.Spec
         public void StringByteReturnsEmptyTupleWhenRangeIsEmpty()
         {
             DynValue result = Evaluate("return string.byte('Lua', 3, 2)");
-            Assert.That(result.IsNil(), Is.True);
+            Assert.That(result.IsVoid(), Is.True);
+
+            DynValue count = Evaluate("return select('#', string.byte('Lua', 3, 2))");
+            Assert.That(count.Number, Is.EqualTo(0));
         }
 
         // Lua 5.4 Reference Manual §6.4 (string.byte): indices are clamped following string.sub rules.

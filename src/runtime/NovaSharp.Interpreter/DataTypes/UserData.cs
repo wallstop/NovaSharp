@@ -100,6 +100,11 @@ namespace NovaSharp.Interpreter.DataTypes
             string friendlyName = null
         )
         {
+            if (proxyFactory == null)
+            {
+                throw new ArgumentNullException(nameof(proxyFactory));
+            }
+
             return TypeDescriptorRegistry.RegisterProxyType_Impl(
                 proxyFactory,
                 accessMode,

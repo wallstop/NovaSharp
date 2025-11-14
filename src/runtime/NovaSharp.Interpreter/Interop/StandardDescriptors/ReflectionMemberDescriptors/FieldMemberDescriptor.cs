@@ -49,9 +49,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         public bool IsReadonly { get; private set; }
 
-        private readonly object _constValue = null;
+        private readonly object _constValue;
 
-        private Func<object, object> _optimizedGetter = null;
+        private Func<object, object> _optimizedGetter;
 
         /// <summary>
         /// Tries to create a new StandardUserDataFieldDescriptor, returning <c>null</c> in case the field is not

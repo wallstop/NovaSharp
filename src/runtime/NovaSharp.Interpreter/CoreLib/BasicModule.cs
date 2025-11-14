@@ -33,6 +33,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "type")]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "type");
@@ -79,6 +84,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue opt = args[0];
 
             string mode = opt.CastToString();

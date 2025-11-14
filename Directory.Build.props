@@ -8,5 +8,7 @@
         <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <WarningsAsErrors>CS*</WarningsAsErrors>
+        <WarningsNotAsErrors>CA*</WarningsNotAsErrors>
     </PropertyGroup>
 </Project>

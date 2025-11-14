@@ -28,10 +28,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// </summary>
         public bool IsFlags { get; private set; }
 
-        private Func<object, ulong> _enumToULong = null;
-        private Func<ulong, object> _uLongToEnum = null;
-        private Func<object, long> _enumToLong = null;
-        private Func<long, object> _longToEnum = null;
+        private Func<object, ulong> _enumToULong;
+        private Func<ulong, object> _uLongToEnum;
+        private Func<object, long> _enumToLong;
+        private Func<long, object> _longToEnum;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StandardEnumUserDataDescriptor"/> class.

@@ -38,10 +38,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         public bool IsConstructor { get; private set; }
 
-        private Func<object, object[], object> _optimizedFunc = null;
-        private Action<object, object[]> _optimizedAction = null;
-        private readonly bool _isAction = false;
-        private readonly bool _isArrayCtor = false;
+        private Func<object, object[], object> _optimizedFunc;
+        private Action<object, object[]> _optimizedAction;
+        private readonly bool _isAction;
+        private readonly bool _isArrayCtor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MethodMemberDescriptor"/> class.
@@ -296,7 +296,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
         void IOptimizableDescriptor.Optimize()
         {
-            ParameterDescriptor[] parameters = ParameterArray;
+            ParameterDescriptor[] parameters = GetParameterArray();
 
             if (AccessMode == InteropAccessMode.Reflection)
             {

@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         public List<Instruction> code = new();
         public Script Script { get; private set; }
         private readonly List<SourceRef> _sourceRefStack = new();
-        private SourceRef _currentSourceRef = null;
+        private SourceRef _currentSourceRef;
 
         internal LoopTracker LoopTracker = new();
 

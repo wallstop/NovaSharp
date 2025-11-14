@@ -8,7 +8,13 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// The return values of the coroutine
         /// </summary>
-        public DynValue[] returnValues;
+        private DynValue[] _returnValues;
+
+        public DynValue[] ReturnValues
+        {
+            get { return _returnValues; }
+            internal set { _returnValues = value; }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="YieldRequest"/> is a forced yield.

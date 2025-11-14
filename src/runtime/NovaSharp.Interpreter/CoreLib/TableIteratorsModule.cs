@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua iterators (pairs, ipairs, next)
     /// </summary>
     [NovaSharpModule]
-    public class TableIteratorsModule
+public class TableIteratorsModule
     {
         // ipairs (t)
         // -------------------------------------------------------------------------------------------------------------------

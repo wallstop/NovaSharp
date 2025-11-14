@@ -13,12 +13,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
     internal class FunctionDefinitionExpression : Expression, IClosureBuilder
     {
-        private readonly SymbolRef[] _paramNames = null;
+        private readonly SymbolRef[] _paramNames;
         private readonly Statement _statement;
         private readonly RuntimeScopeFrame _stackFrame;
         private readonly List<SymbolRef> _closure = new();
-        private bool _hasVarArgs = false;
-        private Instruction _closureInstruction = null;
+        private bool _hasVarArgs;
+        private Instruction _closureInstruction;
 
         private readonly bool _usesGlobalEnv;
         private readonly SymbolRef _env;

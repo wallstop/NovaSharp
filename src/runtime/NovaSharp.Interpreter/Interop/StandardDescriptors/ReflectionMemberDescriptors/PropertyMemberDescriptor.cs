@@ -65,8 +65,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
         private readonly MethodInfo _setter;
 
-        private Func<object, object> _optimizedGetter = null;
-        private Action<object, object> _optimizedSetter = null;
+        private Func<object, object> _optimizedGetter;
+        private Action<object, object> _optimizedSetter;
 
         /// <summary>
         /// Tries to create a new StandardUserDataPropertyDescriptor, returning <c>null</c> in case the property is not

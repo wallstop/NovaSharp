@@ -840,10 +840,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(result.Type, Is.EqualTo(DataType.YieldRequest));
                 Assert.That(result.YieldRequest.Forced, Is.False);
-                Assert.That(result.YieldRequest.returnValues, Is.Not.Null);
-                Assert.That(result.YieldRequest.returnValues.Length, Is.EqualTo(2));
-                Assert.That(result.YieldRequest.returnValues[0].Number, Is.EqualTo(7));
-                Assert.That(result.YieldRequest.returnValues[1].String, Is.EqualTo("value"));
+                Assert.That(result.YieldRequest.ReturnValues, Is.Not.Null);
+                Assert.That(result.YieldRequest.ReturnValues.Length, Is.EqualTo(2));
+                Assert.That(result.YieldRequest.ReturnValues[0].Number, Is.EqualTo(7));
+                Assert.That(result.YieldRequest.ReturnValues[1].String, Is.EqualTo("value"));
             });
         }
     }

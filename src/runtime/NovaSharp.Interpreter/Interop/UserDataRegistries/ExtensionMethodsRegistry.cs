@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             string,
             UnresolvedGenericMethod
         > SUnresolvedGenericsRegistry = new();
-        private static int _sExtensionMethodChangeVersion = 0;
+        private static int _sExtensionMethodChangeVersion;
 
         private class UnresolvedGenericMethod
         {

@@ -53,7 +53,7 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks.Base
 
         public abstract ConstructorInfo[] GetConstructors(Type type);
 
-        public abstract Type[] GetAssemblyTypes(Assembly asm);
+        public abstract Type[] GetAssemblyTypes(Assembly assembly);
 
         public abstract MethodInfo[] GetMethods(Type type);
 

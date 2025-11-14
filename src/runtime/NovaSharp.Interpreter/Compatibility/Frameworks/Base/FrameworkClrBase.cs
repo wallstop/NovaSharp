@@ -101,9 +101,9 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks.Base
             return GetTypeInfoFromType(resourcesType).GetMethod(name, types);
         }
 
-        public override Type[] GetAssemblyTypes(Assembly asm)
+        public override Type[] GetAssemblyTypes(Assembly assembly)
         {
-            return asm.GetTypes();
+            return assembly.GetTypes();
         }
     }
 }

@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
     internal class ReturnStatement : Statement
     {
-        private readonly Expression _expression = null;
+        private readonly Expression _expression;
         private readonly SourceRef _ref;
 
         public ReturnStatement(ScriptLoadingContext lcontext, Expression e, SourceRef sref)

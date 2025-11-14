@@ -395,7 +395,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(
                     () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
                     Throws.ArgumentException.With.Message.Contains(
-                        $"{EventMemberDescriptor.MAX_ARGS_IN_DELEGATE}"
+                        $"{EventMemberDescriptor.MaxArgsInDelegate}"
                     )
                 );
             });

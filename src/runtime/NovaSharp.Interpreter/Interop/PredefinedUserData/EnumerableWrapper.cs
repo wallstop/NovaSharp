@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
         private readonly IEnumerator _enumerator;
         private readonly Script _script;
         private DynValue _prev = DynValue.Nil;
-        private bool _hasTurnOnce = false;
+        private bool _hasTurnOnce;
 
         private EnumerableWrapper(Script script, IEnumerator enumerator)
         {

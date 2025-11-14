@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
     internal class TableConstructor : Expression
     {
-        private readonly bool _shared = false;
+        private readonly bool _shared;
         private readonly List<Expression> _positionalValues = new();
         private readonly List<KeyValuePair<Expression, Expression>> _ctorArgs = new();
 

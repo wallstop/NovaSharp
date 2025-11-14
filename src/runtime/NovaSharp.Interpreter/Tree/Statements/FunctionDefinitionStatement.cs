@@ -12,9 +12,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private readonly SymbolRef _funcSymbol;
         private readonly SourceRef _sourceRef;
 
-        private readonly bool _local = false;
-        private readonly bool _isMethodCallingConvention = false;
-        private readonly string _methodName = null;
+        private readonly bool _local;
+        private readonly bool _isMethodCallingConvention;
+        private readonly string _methodName;
 
         private readonly string _friendlyName;
         private readonly List<string> _tableAccessors;

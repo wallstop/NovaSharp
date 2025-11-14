@@ -38,7 +38,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// </summary>
         public IReadOnlyList<ParameterDescriptor> Parameters => _parameters;
 
-        protected ParameterDescriptor[] ParameterArray => _parameters;
+        protected ParameterDescriptor[] GetParameterArray()
+        {
+            return _parameters;
+        }
 
         /// <summary>
         /// Gets the type which this extension method extends, null if this is not an extension method.
