@@ -1,6 +1,7 @@
 namespace NovaSharp.Hardwire.Generators
 {
     using System.CodeDom;
+    using NovaSharp.Hardwire.Generators.Base;
 
     internal sealed class PropertyMemberDescriptorGenerator
         : AssignableMemberDescriptorGeneratorBase

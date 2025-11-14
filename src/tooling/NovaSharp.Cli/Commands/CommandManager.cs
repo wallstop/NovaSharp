@@ -1,9 +1,10 @@
-namespace NovaSharp.Commands
+namespace NovaSharp.Cli.Commands
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Cli.Commands.Implementations;
 
     public static class CommandManager
     {

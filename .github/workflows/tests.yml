@@ -15,8 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Enforce NovaSharp branding
-        run: ./scripts/ensure-novasharp-branding.sh
+        run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash
+      - name: Verify namespace alignment
+        run: python3 tools/NamespaceAudit/namespace_audit.py
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -45,8 +48,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Enforce NovaSharp branding
-        run: ./scripts/ensure-novasharp-branding.sh
+        run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash
+      - name: Verify namespace alignment
+        run: python3 tools/NamespaceAudit/namespace_audit.py
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -57,7 +63,7 @@ jobs:
         run: dotnet tool restore
       - name: Generate coverage
         shell: pwsh
-        run: ./coverage.ps1
+        run: ./scripts/coverage/coverage.ps1
       - name: Publish coverage summary
         if: always()
         run: |

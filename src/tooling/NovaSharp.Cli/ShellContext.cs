@@ -1,4 +1,4 @@
-namespace NovaSharp
+namespace NovaSharp.Cli
 {
     using System;
     using NovaSharp.Interpreter;

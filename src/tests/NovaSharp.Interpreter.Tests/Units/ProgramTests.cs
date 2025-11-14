@@ -3,9 +3,9 @@
     using System;
     using System.IO;
     using System.Reflection;
-    using Commands;
-    using Commands.Implementations;
-    using NovaSharp;
+    using NovaSharp.Cli;
+    using NovaSharp.Cli.Commands;
+    using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;

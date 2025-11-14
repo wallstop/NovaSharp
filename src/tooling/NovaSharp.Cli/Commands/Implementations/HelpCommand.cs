@@ -1,6 +1,7 @@
-namespace NovaSharp.Commands
+namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
+    using NovaSharp.Cli;
 
     internal class HelpCommand : ICommand
     {

@@ -2,7 +2,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
-    using Commands.Implementations;
+    using NovaSharp.Cli;
+    using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;

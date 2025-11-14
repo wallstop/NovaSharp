@@ -51,6 +51,7 @@ For highlights on differences between NovaSharp and standard Lua, see http://www
 Please see http://www.NovaSharp.org for downloads, infos, tutorials, etc.
 
 Additional documentation:
+- [Documentation Index](docs/README.md)
 - [Performance Benchmarks](docs/Performance.md)
 - [Testing Guide](docs/Testing.md)
 - [Modernization Notes](docs/Modernization.md)
@@ -90,7 +91,6 @@ double NovaSharpFactorial()
 ```
 
 For more in-depth tutorials, samples, etc. please refer to http://www.NovaSharp.org/getting_started.html
-
 
 
 

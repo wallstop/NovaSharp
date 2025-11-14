@@ -18,5 +18,7 @@ NovaSharp now targets `netstandard2.1` for all runtime components and `net8.0` f
 - Audit any external documentation or samples that still describe the portable40/net35 build chain.
 - Validate remote debugger assets on modern browsers now that the Flash-era implementation has been removed.
 
-Keep this page current when additional modernization steps land (e.g., nullable annotations, trimming support, native AOT testing).
+## Modernization Tooling
+- `pwsh ./scripts/modernization/generate-moonsharp-audit.ps1` — regenerates the MoonSharp→NovaSharp issue audit so `docs/modernization/moonsharp-issue-audit.md` stays current. Run this whenever you touch large swaths of code or docs tied to the rename.
 
+Keep this page current when additional modernization steps land (e.g., nullable annotations, trimming support, native AOT testing).

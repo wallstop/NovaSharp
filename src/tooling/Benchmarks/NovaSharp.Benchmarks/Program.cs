@@ -2,7 +2,6 @@ namespace NovaSharp.Benchmarks
 {
     using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
-    using Benchmarking;
 
     internal static class Program
     {

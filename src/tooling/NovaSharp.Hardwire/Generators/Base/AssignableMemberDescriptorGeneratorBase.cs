@@ -1,4 +1,4 @@
-namespace NovaSharp.Hardwire.Generators
+namespace NovaSharp.Hardwire.Generators.Base
 {
     using System.CodeDom;
     using NovaSharp.Interpreter;

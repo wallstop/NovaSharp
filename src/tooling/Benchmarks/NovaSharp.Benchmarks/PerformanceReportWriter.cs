@@ -1,4 +1,4 @@
-namespace NovaSharp.Benchmarking
+namespace NovaSharp.Benchmarks
 {
     using System;
     using System.Collections.Generic;

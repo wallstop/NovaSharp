@@ -1,5 +1,7 @@
-namespace NovaSharp.Commands
+namespace NovaSharp.Cli.Commands
 {
+    using NovaSharp.Cli;
+
     public interface ICommand
     {
         public string Name { get; }

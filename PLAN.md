@@ -228,15 +228,20 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
   - ✅ Replaced CLI `packages/*` binaries with NuGet-managed references; ensure remaining legacy tooling cleans up any straggler DLL drops.
 - **Milestone C – Script & Documentation Hub (High Priority)**  
   Establish a coherent `scripts/` hierarchy and reinforce Markdown documentation so contributors have a single source of truth.
-  - Audit every helper script (PowerShell, Bash, Python) and relocate them into `scripts/<area>` folders (`scripts/build`, `scripts/coverage`, `scripts/dev`), adopting descriptive names (`scripts/coverage/coverage.ps1` + `coverage.sh`, `ensure-branding.sh`, etc.) and consistent shebang/parameter docs.
-    - 🔄 Seeded the hub by relocating the coverage helpers into `scripts/coverage/` (PowerShell + Bash) and adding folder-level READMEs; continue migrating the remaining root-level scripts (`ensure-novasharp-branding.sh`, legacy build helpers) next.
+  - Audit every helper script (PowerShell, Bash, Python) and relocate them into `scripts/<area>` folders (`scripts/build`, `scripts/coverage`, `scripts/dev`), adopting descriptive names (`scripts/coverage/coverage.ps1` + `coverage.sh`, branding guards, etc.) and consistent shebang/parameter docs.
+    - 🔄 Seeded the hub by relocating the coverage helpers into `scripts/coverage/` (PowerShell + Bash) and adding folder-level READMEs; migrated the branding guard to `scripts/branding/ensure-novasharp-branding.sh` with its own README—next up is the remaining legacy build helpers.
   - Provide dual-platform shims where practical (PowerShell + Bash) and record fallback logic (e.g., macOS/Linux call `scripts/coverage/coverage.sh` when PowerShell is unavailable); update CI workflows and developer docs to reference the new paths.
   - Author `scripts/README.md` plus per-subfolder READMEs describing prerequisites, environment variables, and sample invocations; cross-link these from `README.md`, `docs/Testing.md`, and `docs/Modernization.md`.
+    - 🔄 Added a top-level `scripts/README.md` and `scripts/coverage/README.md` so contributors can discover tooling (build, coverage, branding) without spelunking.
+    - 🔄 Documented the modernization audit helper in `docs/Modernization.md` so contributors know how to regenerate the MoonSharp rename report.
   - Curate a documentation index (`docs/README.md`) that maps every Markdown guide (testing, modernization, Lua compatibility, benchmarks, Unity integration, coverage dashboards) and ensure each section has a clear owner/status checklist.
+    - ✅ Created `docs/README.md` as a searchable index pointing to testing, coverage, modernization, Lua compatibility, performance, Unity, and scripts; linked it from the repo README.
   - Add a PR checklist/CI guard requiring new scripts to update the appropriate README entry and new docs to be linked from the index, keeping the ecosystem discoverable long-term.
+    - 🔄 Introduced `.github/pull_request_template.md` with checklist items for docs index + script READMEs; monitor usage before adding CI enforcement.
 - **Milestone D – Namespace & Using Enforcement**  
   Introduce Roslyn analyzers or custom scripts to ensure namespaces mirror the physical path + project root (`NovaSharp.Interpreter.Debugging` style), and require `using` directives to live inside namespaces. Provide migration scripts to batch-update existing files, codify exceptions for generated/bundled code, and document rules in `docs/Contributing.md`.
   - ✅ Added `tools/NamespaceAudit/namespace_audit.py` to surface directory/namespace mismatches (current hot spots: CLI/Hardwire/NovaSharp.Comparison).
+  - 🔄 Enhanced the audit script with category/allowlist support, aligned NovaSharp.Cli + benchmark namespaces, and wired `python3 tools/NamespaceAudit/namespace_audit.py` into CI (tests/coverage jobs) so deviations fail the build immediately.
 - **Milestone E – EditorConfig Adoption + Lua Exceptions**  
   Import `.editorconfig` from `D:/Code/DxMessaging-Unity/Packages/com.wallstop-studios.unity-helpers`, strip BOM (`charset = utf-8`), and align with repo conventions (CRLF is acceptable). Add sub-directory `.editorconfig` under Lua fixture folders to keep Lua-specific indentation/whitespace expectations. Document formatting commands and exception rationale in `docs/Testing.md` + PR template.
 - **Milestone F – Solution Organization & Naming (Current Sprint)**  
@@ -251,7 +256,7 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
    - ✅ Rebranded the comparison benchmark harness (`tooling/NovaSharp.Comparison`) with default BenchmarkDotNet config and VS run target output.
    - ✅ Scrubbed `.csproj` entries referencing missing/irrelevant assets (icons, logs, keypairs) to keep IDE surfaces clean.
    - ✅ Refreshed generated artefacts (coverage, benchmarks) under the NovaSharp name and cleaned stale MoonSharp results.
-   - ✅ Add guardrail automation (CI grep or analyzer) blocking `MoonSharp` regressions across code, docs, and assets. CI now runs `scripts/ensure-novasharp-branding.sh`, which fails on new `MoonSharp` identifiers outside the curated allowlist (perf baseline + benchmark writer shim).
+  - ✅ Add guardrail automation (CI grep or analyzer) blocking `MoonSharp` regressions across code, docs, and assets. CI now runs `scripts/branding/ensure-novasharp-branding.sh`, which fails on new `MoonSharp` identifiers outside the curated allowlist (perf baseline + benchmark writer shim).
 - ✅ Completed an initial vestigial inventory (`docs/modernization/vestigial-inventory.md`) highlighting keep/remove candidates (e.g., legacy REPL history) and modernization notes for performance counters.
 - ✅ Audit outstanding MoonSharp issues that still apply to NovaSharp, classify real defects vs legacy gaps, and schedule fixes or deprecations accordingly. See `docs/modernization/moonsharp-issue-audit.md` for the owner/status matrix feeding the modernization tracker.
 2. **Vestigial Runtime Review (Pre-Coverage)**

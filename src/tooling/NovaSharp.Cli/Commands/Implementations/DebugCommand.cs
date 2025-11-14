@@ -1,4 +1,4 @@
-namespace NovaSharp.Commands.Implementations
+namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using System.Diagnostics;

@@ -19,6 +19,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]  # repo root
 SRC_ROOT = ROOT / "src"
 EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs"}
+CATEGORY_ROOTS = {"runtime", "tooling", "tests", "debuggers", "samples"}
+IGNORED_PARTS = {"properties", "tests", "testcases", "benchmarks", "tutorial", "processor"}
+PATH_ALLOWLIST = {
+    Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
+    Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
+    Path("src/debuggers/NovaSharp.VsCodeDebugger/SDK/IsExternalInit.cs"),
+    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
+    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
+}
 NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z0-9_.]+)")
 
 
@@ -58,8 +67,14 @@ def expected_namespace(path: Path) -> str | None:
     if not parts:
         return None
 
+    # Strip top-level category folders (runtime/tooling/tests/debuggers/samples/docs)
+    if parts and parts[0].lower() in CATEGORY_ROOTS:
+        parts = parts[1:]
+        if not parts:
+            return None
+
     # Remove folder tokens that are not part of the namespace (e.g., Properties)
-    filtered = [p for p in parts if p.lower() not in {"properties", "tests", "testcases"}]
+    filtered = [p for p in parts if p.lower() not in IGNORED_PARTS]
     if not filtered:
         filtered = parts
 
@@ -69,12 +84,17 @@ def expected_namespace(path: Path) -> str | None:
 def audit() -> int:
     mismatches: list[tuple[Path, str | None, str | None]] = []
     for cs_file in discover_cs_files():
+        rel_path = cs_file.relative_to(ROOT)
+
+        if rel_path in PATH_ALLOWLIST:
+            continue
+
         actual = extract_namespace(cs_file)
         expected = expected_namespace(cs_file)
         if actual is None or expected is None:
             continue
         if actual != expected:
-            mismatches.append((cs_file.relative_to(ROOT), expected, actual))
+            mismatches.append((rel_path, expected, actual))
 
     if not mismatches:
         print("✓ All namespaces align with directory layout.")

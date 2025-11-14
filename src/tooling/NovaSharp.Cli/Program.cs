@@ -1,8 +1,8 @@
-namespace NovaSharp
+namespace NovaSharp.Cli
 {
     using System;
-    using Commands;
-    using Commands.Implementations;
+    using NovaSharp.Cli.Commands;
+    using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;

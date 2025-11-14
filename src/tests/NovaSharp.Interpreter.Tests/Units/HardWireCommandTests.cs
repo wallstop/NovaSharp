@@ -2,8 +2,8 @@
 {
     using System;
     using System.IO;
-    using NovaSharp;
-    using NovaSharp.Commands.Implementations;
+    using NovaSharp.Cli;
+    using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;

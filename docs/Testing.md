@@ -18,11 +18,13 @@ dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.cs
 ```powershell
 pwsh ./scripts/coverage/coverage.ps1
 ```
+- If the host only has .NET 9 installed (common on new Ubuntu images), set `DOTNET_ROLL_FORWARD=Major` when invoking the script (PowerShell or Bash) so the .NET 9 runtime can execute the net8.0 testhost.
 - Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
 - Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
 - Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour).
+- When using the Bash variant on hosts without .NET 8, call it as `DOTNET_ROLL_FORWARD=Major bash ./scripts/coverage/coverage.sh …` so Coverlet can launch the net8.0 testhost via the installed .NET 9 runtime.
 
 ### Coverage in CI
 - `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
