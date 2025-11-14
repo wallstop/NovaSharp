@@ -37,7 +37,7 @@ NovaSharp now exposes a version selector so applications can pin script executio
 | `string` | `%q`, UTF-8 escapes, pattern updates | ✅ | `StringLibTests`, TAP `401-strings.t` | Verified for UTF-8 escape sequences and `%q` output; keep TAP enabled as lane stabilises. Owner: Interpreter. |
 | `table` | `table.move` metamethod behaviour | ✅ | `TableModuleTests.MoveHonoursMetamethods` | Matches Lua 5.4 metamethod invocation. Owner: Interpreter. |
 | `table` | `table.pack` / `unpack` n-field handling | ✅ | `TableModuleTests.PackStoresN`, TAP `503-table.t` | Tests ensure `n` is promoted to integer. Owner: Interpreter. |
-| `coroutine` | `coroutine.close` result tuples | 🚧 | `CoroutineModuleTests` (no close coverage) | Need targeted tests for status + propagated errors; implementation partially wired. Owner: Interpreter. |
+| `coroutine` | `coroutine.close` result tuples | ✅ | `TestMore/310-close-var.t`, `CloseAttributeTests` | Mirrors Lua §6.2 semantics (suspended cleanup, errored coroutine tuples) with §3.3.8 to-be-closed coverage. Owner: Interpreter. |
 | `coroutine` | `coroutine.isyieldable` | ✅ | `CoroutineModuleTests.IsYieldable*` | Matches Lua semantics for main thread vs coroutine. Owner: Interpreter. |
 | `debug` | `debug.upvaluejoin`, `debug.upvalueid` | ✅ | `DebugModuleTests.UpvalueJoin*`, `UpvalueId*` | Exercises cross-function upvalue sharing. Owner: Interpreter. |
 | `debug` | `debug.getuservalue` / `setuservalue` | 🚧 | `DebugModuleTests.GetUserValueReturnsNil` | Light userdata unsupported; document limitation (⏸️). Owner: Interop. |

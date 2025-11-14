@@ -65,7 +65,7 @@ Key principles:
    - Leverage analyzers to ensure `using` directives remain inside namespaces.
 
 4. **Tests & Pipelines**
-   - Update GitHub workflows, docs, and helper scripts (`coverage.ps1`, etc.) to reference the new paths (partial work complete).
+   - Update GitHub workflows, docs, and helper scripts (`scripts/coverage/coverage.ps1`, etc.) to reference the new paths (partial work complete).
   - Share TAP fixtures via `tests/fixtures/` to remove duplication across TAP and NUnit runners.
 
 5. **Documentation Alignment**

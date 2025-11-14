@@ -216,6 +216,12 @@ namespace NovaSharp.Interpreter.Tests
             TapRunner.Run(@"TestMore/307-bit.t");
         }
 
+        [Test]
+        public void TestMore310CloseVar()
+        {
+            TapRunner.Run(@"TestMore/310-close-var.t");
+        }
+
         private bool AreCoreModulesFullySupported(CoreModules modules)
         {
             CoreModules supp = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);

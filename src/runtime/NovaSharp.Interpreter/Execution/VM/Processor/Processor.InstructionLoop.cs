@@ -573,9 +573,20 @@ namespace NovaSharp.Interpreter.Execution.VM
             ClearBlockData(i);
         }
 
+        private static bool ShouldIgnoreToBeClosedValue(DynValue value)
+        {
+            return value == null || value.IsNil()
+                || (value.Type == DataType.Boolean && value.Boolean == false);
+        }
+
         private void EnsureToBeClosedValue(SymbolRef symbol, DynValue value)
         {
             DynValue candidate = value?.ToScalar() ?? DynValue.Nil;
+
+            if (ShouldIgnoreToBeClosedValue(candidate))
+            {
+                return;
+            }
 
             DynValue metamethod = GetMetamethodRaw(candidate, "__close");
 
@@ -588,6 +599,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         private void CloseValue(SymbolRef symbol, DynValue value, DynValue error)
         {
             DynValue scalar = value?.ToScalar() ?? DynValue.Nil;
+
+            if (ShouldIgnoreToBeClosedValue(scalar))
+            {
+                return;
+            }
 
             DynValue metamethod = GetMetamethodRaw(scalar, "__close");
 

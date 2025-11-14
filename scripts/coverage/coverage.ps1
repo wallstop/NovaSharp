@@ -7,7 +7,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptPath = $MyInvocation.MyCommand.Path
-$repoRoot = Split-Path -Parent $scriptPath
+$scriptDirectory = Split-Path -Parent $scriptPath
+$repoRoot = Split-Path -Parent $scriptDirectory
 if ([string]::IsNullOrWhiteSpace($repoRoot)) {
     $repoRoot = "."
 }

@@ -1,6 +1,6 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./coverage.ps1` on 2025-11-13 11:08 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-13 11:08 UTC).
 
 ## Snapshot
 - Overall line coverage: **75.3 %**
@@ -20,7 +20,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 ## Action Items
 1. Assign owners for each red-listed class (default owner noted above until explicit assignment).
 2. Add issue/project board entries mirroring this table so progress is tracked.
-3. Update this document after each `./coverage.ps1` run (include new timestamp + notes).
+3. Update this document after each `./scripts/coverage/coverage.ps1` run (include new timestamp + notes).
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
 
 ## Recently Covered
@@ -54,7 +54,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `EventMemberDescriptor` now sits at 94 %+ coverage after exercising add/remove failure paths, static facades, and assignment guards.
 - `CharPtr` climbed to 98.8 % line coverage by validating byte-array conversions, pointer arithmetic, navigation helpers, and null equality branches.
 - `DescriptorHelpers` now reports 92.9 % line / 90.1 % branch coverage after supplementing visibility, identifier shaping, and SafeGetTypes guard scenarios.
-- Expanded `ReflectionSpecialName` operator mapping tests (additional arithmetic/relational cases) to drive branch coverage; rerun `coverage.ps1` to confirm the updated instrumentation.
+- Expanded `ReflectionSpecialName` operator mapping tests (additional arithmetic/relational cases) to drive branch coverage; rerun `scripts/coverage/coverage.ps1` to confirm the updated instrumentation.
 - `OsTimeModule` now sits at 97 % line coverage after adding missing-field, pre-epoch, and conversion-specifier tests.
 - `DebuggerAction` coverage lifted to 100 % by testing constructor timestamps, age calculations, defensive line storage, and breakpoint formatting.
 - `CompositeUserDataDescriptor` now covered at 92 % via aggregate lookup, set, and metatable resolution tests (`CompositeUserDataDescriptorTests`).
@@ -76,7 +76,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 - `StandardEnumUserDataDescriptorTests` ensure flag helpers, numeric coercion, and signed/unsigned paths work correctly, raising enum descriptor coverage to 67.4 %.
 - `UnityAssetsScriptLoaderTests` cover path normalization, missing-script diagnostics, and enumeration helpers, boosting loader coverage while keeping Unity packaging logic under regression.
 - `WatchItemTests` exercise formatting/null-handling, closing out the debugging watch surface (now 100 % covered), while `ValueTypeDefaultCtorMemberDescriptorTests` confirm validation/instantiation paths and lift the descriptor to 78.5 %.
-- `ScriptLoaderBaseTests` now validate LUA_PATH overrides, ignore flags, environment fallbacks, and string-path unpacking (coverage jumps to 96.9 %; rerun `./coverage.ps1` after the latest CharPtr work to capture the uplift).
+- `ScriptLoaderBaseTests` now validate LUA_PATH overrides, ignore flags, environment fallbacks, and string-path unpacking (coverage jumps to 96.9 %; rerun `./scripts/coverage/coverage.ps1` after the latest CharPtr work to capture the uplift).
 - `CharPtrTests` and `DescriptorHelpersTests` target KopiLua interop and descriptor utilities (visibility helpers, identifier normalization), with `DescriptorHelpers` now following the Wallstop string helpers’ rules so digit suffixes stay contiguous and Pascal initials are preserved.
 - `EventMemberDescriptorTests` now drive delegate creation for 1–16 parameter events, covering the previously untested switch cases in `EventMemberDescriptor.CreateDelegate`.
 - `LuaStateInteropToolsTests` exercise additional format specifiers (`%#o`, `%p`, `%n`, space flag) so `LuaStateInterop.Tools` now accounts for zero-padding, pointer, and positive-space branches.
@@ -91,7 +91,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./c
 
 ## Updating the Snapshot
 ```powershell
-./coverage.ps1
+./scripts/coverage/coverage.ps1
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 

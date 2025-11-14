@@ -331,5 +331,15 @@ namespace NovaSharp.Interpreter.DataTypes
             get { return _processor.AutoYieldCounter; }
             set { _processor.AutoYieldCounter = value; }
         }
+
+        public DynValue Close()
+        {
+            if (Type != CoroutineType.Coroutine)
+            {
+                return DynValue.True;
+            }
+
+            return _processor.Coroutine_Close();
+        }
     }
 }

@@ -25,6 +25,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         private bool _canYield = true;
         private int _savedInstructionPtr = -1;
         private readonly DebugContext _debug;
+        private DynValue _lastCloseError = DynValue.Nil;
 
         internal bool CanYield
         {

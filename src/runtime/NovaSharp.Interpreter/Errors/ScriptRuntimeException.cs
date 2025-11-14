@@ -578,6 +578,22 @@ namespace NovaSharp.Interpreter.Errors
             }
         }
 
+        public static ScriptRuntimeException CannotCloseCoroutine(CoroutineState state)
+        {
+            return state switch
+            {
+                CoroutineState.Main
+                    => new ScriptRuntimeException("attempt to close the main coroutine"),
+                CoroutineState.Running
+                    => new ScriptRuntimeException("cannot close a running coroutine"),
+                _
+                    => new ScriptRuntimeException(
+                        "cannot close coroutine in state {0}",
+                        state.ToString().ToLowerInvariant()
+                    ),
+            };
+        }
+
         /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// an attempt to yield across a CLR boundary was made.

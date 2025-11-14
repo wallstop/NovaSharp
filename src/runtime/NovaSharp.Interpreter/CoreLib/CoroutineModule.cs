@@ -94,6 +94,13 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        [NovaSharpModuleMethod(Name = "close")]
+        public static DynValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            DynValue handle = args.AsType(0, "close", DataType.Thread);
+            return handle.Coroutine.Close();
+        }
+
         [NovaSharpModuleMethod(Name = "yield")]
         public static DynValue Yield(
             ScriptExecutionContext executionContext,

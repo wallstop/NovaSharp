@@ -98,14 +98,22 @@ namespace NovaSharp.Interpreter.Execution.VM
                     else
                     {
                         _state = CoroutineState.Suspended;
+                        _lastCloseError = DynValue.Nil;
                         return DynValue.NewTuple(retVal.YieldRequest.ReturnValues);
                     }
                 }
                 else
                 {
                     _state = CoroutineState.Dead;
+                    _lastCloseError = DynValue.Nil;
                     return retVal;
                 }
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                _state = CoroutineState.Dead;
+                _lastCloseError = DynValue.NewString(ex.DecoratedMessage);
+                throw;
             }
             catch (Exception)
             {
@@ -117,6 +125,79 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 LeaveProcessor();
             }
+        }
+
+        public DynValue Coroutine_Close()
+        {
+            EnterProcessor();
+
+            try
+            {
+                if (_state == CoroutineState.Main)
+                {
+                    throw ScriptRuntimeException.CannotCloseCoroutine(_state);
+                }
+
+                if (_state == CoroutineState.Running)
+                {
+                    throw ScriptRuntimeException.CannotCloseCoroutine(_state);
+                }
+
+                if (_state == CoroutineState.Dead)
+                {
+                    return BuildCloseResultFromLastError();
+                }
+
+                if (_state == CoroutineState.NotStarted)
+                {
+                    _state = CoroutineState.Dead;
+                    _lastCloseError = DynValue.Nil;
+                    return DynValue.True;
+                }
+
+                if (
+                    _state != CoroutineState.Suspended
+                    && _state != CoroutineState.ForceSuspended
+                )
+                {
+                    throw ScriptRuntimeException.CannotCloseCoroutine(_state);
+                }
+
+                try
+                {
+                    while (_executionStack.Count > 0)
+                    {
+                        CallStackItem frame = PopToBasePointer();
+                        CloseAllPendingBlocks(frame, DynValue.Nil);
+                    }
+
+                    _valueStack.Clear();
+                    _lastCloseError = DynValue.Nil;
+                    _state = CoroutineState.Dead;
+                    return DynValue.True;
+                }
+                catch (ScriptRuntimeException ex)
+                {
+                    DynValue error = DynValue.NewString(ex.DecoratedMessage);
+                    _lastCloseError = error;
+                    _state = CoroutineState.Dead;
+                    return DynValue.NewTuple(DynValue.False, error);
+                }
+            }
+            finally
+            {
+                LeaveProcessor();
+            }
+        }
+
+        private DynValue BuildCloseResultFromLastError()
+        {
+            if (_lastCloseError != null && !_lastCloseError.IsNil())
+            {
+                return DynValue.NewTuple(DynValue.False, _lastCloseError);
+            }
+
+            return DynValue.True;
         }
     }
 }

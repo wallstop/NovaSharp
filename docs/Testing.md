@@ -16,15 +16,16 @@ dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.cs
 
 ## Generating Coverage
 ```powershell
-.\coverage.ps1
+pwsh ./scripts/coverage/coverage.ps1
 ```
 - Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
 - Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
 - Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
+- On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour).
 
 ### Coverage in CI
-- `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `./coverage.ps1` after the primary test job.
+- `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
 - The job appends the Markdown summary to the GitHub Action run, posts a PR comment with line/branch/method coverage, and uploads raw + HTML artefacts for inspection.
 - Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise.
 
@@ -32,7 +33,7 @@ dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.cs
 - Two Lua TAP suites (`TestMore_308_io`, `TestMore_309_os`) remain skipped because they require raw filesystem/OS access. Enable them manually only on trusted machines.
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Baseline (Release via `coverage.ps1`, 2025-11-11)**: 68.5 % line, 70.5 % branch, 73.0 % method coverage (interpreter module at 81.9 % line).
+- **Baseline (Release via `scripts/coverage/coverage.ps1`, 2025-11-11)**: 68.5 % line, 70.5 % branch, 73.0 % method coverage (interpreter module at 81.9 % line).
 - **Fixtures**: 42 `[TestFixture]` types, 1095 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 - **Gaps**: Visual Studio Code/remote debugger integration still lacks automated smoke tests; CLI tooling and dev utilities remain manual.

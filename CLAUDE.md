@@ -32,7 +32,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release
 
 # Generate coverage reports (Coverlet + ReportGenerator)
-./coverage.ps1
+pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux
 ```
 
 ### Code Formatting
