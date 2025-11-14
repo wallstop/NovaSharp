@@ -63,6 +63,15 @@
 - **Floating-point determinism**: Evaluate CPU/runtime variability; consider fixed-point or deterministic options for lockstep networking scenarios.
 - **Sandbox escape audit**: Catalogue interop/reflection entry points that could bypass security modes and add mitigations or documentation.
 - **Mod SDK & docs**: Produce modder-facing SDK artifacts (API docs, templates, analyzers) and automation for keeping documentation in sync with runtime releases.
+- **Frame-time budgeting**: Introduce per-frame execution budgets/watchdogs so Lua scripts can’t stall Unity’s main thread; expose host callbacks for enforcement.
+- **Unity coroutine helpers**: Provide scheduling utilities that bridge Lua coroutines with Unity’s Update/Coroutine loops for smooth frame-by-frame execution.
+- **Unity API exposure**: Define safe, tested wrappers for the subset of Unity APIs accessible to Lua (threading rules, async helpers) and document constraints.
+- **Mod asset pipeline**: Design asset ingestion (addressables/bundles, size limits) so Lua mods can load textures/audio safely without violating sandbox rules.
+- **Mod tooling & debugging**: Ship a debug console/REPL, stack inspectors, and editor integration to help modders diagnose runtime issues in Unity builds.
+- **Mod onboarding templates**: Provide starter projects, NuGet/UPM packages, and sample mods illustrating secure patterns and recommended architecture.
+- **Mod versioning & compatibility**: Define manifest metadata and compatibility checks so the host can warn about API/engine mismatches before loading mods.
+- **Crash containment UX**: Wrap mod entry points with resilient error handling, surface friendly UI in-game, and allow restart/reload without killing the session.
+- **Runtime analytics hooks**: Offer optional telemetry hooks (usage/perf metrics) that hosts can enable to monitor mod health in the field.
 
 ## Coverage Burn-down Checkpoint (Latest)
 • Progress
