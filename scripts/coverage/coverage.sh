@@ -86,6 +86,11 @@ pushd "$repo_root" >/dev/null
 
 trap 'popd >/dev/null' EXIT
 
+if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
+    export DOTNET_ROLL_FORWARD=Major
+    log "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
+fi
+
 log "Restoring local dotnet tools..."
 dotnet tool restore >/dev/null
 

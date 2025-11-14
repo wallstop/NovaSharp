@@ -13,6 +13,11 @@ if ([string]::IsNullOrWhiteSpace($repoRoot)) {
     $repoRoot = "."
 }
 
+if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
+    $env:DOTNET_ROLL_FORWARD = "Major"
+    Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
+}
+
 Push-Location $repoRoot
 try {
     Write-Host "Restoring local tools..."
