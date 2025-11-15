@@ -64,6 +64,37 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LocalSymbolExposesConstAndToBeClosedFlags()
+        {
+            SymbolRef symbol = SymbolRef.Local(
+                "constClose",
+                7,
+                SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(symbol.IsConst, Is.True);
+                Assert.That(symbol.IsToBeClosed, Is.True);
+            });
+        }
+
+        [Test]
+        public void ToStringReflectsSymbolType()
+        {
+            SymbolRef env = SymbolRef.DefaultEnv;
+            SymbolRef global = SymbolRef.Global("foo", env);
+            SymbolRef local = SymbolRef.Local("bar", 2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(env.ToString(), Is.EqualTo("(default _ENV)"));
+                Assert.That(global.ToString(), Does.Contain("foo"));
+                Assert.That(local.ToString(), Does.Contain("bar"));
+            });
+        }
+
+        [Test]
         public void UpvalueSymbolSerializationRetainsIndex()
         {
             SymbolRef original = SymbolRef.Upvalue("baz", 5);
