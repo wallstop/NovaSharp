@@ -2,14 +2,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
-    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-    using NovaSharp.Interpreter.Interop.StandardDescriptors;
-    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -31,6 +27,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.UnregisterType(typeof(RegistryHost));
             UserData.UnregisterType(typeof(AutoPolicyHost));
             UserData.UnregisterType(typeof(BaseHost));
+            UserData.UnregisterType(typeof(EqualityHost));
+            UserData.UnregisterType(typeof(IMarker));
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
         }
 
@@ -86,7 +84,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void RegisterProxyTypeRegistersProxyAndTargetDescriptors()
         {
-            UserData.RegisterProxyType<ProxySurface, ProxyTarget>(target => new ProxySurface(target));
+            UserData.RegisterProxyType<ProxySurface, ProxyTarget>(target => new ProxySurface(
+                target
+            ));
 
             DynValue proxied = UserData.Create(new ProxyTarget("proxy"));
 
@@ -213,9 +213,95 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptor.Type, Is.EqualTo(typeof(BaseHost)));
         }
 
-        private sealed class CustomWireableDescriptor
-            : IUserDataDescriptor,
-                IWireableDescriptor
+        [Test]
+        public void UserDataEqualityUsesObjectEquals()
+        {
+            UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+
+            DynValue left = UserData.Create(new EqualityHost("value"));
+            DynValue right = UserData.Create(new EqualityHost("value"));
+
+            Assert.That(left.Equals(right), Is.True);
+        }
+
+        [Test]
+        public void UserDataEqualityRequiresMatchingDescriptors()
+        {
+            CustomWireableDescriptor descriptorA = new();
+            CustomWireableDescriptor descriptorB = new();
+            CustomDescriptorHost host = new("descriptor");
+
+            DynValue left = UserData.Create(host, descriptorA);
+            DynValue right = UserData.Create(host, descriptorB);
+
+            Assert.That(left.Equals(right), Is.False);
+        }
+
+        [Test]
+        public void StaticUserDataWithMatchingDescriptorsAreEqual()
+        {
+            UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+            DynValue left = UserData.CreateStatic(typeof(EqualityHost));
+            DynValue right = UserData.CreateStatic(typeof(EqualityHost));
+
+            Assert.That(left.Equals(right), Is.True);
+        }
+
+        [Test]
+        public void UserDataInequalityWhenOnlyOneObjectNull()
+        {
+            CustomWireableDescriptor descriptor = new();
+            CustomDescriptorHost host = new("descriptor");
+
+            DynValue left = UserData.Create(host, descriptor);
+            DynValue right = UserData.CreateStatic(descriptor);
+
+            Assert.That(left.Equals(right), Is.False);
+        }
+
+        [Test]
+        public void CreateReturnsStaticUserDataWhenPassingType()
+        {
+            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+
+            DynValue dynValue = UserData.Create(typeof(RegistryHost));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.UserData));
+                Assert.That(dynValue.UserData.Object, Is.Null);
+                Assert.That(dynValue.UserData.Descriptor.Type, Is.EqualTo(typeof(RegistryHost)));
+            });
+        }
+
+        [Test]
+        public void GetRegisteredTypesIncludesCurrentlyRegisteredTypes()
+        {
+            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+
+            IEnumerable<Type> registered = UserData.GetRegisteredTypes();
+
+            Assert.That(registered, Does.Contain(typeof(RegistryHost)));
+        }
+
+        [Test]
+        public void GetDescriptorForTypeSearchInterfacesReturnsInterfaceDescriptor()
+        {
+            UserData.RegisterType(typeof(IMarker), InteropAccessMode.Reflection);
+
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
+                typeof(InterfaceHost),
+                true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor, Is.Not.Null);
+                Assert.That(descriptor.Type, Is.EqualTo(typeof(IMarker)));
+            });
+        }
+
+        private sealed class CustomWireableDescriptor : IUserDataDescriptor, IWireableDescriptor
         {
             public bool PreparedForWiring { get; private set; }
 
@@ -223,12 +309,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public Type Type => typeof(CustomDescriptorHost);
 
-            public DynValue Index(
-                Script script,
-                object obj,
-                DynValue index,
-                bool isDirectIndexing
-            )
+            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
             {
                 return DynValue.NewString("indexed");
             }
@@ -265,9 +346,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 t.Set("name", DynValue.NewString(Name));
             }
         }
-
     }
-
 }
 
 internal sealed class CustomDescriptorHost
@@ -285,9 +364,7 @@ internal sealed class CustomDescriptorHost
     }
 }
 
-internal sealed class HistoricalHost
-{
-}
+internal sealed class HistoricalHost { }
 
 internal sealed class ProxyTarget
 {
@@ -309,9 +386,7 @@ internal sealed class ProxySurface
     public ProxyTarget Target { get; }
 }
 
-internal sealed class UnregisteredHost
-{
-}
+internal sealed class UnregisteredHost { }
 
 internal static class CustomDescriptorHostExtensions
 {
@@ -321,18 +396,35 @@ internal static class CustomDescriptorHostExtensions
     }
 }
 
-internal sealed class RegistryHost
-{
-}
+internal sealed class RegistryHost { }
 
-internal sealed class AutoPolicyHost
-{
-}
+internal sealed class AutoPolicyHost { }
 
-internal class BaseHost
-{
-}
+internal class BaseHost { }
 
-internal sealed class DerivedHost : BaseHost
+internal sealed class DerivedHost : BaseHost { }
+
+internal interface IMarker { }
+
+internal sealed class InterfaceHost : IMarker { }
+
+internal sealed class EqualityHost
 {
+    public EqualityHost(string label)
+    {
+        Label = label;
+    }
+
+    public string Label { get; }
+
+    public override bool Equals(object obj)
+    {
+        return obj is EqualityHost other
+            && string.Equals(Label, other.Label, System.StringComparison.Ordinal);
+    }
+
+    public override int GetHashCode()
+    {
+        return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
+    }
 }
