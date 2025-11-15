@@ -255,6 +255,42 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void StringLessComparisonUsesLexicographicalOrdering()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(ctx, DynValue.NewString("alpha")),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("beta"))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void StringLessOrEqualTreatsEqualStringsAsTrue()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThanEqual,
+                "<=",
+                ctx => new LiteralExpression(ctx, DynValue.NewString("cat")),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("cat"))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
         public void EqualityTreatsNilAndVoidAsEqual()
         {
             Script script = new Script();
@@ -265,6 +301,43 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "==",
                 ctx => new LiteralExpression(ctx, DynValue.Nil),
                 ctx => new LiteralExpression(ctx, DynValue.Void)
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void EqualityReturnsTrueForSharedDynValueReference()
+        {
+            Script script = new Script();
+            DynValue shared = DynValue.NewTable(script);
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpEqual,
+                "==",
+                ctx => new LiteralExpression(ctx, shared),
+                ctx => new LiteralExpression(ctx, shared)
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void GreaterOrEqualComparisonReturnsTrueForEqualNumbers()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpGreaterThanEqual,
+                ">=",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(4)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(4))
             );
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
@@ -310,6 +383,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             Assert.That(result.Number, Is.EqualTo(Math.Pow(2, Math.Pow(3, 2))));
+        }
+
+        [Test]
+        public void CreatePowerExpressionBuildsExponentNode()
+        {
+            Script script = new Script();
+            ScriptLoadingContext ctx = new(script);
+
+            Expression expr = BinaryOperatorExpression.CreatePowerExpression(
+                new LiteralExpression(ctx, DynValue.NewNumber(2)),
+                new LiteralExpression(ctx, DynValue.NewNumber(5)),
+                ctx
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.EqualTo(32));
         }
 
         [Test]
@@ -405,6 +495,87 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.LessEq));
                 Assert.That(byteCode.code[3].OpCode, Is.EqualTo(OpCode.CNot));
+                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Not));
+            });
+        }
+
+        [TestCase(TokenType.OpAdd, "+", false, OpCode.Add)]
+        [TestCase(TokenType.OpMinusOrSub, "-", false, OpCode.Sub)]
+        [TestCase(TokenType.OpMul, "*", false, OpCode.Mul)]
+        [TestCase(TokenType.OpDiv, "/", false, OpCode.Div)]
+        [TestCase(TokenType.OpMod, "%", false, OpCode.Mod)]
+        [TestCase(TokenType.OpPwr, "^", false, OpCode.Power)]
+        [TestCase(TokenType.OpConcat, "..", true, OpCode.Concat)]
+        public void CompileArithmeticAndConcatEmitsExpectedOpcode(
+            TokenType tokenType,
+            string tokenText,
+            bool operandsAreStrings,
+            OpCode expectedOpCode
+        )
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                tokenType,
+                tokenText,
+                ctx => operandsAreStrings
+                    ? new LiteralExpression(ctx, DynValue.NewString("left"))
+                    : new LiteralExpression(ctx, DynValue.NewNumber(6)),
+                ctx => operandsAreStrings
+                    ? new LiteralExpression(ctx, DynValue.NewString("right"))
+                    : new LiteralExpression(ctx, DynValue.NewNumber(3))
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode));
+        }
+
+        [TestCase(TokenType.OpLessThan, "<", OpCode.Less)]
+        [TestCase(TokenType.OpLessThanEqual, "<=", OpCode.LessEq)]
+        public void CompileComparisonOperatorsEmitExpectedOpcode(
+            TokenType tokenType,
+            string tokenText,
+            OpCode expectedOpCode
+        )
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                tokenType,
+                tokenText,
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode));
+        }
+
+        [Test]
+        public void CompileNotEqualEmitsEqualityFollowedByNot()
+        {
+            Script script = new Script();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpNotEqual,
+                "~=",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(byteCode.code[^2].OpCode, Is.EqualTo(OpCode.Eq));
                 Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Not));
             });
         }
