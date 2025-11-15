@@ -126,6 +126,53 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfSupportsExplicitParameterIndexes()
+        {
+            string result = Tools.Sprintf("%2$d %1$+05d", 3, 10);
+            Assert.That(result, Is.EqualTo("10 +0003"));
+        }
+
+        [Test]
+        public void SprintfHonoursShortAndLongLengthModifiers()
+        {
+            string result = Tools.Sprintf("%hd %lu", 40000, (ushort)65535);
+            Assert.That(result, Is.EqualTo("-25536 65535"));
+        }
+
+        [Test]
+        public void SprintfAppliesThousandsGroupingFlag()
+        {
+            string result = Tools.Sprintf("%'15d", 1234567);
+            Assert.That(result, Is.EqualTo("      1,234,567"));
+        }
+
+        [Test]
+        public void SprintfTruncatesStringsWhenPrecisionSpecified()
+        {
+            string result = Tools.Sprintf("%.3s", "LuaState");
+            Assert.That(result, Is.EqualTo("Lua"));
+        }
+
+        [Test]
+        public void SprintfUsesFirstCharacterOfStringForCharFormat()
+        {
+            string result = Tools.Sprintf("%c", "Hello");
+            Assert.That(result, Is.EqualTo("H"));
+        }
+
+        [Test]
+        public void SprintfIgnoresUnsupportedFormatSpecifier()
+        {
+            string result = Tools.Sprintf("Value:%q:%d", 42, 7);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.EqualTo("Value:%q:42"));
+                Assert.That(result.Contains("%q"), Is.True);
+            });
+        }
+
+        [Test]
         public void FprintfWritesToDestination()
         {
             using StringWriter writer = new();
