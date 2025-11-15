@@ -9,12 +9,13 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-        <None Remove=".editorconfig" />
+        <None Remove="$(MSBuildProjectDirectory)/.editorconfig" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
-        <ProjectReference Include="..\..\tooling\NovaSharp.Cli\NovaSharp.Cli.csproj" />
-        <ProjectReference Include="..\..\tooling\NovaSharp.Hardwire\NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(MSBuildProjectDirectory)/../../runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(MSBuildProjectDirectory)/../../tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
+        <ProjectReference Include="$(MSBuildProjectDirectory)/../../tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(MSBuildProjectDirectory)/../../debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
@@ -22,28 +23,28 @@
         <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
     </ItemGroup>
     <ItemGroup>
-        <None Update="TestMore\**\*.t">
+        <None Update="TestMore/**/*.t">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="TestMore\**\*.lua">
+        <None Update="TestMore/**/*.lua">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="TestMore\**\*.mak">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-    <ItemGroup>
-        <None Update="Fixtures\**\*">
+        <None Update="TestMore/**/*.mak">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
     <ItemGroup>
-        <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
+        <None Update="Fixtures/**/*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
     <ItemGroup>
-        <EditorConfigFiles Remove="D:\Code\NovaSharp\src\tests\NovaSharp.Interpreter.Tests\.editorconfig" />
+        <EditorConfigFiles Remove="$(MSBuildProjectDirectory)/.editorconfig" />
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="Resources\embedded.lua" />
+        <EditorConfigFiles Remove="$(MSBuildProjectDirectory)/.editorconfig" />
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Resources/embedded.lua" />
     </ItemGroup>
 </Project>
