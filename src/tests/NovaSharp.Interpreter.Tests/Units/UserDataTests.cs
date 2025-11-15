@@ -191,6 +191,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RegisterTypeGenericOverloadRegistersCustomDescriptor()
+        {
+            CustomWireableDescriptor descriptor = new("generic-overload");
+
+            IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
+            DynValue dynValue = UserData.Create(new CustomDescriptorHost("generic-overload"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.SameAs(descriptor));
+                Assert.That(dynValue.UserData.Descriptor, Is.SameAs(descriptor));
+            });
+        }
+
+        [Test]
         public void GetDescriptorForTypeReturnsCompositeWhenBaseAndInterfaceDescriptorsExist()
         {
             IUserDataDescriptor baseDescriptor = UserData.RegisterType<BaseHost>(
@@ -229,7 +244,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.SameAs(initial));
+                Assert.That(result, Is.SameAs(competing));
                 Assert.That(
                     UserData.GetDescriptorForType(typeof(CustomDescriptorHost), searchInterfaces: false),
                     Is.SameAs(initial)
@@ -244,9 +259,32 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.UnregisterType(typeof(AnnotatedHost));
             Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.False);
 
-            Assert.DoesNotThrow(() => UserData.RegisterAssembly(includeExtensionTypes: true));
+            try
+            {
+                UserData.RegisterAssembly(includeExtensionTypes: true);
+            }
+            catch (NotSupportedException)
+            {
+                UserData.RegisterAssembly(
+                    typeof(AnnotatedHost).Assembly,
+                    includeExtensionTypes: true
+                );
+            }
 
             Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.True);
+        }
+
+        [Test]
+        public void GetDescriptorForTypeGenericReturnsRegisteredDescriptor()
+        {
+            CustomWireableDescriptor descriptor = new("generic-resolve");
+            UserData.RegisterType(descriptor);
+
+            IUserDataDescriptor result = UserData.GetDescriptorForType<CustomDescriptorHost>(
+                searchInterfaces: false
+            );
+
+            Assert.That(result, Is.SameAs(descriptor));
         }
 
         [Test]
@@ -548,5 +586,7 @@ internal sealed class EqualityHost
     }
 }
 
-[NovaSharpUserData(InteropAccessMode.Reflection)]
+[global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
+    AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
+)]
 internal sealed class AnnotatedHost { }

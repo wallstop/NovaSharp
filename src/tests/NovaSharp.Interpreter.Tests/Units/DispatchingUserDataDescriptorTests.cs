@@ -9,12 +9,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class DispatchingUserDataDescriptorTests
     {
+        private const string IndexerGetterName = "get_Item";
         private Script script = null!;
         private DispatchHost hostAdd = null!;
         private DispatchHost hostOther = null!;
@@ -26,6 +28,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             UserData.RegisterType<DispatchHost>(InteropAccessMode.Reflection);
             UserData.RegisterType<MetaFallbackHost>(InteropAccessMode.Reflection);
+            UserData.RegisterType<CountOnlyHost>(InteropAccessMode.Reflection);
+            UserData.RegisterType<IntConversionOnlyHost>(InteropAccessMode.Reflection);
+            UserData.RegisterType<NoConversionHost>(InteropAccessMode.Reflection);
         }
 
         [SetUp]
@@ -80,10 +85,36 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ComparisonMetamethodSupportsSecondOperandOwnership()
+        {
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
+            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__lt");
+            Assert.That(meta, Is.Not.Null, "__lt metamethod should be registered");
+
+            DynValue result = script.Call(
+                meta,
+                UserData.Create(hostOther),
+                UserData.Create(hostAdd)
+            );
+
+            Assert.That(result.Boolean, Is.False);
+        }
+
+        [Test]
         public void LenOperatorReturnsCount()
         {
             DynValue len = script.DoString("return #hostAdd");
             Assert.That(len.Number, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void LenOperatorFallsBackToCountWhenLengthMissing()
+        {
+            script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
+
+            DynValue len = script.DoString("return #countOnly");
+
+            Assert.That(len.Number, Is.EqualTo(4));
         }
 
         [Test]
@@ -97,6 +128,31 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(number.Type, Is.EqualTo(DataType.Number));
             Assert.That(number.Number, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ToNumberSkipsMissingConvertersBeforeFindingMatch()
+        {
+            IntConversionOnlyHost host = new(9);
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
+            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+
+            Assert.That(meta, Is.Not.Null, "__tonumber meta should be generated for numeric conversions");
+
+            DynValue number = script.Call(meta, UserData.Create(host));
+
+            Assert.That(number.Type, Is.EqualTo(DataType.Number));
+            Assert.That(number.Number, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void ToNumberReturnsNilWhenNoConvertersExist()
+        {
+            NoConversionHost host = new(6);
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
+            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+
+            Assert.That(meta, Is.Null);
         }
 
         [Test]
@@ -132,6 +188,110 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void MemberManagementSupportsAddRemoveQueries()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            StubMemberDescriptor member = StubMemberDescriptor.CreateCallable(
+                "Value",
+                MemberDescriptorAccess.CanRead
+            );
+            descriptor.AddMember("Value", member);
+            descriptor.AddMetaMember("__meta", member);
+            descriptor.AddDynValue("dyn", DynValue.NewNumber(5));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.HasMember("Value"), Is.True);
+                Assert.That(descriptor.MemberNames, Does.Contain("Value"));
+                Assert.That(descriptor.Members, Has.Some.Matches<KeyValuePair<string, IMemberDescriptor>>(kv => kv.Key == "dyn"));
+                Assert.That(descriptor.MetaMemberNames, Does.Contain("__meta"));
+                Assert.That(descriptor.HasMetaMember("__meta"), Is.True);
+            });
+
+            descriptor.RemoveMember("Value");
+            descriptor.RemoveMetaMember("__meta");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.HasMember("Value"), Is.False);
+                Assert.That(descriptor.HasMetaMember("__meta"), Is.False);
+            });
+        }
+
+        [Test]
+        public void IndexerInvokesClrCallbackWhenAccessedFromBracketSyntax()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            bool invoked = false;
+            descriptor.AddMember(
+                IndexerGetterName,
+                StubMemberDescriptor.CreateCallable(
+                    IndexerGetterName,
+                    MemberDescriptorAccess.CanExecute | MemberDescriptorAccess.CanRead,
+                    (_, _) =>
+                        DynValue.NewCallback(
+                            (context, args) =>
+                            {
+                                invoked = true;
+                                return DynValue.NewString($"idx:{args[0].Number}");
+                            }
+                        )
+                )
+            );
+
+            Script localScript = new Script(CoreModules.None);
+            DynValue result = descriptor.Index(
+                localScript,
+                new DescriptorHost(),
+                DynValue.NewNumber(7),
+                isDirectIndexing: false
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(invoked, Is.True);
+                Assert.That(result.String, Is.EqualTo("idx:7"));
+            });
+        }
+
+        [Test]
+        public void IndexerThrowsWhenGetterIsNotClrCallback()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            descriptor.AddMember(
+                IndexerGetterName,
+                StubMemberDescriptor.CreateCallable(
+                    IndexerGetterName,
+                    MemberDescriptorAccess.CanExecute | MemberDescriptorAccess.CanRead,
+                    (_, _) => DynValue.NewString("not a callback")
+                )
+            );
+
+            Script localScript = new Script(CoreModules.None);
+
+            Assert.That(
+                () => descriptor.Index(
+                    localScript,
+                    new DescriptorHost(),
+                    DynValue.NewNumber(1),
+                    isDirectIndexing: false
+                ),
+                Throws.InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("clr callback was expected")
+            );
+        }
+
+        [Test]
+        public void IndexFallsBackToExtensionMethodsAfterRegistration()
+        {
+            UserData.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
+
+            DynValue result = script.DoString("return hostAdd:DescribeExt()");
+
+            Assert.That(result.String, Is.EqualTo("ext:2"));
+        }
+
+        [Test]
         public void DivisionByZeroPropagatesInvocationException()
         {
             Assert.That(
@@ -151,99 +311,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(concat.String, Is.EqualTo("L|R"));
         }
 
-        private sealed class DispatchHost : IComparable<DispatchHost>, IComparable, IEnumerable<int>
-        {
-            private readonly int value;
-            private readonly IList<int> sequence;
-
-            public DispatchHost(int value, IEnumerable<int> sequence)
-            {
-                this.value = value;
-                this.sequence = new List<int>(sequence);
-            }
-
-            public int Value => value;
-
-            public int Length => sequence.Count;
-
-            public int Count => sequence.Count;
-
-            public static DispatchHost operator +(DispatchHost left, DispatchHost right)
-            {
-                return new DispatchHost(left.value + right.value, left.sequence);
-            }
-
-            public static DispatchHost operator -(DispatchHost left, DispatchHost right)
-            {
-                return new DispatchHost(left.value - right.value, left.sequence);
-            }
-
-            public static DispatchHost operator *(DispatchHost left, DispatchHost right)
-            {
-                return new DispatchHost(left.value * right.value, left.sequence);
-            }
-
-            public static DispatchHost operator /(DispatchHost left, DispatchHost right)
-            {
-                return new DispatchHost(left.value / right.value, left.sequence);
-            }
-
-            public static DispatchHost operator %(DispatchHost left, DispatchHost right)
-            {
-                return new DispatchHost(left.value % right.value, left.sequence);
-            }
-
-            public static DispatchHost operator -(DispatchHost host)
-            {
-                return new DispatchHost(-host.value, host.sequence);
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is DispatchHost other && other.value == value;
-            }
-
-            public override int GetHashCode()
-            {
-                return value;
-            }
-
-            public int CompareTo(DispatchHost other)
-            {
-                return value.CompareTo(other?.value ?? 0);
-            }
-
-            int IComparable.CompareTo(object obj)
-            {
-                if (obj is DispatchHost other)
-                {
-                    return CompareTo(other);
-                }
-
-                throw new ArgumentException("Object must be a DispatchHost", nameof(obj));
-            }
-
-            public IEnumerator<int> GetEnumerator()
-            {
-                return sequence.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            public static implicit operator double(DispatchHost host)
-            {
-                return host.value;
-            }
-
-            public static implicit operator bool(DispatchHost host)
-            {
-                return host.value != 0;
-            }
-        }
-
         private sealed class MetaFallbackHost
         {
             public MetaFallbackHost(string label)
@@ -258,6 +325,204 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 return $"{left.Label}|{right.Label}";
             }
+        }
+
+        private sealed class StubMemberDescriptor : IMemberDescriptor
+        {
+            private readonly Func<Script, object, DynValue> getter;
+
+            private StubMemberDescriptor(
+                string name,
+                MemberDescriptorAccess access,
+                bool isStatic,
+                Func<Script, object, DynValue> getter
+            )
+            {
+                Name = name;
+                MemberAccess = access;
+                IsStatic = isStatic;
+                this.getter = getter ?? ((_, _) => DynValue.Nil);
+            }
+
+            public static StubMemberDescriptor CreateCallable(
+                string name,
+                MemberDescriptorAccess access,
+                Func<Script, object, DynValue> getter = null
+            )
+            {
+                return new StubMemberDescriptor(
+                    name,
+                    access,
+                    isStatic: false,
+                    getter: getter ?? ((_, _) => DynValue.NewCallback((_, _) => DynValue.Nil))
+                );
+            }
+
+            public bool IsStatic { get; }
+
+            public string Name { get; }
+
+            public MemberDescriptorAccess MemberAccess { get; }
+
+            public DynValue GetValue(Script script, object obj)
+            {
+                return getter(script, obj);
+            }
+
+            public void SetValue(Script script, object obj, DynValue value)
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        private static DispatchingUserDataDescriptor CreateDescriptorHostDescriptor()
+        {
+            return new DescriptorHostDescriptor();
+        }
+
+        private sealed class DescriptorHostDescriptor
+            : DispatchingUserDataDescriptor
+        {
+            public DescriptorHostDescriptor()
+                : base(typeof(DescriptorHost)) { }
+        }
+    }
+
+    internal sealed class DescriptorHost { }
+
+    internal sealed class CountOnlyHost
+    {
+        public CountOnlyHost(int count)
+        {
+            Count = count;
+        }
+
+        public int Count { get; }
+    }
+
+    internal sealed class IntConversionOnlyHost
+    {
+        public IntConversionOnlyHost(int value)
+        {
+            Value = value;
+        }
+
+        public int Value { get; }
+
+        public static implicit operator int(IntConversionOnlyHost host)
+        {
+            return host.Value;
+        }
+    }
+
+    internal sealed class NoConversionHost
+    {
+        public NoConversionHost(int value)
+        {
+            Value = value;
+        }
+
+        public int Value { get; }
+    }
+
+    internal sealed class DispatchHost : IComparable<DispatchHost>, IComparable, IEnumerable<int>
+    {
+        private readonly int value;
+        private readonly IList<int> sequence;
+
+        public DispatchHost(int value, IEnumerable<int> sequence)
+        {
+            this.value = value;
+            this.sequence = new List<int>(sequence);
+        }
+
+        public int Value => value;
+
+        public int Length => sequence.Count;
+
+        public int Count => sequence.Count;
+
+        public static DispatchHost operator +(DispatchHost left, DispatchHost right)
+        {
+            return new DispatchHost(left.value + right.value, left.sequence);
+        }
+
+        public static DispatchHost operator -(DispatchHost left, DispatchHost right)
+        {
+            return new DispatchHost(left.value - right.value, left.sequence);
+        }
+
+        public static DispatchHost operator *(DispatchHost left, DispatchHost right)
+        {
+            return new DispatchHost(left.value * right.value, left.sequence);
+        }
+
+        public static DispatchHost operator /(DispatchHost left, DispatchHost right)
+        {
+            return new DispatchHost(left.value / right.value, left.sequence);
+        }
+
+        public static DispatchHost operator %(DispatchHost left, DispatchHost right)
+        {
+            return new DispatchHost(left.value % right.value, left.sequence);
+        }
+
+        public static DispatchHost operator -(DispatchHost host)
+        {
+            return new DispatchHost(-host.value, host.sequence);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is DispatchHost other && other.value == value;
+        }
+
+        public override int GetHashCode()
+        {
+            return value;
+        }
+
+        public int CompareTo(DispatchHost other)
+        {
+            return value.CompareTo(other?.value ?? 0);
+        }
+
+        int IComparable.CompareTo(object obj)
+        {
+            if (obj is DispatchHost other)
+            {
+                return CompareTo(other);
+            }
+
+            throw new ArgumentException("Object must be a DispatchHost", nameof(obj));
+        }
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            return sequence.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public static implicit operator double(DispatchHost host)
+        {
+            return host.value;
+        }
+
+        public static implicit operator bool(DispatchHost host)
+        {
+            return host.value != 0;
+        }
+    }
+
+    internal static class DispatchHostExtensionMethods
+    {
+        public static string DescribeExt(this DispatchHost host)
+        {
+            return $"ext:{host.Value}";
         }
     }
 }
