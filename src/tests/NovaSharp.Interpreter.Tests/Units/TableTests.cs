@@ -163,5 +163,50 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(exception.Message, Does.Contain("table index is nil"));
         }
+
+        [Test]
+        public void RemoveStringKeyDeletesEntry()
+        {
+            Table table = new(new Script());
+            table.Set("key", DynValue.NewNumber(12));
+
+            bool removed = table.Remove("key");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(removed, Is.True);
+                Assert.That(table.RawGet("key"), Is.Null);
+            });
+        }
+
+        [Test]
+        public void RemoveDynValueNumberUsesIntegralPath()
+        {
+            Table table = new(new Script());
+            table.Set(1, DynValue.NewNumber(42));
+
+            bool removed = table.Remove(DynValue.NewNumber(1));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(removed, Is.True);
+                Assert.That(table.RawGet(1), Is.Null);
+            });
+        }
+
+        [Test]
+        public void RawGetParamsNavigatesNestedTables()
+        {
+            Script script = new();
+            Table table = new(script);
+            Table inner = new(script);
+            inner.Set("leaf", DynValue.NewNumber(99));
+            table.Set("child", DynValue.NewTable(script));
+            table.Set(new object[] { "child", "leaf" }, DynValue.NewNumber(7));
+
+            DynValue result = table.RawGet("child", "leaf");
+
+            Assert.That(result.Number, Is.EqualTo(7));
+        }
     }
 }

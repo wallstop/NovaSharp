@@ -241,6 +241,42 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(DynValue.True.AsReadOnly(), Is.SameAs(DynValue.True));
         }
 
+        [Test]
+        public void GetHashCodeCachesPerInstance()
+        {
+            DynValue str = DynValue.NewString("hash-me");
+
+            int first = str.GetHashCode();
+            int second = str.GetHashCode();
+
+            Assert.That(second, Is.EqualTo(first));
+        }
+
+        [Test]
+        public void ToDebugPrintStringFlattensTuples()
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewString("x"), DynValue.NewNumber(4));
+
+            Assert.That(tuple.ToDebugPrintString(), Is.EqualTo("x\t4"));
+        }
+
+        [Test]
+        public void IsNilOrNanDetectsNaN()
+        {
+            DynValue value = DynValue.NewNumber(double.NaN);
+            Assert.That(value.IsNilOrNan(), Is.True);
+        }
+
+        [Test]
+        public void GetAsPrivateResourceReturnsUnderlyingResource()
+        {
+            Script script = new();
+            Table table = new(script);
+            DynValue tableValue = DynValue.NewTable(table);
+
+            Assert.That(tableValue.GetAsPrivateResource(), Is.SameAs(table));
+        }
+
         private sealed class SampleUserData
         {
             public SampleUserData(string name)
