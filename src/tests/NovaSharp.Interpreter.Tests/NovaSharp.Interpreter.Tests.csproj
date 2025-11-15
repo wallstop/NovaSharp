@@ -12,10 +12,10 @@
         <None Remove="$(MSBuildProjectDirectory)/.editorconfig" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="$(MSBuildProjectDirectory)/../../runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
-        <ProjectReference Include="$(MSBuildProjectDirectory)/../../tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
-        <ProjectReference Include="$(MSBuildProjectDirectory)/../../tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
-        <ProjectReference Include="$(MSBuildProjectDirectory)/../../debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />

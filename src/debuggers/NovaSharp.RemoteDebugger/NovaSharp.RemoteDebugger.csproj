@@ -10,7 +10,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Resources\Main.html" />

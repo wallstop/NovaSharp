@@ -7,12 +7,12 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\NovaSharp.Hardwire\NovaSharp.Hardwire.csproj" />
-        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
-        <ProjectReference Include="..\..\debuggers\NovaSharp.RemoteDebugger\NovaSharp.RemoteDebugger.csproj" />
-        <ProjectReference Include="..\..\debuggers\NovaSharp.VsCodeDebugger\NovaSharp.VsCodeDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <None Remove="moonsharp.ico" />
+        <None Remove="$(MSBuildProjectDirectory)/moonsharp.ico" />
     </ItemGroup>
 </Project>

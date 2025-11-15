@@ -10,5 +10,7 @@
         <Nullable>disable</Nullable>
         <WarningsAsErrors>CS*</WarningsAsErrors>
         <WarningsNotAsErrors>CA*</WarningsNotAsErrors>
+        <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
+        <SrcRoot>$(RepoRoot)src/</SrcRoot>
     </PropertyGroup>
 </Project>

@@ -15,9 +15,9 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
     <ItemGroup>
-        <None Remove="keypair.snk" />
+        <None Remove="$(MSBuildProjectDirectory)/keypair.snk" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
     </ItemGroup>
 </Project>
