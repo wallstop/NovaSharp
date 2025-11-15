@@ -5,7 +5,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.ProxyObjects;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -29,6 +32,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.UnregisterType(typeof(BaseHost));
             UserData.UnregisterType(typeof(EqualityHost));
             UserData.UnregisterType(typeof(IMarker));
+            UserData.UnregisterType(typeof(AnnotatedHost));
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
         }
 
@@ -178,6 +182,74 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RegisterProxyTypeThrowsWhenFactoryIsNull()
+        {
+            Assert.That(
+                () => UserData.RegisterProxyType((IProxyFactory)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("proxyFactory")
+            );
+        }
+
+        [Test]
+        public void GetDescriptorForTypeReturnsCompositeWhenBaseAndInterfaceDescriptorsExist()
+        {
+            IUserDataDescriptor baseDescriptor = UserData.RegisterType<BaseHost>(
+                InteropAccessMode.Reflection
+            );
+            MarkerDescriptor interfaceDescriptor = new();
+            UserData.RegisterType(typeof(IMarker), interfaceDescriptor);
+
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
+                typeof(DerivedInterfaceHost),
+                searchInterfaces: true
+            );
+
+            Assert.That(descriptor, Is.InstanceOf<CompositeUserDataDescriptor>());
+            CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(composite.Descriptors, Does.Contain(baseDescriptor));
+                Assert.That(composite.Descriptors, Does.Contain(interfaceDescriptor));
+            });
+        }
+
+        [Test]
+        public void RegisterTypeKeepsExistingDescriptorUnderDefaultPolicy()
+        {
+            CustomWireableDescriptor initial = new("initial");
+            CustomWireableDescriptor competing = new("competing");
+
+            UserData.RegisterType(initial);
+            IUserDataDescriptor result = UserData.RegisterType(
+                typeof(CustomDescriptorHost),
+                competing
+            );
+            DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.SameAs(initial));
+                Assert.That(
+                    UserData.GetDescriptorForType(typeof(CustomDescriptorHost), searchInterfaces: false),
+                    Is.SameAs(initial)
+                );
+                Assert.That(dynValue.UserData.Descriptor, Is.SameAs(initial));
+            });
+        }
+
+        [Test]
+        public void RegisterAssemblyRegistersAnnotatedTypesWhenAssemblyIsNull()
+        {
+            UserData.UnregisterType(typeof(AnnotatedHost));
+            Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.False);
+
+            Assert.DoesNotThrow(() => UserData.RegisterAssembly(includeExtensionTypes: true));
+
+            Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.True);
+        }
+
+        [Test]
         public void GetDescriptionOfRegisteredTypesIncludesHistoricalEntries()
         {
             UserData.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
@@ -303,6 +375,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class CustomWireableDescriptor : IUserDataDescriptor, IWireableDescriptor
         {
+            public CustomWireableDescriptor(string identifier = null)
+            {
+                Identifier = identifier;
+            }
+
+            public string Identifier { get; }
+
             public bool PreparedForWiring { get; private set; }
 
             public string Name => "CustomDescriptorHost";
@@ -344,6 +423,44 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 PreparedForWiring = true;
                 t.Set("name", DynValue.NewString(Name));
+            }
+        }
+
+        private sealed class MarkerDescriptor : IUserDataDescriptor
+        {
+            public string Name => "IMarker";
+
+            public Type Type => typeof(IMarker);
+
+            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            {
+                return DynValue.Nil;
+            }
+
+            public bool SetIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value,
+                bool isDirectIndexing
+            )
+            {
+                return false;
+            }
+
+            public string AsString(object obj)
+            {
+                return obj?.ToString();
+            }
+
+            public DynValue MetaIndex(Script script, object obj, string metaname)
+            {
+                return DynValue.Nil;
+            }
+
+            public bool IsTypeCompatible(Type type, object obj)
+            {
+                return type.IsInstanceOfType(obj);
             }
         }
     }
@@ -404,6 +521,8 @@ internal class BaseHost { }
 
 internal sealed class DerivedHost : BaseHost { }
 
+internal sealed class DerivedInterfaceHost : BaseHost, IMarker { }
+
 internal interface IMarker { }
 
 internal sealed class InterfaceHost : IMarker { }
@@ -428,3 +547,6 @@ internal sealed class EqualityHost
         return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
     }
 }
+
+[NovaSharpUserData(InteropAccessMode.Reflection)]
+internal sealed class AnnotatedHost { }

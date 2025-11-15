@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-14 18:15 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 10:28 UTC).
 
 ## Snapshot
-- Overall line coverage: **76.3 %**
-- NovaSharp.Interpreter line coverage: **88.8 %**
+- Overall line coverage: **76.9 %**
+- NovaSharp.Interpreter line coverage: **89.5 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
@@ -13,7 +13,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.OverloadedMethodMemberDescriptor` — **82.2 %** (unit suite now drives cache reuse/static vs. instance lookups, extension snapshots, varargs scoring, callback/value accessors, and wiring/optimizer paths. Remaining gaps are the defensive `_cache.Length == 0` branch, the IEnumerable ctor, the auto `IsStatic` getter, and the non-wireable wiring fallback lines (94-97, 141, 270-277, 415-436, 529-533, 552, 585-586, 613-618); consider refactoring or `Debug.Assert`-ing those guards so they’re no longer counted as executable).
 - `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` — **71.4 %** (cover missing-asset error flows and invalid manifest handling).
 - `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` — **77.6 %** (latest spec-driven tests now hit explicit-parameter indexes, grouping (`%'`), `%h`/`%l`, `%c`, `%n`, hex/octal alternate forms, and zero-padding positive numbers. Remaining uncovered branches live in the numeric formatter’s right-padding paths and composite flag combinations like space+sign without zero padding).
-- `NovaSharp.Interpreter.DataTypes.UserData` — **85.0 %** (custom descriptor wiring, proxy registration, extension snapshots, and registered-type history are now exercised; still need tests for composite descriptor selection, auto-registration denial paths, and equality/metatable toggles).
+- `NovaSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor` — **80.6 %** line / **73.8 %** branch (new descriptor-level tests now cover `__tonumber`, `__tobool`, iterator dispatch, comparison fallbacks, and division-by-zero propagation, but we still need regressions for the length/count auto-dispatchers, extension-method refresh path, enumerable snapshot invalidation, and unsupported-operator error branches).
+- `NovaSharp.Interpreter.DataTypes.UserData` — **86.0 %** (latest `UserDataTests` exercise composite descriptor creation, default-policy rejection of duplicate custom descriptors, the `IProxyFactory` null-guard, and the `[NovaSharpUserData]` assembly scanner; remaining gaps are equality/metatable toggles in `RefIdObject`, auto-registration denial fallbacks across legacy policies, and the historical wiring paths for interface-only descriptors.)
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items
