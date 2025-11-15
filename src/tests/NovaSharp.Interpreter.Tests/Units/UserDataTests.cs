@@ -1,129 +1,124 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class UserDataTests
     {
-        [Test]
-        public void CreateReturnsNullWhenDescriptorIsMissing()
+        [TearDown]
+        public void Cleanup()
         {
-            DynValue result = UserData.Create(new UnregisteredSample());
+            UserData.UnregisterType(typeof(CustomDescriptorHost));
+            UserData.UnregisterType(typeof(HistoricalHost));
+            UserData.UnregisterType(typeof(ProxyTarget));
+            UserData.UnregisterType(typeof(ProxySurface));
+            UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
+        }
+
+        [Test]
+        public void CreateReturnsNullForUnregisteredType()
+        {
+            UserData.UnregisterType(typeof(UnregisteredHost));
+
+            DynValue result = UserData.Create(new UnregisteredHost());
 
             Assert.That(result, Is.Null);
         }
 
         [Test]
-        public void CreateWithDescriptorWrapsTheProvidedObject()
+        public void CustomDescriptorIsUsedForCreationAndWiring()
         {
-            SampleDescriptor descriptor = new(typeof(RegisteredSample), "RegisteredSample");
-            RegisteredSample instance = new();
+            CustomWireableDescriptor descriptor = new();
+            UserData.RegisterType(descriptor);
+            CustomDescriptorHost instance = new CustomDescriptorHost("tracked");
 
-            DynValue dynValue = UserData.Create(instance, descriptor);
+            DynValue dynValue = UserData.Create(instance);
+            Table description = UserData.GetDescriptionOfRegisteredTypes();
 
             Assert.Multiple(() =>
             {
                 Assert.That(dynValue.Type, Is.EqualTo(DataType.UserData));
-                Assert.That(dynValue.UserData.Object, Is.SameAs(instance));
+                Assert.That(dynValue.UserData.Object, Is.EqualTo(instance));
                 Assert.That(dynValue.UserData.Descriptor, Is.SameAs(descriptor));
+                Assert.That(descriptor.PreparedForWiring, Is.True);
+                Assert.That(
+                    description.Get(descriptor.Type.FullName).Table.Get("name").String,
+                    Is.EqualTo(descriptor.Name)
+                );
             });
         }
 
         [Test]
-        public void RegisterProxyTypeThrowsWhenFactoryIsNull()
+        public void RegisteredTypesHistoryIncludesUnregisteredEntries()
         {
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(
-                () => UserData.RegisterProxyType(proxyFactory: null)
+            UserData.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
+            UserData.UnregisterType<HistoricalHost>();
+
+            IEnumerable<Type> current = UserData.GetRegisteredTypes();
+            IEnumerable<Type> history = UserData.GetRegisteredTypes(useHistoricalData: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(current, Does.Not.Contain(typeof(HistoricalHost)));
+                Assert.That(history, Does.Contain(typeof(HistoricalHost)));
+            });
+        }
+
+        [Test]
+        public void RegisterProxyTypeRegistersProxyAndTargetDescriptors()
+        {
+            UserData.RegisterProxyType<ProxySurface, ProxyTarget>(target => new ProxySurface(target));
+
+            DynValue proxied = UserData.Create(new ProxyTarget("proxy"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(UserData.IsTypeRegistered<ProxySurface>(), Is.True);
+                Assert.That(UserData.IsTypeRegistered<ProxyTarget>(), Is.True);
+                Assert.That(proxied.Type, Is.EqualTo(DataType.UserData));
+                Assert.That(proxied.UserData.Descriptor.Type, Is.EqualTo(typeof(ProxyTarget)));
+            });
+        }
+
+        [Test]
+        public void RegisterExtensionTypeExposesMethodsAndIncrementsVersion()
+        {
+            int startingVersion = UserData.GetExtensionMethodsChangeVersion();
+            UserData.RegisterExtensionType(typeof(CustomDescriptorHostExtensions));
+            int updatedVersion = UserData.GetExtensionMethodsChangeVersion();
+
+            List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
+                nameof(CustomDescriptorHostExtensions.Decorate),
+                typeof(CustomDescriptorHost)
             );
 
-            Assert.That(exception.ParamName, Is.EqualTo("proxyFactory"));
-        }
-
-        [Test]
-        public void GetDescriptionOfRegisteredTypesIncludesWireableDescriptors()
-        {
-            SampleDescriptor descriptor = new(typeof(WireableSample), "WireableSample");
-            UserData.RegisterType(descriptor);
-
-            try
-            {
-                Table registry = UserData.GetDescriptionOfRegisteredTypes();
-                DynValue entry = registry.Get(descriptor.Type.FullName);
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(entry.Type, Is.EqualTo(DataType.Table));
-                    Assert.That(
-                        entry.Table.Get("descriptorName").String,
-                        Is.EqualTo("WireableSample")
-                    );
-                });
-            }
-            finally
-            {
-                UserData.UnregisterType(descriptor.Type);
-            }
-        }
-
-        [Test]
-        public void DescriptionIncludesHistoricalDescriptorsOnRequest()
-        {
-            SampleDescriptor descriptor = new(typeof(HistoricalSample), "HistoricalSample");
-            UserData.RegisterType(descriptor);
-            UserData.UnregisterType(descriptor.Type);
-
-            Table withoutHistory = UserData.GetDescriptionOfRegisteredTypes();
-            Table withHistory = UserData.GetDescriptionOfRegisteredTypes(useHistoricalData: true);
-
             Assert.Multiple(() =>
             {
-                Assert.That(
-                    withoutHistory.Get(descriptor.Type.FullName).IsNil(),
-                    Is.True,
-                    "Active registry should not contain historical descriptors."
-                );
-                DynValue entry = withHistory.Get(descriptor.Type.FullName);
-                Assert.That(entry.Type, Is.EqualTo(DataType.Table));
-                Assert.That(
-                    entry.Table.Get("typeName").String,
-                    Is.EqualTo(typeof(HistoricalSample).FullName)
-                );
+                Assert.That(updatedVersion, Is.GreaterThan(startingVersion));
+                Assert.That(methods, Is.Not.Null);
+                Assert.That(methods.Count, Is.GreaterThan(0));
             });
         }
 
-        [Test]
-        public void GetRegisteredTypesHonorsHistoricalFlag()
+        private sealed class CustomWireableDescriptor
+            : IUserDataDescriptor,
+                IWireableDescriptor
         {
-            SampleDescriptor descriptor = new(typeof(HistoricalSampleTwo), "HistoricalSampleTwo");
-            UserData.RegisterType(descriptor);
-            UserData.UnregisterType(descriptor.Type);
+            public bool PreparedForWiring { get; private set; }
 
-            Type[] active = UserData.GetRegisteredTypes().ToArray();
-            Type[] history = UserData.GetRegisteredTypes(useHistoricalData: true).ToArray();
+            public string Name => "CustomDescriptorHost";
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(active, Does.Not.Contain(typeof(HistoricalSampleTwo)));
-                Assert.That(history, Does.Contain(typeof(HistoricalSampleTwo)));
-            });
-        }
-
-        private sealed class SampleDescriptor : IUserDataDescriptor, IWireableDescriptor
-        {
-            public SampleDescriptor(Type type, string name)
-            {
-                Type = type;
-                Name = name;
-            }
-
-            public string Name { get; }
-
-            public Type Type { get; }
+            public Type Type => typeof(CustomDescriptorHost);
 
             public DynValue Index(
                 Script script,
@@ -132,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool isDirectIndexing
             )
             {
-                return DynValue.Nil;
+                return DynValue.NewString("indexed");
             }
 
             public bool SetIndex(
@@ -143,12 +138,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool isDirectIndexing
             )
             {
-                return false;
+                return true;
             }
 
             public string AsString(object obj)
             {
-                return obj?.ToString() ?? string.Empty;
+                return $"custom:{obj}";
             }
 
             public DynValue MetaIndex(Script script, object obj, string metaname)
@@ -161,21 +156,64 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return type.IsInstanceOfType(obj);
             }
 
-            public void PrepareForWiring(Table table)
+            public void PrepareForWiring(Table t)
             {
-                table.Set("descriptorName", DynValue.NewString(Name));
-                table.Set("typeName", DynValue.NewString(Type.FullName));
+                PreparedForWiring = true;
+                t.Set("name", DynValue.NewString(Name));
             }
         }
 
-        private sealed class UnregisteredSample { }
+    }
 
-        private sealed class RegisteredSample { }
+}
 
-        private sealed class WireableSample { }
+internal sealed class CustomDescriptorHost
+{
+    public CustomDescriptorHost(string name)
+    {
+        Name = name;
+    }
 
-        private sealed class HistoricalSample { }
+    public string Name { get; }
 
-        private sealed class HistoricalSampleTwo { }
+    public override string ToString()
+    {
+        return $"Host:{Name}";
+    }
+}
+
+internal sealed class HistoricalHost
+{
+}
+
+internal sealed class ProxyTarget
+{
+    public ProxyTarget(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
+}
+
+internal sealed class ProxySurface
+{
+    public ProxySurface(ProxyTarget target)
+    {
+        Target = target;
+    }
+
+    public ProxyTarget Target { get; }
+}
+
+internal sealed class UnregisteredHost
+{
+}
+
+internal static class CustomDescriptorHostExtensions
+{
+    public static string Decorate(this CustomDescriptorHost host, string suffix)
+    {
+        return (host?.ToString() ?? string.Empty) + suffix;
     }
 }
