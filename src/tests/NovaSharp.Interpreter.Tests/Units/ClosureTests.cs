@@ -130,5 +130,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(dynValues.Number, Is.EqualTo(15d));
             });
         }
+
+        [Test]
+        public void UpvaluesTypeIsNoneWhenNoUpvaluesAreCaptured()
+        {
+            Script script = new();
+            Closure closure = new(script, idx: 0, symbols: System.Array.Empty<SymbolRef>(), resolvedLocals: System.Array.Empty<DynValue>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(0));
+                Assert.That(closure.GetUpvaluesType(), Is.EqualTo(default(Closure.UpvaluesType)));
+            });
+        }
     }
 }
