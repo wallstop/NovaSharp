@@ -12,8 +12,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 ## Prioritized Red List (Interpreter < 90 %)
 - `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.OverloadedMethodMemberDescriptor` — **82.2 %** (unit suite now drives cache reuse/static vs. instance lookups, extension snapshots, varargs scoring, callback/value accessors, and wiring/optimizer paths. Remaining gaps are the defensive `_cache.Length == 0` branch, the IEnumerable ctor, the auto `IsStatic` getter, and the non-wireable wiring fallback lines (94-97, 141, 270-277, 415-436, 529-533, 552, 585-586, 613-618); consider refactoring or `Debug.Assert`-ing those guards so they’re no longer counted as executable).
 - `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` — **71.4 %** (cover missing-asset error flows and invalid manifest handling).
-- `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` — **72.3 %** (expand spec-driven formatting cases for flags, padding, and unsupported conversions).
-- `NovaSharp.Interpreter.DataTypes.UserData` — **74.4 %** (hit meta-table toggles, descriptor cache paths, and userdata equality combinations).
+- `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` — **77.6 %** (latest spec-driven tests now hit explicit-parameter indexes, grouping (`%'`), `%h`/`%l`, `%c`, `%n`, hex/octal alternate forms, and zero-padding positive numbers. Remaining uncovered branches live in the numeric formatter’s right-padding paths and composite flag combinations like space+sign without zero padding).
+- `NovaSharp.Interpreter.DataTypes.UserData` — **85.0 %** (custom descriptor wiring, proxy registration, extension snapshots, and registered-type history are now exercised; still need tests for composite descriptor selection, auto-registration denial paths, and equality/metatable toggles).
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items

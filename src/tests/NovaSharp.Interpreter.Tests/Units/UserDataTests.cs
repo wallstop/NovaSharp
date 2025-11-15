@@ -15,6 +15,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class UserDataTests
     {
+        [SetUp]
+        public void ResetPolicy()
+        {
+            UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
+        }
+
         [TearDown]
         public void Cleanup()
         {
@@ -22,6 +28,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.UnregisterType(typeof(HistoricalHost));
             UserData.UnregisterType(typeof(ProxyTarget));
             UserData.UnregisterType(typeof(ProxySurface));
+            UserData.UnregisterType(typeof(RegistryHost));
+            UserData.UnregisterType(typeof(AutoPolicyHost));
+            UserData.UnregisterType(typeof(BaseHost));
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
         }
 
@@ -108,6 +117,100 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(methods, Is.Not.Null);
                 Assert.That(methods.Count, Is.GreaterThan(0));
             });
+        }
+
+        [Test]
+        public void CreateUsesExplicitDescriptorWhenProvided()
+        {
+            CustomWireableDescriptor descriptor = new();
+            CustomDescriptorHost host = new("explicit");
+
+            DynValue dynValue = UserData.Create(host, descriptor);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(dynValue.Type, Is.EqualTo(DataType.UserData));
+                Assert.That(dynValue.UserData.Descriptor, Is.SameAs(descriptor));
+                Assert.That(dynValue.UserData.Object, Is.EqualTo(host));
+            });
+        }
+
+        [Test]
+        public void CreateStaticReturnsNullWhenDescriptorMissing()
+        {
+            Assert.That(UserData.CreateStatic((IUserDataDescriptor)null), Is.Null);
+        }
+
+        [Test]
+        public void CreateStaticReturnsNullWhenDescriptorUnavailable()
+        {
+            UserData.UnregisterType(typeof(UnregisteredHost));
+
+            DynValue result = UserData.CreateStatic(typeof(UnregisteredHost));
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void GetRegisteredTypesIncludesRegisteredDescriptors()
+        {
+            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+
+            IEnumerable<Type> registered = UserData.GetRegisteredTypes();
+
+            Assert.That(registered, Does.Contain(typeof(RegistryHost)));
+        }
+
+        [Test]
+        public void AutomaticRegistrationPolicyRegistersTypesOnDemand()
+        {
+            UserData.UnregisterType(typeof(AutoPolicyHost));
+
+            UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
+            DynValue dynValue = UserData.Create(new AutoPolicyHost());
+            UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(dynValue, Is.Not.Null);
+                Assert.That(UserData.IsTypeRegistered<AutoPolicyHost>(), Is.True);
+            });
+        }
+
+        [Test]
+        public void GetDescriptionOfRegisteredTypesIncludesHistoricalEntries()
+        {
+            UserData.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
+            UserData.UnregisterType<HistoricalHost>();
+
+            Table description = UserData.GetDescriptionOfRegisteredTypes(useHistoricalData: true);
+
+            Assert.That(
+                description.Get(typeof(HistoricalHost).FullName),
+                Is.Not.Null.And.Not.EqualTo(DynValue.Nil)
+            );
+        }
+
+        [Test]
+        public void GetRegisteredTypesHistoricallyIncludesUnregisteredTypes()
+        {
+            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+            UserData.UnregisterType<RegistryHost>();
+
+            IEnumerable<Type> history = UserData.GetRegisteredTypes(useHistoricalData: true);
+
+            Assert.That(history, Does.Contain(typeof(RegistryHost)));
+        }
+
+        [Test]
+        public void GetDescriptorForObjectFallsBackToBaseType()
+        {
+            UserData.RegisterType<BaseHost>(InteropAccessMode.Reflection);
+
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(new DerivedHost());
+
+            Assert.That(descriptor, Is.Not.Null);
+            Assert.That(descriptor.Type, Is.EqualTo(typeof(BaseHost)));
         }
 
         private sealed class CustomWireableDescriptor
@@ -216,4 +319,20 @@ internal static class CustomDescriptorHostExtensions
     {
         return (host?.ToString() ?? string.Empty) + suffix;
     }
+}
+
+internal sealed class RegistryHost
+{
+}
+
+internal sealed class AutoPolicyHost
+{
+}
+
+internal class BaseHost
+{
+}
+
+internal sealed class DerivedHost : BaseHost
+{
 }

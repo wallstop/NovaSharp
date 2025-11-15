@@ -126,6 +126,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfFormatsUppercaseHexWithAlternateZeroPadding()
+        {
+            string result = Tools.Sprintf("%#08X", 0x2A);
+            Assert.That(result, Is.EqualTo("0X00002A"));
+        }
+
+        [Test]
+        public void SprintfDoesNotDuplicateOctalPrefixForZero()
+        {
+            string result = Tools.Sprintf("%#o", 0);
+            Assert.That(result, Is.EqualTo("0"));
+        }
+
+        [Test]
+        public void SprintfAppliesPositiveSignWhenZeroPadding()
+        {
+            string result = Tools.Sprintf("%+06d", 5);
+            Assert.That(result, Is.EqualTo("+00005"));
+        }
+
+        [Test]
         public void SprintfSupportsExplicitParameterIndexes()
         {
             string result = Tools.Sprintf("%2$d %1$+05d", 3, 10);
