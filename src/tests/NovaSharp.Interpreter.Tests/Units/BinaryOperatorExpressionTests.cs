@@ -499,62 +499,82 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [TestCase(TokenType.OpAdd, "+", false, OpCode.Add)]
-        [TestCase(TokenType.OpMinusOrSub, "-", false, OpCode.Sub)]
-        [TestCase(TokenType.OpMul, "*", false, OpCode.Mul)]
-        [TestCase(TokenType.OpDiv, "/", false, OpCode.Div)]
-        [TestCase(TokenType.OpMod, "%", false, OpCode.Mod)]
-        [TestCase(TokenType.OpPwr, "^", false, OpCode.Power)]
-        [TestCase(TokenType.OpConcat, "..", true, OpCode.Concat)]
-        public void CompileArithmeticAndConcatEmitsExpectedOpcode(
-            TokenType tokenType,
-            string tokenText,
-            bool operandsAreStrings,
-            OpCode expectedOpCode
-        )
+        [Test]
+        public void CompileArithmeticAndConcatEmitsExpectedOpcode()
         {
             Script script = new Script();
+            (TokenType TokenType, string Text, bool OperandsAreStrings, OpCode OpCode)[] cases =
+            {
+                (TokenType.OpAdd, "+", false, OpCode.Add),
+                (TokenType.OpMinusOrSub, "-", false, OpCode.Sub),
+                (TokenType.OpMul, "*", false, OpCode.Mul),
+                (TokenType.OpDiv, "/", false, OpCode.Div),
+                (TokenType.OpMod, "%", false, OpCode.Mod),
+                (TokenType.OpPwr, "^", false, OpCode.Power),
+                (TokenType.OpConcat, "..", true, OpCode.Concat),
+            };
 
-            Expression expr = BuildBinaryExpression(
-                script,
-                tokenType,
-                tokenText,
-                ctx => operandsAreStrings
-                    ? new LiteralExpression(ctx, DynValue.NewString("left"))
-                    : new LiteralExpression(ctx, DynValue.NewNumber(6)),
-                ctx => operandsAreStrings
-                    ? new LiteralExpression(ctx, DynValue.NewString("right"))
-                    : new LiteralExpression(ctx, DynValue.NewNumber(3))
-            );
+            foreach ((TokenType tokenType, string tokenText, bool operandsAreStrings, OpCode expectedOpCode) in cases)
+            {
+                Expression expr = BuildBinaryExpression(
+                    script,
+                    tokenType,
+                    tokenText,
+                    ctx => operandsAreStrings
+                        ? new LiteralExpression(ctx, DynValue.NewString("left"))
+                        : new LiteralExpression(ctx, DynValue.NewNumber(6)),
+                    ctx => operandsAreStrings
+                        ? new LiteralExpression(ctx, DynValue.NewString("right"))
+                        : new LiteralExpression(ctx, DynValue.NewNumber(3))
+                );
 
-            ByteCode byteCode = new(script);
-            expr.Compile(byteCode);
+                ByteCode byteCode = new(script);
+                expr.Compile(byteCode);
 
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode));
+                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode), tokenText);
+            }
         }
 
-        [TestCase(TokenType.OpLessThan, "<", OpCode.Less)]
-        [TestCase(TokenType.OpLessThanEqual, "<=", OpCode.LessEq)]
-        public void CompileComparisonOperatorsEmitExpectedOpcode(
-            TokenType tokenType,
-            string tokenText,
-            OpCode expectedOpCode
-        )
+        [Test]
+        public void CompileComparisonOperatorsEmitExpectedOpcode()
         {
             Script script = new Script();
+            (TokenType TokenType, string Text, OpCode OpCode)[] cases =
+            {
+                (TokenType.OpLessThan, "<", OpCode.Less),
+                (TokenType.OpLessThanEqual, "<=", OpCode.LessEq),
+            };
 
-            Expression expr = BuildBinaryExpression(
-                script,
-                tokenType,
-                tokenText,
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
-            );
+            foreach ((TokenType tokenType, string text, OpCode expectedOpCode) in cases)
+            {
+                Expression expr = BuildBinaryExpression(
+                    script,
+                    tokenType,
+                    text,
+                    ctx => new LiteralExpression(ctx, DynValue.NewNumber(2)),
+                    ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
+                );
 
-            ByteCode byteCode = new(script);
-            expr.Compile(byteCode);
+                ByteCode byteCode = new(script);
+                expr.Compile(byteCode);
 
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode));
+                Instruction[] instructions = byteCode.code.ToArray();
+                int comparisonIndex = Array.FindLastIndex(instructions, i => i.OpCode == expectedOpCode);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(comparisonIndex, Is.GreaterThan(1), text);
+
+                    if (expectedOpCode == OpCode.Less)
+                    {
+                        Assert.That(instructions[comparisonIndex + 1].OpCode, Is.EqualTo(OpCode.ToBool));
+                    }
+                    else
+                    {
+                        Assert.That(instructions[comparisonIndex + 1].OpCode, Is.EqualTo(OpCode.CNot));
+                    }
+                });
+            }
         }
 
         [Test]
@@ -573,10 +593,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
+            Instruction[] instructions = byteCode.code.ToArray();
+            int eqIndex = Array.FindLastIndex(instructions, i => i.OpCode == OpCode.Eq);
+
             Assert.Multiple(() =>
             {
-                Assert.That(byteCode.code[^2].OpCode, Is.EqualTo(OpCode.Eq));
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Not));
+                Assert.That(eqIndex, Is.GreaterThan(1));
+                Assert.That(instructions[eqIndex + 1].OpCode, Is.EqualTo(OpCode.ToBool));
+                Assert.That(instructions[^1].OpCode, Is.EqualTo(OpCode.Not));
             });
         }
 
