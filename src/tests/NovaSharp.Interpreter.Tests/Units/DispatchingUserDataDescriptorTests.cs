@@ -7,9 +7,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -17,6 +19,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class DispatchingUserDataDescriptorTests
     {
         private const string IndexerGetterName = "get_Item";
+        private const string IndexerSetterName = "set_Item";
         private Script script = null!;
         private DispatchHost hostAdd = null!;
         private DispatchHost hostOther = null!;
@@ -101,6 +104,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void MetaIndexReturnsNullForUnsupportedMetamethod()
+        {
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
+
+            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__unknown");
+
+            Assert.That(meta, Is.Null);
+        }
+
+        [Test]
         public void LenOperatorReturnsCount()
         {
             DynValue len = script.DoString("return #hostAdd");
@@ -115,6 +128,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue len = script.DoString("return #countOnly");
 
             Assert.That(len.Number, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void ComparisonMetamethodReturnsNullWhenObjectIsNotComparable()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            DynValue lt = descriptor.MetaIndex(script, new DescriptorHost(), "__lt");
+            DynValue le = descriptor.MetaIndex(script, new DescriptorHost(), "__le");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(lt, Is.Null);
+                Assert.That(le, Is.Null);
+            });
+        }
+
+        [Test]
+        public void LenMetamethodReturnsNullWhenTargetIsNull()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            DynValue len = descriptor.MetaIndex(script, null, "__len");
+
+            Assert.That(len, Is.Null);
         }
 
         [Test]
@@ -206,6 +243,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(descriptor.Members, Has.Some.Matches<KeyValuePair<string, IMemberDescriptor>>(kv => kv.Key == "dyn"));
                 Assert.That(descriptor.MetaMemberNames, Does.Contain("__meta"));
                 Assert.That(descriptor.HasMetaMember("__meta"), Is.True);
+                Assert.That(
+                    descriptor.MetaMembers,
+                    Has.Some.Matches<KeyValuePair<string, IMemberDescriptor>>(kv =>
+                        kv.Key == "__meta" && kv.Value == member
+                    )
+                );
+                Assert.That(descriptor.FindMetaMember("__meta"), Is.SameAs(member));
             });
 
             descriptor.RemoveMember("Value");
@@ -216,6 +260,40 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(descriptor.HasMember("Value"), Is.False);
                 Assert.That(descriptor.HasMetaMember("__meta"), Is.False);
             });
+        }
+
+        [Test]
+        public void AddMemberThrowsWhenDuplicateNonOverloadAdded()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            descriptor.AddMember(
+                "Duplicate",
+                StubMemberDescriptor.CreateCallable("Duplicate", MemberDescriptorAccess.CanRead)
+            );
+
+            Assert.That(
+                () =>
+                    descriptor.AddMember(
+                        "Duplicate",
+                        StubMemberDescriptor.CreateCallable("Duplicate", MemberDescriptorAccess.CanRead)
+                    ),
+                Throws.ArgumentException.With.Message.Contains("Multiple members named Duplicate")
+            );
+        }
+
+        [Test]
+        public void AddMemberAggregatesOverloadableDescriptors()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            StubOverloadableMemberDescriptor first = new("Describe", "first");
+            StubOverloadableMemberDescriptor second = new("Describe", "second");
+
+            descriptor.AddMember("Describe", first);
+            descriptor.AddMember("Describe", second);
+
+            IMemberDescriptor result = descriptor.FindMember("Describe");
+
+            Assert.That(result, Is.TypeOf<OverloadedMethodMemberDescriptor>());
         }
 
         [Test]
@@ -311,6 +389,150 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(concat.String, Is.EqualTo("L|R"));
         }
 
+        [Test]
+        public void SetIndexUsesIndexerSetterForBracketSyntax()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            bool invoked = false;
+            descriptor.AddMember(
+                IndexerSetterName,
+                StubMemberDescriptor.CreateCallable(
+                    IndexerSetterName,
+                    MemberDescriptorAccess.CanExecute,
+                    getter: (_, _) =>
+                        DynValue.NewCallback(
+                            (_, args) =>
+                            {
+                                invoked = true;
+                                Assert.That(args[0].Number, Is.EqualTo(2));
+                                Assert.That(args[1].String, Is.EqualTo("payload"));
+                                return DynValue.Nil;
+                            }
+                        )
+                )
+            );
+
+            bool handled = descriptor.SetIndex(
+                script,
+                new DescriptorHost(),
+                DynValue.NewNumber(2),
+                DynValue.NewString("payload"),
+                isDirectIndexing: false
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(invoked, Is.True);
+            });
+        }
+
+        [Test]
+        public void SetIndexFallsBackToNamedMemberWhenDirectIndexing()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            bool invoked = false;
+            descriptor.AddMember(
+                "DirectTarget",
+                StubMemberDescriptor.CreateCallable(
+                    "DirectTarget",
+                    MemberDescriptorAccess.CanWrite,
+                    getter: (_, _) => DynValue.Nil,
+                    setter: (_, _, value) =>
+                    {
+                        invoked = true;
+                        Assert.That(value.String, Is.EqualTo("direct"));
+                    }
+                )
+            );
+
+            bool handled = descriptor.SetIndex(
+                script,
+                new DescriptorHost(),
+                DynValue.NewString("DirectTarget"),
+                DynValue.NewString("direct"),
+                isDirectIndexing: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(handled, Is.True);
+                Assert.That(invoked, Is.True);
+            });
+        }
+
+        [Test]
+        public void SetIndexReturnsFalseWhenNonStringIndexProvided()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            bool handled = descriptor.SetIndex(
+                script,
+                new DescriptorHost(),
+                DynValue.NewNumber(5),
+                DynValue.NewString("ignored"),
+                isDirectIndexing: true
+            );
+
+            Assert.That(handled, Is.False);
+        }
+
+        [Test]
+        public void SetIndexReturnsFalseWhenMemberIsMissing()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            bool handled = descriptor.SetIndex(
+                script,
+                new DescriptorHost(),
+                DynValue.NewString("DoesNotExist"),
+                DynValue.NewNumber(1),
+                isDirectIndexing: true
+            );
+
+            Assert.That(handled, Is.False);
+        }
+
+        [Test]
+        public void OptimizeDelegatesToMembersAndMetaMembers()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            bool memberOptimized = false;
+            bool metaOptimized = false;
+            descriptor.AddMember(
+                "OptimizableMember",
+                new StubOptimizableMemberDescriptor("OptimizableMember", () => memberOptimized = true)
+            );
+            descriptor.AddMetaMember(
+                "__meta",
+                new StubOptimizableMemberDescriptor("__meta", () => metaOptimized = true)
+            );
+
+            ((IOptimizableDescriptor)descriptor).Optimize();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(memberOptimized, Is.True);
+                Assert.That(metaOptimized, Is.True);
+            });
+        }
+
+        [Test]
+        public void HelperNameTransformationsMirrorDescriptorHelpers()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    AccessibleDispatchingUserDataDescriptor.InvokeCamelify("hello_world-value"),
+                    Is.EqualTo(DescriptorHelpers.Camelify("hello_world-value"))
+                );
+                Assert.That(
+                    AccessibleDispatchingUserDataDescriptor.InvokeUpperFirst("example"),
+                    Is.EqualTo(DescriptorHelpers.UpperFirstLetter("example"))
+                );
+            });
+        }
+
         private sealed class MetaFallbackHost
         {
             public MetaFallbackHost(string label)
@@ -330,31 +552,36 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class StubMemberDescriptor : IMemberDescriptor
         {
             private readonly Func<Script, object, DynValue> getter;
+            private readonly Action<Script, object, DynValue> setter;
 
             private StubMemberDescriptor(
                 string name,
                 MemberDescriptorAccess access,
                 bool isStatic,
-                Func<Script, object, DynValue> getter
+                Func<Script, object, DynValue> getter,
+                Action<Script, object, DynValue> setter
             )
             {
                 Name = name;
                 MemberAccess = access;
                 IsStatic = isStatic;
                 this.getter = getter ?? ((_, _) => DynValue.Nil);
+                this.setter = setter ?? ((_, _, _) => throw new NotSupportedException());
             }
 
             public static StubMemberDescriptor CreateCallable(
                 string name,
                 MemberDescriptorAccess access,
-                Func<Script, object, DynValue> getter = null
+                Func<Script, object, DynValue> getter = null,
+                Action<Script, object, DynValue> setter = null
             )
             {
                 return new StubMemberDescriptor(
                     name,
                     access,
                     isStatic: false,
-                    getter: getter ?? ((_, _) => DynValue.NewCallback((_, _) => DynValue.Nil))
+                    getter: getter ?? ((_, _) => DynValue.NewCallback((_, _) => DynValue.Nil)),
+                    setter: setter
                 );
             }
 
@@ -371,7 +598,109 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void SetValue(Script script, object obj, DynValue value)
             {
+                setter(script, obj, value);
+            }
+        }
+
+        private sealed class StubOverloadableMemberDescriptor : IOverloadableMemberDescriptor
+        {
+            private readonly DynValue result;
+
+            public StubOverloadableMemberDescriptor(string name, string discriminant)
+            {
+                Name = name;
+                SortDiscriminant = discriminant;
+                MemberAccess = MemberDescriptorAccess.CanExecute;
+                result = DynValue.NewString(discriminant);
+            }
+
+            public bool IsStatic { get; } = false;
+
+            public string Name { get; }
+
+            public MemberDescriptorAccess MemberAccess { get; }
+
+            public Type ExtensionMethodType => null;
+
+            public IReadOnlyList<ParameterDescriptor> Parameters { get; } =
+                Array.Empty<ParameterDescriptor>();
+
+            public Type VarArgsArrayType => null;
+
+            public Type VarArgsElementType => null;
+
+            public string SortDiscriminant { get; }
+
+            public DynValue Execute(
+                Script script,
+                object obj,
+                ScriptExecutionContext context,
+                CallbackArguments args
+            )
+            {
+                return result;
+            }
+
+            public DynValue GetValue(Script script, object obj)
+            {
+                return DynValue.NewCallback((_, _) => result);
+            }
+
+            public void SetValue(Script script, object obj, DynValue value)
+            {
                 throw new NotSupportedException();
+            }
+        }
+
+        private sealed class StubOptimizableMemberDescriptor
+            : IMemberDescriptor,
+                IOptimizableDescriptor
+        {
+            private readonly Action optimize;
+
+            public StubOptimizableMemberDescriptor(string name, Action optimize)
+            {
+                Name = name;
+                MemberAccess = MemberDescriptorAccess.CanRead;
+                this.optimize = optimize;
+            }
+
+            public bool IsStatic { get; } = false;
+
+            public string Name { get; }
+
+            public MemberDescriptorAccess MemberAccess { get; }
+
+            public DynValue GetValue(Script script, object obj)
+            {
+                return DynValue.Nil;
+            }
+
+            public void SetValue(Script script, object obj, DynValue value)
+            {
+                throw new NotSupportedException();
+            }
+
+            public void Optimize()
+            {
+                optimize?.Invoke();
+            }
+        }
+
+        private sealed class AccessibleDispatchingUserDataDescriptor
+            : DispatchingUserDataDescriptor
+        {
+            public AccessibleDispatchingUserDataDescriptor()
+                : base(typeof(DescriptorHost)) { }
+
+            public static string InvokeCamelify(string name)
+            {
+                return Camelify(name);
+            }
+
+            public static string InvokeUpperFirst(string name)
+            {
+                return UpperFirstLetter(name);
             }
         }
 

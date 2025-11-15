@@ -15,11 +15,37 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase(typeof(short), 0, true, ExpectedResult = true)]
         [TestCase(typeof(int), 0, false, ExpectedResult = false)]
         [TestCase(typeof(uint), 10, false, ExpectedResult = true)]
+        [TestCase(typeof(ushort), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(ulong), 2, false, ExpectedResult = true)]
+        [TestCase(typeof(double), 0.5, false, ExpectedResult = true)]
+        [TestCase(typeof(decimal), 0, false, ExpectedResult = false)]
         [TestCase(typeof(float), 0.5, true, ExpectedResult = true)]
         public bool IsPositiveHandlesPrimitiveTypes(Type type, double rawValue, bool zeroIsPositive)
         {
             object boxed = ConvertNumeric(rawValue, type);
             return Tools.IsPositive(boxed, zeroIsPositive);
+        }
+
+        [TestCase('\0', false, ExpectedResult = false)]
+        [TestCase('A', false, ExpectedResult = true)]
+        [TestCase('Z', true, ExpectedResult = true)]
+        public bool IsPositiveHandlesCharInputs(char value, bool zeroIsPositive)
+        {
+            return Tools.IsPositive(value, zeroIsPositive);
+        }
+
+        [Test]
+        public void IsPositiveHandlesUnsignedAndUnknownTypes()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(Tools.IsPositive((byte)0, zeroIsPositive: false), Is.False);
+                Assert.That(Tools.IsPositive((byte)0, zeroIsPositive: true), Is.True);
+                Assert.That(Tools.IsPositive((uint)5, zeroIsPositive: false), Is.True);
+                Assert.That(Tools.IsPositive((char)0, zeroIsPositive: false), Is.False);
+                Assert.That(Tools.IsPositive(new object(), zeroIsPositive: true), Is.True);
+                Assert.That(Tools.IsPositive(new object(), zeroIsPositive: false), Is.False);
+            });
         }
 
         [TestCase(typeof(sbyte), -1, typeof(byte), (ulong)255)]
@@ -28,6 +54,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase(typeof(long), -1, typeof(ulong), (ulong)18446744073709551615)]
         [TestCase(typeof(float), 1.5, typeof(uint), (ulong)1)]
         [TestCase(typeof(double), 1.5, typeof(ulong), (ulong)1)]
+        [TestCase(typeof(decimal), 5, typeof(ulong), (ulong)5)]
         public void ToUnsignedConvertsSignedValues(
             Type type,
             double rawValue,
@@ -72,6 +99,32 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [TestCase(typeof(sbyte), -12)]
+        [TestCase(typeof(short), 1200)]
+        [TestCase(typeof(int), 42)]
+        [TestCase(typeof(long), 123456789)]
+        [TestCase(typeof(byte), 200)]
+        [TestCase(typeof(ushort), 60000)]
+        [TestCase(typeof(uint), 123456)]
+        [TestCase(typeof(ulong), 123456)]
+        public void ToIntegerReturnsIntegralValues(Type type, double rawValue)
+        {
+            object boxed = ConvertNumeric(rawValue, type);
+            object result = Tools.ToInteger(boxed, round: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.InstanceOf(type));
+                Assert.That(result, Is.EqualTo(boxed));
+            });
+        }
+
+        [Test]
+        public void ToIntegerReturnsNullForUnsupportedTypes()
+        {
+            Assert.That(Tools.ToInteger(TimeSpan.Zero, round: false), Is.Null);
+        }
+
         [TestCase(typeof(float), 1.7, true, ExpectedResult = 2L)]
         [TestCase(typeof(float), 1.7, false, ExpectedResult = 1L)]
         [TestCase(typeof(double), 2.2, true, ExpectedResult = 2L)]
@@ -82,11 +135,62 @@ namespace NovaSharp.Interpreter.Tests.Units
             return Tools.UnboxToLong(boxed, round);
         }
 
+        [TestCase(typeof(sbyte), -8, false, ExpectedResult = -8)]
+        [TestCase(typeof(short), 32000, false, ExpectedResult = 32000)]
+        [TestCase(typeof(int), 123456, false, ExpectedResult = 123456)]
+        [TestCase(typeof(long), -123456789, false, ExpectedResult = -123456789)]
+        [TestCase(typeof(byte), 200, false, ExpectedResult = 200)]
+        [TestCase(typeof(ushort), 65530, false, ExpectedResult = 65530)]
+        [TestCase(typeof(uint), 1234, false, ExpectedResult = 1234)]
+        [TestCase(typeof(ulong), 9876, false, ExpectedResult = 9876)]
+        [TestCase(typeof(decimal), 42, false, ExpectedResult = 42)]
+        public long UnboxToLongHandlesIntegralValues(Type type, double rawValue, bool round)
+        {
+            object boxed = ConvertNumeric(rawValue, type);
+            return Tools.UnboxToLong(boxed, round);
+        }
+
+        [Test]
+        public void UnboxToLongHandlesUnsignedValues()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(Tools.UnboxToLong((byte)200, round: false), Is.EqualTo(200));
+                Assert.That(Tools.UnboxToLong((ushort)60000, round: false), Is.EqualTo(60000));
+                Assert.That(Tools.UnboxToLong((uint)123456, round: false), Is.EqualTo(123456));
+                Assert.That(Tools.UnboxToLong((ulong)9876543210L, round: false), Is.EqualTo(9876543210L));
+            });
+        }
+
         [Test]
         public void ReplaceMetaCharsSubstitutesEscapeSequences()
         {
             string input = @"Line1\nLine2\t\040";
             Assert.That(Tools.ReplaceMetaChars(input), Is.EqualTo("Line1\nLine2\t "));
+        }
+
+        [Test]
+        public void ReplaceMetaCharsHandlesAdditionalEscapes()
+        {
+            string input = @"\000\a\b\f\v\r";
+            string expected = "\0\a\b\f\v\r";
+
+            Assert.That(Tools.ReplaceMetaChars(input), Is.EqualTo(expected));
+        }
+
+        [TestCase(@"\000", "\0")]
+        [TestCase(@"\a", "\a")]
+        [TestCase(@"\b", "\b")]
+        [TestCase(@"\f", "\f")]
+        [TestCase(@"\v", "\v")]
+        [TestCase(@"\r", "\r")]
+        [TestCase(@"\n", "\n")]
+        [TestCase(@"\t", "\t")]
+        [TestCase(@"\060", "0")]
+        [TestCase(@"\x", "x")]
+        public void ReplaceMetaCharsExpandsIndividualEscapes(string input, string expected)
+        {
+            Assert.That(Tools.ReplaceMetaChars(input), Is.EqualTo(expected));
         }
 
         [Test]
@@ -126,6 +230,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfSpaceFlagIsSuppressedByPlusFlag()
+        {
+            string result = Tools.Sprintf("%+ d", 7);
+            Assert.That(result, Is.EqualTo("+7"));
+        }
+
+        [Test]
         public void SprintfFormatsUppercaseHexWithAlternateZeroPadding()
         {
             string result = Tools.Sprintf("%#08X", 0x2A);
@@ -140,10 +251,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfAlternateOctalWithSpacePadding()
+        {
+            string result = Tools.Sprintf("%#6o", 15);
+            Assert.That(result, Is.EqualTo("   017"));
+        }
+
+        [Test]
         public void SprintfAppliesPositiveSignWhenZeroPadding()
         {
             string result = Tools.Sprintf("%+06d", 5);
             Assert.That(result, Is.EqualTo("+00005"));
+        }
+
+        [Test]
+        public void SprintfLeftAlignmentDisablesZeroPadding()
+        {
+            string result = Tools.Sprintf("%-05d", 12);
+            Assert.That(result, Is.EqualTo("12   "));
         }
 
         [Test]
@@ -161,6 +286,20 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfShortIndicatorCastsWideInputs()
+        {
+            string result = Tools.Sprintf("%hd %hu", 70000L, 131071UL);
+            Assert.That(result, Is.EqualTo("4464 65535"));
+        }
+
+        [Test]
+        public void SprintfLongIndicatorExtendsNarrowInputs()
+        {
+            string result = Tools.Sprintf("%ld %lu", (short)-3, uint.MaxValue);
+            Assert.That(result, Is.EqualTo("-3 4294967295"));
+        }
+
+        [Test]
         public void SprintfAppliesThousandsGroupingFlag()
         {
             string result = Tools.Sprintf("%'15d", 1234567);
@@ -175,10 +314,31 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfStringRightAlignmentUsesPadding()
+        {
+            string result = Tools.Sprintf("%5s", "Lua");
+            Assert.That(result, Is.EqualTo("  Lua"));
+        }
+
+        [Test]
         public void SprintfUsesFirstCharacterOfStringForCharFormat()
         {
             string result = Tools.Sprintf("%c", "Hello");
             Assert.That(result, Is.EqualTo("H"));
+        }
+
+        [Test]
+        public void SprintfCharSpecifierAcceptsNumericAndCharInputs()
+        {
+            string result = Tools.Sprintf("%c %c", 65, 'Z');
+            Assert.That(result, Is.EqualTo("A Z"));
+        }
+
+        [Test]
+        public void SprintfFormatsFloatingPointSpecifiers()
+        {
+            string result = Tools.Sprintf("%.2f|%.2e|%.2E|%.2g|%.2G", 1.2345, 1.2345, 1.2345, 12345.0, 12345.0);
+            Assert.That(result, Is.EqualTo("1.23|1.23e+000|1.23E+000|1.2e+04|1.2E+04"));
         }
 
         [Test]
@@ -191,6 +351,35 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result, Is.EqualTo("Value:%q:42"));
                 Assert.That(result.Contains("%q"), Is.True);
             });
+        }
+
+        [Test]
+        public void SprintfTreatsSpecifierIAsSignedInteger()
+        {
+            string result = Tools.Sprintf("%i %d", 42, 7);
+            Assert.That(result, Is.EqualTo("42 7"));
+        }
+
+        [TestCase(typeof(byte), 200)]
+        [TestCase(typeof(ushort), 65530)]
+        [TestCase(typeof(uint), 12345)]
+        [TestCase(typeof(ulong), 12345)]
+        public void ToUnsignedReturnsUnsignedValues(Type type, double rawValue)
+        {
+            object boxed = ConvertNumeric(rawValue, type);
+            object result = Tools.ToUnsigned(boxed);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.InstanceOf(type));
+                Assert.That(result, Is.EqualTo(boxed));
+            });
+        }
+
+        [Test]
+        public void ToUnsignedReturnsNullForUnsupportedTypes()
+        {
+            Assert.That(Tools.ToUnsigned(TimeSpan.Zero), Is.Null);
         }
 
         [Test]

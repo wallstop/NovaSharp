@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 12:05 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 14:26 UTC).
 
 ## Snapshot
-- Overall line coverage: **77.3 %**
-- NovaSharp.Interpreter line coverage: **89.9 %**
+- Overall line coverage: **77.9 %**
+- NovaSharp.Interpreter line coverage: **90.7 %**
 - NovaSharp.Cli line coverage: **78.0 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger / NovaSharp.VsCodeDebugger: **0 %** (no tests yet)
@@ -12,8 +12,6 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 ## Prioritized Red List (Interpreter < 90 %)
 - `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.OverloadedMethodMemberDescriptor` — **82.2 %** (unit suite now drives cache reuse/static vs. instance lookups, extension snapshots, varargs scoring, callback/value accessors, and wiring/optimizer paths. Remaining gaps are the defensive `_cache.Length == 0` branch, the IEnumerable ctor, the auto `IsStatic` getter, and the non-wireable wiring fallback lines (94-97, 141, 270-277, 415-436, 529-533, 552, 585-586, 613-618); consider refactoring or `Debug.Assert`-ing those guards so they’re no longer counted as executable).
 - `NovaSharp.Interpreter.Loaders.UnityAssetsScriptLoader` — **71.4 %** (cover missing-asset error flows and invalid manifest handling).
-- `NovaSharp.Interpreter.Interop.LuaStateInterop.Tools` — **77.6 %** (latest spec-driven tests now hit explicit-parameter indexes, grouping (`%'`), `%h`/`%l`, `%c`, `%n`, hex/octal alternate forms, and zero-padding positive numbers. Remaining uncovered branches live in the numeric formatter’s right-padding paths and composite flag combinations like space+sign without zero padding).
-- `NovaSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor` — **85.9 %** line / **76.1 %** branch (new hosts/tests now cover the `Count` fallback for `__len`, the numeric-conversion loop that skips `double/decimal/float/long` before landing on `__toInt32`, the nil-return guard when no conversions exist, and the comparison callback when the second operand owns the metamethod. Remaining gaps are the duplicate-member guardrails inside `AddMemberTo` (lines 148‑234) plus the iterator/comparison fallbacks at 274/410/426/460; we still need targeted tests that force those defensive branches.)
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
 ## Action Items
@@ -24,6 +22,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 
 ## Recently Covered
 - `BinaryOperatorExpression` now sits at **90.0 %** line / **82.5 %** branch coverage after adding compile-path opcode assertions (arithmetic, concatenation, comparison, and `~=` inversion) plus new string comparison/equality regressions; coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-14 17:44 UTC captured the jump.
+- `LuaStateInterop.Tools` climbed to **98.2 % line / 90.4 % branch** after expanding `LuaStateInteropToolsTests` with unsigned/null-edge coverage and exhaustive `sprintf` permutations (`%i`, `%f/%e/%E/%g/%G`, `%c`, `%s`, `%#o`, `%hd/%hu/%ld/%lu`, flag precedence). The same coverage run bumped interpreter totals to **90.7 % line / 87.4 % branch / 93.1 % method** with **1 721** Release tests.
 - `UnaryOperatorExpression` now sits at **100 %** line/branch coverage after adding direct Eval tests for `not`, `#`, `-`, and the non-numeric failure path.
 - `StringModule` has climbed to **97.2 %** line / **94.6 %** branch coverage via spec-aligned edge cases and modulo-normalization in production.
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.
@@ -57,6 +56,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `OsTimeModule` now sits at 97 % line coverage after adding missing-field, pre-epoch, and conversion-specifier tests.
 - `DebuggerAction` coverage lifted to 100 % by testing constructor timestamps, age calculations, defensive line storage, and breakpoint formatting.
 - `CompositeUserDataDescriptor` now covered at 92 % via aggregate lookup, set, and metatable resolution tests (`CompositeUserDataDescriptorTests`).
+- `DispatchingUserDataDescriptor` crossed the ≥90 % threshold at **94.2 %** line / **93.3 %** branch (2025-11-15 13:47 UTC) after adding tests for duplicate-member guardrails, overload aggregation, `SetIndex` setters/fallbacks, optimizer fan-out, helper-name wrappers, unsupported metamethod requests, and non-comparable/`null` metamethod scenarios. `NovaSharp.Interpreter.DataTypes.UserData` remains fully covered (**100 %**) thanks to the assembly-scan fallback and default-policy regression tests.
 - `NovaSharp.Interpreter.DataTypes.UserData` is now **100 %** covered after the latest `UserDataTests` sweep hardened the default-registration-policy rejection path, proxy factories, generic helpers, equality/mixed null scenarios, and assembly scanning (with a .NET 8-friendly fallback when `Assembly.GetCallingAssembly` throws).
 - `UndisposableStream` reaches 94 % line coverage after forwarding/guard tests ensured dispose/close suppression and async passthrough behaviour.
 - `LuaStateInterop.Tools` climbs to 94 % line coverage after adding targeted numeric checks, conversion, meta-character substitution, and formatting regressions.
