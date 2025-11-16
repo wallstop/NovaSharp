@@ -7,11 +7,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
+    using System.Diagnostics;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -195,26 +197,22 @@ namespace NovaSharp.Interpreter.Tests.Units
             internal IList<string> ReadUntil(Func<IList<string>, bool> predicate, TimeSpan timeout)
             {
                 List<string> messages = new();
-                DateTime deadline = DateTime.UtcNow + timeout;
-
-                while (DateTime.UtcNow < deadline)
-                {
-                    messages.AddRange(ReadAvailable(TimeSpan.FromMilliseconds(25)));
-                    if (messages.Count > 0 && predicate(messages))
+                TestWaitHelpers.SpinUntilOrThrow(
+                    () =>
                     {
-                        return messages;
-                    }
-
-                    Thread.Sleep(5);
-                }
-
-                throw new TimeoutException("Timed out waiting for debugger messages.");
+                        messages.AddRange(ReadAvailable(TimeSpan.FromMilliseconds(25)));
+                        return messages.Count > 0 && predicate(messages);
+                    },
+                    timeout,
+                    "Timed out waiting for debugger messages."
+                );
+                return messages;
             }
 
             internal void Drain(TimeSpan timeout)
             {
-                DateTime deadline = DateTime.UtcNow + timeout;
-                while (DateTime.UtcNow < deadline)
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                while (stopwatch.Elapsed < timeout)
                 {
                     IList<string> chunk = ReadAvailable(TimeSpan.FromMilliseconds(25));
                     if (chunk.Count == 0)
@@ -227,10 +225,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             private IList<string> ReadAvailable(TimeSpan timeout)
             {
                 List<string> messages = new();
-                DateTime deadline = DateTime.UtcNow + timeout;
+                Stopwatch stopwatch = Stopwatch.StartNew();
                 byte[] buffer = new byte[1024];
 
-                while (DateTime.UtcNow < deadline)
+                while (stopwatch.Elapsed < timeout)
                 {
                     if (!_stream.DataAvailable)
                     {

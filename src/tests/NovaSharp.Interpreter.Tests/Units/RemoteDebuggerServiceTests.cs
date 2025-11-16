@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
     using NovaSharp.Cli.Commands.Implementations;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -146,43 +147,58 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static string SendHttpRequest(int port, string path)
         {
-            DateTime deadline = DateTime.UtcNow + ServerReadyTimeout;
             Exception lastException = null;
+            string response = null;
 
-            while (DateTime.UtcNow < deadline)
-            {
-                try
+            bool success = TestWaitHelpers.SpinUntil(
+                () =>
                 {
-                    using TcpClient client = new();
-                    client.Connect(IPAddress.Loopback, port);
-                    using NetworkStream stream = client.GetStream();
-
-                    string request = $"GET {path} HTTP/1.0\r\nHost: localhost\r\n\r\n";
-                    byte[] payload = Encoding.ASCII.GetBytes(request);
-                    stream.Write(payload, 0, payload.Length);
-                    stream.Flush();
-
-                    using MemoryStream buffer = new();
-                    byte[] chunk = new byte[1024];
-                    int read;
-                    while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
+                    try
                     {
-                        buffer.Write(chunk, 0, read);
+                        response = IssueRequest(port, path);
+                        return true;
                     }
+                    catch (SocketException ex)
+                    {
+                        lastException = ex;
+                        Thread.Sleep(25);
+                        return false;
+                    }
+                },
+                ServerReadyTimeout
+            );
 
-                    return Encoding.UTF8.GetString(buffer.ToArray());
-                }
-                catch (SocketException ex)
-                {
-                    lastException = ex;
-                    Thread.Sleep(25);
-                }
+            if (!success || response == null)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to connect to HTTP debug host on port {port}.",
+                    lastException
+                );
             }
 
-            throw new InvalidOperationException(
-                $"Failed to connect to HTTP debug host on port {port}.",
-                lastException
-            );
+            return response;
+        }
+
+        private static string IssueRequest(int port, string path)
+        {
+            using TcpClient client = new();
+            client.Connect(IPAddress.Loopback, port);
+            using NetworkStream stream = client.GetStream();
+
+            string request = $"GET {path} HTTP/1.0\r\nHost: localhost\r\n\r\n";
+            byte[] payload = Encoding.ASCII.GetBytes(request);
+            stream.Write(payload, 0, payload.Length);
+            stream.Flush();
+
+            using MemoryStream buffer = new();
+            byte[] chunk = new byte[1024];
+            int read;
+            while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
+            {
+                buffer.Write(chunk, 0, read);
+            }
+
+            return Encoding.UTF8.GetString(buffer.ToArray());
         }
     }
 }

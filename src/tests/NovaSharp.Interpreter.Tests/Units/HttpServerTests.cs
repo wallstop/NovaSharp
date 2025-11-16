@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Text;
     using System.Threading;
     using NovaSharp.RemoteDebugger.Network;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -126,51 +127,66 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static string SendHttpRequest(int port, string path, params string[] headers)
         {
-            DateTime deadline = DateTime.UtcNow + RetryTimeout;
             Exception lastError = null;
+            string response = null;
 
-            while (DateTime.UtcNow < deadline)
+            bool success = TestWaitHelpers.SpinUntil(
+                () =>
+                {
+                    try
+                    {
+                        response = ExecuteRequest(port, path, headers);
+                        return true;
+                    }
+                    catch (SocketException ex)
+                    {
+                        lastError = ex;
+                        Thread.Sleep(25);
+                        return false;
+                    }
+                },
+                RetryTimeout
+            );
+
+            if (!success || response == null)
             {
-                try
-                {
-                    using TcpClient client = new();
-                    client.Connect(IPAddress.Loopback, port);
-                    using NetworkStream stream = client.GetStream();
-
-                    StringBuilder builder = new();
-                    builder.Append($"GET {path} HTTP/1.0\r\n");
-                    builder.Append("Host: localhost\r\n");
-                    foreach (string header in headers)
-                    {
-                        builder.Append(header).Append("\r\n");
-                    }
-
-                    builder.Append("\r\n");
-                    byte[] payload = Encoding.ASCII.GetBytes(builder.ToString());
-                    stream.Write(payload, 0, payload.Length);
-                    stream.Flush();
-
-                    using MemoryStream buffer = new();
-                    byte[] chunk = new byte[1024];
-                    int read;
-                    while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
-                    {
-                        buffer.Write(chunk, 0, read);
-                    }
-
-                    return Encoding.UTF8.GetString(buffer.ToArray());
-                }
-                catch (SocketException ex)
-                {
-                    lastError = ex;
-                    Thread.Sleep(25);
-                }
+                throw new InvalidOperationException(
+                    $"Failed to connect to HTTP server on port {port}.",
+                    lastError
+                );
             }
 
-            throw new InvalidOperationException(
-                $"Failed to connect to HTTP server on port {port}.",
-                lastError
-            );
+            return response;
+        }
+
+        private static string ExecuteRequest(int port, string path, params string[] headers)
+        {
+            using TcpClient client = new();
+            client.Connect(IPAddress.Loopback, port);
+            using NetworkStream stream = client.GetStream();
+
+            StringBuilder builder = new();
+            builder.Append($"GET {path} HTTP/1.0\r\n");
+            builder.Append("Host: localhost\r\n");
+            foreach (string header in headers)
+            {
+                builder.Append(header).Append("\r\n");
+            }
+
+            builder.Append("\r\n");
+            byte[] payload = Encoding.ASCII.GetBytes(builder.ToString());
+            stream.Write(payload, 0, payload.Length);
+            stream.Flush();
+
+            using MemoryStream buffer = new();
+            byte[] chunk = new byte[1024];
+            int read;
+            while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
+            {
+                buffer.Write(chunk, 0, read);
+            }
+
+            return Encoding.UTF8.GetString(buffer.ToArray());
         }
 
         private static int GetFreeTcpPort()
