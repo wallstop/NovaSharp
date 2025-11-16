@@ -175,6 +175,102 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void DynValueToObjectOfTypeConvertsTableToDictionary()
+        {
+            Script script = new Script();
+            Table table = new Table(script);
+            table.Set(DynValue.NewString("alpha"), DynValue.NewNumber(1));
+            table.Set(DynValue.NewNumber(2), DynValue.NewString("beta"));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                tableValue,
+                typeof(Dictionary<object, object>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            Assert.That(result, Is.InstanceOf<Dictionary<object, object>>());
+            Dictionary<object, object> dictionary = (Dictionary<object, object>)result;
+            Assert.That(dictionary["alpha"], Is.EqualTo(1.0));
+            Assert.That(dictionary[2.0], Is.EqualTo("beta"));
+        }
+
+        [Test]
+        public void DynValueToObjectOfTypeConvertsTableToGenericDictionary()
+        {
+            Script script = new Script();
+            Table table = new Table(script);
+            table.Set(DynValue.NewString("one"), DynValue.NewNumber(1));
+            table.Set(DynValue.NewString("two"), DynValue.NewNumber(2));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                tableValue,
+                typeof(Dictionary<string, int>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            Assert.That(result, Is.InstanceOf<Dictionary<string, int>>());
+            Dictionary<string, int> dictionary = (Dictionary<string, int>)result;
+            Assert.That(dictionary["one"], Is.EqualTo(1));
+            Assert.That(dictionary["two"], Is.EqualTo(2));
+        }
+
+        [Test]
+        public void DynValueToObjectOfTypeWeightReturnsTableToDictionaryWeight()
+        {
+            Table table = new Table(new Script());
+            table.Set(DynValue.NewString("key"), DynValue.NewNumber(42));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                tableValue,
+                typeof(Dictionary<string, double>),
+                isOptional: false
+            );
+
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_TABLE_CONVERSION));
+        }
+
+        [Test]
+        public void DynValueToObjectOfTypeThrowsForTupleConversions()
+        {
+            DynValue tupleValue = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () =>
+                    ScriptToClrConversions.DynValueToObjectOfType(
+                        tupleValue,
+                        typeof(int),
+                        defaultValue: null,
+                        isOptional: false
+                    )
+            );
+
+            Assert.That(exception.Message, Does.Contain("convert"));
+        }
+
+        [Test]
+        public void DynValueToObjectOfTypeThrowsForEmptyStringCharConversions()
+        {
+            DynValue empty = DynValue.NewString(string.Empty);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
+                () =>
+                    ScriptToClrConversions.DynValueToObjectOfType(
+                        empty,
+                        typeof(char),
+                        defaultValue: null,
+                        isOptional: false
+                    )
+            );
+
+            Assert.That(exception.Message, Does.Contain("convert"));
+        }
+
+        [Test]
         public void DynValueToObjectOfTypeHonorsCustomConverters()
         {
             Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
