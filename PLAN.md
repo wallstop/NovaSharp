@@ -127,17 +127,17 @@
   13. Investigate `pcall` behaviour when CLR callbacks yield: confirm Lua parity, add repro harness, and patch runtime if NovaSharp should surface an error instead of returning success.
   14. Review CA1711 guidance for `SymbolRefAttributes` (rename vs. suppression) once `<close>` work stabilises, capturing the outcome in PLAN + analyzer settings.
 
-## MoonSharp ➜ NovaSharp Finalization (New)
-- ✅ Scope audit: `rg` confirmed zero `MoonSharp` identifiers remain in tracked source/docs; 612 residual artifacts still carry the legacy name (coverage HTML exports, benchmark logs, cached VS metadata). Directories flagged for rename: `src\.vs\moonsharp`, `src\legacy\moonsharp_netcore`. Acceptance: documented rename queue covering files, folders, and generated outputs.
+## Legacy ➜ NovaSharp Finalization (New)
+- ✅ Scope audit: `rg` confirmed zero legacy-brand identifiers remain in tracked source/docs; 612 residual artifacts still carry the legacy name (coverage HTML exports, benchmark logs, cached VS metadata). Directories flagged for rename: `src\.vs\moonsharp`, `src\legacy\moonsharp_netcore`. Acceptance: documented rename queue covering files, folders, and generated outputs.
 - ✅ File & folder renames: Renamed lingering filesystem entries (`NovaSharp.Interpreter` attribute source files, VS Code debugger scaffolding, `_Projects` mirror, JetBrains `.DotSettings`, legacy `novasharp_netcore`, `.vs/novasharp` cache, Flash project metadata, `.gitignore` helpers) so tracked assets now ship with `NovaSharp` branding.
 - ✅ Resource sync: Rebranded embedded assets (e.g., `Resources/NovaSharpdbg.png`) to unblock `NovaSharp.RemoteDebugger` and `NovaSharp.Cli` builds referencing the new resource names.
 - ✅ Benchmark harness rename: `tooling/NovaSharp.Comparison` replaces `PerformanceComparison` with updated namespaces, net8.0 executable output, and auto-run BenchmarkDotNet wiring.
 - ✅ Benchmark defaults: `NovaSharp.Benchmarks` and `NovaSharp.Comparison` now run all suites automatically when invoked (inject `--filter *`) while keeping shared `PerformanceReportWriter` reporting.
 - ✅ Project hygiene: Audited `.csproj` metadata and purged references to missing/irrelevant assets (icons, logs, keypairs) so IDE surfacing stays clean.
 - ✅ Build sanity check: `dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj` passes after renames, confirming compiler parity.
-- ✅ Artifact regeneration: Regenerated coverage via `./scripts/coverage/coverage.ps1` (67.8 % line / 69.7 % branch / 72.1 % method) and reran `NovaSharp.Benchmarks` + `NovaSharp.Comparison` to refresh BenchmarkDotNet outputs; stale MoonSharp-labelled artefacts are no longer present under `docs/coverage/latest` or `BenchmarkDotNet.Artifacts`.
-- ✅ Automation guardrails: Added a GitHub Actions branding check in `.github/workflows/tests.yml` that fails the build if tracked files or filenames contain `MoonSharp`, preventing regressions.
-- ✅ Baseline snapshot: Captured the current benchmark outputs under MoonSharp-labelled sections in `docs/Performance.md` so performance work can compare future NovaSharp runs against the pre-improvement baseline.
+- ✅ Artifact regeneration: Regenerated coverage via `./scripts/coverage/coverage.ps1` (67.8 % line / 69.7 % branch / 72.1 % method) and reran `NovaSharp.Benchmarks` + `NovaSharp.Comparison` to refresh BenchmarkDotNet outputs; stale legacy-labelled artefacts are no longer present under `docs/coverage/latest` or `BenchmarkDotNet.Artifacts`.
+- ✅ Automation guardrails: Added a GitHub Actions branding check in `.github/workflows/tests.yml` that fails the build if tracked files or filenames contain the legacy brand, preventing regressions.
+- ✅ Baseline snapshot: Captured the current benchmark outputs under legacy-labelled sections in `docs/Performance.md` so performance work can compare future NovaSharp runs against the pre-improvement baseline.
 - ✅ OS metadata accuracy: Perf logging harness now reads the Windows edition + display version from `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion`, so `docs/Performance.md` records entries like "Windows 11 Pro 25H2 (build 26200.6899, 10.0.26200)" instead of the kernel-only label.
 - ✅ Unity compatibility: Disabled nullable reference types across remaining tooling/test projects and reinforced explicit-type editorconfig rules so Unity builds never see `var` or nullable metadata drift.
 
@@ -284,7 +284,7 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
     - ✅ (2025-11-14) Fixed `scripts/coverage/coverage.ps1` repo-root detection (it was stopping under `scripts/` and trying to build `scripts/src/NovaSharp.sln`), and double-checked the other helpers: `scripts/build/build.ps1` already walks two levels and the Bash coverage shim keeps `cd`-ing to `../..`.
   - Author `scripts/README.md` plus per-subfolder READMEs describing prerequisites, environment variables, and sample invocations; cross-link these from `README.md`, `docs/Testing.md`, and `docs/Modernization.md`.
     - 🔄 Added a top-level `scripts/README.md` and `scripts/coverage/README.md` so contributors can discover tooling (build, coverage, branding) without spelunking.
-    - 🔄 Documented the modernization audit helper in `docs/Modernization.md` so contributors know how to regenerate the MoonSharp rename report.
+    - 🔄 Documented the modernization audit helper in `docs/Modernization.md` so contributors know how to regenerate the legacy rename report.
     - ✅ Added `docs/Contributing.md` and linked it from the README to centralize build/test/coverage/namespace guidance for new contributors.
   - Curate a documentation index (`docs/README.md`) that maps every Markdown guide (testing, modernization, Lua compatibility, benchmarks, Unity integration, coverage dashboards) and ensure each section has a clear owner/status checklist.
     - ✅ Created `docs/README.md` as a searchable index pointing to testing, coverage, modernization, Lua compatibility, performance, Unity, and scripts; linked it from the repo README.
@@ -303,14 +303,14 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
   - ✅ Updated VS Code debugger package metadata (dropped `.netcore` suffix) and documented the new single-source layout.
 
 ## Near-Term Priorities (ordered)
-1. **MoonSharp ➜ NovaSharp finalization**
+1. **Legacy ➜ NovaSharp finalization**
    - ✅ Cleared the filesystem rename queue (`NovaSharp.Interpreter` attribute files, VS Code debugger scaffolding, `_Projects` mirror, JetBrains `.DotSettings`, legacy cache folders).
    - ✅ Rebranded the comparison benchmark harness (`tooling/NovaSharp.Comparison`) with default BenchmarkDotNet config and VS run target output.
    - ✅ Scrubbed `.csproj` entries referencing missing/irrelevant assets (icons, logs, keypairs) to keep IDE surfaces clean.
-   - ✅ Refreshed generated artefacts (coverage, benchmarks) under the NovaSharp name and cleaned stale MoonSharp results.
-  - ✅ Add guardrail automation (CI grep or analyzer) blocking `MoonSharp` regressions across code, docs, and assets. CI now runs `scripts/branding/ensure-novasharp-branding.sh`, which fails on new `MoonSharp` identifiers outside the curated allowlist (perf baseline + benchmark writer shim).
+   - ✅ Refreshed generated artefacts (coverage, benchmarks) under the NovaSharp name and cleaned stale legacy-brand results.
+  - ✅ Add guardrail automation (CI grep or analyzer) blocking regressions to the previous branding across code, docs, and assets. CI now runs `scripts/branding/ensure-novasharp-branding.sh`, which fails on new legacy-brand identifiers outside the curated allowlist (perf baseline + benchmark writer shim).
 - ✅ Completed an initial vestigial inventory (`docs/modernization/vestigial-inventory.md`) highlighting keep/remove candidates (e.g., legacy REPL history) and modernization notes for performance counters.
-- ✅ Audit outstanding MoonSharp issues that still apply to NovaSharp, classify real defects vs legacy gaps, and schedule fixes or deprecations accordingly. See `docs/modernization/moonsharp-issue-audit.md` for the owner/status matrix feeding the modernization tracker.
+- ✅ Audit outstanding legacy runtime issues that still apply to NovaSharp, classify real defects vs legacy gaps, and schedule fixes or deprecations accordingly. See `docs/modernization/moonsharp-issue-audit.md` for the owner/status matrix feeding the modernization tracker.
 2. **Vestigial Runtime Review (Pre-Coverage)**
    - ✅ Inventory instrumentation and ancillary runtime helpers (e.g., `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, `DummyPerformanceStopwatch`) — catalog captured in `docs/modernization/vestigial-inventory.md` (2025-11-10 snapshot).
    - ✅ Replaced remaining reflection-based access with friend-assembly visibility: `InfrastructureTests` now sets `PerformanceResult` properties directly and instantiates `ExecutionState` without reflection (Release suite 990 tests, 2025-11-12).
@@ -408,9 +408,9 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
     - Prioritize unit/integration tests that close the gaps without brittle assertions; update TAP fixtures where feasible.
     - Treat this as blocking before moving on to broader allocation/interop work; track progress weekly in `docs/coverage/coverage-hotspots.md`.
   - ⚖️ Guardrail: treat any failing test as a spec investigation. Cross-check behaviour against the official Lua manuals for every supported version (baseline: 5.4.8), capture the cited section/link in the diff, and only adjust production/tests once the canonical interpreter behaviour is understood.
-    - ✅ Policy update (2025-11-14): when a test surfaces a regression, fix the production implementation (or MoonSharp-era behaviour) instead of weakening the test; NovaSharp must converge on Lua 5.4 semantics, so “making tests pass” is never an acceptable substitute for addressing the runtime gap.
+    - ✅ Policy update (2025-11-14): when a test surfaces a regression, fix the production implementation (or legacy-era behaviour) instead of weakening the test; NovaSharp must converge on Lua 5.4 semantics, so “making tests pass” is never an acceptable substitute for addressing the runtime gap.
   - ⏳ Establish a multi-version Lua spec harness: enumerate the manuals/sections for each supported version, expand spec suites (string/math/table/core/error paths) with exhaustive edge/error cases that cite the manual, and sync findings into `docs/LuaCompatibility.md`.
-  - 🔜 Audit existing regression tests for spec fidelity: review each red/green test against the Lua 5.4 manual (and any documented deviations), catalog cases where we’re locking in behaviour that disagrees with stock Lua, and file follow-up bugs to bring NovaSharp back to spec instead of preserving incorrect MoonSharp-era expectations.
+  - 🔜 Audit existing regression tests for spec fidelity: review each red/green test against the Lua 5.4 manual (and any documented deviations), catalog cases where we’re locking in behaviour that disagrees with stock Lua, and file follow-up bugs to bring NovaSharp back to spec instead of preserving incorrect legacy-era expectations.
     - 🔄 Bootstrapped the audit log at `docs/testing/spec-audit.md`, citing Lua §3.4.1 for the fixed power-operator gap, documenting `math.modf` (§6.7) now truncates toward zero, and confirming the `nil == void` guard remains an internal sentinel. Next pass: expand the table across other interpreter hotspots and file issues for every “Needs investigation” entry.
   - ✅ Expanded EventMemberDescriptor, CharPtr, StringConversions, DescriptorHelpers, RefIdObject, ExprListExpression, FieldMemberDescriptor, StandardEnumUserDataDescriptor, ScriptExecutionContext, and `FastStack<T>` unit suites (null-pointer guards, tuple compilation, SafeGetTypes failure path, string conversion errors, ref-id formatting, field read/write guardrails, enum conversion/validation, call/AdditionalData edge paths, explicit-interface stack members) and reran `./scripts/coverage/coverage.ps1` (2025-11-12 18:55 UTC); NovaSharp.Interpreter now reports **86.1 % line / 82.3 % branch** coverage with the former red-listed classes clearing 95 %+ (`FastStack<T>` now 100 %).
 4. **Project Structure Refactor (High Priority)**
@@ -501,7 +501,7 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
     - ✅ Captured an initial coverage ledger in `docs/testing/spec-coverage.md`, outlining version targets, manual sections, and current status indicators.
     - 🔄 Added the first Lua 5.4 spec harness suite (`Lua54StringSpecTests`) covering canonical string library examples (byte/char ranges, pattern-free helpers); expand to additional libraries next.
     - Stand up a conformance harness that executes official manual examples, edge cases, and error scenarios, storing fixtures beside the NUnit TAP corpus for reuse across interpreter builds.
-    - For each module (`StringModule`, `MathModule`, coroutine APIs, etc.), enumerate edge/error behaviours from the spec and add exhaustive NUnit coverage so we rely on canonical Lua semantics rather than legacy MoonSharp behaviour.
+    - For each module (`StringModule`, `MathModule`, coroutine APIs, etc.), enumerate edge/error behaviours from the spec and add exhaustive NUnit coverage so we rely on canonical Lua semantics rather than legacy-era behaviour.
     - Integrate the harness into CI, fail builds on spec regressions, and capture progress/remaining work in `docs/testing/spec-coverage.md` with links back to manual sections.
 
 ## Long-Horizon Ideas
@@ -511,3 +511,4 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
 - Automated regression harness for memory allocations using BenchmarkDotNet diagnosers.
 
 Keep this plan in sync with `docs/Testing.md` and `docs/Modernization.md`. Update after each milestone so contributors know what's complete, in-flight, and still open.
+

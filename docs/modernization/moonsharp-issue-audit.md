@@ -1,4 +1,4 @@
-# MoonSharp Issue Audit (NovaSharp Port)
+# Legacy Issue Audit (NovaSharp Port)
 
 Generated: 2025-11-10
 
@@ -12,7 +12,7 @@ Generated: 2025-11-10
 | [#318](https://github.com/moonsharp-devs/moonsharp/issues/318) | KopiLua string.gsub() "pattern too complex" error, update KopiLua_strlib? | Gap | Backlog | Runtime | Investigate KopiLua string.gsub pattern limits and evaluate modern regex replacement |
 | [#317](https://github.com/moonsharp-devs/moonsharp/issues/317) | Unexpected result on string XOR | Defect | Needs reproduction | Runtime | Confirm string XOR semantics against Lua 5.2 and adjust StringLib/bit32 implementation |
 | [#315](https://github.com/moonsharp-devs/moonsharp/issues/315) | Lua code can set table[0], but С# can't read it | Defect | Queued for fix | Runtime | Table.RawGet(int) routes key 0 through array map; patch to use value map and cover with tests |
-| [#314](https://github.com/moonsharp-devs/moonsharp/issues/314) | Building MoonSharp | Docs | Covered | Docs | Modern build story uses dotnet build per docs/Testing.md; no additional work |
+| [#314](https://github.com/moonsharp-devs/moonsharp/issues/314) | Building legacy runtime | Docs | Covered | Docs | Modern build story uses dotnet build per docs/Testing.md; no additional work |
 | [#313](https://github.com/moonsharp-devs/moonsharp/issues/313) | Watch Item Location | Gap | Needs investigation | Debugger | Debugger stack locations missing; capture in automation harness and ensure VS Code adapter populates source info |
 | [#312](https://github.com/moonsharp-devs/moonsharp/issues/312) | Feature Request: Increased Error Data | Gap | Backlog | Runtime | Design richer ScriptRuntimeException payload/DecoratedMessage metadata for host diagnostics |
 | [#310](https://github.com/moonsharp-devs/moonsharp/issues/310) | Can we make a C# method that "Yield requests" but also returns a value to lua? | Gap | Needs design | Runtime | Explore CLR callbacks that yield and resume with values; document coroutine bridging plan |
@@ -58,7 +58,7 @@ Generated: 2025-11-10
 | [#231](https://github.com/moonsharp-devs/moonsharp/issues/231) | Script timeout/cancellation support | Gap | Backlog | Runtime | Introduce script cancellation/timeouts via cooperative checks and host tokens |
 | [#229](https://github.com/moonsharp-devs/moonsharp/issues/229) | tonumber("0x23") does not work | Defect | Queued for fix | Runtime | tonumber("0x23") should parse hex; update StringModule numeric parsing and add tests |
 | [#228](https://github.com/moonsharp-devs/moonsharp/issues/228) | Async / await support | Gap | Backlog | Runtime | Plan async/await integration by bridging CLR tasks to Lua coroutines |
-| [#221](https://github.com/moonsharp-devs/moonsharp/issues/221) | MoonSharp does not catch stack overflows | Defect | Backlog | Runtime | Add stack overflow guards and configurable recursion depth to Script/Processor |
+| [#221](https://github.com/moonsharp-devs/moonsharp/issues/221) | Legacy runtime does not catch stack overflows | Defect | Backlog | Runtime | Add stack overflow guards and configurable recursion depth to Script/Processor |
 | [#219](https://github.com/moonsharp-devs/moonsharp/issues/219) | json.parse lexer fails on 2D arrays | Defect | Queued for fix | Runtime | json.parse 2D arrays currently fail; share lexer fix with issue #257 |
 | [#218](https://github.com/moonsharp-devs/moonsharp/issues/218) | System.IndexOutOfRangeException | Defect | Needs reproduction | Runtime | Nested Assert wrapper triggers AssignLocal IndexOutOfRange; create coroutine regression test |
 | [#213](https://github.com/moonsharp-devs/moonsharp/issues/213) | Lowercase Descriptors | Gap | Won't implement | Runtime | Maintain case-sensitive userdata members; document naming guidance instead |
@@ -80,6 +80,6 @@ Generated: 2025-11-10
 | [#183](https://github.com/moonsharp-devs/moonsharp/issues/183) | Proxy operator overloads | Gap | Backlog | Runtime | Support operator overloads on proxy userdata; adjust descriptor pipeline |
 | [#181](https://github.com/moonsharp-devs/moonsharp/issues/181) | Non-global TypeDescriptorRegistry and ExtensionMethodsRegistry | Gap | Backlog | Runtime | Enable per-script TypeDescriptorRegistry/ExtensionMethodsRegistry injection |
 | [#180](https://github.com/moonsharp-devs/moonsharp/issues/180) | JsonTableConverter.JsonToTable can't handle escaped forward slash | Defect | Needs reproduction | Runtime | JsonTableConverter.JsonToTable should handle escaped forward slash; align with issue #282 fix |
-| [#175](https://github.com/moonsharp-devs/moonsharp/issues/175) | Inheritance for static objects | Defect | Queued for fix | Runtime | Port MoonSharp PR #336 to restore static inheritance support in userdata |
+| [#175](https://github.com/moonsharp-devs/moonsharp/issues/175) | Inheritance for static objects | Defect | Queued for fix | Runtime | Port upstream PR #336 (moonsharp-devs/moonsharp) to restore static inheritance support in userdata |
 | [#169](https://github.com/moonsharp-devs/moonsharp/issues/169) | Winrt (Windows Store App) not working with version 2.0 | Legacy | Won't port | Runtime | WinRT support dropped during modernization; no action |
 | [#161](https://github.com/moonsharp-devs/moonsharp/issues/161) | io.write() does not print standard console | Resolved | Covered | Runtime | IoModuleVirtualizationTests confirm io.write/io.output piping to configured streams |

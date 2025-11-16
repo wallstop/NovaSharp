@@ -35,7 +35,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 - Coverage artefacts land in `artifacts/coverage/` and `docs/coverage/latest/`. Update `PLAN.md` / docs as needed when the baseline changes.
 
 ## Branding & Namespace Guards
-- Reject accidental regressions to the legacy MoonSharp brand:
+- Reject accidental regressions to the legacy brand:
   ```bash
   ./scripts/branding/ensure-novasharp-branding.sh
   ```

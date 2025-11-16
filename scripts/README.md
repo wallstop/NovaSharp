@@ -6,7 +6,7 @@ Helper scripts live under this directory so contributors can find tooling withou
 - `build/` — Cross-platform build helpers (`build.ps1` / `build.sh`) that restore local tools, build `src/NovaSharp.sln`, and (by default) execute the interpreter tests into `artifacts/test-results`.
 - `ci/` — Repository health guards (e.g., README/link enforcement) that run locally or in CI before builds/tests execute.
 - `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver that auto-fixes formatting issues before commits.
-- `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to legacy MoonSharp names.
+- `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to the legacy brand.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
 - Additional folders (e.g., `build/`, `dev/`, `ci/`) should follow the same pattern: descriptive folder name, script-specific README, and cross-platform shims when practical.
 

@@ -1,6 +1,6 @@
 # Naming Audit (Nov 2025)
 
-NovaSharp inherited a mix of naming conventions from MoonSharp (e.g., Hungarian-style member prefixes, `Emit_*` helpers). This audit captures the current hotspots so we can plan the final alignment work noted in PLAN.md.
+NovaSharp inherited a mix of naming conventions from the legacy runtime (e.g., Hungarian-style member prefixes, `Emit_*` helpers). This audit captures the current hotspots so we can plan the final alignment work noted in PLAN.md.
 
 ## 1. `Emit_*` Helpers
 

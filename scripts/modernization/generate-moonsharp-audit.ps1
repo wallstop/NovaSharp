@@ -579,7 +579,7 @@ $auditData = @(
         Class  = 'Defect'
         Status = 'Queued for fix'
         Owner  = 'Runtime'
-        Note   = 'Port MoonSharp PR #336 to restore static inheritance support in userdata'
+        Note   = 'Port upstream PR #336 (moonsharp-devs/moonsharp) to restore static inheritance support in userdata'
     }
     [pscustomobject]@{
         Number = 169
@@ -604,7 +604,7 @@ foreach ($item in $auditData) {
 }
 
 $header = @(
-    '# MoonSharp Issue Audit (NovaSharp Port)',
+    '# Legacy Issue Audit (NovaSharp Port)',
     '',
     ('Generated: {0}' -f (Get-Date -Format 'yyyy-MM-dd')),
     '',
@@ -635,4 +635,4 @@ foreach ($issue in $issues) {
 
 $outputPath = Join-Path $repoRoot "docs/modernization/moonsharp-issue-audit.md"
 $output | Set-Content $outputPath -Encoding UTF8
-Write-Host ("MoonSharp audit regenerated at {0}" -f $outputPath)
+Write-Host ("Legacy issue audit regenerated at {0}" -f $outputPath)

@@ -1,6 +1,6 @@
 # Spec Fidelity Audit (Nov 2025)
 
-NovaSharp aims for Lua 5.4.8 parity. When historic MoonSharp behaviour diverges from the spec, existing tests may accidentally lock in the wrong semantics. This audit captures ongoing verification of high-risk areas so we fix the runtime (or the tests) based on the canonical Lua manuals instead of papering over defects.
+NovaSharp aims for Lua 5.4.8 parity. When historic legacy behaviour diverges from the spec, existing tests may accidentally lock in the wrong semantics. This audit captures ongoing verification of high-risk areas so we fix the runtime (or the tests) based on the canonical Lua manuals instead of papering over defects.
 
 ## Tracking Table
 

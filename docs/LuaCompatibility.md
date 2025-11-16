@@ -5,7 +5,7 @@ NovaSharp aims to match the behaviour of upstream Lua **5.4.8**.
 ## Compatibility Principles
 
 - Align runtime semantics, standard library behaviour, and coroutine semantics with stock Lua 5.4.8.
-- Prefer behaviour parity over historic MoonSharp quirks; regressions against Lua take precedence.
+- Prefer behaviour parity over historic legacy quirks; regressions against Lua take precedence.
 - Track any intentional deviations (e.g., .NET integration helpers) in this document and mirror coverage tests where feasible.
 
 Use the matrices below to understand how close NovaSharp is to stock Lua 5.4.8, which gaps still need work, and which tests guard each area. Update the tables when functionality lands or coverage moves.
@@ -49,7 +49,7 @@ NovaSharp now exposes a version selector so applications can pin script executio
 | Feature | Status | Coverage / Evidence | Notes & Owner |
 | --- | --- | --- | --- |
 | Metatable `__pairs` / `__ipairs` behaviour | ✅ | `MetatableTests.CustomPairsIterators` | Matches Lua 5.4 iteration semantics, including fallback. Owner: Interpreter. |
-| Ephemeron tables / weak keys & values | 🚧 | `WeakTablesTests` (legacy) | Behaviour follows MoonSharp-era implementation; 5.4 ephemeron rules still missing. Owner: Runtime Modernization. |
+| Ephemeron tables / weak keys & values | 🚧 | `WeakTablesTests` (legacy) | Behaviour follows legacy-era implementation; 5.4 ephemeron rules still missing. Owner: Runtime Modernization. |
 | GC generational / incremental modes | ❌ | — | `collectgarbage("incremental")` unsupported; document limitation. Owner: Runtime Modernization. |
 | `debug.getmetatable` protection for protected tables | ✅ | `MetatableTests.ProtectedMetatableFailures` | Aligns with Lua raising errors for protected metatables. Owner: Interpreter. |
 

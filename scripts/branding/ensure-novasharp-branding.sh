@@ -18,6 +18,9 @@ readarray -t allowlist <<'EOF'
 :(exclude)moonsharp_DescriptorHelpers.cs
 :(exclude)src/tooling/Benchmarks/NovaSharp.Benchmarks/PerformanceReportWriter.cs
 :(exclude)scripts/branding/ensure-novasharp-branding.sh
+:(exclude)AGENTS.md
+:(exclude)src/tooling/NovaSharp.Comparison
+:(exclude)src/tooling/NovaSharp.Comparison/**
 EOF
 
 if git grep -n --color=never "${pattern}" -- . "${allowlist[@]}"; then
