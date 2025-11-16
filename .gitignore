@@ -12,9 +12,12 @@
 [Rr]elease/
 x64/
 build/
+!scripts/build/
+!scripts/build/**
 [Bb]in/
 [Oo]bj/
 bin-debug/
+node_modules/
 
 # VS2017 .vs directory
 src/.vs/
@@ -22,12 +25,12 @@ src/.vs/
 
 # Remove generated docs
 
-src/MoonSharp.Documentation/Help/html/
-src/MoonSharp.Documentation/Help/toc/
-src/MoonSharp.Documentation/Help/fti/
-src/MoonSharp.Documentation/Help/styles/
-src/MoonSharp.Documentation/Help/icons/
-src/MoonSharp.Documentation/Help/
+src/NovaSharp.Documentation/Help/html/
+src/NovaSharp.Documentation/Help/toc/
+src/NovaSharp.Documentation/Help/fti/
+src/NovaSharp.Documentation/Help/styles/
+src/NovaSharp.Documentation/Help/icons/
+src/NovaSharp.Documentation/Help/
 
 #
 
@@ -170,3 +173,9 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+
+BenchmarkDotNet.Artifacts/
+artifacts/
+
+docs/coverage/latest/
+!docs/coverage/README.md

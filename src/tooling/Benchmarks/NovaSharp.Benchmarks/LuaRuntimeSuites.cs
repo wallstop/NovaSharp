@@ -1,0 +1,91 @@
+namespace NovaSharp.Benchmarks
+{
+    using System;
+
+    public enum RuntimeScenario
+    {
+        [Obsolete("Use a specific RuntimeScenario.", false)]
+        Unknown = 0,
+        NumericLoops = 1,
+        TableMutation = 2,
+        CoroutinePipeline = 3,
+        UserDataInterop = 4,
+    }
+
+    internal static class LuaRuntimeSuites
+    {
+        public const int LOOP_ITERATIONS = 2_000;
+        public const int TABLE_ENTRY_COUNT = 128;
+        public const int COROUTINE_STEPS = 64;
+        public const int USER_DATA_ITERATIONS = 256;
+
+        public static string GetScript(RuntimeScenario scenario) =>
+            scenario switch
+            {
+                RuntimeScenario.NumericLoops => NumericLoopScript,
+                RuntimeScenario.TableMutation => TABLE_MUTATION_SCRIPT,
+                RuntimeScenario.CoroutinePipeline => COROUTINE_PIPELINE_SCRIPT,
+                RuntimeScenario.UserDataInterop => USER_DATA_INTEROP_SCRIPT,
+                _ => NumericLoopScript,
+            };
+
+        private static readonly string NumericLoopScript =
+            $@"
+return function ()
+    local sum = 0.0
+    for i = 1, {LOOP_ITERATIONS} do
+        sum = sum + math.sin(i) * math.cos(i * 0.5)
+        if (i % 7) == 0 then
+            sum = sum / 2.0
+        end
+    end
+    return sum
+end";
+
+        private const string TABLE_MUTATION_SCRIPT =
+            $@"
+return function (source)
+    local acc = 0
+    for i = 1, #source do
+        acc = acc + source[i]
+        source[i] = acc % 17
+    end
+    for k = #source, 1, -3 do
+        source[k] = nil
+    end
+    return acc
+end";
+
+        private const string COROUTINE_PIPELINE_SCRIPT =
+            $@"
+return function (steps)
+    local producer = coroutine.create(function(n)
+        local value = 0
+        for i = 1, n do
+            value = value + math.sqrt(i)
+            coroutine.yield(value)
+        end
+        return value
+    end)
+
+    local last = 0
+    for i = 1, steps do
+        local ok, result = coroutine.resume(producer, i + (i % 3))
+        if not ok then error(result) end
+        last = result
+    end
+    return last
+end";
+
+        private const string USER_DATA_INTEROP_SCRIPT =
+            $@"
+return function (host, iterations)
+    local value = 0
+    for i = 1, iterations do
+        value = value + host:Accumulate(i, i * 2)
+    end
+    host:Store(value)
+    return value
+end";
+    }
+}

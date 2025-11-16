@@ -1,7 +1,7 @@
-#:Z:\git\my\moonsharp\src\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.xproj
-Z:\git\my\moonsharp\src\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.xproj|Z:\git\my\moonsharp\src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.xproj
-#:Z:\git\my\moonsharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj
-Z:\git\my\moonsharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj|Z:\git\my\moonsharp\src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.xproj
-Z:\git\my\moonsharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj|Z:\git\my\moonsharp\src\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.xproj
-Z:\git\my\moonsharp\src\MoonSharp.VsCodeDebugger\_Projects\MoonSharp.VsCodeDebugger.netcore\MoonSharp.VsCodeDebugger.netcore.xproj|Z:\git\my\moonsharp\src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.xproj
-#:Z:\git\my\moonsharp\src\MoonSharp.Interpreter\_Projects\MoonSharp.Interpreter.netcore\MoonSharp.Interpreter.netcore.xproj
+#:Z:\git\my\novasharp\src\NovaSharp.VsCodeDebugger\_Projects\NovaSharp.VsCodeDebugger.netcore\NovaSharp.VsCodeDebugger.netcore.xproj
+Z:\git\my\novasharp\src\NovaSharp.VsCodeDebugger\_Projects\NovaSharp.VsCodeDebugger.netcore\NovaSharp.VsCodeDebugger.netcore.xproj|Z:\git\my\novasharp\src\NovaSharp.Interpreter\_Projects\NovaSharp.Interpreter.netcore\NovaSharp.Interpreter.netcore.xproj
+#:Z:\git\my\novasharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj
+Z:\git\my\novasharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj|Z:\git\my\novasharp\src\NovaSharp.Interpreter\_Projects\NovaSharp.Interpreter.netcore\NovaSharp.Interpreter.netcore.xproj
+Z:\git\my\novasharp\src\TestRunners\DotNetCoreTestRunner\DotNetCoreTestRunner.xproj|Z:\git\my\novasharp\src\NovaSharp.VsCodeDebugger\_Projects\NovaSharp.VsCodeDebugger.netcore\NovaSharp.VsCodeDebugger.netcore.xproj
+Z:\git\my\novasharp\src\NovaSharp.VsCodeDebugger\_Projects\NovaSharp.VsCodeDebugger.netcore\NovaSharp.VsCodeDebugger.netcore.xproj|Z:\git\my\novasharp\src\NovaSharp.Interpreter\_Projects\NovaSharp.Interpreter.netcore\NovaSharp.Interpreter.netcore.xproj
+#:Z:\git\my\novasharp\src\NovaSharp.Interpreter\_Projects\NovaSharp.Interpreter.netcore\NovaSharp.Interpreter.netcore.xproj

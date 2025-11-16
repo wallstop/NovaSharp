@@ -1,0 +1,565 @@
+namespace NovaSharp.VsCodeDebugger.DebuggerLogic
+{
+#if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
+
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
+    using SDK;
+
+    internal sealed class NovaSharpDebugSession : DebugSession, IAsyncDebuggerClient
+    {
+        private readonly AsyncDebugger _debug;
+        private readonly NovaSharpVsCodeDebugServer _server;
+        private readonly List<DynValue> _variables = new();
+        private bool _notifyExecutionEnd = false;
+
+        private const int SCOPE_LOCALS = 65536;
+        private const int SCOPE_SELF = 65537;
+
+        internal NovaSharpDebugSession(NovaSharpVsCodeDebugServer server, AsyncDebugger debugger)
+            : base(true, false)
+        {
+            _server = server;
+            _debug = debugger;
+        }
+
+        public override void Initialize(Response response, Table args)
+        {
+#if DOTNET_CORE
+            SendText(
+                "Connected to NovaSharp {0} [{1}]",
+                Script.VERSION,
+                Script.GlobalOptions.Platform.GetPlatformName()
+            );
+#else
+            SendText(
+                "Connected to NovaSharp {0} [{1}] on process {2} (PID {3})",
+                Script.VERSION,
+                Script.GlobalOptions.Platform.GetPlatformName(),
+                System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                System.Diagnostics.Process.GetCurrentProcess().Id
+            );
+#endif
+
+            SendText(
+                "Debugging script '{0}'; use the debug console to debug another script.",
+                _debug.Name
+            );
+
+            SendText("Type '!help' in the Debug Console for available commands.");
+
+            SendResponse(
+                response,
+                new Capabilities()
+                {
+                    // This debug adapter does not need the configurationDoneRequest.
+                    supportsConfigurationDoneRequest = false,
+
+                    // This debug adapter does not support function breakpoints.
+                    supportsFunctionBreakpoints = false,
+
+                    // This debug adapter doesn't support conditional breakpoints.
+                    supportsConditionalBreakpoints = false,
+
+                    // This debug adapter does not support a side effect free evaluate request for data hovers.
+                    supportsEvaluateForHovers = false,
+
+                    // This debug adapter does not support exception breakpoint filters
+                    exceptionBreakpointFilters = Array.Empty<object>(),
+                }
+            );
+
+            // Debugger is ready to accept breakpoints immediately
+            SendEvent(new InitializedEvent());
+
+            _debug.Client = this;
+        }
+
+        public override void Attach(Response response, Table arguments)
+        {
+            SendResponse(response);
+        }
+
+        public override void Continue(Response response, Table arguments)
+        {
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.Run,
+                }
+            );
+            SendResponse(response);
+        }
+
+        public override void Disconnect(Response response, Table arguments)
+        {
+            _debug.Client = null;
+            SendResponse(response);
+        }
+
+        private static string GetString(Table args, string property, string dflt = null)
+        {
+            string s = (string)args[property];
+            if (s == null)
+            {
+                return dflt;
+            }
+            s = s.Trim();
+            if (s.Length == 0)
+            {
+                return dflt;
+            }
+            return s;
+        }
+
+        public override void Evaluate(Response response, Table args)
+        {
+            string expression = GetString(args, "expression");
+            int frameId = GetInt(args, "frameId", 0);
+            string context = GetString(args, "context") ?? "hover";
+
+            if (frameId != 0 && context != "repl")
+            {
+                SendText(
+                    "Warning : Evaluation of variables/watches is always done with the top-level scope."
+                );
+            }
+
+            if (context == "repl" && expression.StartsWith("!"))
+            {
+                ExecuteRepl(expression.Substring(1));
+                SendResponse(response);
+                return;
+            }
+
+            DynValue v = _debug.Evaluate(expression) ?? DynValue.Nil;
+            _variables.Add(v);
+
+            SendResponse(
+                response,
+                new EvaluateResponseBody(v.ToDebugPrintString(), _variables.Count - 1)
+                {
+                    Type = v.Type.ToLuaDebuggerString(),
+                }
+            );
+        }
+
+        private void ExecuteRepl(string cmd)
+        {
+            bool showHelp = false;
+            cmd = cmd.Trim();
+            if (cmd == "help")
+            {
+                showHelp = true;
+            }
+            else if (cmd.StartsWith("geterror"))
+            {
+                SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
+            }
+            else if (cmd.StartsWith("seterror"))
+            {
+                string regex = cmd.Substring("seterror".Length).Trim();
+
+                try
+                {
+                    Regex rx = new(regex);
+                    _debug.ErrorRegex = rx;
+                    SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SendText("Error setting regex: {0}", ex.Message);
+                }
+            }
+            else if (cmd.StartsWith("execendnotify"))
+            {
+                string val = cmd.Substring("execendnotify".Length).Trim();
+
+                if (val == "off")
+                {
+                    _notifyExecutionEnd = false;
+                }
+                else if (val == "on")
+                {
+                    _notifyExecutionEnd = true;
+                }
+                else if (val.Length > 0)
+                {
+                    SendText("Error : expected 'on' or 'off'");
+                }
+
+                SendText(
+                    "Notifications of execution end are : {0}",
+                    _notifyExecutionEnd ? "enabled" : "disabled"
+                );
+            }
+            else if (cmd == "list")
+            {
+                int currId = _server.CurrentId ?? -1000;
+
+                foreach (
+                    KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName()
+                )
+                {
+                    string isthis = (pair.Key == _debug.Id) ? " (this)" : "";
+                    string isdef = (pair.Key == currId) ? " (default)" : "";
+
+                    SendText(
+                        "{0} : {1}{2}{3}",
+                        pair.Key.ToString().PadLeft(9),
+                        pair.Value,
+                        isdef,
+                        isthis
+                    );
+                }
+            }
+            else if (cmd.StartsWith("select") || cmd.StartsWith("switch"))
+            {
+                string arg = cmd.Substring("switch".Length).Trim();
+
+                try
+                {
+                    int id = int.Parse(arg);
+                    _server.CurrentId = id;
+
+                    if (cmd.StartsWith("switch"))
+                    {
+                        Unbind();
+                    }
+                    else
+                    {
+                        SendText(
+                            "Next time you'll attach the debugger, it will be atteched to script #{0}",
+                            id
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SendText("Error setting regex: {0}", ex.Message);
+                }
+            }
+            else
+            {
+                SendText("Syntax error : {0}\n", cmd);
+                showHelp = true;
+            }
+
+            if (showHelp)
+            {
+                SendText("Available commands : ");
+                SendText("    !help - gets this help");
+                SendText("    !list - lists the other scripts which can be debugged");
+                SendText("    !select <id> - select another script for future sessions");
+                SendText(
+                    "    !switch <id> - switch to another script (same as select + disconnect)"
+                );
+                SendText("    !seterror <regex> - sets the regex which tells which errors to trap");
+                SendText(
+                    "    !geterror - gets the current value of the regex which tells which errors to trap"
+                );
+                SendText(
+                    "    !execendnotify [on|off] - sets the notification of end of execution on or off (default = off)"
+                );
+                SendText("    ... or type an expression to evaluate it on the fly.");
+            }
+        }
+
+        public override void Launch(Response response, Table arguments)
+        {
+            SendResponse(response);
+        }
+
+        public override void Next(Response response, Table arguments)
+        {
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepOver,
+                }
+            );
+            SendResponse(response);
+        }
+
+        private StoppedEvent CreateStoppedEvent(string reason, string text = null)
+        {
+            return new StoppedEvent(0, reason, text);
+        }
+
+        public override void Pause(Response response, Table arguments)
+        {
+            _debug.PauseRequested = true;
+            SendResponse(response);
+            SendText("Pause pending -- will pause at first script statement.");
+        }
+
+        public override void Scopes(Response response, Table arguments)
+        {
+            List<Scope> scopes = new();
+
+            scopes.Add(new Scope("Locals", SCOPE_LOCALS));
+            scopes.Add(new Scope("Self", SCOPE_SELF));
+
+            SendResponse(response, new ScopesResponseBody(scopes));
+        }
+
+        public override void SetBreakpoints(Response response, Table args)
+        {
+            string path = null;
+
+            if (args["source"] is Table argsSource)
+            {
+                string p = argsSource["path"].ToString();
+                if (p != null && p.Trim().Length > 0)
+                {
+                    path = p;
+                }
+            }
+
+            if (path == null)
+            {
+                SendErrorResponse(
+                    response,
+                    3010,
+                    "setBreakpoints: property 'source' is empty or misformed",
+                    null,
+                    false,
+                    true
+                );
+                return;
+            }
+
+            path = ConvertClientPathToDebugger(path);
+
+            SourceCode src = _debug.FindSourceByName(path);
+
+            if (src == null)
+            {
+                // we only support breakpoints in files mono can handle
+                SendResponse(response, new SetBreakpointsResponseBody());
+                return;
+            }
+
+            Table clientLines = args.Get("lines").Table;
+
+            HashSet<int> lin = new(
+                clientLines
+                    .Values.Select(jt => ConvertClientLineToDebugger(jt.ToObject<int>()))
+                    .ToArray()
+            );
+
+            HashSet<int> lin2 = _debug.DebugService.ResetBreakPoints(src, lin);
+
+            List<Breakpoint> breakpoints = new();
+            foreach (int l in lin)
+            {
+                breakpoints.Add(new Breakpoint(lin2.Contains(l), l));
+            }
+
+            response.SetBody(new SetBreakpointsResponseBody(breakpoints));
+            SendResponse(response);
+        }
+
+        public override void StackTrace(Response response, Table args)
+        {
+            int maxLevels = GetInt(args, "levels", 10);
+            //int threadReference = getInt(args, "threadId", 0);
+
+            List<StackFrame> stackFrames = new();
+
+            List<WatchItem> stack = _debug.GetWatches(WatchType.CallStack);
+
+            WatchItem coroutine = _debug.GetWatches(WatchType.Threads).LastOrDefault();
+
+            int level = 0;
+            int max = Math.Min(maxLevels - 3, stack.Count);
+
+            while (level < max)
+            {
+                WatchItem frame = stack[level];
+
+                string name = frame.Name;
+                SourceRef sourceRef = frame.Location ?? _defaultSourceRef;
+                int sourceIdx = sourceRef.SourceIdx;
+                string path = sourceRef.IsClrLocation
+                    ? "(native)"
+                    : (_debug.GetSourceFile(sourceIdx) ?? "???");
+                string sourceName = Path.GetFileName(path);
+
+                Source source = new(sourceName, path); // ConvertDebuggerPathToClient(path));
+
+                stackFrames.Add(
+                    new StackFrame(
+                        level,
+                        name,
+                        source,
+                        ConvertDebuggerLineToClient(sourceRef.FromLine),
+                        sourceRef.FromChar,
+                        ConvertDebuggerLineToClient(sourceRef.ToLine),
+                        sourceRef.ToChar
+                    )
+                );
+
+                level++;
+            }
+
+            if (stack.Count > maxLevels - 3)
+            {
+                stackFrames.Add(new StackFrame(level++, "(...)", null, 0));
+            }
+
+            if (coroutine != null)
+            {
+                stackFrames.Add(new StackFrame(level++, "(" + coroutine.Name + ")", null, 0));
+            }
+            else
+            {
+                stackFrames.Add(new StackFrame(level++, "(main coroutine)", null, 0));
+            }
+
+            stackFrames.Add(new StackFrame(level++, "(native)", null, 0));
+
+            SendResponse(response, new StackTraceResponseBody(stackFrames));
+        }
+
+        private readonly SourceRef _defaultSourceRef = new(-1, 0, 0, 0, 0, false);
+
+        private int GetInt(Table args, string propName, int defaultValue)
+        {
+            DynValue jo = args.Get(propName);
+
+            if (jo.Type != DataType.Number)
+            {
+                return defaultValue;
+            }
+            else
+            {
+                return jo.ToObject<int>();
+            }
+        }
+
+        public override void StepIn(Response response, Table arguments)
+        {
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepIn,
+                }
+            );
+            SendResponse(response);
+        }
+
+        public override void StepOut(Response response, Table arguments)
+        {
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepOut,
+                }
+            );
+            SendResponse(response);
+        }
+
+        public override void Threads(Response response, Table arguments)
+        {
+            List<Thread> threads = new() { new Thread(0, "Main Thread") };
+            SendResponse(response, new ThreadsResponseBody(threads));
+        }
+
+        public override void Variables(Response response, Table arguments)
+        {
+            int index = GetInt(arguments, "variablesReference", -1);
+
+            List<Variable> variables = new();
+
+            if (index == SCOPE_SELF)
+            {
+                DynValue v = _debug.Evaluate("self");
+                VariableInspector.InspectVariable(v, variables);
+            }
+            else if (index == SCOPE_LOCALS)
+            {
+                foreach (WatchItem w in _debug.GetWatches(WatchType.Locals))
+                {
+                    variables.Add(
+                        new Variable(w.Name, (w.Value ?? DynValue.Void).ToDebugPrintString())
+                    );
+                }
+            }
+            else if (index < 0 || index >= _variables.Count)
+            {
+                variables.Add(new Variable("<error>", null));
+            }
+            else
+            {
+                VariableInspector.InspectVariable(_variables[index], variables);
+            }
+
+            SendResponse(response, new VariablesResponseBody(variables));
+        }
+
+        void IAsyncDebuggerClient.SendStopEvent()
+        {
+            SendEvent(CreateStoppedEvent("step"));
+        }
+
+        void IAsyncDebuggerClient.OnWatchesUpdated(WatchType watchType)
+        {
+            if (watchType == WatchType.CallStack)
+            {
+                _variables.Clear();
+            }
+        }
+
+        void IAsyncDebuggerClient.OnSourceCodeChanged(int sourceId)
+        {
+            if (_debug.IsSourceOverride(sourceId))
+            {
+                SendText(
+                    "Loaded source '{0}' -> '{1}'",
+                    _debug.GetSource(sourceId).Name,
+                    _debug.GetSourceFile(sourceId)
+                );
+            }
+            else
+            {
+                SendText("Loaded source '{0}'", _debug.GetSource(sourceId).Name);
+            }
+        }
+
+        public void OnExecutionEnded()
+        {
+            if (_notifyExecutionEnd)
+            {
+                SendText("Execution ended.");
+            }
+        }
+
+        private void SendText(string msg, params object[] args)
+        {
+            msg = string.Format(msg, args);
+            // SendEvent(new OutputEvent("console", DateTime.Now.ToString("u") + ": " + msg + "\n"));
+            SendEvent(new OutputEvent("console", msg + "\n"));
+        }
+
+        public void OnException(ScriptRuntimeException ex)
+        {
+            SendText("runtime error : {0}", ex.DecoratedMessage);
+        }
+
+        public void Unbind()
+        {
+            SendText("Debug session has been closed by the hosting process.");
+            SendText("Bye.");
+            SendEvent(new TerminatedEvent());
+        }
+    }
+}
+#endif

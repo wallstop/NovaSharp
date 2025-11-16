@@ -1,0 +1,12 @@
+{
+  "timeout": "30s",
+  "retryCount": 2,
+  "retryOn429": true,
+  "aliveStatusCodes": [200, 201, 202, 203, 204, 206, 301, 302, 307, 308, 429],
+  "ignorePatterns": [
+    { "pattern": "^https?://localhost" },
+    { "pattern": "^http://127.0.0.1" },
+    { "pattern": "^https://github.com/.+/.+/issues/new" },
+    { "pattern": "NovaSharp\\.org" }
+  ]
+}
