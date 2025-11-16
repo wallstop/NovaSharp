@@ -1,4 +1,4 @@
-NovaSharp       [![Build Status](https://travis-ci.org/xanathar/NovaSharp.svg?branch=master)](https://travis-ci.org/xanathar/NovaSharp) [![Build Status](https://img.shields.io/nuget/v/NovaSharp.svg)](https://www.nuget.org/packages/NovaSharp/)
+NovaSharp — [GitHub Repository](https://github.com/wallstop/NovaSharp) *(NuGet package not published; build from source)*
 =========
 http://www.NovaSharp.org   
 

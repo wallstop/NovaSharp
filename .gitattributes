@@ -3,6 +3,9 @@
 ###############################################################################
 * text=auto
 
+# Keep C# sources on CRLF to match .editorconfig and keep CSharpier happy on Linux agents.
+*.cs text eol=crlf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
