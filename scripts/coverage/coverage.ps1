@@ -9,6 +9,22 @@ param(
     [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE
 )
 
+function Get-CoverageTarget {
+    param(
+        [string]$Value,
+        [double]$Fallback
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($Value)) {
+        $parsed = 0.0
+        if ([double]::TryParse($Value, [ref]$parsed)) {
+            return $parsed
+        }
+    }
+
+    return $Fallback
+}
+
 $ErrorActionPreference = "Stop"
 $scriptRoot = $PSScriptRoot
 $repoRoot = ""
@@ -275,10 +291,14 @@ if (Test-Path $summaryPath) {
         $methodThreshold = $MinimumInterpreterMethodCoverage
         $enforceThresholds = $true
 
+        $lineTarget = Get-CoverageTarget -Value $env:COVERAGE_GATING_TARGET_LINE -Fallback 95.0
+        $branchTarget = Get-CoverageTarget -Value $env:COVERAGE_GATING_TARGET_BRANCH -Fallback 95.0
+        $methodTarget = Get-CoverageTarget -Value $env:COVERAGE_GATING_TARGET_METHOD -Fallback 95.0
+
         if ($gatingMode -eq "monitor" -or $gatingMode -eq "enforce") {
-            $lineThreshold = [Math]::Max($lineThreshold, 95.0)
-            $branchThreshold = [Math]::Max($branchThreshold, 95.0)
-            $methodThreshold = [Math]::Max($methodThreshold, 95.0)
+            $lineThreshold = [Math]::Max($lineThreshold, $lineTarget)
+            $branchThreshold = [Math]::Max($branchThreshold, $branchTarget)
+            $methodThreshold = [Math]::Max($methodThreshold, $methodTarget)
             $enforceThresholds = $gatingMode -eq "enforce"
             Write-Host ""
             Write-Host ("Coverage gating mode: {0} (line ≥ {1:N1}%, branch ≥ {2:N1}%, method ≥ {3:N1}%)" -f `

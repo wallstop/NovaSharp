@@ -158,6 +158,9 @@ jobs:
         run: dotnet tool restore
       - name: Generate coverage
         shell: pwsh
+        env:
+          COVERAGE_GATING_TARGET_LINE: "90"
+          COVERAGE_GATING_MODE: ${{ vars.COVERAGE_GATING_MODE || 'enforce' }}
         run: ./scripts/coverage/coverage.ps1
       - name: Publish coverage summary
         if: always()

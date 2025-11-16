@@ -1,9 +1,13 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NUnit.Framework;
 
@@ -11,82 +15,103 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class ValueTypeDefaultCtorMemberDescriptorTests
     {
         [Test]
-        public void ConstructorRejectsNonValueTypes()
+        public void ConstructorRejectsReferenceTypes()
         {
             Assert.That(
                 () => new ValueTypeDefaultCtorMemberDescriptor(typeof(string)),
-                Throws.ArgumentException.With.Message.Contains("valueType is not a value type")
+                Throws.TypeOf<ArgumentException>().With.Message.Contains("valueType is not a value type")
             );
         }
 
         [Test]
-        public void ExecuteReturnsDefaultValueForValueTypes()
+        public void ExecuteReturnsDefaultStructValue()
         {
-            UserData.RegisterType<SampleStruct>();
-            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
+            RegisterSampleStruct();
             Script script = new();
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
             DynValue result = descriptor.Execute(
                 script,
-                null,
-                context,
-                TestHelpers.CreateArguments()
+                obj: null,
+                context: null,
+                args: new CallbackArguments(new List<DynValue>(), isMethodCall: false)
             );
 
             Assert.Multiple(() =>
             {
                 Assert.That(result.Type, Is.EqualTo(DataType.UserData));
                 Assert.That(result.UserData.Object, Is.InstanceOf<SampleStruct>());
+                Assert.That(((SampleStruct)result.UserData.Object).Value, Is.Zero);
             });
         }
 
         [Test]
-        public void GetValueReturnsDefaultDynValue()
+        public void GetValueReturnsDefaultStructValue()
         {
-            UserData.RegisterType<SampleStruct>();
-            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
+            RegisterSampleStruct();
             Script script = new();
+            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
-            DynValue value = descriptor.GetValue(script, null);
+            DynValue result = descriptor.GetValue(script, obj: null);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(value.Type, Is.EqualTo(DataType.UserData));
-                Assert.That(value.UserData.Object, Is.InstanceOf<SampleStruct>());
-            });
+            Assert.That(result.Type, Is.EqualTo(DataType.UserData));
+            Assert.That(result.UserData.Object, Is.InstanceOf<SampleStruct>());
         }
 
         [Test]
-        public void SetValueThrowsOnWriteAttempt()
+        public void SetValueThrows()
         {
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
-            Script script = new();
 
             Assert.That(
-                () => descriptor.SetValue(script, null, DynValue.Nil),
-                Throws.InstanceOf<NovaSharp.Interpreter.Errors.ScriptRuntimeException>()
+                () => descriptor.SetValue(new Script(), null, DynValue.NewNumber(1)),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("cannot be assigned")
             );
         }
 
         [Test]
-        public void PrepareForWiringWritesMetadata()
+        public void PrepareForWiringCapturesDescriptorMetadata()
         {
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
-            Script script = new();
-            Table table = new(script);
+            Table wiring = new(null);
 
-            descriptor.PrepareForWiring(table);
+            descriptor.PrepareForWiring(wiring);
 
             Assert.Multiple(() =>
             {
-                Assert.That(
-                    table.RawGet("class").String,
-                    Is.EqualTo(descriptor.GetType().FullName)
-                );
-                Assert.That(table.RawGet("type").String, Is.EqualTo(typeof(SampleStruct).FullName));
-                Assert.That(table.RawGet("name").String, Is.EqualTo("__new"));
+                Assert.That(wiring.Get("class").String, Does.Contain(nameof(ValueTypeDefaultCtorMemberDescriptor)));
+                Assert.That(wiring.Get("type").String, Is.EqualTo(typeof(SampleStruct).FullName));
+                Assert.That(wiring.Get("name").String, Is.EqualTo("__new"));
             });
+        }
+
+        [Test]
+        public void DescriptorMetadataExposesDefaultValues()
+        {
+            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Parameters, Is.Empty);
+                Assert.That(descriptor.ExtensionMethodType, Is.Null);
+                Assert.That(descriptor.VarArgsArrayType, Is.Null);
+                Assert.That(descriptor.VarArgsElementType, Is.Null);
+                Assert.That(descriptor.SortDiscriminant, Is.EqualTo("@.ctor"));
+                Assert.That(
+                    descriptor.MemberAccess,
+                    Is.EqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute)
+                );
+            });
+        }
+
+        private static void RegisterSampleStruct()
+        {
+            if (!UserData.IsTypeRegistered(typeof(SampleStruct)))
+            {
+                UserData.RegisterType<SampleStruct>();
+            }
         }
 
         private struct SampleStruct
