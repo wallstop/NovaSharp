@@ -1,9 +1,9 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 14:03 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 14:13 UTC).
 
 ## Snapshot
-- Overall line coverage: **83.9 %**
+- Overall line coverage: **84.0 %**
 - NovaSharp.Interpreter line coverage: **92.8 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
@@ -92,6 +92,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - Added `CoroutineApiTests` to drive enumerable helpers, Unity coroutine adapters, CLR callback transitions, and `AutoYieldCounter`, boosting coroutine coverage.
 - Added `FastStackTests` to cover push/pop/remove/expand/crop paths in the fixed-capacity stack implementation.
 - `SourceRefTests` now cover `ToString()`, collapsed-line distance calculations, mid-slice line checks, and the single-line formatting branch, lifting `NovaSharp.Interpreter.Debugging.SourceRef` to **96.0 % line / 86.0 % branch / 100 % method** (coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 14:03 UTC). `ExitCommandTests` continue to drive the CLI `exit` path to 100 %, keeping NovaSharp.Cli line coverage at 79.7 %.
+- `NodeBaseTests` exercise the single/two/three-token overloads (match and mismatch), the “not next” guard, and the `LoadingContext` getter, so `NovaSharp.Interpreter.Tree.NodeBase` now sits at **100 % line / 100 % branch / 100 % method** (coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 14:13 UTC), nudging interpreter totals to **92.85 % line / 89.38 % branch / 94.97 % method** across **1 916** Release tests.
 - `LoadModuleTests` now exercise `require`, `load`, and `loadfilesafe` paths (LoadModule at 71 % line coverage), and `SyntaxErrorExceptionTests`/`DynamicExpressionException` assertions ensure parser errors honour nested rethrow rules and message prefixes.
 - `EventMemberDescriptorTests` expanded with compatibility guards and multi-signature dispatch checks, lifting event coverage to 53 % and validating zero-arg/multi-arg pathways.
 - `AutoDescribingUserDataDescriptorTests` verify name/type exposure plus index/set/meta forwarding to IUserDataType, keeping self-describing userdata behaviour under regression tests.

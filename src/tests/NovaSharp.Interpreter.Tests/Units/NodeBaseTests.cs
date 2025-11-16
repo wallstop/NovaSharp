@@ -52,6 +52,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CheckTokenTypeSupportsThreeExpectedTokens()
+        {
+            ScriptLoadingContext context = CreateContext("elseif");
+
+            Token token = TestNode.CallCheckTokenType(
+                context,
+                TokenType.If,
+                TokenType.Else,
+                TokenType.ElseIf
+            );
+
+            Assert.That(token.type, Is.EqualTo(TokenType.ElseIf));
+        }
+
+        [Test]
         public void CheckTokenTypeNotNextDoesNotAdvanceLexer()
         {
             ScriptLoadingContext context = CreateContext("name");
@@ -60,6 +75,66 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestNode.CallCheckTokenTypeNotNext(context, TokenType.Name);
 
             Assert.That(context.Lexer.Current.Text, Is.EqualTo(original));
+        }
+
+        [Test]
+        public void CheckTokenTypeNotNextThrowsWhenTokenDiffers()
+        {
+            ScriptLoadingContext context = CreateContext("name");
+
+            Assert.That(
+                () => TestNode.CallCheckTokenTypeNotNext(context, TokenType.Number),
+                Throws.TypeOf<SyntaxErrorException>()
+            );
+        }
+
+        [Test]
+        public void UnexpectedTokenDoesNotMarkPrematureTerminationWhenNotEof()
+        {
+            ScriptLoadingContext context = CreateContext("identifier");
+
+            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckTokenType(context, TokenType.Number)
+            );
+
+            Assert.That(ex.IsPrematureStreamTermination, Is.False);
+        }
+
+        [Test]
+        public void CheckTokenTypeWithMultipleOptionsThrowsWhenTokenDoesNotMatch()
+        {
+            ScriptLoadingContext context = CreateContext("end");
+
+            Assert.That(
+                () => TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False),
+                Throws.TypeOf<SyntaxErrorException>()
+            );
+        }
+
+        [Test]
+        public void CheckTokenTypeWithThreeOptionsThrowsWhenTokenDoesNotMatch()
+        {
+            ScriptLoadingContext context = CreateContext("do");
+
+            Assert.That(
+                () =>
+                    TestNode.CallCheckTokenType(
+                        context,
+                        TokenType.If,
+                        TokenType.Else,
+                        TokenType.ElseIf
+                    ),
+                Throws.TypeOf<SyntaxErrorException>()
+            );
+        }
+
+        [Test]
+        public void LoadingContextPropertyCanBeQueriedByDerivedType()
+        {
+            ScriptLoadingContext context = CreateContext("return 1");
+            TestNode node = new(context);
+
+            Assert.That(node.GetLoadingContextViaHelper(), Is.Null);
         }
 
         [Test]
@@ -133,6 +208,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return CheckTokenType(context, tokenType1, tokenType2);
             }
 
+            public static Token CallCheckTokenType(
+                ScriptLoadingContext context,
+                TokenType tokenType1,
+                TokenType tokenType2,
+                TokenType tokenType3
+            )
+            {
+                return CheckTokenType(context, tokenType1, tokenType2, tokenType3);
+            }
+
             public static void CallCheckTokenTypeNotNext(
                 ScriptLoadingContext context,
                 TokenType tokenType
@@ -149,6 +234,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 return CheckMatch(context, original, expected, expectedText);
+            }
+
+            public ScriptLoadingContext GetLoadingContextViaHelper()
+            {
+                return LoadingContext;
             }
         }
     }

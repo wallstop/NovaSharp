@@ -487,11 +487,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TimeProvider = timeProvider,
             };
             Script script = BuildScript("return 0", "aging.lua", options);
-            using DebugServer server = CreateServer(
-                script,
-                freeRunAfterAttach: false,
-                out _
-            );
+            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out _);
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             DebuggerAction stale = new(script.TimeProvider)
