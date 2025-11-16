@@ -9,7 +9,7 @@ fi
 cd "$repo_root"
 
 dotnet tool restore >/dev/null
-if ! dotnet csharpier --check .; then
-  echo "CSharpier formatting issues detected. Run 'dotnet csharpier .' to fix." >&2
+if ! dotnet tool run csharpier check .; then
+  echo "CSharpier formatting issues detected. Run 'dotnet tool run csharpier format .' to fix." >&2
   exit 1
 fi
