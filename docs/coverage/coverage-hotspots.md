@@ -1,6 +1,6 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 17:16 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-15 20:12 UTC).
 
 ## Snapshot
 - Overall line coverage: **81.9 %**
@@ -13,7 +13,6 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 ## Prioritized Red List (Interpreter < 90 %)
 - `NovaSharp.Interpreter.Interop.PredefinedUserData.EnumerableWrapper` — **71.4 %** line coverage. Add regression tests that enumerate empty/non-empty CLR sequences through Lua, hit the `IEnumerator.Reset()` guard, and force the lazy iterator cache path.
 - `NovaSharp.Interpreter.Interop.Converters.ScriptToClrConversions` — **72.8 %**. Missing coverage around numeric/string coercion fallbacks (`GetValueTypeForDynamic`, `CastToNumber`, wildcard delegate bridges); add focused unit tests to drive the remaining switch cases.
-- `NovaSharp.Interpreter.Interop.CustomConverterRegistry` — **72.9 %**. Exercise duplicate-registration handling, `RemoveConverter`, and the interface-based lookup paths.
 - `NovaSharp.Interpreter.Tree.Statements.BreakStatement` — **73.9 %**. Add parser/VM tests for nested loop/`goto` mixes so the `StatementBlock` metadata and runtime guard rails execute.
 - `NovaSharp.Interpreter.Interop.StandardDescriptors.ProxyUserDataDescriptor` — **77.7 %**. Expand `UserDataTests` to register multi-level proxy types (null proxy guard, interface proxies, static-only paths) and drive the meta-table caching branches.
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
@@ -25,6 +24,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
 
 ## Recently Covered
+- `CustomConverterRegistry` jumped to **100 % line / 100 % branch / 100 % method** after introducing `CustomConverterRegistryTests` (duplicate registration, removal, typed + obsolete CLR bridge paths, `Clear`) and tightening the registry's DataType guard so invalid values no longer index past the backing arrays. Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-15 20:12 UTC captured the bump and pushed interpreter totals to **91.1 % line / 87.4 % branch / 93.5 % method** with **1 760** Release tests.
 - `BinaryOperatorExpression` now sits at **90.0 %** line / **82.5 %** branch coverage after adding compile-path opcode assertions (arithmetic, concatenation, comparison, and `~=` inversion) plus new string comparison/equality regressions; coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-14 17:44 UTC captured the jump.
 - `LuaStateInterop.Tools` climbed to **98.2 % line / 90.4 % branch** after expanding `LuaStateInteropToolsTests` with unsigned/null-edge coverage and exhaustive `sprintf` permutations (`%i`, `%f/%e/%E/%g/%G`, `%c`, `%s`, `%#o`, `%hd/%hu/%ld/%lu`, flag precedence). The same coverage run bumped interpreter totals to **90.7 % line / 87.4 % branch / 93.1 % method** with **1 721** Release tests.
     - `UnityAssetsScriptLoader` is now fully exercised under the reflection pathway thanks to a dynamically generated `UnityEngine` stub and failure-mode regression tests, yielding **100 % line / 90 % branch** coverage and pushing the suite to **1 723** Release tests (interpreter totals: **90.9 % line / 87.5 % branch / 93.3 % method**).

@@ -89,7 +89,7 @@ namespace NovaSharp.Interpreter.Interop
             Func<DynValue, object> converter = null
         )
         {
-            if ((int)scriptDataType > _script2Clr.Length)
+            if ((int)scriptDataType >= _script2Clr.Length)
             {
                 throw new ArgumentException("scriptDataType");
             }
@@ -120,7 +120,7 @@ namespace NovaSharp.Interpreter.Interop
             Type clrDataType
         )
         {
-            if ((int)scriptDataType > _script2Clr.Length)
+            if ((int)scriptDataType >= _script2Clr.Length)
             {
                 return null;
             }
