@@ -4,9 +4,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
-    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
@@ -187,7 +187,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                             source,
                             DynValue.NewString("should fail assignment")
                         ),
-                    Throws.TypeOf<ScriptRuntimeException>()
+                    Throws
+                        .TypeOf<ScriptRuntimeException>()
                         .With.Message.Contains("cannot be assigned")
                 );
             });
@@ -352,8 +353,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Is.False
                 );
                 Assert.That(
-                    () =>
-                        EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
+                    () => EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
                     Throws.ArgumentException.With.Message.Contains("value type parameters")
                 );
             });
@@ -368,10 +368,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(
-                    EventMemberDescriptor.CheckEventIsCompatible(byRef, false),
-                    Is.False
-                );
+                Assert.That(EventMemberDescriptor.CheckEventIsCompatible(byRef, false), Is.False);
                 Assert.That(
                     () => EventMemberDescriptor.CheckEventIsCompatible(byRef, true),
                     Throws.ArgumentException.With.Message.Contains("by-ref type parameters")
@@ -388,10 +385,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(
-                    EventMemberDescriptor.CheckEventIsCompatible(tooMany, false),
-                    Is.False
-                );
+                Assert.That(EventMemberDescriptor.CheckEventIsCompatible(tooMany, false), Is.False);
                 Assert.That(
                     () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
                     Throws.ArgumentException.With.Message.Contains(
@@ -464,7 +458,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                     typeof(MultiArityEventSource).GetEvent(@case.EventName)
                 );
 
-                string handlerSource = $@"
+                string handlerSource =
+                    $@"
 local max = {MultiArityEventSource.MaxArity}
 return function(...)
     local args = {{ ... }}
@@ -517,11 +512,7 @@ end";
                     );
                 }
 
-                descriptor.RemoveCallback(
-                    source,
-                    context,
-                    TestHelpers.CreateArguments(handler)
-                );
+                descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
             }
         }
 
@@ -620,7 +611,12 @@ end";
 
         private readonly struct ArityCase
         {
-            public ArityCase(string id, string eventName, int arity, Action<MultiArityEventSource> raise)
+            public ArityCase(
+                string id,
+                string eventName,
+                int arity,
+                Action<MultiArityEventSource> raise
+            )
             {
                 Id = id;
                 EventName = eventName;
@@ -641,24 +637,23 @@ end";
         {
             public const int MaxArity = 16;
 
-            public static readonly ArityCase[] Cases =
-                new ArityCase[]
-                {
-                    new("one", nameof(OneArg), 1, s => s.RaiseOneArg()),
-                    new("four", nameof(FourArgs), 4, s => s.RaiseFourArgs()),
-                    new("five", nameof(FiveArgs), 5, s => s.RaiseFiveArgs()),
-                    new("six", nameof(SixArgs), 6, s => s.RaiseSixArgs()),
-                    new("seven", nameof(SevenArgs), 7, s => s.RaiseSevenArgs()),
-                    new("eight", nameof(EightArgs), 8, s => s.RaiseEightArgs()),
-                    new("nine", nameof(NineArgs), 9, s => s.RaiseNineArgs()),
-                    new("ten", nameof(TenArgs), 10, s => s.RaiseTenArgs()),
-                    new("eleven", nameof(ElevenArgs), 11, s => s.RaiseElevenArgs()),
-                    new("twelve", nameof(TwelveArgs), 12, s => s.RaiseTwelveArgs()),
-                    new("thirteen", nameof(ThirteenArgs), 13, s => s.RaiseThirteenArgs()),
-                    new("fourteen", nameof(FourteenArgs), 14, s => s.RaiseFourteenArgs()),
-                    new("fifteen", nameof(FifteenArgs), 15, s => s.RaiseFifteenArgs()),
-                    new("sixteen", nameof(SixteenArgs), MaxArity, s => s.RaiseSixteenArgs()),
-                };
+            public static readonly ArityCase[] Cases = new ArityCase[]
+            {
+                new("one", nameof(OneArg), 1, s => s.RaiseOneArg()),
+                new("four", nameof(FourArgs), 4, s => s.RaiseFourArgs()),
+                new("five", nameof(FiveArgs), 5, s => s.RaiseFiveArgs()),
+                new("six", nameof(SixArgs), 6, s => s.RaiseSixArgs()),
+                new("seven", nameof(SevenArgs), 7, s => s.RaiseSevenArgs()),
+                new("eight", nameof(EightArgs), 8, s => s.RaiseEightArgs()),
+                new("nine", nameof(NineArgs), 9, s => s.RaiseNineArgs()),
+                new("ten", nameof(TenArgs), 10, s => s.RaiseTenArgs()),
+                new("eleven", nameof(ElevenArgs), 11, s => s.RaiseElevenArgs()),
+                new("twelve", nameof(TwelveArgs), 12, s => s.RaiseTwelveArgs()),
+                new("thirteen", nameof(ThirteenArgs), 13, s => s.RaiseThirteenArgs()),
+                new("fourteen", nameof(FourteenArgs), 14, s => s.RaiseFourteenArgs()),
+                new("fifteen", nameof(FifteenArgs), 15, s => s.RaiseFifteenArgs()),
+                new("sixteen", nameof(SixteenArgs), MaxArity, s => s.RaiseSixteenArgs()),
+            };
 
             public event Action<object> OneArg;
 
@@ -670,11 +665,41 @@ end";
 
             public event Action<object, object, object, object, object, object, object> SevenArgs;
 
-            public event Action<object, object, object, object, object, object, object, object> EightArgs;
+            public event Action<
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object
+            > EightArgs;
 
-            public event Action<object, object, object, object, object, object, object, object, object> NineArgs;
+            public event Action<
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object
+            > NineArgs;
 
-            public event Action<object, object, object, object, object, object, object, object, object, object> TenArgs;
+            public event Action<
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object,
+                object
+            > TenArgs;
 
             public event ElevenArgsDelegate ElevenArgs;
 

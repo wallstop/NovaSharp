@@ -6,8 +6,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
-    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -34,16 +34,15 @@ end
 return caller()
 ";
 
-            StepSequencingDebugger debugger =
-                new(
-                    new[]
-                    {
-                        DebuggerAction.ActionType.StepIn,
-                        DebuggerAction.ActionType.StepOut,
-                        DebuggerAction.ActionType.Run,
-                    },
-                    new[] { 7, 8 }
-                );
+            StepSequencingDebugger debugger = new(
+                new[]
+                {
+                    DebuggerAction.ActionType.StepIn,
+                    DebuggerAction.ActionType.StepOut,
+                    DebuggerAction.ActionType.Run,
+                },
+                new[] { 7, 8 }
+            );
 
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;
@@ -56,10 +55,20 @@ return caller()
             int[] meaningfulLines = debugger.SeenLines.Where(line => line > 0).ToArray();
             Assert.Multiple(() =>
             {
-                Assert.That(meaningfulLines.Length, Is.GreaterThanOrEqualTo(1), "Debugger never reported a source line.");
+                Assert.That(
+                    meaningfulLines.Length,
+                    Is.GreaterThanOrEqualTo(1),
+                    "Debugger never reported a source line."
+                );
                 Assert.That(debugger.ActionsServed.Count, Is.GreaterThanOrEqualTo(2));
-                Assert.That(debugger.ActionsServed[0], Is.EqualTo(DebuggerAction.ActionType.StepIn));
-                Assert.That(debugger.ActionsServed[1], Is.EqualTo(DebuggerAction.ActionType.StepOut));
+                Assert.That(
+                    debugger.ActionsServed[0],
+                    Is.EqualTo(DebuggerAction.ActionType.StepIn)
+                );
+                Assert.That(
+                    debugger.ActionsServed[1],
+                    Is.EqualTo(DebuggerAction.ActionType.StepOut)
+                );
             });
         }
 

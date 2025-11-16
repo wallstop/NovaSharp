@@ -155,10 +155,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     return DynValue.True;
                 }
 
-                if (
-                    _state != CoroutineState.Suspended
-                    && _state != CoroutineState.ForceSuspended
-                )
+                if (_state != CoroutineState.Suspended && _state != CoroutineState.ForceSuspended)
                 {
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }

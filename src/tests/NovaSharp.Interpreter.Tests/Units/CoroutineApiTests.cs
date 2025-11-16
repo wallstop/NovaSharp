@@ -52,7 +52,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => enumerator.MoveNext(),
-                Throws.TypeOf<InvalidOperationException>()
+                Throws
+                    .TypeOf<InvalidOperationException>()
                     .With.Message.Contains("Only non-CLR coroutines can be resumed")
             );
         }
@@ -207,7 +208,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => coroutine.MarkClrCallbackAsDead(),
-                Throws.TypeOf<InvalidOperationException>()
+                Throws
+                    .TypeOf<InvalidOperationException>()
                     .With.Message.Contains("CoroutineType.ClrCallback")
             );
         }
@@ -222,7 +224,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => coroutine.Resume(),
-                Throws.TypeOf<InvalidOperationException>()
+                Throws
+                    .TypeOf<InvalidOperationException>()
                     .With.Message.Contains("Only non-CLR coroutines")
             );
         }

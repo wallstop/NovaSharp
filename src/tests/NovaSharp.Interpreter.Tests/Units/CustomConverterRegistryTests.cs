@@ -16,7 +16,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue dynValue = DynValue.NewString("payload");
 
             Func<DynValue, object> firstConverter = value => value.String + "-first";
-            registry.SetScriptToClrCustomConversion(DataType.String, typeof(string), firstConverter);
+            registry.SetScriptToClrCustomConversion(
+                DataType.String,
+                typeof(string),
+                firstConverter
+            );
 
             Func<DynValue, object> resolved = registry.GetScriptToClrCustomConversion(
                 DataType.String,
@@ -25,7 +29,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(resolved(dynValue), Is.EqualTo("payload-first"));
 
             Func<DynValue, object> secondConverter = value => value.String + "-second";
-            registry.SetScriptToClrCustomConversion(DataType.String, typeof(string), secondConverter);
+            registry.SetScriptToClrCustomConversion(
+                DataType.String,
+                typeof(string),
+                secondConverter
+            );
 
             Func<DynValue, object> updated = registry.GetScriptToClrCustomConversion(
                 DataType.String,
@@ -46,13 +54,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             CustomConverterRegistry registry = new CustomConverterRegistry();
             DataType invalidType = (DataType)((int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1);
 
-            Assert.Throws<ArgumentException>(
-                () =>
-                    registry.SetScriptToClrCustomConversion(
-                        invalidType,
-                        typeof(string),
-                        value => value.String
-                    )
+            Assert.Throws<ArgumentException>(() =>
+                registry.SetScriptToClrCustomConversion(
+                    invalidType,
+                    typeof(string),
+                    value => value.String
+                )
             );
         }
 
@@ -147,7 +154,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ClearRemovesAllConverters()
         {
             CustomConverterRegistry registry = new CustomConverterRegistry();
-            registry.SetScriptToClrCustomConversion(DataType.String, typeof(string), value => value.String);
+            registry.SetScriptToClrCustomConversion(
+                DataType.String,
+                typeof(string),
+                value => value.String
+            );
             registry.SetClrToScriptCustomConversion(
                 typeof(int),
                 (s, value) => DynValue.NewNumber((int)value)
@@ -161,10 +172,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     registry.GetScriptToClrCustomConversion(DataType.String, typeof(string)),
                     Is.Null
                 );
-                Assert.That(
-                    registry.GetClrToScriptCustomConversion(typeof(int)),
-                    Is.Null
-                );
+                Assert.That(registry.GetClrToScriptCustomConversion(typeof(int)), Is.Null);
             });
         }
     }

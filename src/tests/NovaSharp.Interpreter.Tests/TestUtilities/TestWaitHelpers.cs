@@ -6,7 +6,11 @@ namespace NovaSharp.Interpreter.Tests.TestUtilities
 
     internal static class TestWaitHelpers
     {
-        internal static bool SpinUntil(Func<bool> condition, TimeSpan timeout, int sleepMilliseconds = 5)
+        internal static bool SpinUntil(
+            Func<bool> condition,
+            TimeSpan timeout,
+            int sleepMilliseconds = 5
+        )
         {
             if (condition == null)
             {

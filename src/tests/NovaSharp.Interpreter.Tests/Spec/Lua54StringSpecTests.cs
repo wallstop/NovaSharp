@@ -220,7 +220,9 @@ namespace NovaSharp.Interpreter.Tests.Spec
         [Test]
         public void StringFormatPercentQEscapesControlSequences()
         {
-            DynValue result = Evaluate("return string.byte(string.format('%q', string.char(76, 117, 97, 10)), 5, 6)");
+            DynValue result = Evaluate(
+                "return string.byte(string.format('%q', string.char(76, 117, 97, 10)), 5, 6)"
+            );
 
             Assert.Multiple(() =>
             {

@@ -20,18 +20,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         private static IEnumerable<TestCaseData> Corpus()
         {
             yield return new TestCaseData(
-                    "json.lua v0.1.2 (rxi)",
-                    Path.Combine("rxi-json", "json.lua"),
-                    (Action<Script, DynValue>)ExerciseRxiJson
-                )
-                .SetName("RealWorld_json_lua_encodes_and_decodes");
+                "json.lua v0.1.2 (rxi)",
+                Path.Combine("rxi-json", "json.lua"),
+                (Action<Script, DynValue>)ExerciseRxiJson
+            ).SetName("RealWorld_json_lua_encodes_and_decodes");
 
             yield return new TestCaseData(
-                    "inspect.lua v3.1.0 (kikito)",
-                    Path.Combine("kikito-inspect", "inspect.lua"),
-                    (Action<Script, DynValue>)ExerciseKikitoInspect
-                )
-                .SetName("RealWorld_inspect_lua_formats_tables");
+                "inspect.lua v3.1.0 (kikito)",
+                Path.Combine("kikito-inspect", "inspect.lua"),
+                (Action<Script, DynValue>)ExerciseKikitoInspect
+            ).SetName("RealWorld_inspect_lua_formats_tables");
         }
 
         [TestCaseSource(nameof(Corpus))]

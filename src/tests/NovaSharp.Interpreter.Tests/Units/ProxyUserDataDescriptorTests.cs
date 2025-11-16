@@ -54,7 +54,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = DynValue.NewNumber(5);
             _innerDescriptor.SetIndexResult = true;
 
-            bool result = _descriptor.SetIndex(_script, target, index, value, isDirectIndexing: false);
+            bool result = _descriptor.SetIndex(
+                _script,
+                target,
+                index,
+                value,
+                isDirectIndexing: false
+            );
 
             Assert.Multiple(() =>
             {
@@ -106,8 +112,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TypeAndNameReflectFactoryAndFriendlyName()
         {
-            ProxyUserDataDescriptor friendlyDescriptor =
-                new ProxyUserDataDescriptor(_factory, _innerDescriptor, "custom-name");
+            ProxyUserDataDescriptor friendlyDescriptor = new ProxyUserDataDescriptor(
+                _factory,
+                _innerDescriptor,
+                "custom-name"
+            );
 
             Assert.Multiple(() =>
             {
@@ -123,10 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(_descriptor.IsTypeCompatible(typeof(Target), new Target("t")), Is.True);
-                Assert.That(
-                    _descriptor.IsTypeCompatible(typeof(Target), new object()),
-                    Is.False
-                );
+                Assert.That(_descriptor.IsTypeCompatible(typeof(Target), new object()), Is.False);
             });
         }
 

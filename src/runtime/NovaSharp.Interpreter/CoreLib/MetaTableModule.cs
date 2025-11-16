@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing metatable related Lua functions (xxxmetatable and rawxxx).
     /// </summary>
     [NovaSharpModule]
-public class MetaTableModule
+    public class MetaTableModule
     {
         // setmetatable (table, metatable)
         // -------------------------------------------------------------------------------------------------------------------

@@ -79,8 +79,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(constDescriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
-                Assert.That(readonlyDescriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(
+                    constDescriptor.MemberAccess,
+                    Is.EqualTo(MemberDescriptorAccess.CanRead)
+                );
+                Assert.That(
+                    readonlyDescriptor.MemberAccess,
+                    Is.EqualTo(MemberDescriptorAccess.CanRead)
+                );
                 Assert.That(
                     writableDescriptor.MemberAccess,
                     Is.EqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite)
@@ -121,7 +127,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(optimizedGetter, Is.Not.Null, "Getter compiled during construction");
-                Assert.That(descriptor.GetValue(_script, null).Number, Is.EqualTo(SampleFields.StaticValue));
+                Assert.That(
+                    descriptor.GetValue(_script, null).Number,
+                    Is.EqualTo(SampleFields.StaticValue)
+                );
             });
         }
 
@@ -172,11 +181,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(
                     () => constDescriptor.SetValue(_script, null, DynValue.NewNumber(10)),
-                    Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot be assigned")
+                    Throws
+                        .TypeOf<ScriptRuntimeException>()
+                        .With.Message.Contains("cannot be assigned")
                 );
                 Assert.That(
                     () => readonlyDescriptor.SetValue(_script, null, DynValue.NewString("new")),
-                    Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot be assigned")
+                    Throws
+                        .TypeOf<ScriptRuntimeException>()
+                        .With.Message.Contains("cannot be assigned")
                 );
             });
         }
@@ -229,7 +242,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => descriptor.SetValue(_script, null, DynValue.NewNumber(1)),
-                Throws.TypeOf<ScriptRuntimeException>()
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("attempt to access instance member InstanceValue")
             );
         }

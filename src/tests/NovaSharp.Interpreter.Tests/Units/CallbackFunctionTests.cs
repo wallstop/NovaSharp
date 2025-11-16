@@ -20,11 +20,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
             CallbackArguments captured = null;
-            CallbackFunction function = new((_, args) =>
-            {
-                captured = args;
-                return DynValue.Nil;
-            });
+            CallbackFunction function = new(
+                (_, args) =>
+                {
+                    captured = args;
+                    return DynValue.Nil;
+                }
+            );
 
             List<DynValue> arguments = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
 
@@ -41,15 +43,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InvokeTreatsMethodCallsOnlyForUserDataUnderDotBehaviour()
         {
             Script script = new();
-            script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsDotOnUserData;
+            script.Options.ColonOperatorClrCallbackBehaviour =
+                ColonOperatorBehaviour.TreatAsDotOnUserData;
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
             CallbackArguments captured = null;
-            CallbackFunction function = new((_, args) =>
-            {
-                captured = args;
-                return DynValue.Nil;
-            });
+            CallbackFunction function = new(
+                (_, args) =>
+                {
+                    captured = args;
+                    return DynValue.Nil;
+                }
+            );
 
             List<DynValue> nonUserData = new() { DynValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
@@ -86,8 +91,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                         Throws.TypeOf<ArgumentException>()
                     );
                     Assert.That(
-                        () => CallbackFunction.DefaultAccessMode =
-                            InteropAccessMode.BackgroundOptimized,
+                        () =>
+                            CallbackFunction.DefaultAccessMode =
+                                InteropAccessMode.BackgroundOptimized,
                         Throws.TypeOf<ArgumentException>()
                     );
                 });
@@ -147,7 +153,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(CallbackFunction.CheckCallbackSignature(publicMethod, true), Is.True);
                 Assert.That(CallbackFunction.CheckCallbackSignature(publicMethod, false), Is.True);
                 Assert.That(CallbackFunction.CheckCallbackSignature(internalMethod, true), Is.True);
-                Assert.That(CallbackFunction.CheckCallbackSignature(internalMethod, false), Is.False);
+                Assert.That(
+                    CallbackFunction.CheckCallbackSignature(internalMethod, false),
+                    Is.False
+                );
                 Assert.That(CallbackFunction.CheckCallbackSignature(badMethod, true), Is.False);
             });
         }

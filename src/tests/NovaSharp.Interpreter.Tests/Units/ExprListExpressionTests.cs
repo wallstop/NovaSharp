@@ -19,10 +19,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptLoadingContext context = new(script);
             StubExpression first = new(context, DynValue.NewNumber(1));
             StubExpression second = new(context, DynValue.NewNumber(2));
-            ExprListExpression list = new(
-                new List<Expression> { first, second },
-                context
-            );
+            ExprListExpression list = new(new List<Expression> { first, second }, context);
             ByteCode byteCode = new(script);
 
             list.Compile(byteCode);
@@ -42,10 +39,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new();
             ScriptLoadingContext context = new(script);
             StubExpression expression = new(context, DynValue.NewNumber(42));
-            ExprListExpression list = new(
-                new List<Expression> { expression },
-                context
-            );
+            ExprListExpression list = new(new List<Expression> { expression }, context);
             ByteCode byteCode = new(script);
 
             list.Compile(byteCode);
@@ -65,10 +59,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue expected = DynValue.NewString("primary");
             StubExpression first = new(context, expected);
             StubExpression second = new(context, DynValue.NewString("secondary"));
-            ExprListExpression list = new(
-                new List<Expression> { first, second },
-                context
-            );
+            ExprListExpression list = new(new List<Expression> { first, second }, context);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
 
             DynValue result = list.Eval(executionContext);

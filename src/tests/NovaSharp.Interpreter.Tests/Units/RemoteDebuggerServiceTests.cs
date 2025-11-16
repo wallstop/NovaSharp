@@ -6,11 +6,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
+    using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
-    using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]

@@ -3,8 +3,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using System.Collections.Generic;
     using Debugging;
     using NovaSharp.Interpreter.Execution;
-    using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Execution.Scopes;
+    using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
     internal class GotoStatement : Statement

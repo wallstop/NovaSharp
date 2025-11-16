@@ -51,9 +51,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new Script();
             TrackingEnumerator enumerator = new TrackingEnumerator(5, null, 7);
-            DynValue iteratorUserData = EnumerableWrapper
-                .ConvertIterator(script, enumerator)
-                .Tuple[0];
+            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+                0
+            ];
             DynValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
@@ -84,7 +84,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.Multiple(() =>
             {
-                Assert.That(enumerator.ResetCalls, Is.EqualTo(1), "Reset should run before the next cycle");
+                Assert.That(
+                    enumerator.ResetCalls,
+                    Is.EqualTo(1),
+                    "Reset should run before the next cycle"
+                );
                 Assert.That(restart.Number, Is.EqualTo(5));
             });
         }
@@ -94,9 +98,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new Script();
             TrackingEnumerator enumerator = new TrackingEnumerator("alpha", "beta");
-            DynValue iteratorUserData = EnumerableWrapper
-                .ConvertIterator(script, enumerator)
-                .Tuple[0];
+            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+                0
+            ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
@@ -106,10 +110,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue.NewString("MoveNext"),
                 isDirectIndexing: true
             );
-            bool advanced = moveNext.Callback.ClrCallback(
-                context,
-                TestHelpers.CreateArguments()
-            ).Boolean;
+            bool advanced = moveNext
+                .Callback.ClrCallback(context, TestHelpers.CreateArguments())
+                .Boolean;
             Assert.That(advanced, Is.True);
 
             DynValue current = descriptor.Index(
@@ -132,10 +135,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(resetResult.IsNil(), Is.True);
 
-            bool restarted = moveNext.Callback.ClrCallback(
-                context,
-                TestHelpers.CreateArguments()
-            ).Boolean;
+            bool restarted = moveNext
+                .Callback.ClrCallback(context, TestHelpers.CreateArguments())
+                .Boolean;
             Assert.That(restarted, Is.True);
             Assert.That(current.String, Is.EqualTo("alpha"), "Reset should rewind the enumerator");
         }

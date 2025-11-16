@@ -13,8 +13,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new Script();
 
-            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(
-                () => script.DoString("break")
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString("break")
             );
 
             Assert.That(
@@ -28,14 +28,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void BreakInsideStandaloneFunctionTriggersLoopBoundaryGuard()
         {
             Script script = new Script();
-            const string chunk = @"
+            const string chunk =
+                @"
                 local function inner()
                     break
                 end
             ";
 
-            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(
-                () => script.DoString(chunk)
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString(chunk)
             );
             Assert.That(
                 exception.DecoratedMessage,
@@ -48,7 +49,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop()
         {
             Script script = new Script();
-            const string chunk = @"
+            const string chunk =
+                @"
                 for i = 1, 2 do
                     local function inner()
                         break
@@ -56,8 +58,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 end
             ";
 
-            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(
-                () => script.DoString(chunk)
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString(chunk)
             );
             Assert.That(
                 exception.DecoratedMessage,
@@ -70,7 +72,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void MultipleBreakStatementsRespectInnermostLoopScope()
         {
             Script script = new Script();
-            const string chunk = @"
+            const string chunk =
+                @"
                 local log = {}
 
                 local function emit(flag)
@@ -105,7 +108,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void BreakOnlyExitsInnermostLoop()
         {
             Script script = new Script();
-            const string chunk = @"
+            const string chunk =
+                @"
                 local log = {}
                 for outer = 1, 3 do
                     for inner = 1, 3 do

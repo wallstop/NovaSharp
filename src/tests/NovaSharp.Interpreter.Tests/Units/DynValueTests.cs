@@ -107,8 +107,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue number = DynValue.NewNumber(5);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => number.GetLength()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                number.GetLength()
             );
 
             Assert.That(exception.Message, Does.Contain("Can't get length"));
@@ -134,8 +134,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AssignThrowsWhenValueIsReadOnly()
         {
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => DynValue.True.Assign(DynValue.False)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.True.Assign(DynValue.False)
             );
 
             Assert.That(exception.Message, Does.Contain("Assigning on r-value"));
@@ -163,8 +163,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckTypeThrowsWhenVoidAndValueRequired()
         {
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => DynValue.Void.CheckType("func", DataType.Number, argNum: 2)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.Void.CheckType("func", DataType.Number, argNum: 2)
             );
 
             Assert.That(exception.Message, Does.Contain("got no value"));
@@ -220,8 +220,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue userData = UserData.Create(new SampleUserData("ud"));
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => userData.CheckUserDataType<string>("func")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                userData.CheckUserDataType<string>("func")
             );
 
             Assert.That(exception.Message, Does.Contain("userdata"));

@@ -25,8 +25,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 or HttpResourceType.Json
                 or HttpResourceType.Xml
                 or HttpResourceType.Javascript
-                or HttpResourceType.Css
-                    => HttpResource.CreateText(type, "payload"),
+                or HttpResourceType.Css => HttpResource.CreateText(type, "payload"),
                 _ => HttpResource.CreateBinary(type, new byte[] { 0 }),
             };
 

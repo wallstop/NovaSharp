@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         [Obsolete("Use a specific OpCode.", false)]
         Unknown = 0,
+
         // Meta-opcodes
         Nop = 0, // Does not perform any operation.
         Debug = 1, // Does not perform any operation. Used to help debugging.

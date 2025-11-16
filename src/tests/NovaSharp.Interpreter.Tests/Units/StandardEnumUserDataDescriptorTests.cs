@@ -4,11 +4,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NUnit.Framework;
-    using NovaSharp.Interpreter.Errors;
 
     [TestFixture]
     public sealed class StandardEnumUserDataDescriptorTests
@@ -137,7 +137,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.False);
-                Assert.That(Convert.ToInt64(result.UserData.Object), Is.EqualTo(Convert.ToInt64(flagValue)));
+                Assert.That(
+                    Convert.ToInt64(result.UserData.Object),
+                    Is.EqualTo(Convert.ToInt64(flagValue))
+                );
             });
         }
 
@@ -156,7 +159,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.True);
-                Assert.That(Convert.ToUInt64(result.UserData.Object), Is.EqualTo(Convert.ToUInt64(flagValue)));
+                Assert.That(
+                    Convert.ToUInt64(result.UserData.Object),
+                    Is.EqualTo(Convert.ToUInt64(flagValue))
+                );
             });
         }
 
@@ -184,9 +190,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () =>
                     descriptor.Callback_Or(
                         context,
-                        TestHelpers.CreateArguments(DynValue.NewString("bad"), DynValue.NewNumber(1))
+                        TestHelpers.CreateArguments(
+                            DynValue.NewString("bad"),
+                            DynValue.NewNumber(1)
+                        )
                     ),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("Enum userdata or number expected")
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("Enum userdata or number expected")
             );
         }
 
@@ -199,7 +210,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => descriptor.Callback_Or(context, TestHelpers.CreateArguments(value)),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("expects two arguments")
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("expects two arguments")
             );
         }
 
@@ -211,7 +224,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => descriptor.Callback_BwNot(context, TestHelpers.CreateArguments()),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("expects one argument")
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("expects one argument")
             );
         }
 
@@ -241,7 +256,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(descriptor.IsTypeCompatible(typeof(SampleEnum), SampleEnum.One), Is.True);
+                Assert.That(
+                    descriptor.IsTypeCompatible(typeof(SampleEnum), SampleEnum.One),
+                    Is.True
+                );
                 Assert.That(descriptor.IsTypeCompatible(typeof(SampleEnum), null), Is.False);
             });
         }

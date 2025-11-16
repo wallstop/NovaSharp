@@ -3,8 +3,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.Collections.Generic;
     using System.Reflection;
-    using NUnit.Framework;
     using NovaSharp.Interpreter.DataStructs;
+    using NUnit.Framework;
 
     [TestFixture]
     public sealed class FastStackTests

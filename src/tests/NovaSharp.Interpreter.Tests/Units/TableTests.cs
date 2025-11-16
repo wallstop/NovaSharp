@@ -20,7 +20,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(table.Length, Is.EqualTo(2));
 
             table.Set(2, DynValue.Nil);
-            Assert.That(table.Length, Is.EqualTo(1), "Setting nil should invalidate the cached length.");
+            Assert.That(
+                table.Length,
+                Is.EqualTo(1),
+                "Setting nil should invalidate the cached length."
+            );
 
             table.Append(DynValue.NewNumber(30));
             Assert.Multiple(() =>
@@ -79,8 +83,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table table = new(scriptA);
             DynValue foreignValue = DynValue.NewTable(scriptB);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => table.Append(foreignValue)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Append(foreignValue)
             );
 
             Assert.That(exception.Message, Does.Contain("resources owned by different scripts"));
@@ -92,8 +96,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table table = new(new Script());
             DynValue nanKey = DynValue.NewNumber(double.NaN);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => table.Set(nanKey, DynValue.NewNumber(1))
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set(nanKey, DynValue.NewNumber(1))
             );
 
             Assert.That(exception.Message, Does.Contain("table index is NaN"));
@@ -104,8 +108,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Table table = new(new Script());
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
             );
 
             Assert.That(exception.Message, Does.Contain("did not point to anything"));
@@ -117,8 +121,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table table = new(new Script());
             table.Set("leaf", DynValue.NewNumber(5));
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
             );
 
             Assert.That(exception.Message, Does.Contain("did not point to a table"));
@@ -157,8 +161,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Table table = new(new Script());
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => table.Set((object)null, DynValue.NewNumber(1))
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set((object)null, DynValue.NewNumber(1))
             );
 
             Assert.That(exception.Message, Does.Contain("table index is nil"));

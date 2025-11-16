@@ -26,7 +26,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 xml,
-                Does.Contain("text=\"(null)\"").And.Contain("object=\"(null)\"").And.Contains("<child>(null)</child>")
+                Does.Contain("text=\"(null)\"")
+                    .And.Contain("object=\"(null)\"")
+                    .And.Contains("<child>(null)</child>")
             );
             Assert.That(xml, Does.Contain("<payload><![CDATA[(null)]]></payload>"));
         }

@@ -99,10 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             Execution.ScriptLoadingContext ctx = new(script);
             LiteralExpression literal = new(ctx, DynValue.True);
-            Token notToken = new Token(TokenType.Not, 0, 0, 0, 0, 0, 0, 0)
-            {
-                Text = "not",
-            };
+            Token notToken = new Token(TokenType.Not, 0, 0, 0, 0, 0, 0, 0) { Text = "not" };
             UnaryOperatorExpression expression = new(ctx, literal, notToken);
 
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
@@ -117,10 +114,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             Execution.ScriptLoadingContext ctx = new(script);
             LiteralExpression literal = new(ctx, DynValue.NewString("Lua"));
-            Token lenToken = new Token(TokenType.OpLen, 0, 0, 0, 0, 0, 0, 0)
-            {
-                Text = "#",
-            };
+            Token lenToken = new Token(TokenType.OpLen, 0, 0, 0, 0, 0, 0, 0) { Text = "#" };
             UnaryOperatorExpression expression = new(ctx, literal, lenToken);
 
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);

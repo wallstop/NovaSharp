@@ -45,7 +45,11 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 if (stackframe.blocksToClose != null)
                 {
-                    for (int listIndex = stackframe.blocksToClose.Count - 1; listIndex >= 0; listIndex--)
+                    for (
+                        int listIndex = stackframe.blocksToClose.Count - 1;
+                        listIndex >= 0;
+                        listIndex--
+                    )
                     {
                         List<SymbolRef> list = stackframe.blocksToClose[listIndex];
                         int foundIndex = list.FindIndex(s => s.i_Index == sym.i_Index);

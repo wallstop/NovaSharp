@@ -7,8 +7,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
-    using NovaSharp.RemoteDebugger.Network;
     using NovaSharp.Interpreter.Tests.TestUtilities;
+    using NovaSharp.RemoteDebugger.Network;
     using NUnit.Framework;
 
     [TestFixture]
@@ -24,8 +24,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 port,
                 Utf8TcpServerOptions.LocalHostOnly | Utf8TcpServerOptions.SingleClientOnly
             );
-            server.Authenticator = (user, password) =>
-                user == "nova" && password == "sharp";
+            server.Authenticator = (user, password) => user == "nova" && password == "sharp";
             server.RegisterResource(
                 "/secure",
                 HttpResource.CreateText(HttpResourceType.PlainText, "ok")
@@ -37,11 +36,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(unauthorized, Does.Contain("WWW-Authenticate"));
 
             string token = Convert.ToBase64String(Encoding.UTF8.GetBytes("nova:sharp"));
-            string authorized = SendHttpRequest(
-                port,
-                "/secure",
-                $"Authorization: Basic {token}"
-            );
+            string authorized = SendHttpRequest(port, "/secure", $"Authorization: Basic {token}");
             Assert.That(authorized, Does.Contain("200 OK"));
             Assert.That(GetBody(authorized), Is.EqualTo("ok"));
         }

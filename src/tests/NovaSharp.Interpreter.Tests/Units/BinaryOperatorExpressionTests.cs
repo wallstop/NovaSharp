@@ -371,12 +371,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Expression expr = BuildExpressionChain(
                 script,
-                new[]
-                {
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(2),
-                },
+                new[] { DynValue.NewNumber(2), DynValue.NewNumber(3), DynValue.NewNumber(2) },
                 new[] { (TokenType.OpPwr, "^"), (TokenType.OpPwr, "^") }
             );
 
@@ -409,12 +404,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Expression expr = BuildExpressionChain(
                 script,
-                new[]
-                {
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                },
+                new[] { DynValue.NewNumber(1), DynValue.NewNumber(2), DynValue.NewNumber(3) },
                 new[] { (TokenType.OpAdd, "+"), (TokenType.OpMul, "*") }
             );
 
@@ -514,18 +504,27 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (TokenType.OpConcat, "..", true, OpCode.Concat),
             };
 
-            foreach ((TokenType tokenType, string tokenText, bool operandsAreStrings, OpCode expectedOpCode) in cases)
+            foreach (
+                (
+                    TokenType tokenType,
+                    string tokenText,
+                    bool operandsAreStrings,
+                    OpCode expectedOpCode
+                ) in cases
+            )
             {
                 Expression expr = BuildBinaryExpression(
                     script,
                     tokenType,
                     tokenText,
-                    ctx => operandsAreStrings
-                        ? new LiteralExpression(ctx, DynValue.NewString("left"))
-                        : new LiteralExpression(ctx, DynValue.NewNumber(6)),
-                    ctx => operandsAreStrings
-                        ? new LiteralExpression(ctx, DynValue.NewString("right"))
-                        : new LiteralExpression(ctx, DynValue.NewNumber(3))
+                    ctx =>
+                        operandsAreStrings
+                            ? new LiteralExpression(ctx, DynValue.NewString("left"))
+                            : new LiteralExpression(ctx, DynValue.NewNumber(6)),
+                    ctx =>
+                        operandsAreStrings
+                            ? new LiteralExpression(ctx, DynValue.NewString("right"))
+                            : new LiteralExpression(ctx, DynValue.NewNumber(3))
                 );
 
                 ByteCode byteCode = new(script);
@@ -559,7 +558,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 expr.Compile(byteCode);
 
                 Instruction[] instructions = byteCode.code.ToArray();
-                int comparisonIndex = Array.FindLastIndex(instructions, i => i.OpCode == expectedOpCode);
+                int comparisonIndex = Array.FindLastIndex(
+                    instructions,
+                    i => i.OpCode == expectedOpCode
+                );
 
                 Assert.Multiple(() =>
                 {
@@ -567,11 +569,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                     if (expectedOpCode == OpCode.Less)
                     {
-                        Assert.That(instructions[comparisonIndex + 1].OpCode, Is.EqualTo(OpCode.ToBool));
+                        Assert.That(
+                            instructions[comparisonIndex + 1].OpCode,
+                            Is.EqualTo(OpCode.ToBool)
+                        );
                     }
                     else
                     {
-                        Assert.That(instructions[comparisonIndex + 1].OpCode, Is.EqualTo(OpCode.CNot));
+                        Assert.That(
+                            instructions[comparisonIndex + 1].OpCode,
+                            Is.EqualTo(OpCode.CNot)
+                        );
                     }
                 });
             }
@@ -628,7 +636,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             if (operands.Length != operators.Length + 1)
             {
-                throw new ArgumentException("Operator count must be operand count - 1", nameof(operators));
+                throw new ArgumentException(
+                    "Operator count must be operand count - 1",
+                    nameof(operators)
+                );
             }
 
             ScriptLoadingContext ctx = new(script);

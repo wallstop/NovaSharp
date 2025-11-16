@@ -158,7 +158,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(Tools.UnboxToLong((byte)200, round: false), Is.EqualTo(200));
                 Assert.That(Tools.UnboxToLong((ushort)60000, round: false), Is.EqualTo(60000));
                 Assert.That(Tools.UnboxToLong((uint)123456, round: false), Is.EqualTo(123456));
-                Assert.That(Tools.UnboxToLong((ulong)9876543210L, round: false), Is.EqualTo(9876543210L));
+                Assert.That(
+                    Tools.UnboxToLong((ulong)9876543210L, round: false),
+                    Is.EqualTo(9876543210L)
+                );
             });
         }
 
@@ -337,7 +340,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SprintfFormatsFloatingPointSpecifiers()
         {
-            string result = Tools.Sprintf("%.2f|%.2e|%.2E|%.2g|%.2G", 1.2345, 1.2345, 1.2345, 12345.0, 12345.0);
+            string result = Tools.Sprintf(
+                "%.2f|%.2e|%.2E|%.2g|%.2G",
+                1.2345,
+                1.2345,
+                1.2345,
+                12345.0,
+                12345.0
+            );
             Assert.That(result, Is.EqualTo("1.23|1.23e+000|1.23E+000|1.2e+04|1.2E+04"));
         }
 

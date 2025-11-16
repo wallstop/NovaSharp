@@ -133,20 +133,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 {
                     "const" => SymbolRefAttributes.Const,
                     "close" => SymbolRefAttributes.ToBeClosed,
-                    _ => throw new SyntaxErrorException(
-                        attr,
-                        "unknown attribute '{0}'",
-                        attr.Text
-                    ),
+                    _ => throw new SyntaxErrorException(attr, "unknown attribute '{0}'", attr.Text),
                 };
 
                 if ((flags & attrFlag) != 0)
                 {
-                    throw new SyntaxErrorException(
-                        attr,
-                        "duplicate attribute '{0}'",
-                        attr.Text
-                    );
+                    throw new SyntaxErrorException(attr, "duplicate attribute '{0}'", attr.Text);
                 }
 
                 CheckTokenType(lcontext, TokenType.OpGreaterThan);

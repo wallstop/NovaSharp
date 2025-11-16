@@ -26,14 +26,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestResource container = new(scriptA);
             DynValue dynValue = DynValue.NewTable(scriptB);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => container.CheckScriptOwnership(dynValue)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                container.CheckScriptOwnership(dynValue)
             );
 
-            Assert.That(
-                exception.Message,
-                Does.Contain("resources owned by different scripts")
-            );
+            Assert.That(exception.Message, Does.Contain("resources owned by different scripts"));
         }
 
         [Test]
@@ -42,8 +39,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestResource sharedContainer = new(owner: null);
             DynValue dynValue = DynValue.NewTable(new Script());
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => sharedContainer.CheckScriptOwnership(dynValue)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                sharedContainer.CheckScriptOwnership(dynValue)
             );
 
             Assert.That(
@@ -59,11 +56,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script scriptB = new();
             TestResource container = new(scriptA);
 
-            DynValue[] values = new[]
-            {
-                DynValue.NewTable(scriptA),
-                DynValue.NewTable(scriptB),
-            };
+            DynValue[] values = new[] { DynValue.NewTable(scriptA), DynValue.NewTable(scriptB) };
 
             Assert.Throws<ScriptRuntimeException>(
                 () => container.CheckScriptOwnership(values),

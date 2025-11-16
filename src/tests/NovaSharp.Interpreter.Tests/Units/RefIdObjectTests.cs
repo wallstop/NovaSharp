@@ -7,7 +7,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RefIdObjectTests
     {
-        private static readonly Regex RefPattern = new(@"^Sample:\s[A-F0-9]{8}$", RegexOptions.Compiled);
+        private static readonly Regex RefPattern = new(
+            @"^Sample:\s[A-F0-9]{8}$",
+            RegexOptions.Compiled
+        );
 
         private sealed class SampleRefObject : RefIdObject { }
 

@@ -40,12 +40,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(policy, Is.InstanceOf<DefaultRegistrationPolicy>());
 
 #pragma warning disable CS0618
-                System.Reflection.PropertyInfo method = typeof(InteropRegistrationPolicy)
-                    .GetProperty(nameof(InteropRegistrationPolicy.Explicit));
+                System.Reflection.PropertyInfo method =
+                    typeof(InteropRegistrationPolicy).GetProperty(
+                        nameof(InteropRegistrationPolicy.Explicit)
+                    );
 #pragma warning restore CS0618
-                object[] attributes = method != null
-                    ? method.GetCustomAttributes(typeof(ObsoleteAttribute), false)
-                    : Array.Empty<object>();
+                object[] attributes =
+                    method != null
+                        ? method.GetCustomAttributes(typeof(ObsoleteAttribute), false)
+                        : Array.Empty<object>();
                 bool hasObsolete = attributes.OfType<ObsoleteAttribute>().Any();
 
                 Assert.That(hasObsolete, Is.True);

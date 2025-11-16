@@ -10,9 +10,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
-    using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -29,7 +29,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void Execute_LazyOptimizedInstanceActionUsesCompiledDelegate()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(nameof(MethodMemberDescriptorHost.SetName));
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.SetName)
+            );
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -70,7 +72,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void Execute_ReflectionModeInvokesMethodInfo()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(nameof(MethodMemberDescriptorHost.Multiply));
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Multiply)
+            );
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -88,7 +92,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void Execute_ArrayConstructorCreatesExpectedArray()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(new[] { typeof(int), typeof(int) });
+            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
+                new[] { typeof(int), typeof(int) }
+            );
             Assert.That(ctor, Is.Not.Null);
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
@@ -252,7 +258,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
                 Assert.That(
                     () => MethodMemberDescriptor.CheckMethodIsCompatible(method, true),
-                    Throws.TypeOf<ArgumentException>()
+                    Throws
+                        .TypeOf<ArgumentException>()
                         .With.Message.Contains("unresolved generic parameters")
                 );
             });
@@ -263,7 +270,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             MethodInfo pointerMethod = typeof(Buffer)
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .First(m => m.Name == "MemoryCopy" && m.GetParameters().Any(p => p.ParameterType.IsPointer));
+                .First(m =>
+                    m.Name == "MemoryCopy" && m.GetParameters().Any(p => p.ParameterType.IsPointer)
+                );
 
             Assert.That(
                 MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
@@ -274,7 +283,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PrepareForWiringPopulatesDescriptorMetadata()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(nameof(MethodMemberDescriptorHost.SetName));
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.SetName)
+            );
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -284,10 +295,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(table.Get("class").String, Contains.Substring("MethodMemberDescriptor"));
+                Assert.That(
+                    table.Get("class").String,
+                    Contains.Substring("MethodMemberDescriptor")
+                );
                 Assert.That(table.Get("name").String, Is.EqualTo("SetName"));
                 Assert.That(table.Get("ctor").Boolean, Is.False);
-                Assert.That(table.Get("decltype").String, Is.EqualTo(typeof(MethodMemberDescriptorHost).FullName));
+                Assert.That(
+                    table.Get("decltype").String,
+                    Is.EqualTo(typeof(MethodMemberDescriptorHost).FullName)
+                );
                 Assert.That(table.Get("static").Boolean, Is.False);
             });
         }
@@ -295,7 +312,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PrepareForWiringArrayConstructorIncludesArrayMetadata()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(new[] { typeof(int), typeof(int) });
+            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
+                new[] { typeof(int), typeof(int) }
+            );
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -310,46 +329,42 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
     }
- 
+
     internal sealed class MethodMemberDescriptorHost
     {
         public string LastName { get; private set; } = string.Empty;
- 
-        public MethodMemberDescriptorHost()
-        {
-        }
- 
+
+        public MethodMemberDescriptorHost() { }
+
         public MethodMemberDescriptorHost(string name)
         {
             LastName = name;
         }
- 
+
         public void SetName(string name)
         {
             LastName = name;
         }
- 
+
         public int Multiply(int left, int right)
         {
             return left * right;
         }
- 
+
         public bool TryDouble(int value, out int doubled)
         {
             doubled = value * 2;
             return true;
         }
- 
-        private void HiddenHelper()
-        {
-        }
- 
+
+        private void HiddenHelper() { }
+
         public static int Sum(int left, int right)
         {
             return left + right;
         }
     }
- 
+
     internal static class MethodMemberDescriptorTestExtensions
     {
         public static string Decorate(this MethodMemberDescriptorHost host, string suffix)
@@ -357,7 +372,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             return host.LastName + suffix;
         }
     }
- 
+
     internal static class GenericMethodHost
     {
         public static T Identity<T>(T value)
@@ -365,73 +380,71 @@ namespace NovaSharp.Interpreter.Tests.Units
             return value;
         }
     }
- 
+
     internal sealed class AotStubPlatformAccessor : IPlatformAccessor
     {
         public CoreModules FilterSupportedCoreModules(CoreModules module)
         {
             return module;
         }
- 
+
         public string GetEnvironmentVariable(string envvarname)
         {
             return null;
         }
- 
+
         public bool IsRunningOnAOT()
         {
             return true;
         }
- 
+
         public string GetPlatformName()
         {
             return "stub.aot";
         }
- 
-        public void DefaultPrint(string content)
-        {
-        }
- 
+
+        public void DefaultPrint(string content) { }
+
         public string DefaultInput(string prompt)
         {
             return null;
         }
- 
+
         public Stream OpenFile(Script script, string filename, Encoding encoding, string mode)
         {
             throw new NotSupportedException();
         }
- 
+
         public Stream GetStandardStream(StandardFileType type)
         {
             return Stream.Null;
         }
- 
+
         public string GetTempFileName()
         {
             return Path.GetTempFileName();
         }
- 
+
         public void ExitFast(int exitCode)
         {
             throw new NotSupportedException();
         }
- 
+
         public bool FileExists(string file)
         {
             return false;
         }
- 
+
         public void DeleteFile(string file)
         {
             throw new NotSupportedException();
         }
- 
+
         public void MoveFile(string src, string dst)
         {
             throw new NotSupportedException();
         }
- 
+
         public int ExecuteCommand(string cmdline)
         {
             return 0;

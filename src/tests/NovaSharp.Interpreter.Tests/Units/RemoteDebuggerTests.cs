@@ -2,18 +2,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net;
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
-    using System.Diagnostics;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
-    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -28,7 +28,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void HandshakeBroadcastsWelcomeAndSourceCode()
         {
             Script script = BuildScript("return 42", "handshake.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
             using RemoteDebuggerTestClient client = new(port);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -51,7 +55,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void RunAndBreakpointCommandsBecomeQueuedActions()
         {
             Script script = BuildScript("local x = 1 return x", "queue.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
             using RemoteDebuggerTestClient client = new(port);
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
@@ -62,7 +70,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             DebuggerAction run = server.GetAction(0, sourceRef);
             Assert.That(run.Action, Is.EqualTo(DebuggerAction.ActionType.Run));
 
-            client.SendCommand("<Command cmd=\"breakpoint\" arg=\"set\" src=\"0\" line=\"1\" col=\"0\" />");
+            client.SendCommand(
+                "<Command cmd=\"breakpoint\" arg=\"set\" src=\"0\" line=\"1\" col=\"0\" />"
+            );
             DebuggerAction breakpoint = server.GetAction(0, sourceRef);
 
             Assert.Multiple(() =>
@@ -77,7 +87,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AddWatchQueuesHardRefreshAndCreatesDynamicExpression()
         {
             Script script = BuildScript("local value = 10 return value", "watch.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
             using RemoteDebuggerTestClient client = new(port);
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
@@ -100,7 +114,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ErrorRegexCommandControlsPauseRequests()
         {
             Script script = BuildScript("return 0", "error.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
             using RemoteDebuggerTestClient client = new(port);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -113,10 +131,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(messages.Last(), Does.Contain("timeout"));
 
-            bool shouldPause = server.SignalRuntimeException(new ScriptRuntimeException("timeout occurred"));
+            bool shouldPause = server.SignalRuntimeException(
+                new ScriptRuntimeException("timeout occurred")
+            );
             Assert.That(shouldPause, Is.True);
 
-            bool otherPause = server.SignalRuntimeException(new ScriptRuntimeException("other failure"));
+            bool otherPause = server.SignalRuntimeException(
+                new ScriptRuntimeException("other failure")
+            );
             Assert.That(otherPause, Is.False);
         }
 
@@ -124,7 +146,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AddWatchQueuesRefreshAndTransitionsHostState()
         {
             Script script = BuildScript("local value = 1 return value", "state.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
             using RemoteDebuggerTestClient client = new(port);
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
@@ -151,10 +177,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(server.GetState(), Is.EqualTo("Unknown"));
         }
 
-        private static DebugServer CreateServer(Script script, bool freeRunAfterAttach, out int port)
+        private static DebugServer CreateServer(
+            Script script,
+            bool freeRunAfterAttach,
+            out int port
+        )
         {
             port = GetFreeTcpPort();
-            return new DebugServer("NovaSharp.Tests", script, port, ServerOptions, freeRunAfterAttach);
+            return new DebugServer(
+                "NovaSharp.Tests",
+                script,
+                port,
+                ServerOptions,
+                freeRunAfterAttach
+            );
         }
 
         private static Script BuildScript(string code, string chunkName)

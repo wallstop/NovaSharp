@@ -20,7 +20,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                         typeof(List<>),
                         InteropAccessMode.NoReflectionAllowed
                     ),
-                Throws.TypeOf<ArgumentException>()
+                Throws
+                    .TypeOf<ArgumentException>()
                     .With.Message.Contains("StandardGenericsUserDataDescriptor")
             );
         }
@@ -36,7 +37,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.Type, Is.EqualTo(typeof(Dictionary<,>)));
-                Assert.That(descriptor.Name, Is.EqualTo("@@System.Collections.Generic.Dictionary`2"));
+                Assert.That(
+                    descriptor.Name,
+                    Is.EqualTo("@@System.Collections.Generic.Dictionary`2")
+                );
                 Assert.That(descriptor.AccessMode, Is.EqualTo(InteropAccessMode.Default));
             });
         }
@@ -44,8 +48,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IndexAndMetaIndexReturnNullWhileSetIndexReturnsFalse()
         {
-            StandardGenericsUserDataDescriptor descriptor = new(typeof(List<>), InteropAccessMode.Default);
-            DynValue result = descriptor.Index(new Script(), null, DynValue.NewString("anything"), true);
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(List<>),
+                InteropAccessMode.Default
+            );
+            DynValue result = descriptor.Index(
+                new Script(),
+                null,
+                DynValue.NewString("anything"),
+                true
+            );
 
             Assert.Multiple(() =>
             {
@@ -67,7 +79,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AsStringUsesUnderlyingObjectToString()
         {
-            StandardGenericsUserDataDescriptor descriptor = new(typeof(List<>), InteropAccessMode.Default);
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(List<>),
+                InteropAccessMode.Default
+            );
 
             Assert.That(descriptor.AsString(42), Is.EqualTo("42"));
         }
@@ -75,7 +90,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IsTypeCompatibleDelegatesToFramework()
         {
-            StandardGenericsUserDataDescriptor descriptor = new(typeof(List<>), InteropAccessMode.Default);
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(List<>),
+                InteropAccessMode.Default
+            );
 
             Assert.Multiple(() =>
             {
@@ -87,7 +105,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GenerateReturnsNullForOpenGeneric()
         {
-            StandardGenericsUserDataDescriptor descriptor = new(typeof(List<>), InteropAccessMode.Default);
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(List<>),
+                InteropAccessMode.Default
+            );
 
             Assert.That(descriptor.Generate(typeof(List<>)), Is.Null);
         }

@@ -246,7 +246,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(result, Is.SameAs(competing));
                 Assert.That(
-                    UserData.GetDescriptorForType(typeof(CustomDescriptorHost), searchInterfaces: false),
+                    UserData.GetDescriptorForType(
+                        typeof(CustomDescriptorHost),
+                        searchInterfaces: false
+                    ),
                     Is.SameAs(initial)
                 );
                 Assert.That(dynValue.UserData.Descriptor, Is.SameAs(initial));

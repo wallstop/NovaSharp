@@ -1,8 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
-    using NUnit.Framework;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
+    using NUnit.Framework;
 
     [TestFixture]
     public class CompatibilityVersionTests

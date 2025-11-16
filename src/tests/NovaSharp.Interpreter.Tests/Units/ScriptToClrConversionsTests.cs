@@ -111,8 +111,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue yieldRequest = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
-            Assert.Throws<ScriptRuntimeException>(
-                () => ScriptToClrConversions.DynValueToObject(yieldRequest)
+            Assert.Throws<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObject(yieldRequest)
             );
         }
 
@@ -398,14 +398,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue tupleValue = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () =>
-                    ScriptToClrConversions.DynValueToObjectOfType(
-                        tupleValue,
-                        typeof(int),
-                        defaultValue: null,
-                        isOptional: false
-                    )
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    tupleValue,
+                    typeof(int),
+                    defaultValue: null,
+                    isOptional: false
+                )
             );
 
             Assert.That(exception.Message, Does.Contain("convert"));
@@ -416,14 +415,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue empty = DynValue.NewString(string.Empty);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () =>
-                    ScriptToClrConversions.DynValueToObjectOfType(
-                        empty,
-                        typeof(char),
-                        defaultValue: null,
-                        isOptional: false
-                    )
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    empty,
+                    typeof(char),
+                    defaultValue: null,
+                    isOptional: false
+                )
             );
 
             Assert.That(exception.Message, Does.Contain("convert"));
@@ -451,14 +449,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DynValueToObjectOfTypeThrowsWhenNoConversionExists()
         {
-            Assert.Throws<ScriptRuntimeException>(
-                () =>
-                    ScriptToClrConversions.DynValueToObjectOfType(
-                        DynValue.NewBoolean(true),
-                        typeof(DateTime),
-                        defaultValue: null,
-                        isOptional: false
-                    )
+            Assert.Throws<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    DynValue.NewBoolean(true),
+                    typeof(DateTime),
+                    defaultValue: null,
+                    isOptional: false
+                )
             );
         }
 

@@ -21,8 +21,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue first = coroutine.Coroutine.Resume();
             Assert.That(first.Number, Is.EqualTo(1));
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => coroutine.Coroutine.Resume()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.Resume()
             );
 
             Assert.That(exception.Message, Does.Contain("cannot resume dead coroutine"));

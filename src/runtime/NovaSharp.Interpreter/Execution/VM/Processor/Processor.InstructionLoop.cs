@@ -575,7 +575,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private static bool ShouldIgnoreToBeClosedValue(DynValue value)
         {
-            return value == null || value.IsNil()
+            return value == null
+                || value.IsNil()
                 || (value.Type == DataType.Boolean && value.Boolean == false);
         }
 
@@ -1117,9 +1118,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         )
         {
             DynValue fn = _valueStack.Peek(argsCount);
-            CallStackItemFlags flags = (
-                thisCall ? CallStackItemFlags.MethodCall : default
-            );
+            CallStackItemFlags flags = (thisCall ? CallStackItemFlags.MethodCall : default);
 
             // if TCO threshold reached
             if (

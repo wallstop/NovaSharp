@@ -265,7 +265,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void MatchReturnsFirstCapture()
         {
             Script script = CreateScript();
-            DynValue result = script.DoString("return string.match('Version: 1.2.3', '%d+%.%d+%.%d+')");
+            DynValue result = script.DoString(
+                "return string.match('Version: 1.2.3', '%d+%.%d+%.%d+')"
+            );
 
             Assert.That(result.String, Is.EqualTo("1.2.3"));
         }
@@ -369,10 +371,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(
-                result.String,
-                Does.StartWith(StringModule.BASE64_DUMP_HEADER)
-            );
+            Assert.That(result.String, Does.StartWith(StringModule.BASE64_DUMP_HEADER));
         }
 
         [Test]
@@ -400,8 +399,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = CreateScript();
             script.Globals.Set("callback", DynValue.NewCallback((_, _) => DynValue.Nil));
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => script.DoString("return string.dump(callback)")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.dump(callback)")
             );
 
             Assert.That(exception, Is.Not.Null);
@@ -435,8 +434,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(adjustIndex, Is.Not.Null);
 
-            object defaultResult = adjustIndex!.Invoke(null, new object[] { "Nova", DynValue.Nil, 3 });
-            object zeroResult = adjustIndex.Invoke(null, new object[] { "Nova", DynValue.NewNumber(0), 3 });
+            object defaultResult = adjustIndex!.Invoke(
+                null,
+                new object[] { "Nova", DynValue.Nil, 3 }
+            );
+            object zeroResult = adjustIndex.Invoke(
+                null,
+                new object[] { "Nova", DynValue.NewNumber(0), 3 }
+            );
             object positiveResult = adjustIndex.Invoke(
                 null,
                 new object[] { "Nova", DynValue.NewNumber(4), 3 }

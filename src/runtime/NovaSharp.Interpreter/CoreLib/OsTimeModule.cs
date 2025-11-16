@@ -10,9 +10,9 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
-    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
@@ -26,8 +26,8 @@ namespace NovaSharp.Interpreter.CoreLib
     public class OsTimeModule
     {
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider.Instance
-            .GetUtcNow()
+        private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider
+            .Instance.GetUtcNow()
             .UtcDateTime;
 
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
@@ -339,6 +339,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             return sb.ToString();
         }
+
         private static ITimeProvider ResolveTimeProvider(ScriptExecutionContext context)
         {
             return context?.OwnerScript?.TimeProvider ?? SystemTimeProvider.Instance;

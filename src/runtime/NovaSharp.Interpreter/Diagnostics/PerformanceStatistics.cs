@@ -2,8 +2,8 @@ namespace NovaSharp.Interpreter.Diagnostics
 {
     using System;
     using System.Text;
-    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Diagnostics.PerformanceCounters;
+    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// A single object of this type exists for every script and gives access to performance statistics.
@@ -61,9 +61,7 @@ namespace NovaSharp.Interpreter.Diagnostics
                     }
                     else if (!value && _enabled)
                     {
-                        _stopwatches = new IPerformanceStopwatch[
-                            (int)PerformanceCounter.LastValue
-                        ];
+                        _stopwatches = new IPerformanceStopwatch[(int)PerformanceCounter.LastValue];
 
                         lock (GlobalSyncRoot)
                         {
@@ -109,10 +107,7 @@ namespace NovaSharp.Interpreter.Diagnostics
             {
                 if (_globalStopwatches[(int)pc] == null)
                 {
-                    _globalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(
-                        pc,
-                        GlobalClock
-                    );
+                    _globalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(pc, GlobalClock);
                 }
 
                 return _globalStopwatches[(int)pc].Start();

@@ -206,7 +206,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase("0X.Cp+2\n", 3d, "\n")]
         [TestCase("-0x1p1\n", -2d, "\n")]
         [TestCase("+0xAp-1\n", 5d, "\n")]
-        public void ReadNumberParsesHexVariants(string literal, double expected, string expectedRemainder)
+        public void ReadNumberParsesHexVariants(
+            string literal,
+            double expected,
+            string expectedRemainder
+        )
         {
             DynValue tuple = ReadNumberFromContent(literal);
 
@@ -590,13 +594,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void StdOutWritesHonorCustomScriptOptionStream()
         {
             MemoryStream capture = new();
-            ScriptOptions options = new ScriptOptions() { Stdout = new UndisposableStream(capture), };
+            ScriptOptions options = new ScriptOptions()
+            {
+                Stdout = new UndisposableStream(capture),
+            };
 
             Script script = new(options);
             script.DoString("io.write('brokered output'); io.flush()");
 
             capture.Position = 0;
-            using StreamReader reader = new(capture, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+            using StreamReader reader = new(
+                capture,
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: true,
+                leaveOpen: true
+            );
             Assert.That(reader.ReadToEnd(), Does.Contain("brokered output"));
         }
 

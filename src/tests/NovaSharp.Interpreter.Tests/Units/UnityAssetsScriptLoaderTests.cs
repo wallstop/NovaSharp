@@ -39,10 +39,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ScriptFileExistsHandlesPathsAndExtensions()
         {
             UnityAssetsScriptLoader loader = new(
-                new Dictionary<string, string>
-                {
-                    ["secondary.lua"] = "",
-                }
+                new Dictionary<string, string> { ["secondary.lua"] = "" }
             );
 
             Assert.Multiple(() =>
@@ -56,11 +53,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetLoadedScriptsReturnsSnapshotOfKeys()
         {
-            Dictionary<string, string> resources = new()
-            {
-                ["alpha.lua"] = "",
-                ["beta.lua"] = "",
-            };
+            Dictionary<string, string> resources = new() { ["alpha.lua"] = "", ["beta.lua"] = "" };
 
             UnityAssetsScriptLoader loader = new(resources);
 
@@ -85,9 +78,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(loader.ScriptFileExists("from_unity.lua"), Is.True);
-                Assert.That(loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null!), Is.EqualTo("print('unity')"));
-                Assert.That(loader.GetLoadedScripts(), Is.EquivalentTo(new[] { "from_unity.lua", "extra.lua" }));
-                Assert.That(UnityEngineReflectionHarness.LastRequestedPath, Is.EqualTo("Custom/Unity/Scripts"));
+                Assert.That(
+                    loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null!),
+                    Is.EqualTo("print('unity')")
+                );
+                Assert.That(
+                    loader.GetLoadedScripts(),
+                    Is.EquivalentTo(new[] { "from_unity.lua", "extra.lua" })
+                );
+                Assert.That(
+                    UnityEngineReflectionHarness.LastRequestedPath,
+                    Is.EqualTo("Custom/Unity/Scripts")
+                );
             });
         }
 
@@ -115,7 +117,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             private static bool _assemblyBuilt;
             private static bool _throwOnLoad;
             private static Assembly _unityAssembly;
-            private static Dictionary<string, string> _scripts = new(StringComparer.OrdinalIgnoreCase);
+            private static Dictionary<string, string> _scripts = new(
+                StringComparer.OrdinalIgnoreCase
+            );
 
             internal static string LastRequestedPath { get; private set; } = string.Empty;
 
@@ -123,7 +127,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 lock (SyncRoot)
                 {
-                    _scripts = new Dictionary<string, string>(scripts, StringComparer.OrdinalIgnoreCase);
+                    _scripts = new Dictionary<string, string>(
+                        scripts,
+                        StringComparer.OrdinalIgnoreCase
+                    );
                     if (!_assemblyBuilt)
                     {
                         BuildUnityAssembly();
@@ -170,7 +177,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             private static void BuildUnityAssembly()
             {
                 AssemblyName name = new("UnityEngine");
-                AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
+                AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(
+                    name,
+                    AssemblyBuilderAccess.Run
+                );
                 _unityAssembly = assembly;
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveUnityAssembly;
                 ModuleBuilder module = assembly.DefineDynamicModule("UnityEngine.Dynamic");
@@ -186,8 +196,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                     TypeAttributes.Public | TypeAttributes.Class
                 );
 
-                FieldBuilder nameField = builder.DefineField("_name", typeof(string), FieldAttributes.Private);
-                FieldBuilder textField = builder.DefineField("_text", typeof(string), FieldAttributes.Private);
+                FieldBuilder nameField = builder.DefineField(
+                    "_name",
+                    typeof(string),
+                    FieldAttributes.Private
+                );
+                FieldBuilder textField = builder.DefineField(
+                    "_text",
+                    typeof(string),
+                    FieldAttributes.Private
+                );
 
                 ConstructorBuilder ctor = builder.DefineConstructor(
                     MethodAttributes.Public,
@@ -227,7 +245,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 MethodBuilder getter = typeBuilder.DefineMethod(
                     $"get_{propertyName}",
-                    MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+                    MethodAttributes.Public
+                        | MethodAttributes.SpecialName
+                        | MethodAttributes.HideBySig,
                     typeof(string),
                     Type.EmptyTypes
                 );
@@ -244,7 +264,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 TypeBuilder builder = module.DefineType(
                     "UnityEngine.Resources",
-                    TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.Abstract
+                    TypeAttributes.Public
+                        | TypeAttributes.Class
+                        | TypeAttributes.Sealed
+                        | TypeAttributes.Abstract
                 );
 
                 MethodBuilder loadAll = builder.DefineMethod(
@@ -272,13 +295,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Type type = Type.GetType(qualifiedName, throwOnError: false);
                 if (type == null)
                 {
-                    throw new InvalidOperationException($"Failed to load stub type '{qualifiedName}'.");
+                    throw new InvalidOperationException(
+                        $"Failed to load stub type '{qualifiedName}'."
+                    );
                 }
             }
 
             private static Assembly ResolveUnityAssembly(object sender, ResolveEventArgs args)
             {
-                if (_unityAssembly != null && args.Name.StartsWith("UnityEngine", StringComparison.Ordinal))
+                if (
+                    _unityAssembly != null
+                    && args.Name.StartsWith("UnityEngine", StringComparison.Ordinal)
+                )
                 {
                     return _unityAssembly;
                 }

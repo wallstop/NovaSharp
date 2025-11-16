@@ -31,8 +31,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ScriptLoadingContext context = CreateContext(string.Empty);
 
-            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(
-                () => TestNode.CallCheckTokenType(context, TokenType.Name)
+            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckTokenType(context, TokenType.Name)
             );
             Assert.Multiple(() =>
             {
@@ -46,11 +46,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ScriptLoadingContext context = CreateContext("true");
 
-            Token token = TestNode.CallCheckTokenType(
-                context,
-                TokenType.True,
-                TokenType.False
-            );
+            Token token = TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False);
 
             Assert.That(token.type, Is.EqualTo(TokenType.True));
         }
@@ -73,12 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Token opening = context.Lexer.Current;
             TestNode.CallCheckTokenType(context, TokenType.BrkOpenRound);
 
-            Token closing = TestNode.CallCheckMatch(
-                context,
-                opening,
-                TokenType.BrkCloseRound,
-                ")"
-            );
+            Token closing = TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")");
 
             Assert.Multiple(() =>
             {
@@ -94,8 +85,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Token opening = context.Lexer.Current;
             TestNode.CallCheckTokenType(context, TokenType.BrkOpenRound);
 
-            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(
-                () => TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")")
+            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")")
             );
             Assert.Multiple(() =>
             {

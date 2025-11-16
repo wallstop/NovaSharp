@@ -173,8 +173,8 @@ namespace NovaSharp.Interpreter.DataTypes
                 .CheckUserDataType<T>(
                     funcName,
                     argNum,
-                allowNil ? TypeValidationFlags.AllowNil : default
-            );
+                    allowNil ? TypeValidationFlags.AllowNil : default
+                );
         }
 
         /// <summary>

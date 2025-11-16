@@ -1,12 +1,12 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using NovaSharp;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NovaSharp.Interpreter.DataTypes;
-    using System;
     using NUnit.Framework;
 
     [TestFixture]
@@ -210,7 +210,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => context.Call(func),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("yield across a CLR-call boundary")
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("yield across a CLR-call boundary")
             );
         }
 
@@ -232,7 +234,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => context.Call(func),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot be called directly")
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("cannot be called directly")
             );
         }
 

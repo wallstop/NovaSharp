@@ -19,7 +19,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(1));
                 Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
-                Assert.That(closure.GetUpvaluesType(), Is.EqualTo(Closure.UpvaluesType.Environment));
+                Assert.That(
+                    closure.GetUpvaluesType(),
+                    Is.EqualTo(Closure.UpvaluesType.Environment)
+                );
             });
         }
 
@@ -49,7 +52,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(1));
                 Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
-                Assert.That(closure.GetUpvaluesType(), Is.EqualTo(Closure.UpvaluesType.Environment));
+                Assert.That(
+                    closure.GetUpvaluesType(),
+                    Is.EqualTo(Closure.UpvaluesType.Environment)
+                );
             });
         }
 
@@ -116,7 +122,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CallOverloadsInvokeUnderlyingFunction()
         {
             Script script = new();
-            DynValue function = script.DoString("return function(a, b) return (a or 0) + (b or 0) end");
+            DynValue function = script.DoString(
+                "return function(a, b) return (a or 0) + (b or 0) end"
+            );
             Closure closure = function.Function;
 
             DynValue noArgs = closure.Call();
@@ -135,7 +143,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void UpvaluesTypeIsNoneWhenNoUpvaluesAreCaptured()
         {
             Script script = new();
-            Closure closure = new(script, idx: 0, symbols: System.Array.Empty<SymbolRef>(), resolvedLocals: System.Array.Empty<DynValue>());
+            Closure closure = new(
+                script,
+                idx: 0,
+                symbols: System.Array.Empty<SymbolRef>(),
+                resolvedLocals: System.Array.Empty<DynValue>()
+            );
 
             Assert.Multiple(() =>
             {

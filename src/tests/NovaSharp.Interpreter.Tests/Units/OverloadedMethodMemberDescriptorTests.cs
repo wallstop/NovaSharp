@@ -59,10 +59,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             argument.SetName("cached");
 
             CallbackArguments args = TestHelpers.CreateArguments(UserData.Create(argument));
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             DynValue first = callback(context, args);
             DynValue second = callback(context, args);
@@ -101,12 +99,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new() { Label = "ext" };
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
-            DynValue result = callback(context, TestHelpers.CreateArguments(DynValue.NewString("!")));
+            DynValue result = callback(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewString("!"))
+            );
 
             Assert.That(result.String, Is.EqualTo("ext!"));
         }
@@ -140,14 +139,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new() { Label = "ext" };
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             Assert.That(
                 () => callback(context, TestHelpers.CreateArguments(DynValue.NewString("!"))),
-                Throws.TypeOf<ScriptRuntimeException>()
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("function call doesn't match any overload")
             );
         }
@@ -171,19 +169,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 parameters: new[] { new ParameterDescriptor("value", typeof(string)) },
                 resultFactory: _ => DynValue.NewString("single")
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "Join",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { varArgs, single }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "Join",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { varArgs, single }
+            );
 
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                null
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, null);
 
             DynValue result = callback(
                 context,
@@ -211,10 +206,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new();
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             DynValue userDataArray = UserData.Create(new[] { "cached" });
             DynValue result = callback(
@@ -238,10 +231,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new();
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             DynValue result = callback(
                 context,
@@ -254,8 +245,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void VarArgsUserDataArrayMatchesDescriptorMetadata()
         {
-            ParameterDescriptor[] parameters =
-                new[] { new ParameterDescriptor("values", typeof(string[]), isVarArgs: true) };
+            ParameterDescriptor[] parameters = new[]
+            {
+                new ParameterDescriptor("values", typeof(string[]), isVarArgs: true),
+            };
             RecordingOverloadDescriptor stub = new(
                 "VarArgsStub",
                 MemberDescriptorAccess.CanExecute,
@@ -264,19 +257,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 varArgsArrayType: typeof(string[]),
                 varArgsElementType: typeof(string)
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "VarArgsStub",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { stub }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "VarArgsStub",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { stub }
+            );
 
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                null
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, null);
 
             DynValue userDataArray = UserData.Create(new[] { "wrapped" });
             DynValue result = callback(context, TestHelpers.CreateArguments(userDataArray));
@@ -287,8 +277,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void VarArgsWithoutAdditionalArgumentsApplyEmptyWeights()
         {
-            ParameterDescriptor[] parameters =
-                new[] { new ParameterDescriptor("values", typeof(string[]), isVarArgs: true) };
+            ParameterDescriptor[] parameters = new[]
+            {
+                new ParameterDescriptor("values", typeof(string[]), isVarArgs: true),
+            };
             RecordingOverloadDescriptor stub = new(
                 "VarArgsStub",
                 MemberDescriptorAccess.CanExecute,
@@ -297,19 +289,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 varArgsArrayType: typeof(string[]),
                 varArgsElementType: typeof(string)
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "VarArgsStub",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { stub }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "VarArgsStub",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { stub }
+            );
 
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                null
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, null);
 
             DynValue result = callback(context, TestHelpers.CreateArguments());
 
@@ -336,11 +325,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Array zeroCache = Array.CreateInstance(cacheField.FieldType.GetElementType(), 0);
             cacheField.SetValue(descriptor, zeroCache);
 
-            DynValue result = descriptor
-                .GetCallback(script, host)(
-                    context,
-                    TestHelpers.CreateArguments(DynValue.NewNumber(1))
-                );
+            DynValue result = descriptor.GetCallback(script, host)(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewNumber(1))
+            );
 
             Assert.That(result.String, Is.EqualTo("num:1"));
         }
@@ -348,8 +336,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CalcScoreTreatsUserDataArrayAsExactMatch()
         {
-            ParameterDescriptor[] parameters =
-                new[] { new ParameterDescriptor("values", typeof(string[]), isVarArgs: true) };
+            ParameterDescriptor[] parameters = new[]
+            {
+                new ParameterDescriptor("values", typeof(string[]), isVarArgs: true),
+            };
             RecordingOverloadDescriptor stub = new(
                 "VarArgsStub",
                 MemberDescriptorAccess.CanExecute,
@@ -358,12 +348,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 varArgsArrayType: typeof(string[]),
                 varArgsElementType: typeof(string)
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "VarArgsStub",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { stub }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "VarArgsStub",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { stub }
+            );
 
             DynValue userDataArray = UserData.Create(new[] { "lua" });
             int score = OverloadedMethodMemberDescriptorTestUtilities.InvokeCalcScore(
@@ -378,8 +367,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CalcScoreHandlesEmptyVarArgsSet()
         {
-            ParameterDescriptor[] parameters =
-                new[] { new ParameterDescriptor("values", typeof(string[]), isVarArgs: true) };
+            ParameterDescriptor[] parameters = new[]
+            {
+                new ParameterDescriptor("values", typeof(string[]), isVarArgs: true),
+            };
             RecordingOverloadDescriptor stub = new(
                 "VarArgsStub",
                 MemberDescriptorAccess.CanExecute,
@@ -388,12 +379,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 varArgsArrayType: typeof(string[]),
                 varArgsElementType: typeof(string)
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "VarArgsStub",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { stub }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "VarArgsStub",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { stub }
+            );
 
             int score = OverloadedMethodMemberDescriptorTestUtilities.InvokeCalcScore(
                 descriptor,
@@ -419,10 +409,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new() { Label = "snap" };
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             DynValue result = callback(
                 context,
@@ -450,26 +438,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new() { Label = "cache" };
 
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> instanceCallback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> instanceCallback =
+                descriptor.GetCallback(script, host);
             DynValue instanceResult = instanceCallback(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewNumber(1.0))
             );
             Assert.That(instanceResult.String, Is.EqualTo("num:1"));
 
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> staticCallback = descriptor.GetCallback(
-                script,
-                null
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> staticCallback =
+                descriptor.GetCallback(script, null);
             DynValue staticResult = staticCallback(
                 context,
-                TestHelpers.CreateArguments(
-                    DynValue.NewString("static"),
-                    DynValue.NewNumber(2.5)
-                )
+                TestHelpers.CreateArguments(DynValue.NewString("static"), DynValue.NewNumber(2.5))
             );
 
             Assert.That(staticResult.String, Is.EqualTo("static:2.5"));
@@ -491,19 +472,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 sortKey: "1"
             );
 
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "Stub",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { first, second }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "Stub",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { first, second }
+            );
 
             Assert.That(descriptor.OverloadCount, Is.EqualTo(2));
 
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue result = descriptor
-                .GetCallback(script, null)(context, TestHelpers.CreateArguments());
+            DynValue result = descriptor.GetCallback(script, null)(
+                context,
+                TestHelpers.CreateArguments()
+            );
 
             Assert.That(result.String, Is.EqualTo("first"));
         }
@@ -549,10 +531,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(value.Type, Is.EqualTo(DataType.ClrFunction));
-                DynValue result = value.Callback.Invoke(
-                    context,
-                    new[] { DynValue.NewNumber(3) }
-                );
+                DynValue result = value.Callback.Invoke(context, new[] { DynValue.NewNumber(3) });
                 Assert.That(result.String, Is.EqualTo("num:3"));
             });
         }
@@ -599,7 +578,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(table.Get("class").String, Does.Contain("OverloadedMethodMemberDescriptor"));
+                Assert.That(
+                    table.Get("class").String,
+                    Does.Contain("OverloadedMethodMemberDescriptor")
+                );
                 Assert.That(table.Get("name").String, Is.EqualTo("JoinMany"));
                 Assert.That(table.Get("overloads").Table.Length, Is.EqualTo(2));
             });
@@ -613,12 +595,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 MemberDescriptorAccess.CanExecute,
                 resultFactory: _ => DynValue.NewString("optimized")
             );
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "Optimizable",
-                    typeof(OverloadedMethodHost),
-                    new IOverloadableMemberDescriptor[] { child }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "Optimizable",
+                typeof(OverloadedMethodHost),
+                new IOverloadableMemberDescriptor[] { child }
+            );
 
             ((IOptimizableDescriptor)descriptor).Optimize();
 
@@ -637,14 +618,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new();
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
             Assert.That(
                 () => callback(context, TestHelpers.CreateArguments()),
-                Throws.TypeOf<ScriptRuntimeException>()
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("function call doesn't match any overload")
             );
         }
@@ -661,12 +641,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             OverloadedMethodHost host = new();
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = descriptor.GetCallback(
-                script,
-                host
-            );
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
 
-            DynValue result = callback(context, TestHelpers.CreateArguments(DynValue.NewString("value")));
+            DynValue result = callback(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewString("value"))
+            );
 
             Assert.That(result.String, Is.EqualTo("value"));
         }
@@ -675,12 +656,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PrepareForWiringCapturesUnsupportedDescriptors()
         {
             NonWireableOverloadDescriptor nonWireable = new("unsupported");
-            OverloadedMethodMemberDescriptor descriptor =
-                new OverloadedMethodMemberDescriptor(
-                    "unsupported",
-                    typeof(OverloadedMethodHost),
-                    new[] { nonWireable }
-                );
+            OverloadedMethodMemberDescriptor descriptor = new OverloadedMethodMemberDescriptor(
+                "unsupported",
+                typeof(OverloadedMethodHost),
+                new[] { nonWireable }
+            );
 
             Script script = new Script();
             Table table = new(script);
@@ -744,7 +724,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             params Type[] parameterTypes
         )
         {
-            return GetMethod(declaringType, BindingFlags.Static | BindingFlags.Public, name, parameterTypes);
+            return GetMethod(
+                declaringType,
+                BindingFlags.Static | BindingFlags.Public,
+                name,
+                parameterTypes
+            );
         }
 
         private static MethodInfo GetMethod(
@@ -754,8 +739,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             params Type[] parameterTypes
         )
         {
-            Type[] normalizedParameters =
-                parameterTypes is { Length: > 0 } ? parameterTypes : Type.EmptyTypes;
+            Type[] normalizedParameters = parameterTypes is { Length: > 0 }
+                ? parameterTypes
+                : Type.EmptyTypes;
             MethodInfo method = declaringType.GetMethod(
                 name,
                 bindingFlags,
@@ -774,7 +760,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             return method;
         }
 
-        private static OverloadedMethodMemberDescriptor CreateDescriptor(params MethodInfo[] overloads)
+        private static OverloadedMethodMemberDescriptor CreateDescriptor(
+            params MethodInfo[] overloads
+        )
         {
             OverloadedMethodMemberDescriptor descriptor = new(
                 overloads[0].Name,
@@ -783,7 +771,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             foreach (MethodInfo method in overloads)
             {
-                descriptor.AddOverload(new MethodMemberDescriptor(method, InteropAccessMode.Reflection));
+                descriptor.AddOverload(
+                    new MethodMemberDescriptor(method, InteropAccessMode.Reflection)
+                );
             }
 
             return descriptor;

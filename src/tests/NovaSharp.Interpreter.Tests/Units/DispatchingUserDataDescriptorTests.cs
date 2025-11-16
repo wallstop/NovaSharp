@@ -174,7 +174,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
             DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
 
-            Assert.That(meta, Is.Not.Null, "__tonumber meta should be generated for numeric conversions");
+            Assert.That(
+                meta,
+                Is.Not.Null,
+                "__tonumber meta should be generated for numeric conversions"
+            );
 
             DynValue number = script.Call(meta, UserData.Create(host));
 
@@ -240,7 +244,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(descriptor.HasMember("Value"), Is.True);
                 Assert.That(descriptor.MemberNames, Does.Contain("Value"));
-                Assert.That(descriptor.Members, Has.Some.Matches<KeyValuePair<string, IMemberDescriptor>>(kv => kv.Key == "dyn"));
+                Assert.That(
+                    descriptor.Members,
+                    Has.Some.Matches<KeyValuePair<string, IMemberDescriptor>>(kv => kv.Key == "dyn")
+                );
                 Assert.That(descriptor.MetaMemberNames, Does.Contain("__meta"));
                 Assert.That(descriptor.HasMetaMember("__meta"), Is.True);
                 Assert.That(
@@ -275,7 +282,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () =>
                     descriptor.AddMember(
                         "Duplicate",
-                        StubMemberDescriptor.CreateCallable("Duplicate", MemberDescriptorAccess.CanRead)
+                        StubMemberDescriptor.CreateCallable(
+                            "Duplicate",
+                            MemberDescriptorAccess.CanRead
+                        )
                     ),
                 Throws.ArgumentException.With.Message.Contains("Multiple members named Duplicate")
             );
@@ -348,13 +358,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script localScript = new Script(CoreModules.None);
 
             Assert.That(
-                () => descriptor.Index(
-                    localScript,
-                    new DescriptorHost(),
-                    DynValue.NewNumber(1),
-                    isDirectIndexing: false
-                ),
-                Throws.InstanceOf<ScriptRuntimeException>()
+                () =>
+                    descriptor.Index(
+                        localScript,
+                        new DescriptorHost(),
+                        DynValue.NewNumber(1),
+                        isDirectIndexing: false
+                    ),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
                     .With.Message.Contains("clr callback was expected")
             );
         }
@@ -374,7 +386,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Assert.That(
                 () => script.DoString("return (hostAdd / hostZero).value"),
-                Throws.InstanceOf<TargetInvocationException>().With.InnerException.InstanceOf<DivideByZeroException>()
+                Throws
+                    .InstanceOf<TargetInvocationException>()
+                    .With.InnerException.InstanceOf<DivideByZeroException>()
             );
         }
 
@@ -501,7 +515,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             bool metaOptimized = false;
             descriptor.AddMember(
                 "OptimizableMember",
-                new StubOptimizableMemberDescriptor("OptimizableMember", () => memberOptimized = true)
+                new StubOptimizableMemberDescriptor(
+                    "OptimizableMember",
+                    () => memberOptimized = true
+                )
             );
             descriptor.AddMetaMember(
                 "__meta",
@@ -687,8 +704,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private sealed class AccessibleDispatchingUserDataDescriptor
-            : DispatchingUserDataDescriptor
+        private sealed class AccessibleDispatchingUserDataDescriptor : DispatchingUserDataDescriptor
         {
             public AccessibleDispatchingUserDataDescriptor()
                 : base(typeof(DescriptorHost)) { }
@@ -709,8 +725,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             return new DescriptorHostDescriptor();
         }
 
-        private sealed class DescriptorHostDescriptor
-            : DispatchingUserDataDescriptor
+        private sealed class DescriptorHostDescriptor : DispatchingUserDataDescriptor
         {
             public DescriptorHostDescriptor()
                 : base(typeof(DescriptorHost)) { }

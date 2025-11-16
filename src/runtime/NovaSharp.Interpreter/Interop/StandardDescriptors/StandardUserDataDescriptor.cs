@@ -61,8 +61,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         private void FillMemberList()
         {
             HashSet<string> membersToIgnore = new();
-            object[] customAttributes = Framework
-                .Do.GetCustomAttributes(Type, typeof(NovaSharpHideMemberAttribute), true);
+            object[] customAttributes = Framework.Do.GetCustomAttributes(
+                Type,
+                typeof(NovaSharpHideMemberAttribute),
+                true
+            );
             for (int i = 0; i < customAttributes.Length; i++)
             {
                 if (customAttributes[i] is NovaSharpHideMemberAttribute hideMember)

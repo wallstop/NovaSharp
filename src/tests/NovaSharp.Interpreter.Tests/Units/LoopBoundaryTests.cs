@@ -1,8 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree;
     using NUnit.Framework;
 

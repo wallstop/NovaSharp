@@ -196,7 +196,8 @@ namespace NovaSharp.Interpreter.Interop
 
         public bool Equals(ReflectionSpecialName other)
         {
-            return Type == other.Type && string.Equals(Argument, other.Argument, StringComparison.Ordinal);
+            return Type == other.Type
+                && string.Equals(Argument, other.Argument, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)

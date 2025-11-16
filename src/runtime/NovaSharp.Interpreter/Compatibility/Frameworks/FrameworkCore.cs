@@ -20,7 +20,8 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
 
         public override bool IsDbNull(object o)
         {
-            return o != null && o.GetType().FullName.StartsWith("System.DBNull", StringComparison.Ordinal);
+            return o != null
+                && o.GetType().FullName.StartsWith("System.DBNull", StringComparison.Ordinal);
         }
 
         public override bool StringContainsChar(string str, char chr)

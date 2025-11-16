@@ -34,8 +34,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ToLuaTypeStringThrowsForInternalTypes()
         {
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(
-                () => DataType.Tuple.ToLuaTypeString()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DataType.Tuple.ToLuaTypeString()
             );
 
             Assert.That(exception.Message, Does.Contain("Unexpected LuaType"));
@@ -55,7 +55,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ToLuaDebuggerStringLowerCasesEnumNames()
         {
-            Assert.That(DataType.TailCallRequest.ToLuaDebuggerString(), Is.EqualTo("tailcallrequest"));
+            Assert.That(
+                DataType.TailCallRequest.ToLuaDebuggerString(),
+                Is.EqualTo("tailcallrequest")
+            );
         }
     }
 }

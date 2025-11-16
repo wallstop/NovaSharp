@@ -416,10 +416,7 @@ namespace NovaSharp.Interpreter.Errors
         public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
         {
             string typeName = value?.Type.ToLuaTypeString() ?? DataType.Nil.ToLuaTypeString();
-            return new ScriptRuntimeException(
-                "__close metamethod expected (got {0})",
-                typeName
-            );
+            return new ScriptRuntimeException("__close metamethod expected (got {0})", typeName);
         }
 
         /// <summary>
@@ -582,15 +579,16 @@ namespace NovaSharp.Interpreter.Errors
         {
             return state switch
             {
-                CoroutineState.Main
-                    => new ScriptRuntimeException("attempt to close the main coroutine"),
-                CoroutineState.Running
-                    => new ScriptRuntimeException("cannot close a running coroutine"),
-                _
-                    => new ScriptRuntimeException(
-                        "cannot close coroutine in state {0}",
-                        state.ToString().ToLowerInvariant()
-                    ),
+                CoroutineState.Main => new ScriptRuntimeException(
+                    "attempt to close the main coroutine"
+                ),
+                CoroutineState.Running => new ScriptRuntimeException(
+                    "cannot close a running coroutine"
+                ),
+                _ => new ScriptRuntimeException(
+                    "cannot close coroutine in state {0}",
+                    state.ToString().ToLowerInvariant()
+                ),
             };
         }
 

@@ -78,8 +78,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                         typeof(char),
                         DataType.String
                     ),
-                Throws.TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("cannot convert")
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot convert")
             );
         }
 
@@ -94,8 +93,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                         typeof(object),
                         DataType.String
                     ),
-                Throws.TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("cannot convert")
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot convert")
             );
         }
     }

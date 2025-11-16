@@ -195,7 +195,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => script.DoString("dofile('broken.lua')"),
-                Throws.TypeOf<ScriptRuntimeException>()
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contain("unexpected symbol near '('")
             );
         }

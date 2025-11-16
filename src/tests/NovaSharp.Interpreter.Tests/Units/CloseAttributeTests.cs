@@ -72,8 +72,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Table log = result.Table;
             Assert.That(log.Length, Is.EqualTo(2));
-            Assert.That(log.Get(1).String, Is.EqualTo("first:nil"), "old value should be closed before reassignment completes");
-            Assert.That(log.Get(2).String, Is.EqualTo("second:nil"), "new value should close when the scope exits");
+            Assert.That(
+                log.Get(1).String,
+                Is.EqualTo("first:nil"),
+                "old value should be closed before reassignment completes"
+            );
+            Assert.That(
+                log.Get(2).String,
+                Is.EqualTo("second:nil"),
+                "new value should close when the scope exits"
+            );
         }
 
         [Test]

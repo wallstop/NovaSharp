@@ -16,8 +16,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Assert.Multiple(() =>
             {
-                Assert.That(ScriptRuntimeException.TableIndexIsNil().Message, Is.EqualTo("table index is nil"));
-                Assert.That(ScriptRuntimeException.TableIndexIsNaN().Message, Is.EqualTo("table index is NaN"));
+                Assert.That(
+                    ScriptRuntimeException.TableIndexIsNil().Message,
+                    Is.EqualTo("table index is nil")
+                );
+                Assert.That(
+                    ScriptRuntimeException.TableIndexIsNaN().Message,
+                    Is.EqualTo("table index is NaN")
+                );
             });
         }
 
@@ -36,15 +42,22 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConvertObjectFailedIncludesClrTypeName()
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(new SampleClrType());
+            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(
+                new SampleClrType()
+            );
 
-            Assert.That(exception.Message, Is.EqualTo($"cannot convert clr type {typeof(SampleClrType)}"));
+            Assert.That(
+                exception.Message,
+                Is.EqualTo($"cannot convert clr type {typeof(SampleClrType)}")
+            );
         }
 
         [Test]
         public void ConvertObjectFailedIncludesLuaTypeName()
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(DataType.String);
+            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(
+                DataType.String
+            );
 
             Assert.That(exception.Message, Is.EqualTo("cannot convert a string to a clr type"));
         }
@@ -52,7 +65,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConvertObjectFailedIncludesExpectedClrType()
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(DataType.Boolean, typeof(Guid));
+            ScriptRuntimeException exception = ScriptRuntimeException.ConvertObjectFailed(
+                DataType.Boolean,
+                typeof(Guid)
+            );
 
             Assert.That(
                 exception.Message,
@@ -77,7 +93,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void UserDataMissingFieldReportsMissingName()
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.UserDataMissingField("Widget", "length");
+            ScriptRuntimeException exception = ScriptRuntimeException.UserDataMissingField(
+                "Widget",
+                "length"
+            );
 
             Assert.That(
                 exception.Message,
@@ -88,9 +107,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase(CoroutineState.Dead, "cannot resume dead coroutine")]
         [TestCase(CoroutineState.Running, "cannot resume non-suspended coroutine")]
         [TestCase(CoroutineState.ForceSuspended, "cannot resume non-suspended coroutine")]
-        public void CannotResumeNotSuspendedDifferentiatesStates(CoroutineState state, string expected)
+        public void CannotResumeNotSuspendedDifferentiatesStates(
+            CoroutineState state,
+            string expected
+        )
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.CannotResumeNotSuspended(state);
+            ScriptRuntimeException exception = ScriptRuntimeException.CannotResumeNotSuspended(
+                state
+            );
 
             Assert.That(exception.Message, Is.EqualTo(expected));
         }
@@ -173,7 +197,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 exception.Message,
-                Is.EqualTo("attempt to access instance member Vector3.Length from a static userdata")
+                Is.EqualTo(
+                    "attempt to access instance member Vector3.Length from a static userdata"
+                )
             );
         }
 
@@ -187,8 +213,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 ScriptRuntimeException exception = new("boom");
 
-                ScriptRuntimeException rethrown = Assert.Throws<ScriptRuntimeException>(
-                    () => exception.Rethrow()
+                ScriptRuntimeException rethrown = Assert.Throws<ScriptRuntimeException>(() =>
+                    exception.Rethrow()
                 );
 
                 Assert.Multiple(() =>
@@ -236,9 +262,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public MemberDescriptorAccess MemberAccess => MemberDescriptorAccess.CanRead;
 
-            public DynValue GetValue(Script script, object obj) => throw new NotSupportedException();
+            public DynValue GetValue(Script script, object obj) =>
+                throw new NotSupportedException();
 
-            public void SetValue(Script script, object obj, DynValue value) => throw new NotSupportedException();
+            public void SetValue(Script script, object obj, DynValue value) =>
+                throw new NotSupportedException();
         }
 
         private sealed class StubUserDataDescriptor : IUserDataDescriptor
@@ -252,8 +280,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public Type Type => typeof(object);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing) =>
-                throw new NotSupportedException();
+            public DynValue Index(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing
+            ) => throw new NotSupportedException();
 
             public bool SetIndex(
                 Script script,
@@ -268,7 +300,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             public DynValue MetaIndex(Script script, object obj, string metaname) =>
                 throw new NotSupportedException();
 
-            public bool IsTypeCompatible(Type type, object obj) => throw new NotSupportedException();
+            public bool IsTypeCompatible(Type type, object obj) =>
+                throw new NotSupportedException();
         }
     }
 }

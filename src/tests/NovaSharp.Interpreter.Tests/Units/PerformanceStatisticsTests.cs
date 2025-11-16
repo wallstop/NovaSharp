@@ -97,7 +97,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 script.PerformanceStats.Enabled = true;
 
                 using (
-                    PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
+                    PerformanceStatistics.StartGlobalStopwatch(
+                        PerformanceCounter.AdaptersCompilation
+                    )
                 )
                 {
                     clock.AdvanceMilliseconds(20);

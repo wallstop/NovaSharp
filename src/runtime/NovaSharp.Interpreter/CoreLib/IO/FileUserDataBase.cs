@@ -345,7 +345,8 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
             if (isHex)
             {
-                bool hasValidDigits = hexDigitsSeen || (hasDecimalPoint && hexFractionDigitCount > 0);
+                bool hasValidDigits =
+                    hexDigitsSeen || (hasDecimalPoint && hexFractionDigitCount > 0);
                 bool isValidLiteral = numericText.Length > 0 && hasValidDigits;
 
                 if (hexExponentSeen && !hexExponentHasDigits)

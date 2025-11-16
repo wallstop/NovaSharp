@@ -9,14 +9,14 @@ namespace NovaSharp.Interpreter
     using Debugging;
     using Diagnostics;
     using IO;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
-    using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
-    using NovaSharp.Interpreter.Infrastructure;
-    using NovaSharp.Interpreter.Infrastructure;
     using Platforms;
     using Tree.Expressions;
     using Tree.FastInterface;

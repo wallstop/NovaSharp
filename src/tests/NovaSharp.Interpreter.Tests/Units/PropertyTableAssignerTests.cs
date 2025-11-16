@@ -50,7 +50,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             ParentWithAddress target = new();
             PropertyTableAssigner<ParentWithAddress> assigner = new();
-            assigner.SetSubassignerForType(typeof(AddressInfo), new PropertyTableAssigner<AddressInfo>());
+            assigner.SetSubassignerForType(
+                typeof(AddressInfo),
+                new PropertyTableAssigner<AddressInfo>()
+            );
 
             assigner.AssignObject(target, data);
 
@@ -94,10 +97,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             PropertyTableAssigner<BasicSample> assigner = new();
             Table data = new(_script);
 
-            Assert.That(
-                () => assigner.AssignObject(null!, data),
-                Throws.ArgumentNullException
-            );
+            Assert.That(() => assigner.AssignObject(null!, data), Throws.ArgumentNullException);
 
             PropertyTableAssigner nonGeneric = new(typeof(BasicSample));
             Assert.That(
