@@ -15,6 +15,8 @@ fi
 # Explicit allowlist for legacy comparison artefacts we intentionally keep.
 readarray -t allowlist <<'EOF'
 :(exclude)docs/Performance.md
+:(exclude)README.md
+:(exclude)src/samples/Tutorial/Tutorials/readme.md
 :(exclude)moonsharp_DescriptorHelpers.cs
 :(exclude)src/tooling/Benchmarks/NovaSharp.Benchmarks/PerformanceReportWriter.cs
 :(exclude)scripts/branding/ensure-novasharp-branding.sh

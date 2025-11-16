@@ -1,11 +1,11 @@
 NovaSharp — [GitHub Repository](https://github.com/wallstop/NovaSharp) *(NuGet package not published; build from source)*
 =========
-http://www.NovaSharp.org   
+https://www.moonsharp.org   
 
 
 # Overview
 
-This project is a port of [NovaSharp](http://www.NovaSharp.org). NovaSharp has not had a commit in over 4 years, and its last stable release was over 9 years ago. It would be awesome to have an active, maintained version of this project.
+This project is a port of [MoonSharp](https://www.moonsharp.org). MoonSharp has not had a commit in over 4 years, and its last stable release was over 9 years ago. It would be awesome to have an active, maintained version of this project.
 
 ## Project Goals
 
@@ -44,11 +44,11 @@ Features:
 * Easy to use error handling (script errors are exceptions)
 * Support for coroutines, including invocation of coroutines as C# iterators 
 * REPL interpreter, plus facilities to easily implement your own REPL in few lines of code
-* Complete XML help, and walkthroughs on http://www.NovaSharp.org
+* Complete XML help, and walkthroughs on https://www.moonsharp.org
 
-For highlights on differences between NovaSharp and standard Lua, see http://www.NovaSharp.org/moonluadifferences.html
+For highlights on differences between MoonSharp and standard Lua, see https://www.moonsharp.org/moonluadifferences.html
 
-Please see http://www.NovaSharp.org for downloads, infos, tutorials, etc.
+Please see https://www.moonsharp.org for downloads, infos, tutorials, etc.
 
 Additional documentation:
 - [Documentation Index](docs/README.md)
@@ -93,7 +93,7 @@ double NovaSharpFactorial()
 }
 ```
 
-For more in-depth tutorials, samples, etc. please refer to http://www.NovaSharp.org/getting_started.html
+For more in-depth tutorials, samples, etc. please refer to https://www.moonsharp.org/getting_started.html
 
 
 
