@@ -177,7 +177,7 @@ jobs:
         shell: bash
       - name: Evaluate coverage threshold
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           COVERAGE_THRESHOLD: "90"
           COVERAGE_GATING_MODE: monitor
@@ -247,7 +247,7 @@ jobs:
             }
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
