@@ -146,6 +146,31 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void FlushWrapsNonScriptExceptions()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed", allowWrite: true);
+            file.TriggerFlushFailure();
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return file:flush()
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("flush failure"));
+            });
+        }
+
+        [Test]
         public void IoFlushUsesDefaultOutputAndPropagatesException()
         {
             Script script = CreateScript();
@@ -200,6 +225,55 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SeekRejectsInvalidWhence()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return file:seek('bogus', 0)
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("invalid option 'bogus'"));
+            });
+        }
+
+        [Test]
+        public void SeekWrapsNonScriptExceptions()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed");
+            file.TriggerSeekFailure();
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return file:seek('set', 0)
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("seek failure"));
+            });
+        }
+
+        [Test]
         public void SeekPropagatesExceptionThroughPcall()
         {
             Script script = CreateScript();
@@ -221,6 +295,31 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
                 Assert.That(tuple.Tuple[0].Boolean, Is.False);
                 Assert.That(tuple.Tuple[1].String, Does.Contain("seek failure"));
+            });
+        }
+
+        [Test]
+        public void SetvbufWrapsNonScriptExceptions()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed", allowWrite: true, autoFlush: false);
+            script.Globals["file"] = UserData.Create(file);
+            script.DoString("file:write('buffer')");
+            file.TriggerStreamWriteFailure();
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return file:setvbuf('line')
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("setvbuf failure"));
             });
         }
 
@@ -247,6 +346,51 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple[1].Boolean, Is.True);
                 Assert.That(file.WriterAutoFlush, Is.False);
             });
+        }
+
+        [Test]
+        public void ClosedFileRejectsFurtherReads()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("line");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                f:close()
+                local ok, err = pcall(function()
+                    return f:read()
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("attempt to use a closed file"));
+            });
+        }
+
+        [Test]
+        public void EofReturnsFalseWhenReaderMissing()
+        {
+            TestStreamFileUserData file = new(
+                "seed",
+                allowWrite: true,
+                autoFlush: true,
+                allowRead: false
+            );
+            Assert.That(file.CallEof(), Is.False);
+        }
+
+        [Test]
+        public void PeekReturnsNextCharacter()
+        {
+            TestStreamFileUserData file = new("peek");
+            Assert.That(file.CallPeek(), Is.EqualTo('p'));
         }
 
         [Test]
@@ -650,9 +794,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class TestStreamFileUserData : StreamFileUserDataBase
         {
-            private readonly MemoryStream _innerStream;
+            private readonly FaultyMemoryStream _innerStream;
             private readonly StreamReader _innerReader;
-            private StreamWriter _innerWriter;
+            private FaultyStreamWriter _innerWriter;
             private readonly Encoding _encoding = new UTF8Encoding(
                 encoderShouldEmitUTF8Identifier: false
             );
@@ -660,10 +804,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             internal TestStreamFileUserData(
                 string initialContent,
                 bool allowWrite = true,
-                bool autoFlush = true
+                bool autoFlush = true,
+                bool allowRead = true
             )
             {
-                _innerStream = new MemoryStream();
+                _innerStream = new FaultyMemoryStream();
 
                 if (!string.IsNullOrEmpty(initialContent))
                 {
@@ -679,17 +824,20 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 _innerStream.Position = 0;
 
-                _innerReader = new StreamReader(
-                    _innerStream,
-                    _encoding,
-                    detectEncodingFromByteOrderMarks: false,
-                    bufferSize: 1024,
-                    leaveOpen: true
-                );
+                if (allowRead)
+                {
+                    _innerReader = new StreamReader(
+                        _innerStream,
+                        _encoding,
+                        detectEncodingFromByteOrderMarks: false,
+                        bufferSize: 1024,
+                        leaveOpen: true
+                    );
+                }
 
                 if (allowWrite)
                 {
-                    _innerWriter = new StreamWriter(
+                    _innerWriter = new FaultyStreamWriter(
                         _innerStream,
                         _encoding,
                         bufferSize: 1024,
@@ -700,7 +848,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                     };
                 }
 
-                Initialize(_innerStream, _innerReader, allowWrite ? _innerWriter : null);
+                Initialize(
+                    _innerStream,
+                    allowRead ? _innerReader : null,
+                    allowWrite ? _innerWriter : null
+                );
             }
 
             internal List<string> Writes { get; } = new();
@@ -760,6 +912,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return string.IsNullOrEmpty(message) ? baseResult : message;
             }
 
+            internal bool CallEof()
+            {
+                return Eof();
+            }
+
+            internal char CallPeek()
+            {
+                return Peek();
+            }
+
             public override bool Flush()
             {
                 if (ThrowOnFlush)
@@ -788,6 +950,91 @@ namespace NovaSharp.Interpreter.Tests.Units
                 }
 
                 return base.Setvbuf(mode);
+            }
+
+            internal void TriggerFlushFailure()
+            {
+                _innerWriter.ThrowOnFlush = true;
+            }
+
+            internal void TriggerSeekFailure()
+            {
+                _innerStream.ThrowOnSeek = true;
+            }
+
+            internal void ReplaceWriterWithDisposedInstance()
+            {
+                FaultyStreamWriter disposed = new FaultyStreamWriter(
+                    _innerStream,
+                    _encoding,
+                    bufferSize: 1024,
+                    leaveOpen: true
+                );
+                disposed.Dispose();
+                _innerWriter = disposed;
+                _writer = disposed;
+            }
+
+            internal void DisposeUnderlyingStream()
+            {
+                _innerStream.Dispose();
+            }
+
+            internal void TriggerStreamWriteFailure()
+            {
+                _innerStream.ThrowOnWrite = true;
+            }
+        }
+
+        private sealed class FaultyMemoryStream : MemoryStream
+        {
+            internal bool ThrowOnSeek { get; set; }
+            internal bool ThrowOnWrite { get; set; }
+
+            public override long Seek(long offset, SeekOrigin loc)
+            {
+                if (ThrowOnSeek)
+                {
+                    ThrowOnSeek = false;
+                    throw new IOException("seek failure");
+                }
+
+                return base.Seek(offset, loc);
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                if (ThrowOnWrite)
+                {
+                    ThrowOnWrite = false;
+                    throw new IOException("setvbuf failure");
+                }
+
+                base.Write(buffer, offset, count);
+            }
+        }
+
+        private sealed class FaultyStreamWriter : StreamWriter
+        {
+            internal FaultyStreamWriter(
+                Stream stream,
+                Encoding encoding,
+                int bufferSize,
+                bool leaveOpen
+            )
+                : base(stream, encoding, bufferSize, leaveOpen) { }
+
+            internal bool ThrowOnFlush { get; set; }
+
+            public override void Flush()
+            {
+                if (ThrowOnFlush)
+                {
+                    ThrowOnFlush = false;
+                    throw new IOException("flush failure");
+                }
+
+                base.Flush();
             }
         }
     }
