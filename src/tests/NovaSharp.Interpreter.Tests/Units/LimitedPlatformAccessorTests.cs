@@ -36,7 +36,7 @@
         public void UnsupportedOperationsThrowNotImplemented()
         {
             LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
 
             Assert.Multiple(() =>
             {

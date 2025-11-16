@@ -29,7 +29,7 @@
         {
             string targetFileName = p + "-compiled";
 
-            Script s = new(default);
+            Script s = new Script(CoreModules.PresetDefault);
 
             DynValue chunk = s.LoadFile(p);
 

@@ -15,6 +15,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Infrastructure;
     using Platforms;
     using Tree.Expressions;
     using Tree.FastInterface;
@@ -70,17 +71,36 @@ namespace NovaSharp.Interpreter
         /// Initializes a new instance of the <see cref="Script"/> clas.s
         /// </summary>
         public Script()
-            : this(CoreModules.PresetDefault) { }
+            : this(CoreModules.PresetDefault, null) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Script"/> class.
         /// </summary>
         /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
         public Script(CoreModules coreModules)
+            : this(coreModules, null) { }
+
+        /// <summary>
+        /// Initializes a new instance using a custom options snapshot.
+        /// </summary>
+        public Script(ScriptOptions options)
+            : this(CoreModules.PresetDefault, options) { }
+
+        /// <summary>
+        /// Initializes a new instance with modules + options.
+        /// </summary>
+        public Script(CoreModules coreModules, ScriptOptions options)
         {
-            Options = new ScriptOptions(DefaultOptions);
-            Options.CompatibilityVersion = GlobalOptions.CompatibilityVersion;
-            PerformanceStats = new PerformanceStatistics();
+            Options = new ScriptOptions(options ?? DefaultOptions);
+
+            if (options == null)
+            {
+                Options.CompatibilityVersion = GlobalOptions.CompatibilityVersion;
+            }
+
+            PerformanceStats = new PerformanceStatistics(
+                Options.HighResolutionClock ?? SystemHighResolutionClock.Instance
+            );
             Registry = new Table(this);
 
             _byteCode = new ByteCode(this);
@@ -115,7 +135,7 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets access to performance statistics.
         /// </summary>
-        public PerformanceStatistics PerformanceStats { get; private set; }
+        public PerformanceStatistics PerformanceStats { get; internal set; }
 
         /// <summary>
         /// Gets the default global table for this script. Unless a different table is intentionally passed (or setfenv has been used)

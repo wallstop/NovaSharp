@@ -1,22 +1,28 @@
 namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
     using System;
-    using System.Diagnostics;
+    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// This class is not *really* IDisposable.. it's just use to have a RAII like pattern.
     /// You are free to reuse this instance after calling Dispose.
     /// </summary>
-    internal class PerformanceStopwatch : IDisposable, IPerformanceStopwatch
+    internal sealed class PerformanceStopwatch : IDisposable, IPerformanceStopwatch
     {
-        private readonly Stopwatch _stopwatch = new();
+        private readonly PerformanceCounter _counter;
+        private readonly IHighResolutionClock _clock;
         private int _count;
         private int _reentrant;
-        private readonly PerformanceCounter _counter;
+        private long? _runningSince;
+        private long _elapsedMilliseconds;
 
-        public PerformanceStopwatch(PerformanceCounter perfcounter)
+        public PerformanceStopwatch(
+            PerformanceCounter perfcounter,
+            IHighResolutionClock clock = null
+        )
         {
             _counter = perfcounter;
+            _clock = clock ?? SystemHighResolutionClock.Instance;
         }
 
         public IDisposable Start()
@@ -24,7 +30,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             if (_reentrant == 0)
             {
                 _count += 1;
-                _stopwatch.Start();
+                _runningSince = _clock.GetTimestamp();
             }
 
             _reentrant += 1;
@@ -36,9 +42,11 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
         {
             _reentrant -= 1;
 
-            if (_reentrant == 0)
+            if (_reentrant == 0 && _runningSince.HasValue)
             {
-                _stopwatch.Stop();
+                long now = _clock.GetTimestamp();
+                _elapsedMilliseconds += _clock.GetElapsedMilliseconds(_runningSince.Value, now);
+                _runningSince = null;
             }
         }
 
@@ -50,7 +58,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
                 Global = false,
                 Name = _counter.ToString(),
                 Instances = _count,
-                Counter = _stopwatch.ElapsedMilliseconds,
+                Counter = _elapsedMilliseconds,
             };
         }
     }

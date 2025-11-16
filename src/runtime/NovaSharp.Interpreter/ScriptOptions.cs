@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter
     using System.IO;
     using Loaders;
     using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Options;
 
     /// <summary>
@@ -11,13 +12,19 @@ namespace NovaSharp.Interpreter
     /// </summary>
     public class ScriptOptions
     {
-        internal ScriptOptions()
+        public ScriptOptions()
         {
             CompatibilityVersion = LuaCompatibilityVersion.Latest;
+            HighResolutionClock = SystemHighResolutionClock.Instance;
         }
 
-        internal ScriptOptions(ScriptOptions defaults)
+        public ScriptOptions(ScriptOptions defaults)
         {
+            if (defaults == null)
+            {
+                throw new ArgumentNullException(nameof(defaults));
+            }
+
             DebugInput = defaults.DebugInput;
             DebugPrint = defaults.DebugPrint;
 
@@ -31,6 +38,7 @@ namespace NovaSharp.Interpreter
 
             CheckThreadAccess = defaults.CheckThreadAccess;
             CompatibilityVersion = defaults.CompatibilityVersion;
+            HighResolutionClock = defaults.HighResolutionClock;
         }
 
         /// <summary>
@@ -104,5 +112,10 @@ namespace NovaSharp.Interpreter
         /// Gets or sets the compatibility version applied to this script. Defaults to <see cref="ScriptGlobalOptions.CompatibilityVersion"/>.
         /// </summary>
         public LuaCompatibilityVersion CompatibilityVersion { get; set; }
+
+        /// <summary>
+        /// Gets or sets the high-resolution clock used by performance statistics (defaults to <see cref="SystemHighResolutionClock.Instance"/>).
+        /// </summary>
+        public IHighResolutionClock HighResolutionClock { get; set; }
     }
 }

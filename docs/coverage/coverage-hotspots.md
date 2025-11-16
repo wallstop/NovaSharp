@@ -1,13 +1,13 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 16:46 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-15 17:16 UTC).
 
 ## Snapshot
-- Overall line coverage: **81.7 %**
+- Overall line coverage: **81.9 %**
 - NovaSharp.Interpreter line coverage: **90.9 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
-- NovaSharp.RemoteDebugger line coverage: **74.6 %** (web host + service + raw HTTP server now covered; remaining gaps live in XML/resource plumbing)
+- NovaSharp.RemoteDebugger line coverage: **78.4 %** (DebugServer still below 70 %; remaining gaps focus on queue/breakpoint handling + Tcp helpers)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
@@ -28,7 +28,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `BinaryOperatorExpression` now sits at **90.0 %** line / **82.5 %** branch coverage after adding compile-path opcode assertions (arithmetic, concatenation, comparison, and `~=` inversion) plus new string comparison/equality regressions; coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-14 17:44 UTC captured the jump.
 - `LuaStateInterop.Tools` climbed to **98.2 % line / 90.4 % branch** after expanding `LuaStateInteropToolsTests` with unsigned/null-edge coverage and exhaustive `sprintf` permutations (`%i`, `%f/%e/%E/%g/%G`, `%c`, `%s`, `%#o`, `%hd/%hu/%ld/%lu`, flag precedence). The same coverage run bumped interpreter totals to **90.7 % line / 87.4 % branch / 93.1 % method** with **1 721** Release tests.
     - `UnityAssetsScriptLoader` is now fully exercised under the reflection pathway thanks to a dynamically generated `UnityEngine` stub and failure-mode regression tests, yielding **100 % line / 90 % branch** coverage and pushing the suite to **1 723** Release tests (interpreter totals: **90.9 % line / 87.5 % branch / 93.3 % method**).
-    - Remote debugger automation now includes `Units/RemoteDebuggerServiceTests` and `Units/HttpServerTests`, which spin up the HTTP host in both single-script and jump-page modes, fetch rendered HTML via raw TCP, validate Basic-auth rejection/acceptance, and assert the callback argument plumbing. Combined with the existing TCP command tests, `NovaSharp.RemoteDebugger` sits at **74.6 % line coverage** (`RemoteDebuggerService` 96.6 %, `DebugWebHost` 100.0 %, `HttpServer` 64.1 %); remaining work targets the low-level XML/resource plumbing still under 80 %.
+    - Remote debugger automation now includes `Units/RemoteDebuggerServiceTests`, `Units/HttpServerTests`, `Units/HttpResourceTests`, `Units/XmlWriterExtensionsTests`, and the extended `Units/RemoteDebuggerTests` (host busy/ready refresh queue). Combined with the existing TCP command suite, `NovaSharp.RemoteDebugger` sits at **78.4 % line coverage** (`DebugServer` 68.7 %, `RemoteDebuggerService` 96.6 %, `DebugWebHost` 100.0 %, `HttpServer` 91.1 %, `HttpResource` 94.7 %); remaining work targets the DebugServer queue/breakpoint flows plus the Tcp helpers still under 80 %.
 - `UnaryOperatorExpression` now sits at **100 %** line/branch coverage after adding direct Eval tests for `not`, `#`, `-`, and the non-numeric failure path.
 - `StringModule` has climbed to **97.2 %** line / **94.6 %** branch coverage via spec-aligned edge cases and modulo-normalization in production.
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.

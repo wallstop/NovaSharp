@@ -1,9 +1,11 @@
-﻿namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.Units
 {
-    using System.Threading;
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Diagnostics;
+    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -12,67 +14,109 @@
         [Test]
         public void EnabledStatisticsCaptureStopwatchResults()
         {
-            Script script = new Script(default) { Options = { } };
+            FakeHighResolutionClock clock = new();
+            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
+            PerformanceStatistics.GlobalClock = clock;
+            Script script = new Script(CoreModules.None);
+            script.PerformanceStats = new PerformanceStatistics(clock);
 
-            script.PerformanceStats.Enabled = true;
-
-            using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Compilation))
+            try
             {
-                Thread.Sleep(1);
+                script.PerformanceStats.Enabled = true;
+
+                using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Compilation))
+                {
+                    clock.AdvanceMilliseconds(15);
+                }
+
+                PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
+                    PerformanceCounter.Compilation
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result, Is.Not.Null);
+                    Assert.That(result.Name, Is.EqualTo(PerformanceCounter.Compilation.ToString()));
+                    Assert.That(result.Instances, Is.EqualTo(1));
+                    Assert.That(result.Counter, Is.EqualTo(15));
+                });
             }
-
-            PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
-                PerformanceCounter.Compilation
-            );
-
-            Assert.Multiple(() =>
+            finally
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Name, Is.EqualTo(PerformanceCounter.Compilation.ToString()));
-                Assert.That(result.Instances, Is.EqualTo(1));
-                Assert.That(result.Counter, Is.GreaterThanOrEqualTo(0));
-            });
+                script.PerformanceStats.Enabled = false;
+                PerformanceStatistics.GlobalClock = originalGlobal;
+            }
         }
 
         [Test]
         public void DisablingStatisticsClearsStopwatches()
         {
-            Script script = new Script(default);
-            script.PerformanceStats.Enabled = true;
+            FakeHighResolutionClock clock = new();
+            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
+            PerformanceStatistics.GlobalClock = clock;
+            Script script = new Script(CoreModules.None);
+            script.PerformanceStats = new PerformanceStatistics(clock);
 
-            using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Execution))
+            try
             {
-                Thread.Sleep(1);
+                script.PerformanceStats.Enabled = true;
+
+                using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Execution))
+                {
+                    clock.AdvanceMilliseconds(5);
+                }
+
+                script.PerformanceStats.Enabled = false;
+
+                PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
+                    PerformanceCounter.Execution
+                );
+
+                Assert.That(result, Is.Null);
             }
-
-            script.PerformanceStats.Enabled = false;
-
-            PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
-                PerformanceCounter.Execution
-            );
-
-            Assert.That(result, Is.Null);
+            finally
+            {
+                script.PerformanceStats.Enabled = false;
+                PerformanceStatistics.GlobalClock = originalGlobal;
+            }
         }
 
         [Test]
         public void GlobalStopwatchAggregatesAcrossInstances()
         {
-            Script script = new Script(default);
-            script.PerformanceStats.Enabled = true;
+            FakeHighResolutionClock clock = new();
+            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
+            PerformanceStatistics.GlobalClock = clock;
+            Script script = new Script(CoreModules.None);
+            script.PerformanceStats = new PerformanceStatistics(clock);
 
-            using (
-                PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
-            )
+            try
             {
-                Thread.Sleep(1);
+                script.PerformanceStats.Enabled = true;
+
+                using (
+                    PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation)
+                )
+                {
+                    clock.AdvanceMilliseconds(20);
+                }
+
+                PerformanceResult global = script.PerformanceStats.GetPerformanceCounterResult(
+                    PerformanceCounter.AdaptersCompilation
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(global, Is.Not.Null);
+                    Assert.That(global.Instances, Is.EqualTo(1));
+                    Assert.That(global.Counter, Is.EqualTo(20));
+                });
             }
-
-            PerformanceResult global = script.PerformanceStats.GetPerformanceCounterResult(
-                PerformanceCounter.AdaptersCompilation
-            );
-
-            Assert.That(global, Is.Not.Null);
-            Assert.That(global.Instances, Is.EqualTo(1));
+            finally
+            {
+                script.PerformanceStats.Enabled = false;
+                PerformanceStatistics.GlobalClock = originalGlobal;
+            }
         }
     }
 }

@@ -11,7 +11,7 @@
         [Test]
         public void HistoryTracksPreviousEntries()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             ReplHistoryInterpreter interpreter = new ReplHistoryInterpreter(script, historySize: 2);
 
             interpreter.Evaluate("return 1");
@@ -28,7 +28,7 @@
         [Test]
         public void HistoryNextMovesForwardThroughEntries()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             ReplHistoryInterpreter interpreter = new ReplHistoryInterpreter(script, historySize: 3);
 
             interpreter.Evaluate("return 1");

@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
@@ -16,14 +16,14 @@
         [Test]
         public void EmptyLongComment()
         {
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString("--[[]]");
         }
 
         [Test]
         public void EmptyChunk()
         {
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString("");
         }
 
@@ -736,7 +736,7 @@
         {
             string script = @"return 1+2*3";
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -769,7 +769,7 @@
         public void OperatorPrecedence3()
         {
             string script = @"return 5-3-2";
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
@@ -781,7 +781,7 @@
         public void OperatorPrecedence4()
         {
             string script = @"return 3 + -1";
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
@@ -793,7 +793,7 @@
         public void OperatorPrecedence5()
         {
             string script = @"return 3 * -1 + 5 * 3";
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
@@ -805,7 +805,7 @@
         public void OperatorPrecedence6()
         {
             string script = @"return -2^2";
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
@@ -817,7 +817,7 @@
         public void OperatorPrecedence7()
         {
             string script = @"return -7 / 0.5";
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
@@ -920,7 +920,7 @@
     
 				return fact(5)";
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -1161,7 +1161,7 @@
 					do return x(); end
 								";
 
-            DynValue res = (new Script(default)).DoString(script);
+            DynValue res = (new Script(CoreModules.PresetDefault)).DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(1));
@@ -1425,7 +1425,7 @@
 				return x() == 3;	
 			";
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Boolean));
@@ -1441,7 +1441,7 @@
 				return x;	
 			";
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.String));
@@ -1458,7 +1458,7 @@
 				return test(1, 2, 3);	
 			";
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -1570,7 +1570,7 @@
         [Test]
         public void MissingArgsDefaultToNil()
         {
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.DoString(
                 @"
 				function test(a)
@@ -1585,7 +1585,7 @@
         [Test]
         public void ParsingTest()
         {
-            Script s = new(default);
+            Script s = new(default(CoreModules));
             DynValue res = s.LoadString(
                 @"
 				t = {'a', 'b', 'c', ['d'] = 'f', ['e'] = 5, [65] = true, [true] = false}

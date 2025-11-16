@@ -118,6 +118,37 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(otherPause, Is.False);
         }
 
+        [Test]
+        public void AddWatchQueuesRefreshAndTransitionsHostState()
+        {
+            Script script = BuildScript("local value = 1 return value", "state.lua");
+            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out int port);
+            using RemoteDebuggerTestClient client = new(port);
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"value\" />");
+
+            IList<string> busyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => m.Contains("Host busy")),
+                DefaultTimeout
+            );
+            Assert.That(busyMessages.Any(m => m.Contains("Host busy")), Is.True);
+            Assert.That(server.GetState(), Is.EqualTo("Busy"));
+
+            DebuggerAction refresh = server.GetAction(0, sourceRef);
+            Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
+
+            IList<string> readyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => m.Contains("Host ready")),
+                DefaultTimeout
+            );
+            Assert.That(readyMessages.Any(m => m.Contains("Host ready")), Is.True);
+            Assert.That(server.GetState(), Is.EqualTo("Unknown"));
+        }
+
         private static DebugServer CreateServer(Script script, bool freeRunAfterAttach, out int port)
         {
             port = GetFreeTcpPort();

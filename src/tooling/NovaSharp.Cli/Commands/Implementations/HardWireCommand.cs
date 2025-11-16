@@ -199,7 +199,7 @@
 
         private static Table LoadDumpTable(string path)
         {
-            Script s = new(default);
+            Script s = new Script(CoreModules.None);
             DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(path));
             return eee.Evaluate(null).Table;
         }

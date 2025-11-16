@@ -89,7 +89,7 @@
         public void OpenFileSupportsReadAndWrite()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             try
             {

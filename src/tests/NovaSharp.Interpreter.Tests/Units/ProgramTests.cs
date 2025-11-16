@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
@@ -158,7 +158,7 @@
             Func<string, Table> originalLoader = HardWireCommand.DumpLoader;
             HardWireCommand.DumpLoader = _ =>
             {
-                Script script = new(default);
+                Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
             };
 
@@ -345,7 +345,7 @@
         private sealed class StubReplInterpreter : ReplInterpreter
         {
             public StubReplInterpreter()
-                : base(new Script(default)) { }
+                : base(new Script(CoreModules.PresetDefault)) { }
 
             public bool PendingCommand { get; set; }
 

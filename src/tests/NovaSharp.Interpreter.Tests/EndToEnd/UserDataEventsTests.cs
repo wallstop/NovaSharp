@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using NovaSharp.Interpreter;
@@ -45,7 +45,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             SomeClass obj = new();
             s.Globals["myobj"] = obj;
@@ -79,7 +79,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             SomeClass obj = new();
             SomeClass obj2 = new();
@@ -116,7 +116,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             SomeClass obj = new();
             s.Globals["myobj"] = obj;
@@ -151,7 +151,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             SomeClass obj = new();
             s.Globals["myobj"] = obj;
@@ -187,7 +187,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default);
+            Script s = new(default(CoreModules));
 
             SomeClass obj = new();
             s.Globals["myobj"] = obj;
@@ -225,7 +225,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default)
+            Script s = new(default(CoreModules))
             {
                 Globals =
                 {
@@ -266,7 +266,7 @@
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
-            Script s = new(default)
+            Script s = new(default(CoreModules))
             {
                 Globals =
                 {

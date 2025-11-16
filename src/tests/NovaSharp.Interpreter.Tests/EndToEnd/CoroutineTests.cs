@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -259,7 +259,7 @@ checkresume(6, false, 'cannot resume dead coroutine');
 				";
 
             // Load the code and get the returned function
-            Script script = new(default);
+            Script script = new(default(CoreModules));
             script.DoString(code);
 
             // get the function

@@ -64,7 +64,7 @@
 
             TestReplLoader loader = new TestReplLoader();
 
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             script.Globals.Set("LUA_PATH", DynValue.NewString("./modules/?.lua;./fallback/?.lua"));
 
             loader.ResolveModuleName("feature.util", script.Globals);

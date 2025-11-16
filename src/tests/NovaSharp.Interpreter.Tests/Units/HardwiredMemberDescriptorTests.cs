@@ -16,7 +16,7 @@
         [Test]
         public void ReadWriteDescriptorGetsAndSetsValues()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             SampleTarget target = new SampleTarget();
             SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
 
@@ -33,7 +33,7 @@
         [Test]
         public void ReadOnlyDescriptorThrowsOnSet()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             SampleTarget target = new SampleTarget();
             SampleReadOnlyDescriptor descriptor = new SampleReadOnlyDescriptor(10);
 
@@ -49,7 +49,7 @@
         [Test]
         public void AccessingInstanceMemberWithoutObjectThrows()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
 
             Assert.That(
@@ -61,7 +61,7 @@
         [Test]
         public void HardwiredMethodDescriptorHonoursDefaultValues()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             SampleTarget target = new SampleTarget { Value = 3 };
             SampleHardwiredMethodDescriptor descriptor = new SampleHardwiredMethodDescriptor();
 

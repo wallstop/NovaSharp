@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
@@ -127,7 +127,7 @@
 
             HardWireCommand.DumpLoader = _ =>
             {
-                Script script = new(default);
+                Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "public");
             };
 
@@ -187,7 +187,7 @@
 
             HardWireCommand.DumpLoader = _ =>
             {
-                Script script = new(default);
+                Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
             };
 
@@ -244,7 +244,7 @@
 
             HardWireCommand.DumpLoader = _ =>
             {
-                Script script = new(default);
+                Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "public");
             };
 
@@ -303,7 +303,7 @@
 
             HardWireCommand.DumpLoader = _ =>
             {
-                Script script = new(default);
+                Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
             };
 

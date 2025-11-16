@@ -87,6 +87,32 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void DebuggerPageServesEmbeddedUi()
+        {
+            RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
+            options.singleScriptMode = false;
+            options.httpPort = GetFreeTcpPort();
+            options.rpcPortBase = GetFreeTcpPort();
+            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+
+            using RemoteDebuggerService service = new(options);
+            Script script = BuildScript("return 1", "debugger.lua");
+            service.Attach(script, "DebuggerScript");
+
+            string debuggerResponse = SendHttpRequest(
+                options.httpPort.Value,
+                $"/Debugger?port={options.rpcPortBase}"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(debuggerResponse, Does.Contain("200 OK"));
+                Assert.That(debuggerResponse, Does.Contain("<html"));
+                Assert.That(debuggerResponse, Does.Contain("swfobject.js"));
+            });
+        }
+
         private static Script BuildScript(string code, string chunkName)
         {
             Script script = new();

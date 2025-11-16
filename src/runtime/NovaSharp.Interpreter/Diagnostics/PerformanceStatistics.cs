@@ -2,7 +2,8 @@ namespace NovaSharp.Interpreter.Diagnostics
 {
     using System;
     using System.Text;
-    using PerformanceCounters;
+    using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Interpreter.Diagnostics.PerformanceCounters;
 
     /// <summary>
     /// A single object of this type exists for every script and gives access to performance statistics.
@@ -16,8 +17,20 @@ namespace NovaSharp.Interpreter.Diagnostics
         private static IPerformanceStopwatch[] _globalStopwatches = new IPerformanceStopwatch[
             (int)PerformanceCounter.LastValue
         ];
+        private static readonly object GlobalSyncRoot = new();
+
+        private readonly IHighResolutionClock _clock;
+        private readonly object _syncRoot = new();
+
+        internal static IHighResolutionClock GlobalClock { get; set; } =
+            SystemHighResolutionClock.Instance;
 
         private bool _enabled;
+
+        internal PerformanceStatistics(IHighResolutionClock clock = null)
+        {
+            _clock = clock ?? SystemHighResolutionClock.Instance;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether this collection of performance stats is enabled.
@@ -30,30 +43,31 @@ namespace NovaSharp.Interpreter.Diagnostics
             get { return _enabled; }
             set
             {
-                if (value && !_enabled)
+                lock (_syncRoot)
                 {
-                    if (_globalStopwatches[(int)PerformanceCounter.AdaptersCompilation] == null)
+                    if (value && !_enabled)
                     {
-                        _globalStopwatches[(int)PerformanceCounter.AdaptersCompilation] =
-                            new GlobalPerformanceStopwatch(PerformanceCounter.AdaptersCompilation);
+                        EnsureGlobalStopwatch(PerformanceCounter.AdaptersCompilation);
+
+                        for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
+                        {
+                            _stopwatches[i] =
+                                _globalStopwatches[i]
+                                ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
+                        }
+                    }
+                    else if (!value && _enabled)
+                    {
+                        _stopwatches = new IPerformanceStopwatch[
+                            (int)PerformanceCounter.LastValue
+                        ];
+                        _globalStopwatches = new IPerformanceStopwatch[
+                            (int)PerformanceCounter.LastValue
+                        ];
                     }
 
-                    for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
-                    {
-                        _stopwatches[i] =
-                            _globalStopwatches[i]
-                            ?? new PerformanceStopwatch((PerformanceCounter)i);
-                    }
+                    _enabled = value;
                 }
-                else if (!value && _enabled)
-                {
-                    _stopwatches = new IPerformanceStopwatch[(int)PerformanceCounter.LastValue];
-                    _globalStopwatches = new IPerformanceStopwatch[
-                        (int)PerformanceCounter.LastValue
-                    ];
-                }
-
-                _enabled = value;
             }
         }
 
@@ -84,8 +98,18 @@ namespace NovaSharp.Interpreter.Diagnostics
         /// <returns></returns>
         internal static IDisposable StartGlobalStopwatch(PerformanceCounter pc)
         {
-            IPerformanceStopwatch pco = _globalStopwatches[(int)pc];
-            return (pco != null) ? pco.Start() : null;
+            lock (GlobalSyncRoot)
+            {
+                if (_globalStopwatches[(int)pc] == null)
+                {
+                    _globalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(
+                        pc,
+                        GlobalClock
+                    );
+                }
+
+                return _globalStopwatches[(int)pc].Start();
+            }
         }
 
         /// <summary>
@@ -106,6 +130,20 @@ namespace NovaSharp.Interpreter.Diagnostics
             }
 
             return sb.ToString();
+        }
+
+        private static void EnsureGlobalStopwatch(PerformanceCounter counter)
+        {
+            lock (GlobalSyncRoot)
+            {
+                if (_globalStopwatches[(int)counter] == null)
+                {
+                    _globalStopwatches[(int)counter] = new GlobalPerformanceStopwatch(
+                        counter,
+                        GlobalClock
+                    );
+                }
+            }
         }
     }
 }

@@ -122,7 +122,7 @@
         [Test]
         public void SerializeNonPrimeTableThrows()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             Table table = new Table(script);
             table.Set(DynValue.NewNumber(1), DynValue.NewNumber(2));
 
@@ -132,7 +132,7 @@
         [Test]
         public void SerializeValueTableOwnedByScriptThrows()
         {
-            Script script = new Script(default);
+            Script script = new Script(CoreModules.None);
             Table table = new Table(script);
             DynValue tableValue = DynValue.NewTable(table);
 
