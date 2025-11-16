@@ -103,7 +103,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("queryRunningStatus"));
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("queryRunningStatus")
+            );
             DynValue result = coroutineValue.Coroutine.Resume();
 
             Assert.That(result.Type, Is.EqualTo(DataType.String));
@@ -422,7 +424,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("invokeNestedBuilder"));
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("invokeNestedBuilder")
+            );
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
 
@@ -952,6 +956,5 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.YieldRequest.ReturnValues[1].String, Is.EqualTo("value"));
             });
         }
-
     }
 }

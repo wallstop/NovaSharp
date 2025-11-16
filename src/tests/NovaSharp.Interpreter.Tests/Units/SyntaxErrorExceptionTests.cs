@@ -163,10 +163,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static Token CreateToken(int sourceId = 0)
         {
-            Token token = new(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0)
-            {
-                Text = "value",
-            };
+            Token token = new(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0) { Text = "value" };
             return token;
         }
     }

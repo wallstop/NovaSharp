@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Interop.Converters
+namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Globalization;

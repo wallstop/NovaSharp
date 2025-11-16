@@ -53,8 +53,8 @@ For IL2CPP builds, keep the PDBs out of the final player by leaving their `Inspe
 ## 3. Reference the Assemblies
 
 1. In Unity, select each DLL and ensure **Any Platform** is enabled (or restrict as needed).
-2. For editor-only tools (e.g., the VS Code debugger), tick **Editor** only.
-3. If you are using assembly definition files (`.asmdef`), add references to the NovaSharp assemblies so your scripts can access the runtime.
+1. For editor-only tools (e.g., the VS Code debugger), tick **Editor** only.
+1. If you are using assembly definition files (`.asmdef`), add references to the NovaSharp assemblies so your scripts can access the runtime.
 
 ## 4. Optional: Generate a Unity Package
 
@@ -71,7 +71,7 @@ Document the NovaSharp version/hash alongside the package so consumers know whic
 
 All interpreter tests now live in `src/tests/NovaSharp.Interpreter.Tests` and execute via `dotnet test`. Keep Unity projects focused on runtime consumption; run the NUnit suite from the command line (CI already does this) to avoid pulling the full test harness into Unity.
 
----
+______________________________________________________________________
 
 For additional context on the build/test pipeline, see:
 

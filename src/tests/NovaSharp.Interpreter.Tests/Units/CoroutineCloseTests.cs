@@ -141,7 +141,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
                 Assert.That(result.Tuple.Length, Is.GreaterThanOrEqualTo(2));
                 Assert.That(result.Tuple[0].Boolean, Is.False);
-                Assert.That(result.Tuple[1].String, Does.Contain("cannot close a running coroutine"));
+                Assert.That(
+                    result.Tuple[1].String,
+                    Does.Contain("cannot close a running coroutine")
+                );
             });
         }
 

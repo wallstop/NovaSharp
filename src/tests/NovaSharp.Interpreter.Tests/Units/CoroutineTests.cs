@@ -174,6 +174,5 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Boolean, Is.True);
             Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.NotStarted));
         }
-
     }
 }

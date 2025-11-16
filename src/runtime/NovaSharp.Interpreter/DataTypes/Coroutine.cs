@@ -346,7 +346,9 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (_processor == null)
             {
-                throw new InvalidOperationException("Cannot override state on CLR callback coroutines.");
+                throw new InvalidOperationException(
+                    "Cannot override state on CLR callback coroutines."
+                );
             }
 
             _processor.ForceStateForTests(state);

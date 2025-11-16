@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Description>http://www.NovaSharp.org</Description>
         <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>

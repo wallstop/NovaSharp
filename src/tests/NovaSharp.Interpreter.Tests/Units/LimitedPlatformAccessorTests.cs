@@ -1,4 +1,4 @@
-﻿namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Text;

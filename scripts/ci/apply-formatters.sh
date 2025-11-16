@@ -11,7 +11,7 @@ cd "$repo_root"
 dotnet tool restore >/dev/null
 
 echo "[autofix] Running CSharpier..."
-dotnet csharpier . >/dev/null
+dotnet tool run csharpier format . >/dev/null
 
 PYTHON_BIN="${PYTHON:-python3}"
 

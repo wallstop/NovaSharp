@@ -13,11 +13,11 @@ Helper scripts live under this directory so contributors can find tooling withou
 ## Usage Guidelines
 
 1. Run scripts from the repository root so relative paths resolve correctly.
-2. Prefer `pwsh` for PowerShell scripts on Windows/Linux/macOS; when PowerShell is unavailable, provide a Bash/Python equivalent and document the fallback in this folder. Python-based utilities rely on `requirements.tooling.txt`, so run `python -m pip install -r requirements.tooling.txt` once per clone.
-3. When introducing a new script:
+1. Prefer `pwsh` for PowerShell scripts on Windows/Linux/macOS; when PowerShell is unavailable, provide a Bash/Python equivalent and document the fallback in this folder. Python-based utilities rely on `requirements.tooling.txt`, so run `python -m pip install -r requirements.tooling.txt` once per clone.
+1. When introducing a new script:
    - Place it in the appropriate subfolder.
    - Add usage, prerequisites, and sample commands to the subfolder README (and link to it from here if needed).
    - Update `docs/Testing.md`, `docs/Modernization.md`, or other relevant guides so end users know the script exists.
-4. Keep scripts idempotent and CI-safe—avoid modifying developer machines or requiring elevated privileges.
+1. Keep scripts idempotent and CI-safe—avoid modifying developer machines or requiring elevated privileges.
 
 Need another folder? Create it under `scripts/` with a short README following the conventions above.
