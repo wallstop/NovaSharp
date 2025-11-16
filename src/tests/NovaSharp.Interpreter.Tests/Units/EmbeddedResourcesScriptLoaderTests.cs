@@ -10,7 +10,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class EmbeddedResourcesScriptLoaderTests
     {
-        private static readonly Assembly TestAssembly = typeof(EmbeddedResourcesScriptLoaderTests).Assembly;
+        private static readonly Assembly TestAssembly =
+            typeof(EmbeddedResourcesScriptLoaderTests).Assembly;
 
         [Test]
         public void ScriptFileExistsDetectsEmbeddedResources()

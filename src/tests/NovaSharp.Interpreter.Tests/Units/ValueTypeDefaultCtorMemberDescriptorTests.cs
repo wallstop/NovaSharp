@@ -19,7 +19,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Assert.That(
                 () => new ValueTypeDefaultCtorMemberDescriptor(typeof(string)),
-                Throws.TypeOf<ArgumentException>().With.Message.Contains("valueType is not a value type")
+                Throws
+                    .TypeOf<ArgumentException>()
+                    .With.Message.Contains("valueType is not a value type")
             );
         }
 
@@ -65,9 +67,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () => descriptor.SetValue(new Script(), null, DynValue.NewNumber(1)),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("cannot be assigned")
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("cannot be assigned")
             );
         }
 
@@ -81,7 +81,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(wiring.Get("class").String, Does.Contain(nameof(ValueTypeDefaultCtorMemberDescriptor)));
+                Assert.That(
+                    wiring.Get("class").String,
+                    Does.Contain(nameof(ValueTypeDefaultCtorMemberDescriptor))
+                );
                 Assert.That(wiring.Get("type").String, Is.EqualTo(typeof(SampleStruct).FullName));
                 Assert.That(wiring.Get("name").String, Is.EqualTo("__new"));
             });

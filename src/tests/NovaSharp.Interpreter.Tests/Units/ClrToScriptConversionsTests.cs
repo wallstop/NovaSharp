@@ -7,8 +7,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
-    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Converters;
     using NUnit.Framework;
@@ -93,7 +93,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 callback
             );
             Assert.That(callbackResult.Type, Is.EqualTo(DataType.ClrFunction));
-
         }
 
         [Test]
@@ -122,11 +121,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(delegateValue.Type, Is.EqualTo(DataType.ClrFunction));
 
-            MethodInfo method = typeof(ClrToScriptConversionsTests)
-                .GetMethod(
-                    nameof(StaticClrCallback),
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
-                );
+            MethodInfo method = typeof(ClrToScriptConversionsTests).GetMethod(
+                nameof(StaticClrCallback),
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
+            );
             DynValue methodValue = ClrToScriptConversions.ObjectToDynValue(script, method);
             Assert.That(methodValue.Type, Is.EqualTo(DataType.ClrFunction));
         }

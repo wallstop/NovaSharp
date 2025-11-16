@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 08:44 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 12:56 UTC).
 
 ## Snapshot
-- Overall line coverage: **82.5 %**
-- NovaSharp.Interpreter line coverage: **91.7 %**
+- Overall line coverage: **83.1 %**
+- NovaSharp.Interpreter line coverage: **92.6 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **79.1 %** (DebugServer still below 70 %; remaining gaps focus on queue/breakpoint handling + Tcp helpers)
@@ -59,7 +59,8 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `DynValueMemberDescriptor` now covered across read access, execution flags, setter guard, and wiring paths (primitive, table, userdata, unsupported types).
 - `DebugModule` interactive loop now handles returned values, CLR exceptions, and null-input exits under test, bumping branch coverage to 77 %.
 - `StandardEnumUserDataDescriptor` now exercises conversion helpers, numeric backstops, argument validation, and meta operations (85.6 % line / 88.8 % branch coverage).
-- `FieldMemberDescriptor` covers pre/lazy optimized getters, null-instance guards, and metadata wiring (80.7 % line coverage).
+- `FieldMemberDescriptorTests` (2025-11-16 12:48 UTC) now pin the AOT fallback (forcing preoptimized descriptors back to reflection), the reflection fallback for instance reads, preoptimized instance getters, the numeric-conversion shim (`double` payloads), mismatched-owner exceptions, and the `IOptimizableDescriptor.Optimize` interface path so the suite no longer relies on reflection to inspect `_optimizedGetter`. `FieldMemberDescriptor` now reports **90.0 % line / 94.7 % branch / 100 % method** coverage, and the interpreter totals land at **92.45 % line / 88.96 % branch / 94.73 % method** across **1 872** Release tests after rerunning `./scripts/coverage/coverage.ps1 -SkipBuild`; PLAN + this doc updated with the checkpoint.
+- `TableModuleTests` (2025-11-16 12:56 UTC) now cover the remaining table-library gaps (§6.6 “Table Manipulation”): numeric sorts, invalid comparator types, comparator/metamethod error propagation, custom `__lt` metatables, comparators that always return `false`, cross-type sort failures, positional validation for `table.insert`, the extra-argument guard for `table.remove`, and `__len`-powered insertions. Coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` records `NovaSharp.Interpreter.CoreLib.TableModule` at **99.2 % line / 98.9 % branch / 100 % method**, raising interpreter totals to **92.58 % line / 89.11 % branch / 94.73 % method** across **1 881** Release tests; PLAN.md captures the checkpoint.
 - `CallbackFunction` now sits at **91.3 %** line coverage thanks to colon-operator handling tests, default access mode validation, and delegate/visibility checks; closure-centric tests also cover entry-point metadata and call overloads, lifting `Closure` to **86.6 %** while documenting the remaining `_ENV` constraint.
 - `ParameterDescriptor` is fully covered (**100 %** line) after exercising type restriction constructors, by-ref wiring, `OriginalType` fallbacks, and `ToString` formatting.
 - `LoadModule` now reports **91.3 %** line / **86.9 %** branch coverage following new NUnit cases for reader concatenation, safe-environment failure, `loadfile` error tuples, and `dofile` success/error flows.

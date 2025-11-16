@@ -24,7 +24,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.Options.UseLuaErrorLocations = true;
             Assert.That(singleLine.FormatLocation(script), Is.EqualTo("chunk:5"));
 
-            Assert.That(multiLine.FormatLocation(script, forceClassicFormat: true), Is.EqualTo("chunk:4"));
+            Assert.That(
+                multiLine.FormatLocation(script, forceClassicFormat: true),
+                Is.EqualTo("chunk:4")
+            );
         }
 
         [Test]

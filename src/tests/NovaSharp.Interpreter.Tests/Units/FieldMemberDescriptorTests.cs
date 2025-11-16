@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
+    using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
 
     [TestFixture]
@@ -122,7 +123,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 InteropAccessMode.Preoptimized
             );
 
-            Func<object, object> optimizedGetter = GetOptimizedGetter(descriptor);
+            Func<object, object> optimizedGetter = descriptor.OptimizedGetter;
 
             Assert.Multiple(() =>
             {
@@ -145,10 +146,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 InteropAccessMode.LazyOptimized
             );
 
-            Assert.That(GetOptimizedGetter(descriptor), Is.Null, "Getter not yet compiled");
+            Assert.That(descriptor.OptimizedGetter, Is.Null, "Getter not yet compiled");
 
             DynValue first = descriptor.GetValue(_script, null);
-            Func<object, object> optimizedGetter = GetOptimizedGetter(descriptor);
+            Func<object, object> optimizedGetter = descriptor.OptimizedGetter;
             DynValue second = descriptor.GetValue(_script, null);
 
             Assert.Multiple(() =>
@@ -156,6 +157,123 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(first.Number, Is.EqualTo(SampleFields.StaticValue));
                 Assert.That(optimizedGetter, Is.Not.Null, "Getter compiled after first access");
                 Assert.That(second.Number, Is.EqualTo(SampleFields.StaticValue));
+            });
+        }
+
+        [Test]
+        public void GetValueReturnsInstanceFieldViaReflection()
+        {
+            SampleFields instance = new() { InstanceValue = 42 };
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+
+            DynValue result = descriptor.GetValue(_script, instance);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.OptimizedGetter, Is.Null);
+                Assert.That(result.Type, Is.EqualTo(DataType.Number));
+                Assert.That(result.Number, Is.EqualTo(instance.InstanceValue));
+            });
+        }
+
+        [Test]
+        public void PreoptimizedGetterCompilesForInstanceField()
+        {
+            SampleFields instance = new() { InstanceValue = 99 };
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Preoptimized
+            );
+
+            DynValue result = descriptor.GetValue(_script, instance);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
+                Assert.That(result.Number, Is.EqualTo(instance.InstanceValue));
+            });
+        }
+
+        [Test]
+        public void PreoptimizedConstFieldDoesNotCompileGetter()
+        {
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.ConstValue),
+                    BindingFlags.Static | BindingFlags.Public
+                ),
+                InteropAccessMode.Preoptimized
+            );
+
+            DynValue result = descriptor.GetValue(_script, null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.OptimizedGetter, Is.Null);
+                Assert.That(result.Number, Is.EqualTo(SampleFields.ConstValue));
+            });
+        }
+
+        [Test]
+        public void ConstructorForcesReflectionModeOnAotPlatforms()
+        {
+            IPlatformAccessor original = Script.GlobalOptions.Platform;
+
+            try
+            {
+                Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
+                FieldMemberDescriptor descriptor = new(
+                    typeof(SampleFields).GetField(
+                        nameof(SampleFields.StaticValue),
+                        BindingFlags.Static | BindingFlags.Public
+                    ),
+                    InteropAccessMode.Preoptimized
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(descriptor.AccessMode, Is.EqualTo(InteropAccessMode.Reflection));
+                    Assert.That(descriptor.OptimizedGetter, Is.Null);
+                });
+            }
+            finally
+            {
+                Script.GlobalOptions.Platform = original;
+            }
+        }
+
+        [Test]
+        public void OptimizeInterfaceCompilesGetterOnDemand()
+        {
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+            SampleFields instance = new() { InstanceValue = 64 };
+
+            Assert.That(descriptor.OptimizedGetter, Is.Null);
+
+            IOptimizableDescriptor optimizable = descriptor;
+            optimizable.Optimize();
+
+            DynValue value = descriptor.GetValue(_script, instance);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
+                Assert.That(value.Number, Is.EqualTo(instance.InstanceValue));
             });
         }
 
@@ -249,6 +367,41 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetValueThrowsWhenInstanceTypeDoesNotMatchField()
+        {
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(_script, new object(), DynValue.NewNumber(1))
+            );
+
+            Assert.That(exception.Message, Does.Contain("cannot find a conversion"));
+        }
+
+        [Test]
+        public void SetValueNormalizesDoubleValuesThroughNumericConversions()
+        {
+            SampleFields instance = new();
+            FieldMemberDescriptor descriptor = new(
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields.DoubleValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+
+            descriptor.SetValue(_script, instance, DynValue.NewNumber(2.5));
+
+            Assert.That(instance.DoubleValue, Is.EqualTo(2.5));
+        }
+
+        [Test]
         public void PrepareForWiringPopulatesMetadataTable()
         {
             FieldMemberDescriptor descriptor = new(
@@ -271,21 +424,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        private static Func<object, object> GetOptimizedGetter(FieldMemberDescriptor descriptor)
-        {
-            FieldInfo getterField = typeof(FieldMemberDescriptor).GetField(
-                "_optimizedGetter",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            );
-            return (Func<object, object>)getterField.GetValue(descriptor);
-        }
-
         private sealed class SampleFields
         {
             public const int ConstValue = 7;
             public static readonly string ReadonlyValue = "fixed";
             public static int StaticValue = 1;
             public int InstanceValue;
+            public double DoubleValue;
             private int _privateValue;
         }
     }

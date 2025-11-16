@@ -54,6 +54,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         private Func<object, object> _optimizedGetter;
 
         /// <summary>
+        /// Internal hook that exposes the compiled getter so interpreter tests (via InternalsVisibleTo)
+        /// can assert optimization behavior without reflection.
+        /// </summary>
+        internal Func<object, object> OptimizedGetter => _optimizedGetter;
+
+        /// <summary>
         /// Tries to create a new StandardUserDataFieldDescriptor, returning <c>null</c> in case the field is not
         /// visible to script code.
         /// </summary>
