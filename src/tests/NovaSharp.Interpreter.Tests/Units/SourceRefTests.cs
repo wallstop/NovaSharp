@@ -85,5 +85,57 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(copy.Breakpoint, Is.False);
             });
         }
+
+        [Test]
+        public void ToStringReflectsStepStopIndicator()
+        {
+            SourceRef stepStop = new(3, 0, 2, 4, 5, true);
+
+            string representation = stepStop.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(representation, Does.Contain("[3]*"));
+                Assert.That(representation, Does.Contain("(4, 0) -> (5, 2)"));
+            });
+        }
+
+        [Test]
+        public void GetLocationDistanceHandlesCollapsedAndBetweenSegments()
+        {
+            SourceRef collapsed = new(1, 2, 2, 10, 10, false);
+            Assert.That(collapsed.GetLocationDistance(1, 10, 2), Is.EqualTo(0));
+            Assert.That(collapsed.GetLocationDistance(1, 12, 5), Is.EqualTo(3200));
+
+            SourceRef multi = new(2, 1, 3, 4, 8, false);
+            Assert.That(multi.GetLocationDistance(2, 6, 2), Is.EqualTo(0));
+            Assert.That(multi.GetLocationDistance(2, 3, 5), Is.EqualTo(1600));
+            Assert.That(multi.GetLocationDistance(2, 9, 1), Is.EqualTo(1600));
+            Assert.That(multi.GetLocationDistance(2, 8, 1), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void IncludesLocationHandlesSingleLineSourceRefs()
+        {
+            SourceRef singleLine = new(4, 0, 2, 5, 5, false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(singleLine.IncludesLocation(4, 5, 1), Is.True);
+                Assert.That(singleLine.IncludesLocation(4, 5, 3), Is.False);
+            });
+        }
+
+        [Test]
+        public void FormatLocationUsesPointFormattingWhenCharsMatch()
+        {
+            Script script = new();
+            script.LoadString("return 1", null, "point");
+            int sourceIdx = script.SourceCodeCount - 1;
+            SourceRef point = new(sourceIdx, 2, 2, 4, 4, false);
+
+            script.Options.UseLuaErrorLocations = false;
+            Assert.That(point.FormatLocation(script), Is.EqualTo("point:(4,2)"));
+        }
     }
 }

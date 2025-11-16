@@ -1,13 +1,13 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 12:56 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 14:03 UTC).
 
 ## Snapshot
-- Overall line coverage: **83.1 %**
-- NovaSharp.Interpreter line coverage: **92.6 %**
+- Overall line coverage: **83.9 %**
+- NovaSharp.Interpreter line coverage: **92.8 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **79.1 %** (DebugServer stuck at **63.2 %** line / **46 %** branch; newly added queue/breakpoint/invalid watch tests cover the guardrails, but the VS command handlers + Tcp helpers remain uncovered)
+- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer now at **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
@@ -30,7 +30,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `FrameworkCurrentTests` verify the .NET Core reflection shim (interface lookup, `GetTypeInfoFromType`, `IsDbNull`, `StringContainsChar`). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 12:22 UTC drives `NovaSharp.Interpreter.Compatibility.Frameworks.FrameworkCurrent` to **100 % line / 100 % branch / 100 % method** while interpreter totals stay at **92.34 % line / 88.89 % branch / 94.54 % method** across **1 851** Release tests.
 - `JsonNullTests` now exercise the JSON-null userdata helper (`IsNull`, `Create`, and `IsJsonNull`). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 12:27 UTC drives `NovaSharp.Interpreter.Serialization.Json.JsonNull` to **100 % line / 100 % branch / 100 % method** with interpreter totals unchanged at **92.34 % line / 88.89 % branch / 94.54 % method** across **1 851** Release tests.
 - `RuntimeScopeBlockTests` and `AnonWrapperTests` (2025-11-16 12:31 UTC) now cover the execution-scope metadata DTO and anonymous userdata wrapper helpers (`AnonWrapper<T>`). `RuntimeScopeBlock` reports **100 % line / 100 % branch / 100 % method**, `AnonWrapper<T>` hits **100 % line / 100 % branch**, and interpreter totals remain **92.36 % line / 88.89 % branch / 94.68 % method** across **1 859** Release tests (`./scripts/coverage/coverage.ps1 -SkipBuild`).
-- `SourceRefTests` (formatting/distance/inclusion/CLR markers) and `EmbeddedResourcesScriptLoaderTests` (resource lookup/load + NetCore guard) improve coverage of the debugging + loader helpers. `EmbeddedResourcesScriptLoader` now reports **100 % line / 100 % branch / 100 % method**; `SourceRef` remains at **81 % line / 84 % branch** because the Release bootstrapper loads `libfunc_require` before user-created chunks, but the behavioural seams are now enforced. Interpreter totals stay at **92.38 % line / 88.90 % branch / 94.68 % method** with **1 865** Release tests (`./scripts/coverage/coverage.ps1 -SkipBuild`).
+- `EmbeddedResourcesScriptLoaderTests` (resource lookup/load + NetCore guard) keep the loader helpers locked down at **100 % line / 100 % branch / 100 % method**, holding interpreter totals at **92.38 % line / 88.90 % branch / 94.68 % method** with **1 865** Release tests (`./scripts/coverage/coverage.ps1 -SkipBuild`).
 - `ValueTypeDefaultCtorMemberDescriptorTests` cover the constructor guard, Execute/GetValue behavior, SetValue write rejection, wiring metadata, and the metadata-only properties (`Parameters`, varargs, `SortDiscriminant`). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 09:54 UTC lifts `NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors.ValueTypeDefaultCtorMemberDescriptor` to **96.4 % line / 100 % branch / 100 % method** and holds interpreter totals at **92.23 % line / 88.75 % branch / 94.44 % method** across **1 841** Release tests.
 - `CustomConverterRegistry` jumped to **100 % line / 100 % branch / 100 % method** after introducing `CustomConverterRegistryTests` (duplicate registration, removal, typed + obsolete CLR bridge paths, `Clear`) and tightening the registry's DataType guard so invalid values no longer index past the backing arrays. Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-15 20:12 UTC captured the bump and pushed interpreter totals to **91.1 % line / 87.4 % branch / 93.5 % method** with **1 760** Release tests.
 - `EnumerableWrapperTests` now drive iterator callbacks, nil-skipping, reset guards, table conversion, and the exposed `Current/MoveNext/Reset` userdata members so `EnumerableWrapper` sits at **95.2 % line / 88.4 % branch / 88.8 % method** (coverage run 2025-11-15 20:52 UTC). That clears the enumerable entry from the red list and raises the interpreter suite to **91.3 % line / 87.8 % branch / 93.6 % method** with **1 780** Release tests.
@@ -41,7 +41,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `BinaryOperatorExpression` now sits at **90.0 %** line / **82.5 %** branch coverage after adding compile-path opcode assertions (arithmetic, concatenation, comparison, and `~=` inversion) plus new string comparison/equality regressions; coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-14 17:44 UTC captured the jump.
 - `LuaStateInterop.Tools` climbed to **98.2 % line / 90.4 % branch** after expanding `LuaStateInteropToolsTests` with unsigned/null-edge coverage and exhaustive `sprintf` permutations (`%i`, `%f/%e/%E/%g/%G`, `%c`, `%s`, `%#o`, `%hd/%hu/%ld/%lu`, flag precedence). The same coverage run bumped interpreter totals to **90.7 % line / 87.4 % branch / 93.1 % method** with **1 721** Release tests.
     - `UnityAssetsScriptLoader` is now fully exercised under the reflection pathway thanks to a dynamically generated `UnityEngine` stub and failure-mode regression tests, yielding **100 % line / 90 % branch** coverage and pushing the suite to **1 723** Release tests (interpreter totals: **90.9 % line / 87.5 % branch / 93.3 % method**).
-    - Remote debugger automation now includes `Units/RemoteDebuggerServiceTests`, `Units/HttpServerTests`, `Units/HttpResourceTests`, `Units/XmlWriterExtensionsTests`, and the freshly expanded `Units/RemoteDebuggerTests` (host busy/ready queue refresh, invalid watch fallback, aged-action skip, breakpoint clear/toggle, `ConnectedClients`, debugger caps). Combined with the TCP command suite, `NovaSharp.RemoteDebugger` sits at **79.1 % line / 62.6 % branch / 91.9 % method** (`DebugServer` 63.2 %, `RemoteDebuggerService` 96.6 %, `DebugWebHost` 100.0 %, `HttpServer` 91.1 %, `HttpResource` 94.7 %); remaining work targets the VS command handlers and Tcp helpers still under 80 %.
+    - Remote debugger automation now includes `Units/RemoteDebuggerServiceTests`, `Units/HttpServerTests`, `Units/HttpResourceTests`, `Units/XmlWriterExtensionsTests`, and the freshly expanded `Units/RemoteDebuggerTests` (host busy/ready queue refresh, invalid watch fallback, aged-action skip, breakpoint clear/toggle, `ConnectedClients`, debugger caps). Combined with the TCP command suite, `NovaSharp.RemoteDebugger` now sits at **92.7 % line / 81.1 % branch / 94.6 % method** (`DebugServer` 99.6 % / 84.9 %, `RemoteDebuggerService` 96.6 %, `DebugWebHost` 100.0 %, `HttpServer` 91.1 %, `HttpResource` 94.7 %); remaining work targets the VS command handlers and Tcp helpers still under 85 %.
 - `UnaryOperatorExpression` now sits at **100 %** line/branch coverage after adding direct Eval tests for `not`, `#`, `-`, and the non-numeric failure path.
 - `StringModule` has climbed to **97.2 %** line / **94.6 %** branch coverage via spec-aligned edge cases and modulo-normalization in production.
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.
@@ -91,7 +91,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - Added `StandardGenericsUserDataDescriptorTests` so the generics descriptor (ctor validation, Index/MetaIndex, Generate) is exercised without relying on manual reflection.
 - Added `CoroutineApiTests` to drive enumerable helpers, Unity coroutine adapters, CLR callback transitions, and `AutoYieldCounter`, boosting coroutine coverage.
 - Added `FastStackTests` to cover push/pop/remove/expand/crop paths in the fixed-capacity stack implementation.
-- `SourceRefTests` cover FormatLocation/GetCodeSnippet heuristics (81 % line coverage) while `ExitCommandTests` drive the CLI `exit` path to 100 %, nudging NovaSharp.Cli line coverage to 73.7 %.
+- `SourceRefTests` now cover `ToString()`, collapsed-line distance calculations, mid-slice line checks, and the single-line formatting branch, lifting `NovaSharp.Interpreter.Debugging.SourceRef` to **96.0 % line / 86.0 % branch / 100 % method** (coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 14:03 UTC). `ExitCommandTests` continue to drive the CLI `exit` path to 100 %, keeping NovaSharp.Cli line coverage at 79.7 %.
 - `LoadModuleTests` now exercise `require`, `load`, and `loadfilesafe` paths (LoadModule at 71 % line coverage), and `SyntaxErrorExceptionTests`/`DynamicExpressionException` assertions ensure parser errors honour nested rethrow rules and message prefixes.
 - `EventMemberDescriptorTests` expanded with compatibility guards and multi-signature dispatch checks, lifting event coverage to 53 % and validating zero-arg/multi-arg pathways.
 - `AutoDescribingUserDataDescriptorTests` verify name/type exposure plus index/set/meta forwarding to IUserDataType, keeping self-describing userdata behaviour under regression tests.
@@ -117,4 +117,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-12_
+_Last updated: 2025-11-16_
