@@ -1,5 +1,46 @@
 param()
 
+$ErrorActionPreference = "Stop"
+$scriptRoot = $PSScriptRoot
+$repoRoot = ""
+
+try {
+    $gitRoot = git -C $scriptRoot rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($gitRoot)) {
+        $repoRoot = $gitRoot.Trim()
+    }
+}
+catch {
+    # git might be unavailable (e.g., when run from packaged artifacts)
+}
+
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+    $current = Get-Item -LiteralPath $scriptRoot
+    while ($current -and $current.FullName -ne [System.IO.Path]::GetPathRoot($current.FullName)) {
+        if (Test-Path (Join-Path $current.FullName ".git")) {
+            $repoRoot = $current.FullName
+            break
+        }
+
+        if ($current.Parent -eq $null) {
+            break
+        }
+
+        $current = $current.Parent
+    }
+
+    if ([string]::IsNullOrWhiteSpace($repoRoot) -and $current -and $current.Parent) {
+        $repoRoot = $current.Parent.FullName
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = (Resolve-Path ".").Path
+}
+else {
+    $repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
+}
+
 $auditData = @(
     [pscustomobject]@{
         Number = 332
@@ -592,4 +633,6 @@ foreach ($issue in $issues) {
     $output += $formatted
 }
 
-$output | Set-Content docs/modernization/moonsharp-issue-audit.md -Encoding UTF8
+$outputPath = Join-Path $repoRoot "docs/modernization/moonsharp-issue-audit.md"
+$output | Set-Content $outputPath -Encoding UTF8
+Write-Host ("MoonSharp audit regenerated at {0}" -f $outputPath)

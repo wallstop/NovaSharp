@@ -10,16 +10,45 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$scriptPath = $MyInvocation.MyCommand.Path
-$scriptDirectory = Split-Path -Parent $scriptPath
-$repoRoot = Split-Path -Parent $scriptDirectory
-if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
-    $repoRoot = Split-Path -Parent $repoRoot
+$scriptRoot = $PSScriptRoot
+$repoRoot = ""
+
+try {
+    $gitRoot = git -C $scriptRoot rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($gitRoot)) {
+        $repoRoot = $gitRoot.Trim()
+    }
 }
+catch {
+    # git might not be available inside some CI containers
+}
+
 if ([string]::IsNullOrWhiteSpace($repoRoot)) {
-    $repoRoot = "."
+    $current = Get-Item -LiteralPath $scriptRoot
+    while ($current -and $current.FullName -ne [System.IO.Path]::GetPathRoot($current.FullName)) {
+        if (Test-Path (Join-Path $current.FullName ".git")) {
+            $repoRoot = $current.FullName
+            break
+        }
+
+        if ($current.Parent -eq $null) {
+            break
+        }
+
+        $current = $current.Parent
+    }
+
+    if ([string]::IsNullOrWhiteSpace($repoRoot) -and $current -and $current.Parent) {
+        $repoRoot = $current.Parent.FullName
+    }
 }
-$repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
+
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = (Resolve-Path ".").Path
+}
+else {
+    $repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
+}
 
 if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"
