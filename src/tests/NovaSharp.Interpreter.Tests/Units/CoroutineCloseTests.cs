@@ -95,5 +95,127 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(closeResult.Tuple[1].String, Does.Contain("boom"));
             });
         }
+
+        [Test]
+        public void CloseMainCoroutineThrows()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function close_main()
+                    local current = select(1, coroutine.running())
+                    coroutine.close(current)
+                end
+            "
+            );
+
+            Assert.That(
+                () => script.Call(script.Globals.Get("close_main")),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("attempt to close the main coroutine")
+            );
+        }
+
+        [Test]
+        public void CloseRunningCoroutineThrows()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function close_running()
+                    local worker = coroutine.create(function()
+                        local current = coroutine.running()
+                        coroutine.close(current)
+                    end)
+
+                    return coroutine.resume(worker)
+                end
+            "
+            );
+
+            DynValue result = script.Call(script.Globals.Get("close_running"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.GreaterThanOrEqualTo(2));
+                Assert.That(result.Tuple[0].Boolean, Is.False);
+                Assert.That(result.Tuple[1].String, Does.Contain("cannot close a running coroutine"));
+            });
+        }
+
+        [Test]
+        public void CloseUnknownStateThrows()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString("function idle() coroutine.yield('pause') end");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
+
+            coroutineValue.Coroutine.ForceStateForTests((CoroutineState)0);
+
+            Assert.That(
+                () => coroutineValue.Coroutine.Close(),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("cannot close coroutine in state unknown")
+            );
+        }
+
+        [Test]
+        public void CloseDeadCoroutineWithoutErrorsReturnsTrue()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString("function done() return 'ok' end");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("done"));
+
+            DynValue first = coroutineValue.Coroutine.Resume();
+            Assert.That(first.String, Is.EqualTo("ok"));
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+            Assert.That(closeResult.Boolean, Is.True);
+        }
+
+        [Test]
+        public void ClosePropagatesErrorsFromCloseMetamethod()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                local function new_closable()
+                    local resource = {}
+                    return setmetatable(resource, {
+                        __close = function(_, err)
+                            error('close failure', 0)
+                        end
+                    })
+                end
+
+                function build_closer_coroutine()
+                    return coroutine.create(function()
+                        local resource <close> = new_closable()
+                        coroutine.yield('pause')
+                    end)
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.Call(script.Globals.Get("build_closer_coroutine"));
+            DynValue first = coroutineValue.Coroutine.Resume();
+
+            Assert.That(first.String, Is.EqualTo("pause"));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(closeResult.Tuple[0].Boolean, Is.False);
+                Assert.That(closeResult.Tuple[1].String, Does.Contain("close failure"));
+            });
+        }
     }
 }
