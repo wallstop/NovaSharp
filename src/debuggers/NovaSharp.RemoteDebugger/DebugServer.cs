@@ -121,6 +121,18 @@ namespace NovaSharp.RemoteDebugger
             _server.BroadcastMessage(xml);
         }
 
+        private DebuggerAction CreateAction()
+        {
+            return new DebuggerAction(_script?.TimeProvider);
+        }
+
+        private DebuggerAction CreateAction(DebuggerAction.ActionType actionType)
+        {
+            DebuggerAction action = CreateAction();
+            action.Action = actionType;
+            return action;
+        }
+
         private void SendWelcome()
         {
             Send(xw =>
@@ -227,7 +239,7 @@ namespace NovaSharp.RemoteDebugger
                 if (_freeRunAfterAttach)
                 {
                     _freeRunAfterAttach = false;
-                    return new DebuggerAction() { Action = DebuggerAction.ActionType.Run };
+                    return CreateAction(DebuggerAction.ActionType.Run);
                 }
 
                 _inGetActionLoop = true;
@@ -362,11 +374,6 @@ namespace NovaSharp.RemoteDebugger
                         }
 
                         break;
-                    case "stepin":
-                        QueueAction(
-                            new DebuggerAction() { Action = DebuggerAction.ActionType.StepIn }
-                        );
-                        break;
                     case "refresh":
                         lock (_lock)
                         {
@@ -377,20 +384,17 @@ namespace NovaSharp.RemoteDebugger
                         }
                         QueueRefresh();
                         break;
+                    case "stepin":
+                        QueueAction(CreateAction(DebuggerAction.ActionType.StepIn));
+                        break;
                     case "run":
-                        QueueAction(
-                            new DebuggerAction() { Action = DebuggerAction.ActionType.Run }
-                        );
+                        QueueAction(CreateAction(DebuggerAction.ActionType.Run));
                         break;
                     case "stepover":
-                        QueueAction(
-                            new DebuggerAction() { Action = DebuggerAction.ActionType.StepOver }
-                        );
+                        QueueAction(CreateAction(DebuggerAction.ActionType.StepOver));
                         break;
                     case "stepout":
-                        QueueAction(
-                            new DebuggerAction() { Action = DebuggerAction.ActionType.StepOut }
-                        );
+                        QueueAction(CreateAction(DebuggerAction.ActionType.StepOut));
                         break;
                     case "pause":
                         _requestPause = true;
@@ -439,15 +443,17 @@ namespace NovaSharp.RemoteDebugger
                             action = DebuggerAction.ActionType.ClearBreakpoint;
                         }
 
-                        QueueAction(
-                            new DebuggerAction()
-                            {
-                                Action = action,
-                                SourceId = int.Parse(xdoc.DocumentElement.GetAttribute("src")),
-                                SourceLine = int.Parse(xdoc.DocumentElement.GetAttribute("line")),
-                                SourceCol = int.Parse(xdoc.DocumentElement.GetAttribute("col")),
-                            }
+                        DebuggerAction breakpointAction = CreateAction(action);
+                        breakpointAction.SourceId = int.Parse(
+                            xdoc.DocumentElement.GetAttribute("src")
                         );
+                        breakpointAction.SourceLine = int.Parse(
+                            xdoc.DocumentElement.GetAttribute("line")
+                        );
+                        breakpointAction.SourceCol = int.Parse(
+                            xdoc.DocumentElement.GetAttribute("col")
+                        );
+                        QueueAction(breakpointAction);
                         break;
                 }
             }
@@ -461,7 +467,7 @@ namespace NovaSharp.RemoteDebugger
                 _hostBusySent = true;
             }
 
-            QueueAction(new DebuggerAction() { Action = DebuggerAction.ActionType.HardRefresh });
+            QueueAction(CreateAction(DebuggerAction.ActionType.HardRefresh));
         }
 
         private void SendOption(string optionName, string optionVal)

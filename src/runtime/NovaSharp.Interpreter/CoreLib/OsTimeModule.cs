@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
@@ -24,8 +25,10 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "os")]
     public class OsTimeModule
     {
-        private static readonly DateTime Time0 = DateTime.UtcNow;
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider.Instance
+            .GetUtcNow()
+            .UtcDateTime;
 
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
@@ -51,7 +54,8 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            DynValue t = GetUnixTime(DateTime.UtcNow, Time0);
+            DateTime now = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
+            DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
             if (t.IsNil())
             {
                 return DynValue.NewNumber(0.0);
@@ -80,7 +84,7 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "time")]
         public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DateTime date = DateTime.UtcNow;
+            DateTime date = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             if (args.Count > 0)
             {
@@ -137,7 +141,7 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "date")]
         public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DateTime reference = DateTime.UtcNow;
+            DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             DynValue vformat = args.AsType(0, "date", DataType.String, true);
             DynValue vtime = args.AsType(1, "date", DataType.Number, true);
@@ -334,6 +338,15 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             return sb.ToString();
+        }
+        private static ITimeProvider ResolveTimeProvider(ScriptExecutionContext context)
+        {
+            return context?.OwnerScript?.TimeProvider ?? SystemTimeProvider.Instance;
+        }
+
+        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context)
+        {
+            return context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
         }
     }
 }

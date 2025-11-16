@@ -104,7 +104,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 {
                     if (Client == null)
                     {
-                        return new DebuggerAction() { Action = DebuggerAction.ActionType.Run };
+                        return new DebuggerAction(Script?.TimeProvider)
+                        {
+                            Action = DebuggerAction.ActionType.Run,
+                        };
                     }
 
                     if (_pendingAction != null)

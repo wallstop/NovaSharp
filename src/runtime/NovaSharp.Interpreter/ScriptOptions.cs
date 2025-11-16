@@ -16,6 +16,7 @@ namespace NovaSharp.Interpreter
         {
             CompatibilityVersion = LuaCompatibilityVersion.Latest;
             HighResolutionClock = SystemHighResolutionClock.Instance;
+            TimeProvider = SystemTimeProvider.Instance;
         }
 
         public ScriptOptions(ScriptOptions defaults)
@@ -39,6 +40,7 @@ namespace NovaSharp.Interpreter
             CheckThreadAccess = defaults.CheckThreadAccess;
             CompatibilityVersion = defaults.CompatibilityVersion;
             HighResolutionClock = defaults.HighResolutionClock;
+            TimeProvider = defaults.TimeProvider;
         }
 
         /// <summary>
@@ -117,5 +119,10 @@ namespace NovaSharp.Interpreter
         /// Gets or sets the high-resolution clock used by performance statistics (defaults to <see cref="SystemHighResolutionClock.Instance"/>).
         /// </summary>
         public IHighResolutionClock HighResolutionClock { get; set; }
+
+        /// <summary>
+        /// Gets or sets the wall-clock provider used by modules that need UTC timestamps (defaults to <see cref="SystemTimeProvider.Instance"/>).
+        /// </summary>
+        public ITimeProvider TimeProvider { get; set; }
     }
 }

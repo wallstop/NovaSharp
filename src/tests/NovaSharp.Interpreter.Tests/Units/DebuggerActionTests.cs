@@ -1,8 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Threading;
     using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -11,9 +11,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorInitializesTimestampNearCurrentTime()
         {
-            DateTime before = DateTime.UtcNow;
-            DebuggerAction action = new();
-            DateTime after = DateTime.UtcNow;
+            FakeTimeProvider provider = new();
+            DateTime before = provider.GetUtcNow().UtcDateTime;
+            DebuggerAction action = new(provider);
+            provider.Advance(TimeSpan.FromMilliseconds(1));
+            DateTime after = provider.GetUtcNow().UtcDateTime;
 
             Assert.That(action.TimeStampUtc, Is.InRange(before, after));
         }
@@ -21,10 +23,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AgeIncreasesOverTime()
         {
-            DebuggerAction action = new();
+            FakeTimeProvider provider = new();
+            DebuggerAction action = new(provider);
 
             TimeSpan initialAge = action.Age;
-            Thread.Sleep(5);
+            provider.Advance(TimeSpan.FromMilliseconds(5));
             TimeSpan laterAge = action.Age;
 
             Assert.That(laterAge, Is.GreaterThanOrEqualTo(initialAge));

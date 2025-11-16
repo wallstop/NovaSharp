@@ -89,7 +89,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void Continue(Response response, Table arguments)
         {
-            _debug.QueueAction(new DebuggerAction() { Action = DebuggerAction.ActionType.Run });
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.Run,
+                }
+            );
             SendResponse(response);
         }
 
@@ -275,7 +280,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         public override void Next(Response response, Table arguments)
         {
             _debug.QueueAction(
-                new DebuggerAction() { Action = DebuggerAction.ActionType.StepOver }
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepOver,
+                }
             );
             SendResponse(response);
         }
@@ -439,13 +447,23 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         public override void StepIn(Response response, Table arguments)
         {
-            _debug.QueueAction(new DebuggerAction() { Action = DebuggerAction.ActionType.StepIn });
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepIn,
+                }
+            );
             SendResponse(response);
         }
 
         public override void StepOut(Response response, Table arguments)
         {
-            _debug.QueueAction(new DebuggerAction() { Action = DebuggerAction.ActionType.StepOut });
+            _debug.QueueAction(
+                new DebuggerAction(_debug.Script?.TimeProvider)
+                {
+                    Action = DebuggerAction.ActionType.StepOut,
+                }
+            );
             SendResponse(response);
         }
 

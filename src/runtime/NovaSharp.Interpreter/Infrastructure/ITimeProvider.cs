@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Infrastructure
     /// <summary>
     /// Minimal abstraction over time retrieval so runtime surfaces can be unit tested without wall-clock delays.
     /// </summary>
-    internal interface ITimeProvider
+    public interface ITimeProvider
     {
         public DateTimeOffset GetUtcNow();
     }

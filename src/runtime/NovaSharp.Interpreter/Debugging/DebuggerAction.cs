@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Debugging
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// Wrapper for a debugger initiated action
@@ -123,21 +124,24 @@ namespace NovaSharp.Interpreter.Debugging
             set => _lines = value is null ? Array.Empty<int>() : value.ToArray();
         }
 
+        private readonly ITimeProvider _timeProvider;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DebuggerAction"/> class.
         /// </summary>
         public DebuggerAction()
+            : this(SystemTimeProvider.Instance) { }
+
+        public DebuggerAction(ITimeProvider timeProvider)
         {
-            TimeStampUtc = DateTime.UtcNow;
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
+            TimeStampUtc = _timeProvider.GetUtcNow().UtcDateTime;
         }
 
         /// <summary>
         /// Gets the age of this debugger action
         /// </summary>
-        public TimeSpan Age
-        {
-            get { return DateTime.UtcNow - TimeStampUtc; }
-        }
+        public TimeSpan Age => _timeProvider.GetUtcNow().UtcDateTime - TimeStampUtc;
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

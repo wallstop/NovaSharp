@@ -16,6 +16,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Interpreter.Infrastructure;
     using Platforms;
     using Tree.Expressions;
     using Tree.FastInterface;
@@ -42,6 +43,8 @@ namespace NovaSharp.Interpreter
         private readonly Table _globalTable;
         private IDebugger _debugger;
         private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MAX_META_TYPES];
+        private readonly ITimeProvider _timeProvider;
+        private readonly DateTime _startTimeUtc;
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -98,6 +101,9 @@ namespace NovaSharp.Interpreter
                 Options.CompatibilityVersion = GlobalOptions.CompatibilityVersion;
             }
 
+            _timeProvider = Options.TimeProvider ?? SystemTimeProvider.Instance;
+            _startTimeUtc = _timeProvider.GetUtcNow().UtcDateTime;
+
             PerformanceStats = new PerformanceStatistics(
                 Options.HighResolutionClock ?? SystemHighResolutionClock.Instance
             );
@@ -136,6 +142,13 @@ namespace NovaSharp.Interpreter
         /// Gets access to performance statistics.
         /// </summary>
         public PerformanceStatistics PerformanceStats { get; internal set; }
+
+        /// <summary>
+        /// Gets the time provider associated with this script.
+        /// </summary>
+        public ITimeProvider TimeProvider => _timeProvider;
+
+        internal DateTime StartTimeUtc => _startTimeUtc;
 
         /// <summary>
         /// Gets the default global table for this script. Unless a different table is intentionally passed (or setfenv has been used)
