@@ -75,7 +75,7 @@ jobs:
         shell: bash
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NovaSharp-test-results
           path: artifacts/test-results
@@ -311,7 +311,7 @@ jobs:
         shell: bash
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-artifacts
           path: |
