@@ -1,4 +1,4 @@
-mdformat==0.7.17
+mdformat==1.0.0
 mdformat-gfm==1.0.0
 markdown-it-py==2.2.0
 requests==2.32.5
