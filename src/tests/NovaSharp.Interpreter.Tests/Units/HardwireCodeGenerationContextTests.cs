@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Hardwire;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
@@ -59,6 +60,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(logger.Errors, Is.EqualTo(new[] { "Failure 1" }));
             Assert.That(logger.Warnings, Is.EqualTo(new[] { "Warning 2" }));
             Assert.That(logger.MinorMessages, Is.EqualTo(new[] { "Note 3" }));
+        }
+
+        [Test]
+        public void TimestampCommentComesFromProvidedTimeProvider()
+        {
+            DateTimeOffset timestamp = new(new DateTime(2030, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+            FakeTimeProvider provider = new(timestamp);
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(
+                timeProvider: provider
+            );
+
+            CodeNamespace ns = context.CompileUnit.Namespaces.Cast<CodeNamespace>().Single();
+            string expected = $"Code generated on {timestamp.UtcDateTime:O}";
+            Assert.That(
+                ns.Comments.Cast<CodeCommentStatement>().Select(c => c.Comment.Text),
+                Does.Contain(expected)
+            );
         }
 
         [Test]

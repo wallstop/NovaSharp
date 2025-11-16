@@ -7,6 +7,7 @@ namespace NovaSharp.Hardwire
     using Languages;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
     /// The context under which code is generated.
@@ -22,6 +23,7 @@ namespace NovaSharp.Hardwire
         private CodeTypeDeclaration _kickstarterClass;
         private readonly CodeNamespace _namespace;
         private readonly ICodeGenerationLogger _logger;
+        private readonly ITimeProvider _timeProvider;
 
         private readonly Stack<string> _nestStack = new();
 
@@ -33,12 +35,14 @@ namespace NovaSharp.Hardwire
             string namespaceName,
             string entryClassName,
             ICodeGenerationLogger logger,
-            HardwireCodeGenerationLanguage language
+            HardwireCodeGenerationLanguage language,
+            ITimeProvider timeProvider = null
         )
         {
             TargetLanguage = language;
 
             _logger = logger;
+            _timeProvider = timeProvider ?? Script.DefaultOptions.TimeProvider;
 
             CompileUnit = new CodeCompileUnit();
 
@@ -65,7 +69,7 @@ namespace NovaSharp.Hardwire
                 Comment("----------------------------------------------------------");
             }
 
-            Comment("Code generated on {0}", DateTime.Now.ToString("O"));
+            Comment("Code generated on {0}", _timeProvider.GetUtcNow().UtcDateTime.ToString("O"));
             Comment("----------------------------------------------------------");
 
             Comment("");

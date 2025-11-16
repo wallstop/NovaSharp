@@ -4,6 +4,7 @@ namespace NovaSharp.Hardwire
     using Languages;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Infrastructure;
 
     public class HardwireGenerator
     {
@@ -14,7 +15,8 @@ namespace NovaSharp.Hardwire
             string namespaceName,
             string entryClassName,
             ICodeGenerationLogger logger,
-            HardwireCodeGenerationLanguage language = null
+            HardwireCodeGenerationLanguage language = null,
+            ITimeProvider timeProvider = null
         )
         {
             _language = language ?? HardwireCodeGenerationLanguage.CSharp;
@@ -22,7 +24,8 @@ namespace NovaSharp.Hardwire
                 namespaceName,
                 entryClassName,
                 logger,
-                language
+                _language,
+                timeProvider
             );
         }
 
