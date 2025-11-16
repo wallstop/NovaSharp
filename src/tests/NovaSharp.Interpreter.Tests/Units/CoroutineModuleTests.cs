@@ -91,6 +91,72 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void StatusReturnsRunningForActiveCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function queryRunningStatus()
+                    local current = select(1, coroutine.running())
+                    return coroutine.status(current)
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("queryRunningStatus"));
+            DynValue result = coroutineValue.Coroutine.Resume();
+
+            Assert.That(result.Type, Is.EqualTo(DataType.String));
+            Assert.That(result.String, Is.EqualTo("running"));
+        }
+
+        [Test]
+        public void StatusReturnsNormalWhenInspectingMainFromChild()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                local mainCoroutine = select(1, coroutine.running())
+
+                function queryMainStatus()
+                    return coroutine.status(mainCoroutine)
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("queryMainStatus"));
+            DynValue result = coroutineValue.Coroutine.Resume();
+
+            Assert.That(result.Type, Is.EqualTo(DataType.String));
+            Assert.That(result.String, Is.EqualTo("normal"));
+        }
+
+        [Test]
+        public void StatusThrowsForUnknownStates()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function idle()
+                    return 1
+                end
+            "
+            );
+
+            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
+
+            coroutineValue.Coroutine.ForceStateForTests((CoroutineState)0);
+
+            Assert.That(
+                () => script.Call(statusFunc, coroutineValue),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contains("Unexpected coroutine state")
+            );
+        }
+
+        [Test]
         public void WrapRequiresFunctionArgument()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -328,6 +394,46 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple.Length, Is.EqualTo(2));
                 Assert.That(result.Tuple[0].Boolean, Is.True);
                 Assert.That(result.Tuple[1].Number, Is.EqualTo(10));
+            });
+        }
+
+        [Test]
+        public void ResumeFlattensTrailingTupleResults()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Globals["buildNestedResult"] = DynValue.NewCallback(
+                (_, _) =>
+                {
+                    DynValue nested = DynValue.NewTuple(
+                        DynValue.NewString("inner-value"),
+                        DynValue.NewNumber(99)
+                    );
+
+                    return DynValue.NewTuple(DynValue.NewString("outer"), nested);
+                }
+            );
+
+            script.DoString(
+                @"
+                function invokeNestedBuilder()
+                    return buildNestedResult()
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("invokeNestedBuilder"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple.Length, Is.EqualTo(4));
+                Assert.That(result.Tuple[0].Boolean, Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("outer"));
+                Assert.That(result.Tuple[2].String, Is.EqualTo("inner-value"));
+                Assert.That(result.Tuple[3].Number, Is.EqualTo(99));
             });
         }
 
@@ -846,5 +952,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.YieldRequest.ReturnValues[1].String, Is.EqualTo("value"));
             });
         }
+
     }
 }

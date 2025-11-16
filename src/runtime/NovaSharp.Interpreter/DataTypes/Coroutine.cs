@@ -318,7 +318,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// The script owning this resource.
         /// </value>
         /// <exception cref="System.NotImplementedException"></exception>
-        public Script OwnerScript { get; private set; }
+        public Script OwnerScript { get; internal set; }
 
         /// <summary>
         /// Gets or sets the automatic yield counter.
@@ -340,6 +340,16 @@ namespace NovaSharp.Interpreter.DataTypes
             }
 
             return _processor.Coroutine_Close();
+        }
+
+        internal void ForceStateForTests(CoroutineState state)
+        {
+            if (_processor == null)
+            {
+                throw new InvalidOperationException("Cannot override state on CLR callback coroutines.");
+            }
+
+            _processor.ForceStateForTests(state);
         }
     }
 }

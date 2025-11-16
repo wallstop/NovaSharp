@@ -223,5 +223,10 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             return GetCurrentSourceRef(_savedInstructionPtr);
         }
+
+        internal void ForceStateForTests(CoroutineState state)
+        {
+            _state = state;
+        }
     }
 }
