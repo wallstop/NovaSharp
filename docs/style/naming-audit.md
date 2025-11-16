@@ -1,6 +1,6 @@
 # Naming Audit (Nov 2025)
 
-NovaSharp inherited a mix of naming conventions from the legacy runtime (e.g., Hungarian-style member prefixes, `Emit_*` helpers). This audit captures the current hotspots so we can plan the final alignment work noted in PLAN.md.
+NovaSharp inherited a mix of naming conventions from the legacy runtime (e.g., Hungarian-style member prefixes, `Emit_*` helpers). This audit captures the current hotspots so we can plan the final alignment work noted in `PLAN.md`.
 
 ## 1. `Emit_*` Helpers
 
@@ -41,4 +41,4 @@ NovaSharp inherited a mix of naming conventions from the legacy runtime (e.g., H
 1. Draft a migration plan for `SymbolRef` members and dependent code paths (Processor, ByteCode, debugger). Ensure binary serialization via `WriteBinary`/`ReadBinary` keeps working.
 1. Update coding guidelines (docs/style) once naming rules are finalized; enforce via analyzers (e.g., IDE1006 custom severity).
 
-Tracking Issue: PLAN.md “Naming alignment” next step.
+Tracking Issue: `PLAN.md` “Naming alignment” next step.

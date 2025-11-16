@@ -56,7 +56,7 @@ Namespace convention: `NovaSharp.Interpreter.Tests.Units.<Area>.<FixtureName>`.
      - Update namespace to `NovaSharp.Interpreter.Tests.Units.<Area>`.
      - Fix any `using` statements impacted by the namespace change.
      - Run `dotnet test` to ensure the suite stays green.
-   - Track progress in PLAN.md with per-area checkboxes.
+   - Track progress in `PLAN.md` with per-area checkboxes.
 
 1. **Documentation & Tooling**
 

@@ -105,7 +105,7 @@
 
 • Preferences / Constraints
   - Keep local CLI output concise; use env vars for full summaries.
-  - Follow PLAN.md milestones; focus on coverage burn-down.
+  - Follow `PLAN.md` milestones; focus on coverage burn-down.
   - Respect existing Lua-facing behavior and build on NUnit + Script.DoString.
   - When adding Lua fixtures, include clearly named files for small-scope, mixed-mode, and complex scenarios so reviewers can target the right coverage level quickly.
 

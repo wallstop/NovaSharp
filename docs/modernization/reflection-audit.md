@@ -25,7 +25,7 @@ Future updates should refresh this file after any large-scale refactor so the mo
 | Tests                                         | `tests/NovaSharp.Interpreter.Tests/*`                                                                   | Reflection used to probe descriptors, load resources for fixtures.                                                         | ⚖️ Acceptable in tests; no action.                                                                                             |
 | Samples/Tutorials                             | `samples/Tutorial/Tutorials/*`                                                                          | Reflection used for demo scenarios.                                                                                        | ✅ Leave as-is; educational code.                                                                                              |
 
-Legend: ✅ keep, ⚖️ monitor, ⚠️ needs follow-up (tracked in PLAN.md Milestone).
+Legend: ✅ keep, ⚖️ monitor, ⚠️ needs follow-up (tracked in `PLAN.md` Milestone).
 
 ## Hotspots Requiring Follow-Up
 
