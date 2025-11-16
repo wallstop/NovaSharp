@@ -1,18 +1,17 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-15 20:52 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-15 21:17 UTC).
 
 ## Snapshot
-- Overall line coverage: **82.1 %**
+- Overall line coverage: **82.2 %**
 - NovaSharp.Interpreter line coverage: **91.3 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **54.8 %**
 - NovaSharp.RemoteDebugger line coverage: **79.1 %** (DebugServer still below 70 %; remaining gaps focus on queue/breakpoint handling + Tcp helpers)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
-## Prioritized Red List (Interpreter < 90 %)
+- ## Prioritized Red List (Interpreter < 90 %)
 - `NovaSharp.Interpreter.Interop.Converters.ScriptToClrConversions` — **82.0 %** (up from 72.8 %). `ScriptToClrConversionsTests` now cover optional parameter defaults, string/char/StringBuilder coercions, enum downcasts, callback delegates, table-to-list conversions, userdata AsString fallbacks, and custom converter precedence. Remaining work: drive the tuple handling, branch weighting for tables/dictionaries, and the delegate bridge branches referenced in the modernization notes until the class clears 90 %.
-- `NovaSharp.Interpreter.Tree.Statements.BreakStatement` — **73.9 %**. Add parser/VM tests for nested loop/`goto` mixes so the `StatementBlock` metadata and runtime guard rails execute.
 - `NovaSharp.Interpreter.Interop.StandardDescriptors.ProxyUserDataDescriptor` — **77.7 %**. Expand `UserDataTests` to register multi-level proxy types (null proxy guard, interface proxies, static-only paths) and drive the meta-table caching branches.
 - See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
 
@@ -25,6 +24,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 ## Recently Covered
 - `CustomConverterRegistry` jumped to **100 % line / 100 % branch / 100 % method** after introducing `CustomConverterRegistryTests` (duplicate registration, removal, typed + obsolete CLR bridge paths, `Clear`) and tightening the registry's DataType guard so invalid values no longer index past the backing arrays. Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-15 20:12 UTC captured the bump and pushed interpreter totals to **91.1 % line / 87.4 % branch / 93.5 % method** with **1 760** Release tests.
 - `EnumerableWrapperTests` now drive iterator callbacks, nil-skipping, reset guards, table conversion, and the exposed `Current/MoveNext/Reset` userdata members so `EnumerableWrapper` sits at **95.2 % line / 88.4 % branch / 88.8 % method** (coverage run 2025-11-15 20:52 UTC). That clears the enumerable entry from the red list and raises the interpreter suite to **91.3 % line / 87.8 % branch / 93.6 % method** with **1 780** Release tests.
+- `BreakStatementTests` execute all error paths—top-level `break`, nested functions, and loop-boundary guards—so `BreakStatement` now reports **100 % line / 100 % branch / 100 % method** coverage. Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-15 21:17 UTC captures the latest totals (**91.39 % line / 87.85 % branch / 93.61 % method**, **1 783** tests).
 - `ScriptToClrConversionsTests` now guard optional/default conversions, coercion weights, and delegate/table/userdata paths so `ScriptToClrConversions` sits at **82.0 % line / 80.3 % branch / 100 % method** (coverage run 2025-11-15 20:27 UTC). Keep iterating on tuple, table-to-dictionary, and string-subtype failure paths until the class clears the 90 % gate.
 - `BinaryOperatorExpression` now sits at **90.0 %** line / **82.5 %** branch coverage after adding compile-path opcode assertions (arithmetic, concatenation, comparison, and `~=` inversion) plus new string comparison/equality regressions; coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-14 17:44 UTC captured the jump.
 - `LuaStateInterop.Tools` climbed to **98.2 % line / 90.4 % branch** after expanding `LuaStateInteropToolsTests` with unsigned/null-edge coverage and exhaustive `sprintf` permutations (`%i`, `%f/%e/%E/%g/%G`, `%c`, `%s`, `%#o`, `%hd/%hu/%ld/%lu`, flag precedence). The same coverage run bumped interpreter totals to **90.7 % line / 87.4 % branch / 93.1 % method** with **1 721** Release tests.
