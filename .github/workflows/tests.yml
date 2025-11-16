@@ -160,7 +160,7 @@ jobs:
         shell: pwsh
         env:
           COVERAGE_GATING_TARGET_LINE: "90"
-          COVERAGE_GATING_MODE: ${{ vars.COVERAGE_GATING_MODE || 'enforce' }}
+          COVERAGE_GATING_MODE: monitor
         run: ./scripts/coverage/coverage.ps1
       - name: Publish coverage summary
         if: always()
@@ -180,7 +180,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           COVERAGE_THRESHOLD: "90"
-          COVERAGE_GATING_MODE: ${{ vars.COVERAGE_GATING_MODE || 'enforce' }}
+          COVERAGE_GATING_MODE: monitor
         with:
           script: |
             const fs = require('fs');

@@ -47,6 +47,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, and `DummyPerformanceStopwatch` now covered by dedicated stopwatch unit tests.
 - `PerformanceStatistics` exercises enabling/disabling counters and global aggregation.
 - `ReplHistoryInterpreter` navigation (prev/next) verified via tests.
+- `MemberDescriptorTests` cover the `IMemberDescriptor` extension helpers (`HasAllFlags`, read/write/execute wrappers, getter callbacks, `WithAccessOrNull`, and `CheckAccess`), keeping the guardrails under regression even though Release builds still report **82.1 % line / 90.0 % branch / 100 % method** for `NovaSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor` due to inlined `return` sites.
 - Hardwired descriptor helpers (member + method) now covered via `HardwiredDescriptorTests`, validating access checks, conversions, and default-argument marshalling.
 - `OsSystemModule` edge paths validated with platform stub tests (non-zero exits, missing files, rename/delete failures, setlocale placeholder), driving coverage to 98 %.
 - `debug.debug` loop now exercised via queued debug console hooks, confirming prompt/print wiring and error reporting without manual REPL interaction.
