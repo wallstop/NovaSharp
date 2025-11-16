@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Threading;
+    using System.Threading.Tasks;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Diagnostics;
     using NovaSharp.Interpreter.Infrastructure;
@@ -116,6 +118,48 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 script.PerformanceStats.Enabled = false;
                 PerformanceStatistics.GlobalClock = originalGlobal;
+            }
+        }
+
+        [Test]
+        public void GlobalStopwatchRemainsStableWhenTogglingEnabledFromOtherThreads()
+        {
+            PerformanceStatistics stats = new();
+            stats.Enabled = true;
+
+            try
+            {
+                Assert.DoesNotThrow(() =>
+                {
+                    Parallel.Invoke(
+                        () =>
+                        {
+                            for (int i = 0; i < 200; i++)
+                            {
+                                using (
+                                    PerformanceStatistics.StartGlobalStopwatch(
+                                        PerformanceCounter.Execution
+                                    )
+                                )
+                                {
+                                    Thread.SpinWait(50);
+                                }
+                            }
+                        },
+                        () =>
+                        {
+                            for (int i = 0; i < 100; i++)
+                            {
+                                stats.Enabled = false;
+                                stats.Enabled = true;
+                            }
+                        }
+                    );
+                });
+            }
+            finally
+            {
+                stats.Enabled = false;
             }
         }
     }

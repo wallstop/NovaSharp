@@ -49,11 +49,14 @@ namespace NovaSharp.Interpreter.Diagnostics
                     {
                         EnsureGlobalStopwatch(PerformanceCounter.AdaptersCompilation);
 
-                        for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
+                        lock (GlobalSyncRoot)
                         {
-                            _stopwatches[i] =
-                                _globalStopwatches[i]
-                                ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
+                            for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
+                            {
+                                _stopwatches[i] =
+                                    _globalStopwatches[i]
+                                    ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
+                            }
                         }
                     }
                     else if (!value && _enabled)
@@ -61,9 +64,13 @@ namespace NovaSharp.Interpreter.Diagnostics
                         _stopwatches = new IPerformanceStopwatch[
                             (int)PerformanceCounter.LastValue
                         ];
-                        _globalStopwatches = new IPerformanceStopwatch[
-                            (int)PerformanceCounter.LastValue
-                        ];
+
+                        lock (GlobalSyncRoot)
+                        {
+                            _globalStopwatches = new IPerformanceStopwatch[
+                                (int)PerformanceCounter.LastValue
+                            ];
+                        }
                     }
 
                     _enabled = value;
