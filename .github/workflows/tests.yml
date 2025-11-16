@@ -42,7 +42,7 @@ jobs:
         shell: bash
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: CSharpier formatting gate
@@ -63,7 +63,7 @@ jobs:
         run: python3 tools/NamespaceAudit/namespace_audit.py
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
@@ -102,7 +102,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.tooling.txt
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Apply repository formatters
@@ -149,7 +149,7 @@ jobs:
         run: python3 tools/NamespaceAudit/namespace_audit.py
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
