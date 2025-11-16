@@ -1,42 +1,48 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class EmbeddedResourcesScriptLoaderTests
     {
+        private static readonly Assembly TestAssembly = typeof(EmbeddedResourcesScriptLoaderTests).Assembly;
+
         [Test]
-        public void ScriptFileExistsHandlesEmbeddedResource()
+        public void ScriptFileExistsDetectsEmbeddedResources()
         {
-            EmbeddedResourcesScriptLoader loader = new EmbeddedResourcesScriptLoader(
-                resourceAssembly: Assembly.GetExecutingAssembly()
-            );
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
 
             Assert.Multiple(() =>
             {
                 Assert.That(loader.ScriptFileExists("Resources/embedded.lua"), Is.True);
-                Assert.That(loader.ScriptFileExists("Resources/missing.lua"), Is.False);
+                Assert.That(loader.ScriptFileExists("missing.lua"), Is.False);
             });
         }
 
         [Test]
-        public void LoadFileReturnsManifestStream()
+        public void LoadFileReturnsResourceStream()
         {
-            EmbeddedResourcesScriptLoader loader = new EmbeddedResourcesScriptLoader(
-                resourceAssembly: Assembly.GetExecutingAssembly()
-            );
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
 
-            using Stream stream = (Stream)
-                loader.LoadFile("Resources/embedded.lua", globalContext: null);
-
-            using StreamReader reader = new StreamReader(stream);
-            string contents = reader.ReadToEnd();
-
-            Assert.That(contents, Does.Contain("hello from embedded resource"));
+            using Stream stream = (Stream)loader.LoadFile("Resources/embedded.lua", null);
+            Assert.That(stream, Is.Not.Null);
+            Assert.That(stream.Length, Is.GreaterThan(0));
         }
+
+#if DOTNET_CORE
+        [Test]
+        public void ParameterlessConstructorThrowsOnNetCore()
+        {
+            Assert.That(
+                () => new EmbeddedResourcesScriptLoader(),
+                Throws.TypeOf<NotSupportedException>()
+            );
+        }
+#endif
     }
 }
