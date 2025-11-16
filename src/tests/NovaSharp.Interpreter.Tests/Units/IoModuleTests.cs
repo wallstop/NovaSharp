@@ -1,12 +1,16 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.IO;
+    using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
+    using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.IO;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
 
     [TestFixture]
@@ -549,6 +553,53 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void OpenFileInvokesPlatformAccessorAndStillWritesToDisk()
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
+            string escapedPath = path.Replace("\\", "\\\\");
+
+            RecordingPlatformAccessor accessor = new(Script.GlobalOptions.Platform);
+            using (new PlatformScope(accessor))
+            {
+                Script script = CreateScript();
+                script.DoString(
+                    $@"
+                local f = assert(io.open('{escapedPath}', 'w'))
+                f:write('hooked payload')
+                f:close()
+                "
+                );
+            }
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(accessor.OpenCalls, Is.Not.Empty);
+                Assert.That(accessor.OpenCalls[0].FileName, Is.EqualTo(path));
+                Assert.That(accessor.GetCapturedFileContent(path), Is.EqualTo("hooked payload"));
+                Assert.That(File.ReadAllText(path), Is.EqualTo("hooked payload"));
+            });
+
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+
+        [Test]
+        public void StdOutWritesHonorCustomScriptOptionStream()
+        {
+            MemoryStream capture = new();
+            ScriptOptions options = new ScriptOptions() { Stdout = new UndisposableStream(capture), };
+
+            Script script = new(options);
+            script.DoString("io.write('brokered output'); io.flush()");
+
+            capture.Position = 0;
+            using StreamReader reader = new(capture, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+            Assert.That(reader.ReadToEnd(), Does.Contain("brokered output"));
+        }
+
         private static DynValue ReadNumberFromContent(string content)
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
@@ -587,5 +638,208 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         private sealed class SampleUserData { }
+
+        private sealed class PlatformScope : IDisposable
+        {
+            private readonly IPlatformAccessor _original;
+
+            internal PlatformScope(IPlatformAccessor replacement)
+            {
+                _original = Script.GlobalOptions.Platform;
+                Script.GlobalOptions.Platform = replacement;
+            }
+
+            public void Dispose()
+            {
+                Script.GlobalOptions.Platform = _original;
+            }
+        }
+
+        private sealed class RecordingPlatformAccessor : IPlatformAccessor
+        {
+            private readonly IPlatformAccessor _inner;
+            private readonly List<(string FileName, string Mode)> _openCalls = new();
+            private readonly Dictionary<string, CapturedFile> _captures = new();
+
+            internal RecordingPlatformAccessor(IPlatformAccessor inner)
+            {
+                _inner = inner;
+            }
+
+            internal IReadOnlyList<(string FileName, string Mode)> OpenCalls => _openCalls;
+
+            internal string GetCapturedFileContent(string file)
+            {
+                if (_captures.TryGetValue(file, out CapturedFile captured))
+                {
+                    return captured.Encoding.GetString(captured.Buffer.ToArray());
+                }
+
+                return null;
+            }
+
+            public CoreModules FilterSupportedCoreModules(CoreModules module)
+            {
+                return _inner.FilterSupportedCoreModules(module);
+            }
+
+            public string GetEnvironmentVariable(string envvarname)
+            {
+                return _inner.GetEnvironmentVariable(envvarname);
+            }
+
+            public bool IsRunningOnAOT()
+            {
+                return _inner.IsRunningOnAOT();
+            }
+
+            public string GetPlatformName()
+            {
+                return _inner.GetPlatformName();
+            }
+
+            public void DefaultPrint(string content)
+            {
+                _inner.DefaultPrint(content);
+            }
+
+            public string DefaultInput(string prompt)
+            {
+                return _inner.DefaultInput(prompt);
+            }
+
+            public Stream OpenFile(Script script, string filename, Encoding encoding, string mode)
+            {
+                _openCalls.Add((filename, mode));
+                Stream stream = _inner.OpenFile(script, filename, encoding, mode);
+
+                if (stream == null)
+                {
+                    return null;
+                }
+
+                if (!string.IsNullOrEmpty(mode) && (mode.Contains('w') || mode.Contains('a')))
+                {
+                    CapturedFile captured = new(encoding ?? Encoding.UTF8);
+                    _captures[filename] = captured;
+                    return new TeeStream(stream, captured.Buffer);
+                }
+
+                return stream;
+            }
+
+            public Stream GetStandardStream(StandardFileType type)
+            {
+                return _inner.GetStandardStream(type);
+            }
+
+            public string GetTempFileName()
+            {
+                return _inner.GetTempFileName();
+            }
+
+            public void ExitFast(int exitCode)
+            {
+                _inner.ExitFast(exitCode);
+            }
+
+            public bool FileExists(string file)
+            {
+                return _inner.FileExists(file);
+            }
+
+            public void DeleteFile(string file)
+            {
+                _inner.DeleteFile(file);
+            }
+
+            public void MoveFile(string src, string dst)
+            {
+                _inner.MoveFile(src, dst);
+            }
+
+            public int ExecuteCommand(string cmdline)
+            {
+                return _inner.ExecuteCommand(cmdline);
+            }
+
+            private sealed class CapturedFile
+            {
+                internal CapturedFile(Encoding encoding)
+                {
+                    Encoding = encoding ?? Encoding.UTF8;
+                    Buffer = new MemoryStream();
+                }
+
+                internal Encoding Encoding { get; }
+
+                internal MemoryStream Buffer { get; }
+            }
+        }
+
+        private sealed class TeeStream : Stream
+        {
+            private readonly Stream _inner;
+            private readonly Stream _mirror;
+            private readonly bool _leaveInnerOpen;
+
+            internal TeeStream(Stream inner, Stream mirror, bool leaveInnerOpen = false)
+            {
+                _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+                _mirror = mirror ?? throw new ArgumentNullException(nameof(mirror));
+                _leaveInnerOpen = leaveInnerOpen;
+            }
+
+            public override bool CanRead => _inner.CanRead;
+
+            public override bool CanSeek => _inner.CanSeek;
+
+            public override bool CanWrite => _inner.CanWrite;
+
+            public override long Length => _inner.Length;
+
+            public override long Position
+            {
+                get => _inner.Position;
+                set => _inner.Position = value;
+            }
+
+            public override void Flush()
+            {
+                _mirror.Flush();
+                _inner.Flush();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                return _inner.Read(buffer, offset, count);
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                return _inner.Seek(offset, origin);
+            }
+
+            public override void SetLength(long value)
+            {
+                _inner.SetLength(value);
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                _mirror.Write(buffer, offset, count);
+                _inner.Write(buffer, offset, count);
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing && !_leaveInnerOpen)
+                {
+                    _inner.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
+        }
     }
 }
