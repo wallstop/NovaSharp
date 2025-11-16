@@ -314,6 +314,49 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(wiring.Get("error").String, Does.Contain("value members not supported"));
         }
 
+        [Test]
+        public void DynValueMemberDescriptorSerializedConstructorLoadsValue()
+        {
+            SerializedDynValueDescriptor descriptor = new("serialized", "${ 'payload' }");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Name, Is.EqualTo("serialized"));
+                Assert.That(descriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(descriptor.Value.String, Is.EqualTo("payload"));
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorNameOnlyConstructorInitializesMetadata()
+        {
+            NullValueDescriptor descriptor = new("unset");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Name, Is.EqualTo("unset"));
+                Assert.That(descriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(descriptor.Value, Is.Null);
+            });
+        }
+
+        [Test]
+        public void DynValueMemberDescriptorPrepareForWiringAllowsPrimeTable()
+        {
+            Table prime = new(null);
+            prime.Set(1, DynValue.NewString("inner"));
+            DynValueMemberDescriptor descriptor = new("table", DynValue.NewTable(prime));
+            Table wiring = new(null);
+
+            descriptor.PrepareForWiring(wiring);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wiring.Get("value").Type, Is.EqualTo(DataType.Table));
+                Assert.That(wiring.Get("error").IsNil(), Is.True);
+            });
+        }
+
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
         {
             public TrackingMemberDescriptor(
@@ -397,6 +440,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 LastArgsCount = argscount;
                 return $"{obj}:{pars[0]}:{pars[1]}:{argscount}";
             }
+        }
+
+        private sealed class SerializedDynValueDescriptor : DynValueMemberDescriptor
+        {
+            public SerializedDynValueDescriptor(string name, string serialized)
+                : base(name, serialized) { }
+
+            public new DynValue Value => base.Value;
+        }
+
+        private sealed class NullValueDescriptor : DynValueMemberDescriptor
+        {
+            public NullValueDescriptor(string name)
+                : base(name) { }
         }
 
         internal sealed class DummyStaticUserData { }

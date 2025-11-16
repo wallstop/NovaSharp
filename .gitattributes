@@ -6,6 +6,16 @@
 # Keep C# sources on CRLF to match .editorconfig and keep CSharpier happy on Linux agents.
 *.cs text eol=crlf
 
+# MSBuild artifacts also inherit CRLF expectations; keep them aligned with .editorconfig/CSharpier across platforms.
+*.csproj text eol=crlf
+*.fsproj text eol=crlf
+*.vbproj text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+*.proj text eol=crlf
+*.sln text eol=crlf
+*.config text eol=crlf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
