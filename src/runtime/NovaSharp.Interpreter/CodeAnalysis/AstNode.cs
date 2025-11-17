@@ -1,4 +1,4 @@
 namespace NovaSharp.Interpreter.CodeAnalysis
 {
-    internal class AstNode { }    
+    internal class AstNode { }
 }
