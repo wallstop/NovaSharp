@@ -15,7 +15,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new();
             DynValue fallback = DynValue.NewString("missing");
 
-            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(script, null, fallback);
+            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                fallback
+            );
 
             Assert.That(result, Is.SameAs(fallback));
         }
@@ -31,8 +35,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(serialized.Get(nameof(SampleObject.InstanceValue)).String, Is.EqualTo("value"));
-                Assert.That(serialized.Get(nameof(SampleObject.StaticNumber)).Number, Is.EqualTo(SampleObject.StaticNumber));
+                Assert.That(
+                    serialized.Get(nameof(SampleObject.InstanceValue)).String,
+                    Is.EqualTo("value")
+                );
+                Assert.That(
+                    serialized.Get(nameof(SampleObject.StaticNumber)).Number,
+                    Is.EqualTo(SampleObject.StaticNumber)
+                );
             });
         }
 
@@ -40,15 +50,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SerializeObjectToDynValueEnumeratesListsAndEnums()
         {
             Script script = new();
-            List<object> payload = new()
-            {
-                SampleEnum.Second,
-                null,
-                "tail",
-            };
+            List<object> payload = new() { SampleEnum.Second, null, "tail" };
             DynValue fallback = DynValue.NewString("missing");
 
-            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(script, payload, fallback);
+            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                payload,
+                fallback
+            );
             Table serialized = result.Table;
 
             Assert.Multiple(() =>

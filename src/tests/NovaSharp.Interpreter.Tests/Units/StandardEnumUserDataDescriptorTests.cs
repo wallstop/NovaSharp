@@ -98,10 +98,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
             );
 
-            Assert.That(
-                (SampleFlags)result.UserData.Object,
-                Is.EqualTo(~SampleFlags.Safe)
-            );
+            Assert.That((SampleFlags)result.UserData.Object, Is.EqualTo(~SampleFlags.Safe));
         }
 
         [Test]
@@ -245,7 +242,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () =>
                     descriptor.Callback_And(
                         context,
-                        TestHelpers.CreateArguments(UserData.Create(SignedIntFlags.Left, descriptor))
+                        TestHelpers.CreateArguments(
+                            UserData.Create(SignedIntFlags.Left, descriptor)
+                        )
                     ),
                 Throws
                     .TypeOf<ScriptRuntimeException>()

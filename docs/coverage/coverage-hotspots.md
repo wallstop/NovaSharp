@@ -1,20 +1,19 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 21:20 UTC; coverlet still prints the `NovaSharp.Cli.dll` “in use” warning but proceeds after the retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 10:01 UTC; coverlet still prints the `NovaSharp.Cli.dll` “in use” warning but proceeds after the retry).
 
 ## Snapshot
-- Overall line coverage: **84.8 %**
-- NovaSharp.Interpreter line coverage: **93.8 %**
+- Overall line coverage: **85.0 %**
+- NovaSharp.Interpreter line coverage: **94.1 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- `Debugging.DebugService` – **83.3 % line / 66.6 % branch** (needs attach/queue coverage)
 - `REPL.ReplInterpreterScriptLoader` – **84.2 % line / 75.0 % branch**
 - `Execution.Scopes.RuntimeScopeFrame` – **85.7 % line**
-- `DataTypes.Table` – **85.8 % line / 81.9 % branch** (metatables & raw setters remain)
+- `DataTypes.Table` – **85.8 % line / 81.9 % branch** (constructor/clear/object-path tests now exist, but we still need to hit the hash vs array length adjustments)
 - `Interop.StandardDescriptors.ReflectionMemberDescriptors.PropertyMemberDescriptor` – **87.1 % line / 91.1 % branch** (new tests landed but more setter/getter permutations remain)
 
 See `docs/coverage/latest/Summary.json` for the full breakdown; update this list after each burn-down.
@@ -25,6 +24,9 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 3. Update this document after each `./scripts/coverage/coverage.ps1` run (include new timestamp + notes).
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
 - `PlatformAccessorBase` now has NUnit coverage for both Unity DLL suffix branches (`unity.dll.mono` + `unity.dll.unknown`), the `.dotnet` fallback, and the base `DefaultInput` shim via a dedicated test accessor. Release builds still inline the `return null` fast path, so the coverage report remains **84 % line / 78.5 % branch**, but behaviour is now regression-tested.
+
+- (2025-11-17 10:01 UTC) Extended `Units/TableTests` to cover constructor array initialization, `Table.Clear`, object/object[] setters, nested removal, raw-get overloads, additional `Remove` paths, and the `Keys` iterator. Behaviour is now exercised end-to-end even though OpenCover still reports **85.8 % line / 81.9 % branch** for `Table`; interpreter totals rise to **94.1 % line / 90.6 % branch / 96.6 % method** across **2 039** Release tests.
+- (2025-11-16 21:41 UTC) Added `Units/DebugServiceTests` to capture the `SourceCode` supplied to debuggers and call `DebugService.ResetBreakPoints` directly, proving that the helper delegates to `Processor.ResetBreakPoints` and surfaces the owning script. `DebugService` now reports **100 % line / 100 % method** coverage (up from **83 % line / 66 % method**), removing it from the red list and nudging interpreter totals to **93.9 % line / 90.4 % branch / 96.3 % method** across **2 030** tests.
 
 - (2025-11-16 21:20 UTC) Extended `Units/StandardEnumUserDataDescriptorTests` with signed/unsigned XOR + NOT permutations, `hasAll`/`hasAny` boolean assertions, argument-count failures, and cross-descriptor mismatch guards, then rebuilt in Release so coverlet could see the new fixtures. `StandardEnumUserDataDescriptor` now reports **95.0 % line / 96.6 % branch / 100 % method**, so it leaves the red list and helps lift interpreter totals to **93.8 % line / 90.4 % branch / 96.2 % method** across **2 029** tests.
 - (2025-11-16 20:14 UTC) Landed `Units/PropertyMemberDescriptorTests` (attribute-driven visibility, lazy/static optimization, access guards, wiring metadata) plus `ReflectionSpecialNamesTests` equality/`GetHashCode` coverage, and patched `PropertyTableAssigner.SetSubassignerForType` so removing a subassigner falls back to CLR conversions instead of dereferencing `null`. The latest `./scripts/coverage/coverage.ps1 -SkipBuild` run exercises **2 019** Release tests, records `ReflectionSpecialName` at **100 % line / 99.2 % branch / 100 % method**, `PropertyMemberDescriptor` up to **87.1 % line / 91.1 % branch / 94.1 % method**, and `PropertyTableAssigner` at **96.9 % line / 98.0 % branch**. Interpreter totals now sit at **93.7 % line / 90.3 % branch / 96.2 % method**, keeping the ≥95 % goal in sight.
@@ -132,4 +134,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-16 (21:20 UTC)_
+_Last updated: 2025-11-17 (10:01 UTC)_

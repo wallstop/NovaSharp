@@ -12,7 +12,11 @@ using NovaSharp.Interpreter.Modules;
 
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
-[SuppressMessage("Performance", "CA1812", Justification = "Instantiated via BenchmarkDotNet reflection.")]
+[SuppressMessage(
+    "Performance",
+    "CA1812",
+    Justification = "Instantiated via BenchmarkDotNet reflection."
+)]
 internal sealed class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;

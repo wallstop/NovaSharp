@@ -3,8 +3,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using System.Text;
-    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Loaders;
@@ -174,7 +174,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CallExecutesClrFunctionCallbacks()
         {
             Script script = new();
-            DynValue callback = DynValue.NewCallback((_, args) => DynValue.NewNumber(args[0].Number + 5));
+            DynValue callback = DynValue.NewCallback(
+                (_, args) => DynValue.NewNumber(args[0].Number + 5)
+            );
 
             DynValue result = script.Call(callback, DynValue.NewNumber(7));
 
@@ -265,12 +267,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void RecycleCoroutineRequiresDeadCoroutineAndFunction()
         {
             Script script = new();
-            DynValue worker = CompileFunction(script, "function() coroutine.yield(1); return 2 end");
+            DynValue worker = CompileFunction(
+                script,
+                "function() coroutine.yield(1); return 2 end"
+            );
             Coroutine live = script.CreateCoroutine(worker).Coroutine;
 
-            Assert.Throws<InvalidOperationException>(() =>
-                script.RecycleCoroutine(live, worker)
-            );
+            Assert.Throws<InvalidOperationException>(() => script.RecycleCoroutine(live, worker));
 
             live.Resume();
             live.Resume();

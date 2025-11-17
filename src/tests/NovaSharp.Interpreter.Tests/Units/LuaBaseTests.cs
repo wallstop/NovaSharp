@@ -84,19 +84,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
             DynValue luaTuple = script.DoString("return (function() return 1, 'two' end)()");
 
-            foreach (DynValue value in new[]
-            {
-                tailCall,
-                yieldRequest,
-                tuple,
-                luaTuple,
-            })
+            foreach (DynValue value in new[] { tailCall, yieldRequest, tuple, luaTuple })
             {
                 LuaState state = CreateLuaState(script);
                 state.Push(value);
                 Assert.That(
                     () => LuaBaseProxy.GetLuaType(state, 1),
-                    Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("Can't call LuaType")
+                    Throws
+                        .TypeOf<ScriptRuntimeException>()
+                        .With.Message.Contains("Can't call LuaType")
                 );
             }
         }
@@ -136,11 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void LuaStringHelpersExposeRawStringValues()
         {
             Script script = new Script();
-            DynValue[] values =
-            {
-                DynValue.NewString("abc"),
-                script.DoString("return 'abc'"),
-            };
+            DynValue[] values = { DynValue.NewString("abc"), script.DoString("return 'abc'") };
 
             foreach (DynValue value in values)
             {
@@ -163,11 +155,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void LuaIntegerChecksValidateNumbers()
         {
             Script script = new Script();
-            DynValue[] numericValues =
-            {
-                DynValue.NewNumber(1337),
-                script.DoString("return 1337"),
-            };
+            DynValue[] numericValues = { DynValue.NewNumber(1337), script.DoString("return 1337") };
 
             foreach (DynValue value in numericValues)
             {
@@ -229,11 +217,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(successState.Pop().Number, Is.EqualTo(42));
             }
 
-            DynValue[] nonTableVariants =
-            {
-                DynValue.NewNumber(10),
-                script.DoString("return 10"),
-            };
+            DynValue[] nonTableVariants = { DynValue.NewNumber(10), script.DoString("return 10") };
 
             foreach (DynValue nonTable in nonTableVariants)
             {
@@ -278,11 +262,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue singleFunction = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(7));
             DynValue luaSingleFunction = script.DoString("return function(value) return value end");
 
-            foreach ((DynValue Function, double Expected) testCase in new[]
-            {
-                (singleFunction, 7d),
-                (luaSingleFunction, 5d),
-            })
+            foreach (
+                (DynValue Function, double Expected) testCase in new[]
+                {
+                    (singleFunction, 7d),
+                    (luaSingleFunction, 5d),
+                }
+            )
             {
                 LuaState paddedState = CreateLuaState(script);
                 paddedState.Push(testCase.Function);
@@ -557,11 +543,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static double CheckNumber(LuaState state, int position) =>
                 LuaLCheckNumber(state, position);
 
-            public static string ReadRawString(
-                LuaState state,
-                int position,
-                out uint length
-            ) => LuaToLString(state, position, out length);
+            public static string ReadRawString(LuaState state, int position, out uint length) =>
+                LuaToLString(state, position, out length);
 
             public static void InitBuffer(LuaState state, LuaLBuffer buffer) =>
                 LuaLBuffInit(state, buffer);
@@ -609,28 +592,49 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             public static bool IsAlphaChar(char value) => Isalpha(value);
+
             public static bool IsAlphaInt(int value) => Isalpha(value);
+
             public static bool IsControlChar(char value) => Iscntrl(value);
+
             public static bool IsControlInt(int value) => Iscntrl(value);
+
             public static bool IsDigitChar(char value) => Isdigit(value);
+
             public static bool IsDigitInt(int value) => Isdigit(value);
+
             public static bool IsLowerChar(char value) => Islower(value);
+
             public static bool IsLowerInt(int value) => Islower(value);
+
             public static bool IsPunctuationChar(char value) => Ispunct(value);
+
             public static bool IsPunctuationInt(int value) => Ispunct(value);
+
             public static bool IsSpaceChar(char value) => Isspace(value);
+
             public static bool IsSpaceInt(int value) => Isspace(value);
+
             public static bool IsUpperChar(char value) => Isupper(value);
+
             public static bool IsUpperInt(int value) => Isupper(value);
+
             public static bool IsAlphaNumericChar(char value) => Isalnum(value);
+
             public static bool IsAlphaNumericInt(int value) => Isalnum(value);
+
             public static bool IsHexDigitChar(char value) => Isxdigit(value);
+
             public static bool IsGraphicChar(char value) => Isgraph(value);
+
             public static bool IsGraphicInt(int value) => Isgraph(value);
 
             public static char ToLowerChar(char value) => Tolower(value);
+
             public static char ToLowerInt(int value) => Tolower(value);
+
             public static char ToUpperChar(char value) => Toupper(value);
+
             public static char ToUpperInt(int value) => Toupper(value);
 
             public static CharPtr StringChar(CharPtr value, char target) => Strchr(value, target);

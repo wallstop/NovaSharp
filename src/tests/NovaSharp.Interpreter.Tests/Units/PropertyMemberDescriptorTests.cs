@@ -107,11 +107,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 InteropAccessMode.Reflection
             );
             PropertyMemberDescriptor readOnly = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(nameof(SampleProperties.GetterOnly), BindingFlags.Instance | BindingFlags.Public),
+                GetProperty(
+                    nameof(SampleProperties.GetterOnly),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
                 InteropAccessMode.Reflection
             );
             PropertyMemberDescriptor writeOnly = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(nameof(SampleProperties.SetterOnly), BindingFlags.Instance | BindingFlags.Public),
+                GetProperty(
+                    nameof(SampleProperties.SetterOnly),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
                 InteropAccessMode.Reflection
             );
 
@@ -121,14 +127,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                     readWrite.MemberAccess,
                     Is.EqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite)
                 );
-                Assert.That(
-                    readOnly.MemberAccess,
-                    Is.EqualTo(MemberDescriptorAccess.CanRead)
-                );
-                Assert.That(
-                    writeOnly.MemberAccess,
-                    Is.EqualTo(MemberDescriptorAccess.CanWrite)
-                );
+                Assert.That(readOnly.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
+                Assert.That(writeOnly.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanWrite));
             });
         }
 
@@ -154,7 +154,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueThrowsWhenGetterMissing()
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(nameof(SampleProperties.SetterOnly), BindingFlags.Instance | BindingFlags.Public),
+                GetProperty(
+                    nameof(SampleProperties.SetterOnly),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
                 InteropAccessMode.Reflection
             );
 
@@ -204,7 +207,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsWhenSetterMissing()
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(nameof(SampleProperties.GetterOnly), BindingFlags.Instance | BindingFlags.Public),
+                GetProperty(
+                    nameof(SampleProperties.GetterOnly),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
                 InteropAccessMode.Reflection
             );
 
@@ -285,7 +291,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(metadata.Get("name").String, Is.EqualTo(nameof(SampleProperties.InstanceValue)));
+                Assert.That(
+                    metadata.Get("name").String,
+                    Is.EqualTo(nameof(SampleProperties.InstanceValue))
+                );
                 Assert.That(metadata.Get("static").Boolean, Is.False);
                 Assert.That(metadata.Get("read").Boolean, Is.True);
                 Assert.That(metadata.Get("write").Boolean, Is.True);

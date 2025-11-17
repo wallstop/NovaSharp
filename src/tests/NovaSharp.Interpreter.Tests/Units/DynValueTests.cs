@@ -308,7 +308,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void NewCoroutineWrapsCoroutineHandles()
         {
             Script script = new();
-            DynValue function = script.Call(script.LoadString("return function(x) coroutine.yield(x); return x end"));
+            DynValue function = script.Call(
+                script.LoadString("return function(x) coroutine.yield(x); return x end")
+            );
             DynValue coroutineValue = script.CreateCoroutine(function);
             DynValue wrapped = DynValue.NewCoroutine(coroutineValue.Coroutine);
 
@@ -330,21 +332,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckTypeAutoConvertsAcrossCoreTypes()
         {
-            DynValue boolValue = DynValue.NewString("truthy").CheckType(
-                "func",
-                DataType.Boolean,
-                flags: TypeValidationFlags.AutoConvert
-            );
-            DynValue numberValue = DynValue.NewString("42").CheckType(
-                "func",
-                DataType.Number,
-                flags: TypeValidationFlags.AutoConvert
-            );
-            DynValue stringValue = DynValue.NewNumber(3.5).CheckType(
-                "func",
-                DataType.String,
-                flags: TypeValidationFlags.AutoConvert
-            );
+            DynValue boolValue = DynValue
+                .NewString("truthy")
+                .CheckType("func", DataType.Boolean, flags: TypeValidationFlags.AutoConvert);
+            DynValue numberValue = DynValue
+                .NewString("42")
+                .CheckType("func", DataType.Number, flags: TypeValidationFlags.AutoConvert);
+            DynValue stringValue = DynValue
+                .NewNumber(3.5)
+                .CheckType("func", DataType.String, flags: TypeValidationFlags.AutoConvert);
 
             Assert.Multiple(() =>
             {

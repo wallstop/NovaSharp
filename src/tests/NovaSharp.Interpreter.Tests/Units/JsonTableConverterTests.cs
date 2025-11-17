@@ -25,7 +25,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(roundTrip.Length, Is.EqualTo(0));
                 Assert.That(roundTrip.Get("valid").String, Is.EqualTo("value"));
                 Assert.That(JsonNull.IsJsonNull(roundTrip.Get("nullEntry")), Is.True);
-                Assert.That(roundTrip.Get("unsupported").IsNil(), Is.True, "Incompatible types are omitted.");
+                Assert.That(
+                    roundTrip.Get("unsupported").IsNil(),
+                    Is.True,
+                    "Incompatible types are omitted."
+                );
             });
         }
 
