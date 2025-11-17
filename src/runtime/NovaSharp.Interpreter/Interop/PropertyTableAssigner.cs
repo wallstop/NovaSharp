@@ -296,7 +296,15 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentException("propertyType must be a concrete, reference type");
             }
 
-            _subAssigners[propertyType] = assigner;
+            if (assigner == null)
+            {
+                // Revert to the default CLR conversion when no custom subassigner is configured.
+                _subAssigners.Remove(propertyType);
+            }
+            else
+            {
+                _subAssigners[propertyType] = assigner;
+            }
         }
 
         /// <summary>

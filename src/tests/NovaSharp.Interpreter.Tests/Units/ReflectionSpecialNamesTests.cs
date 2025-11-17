@@ -171,6 +171,43 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void EqualityComparesTypeAndArgument()
+        {
+            ReflectionSpecialName getterFromString = new("get_Length");
+            ReflectionSpecialName getterTyped = new(
+                ReflectionSpecialNameType.PropertyGetter,
+                "Length"
+            );
+            ReflectionSpecialName differentArgument = new(
+                ReflectionSpecialNameType.PropertyGetter,
+                "Width"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(getterFromString.Equals(getterTyped), Is.True);
+                Assert.That(getterFromString == getterTyped, Is.True);
+                Assert.That(getterFromString != differentArgument, Is.True);
+                Assert.That(getterFromString.GetHashCode(), Is.EqualTo(getterTyped.GetHashCode()));
+            });
+        }
+
+        [Test]
+        public void EqualityHandlesNullArgumentsAndObjectOverrides()
+        {
+            ReflectionSpecialName opTrue = new("op_True");
+            ReflectionSpecialName typedTrue = new(ReflectionSpecialNameType.OperatorTrue);
+            ReflectionSpecialName opFalse = new("op_False");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(opTrue.Equals((object)typedTrue), Is.True);
+                Assert.That(opTrue.Equals(new object()), Is.False);
+                Assert.That(opTrue != opFalse, Is.True);
+            });
+        }
+
+        [Test]
         public void UnknownNamesLeaveTypeAtDefault()
         {
             ReflectionSpecialName unknown = new ReflectionSpecialName("CustomMethod");

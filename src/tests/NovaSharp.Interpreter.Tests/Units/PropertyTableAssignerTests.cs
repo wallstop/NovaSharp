@@ -183,6 +183,58 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(target.Name, Is.EqualTo("Nova"));
         }
 
+        [Test]
+        public void ConstructorAllowsExpectedMissingPropertiesParameter()
+        {
+            Table data = new(_script);
+            data.Set("ignored", DynValue.NewNumber(5));
+
+            PropertyTableAssigner<BasicSample> assigner = new("ignored");
+
+            Assert.That(() => assigner.AssignObject(new BasicSample(), data), Throws.Nothing);
+        }
+
+        [Test]
+        public void ConstructorRejectsValueTypesAndDuplicateNames()
+        {
+            Assert.That(() => new PropertyTableAssigner(typeof(int)), Throws.ArgumentException);
+
+            Assert.That(
+                () => new PropertyTableAssigner<DuplicateProperties>(),
+                Throws.ArgumentException.With.Message.Contains("two definitions")
+            );
+        }
+
+        [Test]
+        public void RemovingSubassignerFallsBackToClrConversion()
+        {
+            Table address = new(_script);
+            address.Set("street", DynValue.NewString("Second"));
+
+            Table data = new(_script);
+            data.Set("address", DynValue.NewTable(address));
+
+            PropertyTableAssigner<ParentWithAddress> assigner = new();
+            assigner.SetSubassigner(new PropertyTableAssigner<AddressInfo>());
+            assigner.AssignObject(new ParentWithAddress(), data); // works with subassigner
+
+            assigner.SetSubassigner<AddressInfo>(null);
+
+            Assert.That(
+                () => assigner.AssignObject(new ParentWithAddress(), data),
+                Throws.TypeOf<ScriptRuntimeException>()
+            );
+        }
+
+        private sealed class DuplicateProperties
+        {
+            [NovaSharpProperty("alias")]
+            public string First { get; set; }
+
+            [NovaSharpProperty("alias")]
+            public string Second { get; set; }
+        }
+
         private sealed class BasicSample
         {
             [NovaSharpProperty("name")]

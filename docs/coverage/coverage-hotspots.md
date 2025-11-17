@@ -1,18 +1,24 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 18:11 UTC; the prior attempt failed because the RemoteDebugger TCP listener wasn't started in time, so the run was repeated until coverlet succeeded).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 20:14 UTC; coverlet logged transient “file in use” warnings while instrumenting `NovaSharp.Cli.dll`, but the rerun completed and emitted fresh reports).
 
 ## Snapshot
-- Overall line coverage: **84.3 %**
-- NovaSharp.Interpreter line coverage: **93.1 %**
-- NovaSharp.Cli line coverage: **79.7 %**
+- Overall line coverage: **84.7 %**
+- NovaSharp.Interpreter line coverage: **93.7 %**
+- NovaSharp.Cli line coverage: **79.6 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer now at **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
+- NovaSharp.RemoteDebugger line coverage: **92.3 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- ✅ None. `ScriptToClrConversions` cleared the gate on 2025-11-16 (now **99.4 % line / 98.8 % branch / 100 % method**); identify the next interpreter gap once a new class drifts below 90 %.
-- See `docs/coverage/latest/Summary.json` for the full list; update this section after each burn-down.
+- `Debugging.DebugService` – **83.3 % line / 66.6 % branch** (needs attach/queue coverage)
+- `REPL.ReplInterpreterScriptLoader` – **84.2 % line / 75.0 % branch**
+- `Interop.StandardDescriptors.StandardEnumUserDataDescriptor` – **85.6 % line / 88.8 % branch** (still missing failure/flags permutations)
+- `Execution.Scopes.RuntimeScopeFrame` – **85.7 % line**
+- `DataTypes.Table` – **85.8 % line / 81.9 % branch** (metatables & raw setters remain)
+- `Interop.StandardDescriptors.ReflectionMemberDescriptors.PropertyMemberDescriptor` – **87.1 % line / 91.1 % branch** (new tests landed but more setter/getter permutations remain)
+
+See `docs/coverage/latest/Summary.json` for the full breakdown; update this list after each burn-down.
 
 ## Action Items
 1. Assign owners for each red-listed class (default owner noted above until explicit assignment).
@@ -22,6 +28,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `PlatformAccessorBase` now has NUnit coverage for both Unity DLL suffix branches (`unity.dll.mono` + `unity.dll.unknown`), the `.dotnet` fallback, and the base `DefaultInput` shim via a dedicated test accessor. Release builds still inline the `return null` fast path, so the coverage report remains **84 % line / 78.5 % branch**, but behaviour is now regression-tested.
 
 ## Recently Covered
+- (2025-11-16 20:14 UTC) Landed `Units/PropertyMemberDescriptorTests` (attribute-driven visibility, lazy/static optimization, access guards, wiring metadata) plus `ReflectionSpecialNamesTests` equality/`GetHashCode` coverage, and patched `PropertyTableAssigner.SetSubassignerForType` so removing a subassigner falls back to CLR conversions instead of dereferencing `null`. The latest `./scripts/coverage/coverage.ps1 -SkipBuild` run exercises **2 019** Release tests, records `ReflectionSpecialName` at **100 % line / 99.2 % branch / 100 % method**, `PropertyMemberDescriptor` up to **87.1 % line / 91.1 % branch / 94.1 % method**, and `PropertyTableAssigner` at **96.9 % line / 98.0 % branch**. Interpreter totals now sit at **93.7 % line / 90.3 % branch / 96.2 % method**, keeping the ≥95 % goal in sight.
 - (2025-11-16 19:17 UTC) Added `Units/JsonTableConverterTests` (object/array filtering, invalid-root/colon/minus regressions, `JsonNull` round-trips) and `Units/ObjectValueConverterTests` (custom null sentinels, enum projections, enumerable expansion, static/instance reflection paths). `./scripts/coverage/coverage.ps1 -SkipBuild` now reports `NovaSharp.Interpreter.Serialization.Json.JsonTableConverter` at **99.2 % line / 96.1 % branch / 100 % method** and `NovaSharp.Interpreter.Serialization.ObjectValueConverter` at **100 % line / 93.7 % branch / 100 % method**, lifting interpreter totals to **93.4 % line / 89.9 % branch / 95.9 % method** across **1 972** Release tests (artifacts under `docs/coverage/latest`).
 - (2025-11-16 19:40 UTC) `Units/ScriptLoadTests` now drive `Script`’s loader/caller pathways: base64 dump decoding, text/dump `LoadStream`, `Dump` guard rails, loader return-type validation, metamethod-based `Call`, CLR/object overloads, coroutine recycling, and the static `RunFile`/`RunString` helpers. Coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` now records `NovaSharp.Interpreter.Script` at **93.1 % line / 82.7 % branch / 95.9 % method**, nudging interpreter totals to **93.5 % line / 90.0 % branch / 95.9 % method** across **1 989** Release tests.
 - (2025-11-16 19:54 UTC) `Units/DynValueTests` picked up the remaining DynValue gaps (StringBuilder constructors, clone/assign/read-only guards, coroutine wrapping, CLR-function `ToString`, `CheckType` auto conversion, `CheckUserDataType` nil allowances). `NovaSharp.Interpreter.DataTypes.DynValue` now reports **87.0 % line / 76.7 % branch / 97.1 % method**, raising interpreter totals to **93.6 % line / 90.1 % branch / 95.9 % method** with **2 000** Release tests and shrinking the gap to the 95 % enforcement target.
@@ -126,4 +133,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-16 (18:11 UTC)_
+_Last updated: 2025-11-16 (20:14 UTC)_
