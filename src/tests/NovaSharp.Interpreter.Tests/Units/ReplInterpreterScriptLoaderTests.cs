@@ -1,120 +1,174 @@
+#nullable enable
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
+    using NovaSharp;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
-    using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
     using NUnit.Framework;
+    using NUnit.Framework.Legacy;
 
     [TestFixture]
     public sealed class ReplInterpreterScriptLoaderTests
     {
+        private static IDisposable OverrideEnv(string name, string? value)
+        {
+            string? original = Environment.GetEnvironmentVariable(name);
+            Environment.SetEnvironmentVariable(name, value);
+            return new EnvRestore(name, original);
+        }
+
         [Test]
         public void ConstructorPrefersNovaSharpPathEnvironmentVariable()
         {
-            using EnvironmentScope scope = new EnvironmentScope(
-                new Dictionary<string, string>
-                {
-                    { "NovaSharp_PATH", "Scripts/?;Scripts/?/init.lua" },
-                    { "LUA_PATH_5_2", null },
-                    { "LUA_PATH", null },
-                }
-            );
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", "?/fromNova;alt/?.lua");
+            using IDisposable lua52 = OverrideEnv("LUA_PATH_5_2", "ignored/?.lua");
+            using IDisposable lua = OverrideEnv("LUA_PATH", "ignored2/?.lua");
 
-            TestReplLoader loader = new TestReplLoader();
+            TestReplLoader loader = new();
 
-            Assert.That(
-                loader.ModulePaths,
-                Is.EqualTo(new[] { "Scripts/?", "Scripts/?/init.lua" })
-            );
+            CollectionAssert.AreEqual(new[] { "?/fromNova", "alt/?.lua" }, loader.ModulePaths);
         }
 
         [Test]
-        public void ConstructorFallsBackToDefaultPaths()
+        public void ConstructorFallsBackToLuaPath52ThenLuaPath()
         {
-            using EnvironmentScope scope = new EnvironmentScope(
-                new Dictionary<string, string>
-                {
-                    { "NovaSharp_PATH", null },
-                    { "LUA_PATH_5_2", null },
-                    { "LUA_PATH", null },
-                }
-            );
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            using IDisposable lua52 = OverrideEnv("LUA_PATH_5_2", "lua52/?.lua");
+            using IDisposable lua = OverrideEnv("LUA_PATH", "luaGlobal/?.lua");
 
-            TestReplLoader loader = new TestReplLoader();
+            TestReplLoader loader = new();
+            CollectionAssert.AreEqual(new[] { "lua52/?.lua" }, loader.ModulePaths);
 
-            Assert.That(loader.ModulePaths, Is.EqualTo(new[] { "?", "?.lua" }));
+            using IDisposable clearLua52 = OverrideEnv("LUA_PATH_5_2", null);
+            loader = new TestReplLoader();
+            CollectionAssert.AreEqual(new[] { "luaGlobal/?.lua" }, loader.ModulePaths);
         }
 
         [Test]
-        public void ResolveModuleNameHonoursLuaPathGlobal()
+        public void ConstructorIgnoresEmptyNovaSharpPathValue()
         {
-            using EnvironmentScope scope = new EnvironmentScope(
-                new Dictionary<string, string>
-                {
-                    { "NovaSharp_PATH", null },
-                    { "LUA_PATH_5_2", null },
-                    { "LUA_PATH", null },
-                }
-            );
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", "   ");
+            using IDisposable lua52 = OverrideEnv("LUA_PATH_5_2", "lua52/?.lua");
+            using IDisposable lua = OverrideEnv("LUA_PATH", null);
 
-            TestReplLoader loader = new TestReplLoader();
+            TestReplLoader loader = new();
 
-            Script script = new Script(CoreModules.None);
-            script.Globals.Set("LUA_PATH", DynValue.NewString("./modules/?.lua;./fallback/?.lua"));
+            CollectionAssert.AreEqual(new[] { "lua52/?.lua" }, loader.ModulePaths);
+        }
 
-            loader.ResolveModuleName("feature.util", script.Globals);
+        [Test]
+        public void ConstructorFallsBackToDefaultPathWhenEnvironmentUnset()
+        {
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            using IDisposable lua52 = OverrideEnv("LUA_PATH_5_2", null);
+            using IDisposable lua = OverrideEnv("LUA_PATH", null);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(loader.CapturedModule, Is.EqualTo("feature.util"));
-                Assert.That(
-                    loader.CapturedPaths,
-                    Is.EqualTo(new[] { "./modules/?.lua", "./fallback/?.lua" })
-                );
-            });
+            TestReplLoader loader = new();
+
+            CollectionAssert.AreEqual(new[] { "?", "?.lua" }, loader.ModulePaths);
+        }
+
+        [Test]
+        public void ResolveModuleNameUsesLuaPathGlobalWhenPresent()
+        {
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            TestReplLoader loader = new();
+            loader.SetModulePaths("global/?.lua");
+            loader.MarkExisting("lua_path/pkg/mod.lua");
+
+            Table globals = new(new Script());
+            globals.Set("LUA_PATH", DynValue.NewString("lua_path/?.lua"));
+
+            string result = loader.ResolveModuleName("pkg.mod", globals);
+            Assert.That(result, Is.EqualTo("lua_path/pkg/mod.lua"));
+        }
+
+        [Test]
+        public void ResolveModuleNameFallsBackToModulePathsWhenLuaPathMissing()
+        {
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            TestReplLoader loader = new();
+            loader.SetModulePaths("global/?.lua");
+            loader.MarkExisting("global/pkg/mod.lua");
+
+            Table globals = new(new Script());
+
+            string result = loader.ResolveModuleName("pkg.mod", globals);
+            Assert.That(result, Is.EqualTo("global/pkg/mod.lua"));
+        }
+
+        [Test]
+        public void ResolveModuleNameIgnoresNonStringLuaPathGlobal()
+        {
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            TestReplLoader loader = new();
+            loader.SetModulePaths("global/?.lua");
+            loader.MarkExisting("global/pkg/mod.lua");
+
+            Table globals = new(new Script());
+            globals.Set("LUA_PATH", DynValue.NewNumber(42));
+
+            string result = loader.ResolveModuleName("pkg.mod", globals);
+            Assert.That(result, Is.EqualTo("global/pkg/mod.lua"));
+        }
+
+        [Test]
+        public void ResolveModuleNameReturnsNullWhenLuaPathCannotResolve()
+        {
+            using IDisposable novaPath = OverrideEnv("NovaSharp_PATH", null);
+            TestReplLoader loader = new();
+            loader.SetModulePaths("global/?.lua");
+
+            Table globals = new(new Script());
+            globals.Set("LUA_PATH", DynValue.NewString("missing/?.lua"));
+
+            string result = loader.ResolveModuleName("pkg.mod", globals);
+            Assert.That(result, Is.Null);
         }
 
         private sealed class TestReplLoader : ReplInterpreterScriptLoader
         {
-            public IReadOnlyList<string> CapturedPaths { get; private set; }
+            private readonly HashSet<string> existingPaths = new(StringComparer.Ordinal);
 
-            public string CapturedModule { get; private set; }
-
-            protected override string ResolveModuleName(string modname, IEnumerable<string> paths)
+            public void MarkExisting(params string[] paths)
             {
-                CapturedModule = modname;
-                CapturedPaths = paths?.ToArray();
-                return "resolved.lua";
+                foreach (string path in paths)
+                {
+                    existingPaths.Add(path);
+                }
             }
 
-            public new IReadOnlyList<string> ModulePaths => base.ModulePaths;
+            public void SetModulePaths(params string[] paths)
+            {
+                ModulePaths = paths;
+            }
+
+            public override bool ScriptFileExists(string name)
+            {
+                return existingPaths.Contains(name);
+            }
         }
 
-        private sealed class EnvironmentScope : IDisposable
+        private sealed class EnvRestore : IDisposable
         {
-            private readonly Dictionary<string, string> _originalValues = new();
+            private readonly string name;
+            private readonly string? original;
 
-            public EnvironmentScope(Dictionary<string, string> variables)
+            public EnvRestore(string name, string? original)
             {
-                foreach ((string key, string value) in variables)
-                {
-                    _originalValues[key] = Environment.GetEnvironmentVariable(key);
-                    Environment.SetEnvironmentVariable(key, value);
-                }
+                this.name = name;
+                this.original = original;
             }
 
             public void Dispose()
             {
-                foreach ((string key, string value) in _originalValues)
-                {
-                    Environment.SetEnvironmentVariable(key, value);
-                }
+                Environment.SetEnvironmentVariable(name, original);
             }
         }
     }
 }
+#nullable disable

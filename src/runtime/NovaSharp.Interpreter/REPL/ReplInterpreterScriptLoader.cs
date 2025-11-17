@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.REPL
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
     using NovaSharp.Interpreter.DataTypes;
     using System;
+    using System.Collections.Generic;
     using Loaders;
 
     /// <summary>
@@ -25,28 +26,16 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public ReplInterpreterScriptLoader()
         {
-            string env = Environment.GetEnvironmentVariable("NovaSharp_PATH");
-            if (!string.IsNullOrEmpty(env))
+            ModulePaths = TryLoadEnvironmentPaths("NovaSharp_PATH");
+
+            if (ModulePaths == null)
             {
-                ModulePaths = UnpackStringPaths(env);
+                ModulePaths = TryLoadEnvironmentPaths("LUA_PATH_5_2");
             }
 
             if (ModulePaths == null)
             {
-                env = Environment.GetEnvironmentVariable("LUA_PATH_5_2");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    ModulePaths = UnpackStringPaths(env);
-                }
-            }
-
-            if (ModulePaths == null)
-            {
-                env = Environment.GetEnvironmentVariable("LUA_PATH");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    ModulePaths = UnpackStringPaths(env);
-                }
+                ModulePaths = TryLoadEnvironmentPaths("LUA_PATH");
             }
 
             if (ModulePaths == null)
@@ -76,6 +65,18 @@ namespace NovaSharp.Interpreter.REPL
             {
                 return base.ResolveModuleName(modname, globalContext);
             }
+        }
+
+        private static IReadOnlyList<string> TryLoadEnvironmentPaths(string variable)
+        {
+            string env = Environment.GetEnvironmentVariable(variable);
+            if (string.IsNullOrWhiteSpace(env))
+            {
+                return null;
+            }
+
+            IReadOnlyList<string> paths = UnpackStringPaths(env);
+            return (paths.Count > 0) ? paths : null;
         }
     }
 }
