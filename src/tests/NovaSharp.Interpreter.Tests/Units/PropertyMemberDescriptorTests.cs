@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -8,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
+    using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
 
     [TestFixture]
@@ -130,6 +132,44 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(readOnly.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
                 Assert.That(writeOnly.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanWrite));
             });
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenBothAccessorsMissing()
+        {
+            PropertyInfo property = GetProperty(
+                nameof(SampleProperties.InstanceValue),
+                BindingFlags.Instance | BindingFlags.Public
+            );
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                new PropertyMemberDescriptor(property, InteropAccessMode.Reflection, null, null)
+            );
+
+            Assert.That(exception.ParamName, Is.Not.Null);
+        }
+
+        [Test]
+        public void ConstructorFallsBackToReflectionWhenPlatformIsAot()
+        {
+            IPlatformAccessor original = Script.GlobalOptions.Platform;
+            try
+            {
+                Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
+                PropertyMemberDescriptor descriptor = new(
+                    GetProperty(
+                        nameof(SampleProperties.InstanceValue),
+                        BindingFlags.Instance | BindingFlags.Public
+                    ),
+                    InteropAccessMode.Preoptimized
+                );
+
+                Assert.That(descriptor.AccessMode, Is.EqualTo(InteropAccessMode.Reflection));
+            }
+            finally
+            {
+                Script.GlobalOptions.Platform = original;
+            }
         }
 
         [Test]
@@ -273,6 +313,25 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(SampleProperties.LazyStatic, Is.EqualTo(9));
             SampleProperties.LazyStatic = 0;
+        }
+
+        [Test]
+        public void OptimizePrecompilesGetterAndSetter()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                GetProperty(
+                    nameof(SampleProperties.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.LazyOptimized
+            );
+            SampleProperties instance = new() { InstanceValue = 12 };
+
+            ((IOptimizableDescriptor)descriptor).Optimize();
+
+            Assert.That(descriptor.GetValue(_script, instance).Number, Is.EqualTo(12));
+            descriptor.SetValue(_script, instance, DynValue.NewNumber(4));
+            Assert.That(instance.InstanceValue, Is.EqualTo(4));
         }
 
         [Test]

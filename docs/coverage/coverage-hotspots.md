@@ -1,20 +1,23 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 10:40 UTC; coverlet still fails to instrument `NovaSharp.Cli.dll` on the first pass but succeeds after the automatic retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 11:30 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
 - Overall line coverage: **85.0 %**
-- NovaSharp.Interpreter line coverage: **94.0 %**
+- NovaSharp.Interpreter line coverage: **94.1 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- `REPL.ReplInterpreterScriptLoader` – **84.2 % line / 75.0 % branch** (constructor fallback helpers still miss the `LUA_PATH_5_2` / `LUA_PATH` assignment sites and the null-return leg inside `ResolveModuleName`)
-- `Execution.Scopes.RuntimeScopeFrame` – **85.7 % line**
-- `DataTypes.Table` – **95.1 % line / 86.8 % branch** (line coverage is now green but the mixed hash/array branches inside `ResolveMultipleKeys`, `PerformTableSet`, and the boxed `Remove` helpers still sit below 90 % branch coverage)
-- `Interop.StandardDescriptors.ReflectionMemberDescriptors.PropertyMemberDescriptor` – **87.1 % line / 91.1 % branch** (new tests landed but more setter/getter permutations remain)
+- `Interop.StandardDescriptors.ReflectionMemberDescriptors.PropertyMemberDescriptor` – **89.6 % line / 94.1 % branch** (constructor/AOT/optimization tests landed, but the legacy `_getter == null`/`_setter == null` guards never trip because `MemberDescriptor.CheckAccess` throws first; remaining uncovered lines correspond to those redundant branches and the argument-mismatch fallbacks in `SetValue`).
+- `Interop.StandardDescriptors.MemberDescriptors.ObjectCallbackMemberDescriptor` – **85.7 % line / 50.0 % branch** (needs coverage for error paths and delegate invocation fallbacks).
+- `Tree.Expressions.DynamicExprExpression` & `Tree.Expressions.AdjustmentExpression` – **85.7 % line** each (no dedicated unit coverage for the adjust/variadic rewrites).
+- `REPL.ReplHistoryInterpreter` – **85.7 % line / 62.5 % branch** (history load/save branches untested).
+- `Platforms.LimitedPlatformAccessor` – **85.7 % line** (trimmed accessor helpers still lack exercised branches).
+- `Tree.Lexer.LexerUtils` – **86.1 % line / 89.7 % branch** (string/number lexeme helpers need direct unit coverage).
+- `Interop.Converters.NumericConversions`, `DataStructs.MultiDictionary<T>`, and `DataTypes.DynValue` all sit between **86 – 87 % line**, with low branch coverage on the numeric conversion switches and boxed value helpers.
 
 See `docs/coverage/latest/Summary.json` for the full breakdown; update this list after each burn-down.
 
@@ -25,6 +28,8 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
 - `PlatformAccessorBase` now has NUnit coverage for both Unity DLL suffix branches (`unity.dll.mono` + `unity.dll.unknown`), the `.dotnet` fallback, and the base `DefaultInput` shim via a dedicated test accessor. Release builds still inline the `return null` fast path, so the coverage report remains **84 % line / 78.5 % branch**, but behaviour is now regression-tested.
 
+- (2025-11-17 11:30 UTC) Extended `PropertyMemberDescriptorTests` with constructor guardrails (dual-null accessors), AOT fallback verification, and explicit `IOptimizableDescriptor.Optimize()` coverage. Overall interpreter coverage nudges to **94.1 % line / 90.9 % branch / 96.8 % method** across **2 061** tests, and `PropertyMemberDescriptor` now reports **89.6 % line / 94.1 % branch** (the remaining uncovered statements are the legacy `_getter == null` / `_setter == null` post-checks and the ArgumentException/InvalidCastException wrappers, which are unreachable while `MemberDescriptor.CheckAccess` guards conversions).
+- (2025-11-17 11:05 UTC) Marked `ReplInterpreterScriptLoaderTests` as `[NonParallelizable]`, fixed the `ConstructorIgnoresEmptyNovaSharpPathValue` flake, and added `RuntimeScopeFrameTests` to pin `Count`, `DebugSymbols`, and `ToFirstBlock`. Table’s fractional-key/boxed-path suite now drives it to **98.5 % line / 95.8 % branch**, while `RuntimeScopeFrame` is fully covered (**100 % line / method**). Interpreter totals remain **94.1 % line / 90.8 % branch / 96.7 % method** across **2 058** Release tests; the remaining debt is concentrated in the reflection/member descriptor helpers and parser/lexer utilities above.
 - (2025-11-17 10:40 UTC) Added a second wave of `Units/TableTests` (boxed string/int/`DynValue` removes, fractional-number keys, `Set(object[])` null/empty guards, and raw-get fallbacks) plus `Units/ReplInterpreterScriptLoaderTests` (whitespace `NovaSharp_PATH` ignores + explicit `LUA_PATH` miss). Branch coverage for `Table` climbs but remains at **86.8 %** because `ResolveMultipleKeys` and the iterator continuations still have untouched combinations; `ReplInterpreterScriptLoader` is functionally covered, yet OpenCover still reports **84.2 % line / 75.0 % branch** because the `LUA_PATH_5_2`/`LUA_PATH` assignment sites (lines 39/48) and the null-return at line 77 never record visits. Interpreter totals stay at **94.0 % line / 90.6 % branch / 96.6 % method** across **2 039** Release tests.
 - (2025-11-17 10:01 UTC) Extended `Units/TableTests` to cover constructor array initialization, `Table.Clear`, object/object[] setters, nested removal, raw-get overloads, additional `Remove` paths, and the `Keys` iterator. Behaviour is now exercised end-to-end even though OpenCover still reports **85.8 % line / 81.9 % branch** for `Table`; interpreter totals rise to **94.1 % line / 90.6 % branch / 96.6 % method** across **2 039** Release tests.
 - (2025-11-16 21:41 UTC) Added `Units/DebugServiceTests` to capture the `SourceCode` supplied to debuggers and call `DebugService.ResetBreakPoints` directly, proving that the helper delegates to `Processor.ResetBreakPoints` and surfaces the owning script. `DebugService` now reports **100 % line / 100 % method** coverage (up from **83 % line / 66 % method**), removing it from the red list and nudging interpreter totals to **93.9 % line / 90.4 % branch / 96.3 % method** across **2 030** tests.
@@ -135,4 +140,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-17 (10:40 UTC)_
+_Last updated: 2025-11-17 (11:30 UTC)_
