@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework.Legacy;
 
     [TestFixture]
+    [NonParallelizable]
     public sealed class ReplInterpreterScriptLoaderTests
     {
         private static IDisposable OverrideEnv(string name, string? value)
