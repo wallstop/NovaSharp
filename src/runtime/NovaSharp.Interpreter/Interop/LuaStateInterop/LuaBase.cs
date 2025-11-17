@@ -350,6 +350,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 while (copied < nresults)
                 {
                     l.Push(DynValue.Nil);
+                    copied++;
                 }
             }
         }

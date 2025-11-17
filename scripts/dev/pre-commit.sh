@@ -12,8 +12,8 @@ cd "$repo_root"
 echo "[pre-commit] Restoring dotnet tools (CSharpier)..."
 dotnet tool restore >/dev/null
 
-echo "[pre-commit] Running CSharpier..."
-dotnet csharpier . >/dev/null
+echo "[pre-commit] Running CSharpier across the entire repository..."
+dotnet tool run csharpier format . >/dev/null
 
 mapfile -t staged_md < <(git diff --cached --name-only --diff-filter=ACM -- '*.md' || true)
 if [[ ${#staged_md[@]} -gt 0 ]]; then

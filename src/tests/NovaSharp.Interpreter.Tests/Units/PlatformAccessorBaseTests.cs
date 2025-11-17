@@ -63,6 +63,72 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetPlatformNameUsesUnityDllMonoWhenNotNative()
+        {
+            using PlatformFlagScope scope = PlatformFlagScope.Override(
+                unity: true,
+                unityNative: false,
+                mono: true,
+                portable: false,
+                clr4: true,
+                aot: false
+            );
+
+            TestPlatformAccessor accessor = new("mono-unity");
+            string name = accessor.GetPlatformName();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
+                Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
+                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.True);
+                Assert.That(name, Does.Contain("mono-unity.unity.dll.mono"));
+            });
+        }
+
+        [Test]
+        public void GetPlatformNameUsesUnityDllUnknownWhenNotMono()
+        {
+            using PlatformFlagScope scope = PlatformFlagScope.Override(
+                unity: true,
+                unityNative: false,
+                mono: false,
+                portable: false,
+                clr4: true,
+                aot: false
+            );
+
+            TestPlatformAccessor accessor = new("unknown-unity");
+            string name = accessor.GetPlatformName();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
+                Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
+                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.False);
+                Assert.That(name, Does.Contain("unknown-unity.unity.dll.unknown"));
+            });
+        }
+
+        [Test]
+        public void GetPlatformNameFallsBackToDotnetWhenNotUnityOrMono()
+        {
+            using PlatformFlagScope scope = PlatformFlagScope.Override(
+                unity: false,
+                unityNative: false,
+                mono: false,
+                portable: false,
+                clr4: true,
+                aot: false
+            );
+
+            TestPlatformAccessor accessor = new("managed");
+            string name = accessor.GetPlatformName();
+
+            Assert.That(name, Does.Contain(".dotnet"));
+        }
+
+        [Test]
         public void DefaultInputWithPromptCallsObsoleteOverload()
         {
             TestPlatformAccessor accessor = new("input");
@@ -75,6 +141,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(accessor.ObsoleteDefaultInputInvocations, Is.EqualTo(1));
                 Assert.That(result, Is.EqualTo("line"));
             });
+        }
+
+        [Test]
+        public void DefaultInputReturnsNullForBaseImplementation()
+        {
+            BaseDefaultInputAccessor accessor = new("base");
+
+            string result = accessor.DefaultInput();
+
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -147,6 +223,69 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 // No-op in tests.
             }
+
+            public override bool FileExists(string file)
+            {
+                return false;
+            }
+
+            public override void DeleteFile(string file) { }
+
+            public override void MoveFile(string src, string dst) { }
+
+            public override int ExecuteCommand(string cmdline)
+            {
+                return 0;
+            }
+
+            public override CoreModules FilterSupportedCoreModules(CoreModules module)
+            {
+                return module;
+            }
+
+            public override string GetEnvironmentVariable(string envvarname)
+            {
+                return Environment.GetEnvironmentVariable(envvarname);
+            }
+        }
+
+        private sealed class BaseDefaultInputAccessor : PlatformAccessorBase
+        {
+            private readonly string prefix;
+
+            public BaseDefaultInputAccessor(string prefix)
+            {
+                this.prefix = prefix;
+            }
+
+            public override string GetPlatformNamePrefix()
+            {
+                return prefix;
+            }
+
+            public override void DefaultPrint(string content) { }
+
+            public override Stream OpenFile(
+                Script script,
+                string filename,
+                Encoding encoding,
+                string mode
+            )
+            {
+                return Stream.Null;
+            }
+
+            public override Stream GetStandardStream(StandardFileType type)
+            {
+                return Stream.Null;
+            }
+
+            public override string GetTempFileName()
+            {
+                return Path.GetTempFileName();
+            }
+
+            public override void ExitFast(int exitCode) { }
 
             public override bool FileExists(string file)
             {

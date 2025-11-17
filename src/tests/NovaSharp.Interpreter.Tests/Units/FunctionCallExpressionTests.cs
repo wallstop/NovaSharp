@@ -30,15 +30,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(call.NumVal, Is.EqualTo(2));
                 Assert.That(call.Name, Is.EqualTo("stub::callee"));
                 Assert.That(
-                    byteCode.code.Any(
-                        instruction => instruction.OpCode == OpCode.Literal && instruction.Value.Number == 1
+                    byteCode.code.Any(instruction =>
+                        instruction.OpCode == OpCode.Literal && instruction.Value.Number == 1
                     ),
                     Is.True
                 );
                 Assert.That(
-                    byteCode.code.Any(
-                        instruction => instruction.OpCode == OpCode.Literal
-                            && instruction.Value.String == "two"
+                    byteCode.code.Any(instruction =>
+                        instruction.OpCode == OpCode.Literal && instruction.Value.String == "two"
                     ),
                     Is.True
                 );
@@ -48,14 +47,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void Compile_EmitsThisCallForColonSyntax()
         {
-            FunctionCallExpression expression = CreateExpression("(42)", out Script script, "withColon");
+            FunctionCallExpression expression = CreateExpression(
+                "(42)",
+                out Script script,
+                "withColon"
+            );
             ByteCode byteCode = new(script);
 
             expression.Compile(byteCode);
 
-            int copyIndex = byteCode.code.FindIndex(instruction => instruction.OpCode == OpCode.Copy);
-            int indexIndex = byteCode.code.FindIndex(instruction => instruction.OpCode == OpCode.IndexN);
-            int swapIndex = byteCode.code.FindIndex(instruction => instruction.OpCode == OpCode.Swap);
+            int copyIndex = byteCode.code.FindIndex(instruction =>
+                instruction.OpCode == OpCode.Copy
+            );
+            int indexIndex = byteCode.code.FindIndex(instruction =>
+                instruction.OpCode == OpCode.IndexN
+            );
+            int swapIndex = byteCode.code.FindIndex(instruction =>
+                instruction.OpCode == OpCode.Swap
+            );
             Instruction thisCall = byteCode.code[^1];
 
             Assert.Multiple(() =>
@@ -74,7 +83,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(swap.NumVal2, Is.EqualTo(1));
 
                 Assert.That(thisCall.OpCode, Is.EqualTo(OpCode.ThisCall));
-                Assert.That(thisCall.NumVal, Is.EqualTo(2), "self argument should increment arg count");
+                Assert.That(
+                    thisCall.NumVal,
+                    Is.EqualTo(2),
+                    "self argument should increment arg count"
+                );
                 Assert.That(thisCall.Name, Is.EqualTo("stub::callee"));
             });
         }
@@ -94,9 +107,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
                 Assert.That(call.NumVal, Is.EqualTo(1));
                 Assert.That(
-                    byteCode.code.Any(
-                        instruction => instruction.OpCode == OpCode.Literal
-                            && instruction.Value.String == "payload"
+                    byteCode.code.Any(instruction =>
+                        instruction.OpCode == OpCode.Literal
+                        && instruction.Value.String == "payload"
                     ),
                     Is.True
                 );
@@ -106,7 +119,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void Constructor_AllowsTableConstructorArguments()
         {
-            FunctionCallExpression expression = CreateExpression("{ value = 1 }", out Script script);
+            FunctionCallExpression expression = CreateExpression(
+                "{ value = 1 }",
+                out Script script
+            );
             ByteCode byteCode = new(script);
 
             expression.Compile(byteCode);
@@ -121,14 +137,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void Constructor_ThrowsWhenArgumentsMissing()
         {
             Script script = new();
-            ScriptLoadingContext context = new(script)
-            {
-                Lexer = new Lexer(0, string.Empty, true),
-            };
+            ScriptLoadingContext context = new(script) { Lexer = new Lexer(0, string.Empty, true) };
             Expression callee = new FunctionExpressionStub(context, "broken::callee");
 
-            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(
-                () => new FunctionCallExpression(context, callee, null)
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                new FunctionCallExpression(context, callee, null)
             )!;
 
             Assert.Multiple(() =>
@@ -150,9 +163,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Lexer = new Lexer(0, argumentSource, true),
             };
             Expression callee = new FunctionExpressionStub(context, "stub::callee");
-            Token methodToken = methodName == null
-                ? null
-                : CreateToken(TokenType.Name, methodName);
+            Token methodToken = methodName == null ? null : CreateToken(TokenType.Name, methodName);
             return new FunctionCallExpression(context, callee, methodToken);
         }
 

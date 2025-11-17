@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-16 14:13 UTC).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-16 17:23 UTC).
 
 ## Snapshot
-- Overall line coverage: **84.0 %**
-- NovaSharp.Interpreter line coverage: **92.8 %**
+- Overall line coverage: **84.3 %**
+- NovaSharp.Interpreter line coverage: **93.1 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer now at **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
@@ -19,8 +19,10 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 2. Add issue/project board entries mirroring this table so progress is tracked.
 3. Update this document after each `./scripts/coverage/coverage.ps1` run (include new timestamp + notes).
 4. When a class crosses 90 %, move it to the green archive section (to be added) and celebrate the win.
+- `PlatformAccessorBase` now has NUnit coverage for both Unity DLL suffix branches (`unity.dll.mono` + `unity.dll.unknown`), the `.dotnet` fallback, and the base `DefaultInput` shim via a dedicated test accessor. Release builds still inline the `return null` fast path, so the coverage report remains **84 % line / 78.5 % branch**, but behaviour is now regression-tested.
 
 ## Recently Covered
+- `LuaBaseTests` now run under NUnit (six fixtures) with stack helpers covering MULTRET classification, Lua string/integer helpers, argument validation, raw table indexing, and the nil-padding path inside `LuaBase.LuaCall`. The padding test surfaced a production bug (the `copied` counter never incremented inside the nil-fill loop), so the loop now advances after each `DynValue.Nil` push instead of allocating indefinitely. Coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` (Release) on 2025-11-16 17:23 UTC lifts `NovaSharp.Interpreter.Interop.LuaStateInterop.LuaBase` to **91.3 % line / 88.3 % branch / 81.1 % method**, boosts interpreter totals to **93.15 % line / 89.73 % branch / 95.26 % method**, and brings the Release suite to **1 958** tests.
 - `CoroutineModuleTests` now exercise the tuple-flattening path in `coroutine.resume`, the `"running"` vs `"normal"` discriminator in `coroutine.status`, and the internal error guard for unexpected coroutine states. Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 08:52 UTC records `NovaSharp.Interpreter.CoreLib.CoroutineModule` at **100 % line / 100 % branch / 100 % method** and lifts the interpreter suite to **91.82 % line / 88.53 % branch / 93.85 % method** across **1 825** Release tests.
 - `CoroutineCloseTests` now assert the `coroutine.close` guardrails (rejecting the main coroutine, failing on in-flight resumptions, guarding unexpected states via `ForceStateForTests`, bubbling `__close` errors, and returning `true` once a coroutine dies cleanly). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 09:04 UTC bumps `NovaSharp.Interpreter.Execution.VM.Processor` to **87.0 % line / 85.7 % branch / 92.8 % method** and raises interpreter totals to **91.97 % line / 88.65 % branch / 93.91 % method** with **1 830** Release tests.
 - `SyntaxErrorExceptionTests` now drive the token- and SourceRef-based constructors, the premature-stream flag, and both sides of the `Script.GlobalOptions.RethrowExceptionNested` guard (ensuring nested clones preserve tokens). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 09:14 UTC records `NovaSharp.Interpreter.Errors.SyntaxErrorException` at **89.2 % line / 100 % branch / 76.9 % method** and holds interpreter totals at **92.0 % line / 88.65 % branch / 94.05 % method** across **1 835** Release tests.
@@ -28,6 +30,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 - `HardwiredDescriptorTests` now exercise the serialized + name-only `DynValueMemberDescriptor` constructors and both table wiring paths (prime tables emit values, script-owned tables emit errors). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 09:44 UTC pushes `NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.DynValueMemberDescriptor` to **100 % line / 100 % branch / 100 % method** and raises interpreter totals to **92.19 % line / 88.75 % branch / 94.20 % method** across **1 840** Release tests.
 - `ClrToScriptConversionsTests` (2025-11-16 12:12 UTC) now cover the CLR→DynValue fast paths (custom converters, closures, callback/Delegate marshalling, enums/Type/UserData, `MethodInfo`, list/dictionary/table projections, iterator tuples, and the failure path). Release builds still report **80.7 % line / 84.2 % branch** for `NovaSharp.Interpreter.Interop.Converters.ClrToScriptConversions` because the trivial return paths are inlined away, but the behavioural gap is locked down and interpreter totals remain at **92.23 % line / 88.75 % branch / 94.44 % method** across **1 841** Release tests.
 - `FunctionCallExpressionTests` (2025-11-16 15:28 UTC) now cover parenthesized arguments, Lua string/table shortcut calls, `:`/`this` dispatch plumbing, and the premature stream guard. Coverage run `./scripts/coverage/coverage.ps1 -SkipBuild` records `NovaSharp.Interpreter.Tree.Expressions.FunctionCallExpression` at **98.2 % line / 95.4 % branch / 75 % method** and lifts interpreter aggregates to **93.0 % line / 89.47 % branch / 94.97 % method** with **1 945** Release tests.
+- `PlatformAutoDetectorTests` (2025-11-16 15:38 UTC) now validate both the Unity-detection path (dynamic `UnityEngine.*` probe assembly) and the cached `IsRunningOnAot` behaviour, pushing `PlatformAutoDetector` to **91.1 % line / 100 % branch / 100 % method** (the catch path still requires a true AOT runtime to execute). Interpreter aggregates after the run sit at **93.02 % line / 89.51 % branch / 95.02 % method** with **1 948** Release tests.
 - `FrameworkCurrentTests` verify the .NET Core reflection shim (interface lookup, `GetTypeInfoFromType`, `IsDbNull`, `StringContainsChar`). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 12:22 UTC drives `NovaSharp.Interpreter.Compatibility.Frameworks.FrameworkCurrent` to **100 % line / 100 % branch / 100 % method** while interpreter totals stay at **92.34 % line / 88.89 % branch / 94.54 % method** across **1 851** Release tests.
 - `JsonNullTests` now exercise the JSON-null userdata helper (`IsNull`, `Create`, and `IsJsonNull`). Coverage run `./scripts/coverage/coverage.ps1` (Release) on 2025-11-16 12:27 UTC drives `NovaSharp.Interpreter.Serialization.Json.JsonNull` to **100 % line / 100 % branch / 100 % method** with interpreter totals unchanged at **92.34 % line / 88.89 % branch / 94.54 % method** across **1 851** Release tests.
 - `RuntimeScopeBlockTests` and `AnonWrapperTests` (2025-11-16 12:31 UTC) now cover the execution-scope metadata DTO and anonymous userdata wrapper helpers (`AnonWrapper<T>`). `RuntimeScopeBlock` reports **100 % line / 100 % branch / 100 % method**, `AnonWrapper<T>` hits **100 % line / 100 % branch**, and interpreter totals remain **92.36 % line / 88.89 % branch / 94.68 % method** across **1 859** Release tests (`./scripts/coverage/coverage.ps1 -SkipBuild`).
@@ -120,4 +123,4 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-16_
+_Last updated: 2025-11-16 (17:23 UTC)_
