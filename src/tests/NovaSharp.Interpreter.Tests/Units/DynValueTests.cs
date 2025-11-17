@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -225,6 +226,155 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("userdata"));
+        }
+
+        [Test]
+        public void CheckUserDataTypeAllowsNilWhenFlagged()
+        {
+            SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
+                "func",
+                flags: TypeValidationFlags.AllowNil
+            );
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void NewStringFromStringBuilderCopiesSnapshot()
+        {
+            StringBuilder builder = new("seed");
+            DynValue value = DynValue.NewString(builder);
+            builder.Append("mutated");
+
+            Assert.That(value.String, Is.EqualTo("seed"));
+        }
+
+        [Test]
+        public void CloneReflectsReadOnlyPreference()
+        {
+            DynValue number = DynValue.NewNumber(7);
+            DynValue readOnly = number.Clone(true);
+            DynValue writable = readOnly.Clone(false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(readOnly.ReadOnly, Is.True);
+                Assert.That(writable.ReadOnly, Is.False);
+            });
+        }
+
+        [Test]
+        public void CloneAsWritableProducesEditableCopy()
+        {
+            DynValue readOnly = DynValue.NewString("locked").AsReadOnly();
+            DynValue clone = readOnly.CloneAsWritable();
+
+            clone.Assign(DynValue.NewString("unlocked"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(clone.String, Is.EqualTo("unlocked"));
+                Assert.That(readOnly.String, Is.EqualTo("locked"));
+            });
+        }
+
+        [Test]
+        public void AssignUpdatesTargetAndResetsHashCode()
+        {
+            DynValue target = DynValue.NewNumber(1);
+            int oldHash = target.GetHashCode();
+
+            target.Assign(DynValue.NewString("assigned"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(target.Type, Is.EqualTo(DataType.String));
+                Assert.That(target.String, Is.EqualTo("assigned"));
+                Assert.That(target.GetHashCode(), Is.Not.EqualTo(oldHash));
+            });
+        }
+
+        [Test]
+        public void AssignThrowsWhenTargetIsReadOnly()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.True.Assign(DynValue.NewNumber(2))
+            );
+
+            Assert.That(exception.Message, Does.Contain("Assigning on r-value"));
+        }
+
+        [Test]
+        public void NewCoroutineWrapsCoroutineHandles()
+        {
+            Script script = new();
+            DynValue function = script.Call(script.LoadString("return function(x) coroutine.yield(x); return x end"));
+            DynValue coroutineValue = script.CreateCoroutine(function);
+            DynValue wrapped = DynValue.NewCoroutine(coroutineValue.Coroutine);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wrapped.Type, Is.EqualTo(DataType.Thread));
+                Assert.That(wrapped.Coroutine, Is.SameAs(coroutineValue.Coroutine));
+                Assert.That(wrapped.ToString(), Does.Contain("Coroutine"));
+            });
+        }
+
+        [Test]
+        public void ToStringFormatsClrFunctions()
+        {
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "named");
+            Assert.That(callback.ToString(), Is.EqualTo("(Function CLR)"));
+        }
+
+        [Test]
+        public void CheckTypeAutoConvertsAcrossCoreTypes()
+        {
+            DynValue boolValue = DynValue.NewString("truthy").CheckType(
+                "func",
+                DataType.Boolean,
+                flags: TypeValidationFlags.AutoConvert
+            );
+            DynValue numberValue = DynValue.NewString("42").CheckType(
+                "func",
+                DataType.Number,
+                flags: TypeValidationFlags.AutoConvert
+            );
+            DynValue stringValue = DynValue.NewNumber(3.5).CheckType(
+                "func",
+                DataType.String,
+                flags: TypeValidationFlags.AutoConvert
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(boolValue.Boolean, Is.True);
+                Assert.That(numberValue.Number, Is.EqualTo(42));
+                Assert.That(stringValue.String, Is.EqualTo("3.5"));
+            });
+        }
+
+        [Test]
+        public void CheckTypeComplainsWhenVoidHasNoValue()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.Void.CheckType("func", DataType.String)
+            );
+
+            Assert.That(exception.Message, Does.Contain("no value"));
+        }
+
+        [Test]
+        public void CheckTypeAutoConvertFallbacksReturnOriginalWhenConversionFails()
+        {
+            DynValue original = DynValue.NewString("not-number");
+            DynValue result = original.CheckType(
+                "func",
+                DataType.String,
+                flags: TypeValidationFlags.AutoConvert
+            );
+
+            Assert.That(result, Is.SameAs(original));
         }
 
         [Test]
