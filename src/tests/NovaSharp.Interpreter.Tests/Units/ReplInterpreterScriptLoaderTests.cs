@@ -58,6 +58,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TestReplLoader loader = new();
 
+            Assert.That(loader.ModulePaths, Is.Not.Null);
             CollectionAssert.AreEqual(new[] { "lua52/?.lua" }, loader.ModulePaths);
         }
 

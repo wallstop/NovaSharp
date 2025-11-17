@@ -226,14 +226,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set((object)"name", DynValue.NewString("nova"));
             table.Set((object)4, DynValue.NewNumber(4));
 
-            DynValue fractionalKey = DynValue.NewNumber(4.5);
+            double fractionalKey = 4.5;
             table.Set((object)fractionalKey, DynValue.NewNumber(5));
 
             Assert.Multiple(() =>
             {
                 Assert.That(table.RawGet("name").String, Is.EqualTo("nova"));
                 Assert.That(table.RawGet(4).Number, Is.EqualTo(4));
-                Assert.That(table.RawGet(fractionalKey).Number, Is.EqualTo(5));
+                Assert.That(table.RawGet((object)fractionalKey).Number, Is.EqualTo(5));
             });
         }
 
@@ -455,7 +455,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             bool removed = table.Remove(new object[] { "branch", "leaf" });
 
-            DynValue value = table.Get("branch", "leaf");
+            DynValue value = table.Get("branch", "leaf") ?? DynValue.Nil;
 
             Assert.Multiple(() =>
             {
