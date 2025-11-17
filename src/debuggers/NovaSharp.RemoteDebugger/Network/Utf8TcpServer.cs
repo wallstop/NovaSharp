@@ -76,6 +76,11 @@ namespace NovaSharp.RemoteDebugger.Network
             {
                 Logger("OnAcceptSocket : " + ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                // Listener was stopped or never started; swallow so test hosts can dispose gracefully.
+                Logger("OnAcceptSocket : " + ex.Message);
+            }
         }
 
         public int GetConnectedClients()

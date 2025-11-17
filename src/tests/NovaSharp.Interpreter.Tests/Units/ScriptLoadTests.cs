@@ -236,6 +236,57 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
+        [Test]
+        public void RecycleCoroutineProducesFreshThread()
+        {
+            Script script = new();
+            DynValue source = CompileFunction(
+                script,
+                "function(value) coroutine.yield(value + 1); return value + 2 end"
+            );
+            Coroutine coroutine = script.CreateCoroutine(source).Coroutine;
+
+            Assert.That(coroutine.Resume(DynValue.NewNumber(3)).Number, Is.EqualTo(4));
+            Assert.That(coroutine.Resume().Number, Is.EqualTo(5));
+            Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
+
+            DynValue replacement = CompileFunction(script, "function() return 99 end");
+            DynValue recycled = script.RecycleCoroutine(coroutine, replacement);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(recycled.Type, Is.EqualTo(DataType.Thread));
+                Assert.That(recycled.Coroutine.State, Is.EqualTo(CoroutineState.NotStarted));
+                Assert.That(recycled.Coroutine.Resume().Number, Is.EqualTo(99));
+            });
+        }
+
+        [Test]
+        public void RecycleCoroutineRequiresDeadCoroutineAndFunction()
+        {
+            Script script = new();
+            DynValue worker = CompileFunction(script, "function() coroutine.yield(1); return 2 end");
+            Coroutine live = script.CreateCoroutine(worker).Coroutine;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                script.RecycleCoroutine(live, worker)
+            );
+
+            live.Resume();
+            live.Resume();
+            Assert.That(live.State, Is.EqualTo(CoroutineState.Dead));
+
+            Assert.Throws<InvalidOperationException>(() =>
+                script.RecycleCoroutine(live, DynValue.NewNumber(1))
+            );
+        }
+
+        private static DynValue CompileFunction(Script script, string luaFunctionSource)
+        {
+            DynValue chunk = script.LoadString($"return {luaFunctionSource}");
+            return script.Call(chunk);
+        }
+
         private static string EncodeFunctionAsBase64(Script script, DynValue chunk)
         {
             using MemoryStream stream = new();
