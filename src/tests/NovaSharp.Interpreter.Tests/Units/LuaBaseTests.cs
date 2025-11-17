@@ -55,10 +55,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             (DynValue Value, int Expected)[] cases =
             {
                 (DynValue.NewBoolean(true), LuaBaseProxy.TNil),
+                (script.DoString("return true"), LuaBaseProxy.TNil),
                 (DynValue.NewString("txt"), LuaBaseProxy.TString),
+                (script.DoString("return 'txt'"), LuaBaseProxy.TString),
                 (DynValue.NewTable(table), LuaBaseProxy.TTable),
+                (script.DoString("return { key = 'value' }"), LuaBaseProxy.TTable),
                 (scriptFunction, LuaBaseProxy.TFunction),
                 (clrFunction, LuaBaseProxy.TFunction),
+                (script.DoString("return function() end"), LuaBaseProxy.TFunction),
             };
 
             foreach ((DynValue value, int expected) in cases)
@@ -78,10 +82,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             DynValue yieldRequest = DynValue.NewYieldReq(new[] { DynValue.NewNumber(6) });
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
+            DynValue luaTuple = script.DoString("return (function() return 1, 'two' end)()");
 
-            DynValue[] values = { tailCall, yieldRequest, tuple };
-
-            foreach (DynValue value in values)
+            foreach (DynValue value in new[]
+            {
+                tailCall,
+                yieldRequest,
+                tuple,
+                luaTuple,
+            })
             {
                 LuaState state = CreateLuaState(script);
                 state.Push(value);
