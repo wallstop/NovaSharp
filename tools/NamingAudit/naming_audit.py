@@ -68,17 +68,19 @@ def audit_file(path: Path) -> list[NamingIssue]:
     issues: list[NamingIssue] = []
     rel_path = path.relative_to(ROOT)
 
-    if rel_path not in FILE_ALLOWLIST:
-        stem = path.stem
-        if not (stem.startswith("_") or is_pascal_case(stem)):
-            issues.append(
-                NamingIssue(
-                    rel_path,
-                    "file",
-                    stem,
-                    "File names should be PascalCase (per .editorconfig).",
-                )
+    if rel_path in FILE_ALLOWLIST:
+        return issues
+
+    stem = path.stem
+    if not (stem.startswith("_") or is_pascal_case(stem)):
+        issues.append(
+            NamingIssue(
+                rel_path,
+                "file",
+                stem,
+                "File names should be PascalCase (per .editorconfig).",
             )
+        )
 
     try:
         with path.open("r", encoding="utf-8-sig") as handle:
@@ -120,7 +122,7 @@ def audit() -> int:
         all_issues.extend(audit_file(cs_file))
 
     if not all_issues:
-        print("✓ All inspected files/types follow PascalCase expectations.")
+        print("All inspected files/types follow PascalCase expectations.")
         return 0
 
     print("Naming inconsistencies detected (per .editorconfig/C# style):\n")

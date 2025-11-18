@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(typeof(PublicType).GetClrVisibility(), Is.EqualTo("public"));
                 Assert.That(
-                    typeof(DescriptorHelpersTests_InternalTopLevel).GetClrVisibility(),
+                    typeof(DescriptorHelpersTestsInternalTopLevel).GetClrVisibility(),
                     Is.EqualTo("internal")
                 );
                 Assert.That(
@@ -304,7 +304,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public class PublicType { }
 
-        internal sealed class DescriptorHelpersTests_InternalTopLevel { }
+        internal sealed class DescriptorHelpersTestsInternalTopLevel { }
 
         public class VisibilityFixtures
         {
