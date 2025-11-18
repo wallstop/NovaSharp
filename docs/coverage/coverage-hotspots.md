@@ -1,19 +1,17 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 15:47 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 16:34 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
-- Overall line coverage: **85.3 %**
-- NovaSharp.Interpreter line coverage: **94.4 %**
+- Overall line coverage: **85.5 %**
+- NovaSharp.Interpreter line coverage: **94.7 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **92.4 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
+- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
 - `Interop.StandardDescriptors.ReflectionMemberDescriptors.PropertyMemberDescriptor` – **89.6 % line / 94.1 % branch** (legacy `_getter/_setter` fallbacks plus the ArgumentException/InvalidCastException wrappers still lack directed tests because `MemberDescriptor.CheckAccess` short-circuits those branches).
-- `DataStructs.MultiDictionary<T>` – **86.2 % line / 66.6 % method** (remove/duplicate/value-enumeration paths still need tests).
-- `DataTypes.DynValue` – **87.0 % line / 76.7 % branch** (table-length, tuple/scalar, and private-resource flows still have uncovered cases).
 - `Tree.Lexer.Token` – **87.2 % line / 99.2 % branch** (string rendering + equality paths need targeted tests).
 - `Execution.VM.Processor` – **87.4 % line / 86.3 % branch** (resume/recycle and hook-dispatch sequences remain partially uncovered).
 - `Infrastructure.SystemHighResolutionClock` – **87.5 % line / 50 % branch** (stopwatch fallbacks vs. platform timers still need exercising).
@@ -37,6 +35,8 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 
 - (2025-11-17 15:33 UTC) Added `Units/LexerUtilsTests` to hammer the parser utilities (decimal/hex parsing, Unicode escape handling, `\z` whitespace trimming, and the malformed escape branches). A fresh `./scripts/coverage/coverage.ps1 -SkipBuild` run (2 091 tests) lifts `LexerUtils` to **96.2 % line / 98.1 % branch / 100 % method** and nudges interpreter totals to **94.4 % line / 91.1 % branch / 96.9 % method**, leaving the numeric conversion helpers and runtime diagnostics classes as the remaining <90 % debt.
 - (2025-11-17 15:47 UTC) Added `Units/NumericConversionsTests` (double-to-type success/overflow plus numeric/non-numeric `TypeToDouble`) and reran `./scripts/coverage/coverage.ps1 -SkipBuild` (2 095 tests). `NumericConversions` now reports **91.3 % line / 89.1 % branch / 100 % method**, and interpreter totals sit at **94.4 % line / 91.2 % branch / 96.9 % method**, narrowing the red list to `MultiDictionary<T>`, `DynValue`, and the diagnostics helpers.
+- (2025-11-17 16:03 UTC) Introduced `Units/MultiDictionaryTests` (equality comparer constructor, `ContainsKey`, `Keys`, `Clear`, remove-value success/failure). `./scripts/coverage/coverage.ps1 -SkipBuild` now runs **2 101** tests, pushes `MultiDictionary<T>` to **100 % line / branch / method**, and holds interpreter aggregates at **94.4 % line / 91.2 % branch / 97.1 % method**. Remaining <90 % classes are `DynValue` plus the diagnostics helpers noted above.
+- (2025-11-17 16:34 UTC) Expanded `Units/DynValueTests` with table array construction, tuple single-element folding, `ToPrintString`/`ToDebugPrintString` fallbacks, equality/assign-number guards, and the nil-tolerant `CheckUserDataType` path (`NewTableFromArrayInitializesEntriesAndOwner`, `NewTupleNestedReturnsSingleValueUnchanged`, `ToPrintStringFormatsCompositeValues`, `ToDebugPrintStringDisplaysTailYieldAndScalars`, `EqualsHandlesNonDynValuesTuplesUserDataAndYieldRequests`, `AssignNumberThrowsWhenDestinationReadOnly`, etc.). `./scripts/coverage/coverage.ps1 -SkipBuild` (2 123 tests) now reports `NovaSharp.Interpreter.DataTypes.DynValue` at **95.2 % line / 92.2 % branch / 100 % method**, lifting interpreter totals to **94.7 % line / 91.6 % branch / 97.2 % method** and removing DynValue from the red list.
 
 - (2025-11-17 15:06 UTC) Extended `LimitedPlatformAccessorTests` with a dedicated `FileExists` assertion and a `DefaultPrintDoesNotThrow` guard so every override in the limited accessor class is exercised. The latest `./scripts/coverage/coverage.ps1 -SkipBuild` run (2 072 tests) reports NovaSharp.Interpreter at **94.3 % line / 90.9 % branch / 96.9 % method**, and `LimitedPlatformAccessor` is now **100 % line/method** coverage, dropping it from the red list. Remaining focus stays on the lexer utilities, numeric conversions, and runtime helpers listed above.
 - (2025-11-17 22:41 UTC) Added three more `ReplHistoryInterpreterTests` to cover empty-history navigation, the `HistoryNext` early-return path, and the navigation reset/overwrite behaviour when the circular buffer wraps. A fresh `./scripts/coverage/coverage.ps1 -SkipBuild` run (2 070 tests) keeps interpreter totals at **94.2 % line / 90.9 % branch / 96.8 % method**, and `ReplHistoryInterpreter` now reports **95.2 % line / 87.5 % branch / 100 % method**, removing it from the red list. Remaining focus stays on the platform accessors, lexer/numeric helpers, and descriptor edge cases enumerated above.
@@ -154,4 +154,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-17 (15:47 UTC)_
+_Last updated: 2025-11-17 (16:03 UTC)_

@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataStructs;
@@ -90,6 +91,45 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(dictionary.ContainsKey("alpha"), Is.False);
                 Assert.That(dictionary.Keys, Is.Empty);
             });
+        }
+
+        [Test]
+        public void ConstructorWithComparerHonorsCaseInsensitiveKeys()
+        {
+            MultiDictionary<string, int> dictionary = new(StringComparer.OrdinalIgnoreCase);
+            dictionary.Add("Alpha", 1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(dictionary.ContainsKey("alpha"), Is.True);
+                Assert.That(dictionary.Find("alpha").Single(), Is.EqualTo(1));
+                Assert.That(dictionary.Keys.Single(), Is.EqualTo("Alpha"));
+            });
+        }
+
+        [Test]
+        public void RemoveValueReturnsFalseWhenValueMissing()
+        {
+            MultiDictionary<string, int> dictionary = new();
+            dictionary.Add("alpha", 1);
+
+            bool removed = dictionary.RemoveValue("alpha", 999);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(removed, Is.False);
+                Assert.That(dictionary.ContainsKey("alpha"), Is.True);
+            });
+        }
+
+        [Test]
+        public void RemoveValueReturnsFalseWhenKeyMissing()
+        {
+            MultiDictionary<string, int> dictionary = new();
+
+            bool removed = dictionary.RemoveValue("alpha", 1);
+
+            Assert.That(removed, Is.False);
         }
     }
 }
