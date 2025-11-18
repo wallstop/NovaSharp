@@ -37,6 +37,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadStreamHandlesShortTextStreams()
+        {
+            Script script = new();
+            using MemoryStream stream = new(Encoding.UTF8.GetBytes("x=41"));
+
+            DynValue chunk = script.LoadStream(stream);
+            script.Call(chunk);
+
+            Assert.That(script.Globals.Get("x").Number, Is.EqualTo(41));
+        }
+
+        [Test]
         public void LoadStreamUndumpsBinaryChunk()
         {
             Script script = new();

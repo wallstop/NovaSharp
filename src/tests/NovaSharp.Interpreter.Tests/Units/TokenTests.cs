@@ -1,42 +1,110 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Tree.Lexer;
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class TokenTests
+    public sealed class TokenTests
     {
+        private static readonly object[] ReservedKeywordCases =
+        {
+            new object[] { "and", (int)TokenType.And },
+            new object[] { "break", (int)TokenType.Break },
+            new object[] { "do", (int)TokenType.Do },
+            new object[] { "else", (int)TokenType.Else },
+            new object[] { "elseif", (int)TokenType.ElseIf },
+            new object[] { "end", (int)TokenType.End },
+            new object[] { "false", (int)TokenType.False },
+            new object[] { "for", (int)TokenType.For },
+            new object[] { "function", (int)TokenType.Function },
+            new object[] { "goto", (int)TokenType.Goto },
+            new object[] { "if", (int)TokenType.If },
+            new object[] { "in", (int)TokenType.In },
+            new object[] { "local", (int)TokenType.Local },
+            new object[] { "nil", (int)TokenType.Nil },
+            new object[] { "not", (int)TokenType.Not },
+            new object[] { "or", (int)TokenType.Or },
+            new object[] { "repeat", (int)TokenType.Repeat },
+            new object[] { "return", (int)TokenType.Return },
+            new object[] { "then", (int)TokenType.Then },
+            new object[] { "true", (int)TokenType.True },
+            new object[] { "until", (int)TokenType.Until },
+            new object[] { "while", (int)TokenType.While },
+        };
+
+        private static readonly int[] EndOfBlockTokens =
+        {
+            (int)TokenType.Else,
+            (int)TokenType.ElseIf,
+            (int)TokenType.End,
+            (int)TokenType.Until,
+            (int)TokenType.Eof,
+        };
+
+        private static readonly int[] UnaryOperatorTokens =
+        {
+            (int)TokenType.OpMinusOrSub,
+            (int)TokenType.Not,
+            (int)TokenType.OpLen,
+        };
+
+        private static readonly int[] BinaryOperatorTokens =
+        {
+            (int)TokenType.And,
+            (int)TokenType.Or,
+            (int)TokenType.OpEqual,
+            (int)TokenType.OpLessThan,
+            (int)TokenType.OpLessThanEqual,
+            (int)TokenType.OpGreaterThanEqual,
+            (int)TokenType.OpGreaterThan,
+            (int)TokenType.OpNotEqual,
+            (int)TokenType.OpConcat,
+            (int)TokenType.OpPwr,
+            (int)TokenType.OpMod,
+            (int)TokenType.OpDiv,
+            (int)TokenType.OpMul,
+            (int)TokenType.OpMinusOrSub,
+            (int)TokenType.OpAdd,
+        };
+
+        private static readonly object[] NumericTokenCases =
+        {
+            new object[] { (int)TokenType.Number, "42.5", 42.5d },
+            new object[] { (int)TokenType.NumberHex, "0x1A", 26d },
+            new object[] { (int)TokenType.NumberHexFloat, "0x1.fp+2", 7.75d },
+        };
+
         [Test]
-        public void ToStringIncludesPaddedTypeLocationAndText()
+        public void ToStringIncludesTypeLocationAndText()
         {
             Token token = CreateToken(
                 TokenType.Name,
-                text: "name",
-                fromLine: 4,
-                fromCol: 2,
-                toLine: 4,
-                toCol: 6
+                "print",
+                sourceId: 3,
+                fromLine: 10,
+                fromCol: 4,
+                toLine: 10,
+                toCol: 8
             );
 
-            string rendered = token.ToString();
+            string description = token.ToString();
 
             Assert.Multiple(() =>
             {
-                Assert.That(rendered, Does.Contain("Name"));
-                Assert.That(rendered, Does.Contain("4:2-4:6"));
-                Assert.That(rendered, Does.EndWith("'name'"));
+                Assert.That(description, Does.StartWith("Name"));
+                Assert.That(description, Does.Contain("10:4-10:8"));
+                Assert.That(description, Does.Contain("'print'"));
             });
         }
 
-        [TestCase("and", TokenType.And)]
-        [TestCase("function", TokenType.Function)]
-        [TestCase("until", TokenType.Until)]
-        public void GetReservedTokenTypeMatchesLuaKeywords(string keyword, TokenType expected)
+        [TestCaseSource(nameof(ReservedKeywordCases))]
+        public void GetReservedTokenTypeRecognizesKeywords(string keyword, int expectedTokenValue)
         {
-            TokenType? result = Token.GetReservedTokenType(keyword);
+            TokenType expected = (TokenType)expectedTokenValue;
 
-            Assert.That(result, Is.EqualTo(expected));
+            Assert.That(Token.GetReservedTokenType(keyword), Is.EqualTo(expected));
         }
 
         [Test]
@@ -45,136 +113,191 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(Token.GetReservedTokenType("novasharp"), Is.Null);
         }
 
-        [Test]
-        public void GetNumberValueParsesDecimalHexAndHexFloat()
+        [TestCaseSource(nameof(NumericTokenCases))]
+        public void GetNumberValueParsesSupportedNumericTokens(
+            int tokenTypeValue,
+            string text,
+            double expected
+        )
         {
-            Token decimalToken = CreateToken(TokenType.Number, text: "12.5");
-            Token hexToken = CreateToken(TokenType.NumberHex, text: "0x10");
-            Token hexFloatToken = CreateToken(TokenType.NumberHexFloat, text: "0x1p+2");
+            TokenType tokenType = (TokenType)tokenTypeValue;
+            Token token = CreateToken(tokenType, text);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(decimalToken.GetNumberValue(), Is.EqualTo(12.5d));
-                Assert.That(hexToken.GetNumberValue(), Is.EqualTo(16d));
-                Assert.That(hexFloatToken.GetNumberValue(), Is.EqualTo(4d));
-            });
+            Assert.That(token.GetNumberValue(), Is.EqualTo(expected));
         }
 
         [Test]
-        public void GetNumberValueThrowsWhenTokenNotNumeric()
+        public void GetNumberValueThrowsOnNonNumericTokens()
         {
-            Token token = CreateToken(TokenType.Name, text: "foo");
+            Token token = CreateToken(TokenType.String, "\"value\"");
 
-            Assert.That(
-                () => token.GetNumberValue(),
-                Throws.TypeOf<System.NotSupportedException>().With.Message.Contains("numeric")
-            );
+            Assert.That(() => token.GetNumberValue(), Throws.TypeOf<NotSupportedException>());
+        }
+
+        [TestCaseSource(nameof(EndOfBlockTokens))]
+        public void IsEndOfBlockReturnsTrueForBlockTerminators(int tokenTypeValue)
+        {
+            Token token = CreateToken((TokenType)tokenTypeValue);
+
+            Assert.That(token.IsEndOfBlock(), Is.True);
         }
 
         [Test]
-        public void IsEndOfBlockRecognizesTerminatingTokens()
+        public void IsEndOfBlockReturnsFalseForRegularTokens()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(CreateToken(TokenType.End).IsEndOfBlock(), Is.True);
-                Assert.That(CreateToken(TokenType.Else).IsEndOfBlock(), Is.True);
-                Assert.That(CreateToken(TokenType.Break).IsEndOfBlock(), Is.False);
-            });
+            Token token = CreateToken(TokenType.Name);
+
+            Assert.That(token.IsEndOfBlock(), Is.False);
+        }
+
+        [TestCaseSource(nameof(UnaryOperatorTokens))]
+        public void IsUnaryOperatorRecognizesSupportedTokens(int tokenTypeValue)
+        {
+            Token token = CreateToken((TokenType)tokenTypeValue);
+
+            Assert.That(token.IsUnaryOperator(), Is.True);
         }
 
         [Test]
-        public void IsUnaryOperatorMatchesNotMinusAndLength()
+        public void IsUnaryOperatorReturnsFalseForOtherTokens()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(CreateToken(TokenType.Not).IsUnaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.OpMinusOrSub).IsUnaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.OpLen).IsUnaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.And).IsUnaryOperator(), Is.False);
-            });
+            Token token = CreateToken(TokenType.Nil);
+
+            Assert.That(token.IsUnaryOperator(), Is.False);
+        }
+
+        [TestCaseSource(nameof(BinaryOperatorTokens))]
+        public void IsBinaryOperatorRecognizesSupportedTokens(int tokenTypeValue)
+        {
+            Token token = CreateToken((TokenType)tokenTypeValue);
+
+            Assert.That(token.IsBinaryOperator(), Is.True);
         }
 
         [Test]
-        public void IsBinaryOperatorRecognizesArithmeticTokens()
+        public void IsBinaryOperatorReturnsFalseForOtherTokens()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(CreateToken(TokenType.OpAdd).IsBinaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.OpEqual).IsBinaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.OpConcat).IsBinaryOperator(), Is.True);
-                Assert.That(CreateToken(TokenType.Not).IsBinaryOperator(), Is.False);
-            });
+            Token token = CreateToken(TokenType.Nil);
+
+            Assert.That(token.IsBinaryOperator(), Is.False);
         }
 
         [Test]
-        public void GetSourceRefUsesTokenCoordinates()
+        public void GetSourceRefUsesTokenLocation()
         {
-            Token token = CreateToken(TokenType.Name, fromLine: 3, fromCol: 1, toLine: 3, toCol: 5);
-
-            SourceRef source = token.GetSourceRef(isStepStop: false);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(source.SourceIdx, Is.EqualTo(7));
-                Assert.That(source.FromLine, Is.EqualTo(3));
-                Assert.That(source.FromChar, Is.EqualTo(1));
-                Assert.That(source.ToLine, Is.EqualTo(3));
-                Assert.That(source.ToChar, Is.EqualTo(5));
-                Assert.That(source.IsStepStop, Is.False);
-            });
-        }
-
-        [Test]
-        public void GetSourceRefUpToUsesPreviousCoordinates()
-        {
-            Token from = CreateToken(
-                TokenType.Name,
-                fromLine: 5,
+            Token token = CreateToken(
+                TokenType.Number,
+                "12",
+                sourceId: 5,
+                fromLine: 8,
                 fromCol: 2,
-                toLine: 5,
-                toCol: 4,
-                prevLine: 4,
-                prevCol: 8
-            );
-            Token to = CreateToken(
-                TokenType.Name,
-                fromLine: 5,
-                fromCol: 5,
-                toLine: 5,
-                toCol: 9,
-                prevLine: 5,
-                prevCol: 6
+                toLine: 9,
+                toCol: 4
             );
 
-            SourceRef source = from.GetSourceRefUpTo(to, isStepStop: true);
+            SourceRef sourceRef = token.GetSourceRef();
 
             Assert.Multiple(() =>
             {
-                Assert.That(source.FromChar, Is.EqualTo(2));
-                Assert.That(source.ToChar, Is.EqualTo(6));
-                Assert.That(source.FromLine, Is.EqualTo(5));
-                Assert.That(source.ToLine, Is.EqualTo(5));
-                Assert.That(source.IsStepStop, Is.True);
+                Assert.That(sourceRef.SourceIdx, Is.EqualTo(5));
+                Assert.That(sourceRef.FromLine, Is.EqualTo(8));
+                Assert.That(sourceRef.ToLine, Is.EqualTo(9));
+                Assert.That(sourceRef.FromChar, Is.EqualTo(2));
+                Assert.That(sourceRef.ToChar, Is.EqualTo(4));
+                Assert.That(sourceRef.IsStepStop, Is.True);
+            });
+        }
+
+        [Test]
+        public void GetSourceRefExtendsToTargetTokenEnd()
+        {
+            Token start = CreateToken(
+                TokenType.Name,
+                "lo",
+                sourceId: 1,
+                fromLine: 1,
+                fromCol: 5,
+                toLine: 1,
+                toCol: 6
+            );
+            Token end = CreateToken(
+                TokenType.Name,
+                "rem",
+                sourceId: 1,
+                fromLine: 1,
+                fromCol: 7,
+                toLine: 1,
+                toCol: 9
+            );
+
+            SourceRef sourceRef = start.GetSourceRef(end, isStepStop: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(sourceRef.SourceIdx, Is.EqualTo(1));
+                Assert.That(sourceRef.FromChar, Is.EqualTo(5));
+                Assert.That(sourceRef.ToChar, Is.EqualTo(9));
+                Assert.That(sourceRef.FromLine, Is.EqualTo(1));
+                Assert.That(sourceRef.ToLine, Is.EqualTo(1));
+                Assert.That(sourceRef.IsStepStop, Is.False);
+            });
+        }
+
+        [Test]
+        public void GetSourceRefUpToStopsBeforeTargetPreviousLocation()
+        {
+            Token start = CreateToken(
+                TokenType.Name,
+                "print",
+                sourceId: 2,
+                fromLine: 4,
+                fromCol: 10,
+                toLine: 4,
+                toCol: 14,
+                prevLine: 4,
+                prevCol: 9
+            );
+            Token end = CreateToken(
+                TokenType.Name,
+                "line",
+                sourceId: 2,
+                fromLine: 4,
+                fromCol: 16,
+                toLine: 4,
+                toCol: 19,
+                prevLine: 4,
+                prevCol: 15
+            );
+
+            SourceRef sourceRef = start.GetSourceRefUpTo(end, isStepStop: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(sourceRef.SourceIdx, Is.EqualTo(2));
+                Assert.That(sourceRef.FromChar, Is.EqualTo(10));
+                Assert.That(sourceRef.ToChar, Is.EqualTo(15));
+                Assert.That(sourceRef.FromLine, Is.EqualTo(4));
+                Assert.That(sourceRef.ToLine, Is.EqualTo(4));
+                Assert.That(sourceRef.IsStepStop, Is.False);
             });
         }
 
         private static Token CreateToken(
-            TokenType type = TokenType.Name,
-            string text = null,
+            TokenType type,
+            string text = "",
             int sourceId = 7,
-            int fromLine = 2,
-            int fromCol = 3,
-            int toLine = 2,
-            int toCol = 5,
-            int prevLine = 1,
-            int prevCol = 1
+            int fromLine = 3,
+            int fromCol = 4,
+            int toLine = 3,
+            int toCol = 6,
+            int prevLine = 3,
+            int prevCol = 2
         )
         {
-            Token token = new(type, sourceId, fromLine, fromCol, toLine, toCol, prevLine, prevCol)
+            return new Token(type, sourceId, fromLine, fromCol, toLine, toCol, prevLine, prevCol)
             {
                 Text = text,
             };
-            return token;
         }
     }
 }

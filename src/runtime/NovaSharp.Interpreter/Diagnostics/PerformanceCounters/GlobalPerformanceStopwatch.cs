@@ -57,7 +57,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             return new PerformanceResult()
             {
                 Type = PerformanceCounterType.TimeMilliseconds,
-                Global = false,
+                Global = true,
                 Name = _counter.ToString(),
                 Instances = _count,
                 Counter = _elapsedMilliseconds,

@@ -1,20 +1,16 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-17 18:56 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-18 05:25 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
-- Overall line coverage: **85.5 %**
-- NovaSharp.Interpreter line coverage: **94.7 %**
+- Overall line coverage: **85.9 %**
+- NovaSharp.Interpreter line coverage: **95.2 %**
 - NovaSharp.Cli line coverage: **79.7 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
+- NovaSharp.RemoteDebugger line coverage: **92.4 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- `Tree.Lexer.Token` – **87.2 % line / 99.2 % branch** (string rendering + equality paths need targeted tests).
-- `Execution.VM.Processor` – **87.4 % line / 86.3 % branch** (resume/recycle and hook-dispatch sequences remain partially uncovered).
-- `Infrastructure.SystemHighResolutionClock` – **87.5 % line / 50 % branch** (stopwatch fallbacks vs. platform timers still need exercising).
-- `Diagnostics.PerformanceStatistics` – **87.5 % line / 84.6 % branch** (the dispose/update guardrails and aggregation helpers lack coverage).
 - `REPL.ReplInterpreter` – **87.8 % line / 86.3 % branch** (interactive loop exit/error scenarios uncovered).
 - `Tree.Statements.AssignmentStatement` – **88.4 % line / 81.8 % branch** (multi-target assign vs. tuple exhaust paths need explicit tests).
 - `DataTypes.ScriptPrivateResourceExtension` – **88.8 % line / 91.6 % branch** (cross-script guard clauses still unchecked).
@@ -37,7 +33,10 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 - (2025-11-17 16:03 UTC) Introduced `Units/MultiDictionaryTests` (equality comparer constructor, `ContainsKey`, `Keys`, `Clear`, remove-value success/failure). `./scripts/coverage/coverage.ps1 -SkipBuild` now runs **2 101** tests, pushes `MultiDictionary<T>` to **100 % line / branch / method**, and holds interpreter aggregates at **94.4 % line / 91.2 % branch / 97.1 % method**. Remaining <90 % classes are `DynValue` plus the diagnostics helpers noted above.
 - (2025-11-17 16:34 UTC) Expanded `Units/DynValueTests` with table array construction, tuple single-element folding, `ToPrintString`/`ToDebugPrintString` fallbacks, equality/assign-number guards, and the nil-tolerant `CheckUserDataType` path (`NewTableFromArrayInitializesEntriesAndOwner`, `NewTupleNestedReturnsSingleValueUnchanged`, `ToPrintStringFormatsCompositeValues`, `ToDebugPrintStringDisplaysTailYieldAndScalars`, `EqualsHandlesNonDynValuesTuplesUserDataAndYieldRequests`, `AssignNumberThrowsWhenDestinationReadOnly`, etc.). `./scripts/coverage/coverage.ps1 -SkipBuild` (2 123 tests) now reports `NovaSharp.Interpreter.DataTypes.DynValue` at **95.2 % line / 92.2 % branch / 100 % method**, lifting interpreter totals to **94.7 % line / 91.6 % branch / 97.2 % method** and removing DynValue from the red list.
 - (2025-11-17 17:21 UTC) Added `SetValueConvertsDoubleToPropertyType`, `SetValueWrapsArgumentExceptionFromOptimizedSetter`, and `SetValueWrapsInvalidCastExceptionFromOptimizedSetter` to `Units/PropertyMemberDescriptorTests`. The new cases drive the double→integral conversion path, and force the `_optimizedSetter` guard rails by injecting delegates that throw `ArgumentException` and `InvalidCastException`. `PropertyMemberDescriptor` now sits at **94.5 % line / 94.1 % branch / 100 % method**, and the latest coverage run (2 126 tests) keeps interpreter totals at **94.7 % line / 91.6 % branch / 97.2 % method**.
-- (2025-11-17 18:56 UTC) Introduced `Units/TokenTests` covering `Token.ToString`, reserved keyword detection, numeric/hex/hex-float parsing, unary/binary operator helpers, end-of-block classification, and the `GetSourceRef*` helpers. This drives `Tree.Lexer.Token` to **96.5 % line / 95.7 % branch / 100 % method** coverage while the full interpreter suite remains at **94.7 % line / 91.6 % branch / 97.2 % method** across 2 126 tests.
+- (2025-11-18 05:25 UTC) Expanded `Units/TokenTests` to lock padding/formatting, reserved keywords, numeric parsing, operator helpers, and every `GetSourceRef*` overload, pushing `Tree.Lexer.Token` to **100 % line / 100 % branch / 100 % method** coverage and keeping the interpreter aggregate at **95.2 % line / 92.1 % branch / 97.4 % method** across **2 196** Release tests.
+- (2025-11-18 05:25 UTC) Added deterministic coverage for the stopwatch infrastructure: `PerformanceStatisticsTests` now verifies redundant enable/disable calls, exercises the multi-scope path in `StartGlobalStopwatch`, and asserts `GetPerformanceLog` output, while `GlobalPerformanceStopwatch` explicitly marks results as global. `PerformanceStatistics` climbs to **98.2 % line / 96.1 % branch / 90 % method**, removing it from the red list.
+- (2025-11-18 05:25 UTC) Introduced `Units/DebuggerBreakpointTests` (queued toggle/set/clear/reset flows with a stub debugger) plus `Units/ProcessorBinaryDumpTests` and the new `ScriptLoadTests.LoadStreamHandlesShortTextStreams` case. `Execution.VM.Processor` now reports **90.7 % line / 88.0 % branch / 94.0 % method**, so the debugger hook/binary dump guards are no longer red-listed.
+- (2025-11-18 05:25 UTC) `ScriptOptionsTests.CallRecordsExecutionCounterWhenEnabled` enables `PerformanceStats` before invoking a script API, covering `Processor.Call`’s stopwatch-disposal path and ensuring the execution counter increments under real script workloads.
 - (2025-11-17 19:24 UTC) Added `Units/SystemHighResolutionClockTests` to pin the stopwatch frequency, monotonic timestamp ordering, explicit elapsed calculations, and the implicit `endTimestamp` path. `SystemHighResolutionClock` now reports **100 % line / 100 % branch / 100 % method**, and interpreter aggregates nudge to **94.8 % line / 91.6 % branch / 97.3 % method** (2 142 Release tests).
 
 - (2025-11-17 15:06 UTC) Extended `LimitedPlatformAccessorTests` with a dedicated `FileExists` assertion and a `DefaultPrintDoesNotThrow` guard so every override in the limited accessor class is exercised. The latest `./scripts/coverage/coverage.ps1 -SkipBuild` run (2 072 tests) reports NovaSharp.Interpreter at **94.3 % line / 90.9 % branch / 96.9 % method**, and `LimitedPlatformAccessor` is now **100 % line/method** coverage, dropping it from the red list. Remaining focus stays on the lexer utilities, numeric conversions, and runtime helpers listed above.
@@ -156,4 +155,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-17 (16:03 UTC)_
+_Last updated: 2025-11-18 (05:25 UTC)_
