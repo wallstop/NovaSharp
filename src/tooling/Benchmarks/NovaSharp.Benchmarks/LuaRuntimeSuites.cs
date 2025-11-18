@@ -22,14 +22,14 @@ namespace NovaSharp.Benchmarks
         public static string GetScript(RuntimeScenario scenario) =>
             scenario switch
             {
-                RuntimeScenario.NumericLoops => _numericLoopScript,
+                RuntimeScenario.NumericLoops => NumericLoopScript,
                 RuntimeScenario.TableMutation => TableMutationScript,
                 RuntimeScenario.CoroutinePipeline => CoroutinePipelineScript,
                 RuntimeScenario.UserDataInterop => UserDataInteropScript,
-                _ => _numericLoopScript,
+                _ => NumericLoopScript,
             };
 
-        private static readonly string _numericLoopScript =
+        private static readonly string NumericLoopScript =
             $@"
 return function ()
     local sum = 0.0

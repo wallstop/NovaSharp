@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class TokenTests
     {
-        private static readonly object[] _reservedKeywordCases =
+        private static readonly object[] ReservedKeywordCases =
         {
             new object[] { "and", (int)TokenType.And },
             new object[] { "break", (int)TokenType.Break },
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             new object[] { "while", (int)TokenType.While },
         };
 
-        private static readonly int[] _endOfBlockTokens =
+        private static readonly int[] EndOfBlockTokens =
         {
             (int)TokenType.Else,
             (int)TokenType.ElseIf,
@@ -43,14 +43,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             (int)TokenType.Eof,
         };
 
-        private static readonly int[] _unaryOperatorTokens =
+        private static readonly int[] UnaryOperatorTokens =
         {
             (int)TokenType.OpMinusOrSub,
             (int)TokenType.Not,
             (int)TokenType.OpLen,
         };
 
-        private static readonly int[] _binaryOperatorTokens =
+        private static readonly int[] BinaryOperatorTokens =
         {
             (int)TokenType.And,
             (int)TokenType.Or,
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             (int)TokenType.OpAdd,
         };
 
-        private static readonly object[] _numericTokenCases =
+        private static readonly object[] NumericTokenCases =
         {
             new object[] { (int)TokenType.Number, "42.5", 42.5d },
             new object[] { (int)TokenType.NumberHex, "0x1A", 26d },
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [TestCaseSource(nameof(_reservedKeywordCases))]
+        [TestCaseSource(nameof(ReservedKeywordCases))]
         public void GetReservedTokenTypeRecognizesKeywords(string keyword, int expectedTokenValue)
         {
             TokenType expected = (TokenType)expectedTokenValue;
@@ -113,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(Token.GetReservedTokenType("novasharp"), Is.Null);
         }
 
-        [TestCaseSource(nameof(_numericTokenCases))]
+        [TestCaseSource(nameof(NumericTokenCases))]
         public void GetNumberValueParsesSupportedNumericTokens(
             int tokenTypeValue,
             string text,
@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(() => token.GetNumberValue(), Throws.TypeOf<NotSupportedException>());
         }
 
-        [TestCaseSource(nameof(_endOfBlockTokens))]
+        [TestCaseSource(nameof(EndOfBlockTokens))]
         public void IsEndOfBlockReturnsTrueForBlockTerminators(int tokenTypeValue)
         {
             Token token = CreateToken((TokenType)tokenTypeValue);
@@ -150,7 +150,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(token.IsEndOfBlock(), Is.False);
         }
 
-        [TestCaseSource(nameof(_unaryOperatorTokens))]
+        [TestCaseSource(nameof(UnaryOperatorTokens))]
         public void IsUnaryOperatorRecognizesSupportedTokens(int tokenTypeValue)
         {
             Token token = CreateToken((TokenType)tokenTypeValue);
@@ -166,7 +166,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(token.IsUnaryOperator(), Is.False);
         }
 
-        [TestCaseSource(nameof(_binaryOperatorTokens))]
+        [TestCaseSource(nameof(BinaryOperatorTokens))]
         public void IsBinaryOperatorRecognizesSupportedTokens(int tokenTypeValue)
         {
             Token token = CreateToken((TokenType)tokenTypeValue);

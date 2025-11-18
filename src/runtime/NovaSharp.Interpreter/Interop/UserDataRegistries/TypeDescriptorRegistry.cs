@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         private static readonly object SLock = new();
         private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistry = new();
         private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistryHistory = new();
-        private static InteropAccessMode _sDefaultAccessMode;
+        private static InteropAccessMode DefaultAccessModeValue;
 
         /// <summary>
         /// Registers all types marked with a NovaSharpUserDataAttribute that ar contained in an assembly.
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <exception cref="System.ArgumentException">InteropAccessMode is InteropAccessMode.Default</exception>
         internal static InteropAccessMode DefaultAccessMode
         {
-            get { return _sDefaultAccessMode; }
+            get { return DefaultAccessModeValue; }
             set
             {
                 if (value == InteropAccessMode.Default)
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     throw new ArgumentException("InteropAccessMode is InteropAccessMode.Default");
                 }
 
-                _sDefaultAccessMode = value;
+                DefaultAccessModeValue = value;
             }
         }
 
@@ -287,7 +287,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _sDefaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
             return accessMode;

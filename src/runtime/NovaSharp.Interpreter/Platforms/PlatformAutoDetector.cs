@@ -11,9 +11,9 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
-        private static bool? _isRunningOnAot;
+        private static bool? RunningOnAotCache;
 
-        private static bool _autoDetectionsDone;
+        private static bool AutoDetectionsDone;
 
         /// <summary>
         /// Gets a value indicating whether this instance is running on mono.
@@ -58,29 +58,29 @@ namespace NovaSharp.Interpreter.Platforms
                 return true;
 #else
 
-                if (!_isRunningOnAot.HasValue)
+                if (!RunningOnAotCache.HasValue)
                 {
                     try
                     {
                         Expression e = Expression.Constant(5, typeof(int));
                         Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
                         lambda.Compile();
-                        _isRunningOnAot = false;
+                        RunningOnAotCache = false;
                     }
                     catch (Exception)
                     {
-                        _isRunningOnAot = true;
+                        RunningOnAotCache = true;
                     }
                 }
 
-                return _isRunningOnAot.Value;
+                return RunningOnAotCache.Value;
 #endif
             }
         }
 
         private static void AutoDetectPlatformFlags()
         {
-            if (_autoDetectionsDone)
+            if (AutoDetectionsDone)
             {
                 return;
             }
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Platforms
 
             IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
 
-            _autoDetectionsDone = true;
+            AutoDetectionsDone = true;
         }
 
         internal static IPlatformAccessor GetDefaultPlatform()

@@ -113,11 +113,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public static class UnityEngineReflectionHarness
         {
-            private static readonly object _syncRoot = new();
-            private static bool _assemblyBuilt;
-            private static bool _throwOnLoad;
-            private static Assembly _unityAssembly;
-            private static Dictionary<string, string> _scripts = new(
+            private static readonly object SyncRoot = new();
+            private static bool AssemblyBuilt;
+            private static bool ThrowOnLoad;
+            private static Assembly UnityAssembly;
+            private static Dictionary<string, string> Scripts = new(
                 StringComparer.OrdinalIgnoreCase
             );
 
@@ -125,16 +125,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal static void EnsureUnityAssemblies(Dictionary<string, string> scripts)
             {
-                lock (_syncRoot)
+                lock (SyncRoot)
                 {
-                    _scripts = new Dictionary<string, string>(
+                    Scripts = new Dictionary<string, string>(
                         scripts,
                         StringComparer.OrdinalIgnoreCase
                     );
-                    if (!_assemblyBuilt)
+                    if (!AssemblyBuilt)
                     {
                         BuildUnityAssembly();
-                        _assemblyBuilt = true;
+                        AssemblyBuilt = true;
                         EnsureTypeIsAvailable("UnityEngine.Resources, UnityEngine");
                         EnsureTypeIsAvailable("UnityEngine.TextAsset, UnityEngine");
                     }
@@ -143,22 +143,22 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal static void SetThrowOnLoad(bool shouldThrow)
             {
-                _throwOnLoad = shouldThrow;
+                ThrowOnLoad = shouldThrow;
             }
 
             public static Array BuildAssetArray(string assetsPath, Type textAssetType)
             {
                 LastRequestedPath = assetsPath;
 
-                if (_throwOnLoad)
+                if (ThrowOnLoad)
                 {
                     throw new InvalidOperationException("Simulated Unity failure.");
                 }
 
-                Array array = Array.CreateInstance(textAssetType, _scripts.Count);
+                Array array = Array.CreateInstance(textAssetType, Scripts.Count);
                 int index = 0;
 
-                foreach (KeyValuePair<string, string> script in _scripts)
+                foreach (KeyValuePair<string, string> script in Scripts)
                 {
                     object instance = Activator.CreateInstance(
                         textAssetType,
@@ -181,7 +181,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     name,
                     AssemblyBuilderAccess.Run
                 );
-                _unityAssembly = assembly;
+                UnityAssembly = assembly;
                 AppDomain.CurrentDomain.AssemblyResolve += ResolveUnityAssembly;
                 ModuleBuilder module = assembly.DefineDynamicModule("UnityEngine.Dynamic");
 
@@ -304,11 +304,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             private static Assembly ResolveUnityAssembly(object sender, ResolveEventArgs args)
             {
                 if (
-                    _unityAssembly != null
+                    UnityAssembly != null
                     && args.Name.StartsWith("UnityEngine", StringComparison.Ordinal)
                 )
                 {
-                    return _unityAssembly;
+                    return UnityAssembly;
                 }
 
                 return null;

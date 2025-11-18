@@ -16,7 +16,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     internal sealed class AsyncDebugger : IDebugger
     {
         private static readonly object SAsyncDebuggerIdLock = new();
-        private static int _sAsyncDebuggerIdCounter = 0;
+        private static int AsyncDebuggerIdCounter = 0;
 
         private readonly object _lock = new();
         private IAsyncDebuggerClient _client;
@@ -43,7 +43,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         {
             lock (SAsyncDebuggerIdLock)
             {
-                Id = _sAsyncDebuggerIdCounter++;
+                Id = AsyncDebuggerIdCounter++;
             }
 
             _sourceFinder = sourceFinder;

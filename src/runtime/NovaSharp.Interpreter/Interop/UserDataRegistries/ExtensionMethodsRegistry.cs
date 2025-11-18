@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             string,
             UnresolvedGenericMethod
         > SUnresolvedGenericsRegistry = new();
-        private static int _sExtensionMethodChangeVersion;
+        private static int ExtensionMethodChangeVersion;
 
         private class UnresolvedGenericMethod
         {
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                 if (changesDone)
                 {
-                    ++_sExtensionMethodChangeVersion;
+                    ++ExtensionMethodChangeVersion;
                 }
             }
         }
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         public static int GetExtensionMethodsChangeVersion()
         {
-            return _sExtensionMethodChangeVersion;
+            return ExtensionMethodChangeVersion;
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                             MethodMemberDescriptor desc = new(mi, ugm.accessMode);
 
                             SRegistry.Add(ugm.method.Name, desc);
-                            ++_sExtensionMethodChangeVersion;
+                            ++ExtensionMethodChangeVersion;
                         }
                     }
                 }

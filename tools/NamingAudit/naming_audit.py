@@ -245,15 +245,17 @@ def audit_file(path: Path) -> list[NamingIssue]:
                     field_name = private_field_match.group("name")
                     modifiers = (private_field_match.group("modifiers") or "").split()
                     is_const = "const" in modifiers
+                    is_static = "static" in modifiers
                     if field_name:
-                        if is_const:
+                        if is_const or is_static:
                             if not is_pascal_case(field_name):
+                                label = "Const" if is_const else "Static"
                                 issues.append(
                                     NamingIssue(
                                         rel_path,
                                         "field",
                                         field_name,
-                                        f"Const field '{field_name}' should be PascalCase "
+                                        f"{label} field '{field_name}' should be PascalCase "
                                         f"(line {line_number}).",
                                     )
                                 )

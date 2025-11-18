@@ -7,7 +7,7 @@ namespace NovaSharp.Comparison
 
     internal static class BenchmarkConfig
     {
-        private static readonly Job _comparisonJob = Job
+        private static readonly Job ComparisonJob = Job
             .ShortRun.WithWarmupCount(2)
             .WithIterationCount(10)
             .WithId("Comparison");
@@ -15,7 +15,7 @@ namespace NovaSharp.Comparison
         public static IConfig Create() =>
             ManualConfig
                 .Create(DefaultConfig.Instance)
-                .AddJob(_comparisonJob)
+                .AddJob(ComparisonJob)
                 .AddDiagnoser(MemoryDiagnoser.Default)
                 .AddColumnProvider(DefaultColumnProviders.Instance)
                 .AddColumn(StatisticColumn.P95, RankColumn.Arabic);

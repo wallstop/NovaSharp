@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HttpServerTests
     {
-        private static readonly TimeSpan _retryTimeout = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan RetryTimeout = TimeSpan.FromSeconds(2);
 
         [Test]
         public void AuthenticatorRejectsMissingCredentialsAndAllowsValidOnes()
@@ -140,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                         return false;
                     }
                 },
-                _retryTimeout
+                RetryTimeout
             );
 
             if (!success || response == null)

@@ -10,13 +10,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class EmbeddedResourcesScriptLoaderTests
     {
-        private static readonly Assembly _testAssembly =
+        private static readonly Assembly TestAssembly =
             typeof(EmbeddedResourcesScriptLoaderTests).Assembly;
 
         [Test]
         public void ScriptFileExistsDetectsEmbeddedResources()
         {
-            EmbeddedResourcesScriptLoader loader = new(_testAssembly);
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
 
             Assert.Multiple(() =>
             {
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void LoadFileReturnsResourceStream()
         {
-            EmbeddedResourcesScriptLoader loader = new(_testAssembly);
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
 
             using Stream stream = (Stream)loader.LoadFile("Resources/embedded.lua", null);
             Assert.That(stream, Is.Not.Null);

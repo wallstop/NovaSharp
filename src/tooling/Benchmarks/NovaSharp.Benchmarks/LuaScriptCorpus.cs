@@ -15,9 +15,9 @@ namespace NovaSharp.Benchmarks
 
     internal static class LuaScriptCorpus
     {
-        private static readonly string _tinyScript = "return 1 + 1";
+        private static readonly string TinyScript = "return 1 + 1";
 
-        private static readonly string _smallScript = string.Join(
+        private static readonly string SmallScript = string.Join(
             '\n',
             "local sum = 0",
             "for i = 1, 64 do",
@@ -26,18 +26,18 @@ namespace NovaSharp.Benchmarks
             "return sum"
         );
 
-        private static readonly string _mediumScript = BuildScript(6, 128);
+        private static readonly string MediumScript = BuildScript(6, 128);
 
-        private static readonly string _largeScript = BuildScript(20, 320);
+        private static readonly string LargeScript = BuildScript(20, 320);
 
         public static string GetCompilationScript(ScriptComplexity complexity) =>
             complexity switch
             {
-                ScriptComplexity.Tiny => _tinyScript,
-                ScriptComplexity.Small => _smallScript,
-                ScriptComplexity.Medium => _mediumScript,
-                ScriptComplexity.Large => _largeScript,
-                _ => _tinyScript,
+                ScriptComplexity.Tiny => TinyScript,
+                ScriptComplexity.Small => SmallScript,
+                ScriptComplexity.Medium => MediumScript,
+                ScriptComplexity.Large => LargeScript,
+                _ => TinyScript,
             };
 
         private static string BuildScript(int functionCount, int loopIterations)

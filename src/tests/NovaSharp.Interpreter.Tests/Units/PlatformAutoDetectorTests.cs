@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class PlatformDetectorScope : IDisposable
         {
-            private static readonly string[] _flagPropertyNames =
+            private static readonly string[] FlagPropertyNames =
             {
                 "IsRunningOnUnity",
                 "IsUnityNative",
@@ -66,14 +66,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             private PlatformDetectorScope()
             {
-                foreach (string name in _flagPropertyNames)
+                foreach (string name in FlagPropertyNames)
                 {
                     PropertyInfo property = GetProperty(name);
                     _originalFlags[property] = property.GetValue(null, null)!;
                 }
 
                 _originalAot = (bool?)GetField("_isRunningOnAot").GetValue(null);
-                _originalAutoDetectionsDone = (bool)GetField("_autoDetectionsDone").GetValue(null);
+                _originalAutoDetectionsDone = (bool)GetField("AutoDetectionsDone").GetValue(null);
             }
 
             public static PlatformDetectorScope ResetForDetection()
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             private static void SetAutoDetectionsDone(bool value)
             {
-                GetField("_autoDetectionsDone").SetValue(null, value);
+                GetField("AutoDetectionsDone").SetValue(null, value);
             }
 
             private static PropertyInfo GetProperty(string name)
@@ -137,11 +137,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static class UnityAssemblyProbe
         {
-            private static bool _loaded;
+            private static bool IsLoaded;
 
             public static void EnsureLoaded()
             {
-                if (_loaded)
+                if (IsLoaded)
                 {
                     return;
                 }
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     )
                     .CreateTypeInfo();
 
-                _loaded = true;
+                IsLoaded = true;
             }
         }
     }

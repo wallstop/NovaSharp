@@ -21,7 +21,7 @@ namespace NovaSharp.Benchmarks
 
     internal static class DefaultConfigFactory
     {
-        private static readonly Job _shortRunJob = Job
+        private static readonly Job ShortRunJob = Job
             .ShortRun.WithWarmupCount(2)
             .WithIterationCount(10)
             .WithId("ShortRun");
@@ -30,7 +30,7 @@ namespace NovaSharp.Benchmarks
         {
             ManualConfig baseConfig = ManualConfig
                 .Create(DefaultConfig.Instance)
-                .AddJob(_shortRunJob)
+                .AddJob(ShortRunJob)
                 .AddDiagnoser(MemoryDiagnoser.Default)
                 .AddColumnProvider(DefaultColumnProviders.Instance)
                 .AddColumn(StatisticColumn.P95, RankColumn.Arabic);

@@ -5,11 +5,11 @@ namespace NovaSharp.Interpreter.Compatibility
 
     public static class Framework
     {
-        private static readonly FrameworkCurrent _frameworkCurrent = new();
+        private static readonly FrameworkCurrent CurrentFramework = new();
 
         public static FrameworkBase Do
         {
-            get { return _frameworkCurrent; }
+            get { return CurrentFramework; }
         }
     }
 }

@@ -13,9 +13,9 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class DynValue
     {
-        private static int _sRefIdCounter;
+        private static int RefIdCounter;
 
-        private readonly int _refId = ++_sRefIdCounter;
+        private readonly int _refId = ++RefIdCounter;
         private int _hashCode = -1;
 
         private bool _readOnly;

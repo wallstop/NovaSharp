@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class CallbackFunction : RefIdObject
     {
-        private static InteropAccessMode _defaultAccessMode = InteropAccessMode.LazyOptimized;
+        private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
 
         /// <summary>
         /// Gets the name of the function
@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Default, HideMembers and BackgroundOptimized are NOT supported.</exception>
         public static InteropAccessMode DefaultAccessMode
         {
-            get { return _defaultAccessMode; }
+            get { return DefaultAccessModeValue; }
             set
             {
                 if (
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     throw new ArgumentException("DefaultAccessMode");
                 }
 
-                _defaultAccessMode = value;
+                DefaultAccessModeValue = value;
             }
         }
 
@@ -118,7 +118,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _defaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
 #if NETFX_CORE
@@ -150,7 +150,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _defaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
             MethodMemberDescriptor descr = new(mi, accessMode);

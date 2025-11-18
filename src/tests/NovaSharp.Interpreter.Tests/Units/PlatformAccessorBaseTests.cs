@@ -337,7 +337,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 FieldInfo aotField = GetField("_isRunningOnAot");
                 _originalAot = (bool?)aotField.GetValue(null);
 
-                FieldInfo autoField = GetField("_autoDetectionsDone");
+                FieldInfo autoField = GetField("AutoDetectionsDone");
                 _originalAutoDetectionsDone = (bool)autoField.GetValue(null);
             }
 
@@ -361,7 +361,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 FieldInfo aotField = GetField("_isRunningOnAot");
                 aotField.SetValue(null, aot ? (bool?)true : (bool?)false);
 
-                FieldInfo autoField = GetField("_autoDetectionsDone");
+                FieldInfo autoField = GetField("AutoDetectionsDone");
                 autoField.SetValue(null, true);
 
                 return scope;
@@ -377,7 +377,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 FieldInfo aotField = GetField("_isRunningOnAot");
                 aotField.SetValue(null, _originalAot);
 
-                FieldInfo autoField = GetField("_autoDetectionsDone");
+                FieldInfo autoField = GetField("AutoDetectionsDone");
                 autoField.SetValue(null, _originalAutoDetectionsDone);
             }
 

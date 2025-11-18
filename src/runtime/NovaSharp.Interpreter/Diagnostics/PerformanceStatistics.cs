@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Diagnostics
             (int)PerformanceCounter.LastValue
         ];
 
-        private static IPerformanceStopwatch[] _globalStopwatches = new IPerformanceStopwatch[
+        private static IPerformanceStopwatch[] GlobalStopwatches = new IPerformanceStopwatch[
             (int)PerformanceCounter.LastValue
         ];
         private static readonly object GlobalSyncRoot = new();
@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Diagnostics
                             for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
                             {
                                 _stopwatches[i] =
-                                    _globalStopwatches[i]
+                                    GlobalStopwatches[i]
                                     ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
                             }
                         }
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Diagnostics
 
                         lock (GlobalSyncRoot)
                         {
-                            _globalStopwatches = new IPerformanceStopwatch[
+                            GlobalStopwatches = new IPerformanceStopwatch[
                                 (int)PerformanceCounter.LastValue
                             ];
                         }
@@ -105,12 +105,12 @@ namespace NovaSharp.Interpreter.Diagnostics
         {
             lock (GlobalSyncRoot)
             {
-                if (_globalStopwatches[(int)pc] == null)
+                if (GlobalStopwatches[(int)pc] == null)
                 {
-                    _globalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(pc, GlobalClock);
+                    GlobalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(pc, GlobalClock);
                 }
 
-                return _globalStopwatches[(int)pc].Start();
+                return GlobalStopwatches[(int)pc].Start();
             }
         }
 
@@ -138,9 +138,9 @@ namespace NovaSharp.Interpreter.Diagnostics
         {
             lock (GlobalSyncRoot)
             {
-                if (_globalStopwatches[(int)counter] == null)
+                if (GlobalStopwatches[(int)counter] == null)
                 {
-                    _globalStopwatches[(int)counter] = new GlobalPerformanceStopwatch(
+                    GlobalStopwatches[(int)counter] = new GlobalPerformanceStopwatch(
                         counter,
                         GlobalClock
                     );

@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RefIdObjectTests
     {
-        private static readonly Regex _refPattern = new(
+        private static readonly Regex RefPattern = new(
             @"^Sample:\s[A-F0-9]{8}$",
             RegexOptions.Compiled
         );
@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             string formatted = instance.FormatTypeString("Sample");
 
-            Assert.That(formatted, Does.Match(_refPattern));
+            Assert.That(formatted, Does.Match(RefPattern));
         }
     }
 }
