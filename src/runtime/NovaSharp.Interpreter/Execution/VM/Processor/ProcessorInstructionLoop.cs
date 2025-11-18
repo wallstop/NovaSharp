@@ -307,12 +307,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.Local:
                             DynValue[] scope = _executionStack.Peek().localScope;
-                            int index = i.Symbol.i_Index;
+                            int index = i.Symbol.IndexValue;
                             _valueStack.Push(scope[index].AsReadOnly());
                             break;
                         case OpCode.Upvalue:
                             _valueStack.Push(
-                                _executionStack.Peek().closureScope[i.Symbol.i_Index].AsReadOnly()
+                                _executionStack
+                                    .Peek()
+                                    .closureScope[i.Symbol.IndexValue]
+                                    .AsReadOnly()
                             );
                             break;
                         case OpCode.StoreUpv:
@@ -502,13 +505,13 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             CallStackItem stackframe = _executionStack.Peek();
 
-            DynValue slot = stackframe.localScope[symref.i_Index];
+            DynValue slot = stackframe.localScope[symref.IndexValue];
             if (slot == null)
             {
-                stackframe.localScope[symref.i_Index] = slot = DynValue.NewNil();
+                stackframe.localScope[symref.IndexValue] = slot = DynValue.NewNil();
             }
 
-            bool isToBeClosed = IsSymbolToBeClosed(stackframe, symref.i_Index);
+            bool isToBeClosed = IsSymbolToBeClosed(stackframe, symref.IndexValue);
 
             if (isToBeClosed)
             {
@@ -554,7 +557,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 foreach (SymbolRef sym in closers)
                 {
-                    stackframe.toBeClosedIndices.Add(sym.i_Index);
+                    stackframe.toBeClosedIndices.Add(sym.IndexValue);
                 }
             }
         }
@@ -637,14 +640,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 foreach (SymbolRef sym in closers)
                 {
-                    stackframe.toBeClosedIndices.Remove(sym.i_Index);
+                    stackframe.toBeClosedIndices.Remove(sym.IndexValue);
                 }
             }
 
             for (int idx = closers.Count - 1; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
-                DynValue slot = stackframe.localScope[sym.i_Index];
+                DynValue slot = stackframe.localScope[sym.IndexValue];
 
                 if (slot != null && !slot.IsNil())
                 {
@@ -671,7 +674,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 {
                     foreach (SymbolRef sym in closers)
                     {
-                        stackframe.toBeClosedIndices.Remove(sym.i_Index);
+                        stackframe.toBeClosedIndices.Remove(sym.IndexValue);
                     }
                 }
 
@@ -683,7 +686,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 for (int idx = closers.Count - 1; idx >= 0; idx--)
                 {
                     SymbolRef sym = closers[idx];
-                    DynValue slot = stackframe.localScope[sym.i_Index];
+                    DynValue slot = stackframe.localScope[sym.IndexValue];
 
                     if (slot != null && !slot.IsNil())
                     {
@@ -712,10 +715,10 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             CallStackItem stackframe = _executionStack.Peek();
 
-            DynValue v = stackframe.closureScope[symref.i_Index];
+            DynValue v = stackframe.closureScope[symref.IndexValue];
             if (v == null)
             {
-                stackframe.closureScope[symref.i_Index] = v = DynValue.NewNil();
+                stackframe.closureScope[symref.IndexValue] = v = DynValue.NewNil();
             }
 
             v.Assign(value);
@@ -763,11 +766,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (s.Type == SymbolRefType.Local)
             {
-                return _executionStack.Peek().localScope[s.i_Index];
+                return _executionStack.Peek().localScope[s.IndexValue];
             }
             else if (s.Type == SymbolRefType.Upvalue)
             {
-                return _executionStack.Peek().closureScope[s.i_Index];
+                return _executionStack.Peek().closureScope[s.IndexValue];
             }
             else
             {
@@ -985,11 +988,15 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             foreach (SymbolRef symbol in symbols)
             {
-                if (symbol != null && symbol.IsToBeClosed && symbol.i_Index <= rootBlockLastIndex)
+                if (
+                    symbol != null
+                    && symbol.IsToBeClosed
+                    && symbol.IndexValue <= rootBlockLastIndex
+                )
                 {
                     rootClosers ??= new List<SymbolRef>();
                     rootClosers.Add(symbol);
-                    cur.toBeClosedIndices.Add(symbol.i_Index);
+                    cur.toBeClosedIndices.Add(symbol.IndexValue);
                 }
             }
 
@@ -1081,7 +1088,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 }
                 else if (
                     (i == instruction.SymbolList.Length - 1)
-                    && (instruction.SymbolList[i].i_Name == WellKnownSymbols.VARARGS)
+                    && (instruction.SymbolList[i].NameValue == WellKnownSymbols.VARARGS)
                 )
                 {
                     int len = argsList.Count - i;

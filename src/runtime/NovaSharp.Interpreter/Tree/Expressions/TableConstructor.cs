@@ -20,15 +20,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer is at the '{', go on
             CheckTokenType(lcontext, TokenType.BrkOpenCurly, TokenType.BrkOpenCurlyShared);
 
-            while (lcontext.Lexer.Current.type != TokenType.BrkCloseCurly)
+            while (lcontext.Lexer.Current.Type != TokenType.BrkCloseCurly)
             {
-                switch (lcontext.Lexer.Current.type)
+                switch (lcontext.Lexer.Current.Type)
                 {
                     case TokenType.Name:
                         {
                             Token assign = lcontext.Lexer.PeekNext();
 
-                            if (assign.type == TokenType.OpAssignment)
+                            if (assign.Type == TokenType.OpAssignment)
                             {
                                 StructField(lcontext);
                             }
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 Token curr = lcontext.Lexer.Current;
 
-                if (curr.type == TokenType.Comma || curr.type == TokenType.SemiColon)
+                if (curr.Type == TokenType.Comma || curr.Type == TokenType.SemiColon)
                 {
                     lcontext.Lexer.Next();
                 }

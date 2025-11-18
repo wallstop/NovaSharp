@@ -249,7 +249,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private static Operator ParseBinaryOperator(Token token)
         {
-            switch (token.type)
+            switch (token.Type)
             {
                 case TokenType.Or:
                     return Operator.Or;

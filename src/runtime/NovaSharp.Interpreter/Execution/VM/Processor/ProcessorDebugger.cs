@@ -387,7 +387,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             IsError = false,
                             LValue = top.debugSymbols[i],
                             Value = top.localScope[i],
-                            Name = top.debugSymbols[i].i_Name,
+                            Name = top.debugSymbols[i].NameValue,
                         }
                     );
                 }

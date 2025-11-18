@@ -29,13 +29,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _debugErr = function.GetFriendlyDebugName();
             _function = function;
 
-            switch (lcontext.Lexer.Current.type)
+            switch (lcontext.Lexer.Current.Type)
             {
                 case TokenType.BrkOpenRound:
                     Token openBrk = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
                     Token t = lcontext.Lexer.Current;
-                    if (t.type == TokenType.BrkCloseRound)
+                    if (t.Type == TokenType.BrkCloseRound)
                     {
                         _arguments = new List<Expression>();
                         SourceRef = callToken.GetSourceRef(t);
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                         _arguments.Add(
                             new TableConstructor(
                                 lcontext,
-                                lcontext.Lexer.Current.type == TokenType.BrkOpenCurlyShared
+                                lcontext.Lexer.Current.Type == TokenType.BrkOpenCurlyShared
                             )
                         );
                         SourceRef = callToken.GetSourceRefUpTo(lcontext.Lexer.Current);
@@ -78,7 +78,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     )
                     {
                         IsPrematureStreamTermination = (
-                            lcontext.Lexer.Current.type == TokenType.Eof
+                            lcontext.Lexer.Current.Type == TokenType.Eof
                         ),
                     };
             }

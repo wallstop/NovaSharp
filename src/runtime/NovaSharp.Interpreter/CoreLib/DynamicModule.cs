@@ -22,14 +22,14 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "dynamic")]
     public class DynamicModule
     {
-        private class DynamicExprWrapper
+        private class DynamicExpressionWrapper
         {
-            public DynamicExpression expr;
+            public DynamicExpression Expression;
         }
 
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
-            UserData.RegisterType<DynamicExprWrapper>(InteropAccessMode.HideMembers);
+            UserData.RegisterType<DynamicExpressionWrapper>(InteropAccessMode.HideMembers);
         }
 
         [NovaSharpModuleMethod(Name = "eval")]
@@ -40,9 +40,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 if (args[0].Type == DataType.UserData)
                 {
                     UserData ud = args[0].UserData;
-                    if (ud.Object is DynamicExprWrapper wrapper)
+                    if (ud.Object is DynamicExpressionWrapper wrapper)
                     {
-                        return wrapper.expr.Evaluate(executionContext);
+                        return wrapper.Expression.Evaluate(executionContext);
                     }
                     else
                     {
@@ -56,10 +56,10 @@ namespace NovaSharp.Interpreter.CoreLib
                 else
                 {
                     DynValue vs = args.AsType(0, "dynamic.eval", DataType.String, false);
-                    DynamicExpression expr = executionContext
+                    DynamicExpression expression = executionContext
                         .GetScript()
                         .CreateDynamicExpression(vs.String);
-                    return expr.Evaluate(executionContext);
+                    return expression.Evaluate(executionContext);
                 }
             }
             catch (SyntaxErrorException ex)
@@ -77,10 +77,10 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 DynValue vs = args.AsType(0, "dynamic.prepare", DataType.String, false);
-                DynamicExpression expr = executionContext
+                DynamicExpression expression = executionContext
                     .GetScript()
                     .CreateDynamicExpression(vs.String);
-                return UserData.Create(new DynamicExprWrapper() { expr = expr });
+                return UserData.Create(new DynamicExpressionWrapper() { Expression = expression });
             }
             catch (SyntaxErrorException ex)
             {

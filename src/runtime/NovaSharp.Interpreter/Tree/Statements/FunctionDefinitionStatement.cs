@@ -50,15 +50,15 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 _funcSymbol = lcontext.Scope.Find(firstName);
                 _friendlyName = firstName;
 
-                if (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
+                if (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
                 {
                     _tableAccessors = new List<string>();
 
-                    while (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
+                    while (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
                     {
                         Token separator = lcontext.Lexer.Current;
 
-                        if (separator.type != TokenType.Colon && separator.type != TokenType.Dot)
+                        if (separator.Type != TokenType.Colon && separator.Type != TokenType.Dot)
                         {
                             UnexpectedTokenType(separator);
                         }
@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                         _friendlyName += separator.Text + field.Text;
                         _sourceRef = funcKeyword.GetSourceRef(field);
 
-                        if (separator.type == TokenType.Colon)
+                        if (separator.Type == TokenType.Colon)
                         {
                             _methodName = field.Text;
                             _isMethodCallingConvention = true;

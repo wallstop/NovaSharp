@@ -253,7 +253,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 foreach (SymbolRef sym in runtimeScopeBlock.ToBeClosed)
                 {
-                    if (sym.i_Index > threshold)
+                    if (sym.IndexValue > threshold)
                     {
                         subset.Add(sym);
                     }
@@ -392,12 +392,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             switch (sym.Type)
             {
                 case SymbolRefType.Global:
-                    Emit_Load(sym.i_Env);
+                    Emit_Load(sym.EnvironmentRef);
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.Index,
-                            Value = DynValue.NewString(sym.i_Name),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -421,7 +421,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             switch (sym.Type)
             {
                 case SymbolRefType.Global:
-                    Emit_Load(sym.i_Env);
+                    Emit_Load(sym.EnvironmentRef);
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {
@@ -429,7 +429,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             Symbol = sym,
                             NumVal = stackofs,
                             NumVal2 = tupleidx,
-                            Value = DynValue.NewString(sym.i_Name),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;

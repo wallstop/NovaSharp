@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             _block = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.type != TokenType.Eof)
+            if (lcontext.Lexer.Current.Type != TokenType.Eof)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,

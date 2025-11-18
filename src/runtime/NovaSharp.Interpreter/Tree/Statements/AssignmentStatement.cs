@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 SymbolRefAttributes flags = ParseLocalAttributes(lcontext);
                 locals.Add((nameToken, flags));
 
-                if (lcontext.Lexer.Current.type != TokenType.Comma)
+                if (lcontext.Lexer.Current.Type != TokenType.Comma)
                 {
                     break;
                 }
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 lcontext.Lexer.Next();
             }
 
-            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
+            if (lcontext.Lexer.Current.Type == TokenType.OpAssignment)
             {
                 CheckTokenType(lcontext, TokenType.OpAssignment);
                 _rValues = Expression.ExprList(lcontext);
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             _lValues.Add(CheckVar(lcontext, firstExpression));
 
-            while (lcontext.Lexer.Current.type == TokenType.Comma)
+            while (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Expression e = Expression.PrimaryExp(lcontext);
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             SymbolRefAttributes flags = default;
 
-            while (lcontext.Lexer.Current.type == TokenType.OpLessThan)
+            while (lcontext.Lexer.Current.Type == TokenType.OpLessThan)
             {
                 lcontext.Lexer.Next();
 

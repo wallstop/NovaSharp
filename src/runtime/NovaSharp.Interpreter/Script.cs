@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter
         private readonly List<SourceCode> _sources = new();
         private readonly Table _globalTable;
         private IDebugger _debugger;
-        private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MAX_META_TYPES];
+        private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
 
@@ -526,10 +526,10 @@ namespace NovaSharp.Interpreter
                 {
                     new()
                     {
-                        i_Env = null,
-                        i_Index = 0,
-                        i_Name = WellKnownSymbols.ENV,
-                        i_Type = SymbolRefType.DefaultEnv,
+                        EnvironmentRef = null,
+                        IndexValue = 0,
+                        NameValue = WellKnownSymbols.ENV,
+                        SymbolType = SymbolRefType.DefaultEnv,
                     },
                 };
 

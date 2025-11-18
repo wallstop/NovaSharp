@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public struct TablePair : System.IEquatable<TablePair>
     {
-        private static readonly TablePair SNilNode = new(DynValue.Nil, DynValue.Nil);
+        private static readonly TablePair NilNode = new(DynValue.Nil, DynValue.Nil);
         private readonly DynValue _key;
 
         private readonly DynValue _value;
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static TablePair Nil
         {
-            get { return SNilNode; }
+            get { return NilNode; }
         }
 
         public bool Equals(TablePair other)

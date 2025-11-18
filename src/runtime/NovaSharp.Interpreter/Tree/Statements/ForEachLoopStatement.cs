@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             List<string> names = new();
             names.Add(firstNameToken.Text);
 
-            while (lcontext.Lexer.Current.type == TokenType.Comma)
+            while (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Token name = CheckTokenType(lcontext, TokenType.Name);
@@ -72,7 +72,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { scope = _stackFrame };
+            Loop l = new() { Scope = _stackFrame };
             bc.LoopTracker.loops.Push(l);
 
             // get iterator tuple
@@ -128,7 +128,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             bc.Emit_Pop();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpointBreaks;
             }

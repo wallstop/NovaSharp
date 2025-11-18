@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)
         {
-            Symbols = symbols.Select(s => s.i_Name).ToArray();
+            Symbols = symbols.Select(s => s.NameValue).ToArray();
             AddRange(values);
         }
 

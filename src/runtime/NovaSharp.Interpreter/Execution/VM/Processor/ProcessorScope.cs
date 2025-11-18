@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             foreach (SymbolRef sym in symbols)
             {
-                stackframe.toBeClosedIndices?.Remove(sym.i_Index);
+                stackframe.toBeClosedIndices?.Remove(sym.IndexValue);
 
                 if (stackframe.blocksToClose != null)
                 {
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     )
                     {
                         List<SymbolRef> list = stackframe.blocksToClose[listIndex];
-                        int foundIndex = list.FindIndex(s => s.i_Index == sym.i_Index);
+                        int foundIndex = list.FindIndex(s => s.IndexValue == sym.IndexValue);
                         if (foundIndex >= 0)
                         {
                             list.RemoveAt(foundIndex);
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                DynValue slot = stackframe.localScope[sym.i_Index];
+                DynValue slot = stackframe.localScope[sym.IndexValue];
 
                 if (slot != null && !slot.IsNil())
                 {
@@ -74,21 +74,24 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public DynValue GetGenericSymbol(SymbolRef symref)
         {
-            switch (symref.i_Type)
+            switch (symref.SymbolType)
             {
                 case SymbolRefType.DefaultEnv:
                     return DynValue.NewTable(GetScript().Globals);
                 case SymbolRefType.Global:
-                    return GetGlobalSymbol(GetGenericSymbol(symref.i_Env), symref.i_Name);
+                    return GetGlobalSymbol(
+                        GetGenericSymbol(symref.EnvironmentRef),
+                        symref.NameValue
+                    );
                 case SymbolRefType.Local:
-                    return GetTopNonClrFunction().localScope[symref.i_Index];
+                    return GetTopNonClrFunction().localScope[symref.IndexValue];
                 case SymbolRefType.Upvalue:
-                    return GetTopNonClrFunction().closureScope[symref.i_Index];
+                    return GetTopNonClrFunction().closureScope[symref.IndexValue];
                 default:
                     throw new InternalErrorException(
                         "Unexpected {0} LRef at resolution: {1}",
-                        symref.i_Type,
-                        symref.i_Name
+                        symref.SymbolType,
+                        symref.NameValue
                     );
             }
         }
@@ -115,10 +118,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public void AssignGenericSymbol(SymbolRef symref, DynValue value)
         {
-            switch (symref.i_Type)
+            switch (symref.SymbolType)
             {
                 case SymbolRefType.Global:
-                    SetGlobalSymbol(GetGenericSymbol(symref.i_Env), symref.i_Name, value);
+                    SetGlobalSymbol(
+                        GetGenericSymbol(symref.EnvironmentRef),
+                        symref.NameValue,
+                        value
+                    );
                     break;
                 case SymbolRefType.Local:
                     AssignLocal(symref, value);
@@ -127,10 +134,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
 
-                        DynValue v = stackframe.closureScope[symref.i_Index];
+                        DynValue v = stackframe.closureScope[symref.IndexValue];
                         if (v == null)
                         {
-                            stackframe.closureScope[symref.i_Index] = v = DynValue.NewNil();
+                            stackframe.closureScope[symref.IndexValue] = v = DynValue.NewNil();
                         }
 
                         v.Assign(value);
@@ -143,8 +150,8 @@ namespace NovaSharp.Interpreter.Execution.VM
                 default:
                     throw new InternalErrorException(
                         "Unexpected {0} LRef at resolution: {1}",
-                        symref.i_Type,
-                        symref.i_Name
+                        symref.SymbolType,
+                        symref.NameValue
                     );
             }
         }
@@ -180,7 +187,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         {
                             SymbolRef l = stackframe.debugSymbols[i];
 
-                            if (l.i_Name == name && stackframe.localScope[i] != null)
+                            if (l.NameValue == name && stackframe.localScope[i] != null)
                             {
                                 return l;
                             }

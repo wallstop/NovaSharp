@@ -51,7 +51,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 //System.Diagnostics.Debug.WriteLine("LEXER : " + T.ToString());
 
                 if (
-                    (t.type != TokenType.Comment && t.type != TokenType.HashBang)
+                    (t.Type != TokenType.Comment && t.Type != TokenType.HashBang)
                     || (!_autoSkipComments)
                 )
                 {

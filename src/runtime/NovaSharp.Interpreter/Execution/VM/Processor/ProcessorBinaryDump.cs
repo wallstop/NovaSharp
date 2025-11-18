@@ -65,9 +65,9 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             foreach (SymbolRef sr in symbolMap.Keys.ToArray())
             {
-                if (sr.i_Env != null)
+                if (sr.EnvironmentRef != null)
                 {
-                    AddSymbolToMap(symbolMap, sr.i_Env);
+                    AddSymbolToMap(symbolMap, sr.EnvironmentRef);
                 }
             }
 

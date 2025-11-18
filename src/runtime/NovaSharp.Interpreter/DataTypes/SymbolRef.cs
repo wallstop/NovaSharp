@@ -18,21 +18,24 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class SymbolRef
     {
-        private static readonly SymbolRef SDefaultEnv = new() { i_Type = SymbolRefType.DefaultEnv };
+        private static readonly SymbolRef DefaultEnvSymbol = new()
+        {
+            SymbolType = SymbolRefType.DefaultEnv,
+        };
 
         // Fields are internal - direct access by the executor was a 10% improvement at profiling here!
-        internal SymbolRefType i_Type;
-        internal SymbolRef i_Env;
-        internal int i_Index;
-        internal string i_Name;
-        internal SymbolRefAttributes i_Attributes;
+        internal SymbolRefType SymbolType;
+        internal SymbolRef EnvironmentRef;
+        internal int IndexValue;
+        internal string NameValue;
+        internal SymbolRefAttributes SymbolAttributes;
 
         /// <summary>
         /// Gets the type of this symbol reference
         /// </summary>
         public SymbolRefType Type
         {
-            get { return i_Type; }
+            get { return SymbolType; }
         }
 
         /// <summary>
@@ -40,7 +43,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public int Index
         {
-            get { return i_Index; }
+            get { return IndexValue; }
         }
 
         /// <summary>
@@ -48,24 +51,24 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public string Name
         {
-            get { return i_Name; }
+            get { return NameValue; }
         }
 
         public SymbolRefAttributes Attributes
         {
-            get { return i_Attributes; }
+            get { return SymbolAttributes; }
         }
 
-        public bool IsConst => (i_Attributes & SymbolRefAttributes.Const) != 0;
+        public bool IsConst => (SymbolAttributes & SymbolRefAttributes.Const) != 0;
 
-        public bool IsToBeClosed => (i_Attributes & SymbolRefAttributes.ToBeClosed) != 0;
+        public bool IsToBeClosed => (SymbolAttributes & SymbolRefAttributes.ToBeClosed) != 0;
 
         /// <summary>
         /// Gets the environment this symbol refers to (for global symbols only)
         /// </summary>
         public SymbolRef Environment
         {
-            get { return i_Env; }
+            get { return EnvironmentRef; }
         }
 
         /// <summary>
@@ -73,7 +76,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static SymbolRef DefaultEnv
         {
-            get { return SDefaultEnv; }
+            get { return DefaultEnvSymbol; }
         }
 
         /// <summary>
@@ -86,11 +89,11 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             return new SymbolRef()
             {
-                i_Index = -1,
-                i_Type = SymbolRefType.Global,
-                i_Env = envSymbol,
-                i_Name = name,
-                i_Attributes = default,
+                IndexValue = -1,
+                SymbolType = SymbolRefType.Global,
+                EnvironmentRef = envSymbol,
+                NameValue = name,
+                SymbolAttributes = default,
             };
         }
 
@@ -109,10 +112,10 @@ namespace NovaSharp.Interpreter.DataTypes
             //Debug.Assert(index >= 0, "Symbol Index < 0");
             return new SymbolRef()
             {
-                i_Index = index,
-                i_Type = SymbolRefType.Local,
-                i_Name = name,
-                i_Attributes = attributes,
+                IndexValue = index,
+                SymbolType = SymbolRefType.Local,
+                NameValue = name,
+                SymbolAttributes = attributes,
             };
         }
 
@@ -127,10 +130,10 @@ namespace NovaSharp.Interpreter.DataTypes
             //Debug.Assert(index >= 0, "Symbol Index < 0");
             return new SymbolRef()
             {
-                i_Index = index,
-                i_Type = SymbolRefType.Upvalue,
-                i_Name = name,
-                i_Attributes = default,
+                IndexValue = index,
+                SymbolType = SymbolRefType.Upvalue,
+                NameValue = name,
+                SymbolAttributes = default,
             };
         }
 
@@ -142,17 +145,17 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </returns>
         public override string ToString()
         {
-            if (i_Type == SymbolRefType.DefaultEnv)
+            if (SymbolType == SymbolRefType.DefaultEnv)
             {
                 return "(default _ENV)";
             }
-            else if (i_Type == SymbolRefType.Global)
+            else if (SymbolType == SymbolRefType.Global)
             {
-                return string.Format("{2} : {0} / {1}", i_Type, i_Env, i_Name);
+                return string.Format("{2} : {0} / {1}", SymbolType, EnvironmentRef, NameValue);
             }
             else
             {
-                return string.Format("{2} : {0}[{1}]", i_Type, i_Index, i_Name);
+                return string.Format("{2} : {0}[{1}]", SymbolType, IndexValue, NameValue);
             }
         }
 
@@ -161,10 +164,10 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         internal void WriteBinary(BinaryWriter bw)
         {
-            bw.Write((byte)i_Type);
-            bw.Write(i_Index);
-            bw.Write(i_Name);
-            bw.Write((int)i_Attributes);
+            bw.Write((byte)SymbolType);
+            bw.Write(IndexValue);
+            bw.Write(NameValue);
+            bw.Write((int)SymbolAttributes);
         }
 
         /// <summary>
@@ -174,19 +177,19 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             SymbolRef that = new()
             {
-                i_Type = (SymbolRefType)br.ReadByte(),
-                i_Index = br.ReadInt32(),
-                i_Name = br.ReadString(),
-                i_Attributes = (SymbolRefAttributes)br.ReadInt32(),
+                SymbolType = (SymbolRefType)br.ReadByte(),
+                IndexValue = br.ReadInt32(),
+                NameValue = br.ReadString(),
+                SymbolAttributes = (SymbolRefAttributes)br.ReadInt32(),
             };
             return that;
         }
 
         internal void WriteBinaryEnv(BinaryWriter bw, Dictionary<SymbolRef, int> symbolMap)
         {
-            if (i_Env != null)
+            if (EnvironmentRef != null)
             {
-                bw.Write(symbolMap[i_Env]);
+                bw.Write(symbolMap[EnvironmentRef]);
             }
             else
             {
@@ -200,7 +203,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
             if (idx >= 0)
             {
-                i_Env = symbolRefs[idx];
+                EnvironmentRef = symbolRefs[idx];
             }
         }
     }

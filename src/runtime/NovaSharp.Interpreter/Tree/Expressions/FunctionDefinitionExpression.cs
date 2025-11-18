@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             Statement s = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.type != TokenType.End)
+            if (lcontext.Lexer.Current.Type != TokenType.End)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -112,7 +112,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     lcontext.Lexer.Current.Text
                 )
                 {
-                    IsPrematureStreamTermination = (lcontext.Lexer.Current.type == TokenType.Eof),
+                    IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
                 };
             }
 
@@ -139,15 +139,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 paramnames.Add("self");
             }
 
-            while (lcontext.Lexer.Current.type != closeToken)
+            while (lcontext.Lexer.Current.Type != closeToken)
             {
                 Token t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Name)
+                if (t.Type == TokenType.Name)
                 {
                     paramnames.Add(t.Text);
                 }
-                else if (t.type == TokenType.VarArgs)
+                else if (t.Type == TokenType.VarArgs)
                 {
                     _hasVarArgs = true;
                     paramnames.Add(WellKnownSymbols.VARARGS);
@@ -161,7 +161,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Comma)
+                if (t.Type == TokenType.Comma)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -172,7 +172,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            if (lcontext.Lexer.Current.type == closeToken)
+            if (lcontext.Lexer.Current.Type == closeToken)
             {
                 lcontext.Lexer.Next();
             }
@@ -203,9 +203,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             for (int i = 0; i < _closure.Count; i++)
             {
-                if (_closure[i].i_Name == symbol.i_Name)
+                if (_closure[i].NameValue == symbol.NameValue)
                 {
-                    return SymbolRef.Upvalue(symbol.i_Name, i);
+                    return SymbolRef.Upvalue(symbol.NameValue, i);
                 }
             }
 
@@ -216,7 +216,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _closureInstruction.SymbolList = _closure.ToArray();
             }
 
-            return SymbolRef.Upvalue(symbol.i_Name, _closure.Count - 1);
+            return SymbolRef.Upvalue(symbol.NameValue, _closure.Count - 1);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)

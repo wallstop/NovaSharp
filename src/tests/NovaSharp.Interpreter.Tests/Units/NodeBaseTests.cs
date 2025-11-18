@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(token.Text, Is.EqualTo("identifier"));
-                Assert.That(context.Lexer.Current.type, Is.EqualTo(TokenType.Eof));
+                Assert.That(context.Lexer.Current.Type, Is.EqualTo(TokenType.Eof));
             });
         }
 
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False);
 
-            Assert.That(token.type, Is.EqualTo(TokenType.True));
+            Assert.That(token.Type, Is.EqualTo(TokenType.True));
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TokenType.ElseIf
             );
 
-            Assert.That(token.type, Is.EqualTo(TokenType.ElseIf));
+            Assert.That(token.Type, Is.EqualTo(TokenType.ElseIf));
         }
 
         [Test]
@@ -148,8 +148,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closing.type, Is.EqualTo(TokenType.BrkCloseRound));
-                Assert.That(context.Lexer.Current.type, Is.EqualTo(TokenType.Eof));
+                Assert.That(closing.Type, Is.EqualTo(TokenType.BrkCloseRound));
+                Assert.That(context.Lexer.Current.Type, Is.EqualTo(TokenType.Eof));
             });
         }
 

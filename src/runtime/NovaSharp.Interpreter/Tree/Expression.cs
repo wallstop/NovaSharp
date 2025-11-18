@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Tree
 
             exps.Add(expr1);
 
-            while ((lcontext.Lexer.Current.type == TokenType.Comma))
+            while ((lcontext.Lexer.Current.Type == TokenType.Comma))
             {
                 lcontext.Lexer.Next();
                 exps.Add(Expr(lcontext));
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Tree
             {
                 exps.Add(Expr(lcontext));
 
-                if (lcontext.Lexer.Current.type != TokenType.Comma)
+                if (lcontext.Lexer.Current.Type != TokenType.Comma)
                 {
                     break;
                 }
@@ -81,12 +81,12 @@ namespace NovaSharp.Interpreter.Tree
                 Token unaryOp = t;
                 t = lcontext.Lexer.Current;
 
-                if (isPrimary && t.type == TokenType.OpPwr)
+                if (isPrimary && t.Type == TokenType.OpPwr)
                 {
                     List<Expression> powerChain = new();
                     powerChain.Add(e);
 
-                    while (isPrimary && t.type == TokenType.OpPwr)
+                    while (isPrimary && t.Type == TokenType.OpPwr)
                     {
                         lcontext.Lexer.Next();
                         powerChain.Add(SubExpr(lcontext, false));
@@ -139,7 +139,7 @@ namespace NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
 
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:
@@ -154,7 +154,7 @@ namespace NovaSharp.Interpreter.Tree
                     return new SymbolRefExpression(t, lcontext);
                 case TokenType.BrkOpenCurly:
                 case TokenType.BrkOpenCurlyShared:
-                    return new TableConstructor(lcontext, t.type == TokenType.BrkOpenCurlyShared);
+                    return new TableConstructor(lcontext, t.Type == TokenType.BrkOpenCurlyShared);
                 case TokenType.Function:
                     lcontext.Lexer.Next();
                     return new FunctionDefinitionExpression(lcontext, false, false);
@@ -179,7 +179,7 @@ namespace NovaSharp.Interpreter.Tree
                 Token t = lcontext.Lexer.Current;
                 Token thisCallName = null;
 
-                switch (t.type)
+                switch (t.Type)
                 {
                     case TokenType.Dot:
                         {
@@ -195,7 +195,7 @@ namespace NovaSharp.Interpreter.Tree
                             Expression index = Expr(lcontext);
 
                             // support NovaSharp multiple indexers for userdata
-                            if (lcontext.Lexer.Current.type == TokenType.Comma)
+                            if (lcontext.Lexer.Current.Type == TokenType.Comma)
                             {
                                 List<Expression> explist = ExprListAfterFirstExpr(lcontext, index);
                                 index = new ExprListExpression(explist, lcontext);
@@ -225,7 +225,7 @@ namespace NovaSharp.Interpreter.Tree
         private static Expression PrefixExp(ScriptLoadingContext lcontext)
         {
             Token t = lcontext.Lexer.Current;
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.BrkOpenRound:
                     lcontext.Lexer.Next();
@@ -238,7 +238,7 @@ namespace NovaSharp.Interpreter.Tree
                 default:
                     throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
                     {
-                        IsPrematureStreamTermination = (t.type == TokenType.Eof),
+                        IsPrematureStreamTermination = (t.Type == TokenType.Eof),
                     };
             }
         }

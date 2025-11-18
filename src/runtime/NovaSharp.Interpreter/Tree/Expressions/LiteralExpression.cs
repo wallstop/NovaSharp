@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
             : base(lcontext)
         {
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:

@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop
         private readonly Dictionary<Type, Func<DynValue, object>>[] _script2Clr = new Dictionary<
             Type,
             Func<DynValue, object>
-        >[(int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1];
+        >[(int)LuaTypeExtensions.MaxConvertibleTypes + 1];
         private readonly Dictionary<Type, Func<Script, object, DynValue>> _clr2Script = new();
 
         internal CustomConverterRegistry()

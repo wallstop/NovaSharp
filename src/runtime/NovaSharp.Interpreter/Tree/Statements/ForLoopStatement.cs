@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             CheckTokenType(lcontext, TokenType.Comma);
             _end = Expression.Expr(lcontext);
 
-            if (lcontext.Lexer.Current.type == TokenType.Comma)
+            if (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 _step = Expression.Expr(lcontext);
@@ -62,7 +62,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { scope = _stackFrame };
+            Loop l = new() { Scope = _stackFrame };
 
             bc.LoopTracker.loops.Push(l);
 
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpoint;
             }

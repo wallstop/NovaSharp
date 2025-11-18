@@ -9,13 +9,13 @@ namespace NovaSharp.Interpreter.Tree
 
     internal class Loop : ILoop
     {
-        public RuntimeScopeBlock scope;
-        public List<Instruction> breakJumps = new();
+        public RuntimeScopeBlock Scope;
+        public List<Instruction> BreakJumps = new();
 
         public void CompileBreak(ByteCode bc)
         {
-            bc.Emit_Exit(scope);
-            breakJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
+            bc.Emit_Exit(Scope);
+            BreakJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
         }
 
         public bool IsBoundary()

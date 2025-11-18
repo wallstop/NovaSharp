@@ -115,7 +115,7 @@ function m.cmp_ok (this, op, that, name)
     end
 end
 
-function m.type_ok (val, t, name)
+function m.Type_ok (val, t, name)
     if type(t) ~= 'string' then
         tb:ok(false, name)
         tb:diag("type isn't a string : " .. tostring(t))
@@ -381,3 +381,4 @@ return m
 -- This library is licensed under the terms of the MIT/X11 license,
 -- like Lua itself.
 --
+

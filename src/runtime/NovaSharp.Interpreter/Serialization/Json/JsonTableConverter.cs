@@ -150,11 +150,11 @@ namespace NovaSharp.Interpreter.Serialization.Json
         {
             Lexer l = new(0, json, false);
 
-            if (l.Current.type == TokenType.BrkOpenCurly)
+            if (l.Current.Type == TokenType.BrkOpenCurly)
             {
                 return ParseJsonObject(l, script);
             }
-            else if (l.Current.type == TokenType.BrkOpenSquare)
+            else if (l.Current.Type == TokenType.BrkOpenSquare)
             {
                 return ParseJsonArray(l, script);
             }
@@ -170,7 +170,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
 
         private static void AssertToken(Lexer l, TokenType type)
         {
-            if (l.Current.type != type)
+            if (l.Current.Type != type)
             {
                 throw new SyntaxErrorException(
                     l.Current,
@@ -186,13 +186,13 @@ namespace NovaSharp.Interpreter.Serialization.Json
 
             l.Next();
 
-            while (l.Current.type != TokenType.BrkCloseSquare)
+            while (l.Current.Type != TokenType.BrkCloseSquare)
             {
                 DynValue v = ParseJsonValue(l, script);
                 t.Append(v);
                 l.Next();
 
-                if (l.Current.type == TokenType.Comma)
+                if (l.Current.Type == TokenType.Comma)
                 {
                     l.Next();
                 }
@@ -207,7 +207,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
 
             l.Next();
 
-            while (l.Current.type != TokenType.BrkCloseCurly)
+            while (l.Current.Type != TokenType.BrkCloseCurly)
             {
                 AssertToken(l, TokenType.String);
                 string key = l.Current.Text;
@@ -218,7 +218,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
                 t.Set(key, v);
                 l.Next();
 
-                if (l.Current.type == TokenType.Comma)
+                if (l.Current.Type == TokenType.Comma)
                 {
                     l.Next();
                 }
@@ -229,33 +229,33 @@ namespace NovaSharp.Interpreter.Serialization.Json
 
         private static DynValue ParseJsonValue(Lexer l, Script script)
         {
-            if (l.Current.type == TokenType.BrkOpenCurly)
+            if (l.Current.Type == TokenType.BrkOpenCurly)
             {
                 Table t = ParseJsonObject(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (l.Current.type == TokenType.BrkOpenSquare)
+            else if (l.Current.Type == TokenType.BrkOpenSquare)
             {
                 Table t = ParseJsonArray(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (l.Current.type == TokenType.String)
+            else if (l.Current.Type == TokenType.String)
             {
                 return DynValue.NewString(l.Current.Text);
             }
-            else if (l.Current.type == TokenType.Number || l.Current.type == TokenType.OpMinusOrSub)
+            else if (l.Current.Type == TokenType.Number || l.Current.Type == TokenType.OpMinusOrSub)
             {
                 return ParseJsonNumberValue(l, script);
             }
-            else if (l.Current.type == TokenType.True)
+            else if (l.Current.Type == TokenType.True)
             {
                 return DynValue.True;
             }
-            else if (l.Current.type == TokenType.False)
+            else if (l.Current.Type == TokenType.False)
             {
                 return DynValue.False;
             }
-            else if (l.Current.type == TokenType.Name && l.Current.Text == "null")
+            else if (l.Current.Type == TokenType.Name && l.Current.Text == "null")
             {
                 return JsonNull.Create();
             }
@@ -272,7 +272,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
         private static DynValue ParseJsonNumberValue(Lexer l, Script script)
         {
             bool negative;
-            if (l.Current.type == TokenType.OpMinusOrSub)
+            if (l.Current.Type == TokenType.OpMinusOrSub)
             {
                 // Negative number consists of 2 tokens.
                 l.Next();
@@ -282,7 +282,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
             {
                 negative = false;
             }
-            if (l.Current.type != TokenType.Number)
+            if (l.Current.Type != TokenType.Number)
             {
                 throw new SyntaxErrorException(
                     l.Current,

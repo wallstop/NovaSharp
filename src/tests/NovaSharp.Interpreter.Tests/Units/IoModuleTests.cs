@@ -58,9 +58,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue tuple = script.DoString(
                     $@"
                 local f = io.open('{path}', 'w')
-                local openType = io.type(f)
+                local openType = io.Type(f)
                 f:close()
-                return openType, io.type(f)
+                return openType, io.Type(f)
                 "
                 );
 
@@ -140,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 @"
                 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.type(f)
+                return io.Type(f)
                 "
             );
 
@@ -258,7 +258,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void TypeReturnsNilForNonUserDataArguments()
         {
             Script script = CreateScript();
-            DynValue tuple = script.DoString("return io.type(42), io.type({})");
+            DynValue tuple = script.DoString("return io.Type(42), io.Type({})");
 
             Assert.Multiple(() =>
             {
@@ -273,7 +273,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = CreateScript();
             script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
 
-            DynValue result = script.DoString("return io.type(sampleUserData)");
+            DynValue result = script.DoString("return io.Type(sampleUserData)");
 
             Assert.That(result.IsNil(), Is.True);
         }
@@ -291,7 +291,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local result = io.close(f)
-                    return result, io.type(f)
+                    return result, io.Type(f)
                     "
                 );
 
@@ -324,7 +324,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     local f = assert(io.open('{escapedPath}', 'w'))
                     io.output(f)
                     local closed = io.close()
-                    return closed, io.type(f)
+                    return closed, io.Type(f)
                     "
                 );
 
@@ -389,7 +389,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     local f = assert(io.open('{escapedPath}', 'r'))
                     io.input(f)
                     local current = io.input()
-                    return io.type(current), io.type(f)
+                    return io.Type(current), io.Type(f)
                     "
                 );
 
@@ -543,9 +543,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 local f = io.tmpfile()
                 f:write('temp data')
                 f:seek('set')
-                local t_open = io.type(f)
+                local t_open = io.Type(f)
                 f:close()
-                local t_closed = io.type(f)
+                local t_closed = io.Type(f)
                 return t_open, t_closed
                 "
             );

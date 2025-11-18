@@ -4,19 +4,19 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
     internal class Token
     {
-        public readonly int sourceId;
-        public readonly int fromCol,
-            toCol,
-            fromLine,
-            toLine,
-            prevCol,
-            prevLine;
-        public readonly TokenType type;
+        public readonly int SourceId;
+        public readonly int FromCol,
+            ToCol,
+            FromLine,
+            ToLine,
+            PrevCol,
+            PrevLine;
+        public readonly TokenType Type;
 
         public string Text { get; set; }
 
         public Token(
-            TokenType type,
+            TokenType tokenType,
             int sourceId,
             int fromLine,
             int fromCol,
@@ -26,24 +26,24 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             int prevCol
         )
         {
-            this.type = type;
+            Type = tokenType;
 
-            this.sourceId = sourceId;
-            this.fromLine = fromLine;
-            this.fromCol = fromCol;
-            this.toCol = toCol;
-            this.toLine = toLine;
-            this.prevCol = prevCol;
-            this.prevLine = prevLine;
+            SourceId = sourceId;
+            FromLine = fromLine;
+            FromCol = fromCol;
+            ToCol = toCol;
+            ToLine = toLine;
+            PrevCol = prevCol;
+            PrevLine = prevLine;
         }
 
         public override string ToString()
         {
             string tokenTypeString = (
-                type.ToString() + "                                                      "
+                Type.ToString() + "                                                      "
             ).Substring(0, 16);
 
-            string location = $"{fromLine}:{fromCol}-{toLine}:{toCol}";
+            string location = $"{FromLine}:{FromCol}-{ToLine}:{ToCol}";
 
             location = (
                 location + "                                                      "
@@ -107,15 +107,15 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
         public double GetNumberValue()
         {
-            if (type == TokenType.Number)
+            if (Type == TokenType.Number)
             {
                 return LexerUtils.ParseNumber(this);
             }
-            else if (type == TokenType.NumberHex)
+            else if (Type == TokenType.NumberHex)
             {
                 return LexerUtils.ParseHexInteger(this);
             }
-            else if (type == TokenType.NumberHexFloat)
+            else if (Type == TokenType.NumberHexFloat)
             {
                 return LexerUtils.ParseHexFloat(this);
             }
@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
         public bool IsEndOfBlock()
         {
-            switch (type)
+            switch (Type)
             {
                 case TokenType.Else:
                 case TokenType.ElseIf:
@@ -144,14 +144,14 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
         public bool IsUnaryOperator()
         {
-            return type == TokenType.OpMinusOrSub
-                || type == TokenType.Not
-                || type == TokenType.OpLen;
+            return Type == TokenType.OpMinusOrSub
+                || Type == TokenType.Not
+                || Type == TokenType.OpLen;
         }
 
         public bool IsBinaryOperator()
         {
-            switch (type)
+            switch (Type)
             {
                 case TokenType.And:
                 case TokenType.Or:
@@ -176,17 +176,17 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
         internal Debugging.SourceRef GetSourceRef(bool isStepStop = true)
         {
-            return new Debugging.SourceRef(sourceId, fromCol, toCol, fromLine, toLine, isStepStop);
+            return new Debugging.SourceRef(SourceId, FromCol, ToCol, FromLine, ToLine, isStepStop);
         }
 
         internal Debugging.SourceRef GetSourceRef(Token to, bool isStepStop = true)
         {
             return new Debugging.SourceRef(
-                sourceId,
-                fromCol,
-                to.toCol,
-                fromLine,
-                to.toLine,
+                SourceId,
+                FromCol,
+                to.ToCol,
+                FromLine,
+                to.ToLine,
                 isStepStop
             );
         }
@@ -194,11 +194,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
         internal Debugging.SourceRef GetSourceRefUpTo(Token to, bool isStepStop = true)
         {
             return new Debugging.SourceRef(
-                sourceId,
-                fromCol,
-                to.prevCol,
-                fromLine,
-                to.prevLine,
+                SourceId,
+                FromCol,
+                to.PrevCol,
+                FromLine,
+                to.PrevLine,
                 isStepStop
             );
         }

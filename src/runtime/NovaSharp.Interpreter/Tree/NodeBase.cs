@@ -21,14 +21,14 @@ namespace NovaSharp.Interpreter.Tree
         {
             throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
             {
-                IsPrematureStreamTermination = (t.type == TokenType.Eof),
+                IsPrematureStreamTermination = (t.Type == TokenType.Eof),
             };
         }
 
         protected static Token CheckTokenType(ScriptLoadingContext lcontext, TokenType tokenType)
         {
             Token t = lcontext.Lexer.Current;
-            if (t.type != tokenType)
+            if (t.Type != tokenType)
             {
                 return UnexpectedTokenType(t);
             }
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.type != tokenType1 && t.type != tokenType2)
+            if (t.Type != tokenType1 && t.Type != tokenType2)
             {
                 return UnexpectedTokenType(t);
             }
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.type != tokenType1 && t.type != tokenType2 && t.type != tokenType3)
+            if (t.Type != tokenType1 && t.Type != tokenType2 && t.Type != tokenType3)
             {
                 return UnexpectedTokenType(t);
             }
@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.type != tokenType)
+            if (t.Type != tokenType)
             {
                 UnexpectedTokenType(t);
             }
@@ -93,18 +93,18 @@ namespace NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.type != expectedTokenType)
+            if (t.Type != expectedTokenType)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
                     "'{0}' expected (to close '{1}' at line {2}) near '{3}'",
                     expectedTokenText,
                     originalToken.Text,
-                    originalToken.fromLine,
+                    originalToken.FromLine,
                     t.Text
                 )
                 {
-                    IsPrematureStreamTermination = (t.type == TokenType.Eof),
+                    IsPrematureStreamTermination = (t.Type == TokenType.Eof),
                 };
             }
 

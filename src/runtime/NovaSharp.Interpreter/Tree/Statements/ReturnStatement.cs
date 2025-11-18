@@ -27,7 +27,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             Token cur = lcontext.Lexer.Current;
 
-            if (cur.IsEndOfBlock() || cur.type == TokenType.SemiColon)
+            if (cur.IsEndOfBlock() || cur.Type == TokenType.SemiColon)
             {
                 _expression = null;
                 _ref = ret.GetSourceRef();

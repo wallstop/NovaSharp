@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             _varName = t.Text;
 
-            if (t.type == TokenType.VarArgs)
+            if (t.Type == TokenType.VarArgs)
             {
                 _ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
 
