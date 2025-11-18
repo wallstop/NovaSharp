@@ -1,7 +1,9 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.IO;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
@@ -107,6 +109,57 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadCompilesStringChunksAndUsesProvidedSourceName()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            Table env = new(script);
+            env["value"] = DynValue.NewNumber(321);
+
+            DynValue chunk = script.LoadString("return value", env, "chunk-string");
+            DynValue result = script.Call(chunk);
+
+            Assert.That(result.Number, Is.EqualTo(321d));
+
+            DynValue failingChunk = script.LoadString(
+                "error('boom')",
+                new Table(script),
+                "chunk-string"
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.Call(failingChunk)
+            )!;
+
+            string message = exception.DecoratedMessage ?? exception.Message;
+            Assert.That(message, Does.Contain("chunk-string"));
+        }
+
+        [Test]
+        public void LoadRejectsChunkSourcesThatAreNeitherStringNorFunction()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.DoString("load(true)"),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contain("function expected")
+            );
+        }
+
+        [Test]
+        public void LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue result = script.DoString("return load('function(')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].IsNil());
+                Assert.That(result.Tuple[1].String, Does.Contain("unexpected symbol near '('"));
+            });
+        }
+
+        [Test]
         public void LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -149,6 +202,29 @@ namespace NovaSharp.Interpreter.Tests.Units
                     result.Tuple[1].String,
                     Does.Contain("current environment cannot be backtracked")
                 );
+            });
+        }
+
+        [Test]
+        public void LoadFileHonorsExplicitEnvironmentParameter()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            RecordingScriptLoader loader = new() { ModuleBody = "return value" };
+            script.Options.ScriptLoader = loader;
+            script.Globals["value"] = DynValue.NewString("global");
+
+            DynValue result = script.DoString(
+                @"
+                local env = { value = 'from-env' }
+                local fn = loadfile('module.lua', 't', env)
+                return fn()
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.String, Is.EqualTo("from-env"));
+                Assert.That(loader.LoadCount, Is.EqualTo(1));
             });
         }
 
@@ -198,6 +274,43 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contain("unexpected symbol near '('")
+            );
+        }
+
+        [Test]
+        public void NovaSharpInitCreatesPackageTableWhenMissing()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            Table globals = new(script);
+            Table ioTable = new(script);
+
+            LoadModule.NovaSharpInit(globals, ioTable);
+
+            DynValue package = globals.Get("package");
+            Assert.Multiple(() =>
+            {
+                Assert.That(package.Type, Is.EqualTo(DataType.Table));
+                Assert.That(
+                    package.Table.Get("config").String,
+                    Is.EqualTo($"{Path.DirectorySeparatorChar}\n;\n?\n!\n-\n")
+                );
+            });
+        }
+
+        [Test]
+        public void NovaSharpInitThrowsWhenPackageIsNotTable()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            Table globals = new(script);
+            globals["package"] = DynValue.NewNumber(42);
+
+            Assert.That(
+                () => LoadModule.NovaSharpInit(globals, new Table(script)),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contain(
+                        "'package' global variable was found and it is not a table"
+                    )
             );
         }
 

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -124,6 +125,220 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(rhsStub, Is.Not.Null);
                 Assert.That(rhsStub.EvalCount, Is.EqualTo(1));
             });
+        }
+
+        [Test]
+        public void ModuloNormalizesNegativeRemainders()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpMod,
+                "%",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(-3)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ArithmeticFailsWhenOperandsAreNotNumbers()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpAdd,
+                "+",
+                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
+            );
+
+            Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
+            );
+        }
+
+        [Test]
+        public void ConcatThrowsOnNonStringOperands()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpConcat,
+                "..",
+                ctx => new LiteralExpression(ctx, DynValue.NewPrimeTable()),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("value"))
+            );
+
+            Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
+            );
+        }
+
+        [Test]
+        public void LessThanSupportsStringComparison()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(ctx, DynValue.NewString("apple")),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("banana"))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void LessOrEqualSupportsStringComparison()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThanEqual,
+                "<=",
+                ctx => new LiteralExpression(ctx, DynValue.NewString("banana")),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("banana"))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void LessThanThrowsOnMismatchedTypes()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5))
+            );
+
+            Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
+            );
+        }
+
+        [Test]
+        public void EqualityTreatsNilAndVoidCombinationAsEqual()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpEqual,
+                "==",
+                ctx => new LiteralExpression(ctx, DynValue.Nil),
+                ctx => new LiteralExpression(ctx, DynValue.Void)
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void EqualityReturnsFalseWhenNumbersDiffer()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpEqual,
+                "==",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.False);
+        }
+
+        [TestCase(TokenType.OpMinusOrSub, "-", OpCode.Sub)]
+        [TestCase(TokenType.OpMul, "*", OpCode.Mul)]
+        [TestCase(TokenType.OpDiv, "/", OpCode.Div)]
+        [TestCase(TokenType.OpMod, "%", OpCode.Mod)]
+        [TestCase(TokenType.OpPwr, "^", OpCode.Power)]
+        [TestCase(TokenType.OpConcat, "..", OpCode.Concat)]
+        public void CompileEmitsExpectedOpCodeForArithmeticOperators(
+            int tokenTypeValue,
+            string tokenText,
+            int expectedOpCodeValue
+        )
+        {
+            TokenType tokenType = (TokenType)tokenTypeValue;
+            OpCode expectedOpCode = (OpCode)expectedOpCodeValue;
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                tokenType,
+                tokenText,
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            ByteCode byteCode = new(script);
+            expr.Compile(byteCode);
+
+            Assert.That(
+                byteCode.code.ToArray().Select(i => i.OpCode),
+                Does.Contain(expectedOpCode)
+            );
+        }
+
+        [Test]
+        public void ParsingUnexpectedOperatorThrows()
+        {
+            Script script = new();
+            ScriptLoadingContext context = new(script);
+            object chain = BinaryOperatorExpression.BeginOperatorChain();
+            BinaryOperatorExpression.AddExpressionToChain(
+                chain,
+                new LiteralExpression(context, DynValue.NewNumber(1))
+            );
+
+            Assert.Throws<InternalErrorException>(() =>
+                BinaryOperatorExpression.AddOperatorToChain(
+                    chain,
+                    CreateToken(TokenType.Comma, ",")
+                )
+            );
+        }
+
+        [Test]
+        public void EqualityReturnsFalseForMismatchedTypes()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpEqual,
+                "==",
+                ctx => new LiteralExpression(ctx, DynValue.Nil),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.False);
         }
 
         [Test]

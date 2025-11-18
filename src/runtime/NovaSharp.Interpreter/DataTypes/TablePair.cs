@@ -13,26 +13,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the key.
         /// </summary>
-        public DynValue Key
-        {
-            get { return _key; }
-            private set { Key = _key; }
-        }
+        public DynValue Key => _key;
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
-        public DynValue Value
-        {
-            get { return _value; }
-            set
-            {
-                if (_key.IsNotNil())
-                {
-                    Value = value;
-                }
-            }
-        }
+        public DynValue Value => _value;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TablePair"/> struct.
