@@ -94,6 +94,7 @@ namespace NovaSharp.Interpreter.REPL
                     string code = _currentCommand.Substring(1).Trim();
                     if (code.Length == 0)
                     {
+                        _currentCommand = "";
                         return DynValue.Void;
                     }
 
