@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Execution.VM;
     using NUnit.Framework;
@@ -249,6 +250,30 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Debug));
             Assert.That(byteCode.code[^1].Name, Is.EqualTo("trace"));
+        }
+
+        [Test]
+        public void EmitLoadThrowsOnUnsupportedSymbolType()
+        {
+            ByteCode byteCode = new(new Script());
+            Assert.That(
+                () => byteCode.Emit_Load(SymbolRef.DefaultEnv),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contain("Unexpected symbol type")
+            );
+        }
+
+        [Test]
+        public void EmitStoreThrowsOnUnsupportedSymbolType()
+        {
+            ByteCode byteCode = new(new Script());
+            Assert.That(
+                () => byteCode.Emit_Store(SymbolRef.DefaultEnv, stackofs: 0, tupleidx: 0),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contain("Unexpected symbol type")
+            );
         }
     }
 }

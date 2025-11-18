@@ -321,6 +321,7 @@ Integrate Coverlet with `src/tests/NovaSharp.Interpreter.Tests`, emit LCOV + Cob
   - ✅ Rebranded the VS Code debugger project (`NovaSharp.VsCodeDebugger.csproj`) and refreshed dependent project references to respect PascalCase naming.
   - ✅ Updated VS Code debugger package metadata (dropped `.netcore` suffix) and documented the new single-source layout.
   - 🔜 Schedule a naming conformance sweep: audit every class, method, property, project, file, and variable name against `.editorconfig` + the C# style guide, queue renames where casing diverges, and update build/test tooling accordingly. Capture the checklist (tools used, validation steps) in this PLAN and `docs/Contributing.md` so contributors understand the canonical naming expectations going forward.
+  - 🔄 (2025-11-18 20:45 UTC) Seeded the sweep with `tools/NamingAudit/naming_audit.py` + README, which scans all `.cs` files for non-PascalCase file/type declarations and emits actionable reports (line numbers + file paths). The helper mirrors the existing `NamespaceAudit` pattern so we can iterate quickly, grow the allowlists, and wire it into CI once the outstanding violations are cleaned up.
 
 ## Near-Term Priorities (ordered)
 1. **Legacy ➜ NovaSharp finalization**
