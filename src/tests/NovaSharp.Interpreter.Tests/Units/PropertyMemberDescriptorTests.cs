@@ -280,6 +280,67 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetValueConvertsDoubleToPropertyType()
+        {
+            PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
+                GetProperty(
+                    nameof(SampleProperties.ShortValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+
+            SampleProperties instance = new();
+            descriptor.SetValue(_script, instance, DynValue.NewNumber(12.0));
+
+            Assert.That(instance.ShortValue, Is.EqualTo((short)12));
+        }
+
+        [Test]
+        public void SetValueWrapsArgumentExceptionFromOptimizedSetter()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                GetProperty(
+                    nameof(SampleProperties.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+            OverrideOptimizedSetter(
+                descriptor,
+                (_, _) => throw new ArgumentException("failing reflection assignment")
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(_script, new SampleProperties(), DynValue.NewNumber(1))
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("cannot find a conversion"));
+        }
+
+        [Test]
+        public void SetValueWrapsInvalidCastExceptionFromOptimizedSetter()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                GetProperty(
+                    nameof(SampleProperties.InstanceValue),
+                    BindingFlags.Instance | BindingFlags.Public
+                ),
+                InteropAccessMode.Reflection
+            );
+            OverrideOptimizedSetter(
+                descriptor,
+                (_, _) => throw new InvalidCastException("failing optimized assignment")
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(_script, new SampleProperties(), DynValue.NewNumber(1))
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("cannot find a conversion"));
+        }
+
+        [Test]
         public void SetValueThrowsWhenInstanceMissing()
         {
             PropertyMemberDescriptor descriptor = new(
@@ -366,6 +427,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             return typeof(SampleProperties).GetProperty(name, flags);
         }
 
+        private static void OverrideOptimizedSetter(
+            PropertyMemberDescriptor descriptor,
+            Action<object, object> setter
+        )
+        {
+            FieldInfo optimizedSetterField = typeof(PropertyMemberDescriptor).GetField(
+                "_optimizedSetter",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+            optimizedSetterField.SetValue(descriptor, setter);
+        }
+
         private sealed class SampleProperties
         {
             public static int StaticValue { get; set; } = 10;
@@ -382,6 +455,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int SetterOnlyBacking { get; private set; }
 
             public int GetterOnly { get; } = 7;
+
+            public short ShortValue { get; set; }
 
             [NovaSharpHidden]
             public int HiddenProperty { get; set; }
