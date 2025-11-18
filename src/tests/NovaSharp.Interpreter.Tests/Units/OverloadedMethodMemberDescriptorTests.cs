@@ -855,14 +855,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             IOptimizableDescriptor,
             IWireableDescriptor
     {
-        private readonly MemberDescriptorAccess access;
-        private readonly bool isStatic;
-        private readonly ParameterDescriptor[] parameters;
-        private readonly string sortDiscriminant;
-        private readonly System.Func<CallbackArguments, DynValue> executor;
-        private readonly Type varArgsArrayType;
-        private readonly Type varArgsElementType;
-        private readonly Type extensionMethodType;
+        private readonly MemberDescriptorAccess _access;
+        private readonly bool _isStatic;
+        private readonly ParameterDescriptor[] _parameters;
+        private readonly string _sortDiscriminant;
+        private readonly System.Func<CallbackArguments, DynValue> _executor;
+        private readonly Type _varArgsArrayType;
+        private readonly Type _varArgsElementType;
+        private readonly Type _extensionMethodType;
 
         public RecordingOverloadDescriptor(
             string name,
@@ -877,33 +877,33 @@ namespace NovaSharp.Interpreter.Tests.Units
         )
         {
             Name = name;
-            this.access = access;
-            this.isStatic = isStatic;
-            this.parameters = parameters ?? System.Array.Empty<ParameterDescriptor>();
-            sortDiscriminant = sortKey;
-            executor = resultFactory ?? (_ => DynValue.Void);
-            this.varArgsArrayType = varArgsArrayType;
-            this.varArgsElementType = varArgsElementType;
-            this.extensionMethodType = extensionMethodType;
+            _access = access;
+            _isStatic = isStatic;
+            _parameters = parameters ?? System.Array.Empty<ParameterDescriptor>();
+            _sortDiscriminant = sortKey;
+            _executor = resultFactory ?? (_ => DynValue.Void);
+            _varArgsArrayType = varArgsArrayType;
+            _varArgsElementType = varArgsElementType;
+            _extensionMethodType = extensionMethodType;
         }
 
         public bool OptimizeCalled { get; private set; }
 
-        public bool IsStatic => isStatic;
+        public bool IsStatic => _isStatic;
 
         public string Name { get; }
 
-        public MemberDescriptorAccess MemberAccess => access;
+        public MemberDescriptorAccess MemberAccess => _access;
 
-        public Type ExtensionMethodType => extensionMethodType;
+        public Type ExtensionMethodType => _extensionMethodType;
 
-        public IReadOnlyList<ParameterDescriptor> Parameters => parameters;
+        public IReadOnlyList<ParameterDescriptor> Parameters => _parameters;
 
-        public Type VarArgsArrayType => varArgsArrayType;
+        public Type VarArgsArrayType => _varArgsArrayType;
 
-        public Type VarArgsElementType => varArgsElementType;
+        public Type VarArgsElementType => _varArgsElementType;
 
-        public string SortDiscriminant => sortDiscriminant;
+        public string SortDiscriminant => _sortDiscriminant;
 
         public DynValue Execute(
             Script script,
@@ -912,12 +912,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             CallbackArguments args
         )
         {
-            return executor(args);
+            return _executor(args);
         }
 
         public DynValue GetValue(Script script, object obj)
         {
-            return DynValue.NewCallback((ctx, arguments) => executor(arguments));
+            return DynValue.NewCallback((ctx, arguments) => _executor(arguments));
         }
 
         public void SetValue(Script script, object obj, DynValue value)
@@ -938,16 +938,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     internal sealed class NonWireableOverloadDescriptor : IOverloadableMemberDescriptor
     {
-        private readonly string name;
+        private readonly string _name;
 
         public NonWireableOverloadDescriptor(string name)
         {
-            this.name = name;
+            _name = name;
         }
 
         public bool IsStatic => true;
 
-        public string Name => name;
+        public string Name => _name;
 
         public MemberDescriptorAccess MemberAccess =>
             MemberDescriptorAccess.CanExecute | MemberDescriptorAccess.CanRead;
@@ -961,7 +961,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public Type VarArgsElementType => null;
 
-        public string SortDiscriminant => name;
+        public string SortDiscriminant => _name;
 
         public DynValue Execute(
             Script script,

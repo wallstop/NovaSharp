@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_LazyOptimizedInstanceActionUsesCompiledDelegate()
+        public void ExecuteLazyOptimizedInstanceActionUsesCompiledDelegate()
         {
             MethodMemberDescriptorHost host = new();
             MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_LazyOptimizedStaticFunctionReturnsDynValue()
+        public void ExecuteLazyOptimizedStaticFunctionReturnsDynValue()
         {
             MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
                 nameof(MethodMemberDescriptorHost.Sum),
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ReflectionModeInvokesMethodInfo()
+        public void ExecuteReflectionModeInvokesMethodInfo()
         {
             MethodMemberDescriptorHost host = new();
             MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ArrayConstructorCreatesExpectedArray()
+        public void ExecuteArrayConstructorCreatesExpectedArray()
         {
             ConstructorInfo ctor = typeof(int[,]).GetConstructor(
                 new[] { typeof(int), typeof(int) }
@@ -117,7 +117,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ExtensionMethodBindsInstance()
+        public void ExecuteExtensionMethodBindsInstance()
         {
             MethodMemberDescriptorHost host = new();
             host.SetName("Nova");
@@ -138,7 +138,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_OutParametersReturnTuple()
+        public void ExecuteOutParametersReturnTuple()
         {
             MethodMemberDescriptorHost host = new();
             MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
@@ -161,7 +161,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_DefaultAccessModeUsesGlobalDefault()
+        public void ConstructorDefaultAccessModeUsesGlobalDefault()
         {
             InteropAccessMode original = UserData.DefaultAccessMode;
             try
@@ -183,7 +183,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_WithByRefParametersEnforcesReflectionAccessMode()
+        public void ConstructorWithByRefParametersEnforcesReflectionAccessMode()
         {
             MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
                 nameof(MethodMemberDescriptorHost.TryDouble)
@@ -195,7 +195,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_OnAotPlatformForcesReflectionAccessMode()
+        public void ConstructorOnAotPlatformForcesReflectionAccessMode()
         {
             IPlatformAccessor original = Script.GlobalOptions.Platform;
             try

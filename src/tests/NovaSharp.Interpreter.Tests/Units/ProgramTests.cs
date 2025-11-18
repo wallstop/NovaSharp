@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private TextWriter _originalOut = null!;
         private TextReader _originalIn = null!;
-        private static readonly MethodInfo InterpreterLoopMethod =
+        private static readonly MethodInfo _interpreterLoopMethod =
             typeof(Program).GetMethod(
                 "InterpreterLoop",
                 BindingFlags.NonPublic | BindingFlags.Static
@@ -339,7 +339,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ShellContext shellContext
         )
         {
-            InterpreterLoopMethod.Invoke(null, new object[] { interpreter, shellContext });
+            _interpreterLoopMethod.Invoke(null, new object[] { interpreter, shellContext });
         }
 
         private sealed class StubReplInterpreter : ReplInterpreter

@@ -251,16 +251,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class BaseDefaultInputAccessor : PlatformAccessorBase
         {
-            private readonly string prefix;
+            private readonly string _prefix;
 
             public BaseDefaultInputAccessor(string prefix)
             {
-                this.prefix = prefix;
+                _prefix = prefix;
             }
 
             public override string GetPlatformNamePrefix()
             {
-                return prefix;
+                return _prefix;
             }
 
             public override void DefaultPrint(string content) { }

@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class BinaryDumpTests
     {
-        private DynValue Script_RunString(string script)
+        private DynValue ScriptRunString(string script)
         {
             Script s1 = new();
             DynValue v1 = s1.LoadString(script);
@@ -25,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return func.Function.Call();
         }
 
-        private DynValue Script_LoadFunc(string script, string funcname)
+        private DynValue ScriptLoadFunc(string script, string funcname)
         {
             Script s1 = new();
             DynValue v1 = s1.DoString(script);
@@ -85,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             DynValue res = fact.Function.Call(5);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -103,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             DynValue res = fact.Function.Call(5);
 
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
@@ -179,7 +179,7 @@ y = y + fact(5);
 return y;
 ";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(140));
@@ -199,7 +199,7 @@ return y;
 
 				return (g(3)(2));";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(5));
@@ -228,7 +228,7 @@ return y;
 	return 10 * m.t.dojob();
 								";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(10));
@@ -264,7 +264,7 @@ return y;
 	return 10 * Q.t.dojob();
 								";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(10));

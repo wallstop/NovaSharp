@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class PlatformAutoDetectorTests
     {
         [Test]
-        public void GetDefaultPlatform_ReturnsLimitedAccessorWhenUnityFlagged()
+        public void GetDefaultPlatformReturnsLimitedAccessorWhenUnityFlagged()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: true);
 
@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetDefaultScriptLoader_DetectsUnityAssemblies()
+        public void GetDefaultScriptLoaderDetectsUnityAssemblies()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             UnityAssemblyProbe.EnsureLoaded();
@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void IsRunningOnAot_UsesCachedValueAfterProbe()
+        public void IsRunningOnAotUsesCachedValueAfterProbe()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
 
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class PlatformDetectorScope : IDisposable
         {
-            private static readonly string[] FlagPropertyNames =
+            private static readonly string[] _flagPropertyNames =
             {
                 "IsRunningOnUnity",
                 "IsUnityNative",
@@ -60,26 +60,26 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "IsUnityIl2Cpp",
             };
 
-            private readonly Dictionary<PropertyInfo, object> originalFlags = new();
-            private readonly bool? originalAot;
-            private readonly bool originalAutoDetectionsDone;
+            private readonly Dictionary<PropertyInfo, object> _originalFlags = new();
+            private readonly bool? _originalAot;
+            private readonly bool _originalAutoDetectionsDone;
 
             private PlatformDetectorScope()
             {
-                foreach (string name in FlagPropertyNames)
+                foreach (string name in _flagPropertyNames)
                 {
                     PropertyInfo property = GetProperty(name);
-                    originalFlags[property] = property.GetValue(null, null)!;
+                    _originalFlags[property] = property.GetValue(null, null)!;
                 }
 
-                originalAot = (bool?)GetField("_isRunningOnAot").GetValue(null);
-                originalAutoDetectionsDone = (bool)GetField("_autoDetectionsDone").GetValue(null);
+                _originalAot = (bool?)GetField("_isRunningOnAot").GetValue(null);
+                _originalAutoDetectionsDone = (bool)GetField("_autoDetectionsDone").GetValue(null);
             }
 
             public static PlatformDetectorScope ResetForDetection()
             {
                 PlatformDetectorScope scope = new();
-                foreach (PropertyInfo property in scope.originalFlags.Keys)
+                foreach (PropertyInfo property in scope._originalFlags.Keys)
                 {
                     property.SetValue(null, false);
                 }
@@ -104,13 +104,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void Dispose()
             {
-                foreach ((PropertyInfo property, object value) in originalFlags)
+                foreach ((PropertyInfo property, object value) in _originalFlags)
                 {
                     property.SetValue(null, value);
                 }
 
-                SetAotValue(originalAot);
-                SetAutoDetectionsDone(originalAutoDetectionsDone);
+                SetAotValue(_originalAot);
+                SetAutoDetectionsDone(_originalAutoDetectionsDone);
             }
 
             private static void SetAutoDetectionsDone(bool value)
@@ -137,11 +137,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static class UnityAssemblyProbe
         {
-            private static bool loaded;
+            private static bool _loaded;
 
             public static void EnsureLoaded()
             {
-                if (loaded)
+                if (_loaded)
                 {
                     return;
                 }
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     )
                     .CreateTypeInfo();
 
-                loaded = true;
+                _loaded = true;
             }
         }
     }

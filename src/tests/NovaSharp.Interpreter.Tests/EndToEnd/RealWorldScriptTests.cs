@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public sealed class RealWorldScriptTests
     {
-        private static readonly string FixtureRoot = Path.Combine(
+        private static readonly string _fixtureRoot = Path.Combine(
             TestContext.CurrentContext.TestDirectory,
             "Fixtures",
             "RealWorld"
@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Action<Script, DynValue> exercise
         )
         {
-            string scriptPath = Path.Combine(FixtureRoot, relativePath);
+            string scriptPath = Path.Combine(_fixtureRoot, relativePath);
             Assert.That(File.Exists(scriptPath), Is.True, $"Fixture not found: {relativePath}");
 
             string source = File.ReadAllText(scriptPath);

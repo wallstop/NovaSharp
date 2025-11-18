@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "string")]
     public class StringModule
     {
-        public const string BASE64_DUMP_HEADER = "NovaSharp_dump_b64::";
+        public const string Base64DumpHeader = "NovaSharp_dump_b64::";
 
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     bytes = ms.ToArray();
                 }
                 string base64 = Convert.ToBase64String(bytes);
-                return DynValue.NewString(BASE64_DUMP_HEADER + base64);
+                return DynValue.NewString(Base64DumpHeader + base64);
             }
             catch (Exception ex)
             {

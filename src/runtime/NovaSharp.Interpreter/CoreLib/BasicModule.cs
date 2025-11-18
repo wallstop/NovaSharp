@@ -176,14 +176,14 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             tail.TailCallData.Continuation = new CallbackFunction(
-                __tostring_continuation,
+                TostringContinuation,
                 "__tostring"
             );
 
             return tail;
         }
 
-        private static DynValue __tostring_continuation(
+        private static DynValue TostringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

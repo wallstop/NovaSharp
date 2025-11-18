@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
 
             return meta
-                ?? DynValue.NewTuple(DynValue.NewCallback(__next_i), table, DynValue.NewNumber(0));
+                ?? DynValue.NewTuple(DynValue.NewCallback(NextArray), table, DynValue.NewNumber(0));
         }
 
         // pairs (t)
@@ -95,7 +95,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // __next_i (table [, index])
         // -------------------------------------------------------------------------------------------------------------------
         // Allows a program to traverse all fields of an array. index is an integer number
-        public static DynValue __next_i(
+        public static DynValue NextArray(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

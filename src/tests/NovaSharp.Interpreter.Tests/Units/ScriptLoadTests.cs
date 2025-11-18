@@ -306,7 +306,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using MemoryStream stream = new();
             script.Dump(chunk, stream);
-            return StringModule.BASE64_DUMP_HEADER + Convert.ToBase64String(stream.ToArray());
+            return StringModule.Base64DumpHeader + Convert.ToBase64String(stream.ToArray());
         }
 
         private static byte[] DumpToBytes(Script script, DynValue chunk)

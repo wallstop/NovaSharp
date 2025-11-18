@@ -371,7 +371,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.String, Does.StartWith(StringModule.BASE64_DUMP_HEADER));
+            Assert.That(result.String, Does.StartWith(StringModule.Base64DumpHeader));
         }
 
         [Test]

@@ -13,12 +13,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public class Proxy
         {
             [NovaSharpVisible(false)]
-            public Random random;
+            public Random RandomSource;
 
             [NovaSharpVisible(false)]
             public Proxy(Random r)
             {
-                random = r;
+                RandomSource = r;
             }
 
             public int GetValue()

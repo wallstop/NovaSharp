@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     internal sealed class PerformanceStatisticsTests
     {
-        private static readonly PerformanceCounter Counter = PerformanceCounter.Execution;
+        private static readonly PerformanceCounter _executionCounter = PerformanceCounter.Execution;
 
         [SetUp]
         public void ResetGlobalState()
@@ -31,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             PerformanceStatistics stats = new(new FakeClock());
 
-            IDisposable handle = stats.StartStopwatch(Counter);
+            IDisposable handle = stats.StartStopwatch(_executionCounter);
 
             Assert.That(handle, Is.Null);
         }
@@ -42,18 +42,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             FakeClock clock = new();
             PerformanceStatistics stats = new(clock) { Enabled = true };
 
-            using (stats.StartStopwatch(Counter))
+            using (stats.StartStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(25);
             }
 
-            PerformanceResult result = stats.GetPerformanceCounterResult(Counter);
+            PerformanceResult result = stats.GetPerformanceCounterResult(_executionCounter);
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result.Counter, Is.EqualTo(25));
                 Assert.That(result.Instances, Is.EqualTo(1));
-                Assert.That(result.Name, Is.EqualTo(Counter.ToString()));
+                Assert.That(result.Name, Is.EqualTo(_executionCounter.ToString()));
                 Assert.That(result.Global, Is.False);
             });
         }
@@ -64,16 +64,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             FakeClock clock = new();
             PerformanceStatistics stats = new(clock) { Enabled = true };
 
-            using (stats.StartStopwatch(Counter))
+            using (stats.StartStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(10);
             }
 
-            Assert.That(stats.GetPerformanceCounterResult(Counter), Is.Not.Null);
+            Assert.That(stats.GetPerformanceCounterResult(_executionCounter), Is.Not.Null);
 
             stats.Enabled = false;
 
-            Assert.That(stats.GetPerformanceCounterResult(Counter), Is.Null);
+            Assert.That(stats.GetPerformanceCounterResult(_executionCounter), Is.Null);
         }
 
         [Test]
@@ -82,13 +82,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             FakeClock clock = new();
             PerformanceStatistics.GlobalClock = clock;
 
-            using (PerformanceStatistics.StartGlobalStopwatch(Counter))
+            using (PerformanceStatistics.StartGlobalStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(40);
             }
 
             PerformanceStatistics stats = new(clock) { Enabled = true };
-            PerformanceResult result = stats.GetPerformanceCounterResult(Counter);
+            PerformanceResult result = stats.GetPerformanceCounterResult(_executionCounter);
 
             Assert.Multiple(() =>
             {
@@ -108,19 +108,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             stats.Enabled = true;
             stats.Enabled = true;
 
-            using (stats.StartStopwatch(Counter))
+            using (stats.StartStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(5);
             }
 
-            PerformanceResult enabledResult = stats.GetPerformanceCounterResult(Counter);
+            PerformanceResult enabledResult = stats.GetPerformanceCounterResult(_executionCounter);
 
             Assert.That(enabledResult.Counter, Is.EqualTo(5));
 
             stats.Enabled = false;
             stats.Enabled = false;
 
-            Assert.That(stats.GetPerformanceCounterResult(Counter), Is.Null);
+            Assert.That(stats.GetPerformanceCounterResult(_executionCounter), Is.Null);
         }
 
         [Test]
@@ -129,18 +129,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             FakeClock clock = new();
             PerformanceStatistics.GlobalClock = clock;
 
-            using (PerformanceStatistics.StartGlobalStopwatch(Counter))
+            using (PerformanceStatistics.StartGlobalStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(10);
             }
 
-            using (PerformanceStatistics.StartGlobalStopwatch(Counter))
+            using (PerformanceStatistics.StartGlobalStopwatch(_executionCounter))
             {
                 clock.AdvanceMilliseconds(15);
             }
 
             PerformanceStatistics stats = new(clock) { Enabled = true };
-            PerformanceResult result = stats.GetPerformanceCounterResult(Counter);
+            PerformanceResult result = stats.GetPerformanceCounterResult(_executionCounter);
 
             Assert.Multiple(() =>
             {

@@ -22,10 +22,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RemoteDebuggerTests
     {
-        private static readonly Utf8TcpServerOptions ServerOptions =
+        private static readonly Utf8TcpServerOptions _serverOptions =
             Utf8TcpServerOptions.LocalHostOnly | Utf8TcpServerOptions.SingleClientOnly;
 
-        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(2);
 
         [Test]
         public void HandshakeBroadcastsWelcomeAndSourceCode()
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 payloads =>
                     payloads.Any(m => m.Contains("<welcome"))
                     && payloads.Any(m => m.Contains("source-code")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             Assert.Multiple(() =>
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"run\" arg=\"\" />");
             DebuggerAction run = server.GetAction(0, sourceRef);
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand(
                 "<Command cmd=\"breakpoint\" arg=\"clear\" src=\"5\" line=\"6\" col=\"7\" />"
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"value\" />");
 
@@ -168,7 +168,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"function(()\" />");
             DebuggerAction refresh = server.GetAction(0, sourceRef);
@@ -176,7 +176,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IList<string> messages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("Error setting watch")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(messages.Last(), Does.Contain("function(()"));
 
@@ -203,12 +203,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             using RemoteDebuggerTestClient client = new(port);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"error_rx\" arg=\"timeout\" />");
             IList<string> messages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("<error_rx")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(messages.Last(), Does.Contain("timeout"));
 
@@ -236,13 +236,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"value\" />");
 
             IList<string> busyMessages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("Host busy")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(busyMessages.Any(m => m.Contains("Host busy")), Is.True);
             Assert.That(server.GetState(), Is.EqualTo("Busy"));
@@ -252,7 +252,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IList<string> readyMessages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("Host ready")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(readyMessages.Any(m => m.Contains("Host ready")), Is.True);
             Assert.That(server.GetState(), Is.EqualTo("Unknown"));
@@ -271,17 +271,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             Task<DebuggerAction> actionTask = Task.Run(() => server.GetAction(0, sourceRef));
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.GetState() == "Waiting debugger",
-                DefaultTimeout,
+                _defaultTimeout,
                 "Debugger never entered GetAction loop."
             );
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"live\" />");
-            Assert.That(actionTask.Wait(DefaultTimeout), Is.True, "GetAction never completed.");
+            Assert.That(actionTask.Wait(_defaultTimeout), Is.True, "GetAction never completed.");
 
             IList<string> messages = client.ReadAll(TimeSpan.FromMilliseconds(150));
             Assert.That(messages.Any(m => m.Contains("Host busy")), Is.False);
@@ -310,7 +310,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             using RemoteDebuggerTestClient client = new(port);
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             WatchItem[] frames =
             {
@@ -338,7 +338,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             server.Update(WatchType.CallStack, frames);
             IList<string> callStackMessages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("<callstack")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             string payload = callStackMessages.First(m => m.Contains("<callstack"));
@@ -366,7 +366,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             using RemoteDebuggerTestClient client = new(port);
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             WatchItem[] watches =
             {
@@ -379,7 +379,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             };
 
             server.Update(WatchType.Watches, watches);
-            client.ReadUntil(payloads => payloads.Any(m => m.Contains("<watches")), DefaultTimeout);
+            client.ReadUntil(
+                payloads => payloads.Any(m => m.Contains("<watches")),
+                _defaultTimeout
+            );
 
             server.Update(WatchType.Watches, watches);
             client.Drain(TimeSpan.FromMilliseconds(50));
@@ -392,7 +395,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             server.Update(WatchType.Watches, watches);
             IList<string> refreshed = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("<watches")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(refreshed.Last(), Does.Contain("value"));
         }
@@ -410,11 +413,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"foo,bar\" />");
             server.GetAction(0, sourceRef);
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"delwatch\" arg=\"foo, bar\" />");
             DebuggerAction refresh = server.GetAction(0, sourceRef);
@@ -434,12 +437,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             using RemoteDebuggerTestClient client = new(port);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"pause\" arg=\"\" />");
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.IsPauseRequested(),
-                DefaultTimeout,
+                _defaultTimeout,
                 "Pause command was not processed."
             );
         }
@@ -457,7 +460,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             client.SendCommand("<Command cmd=\"stepin\" arg=\"\" />");
             Assert.That(
@@ -515,7 +518,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             using DebugServer server = CreateServer(script, freeRunAfterAttach: true, out int port);
             using RemoteDebuggerTestClient client = new(port);
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
-            client.Drain(DefaultTimeout);
+            client.Drain(_defaultTimeout);
 
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
             DebuggerAction action = server.GetAction(0, sourceRef);
@@ -536,7 +539,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             client.SendCommand("<policy-file-request/>");
             IList<string> policy = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("cross-domain-policy")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             Assert.That(policy.Last(), Does.Contain("allow-access-from"));
@@ -555,7 +558,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients() == 1,
-                DefaultTimeout,
+                _defaultTimeout,
                 "Tcp client never registered with the server."
             );
         }
@@ -580,14 +583,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             using RemoteDebuggerTestClient client = new(port);
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients() == 1,
-                DefaultTimeout,
+                _defaultTimeout,
                 "Tcp client never registered with the server."
             );
 
             server.SignalExecutionEnded();
             IList<string> payloads = client.ReadUntil(
                 msgs => msgs.Any(m => m.Contains("execution-completed")),
-                DefaultTimeout
+                _defaultTimeout
             );
             Assert.That(payloads.Last(), Does.Contain("execution-completed"));
         }
@@ -604,7 +607,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             using RemoteDebuggerTestClient client = new(port);
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients() == 1,
-                DefaultTimeout,
+                _defaultTimeout,
                 "Tcp client never registered with the server."
             );
 
@@ -613,7 +616,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IList<string> payloads = client.ReadUntil(
                 msgs => msgs.Any(m => m.Contains("<breakpoints")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             Assert.Multiple(() =>
@@ -638,13 +641,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             client.SendCommand("<policy-file-request/>");
             client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("cross-domain-policy")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             IList<string> messages = client.ReadUntil(
                 payloads => payloads.Any(m => m.Contains("<welcome")),
-                DefaultTimeout
+                _defaultTimeout
             );
 
             Assert.That(messages.Any(m => m.Contains("<welcome")), Is.True);
@@ -661,7 +664,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "NovaSharp.Tests",
                 script,
                 port,
-                ServerOptions,
+                _serverOptions,
                 freeRunAfterAttach
             );
         }

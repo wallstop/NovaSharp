@@ -14,26 +14,26 @@ namespace NovaSharp.Benchmarks
 
     internal static class LuaRuntimeSuites
     {
-        public const int LOOP_ITERATIONS = 2_000;
-        public const int TABLE_ENTRY_COUNT = 128;
-        public const int COROUTINE_STEPS = 64;
-        public const int USER_DATA_ITERATIONS = 256;
+        public const int LoopIterations = 2_000;
+        public const int TableEntryCount = 128;
+        public const int CoroutineSteps = 64;
+        public const int UserDataIterations = 256;
 
         public static string GetScript(RuntimeScenario scenario) =>
             scenario switch
             {
-                RuntimeScenario.NumericLoops => NumericLoopScript,
-                RuntimeScenario.TableMutation => TABLE_MUTATION_SCRIPT,
-                RuntimeScenario.CoroutinePipeline => COROUTINE_PIPELINE_SCRIPT,
-                RuntimeScenario.UserDataInterop => USER_DATA_INTEROP_SCRIPT,
-                _ => NumericLoopScript,
+                RuntimeScenario.NumericLoops => _numericLoopScript,
+                RuntimeScenario.TableMutation => TableMutationScript,
+                RuntimeScenario.CoroutinePipeline => CoroutinePipelineScript,
+                RuntimeScenario.UserDataInterop => UserDataInteropScript,
+                _ => _numericLoopScript,
             };
 
-        private static readonly string NumericLoopScript =
+        private static readonly string _numericLoopScript =
             $@"
 return function ()
     local sum = 0.0
-    for i = 1, {LOOP_ITERATIONS} do
+    for i = 1, {LoopIterations} do
         sum = sum + math.sin(i) * math.cos(i * 0.5)
         if (i % 7) == 0 then
             sum = sum / 2.0
@@ -42,7 +42,7 @@ return function ()
     return sum
 end";
 
-        private const string TABLE_MUTATION_SCRIPT =
+        private const string TableMutationScript =
             $@"
 return function (source)
     local acc = 0
@@ -56,7 +56,7 @@ return function (source)
     return acc
 end";
 
-        private const string COROUTINE_PIPELINE_SCRIPT =
+        private const string CoroutinePipelineScript =
             $@"
 return function (steps)
     local producer = coroutine.create(function(n)
@@ -77,7 +77,7 @@ return function (steps)
     return last
 end";
 
-        private const string USER_DATA_INTEROP_SCRIPT =
+        private const string UserDataInteropScript =
             $@"
 return function (host, iterations)
     local value = 0

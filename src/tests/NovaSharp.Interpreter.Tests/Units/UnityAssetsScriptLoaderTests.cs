@@ -113,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public static class UnityEngineReflectionHarness
         {
-            private static readonly object SyncRoot = new();
+            private static readonly object _syncRoot = new();
             private static bool _assemblyBuilt;
             private static bool _throwOnLoad;
             private static Assembly _unityAssembly;
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal static void EnsureUnityAssemblies(Dictionary<string, string> scripts)
             {
-                lock (SyncRoot)
+                lock (_syncRoot)
                 {
                     _scripts = new Dictionary<string, string>(
                         scripts,

@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RemoteDebuggerServiceTests
     {
-        private static readonly TimeSpan ServerReadyTimeout = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan _serverReadyTimeout = TimeSpan.FromSeconds(2);
 
         [Test]
         public void SingleScriptModeServesIframeWithConfiguredRpcPort()
@@ -165,7 +165,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                         return false;
                     }
                 },
-                ServerReadyTimeout
+                _serverReadyTimeout
             );
 
             if (!success || response == null)

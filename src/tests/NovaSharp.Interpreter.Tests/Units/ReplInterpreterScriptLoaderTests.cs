@@ -134,13 +134,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class TestReplLoader : ReplInterpreterScriptLoader
         {
-            private readonly HashSet<string> existingPaths = new(StringComparer.Ordinal);
+            private readonly HashSet<string> _existingPaths = new(StringComparer.Ordinal);
 
             public void MarkExisting(params string[] paths)
             {
                 foreach (string path in paths)
                 {
-                    existingPaths.Add(path);
+                    _existingPaths.Add(path);
                 }
             }
 
@@ -151,24 +151,24 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override bool ScriptFileExists(string name)
             {
-                return existingPaths.Contains(name);
+                return _existingPaths.Contains(name);
             }
         }
 
         private sealed class EnvRestore : IDisposable
         {
-            private readonly string name;
-            private readonly string? original;
+            private readonly string _name;
+            private readonly string? _original;
 
             public EnvRestore(string name, string? original)
             {
-                this.name = name;
-                this.original = original;
+                _name = name;
+                _original = original;
             }
 
             public void Dispose()
             {
-                Environment.SetEnvironmentVariable(name, original);
+                Environment.SetEnvironmentVariable(_name, _original);
             }
         }
     }

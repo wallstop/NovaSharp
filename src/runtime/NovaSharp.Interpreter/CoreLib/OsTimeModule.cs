@@ -25,14 +25,14 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "os")]
     public class OsTimeModule
     {
-        private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider
+        private static readonly DateTime _epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime _globalStartTimeUtc = SystemTimeProvider
             .Instance.GetUtcNow()
             .UtcDateTime;
 
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
-            double time = (dateTime - (epoch ?? Epoch)).TotalSeconds;
+            double time = (dateTime - (epoch ?? _epoch)).TotalSeconds;
 
             if (time < 0.0)
             {
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.CoreLib
         private static DateTime FromUnixTime(double unixtime)
         {
             TimeSpan ts = TimeSpan.FromSeconds(unixtime);
-            return Epoch + ts;
+            return _epoch + ts;
         }
 
         [NovaSharpModuleMethod(Name = "clock")]
@@ -345,9 +345,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return context?.OwnerScript?.TimeProvider ?? SystemTimeProvider.Instance;
         }
 
-        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context)
-        {
-            return context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
-        }
+        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context) =>
+            context?.OwnerScript?.StartTimeUtc ?? _globalStartTimeUtc;
     }
 }

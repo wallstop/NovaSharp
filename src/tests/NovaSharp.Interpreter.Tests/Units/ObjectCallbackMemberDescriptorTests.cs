@@ -12,11 +12,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ObjectCallbackMemberDescriptorTests
     {
-        private static CallbackArguments NoOpArgs =>
-            new CallbackArguments(
-                new List<DynValue> { DynValue.NewNumber(1), DynValue.NewNumber(2) },
-                false
-            );
+        private static readonly CallbackArguments _noOpArgs = new CallbackArguments(
+            new List<DynValue> { DynValue.NewNumber(1), DynValue.NewNumber(2) },
+            false
+        );
 
         [Test]
         public void ExecuteReturnsCallbackResult()
@@ -34,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 }
             );
 
-            DynValue result = descriptor.Execute(script, "host", context: null, NoOpArgs);
+            DynValue result = descriptor.Execute(script, "host", context: null, _noOpArgs);
 
             Assert.Multiple(() =>
             {
@@ -54,7 +53,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 parameters: Array.Empty<ParameterDescriptor>()
             );
 
-            DynValue result = descriptor.Execute(script, new object(), null, NoOpArgs);
+            DynValue result = descriptor.Execute(script, new object(), null, _noOpArgs);
 
             Assert.That(result.Type, Is.EqualTo(DataType.Void));
         }

@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class FunctionCallExpressionTests
     {
         [Test]
-        public void Compile_EmitsCallWithParenthesizedArguments()
+        public void CompileEmitsCallWithParenthesizedArguments()
         {
             FunctionCallExpression expression = CreateExpression("(1, \"two\")", out Script script);
             ByteCode byteCode = new(script);
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Compile_EmitsThisCallForColonSyntax()
+        public void CompileEmitsThisCallForColonSyntax()
         {
             FunctionCallExpression expression = CreateExpression(
                 "(42)",
@@ -93,7 +93,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_AllowsStringLiteralArguments()
+        public void ConstructorAllowsStringLiteralArguments()
         {
             FunctionCallExpression expression = CreateExpression("\"payload\"", out Script script);
             ByteCode byteCode = new(script);
@@ -117,7 +117,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_AllowsTableConstructorArguments()
+        public void ConstructorAllowsTableConstructorArguments()
         {
             FunctionCallExpression expression = CreateExpression(
                 "{ value = 1 }",
@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_ThrowsWhenArgumentsMissing()
+        public void ConstructorThrowsWhenArgumentsMissing()
         {
             Script script = new();
             ScriptLoadingContext context = new(script) { Lexer = new Lexer(0, string.Empty, true) };
@@ -174,12 +174,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class FunctionExpressionStub : Expression
         {
-            private readonly string friendlyName;
+            private readonly string _friendlyName;
 
             public FunctionExpressionStub(ScriptLoadingContext context, string friendlyName)
                 : base(context)
             {
-                this.friendlyName = friendlyName;
+                _friendlyName = friendlyName;
             }
 
             public override void Compile(ByteCode bc)
@@ -189,7 +189,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override string GetFriendlyDebugName()
             {
-                return friendlyName;
+                return _friendlyName;
             }
 
             public override DynValue Eval(ScriptExecutionContext context)

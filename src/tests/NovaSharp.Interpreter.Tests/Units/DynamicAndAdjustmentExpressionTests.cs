@@ -89,8 +89,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     internal sealed class StubExpression : Expression
     {
-        private readonly DynValue value;
-        private readonly SymbolRef dynamic;
+        private readonly DynValue _value;
+        private readonly SymbolRef _dynamic;
 
         public StubExpression(
             ScriptLoadingContext context,
@@ -99,8 +99,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         )
             : base(context)
         {
-            this.value = value ?? DynValue.Void;
-            dynamic = dynamicRef;
+            _value = value ?? DynValue.Void;
+            _dynamic = dynamicRef;
         }
 
         public int CompileCount { get; private set; }
@@ -116,12 +116,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public override DynValue Eval(ScriptExecutionContext context)
         {
             EvalCount++;
-            return value;
+            return _value;
         }
 
         public override SymbolRef FindDynamic(ScriptExecutionContext context)
         {
-            return dynamic;
+            return _dynamic;
         }
     }
 

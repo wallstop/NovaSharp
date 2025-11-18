@@ -228,9 +228,9 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            if (code.StartsWith(StringModule.BASE64_DUMP_HEADER))
+            if (code.StartsWith(StringModule.Base64DumpHeader))
             {
-                code = code.Substring(StringModule.BASE64_DUMP_HEADER.Length);
+                code = code.Substring(StringModule.Base64DumpHeader.Length);
                 byte[] data = Convert.FromBase64String(code);
                 using MemoryStream ms = new(data);
                 return LoadStream(ms, globalTable, codeFriendlyName);

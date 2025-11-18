@@ -20,11 +20,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private const string IndexerGetterName = "get_Item";
         private const string IndexerSetterName = "set_Item";
-        private Script script = null!;
-        private DispatchHost hostAdd = null!;
-        private DispatchHost hostOther = null!;
-        private DispatchHost hostCopy = null!;
-        private DispatchHost hostZero = null!;
+        private Script _script = null!;
+        private DispatchHost _hostAdd = null!;
+        private DispatchHost _hostOther = null!;
+        private DispatchHost _hostCopy = null!;
+        private DispatchHost _hostZero = null!;
 
         [OneTimeSetUp]
         public void RegisterType()
@@ -39,27 +39,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         [SetUp]
         public void CreateScript()
         {
-            script = new Script(CoreModules.PresetComplete);
-            hostAdd = new DispatchHost(2, new[] { 1, 2 });
-            hostOther = new DispatchHost(3, new[] { 3 });
-            hostCopy = new DispatchHost(2, new[] { 2 });
-            hostZero = new DispatchHost(0, new[] { 0 });
+            _script = new Script(CoreModules.PresetComplete);
+            _hostAdd = new DispatchHost(2, new[] { 1, 2 });
+            _hostOther = new DispatchHost(3, new[] { 3 });
+            _hostCopy = new DispatchHost(2, new[] { 2 });
+            _hostZero = new DispatchHost(0, new[] { 0 });
 
-            script.Globals["hostAdd"] = UserData.Create(hostAdd);
-            script.Globals["hostOther"] = UserData.Create(hostOther);
-            script.Globals["hostCopy"] = UserData.Create(hostCopy);
-            script.Globals["hostZero"] = UserData.Create(hostZero);
+            _script.Globals["hostAdd"] = UserData.Create(_hostAdd);
+            _script.Globals["hostOther"] = UserData.Create(_hostOther);
+            _script.Globals["hostCopy"] = UserData.Create(_hostCopy);
+            _script.Globals["hostZero"] = UserData.Create(_hostZero);
         }
 
         [Test]
         public void ArithmeticOperatorsDispatchToClrOverloads()
         {
-            DynValue sum = script.DoString("return (hostAdd + hostOther).value");
-            DynValue difference = script.DoString("return (hostOther - hostAdd).value");
-            DynValue product = script.DoString("return (hostAdd * hostOther).value");
-            DynValue quotient = script.DoString("return (hostOther / hostAdd).value");
-            DynValue modulus = script.DoString("return (hostOther % hostAdd).value");
-            DynValue negate = script.DoString("return (-hostAdd).value");
+            DynValue sum = _script.DoString("return (hostAdd + hostOther).value");
+            DynValue difference = _script.DoString("return (hostOther - hostAdd).value");
+            DynValue product = _script.DoString("return (hostAdd * hostOther).value");
+            DynValue quotient = _script.DoString("return (hostOther / hostAdd).value");
+            DynValue modulus = _script.DoString("return (hostOther % hostAdd).value");
+            DynValue negate = _script.DoString("return (-hostAdd).value");
 
             Assert.Multiple(() =>
             {
@@ -75,9 +75,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ComparisonOperatorsUseComparable()
         {
-            DynValue equality = script.DoString("return hostAdd == hostCopy");
-            DynValue lessThan = script.DoString("return hostAdd < hostOther");
-            DynValue lessThanOrEqual = script.DoString("return hostAdd <= hostCopy");
+            DynValue equality = _script.DoString("return hostAdd == hostCopy");
+            DynValue lessThan = _script.DoString("return hostAdd < hostOther");
+            DynValue lessThanOrEqual = _script.DoString("return hostAdd <= hostCopy");
 
             Assert.Multiple(() =>
             {
@@ -90,14 +90,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ComparisonMetamethodSupportsSecondOperandOwnership()
         {
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__lt");
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(_hostAdd);
+            DynValue meta = descriptor.MetaIndex(_script, _hostAdd, "__lt");
             Assert.That(meta, Is.Not.Null, "__lt metamethod should be registered");
 
-            DynValue result = script.Call(
+            DynValue result = _script.Call(
                 meta,
-                UserData.Create(hostOther),
-                UserData.Create(hostAdd)
+                UserData.Create(_hostOther),
+                UserData.Create(_hostAdd)
             );
 
             Assert.That(result.Boolean, Is.False);
@@ -106,9 +106,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void MetaIndexReturnsNullForUnsupportedMetamethod()
         {
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(_hostAdd);
 
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__unknown");
+            DynValue meta = descriptor.MetaIndex(_script, _hostAdd, "__unknown");
 
             Assert.That(meta, Is.Null);
         }
@@ -116,16 +116,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void LenOperatorReturnsCount()
         {
-            DynValue len = script.DoString("return #hostAdd");
+            DynValue len = _script.DoString("return #hostAdd");
             Assert.That(len.Number, Is.EqualTo(2));
         }
 
         [Test]
         public void LenOperatorFallsBackToCountWhenLengthMissing()
         {
-            script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
+            _script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
 
-            DynValue len = script.DoString("return #countOnly");
+            DynValue len = _script.DoString("return #countOnly");
 
             Assert.That(len.Number, Is.EqualTo(4));
         }
@@ -134,8 +134,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ComparisonMetamethodReturnsNullWhenObjectIsNotComparable()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
-            DynValue lt = descriptor.MetaIndex(script, new DescriptorHost(), "__lt");
-            DynValue le = descriptor.MetaIndex(script, new DescriptorHost(), "__le");
+            DynValue lt = descriptor.MetaIndex(_script, new DescriptorHost(), "__lt");
+            DynValue le = descriptor.MetaIndex(_script, new DescriptorHost(), "__le");
 
             Assert.Multiple(() =>
             {
@@ -149,7 +149,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
-            DynValue len = descriptor.MetaIndex(script, null, "__len");
+            DynValue len = descriptor.MetaIndex(_script, null, "__len");
 
             Assert.That(len, Is.Null);
         }
@@ -157,11 +157,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ToNumberDispatchesImplicitConversion()
         {
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostOther);
-            DynValue meta = descriptor.MetaIndex(script, hostOther, "__tonumber");
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(_hostOther);
+            DynValue meta = descriptor.MetaIndex(_script, _hostOther, "__tonumber");
             Assert.That(meta, Is.Not.Null, "__tonumber meta should be registered");
 
-            DynValue number = script.Call(meta, UserData.Create(hostOther));
+            DynValue number = _script.Call(meta, UserData.Create(_hostOther));
 
             Assert.That(number.Type, Is.EqualTo(DataType.Number));
             Assert.That(number.Number, Is.EqualTo(3));
@@ -172,7 +172,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             IntConversionOnlyHost host = new(9);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
-            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+            DynValue meta = descriptor.MetaIndex(_script, host, "__tonumber");
 
             Assert.That(
                 meta,
@@ -180,7 +180,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "__tonumber meta should be generated for numeric conversions"
             );
 
-            DynValue number = script.Call(meta, UserData.Create(host));
+            DynValue number = _script.Call(meta, UserData.Create(host));
 
             Assert.That(number.Type, Is.EqualTo(DataType.Number));
             Assert.That(number.Number, Is.EqualTo(9));
@@ -191,7 +191,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             NoConversionHost host = new(6);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
-            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+            DynValue meta = descriptor.MetaIndex(_script, host, "__tonumber");
 
             Assert.That(meta, Is.Null);
         }
@@ -199,12 +199,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ToBoolUsesImplicitConversion()
         {
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__tobool");
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(_hostAdd);
+            DynValue meta = descriptor.MetaIndex(_script, _hostAdd, "__tobool");
             Assert.That(meta, Is.Not.Null, "__tobool meta should be registered");
 
-            DynValue trueResult = script.Call(meta, UserData.Create(hostAdd));
-            DynValue falseResult = script.Call(meta, UserData.Create(hostZero));
+            DynValue trueResult = _script.Call(meta, UserData.Create(_hostAdd));
+            DynValue falseResult = _script.Call(meta, UserData.Create(_hostZero));
 
             Assert.Multiple(() =>
             {
@@ -216,7 +216,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IteratorDispatchEnumeratesClrEnumerable()
         {
-            DynValue sum = script.DoString(
+            DynValue sum = _script.DoString(
                 @"
                 local total = 0
                 for value in hostAdd do
@@ -376,7 +376,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             UserData.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
 
-            DynValue result = script.DoString("return hostAdd:DescribeExt()");
+            DynValue result = _script.DoString("return hostAdd:DescribeExt()");
 
             Assert.That(result.String, Is.EqualTo("ext:2"));
         }
@@ -385,7 +385,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DivisionByZeroPropagatesInvocationException()
         {
             Assert.That(
-                () => script.DoString("return (hostAdd / hostZero).value"),
+                () => _script.DoString("return (hostAdd / hostZero).value"),
                 Throws
                     .InstanceOf<TargetInvocationException>()
                     .With.InnerException.InstanceOf<DivideByZeroException>()
@@ -395,10 +395,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConcatOperatorFallsBackToRegisteredMetamethod()
         {
-            script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L"));
-            script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R"));
+            _script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L"));
+            _script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R"));
 
-            DynValue concat = script.DoString("return concatLeft .. concatRight");
+            DynValue concat = _script.DoString("return concatLeft .. concatRight");
 
             Assert.That(concat.String, Is.EqualTo("L|R"));
         }
@@ -427,7 +427,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             bool handled = descriptor.SetIndex(
-                script,
+                _script,
                 new DescriptorHost(),
                 DynValue.NewNumber(2),
                 DynValue.NewString("payload"),
@@ -452,16 +452,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                     "DirectTarget",
                     MemberDescriptorAccess.CanWrite,
                     getter: (_, _) => DynValue.Nil,
-                    setter: (_, _, value) =>
+                    setter: (_, _, _value) =>
                     {
                         invoked = true;
-                        Assert.That(value.String, Is.EqualTo("direct"));
+                        Assert.That(_value.String, Is.EqualTo("direct"));
                     }
                 )
             );
 
             bool handled = descriptor.SetIndex(
-                script,
+                _script,
                 new DescriptorHost(),
                 DynValue.NewString("DirectTarget"),
                 DynValue.NewString("direct"),
@@ -481,7 +481,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
             bool handled = descriptor.SetIndex(
-                script,
+                _script,
                 new DescriptorHost(),
                 DynValue.NewNumber(5),
                 DynValue.NewString("ignored"),
@@ -497,7 +497,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
             bool handled = descriptor.SetIndex(
-                script,
+                _script,
                 new DescriptorHost(),
                 DynValue.NewString("DoesNotExist"),
                 DynValue.NewNumber(1),
@@ -608,27 +608,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public MemberDescriptorAccess MemberAccess { get; }
 
-            public DynValue GetValue(Script script, object obj)
+            public DynValue GetValue(Script currentScript, object obj)
             {
-                return getter(script, obj);
+                return getter(currentScript, obj);
             }
 
-            public void SetValue(Script script, object obj, DynValue value)
+            public void SetValue(Script currentScript, object obj, DynValue newValue)
             {
-                setter(script, obj, value);
+                setter(currentScript, obj, newValue);
             }
         }
 
         private sealed class StubOverloadableMemberDescriptor : IOverloadableMemberDescriptor
         {
-            private readonly DynValue result;
+            private readonly DynValue _result;
 
             public StubOverloadableMemberDescriptor(string name, string discriminant)
             {
                 Name = name;
                 SortDiscriminant = discriminant;
                 MemberAccess = MemberDescriptorAccess.CanExecute;
-                result = DynValue.NewString(discriminant);
+                _result = DynValue.NewString(discriminant);
             }
 
             public bool IsStatic { get; } = false;
@@ -655,12 +655,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CallbackArguments args
             )
             {
-                return result;
+                return _result;
             }
 
             public DynValue GetValue(Script script, object obj)
             {
-                return DynValue.NewCallback((_, _) => result);
+                return DynValue.NewCallback((_, _) => _result);
             }
 
             public void SetValue(Script script, object obj, DynValue value)
@@ -673,13 +673,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             : IMemberDescriptor,
                 IOptimizableDescriptor
         {
-            private readonly Action optimize;
+            private readonly Action _optimize;
 
             public StubOptimizableMemberDescriptor(string name, Action optimize)
             {
                 Name = name;
                 MemberAccess = MemberDescriptorAccess.CanRead;
-                this.optimize = optimize;
+                this._optimize = optimize;
             }
 
             public bool IsStatic { get; } = false;
@@ -700,7 +700,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void Optimize()
             {
-                optimize?.Invoke();
+                _optimize?.Invoke();
             }
         }
 
@@ -771,64 +771,64 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     internal sealed class DispatchHost : IComparable<DispatchHost>, IComparable, IEnumerable<int>
     {
-        private readonly int value;
-        private readonly IList<int> sequence;
+        private readonly int _value;
+        private readonly IList<int> _sequence;
 
         public DispatchHost(int value, IEnumerable<int> sequence)
         {
-            this.value = value;
-            this.sequence = new List<int>(sequence);
+            _value = value;
+            _sequence = new List<int>(sequence);
         }
 
-        public int Value => value;
+        public int Value => _value;
 
-        public int Length => sequence.Count;
+        public int Length => _sequence.Count;
 
-        public int Count => sequence.Count;
+        public int Count => _sequence.Count;
 
         public static DispatchHost operator +(DispatchHost left, DispatchHost right)
         {
-            return new DispatchHost(left.value + right.value, left.sequence);
+            return new DispatchHost(left._value + right._value, left._sequence);
         }
 
         public static DispatchHost operator -(DispatchHost left, DispatchHost right)
         {
-            return new DispatchHost(left.value - right.value, left.sequence);
+            return new DispatchHost(left._value - right._value, left._sequence);
         }
 
         public static DispatchHost operator *(DispatchHost left, DispatchHost right)
         {
-            return new DispatchHost(left.value * right.value, left.sequence);
+            return new DispatchHost(left._value * right._value, left._sequence);
         }
 
         public static DispatchHost operator /(DispatchHost left, DispatchHost right)
         {
-            return new DispatchHost(left.value / right.value, left.sequence);
+            return new DispatchHost(left._value / right._value, left._sequence);
         }
 
         public static DispatchHost operator %(DispatchHost left, DispatchHost right)
         {
-            return new DispatchHost(left.value % right.value, left.sequence);
+            return new DispatchHost(left._value % right._value, left._sequence);
         }
 
         public static DispatchHost operator -(DispatchHost host)
         {
-            return new DispatchHost(-host.value, host.sequence);
+            return new DispatchHost(-host._value, host._sequence);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is DispatchHost other && other.value == value;
+            return obj is DispatchHost other && other._value == _value;
         }
 
         public override int GetHashCode()
         {
-            return value;
+            return _value;
         }
 
         public int CompareTo(DispatchHost other)
         {
-            return value.CompareTo(other?.value ?? 0);
+            return _value.CompareTo(other?._value ?? 0);
         }
 
         int IComparable.CompareTo(object obj)
@@ -843,7 +843,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public IEnumerator<int> GetEnumerator()
         {
-            return sequence.GetEnumerator();
+            return _sequence.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -853,12 +853,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public static implicit operator double(DispatchHost host)
         {
-            return host.value;
+            return host._value;
         }
 
         public static implicit operator bool(DispatchHost host)
         {
-            return host.value != 0;
+            return host._value != 0;
         }
     }
 
