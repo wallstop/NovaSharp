@@ -9,6 +9,8 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Globalization;
     using System.Text;
     using Debugging;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -382,6 +384,58 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             executionContext.GetScript().Options.DebugPrint(sb.ToString());
+
+            return DynValue.Nil;
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "warn")]
+        public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            StringBuilder sb = new();
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append('\t');
+                }
+
+                sb.Append(args.AsStringUsingMeta(executionContext, i, "warn"));
+            }
+
+            string payload = sb.ToString();
+            Script script = executionContext.GetScript();
+            DynValue warnHandler = script.Globals.RawGet("_WARN");
+
+            if (
+                warnHandler != null
+                && (
+                    warnHandler.Type == DataType.Function
+                    || warnHandler.Type == DataType.ClrFunction
+                )
+            )
+            {
+                script.Call(warnHandler, DynValue.NewString(payload));
+            }
+            else
+            {
+                Action<string> sink = script.Options.DebugPrint;
+
+                if (sink != null)
+                {
+                    sink(payload);
+                }
+                else
+                {
+                    Console.Error.WriteLine(payload);
+                }
+            }
 
             return DynValue.Nil;
         }

@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Modules
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
@@ -26,6 +27,7 @@ namespace NovaSharp.Interpreter.Modules
         public static Table RegisterCoreModules(this Table table, CoreModules modules)
         {
             modules = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
+            LuaCompatibilityProfile profile = GetCompatibilityProfile(table.OwnerScript);
 
             if (modules.Has(CoreModules.GlobalConsts))
             {
@@ -82,7 +84,7 @@ namespace NovaSharp.Interpreter.Modules
                 RegisterModuleType<CoroutineModule>(table);
             }
 
-            if (modules.Has(CoreModules.Bit32))
+            if (modules.Has(CoreModules.Bit32) && profile.SupportsBit32Library)
             {
                 RegisterModuleType<Bit32Module>(table);
             }
@@ -157,6 +159,9 @@ namespace NovaSharp.Interpreter.Modules
         public static Table RegisterModuleType(this Table gtable, Type t)
         {
             Table table = CreateModuleNamespace(gtable, t);
+            Script ownerScript = table.OwnerScript;
+            LuaCompatibilityVersion scriptVersion =
+                ownerScript?.CompatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
 
             foreach (MethodInfo mi in Framework.Do.GetMethods(t).Where(mi => mi.IsStatic))
             {
@@ -169,6 +174,11 @@ namespace NovaSharp.Interpreter.Modules
                     NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                         mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
                             .First();
+
+                    if (!IsMemberCompatible(mi, scriptVersion))
+                    {
+                        continue;
+                    }
 
                     if (!CallbackFunction.CheckCallbackSignature(mi, true))
                     {
@@ -214,6 +224,11 @@ namespace NovaSharp.Interpreter.Modules
                     )
             )
             {
+                if (!IsMemberCompatible(fi, scriptVersion))
+                {
+                    continue;
+                }
+
                 NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                     fi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false).First();
                 RegisterScriptField(fi, null, table, t, attr.Name, fi.Name);
@@ -230,6 +245,11 @@ namespace NovaSharp.Interpreter.Modules
                     )
             )
             {
+                if (!IsMemberCompatible(fi, scriptVersion))
+                {
+                    continue;
+                }
+
                 NovaSharpModuleConstantAttribute attr = (NovaSharpModuleConstantAttribute)
                     fi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false).First();
                 string name = (!string.IsNullOrEmpty(attr.Name)) ? attr.Name : fi.Name;
@@ -408,6 +428,22 @@ namespace NovaSharp.Interpreter.Modules
             }
 
             return names;
+        }
+
+        private static bool IsMemberCompatible(
+            MemberInfo member,
+            LuaCompatibilityVersion scriptVersion
+        )
+        {
+            LuaCompatibilityAttribute attr = member.GetCustomAttribute<LuaCompatibilityAttribute>();
+            return attr == null || attr.IsSupported(scriptVersion);
+        }
+
+        private static LuaCompatibilityProfile GetCompatibilityProfile(Script script)
+        {
+            return script != null
+                ? script.CompatibilityProfile
+                : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
         }
     }
 }

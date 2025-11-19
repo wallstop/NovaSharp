@@ -138,6 +138,12 @@ namespace NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Gets the derived compatibility profile describing the selected Lua feature set.
+        /// </summary>
+        public LuaCompatibilityProfile CompatibilityProfile =>
+            LuaCompatibilityProfile.ForVersion(CompatibilityVersion);
+
+        /// <summary>
         /// Gets access to performance statistics.
         /// </summary>
         public PerformanceStatistics PerformanceStats { get; internal set; }

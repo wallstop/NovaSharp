@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -319,6 +320,52 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             return DynValue.NewString(sb.ToString());
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        [NovaSharpModuleMethod(Name = "move")]
+        public static DynValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            const string func = "move";
+
+            Table source = args.AsType(0, func, DataType.Table, false).Table;
+            int from = args.AsInt(1, func);
+            int to = args.AsInt(2, func);
+            int target = args.AsInt(3, func);
+            Table destination =
+                (args.Count >= 5 && !args[4].IsNil())
+                    ? args.AsType(4, func, DataType.Table, false).Table
+                    : source;
+
+            int elementsToCopy = to - from;
+
+            if (elementsToCopy >= 0)
+            {
+                int offset = target - from;
+
+                if (destination == source && offset > 0 && target <= to)
+                {
+                    for (int i = elementsToCopy; i >= 0; i--)
+                    {
+                        int srcIndex = from + i;
+                        int destIndex = srcIndex + offset;
+                        DynValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value ?? DynValue.Nil);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i <= elementsToCopy; i++)
+                    {
+                        int srcIndex = from + i;
+                        int destIndex = srcIndex + offset;
+                        DynValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value ?? DynValue.Nil);
+                    }
+                }
+            }
+
+            return DynValue.NewTable(destination);
         }
 
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
