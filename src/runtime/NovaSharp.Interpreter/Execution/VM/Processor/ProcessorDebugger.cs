@@ -78,6 +78,16 @@ namespace NovaSharp.Interpreter.Execution.VM
             ListenDebugger(instr, instructionPtr);
         }
 
+        internal IReadOnlyList<SourceRef> GetBreakpointsForTests()
+        {
+            return _debug.BreakPoints.ToArray();
+        }
+
+        internal void ClearBreakpointsForTests()
+        {
+            _debug.BreakPoints.Clear();
+        }
+
         internal bool DebuggerEnabled
         {
             get { return _debug.DebuggerEnabled; }
