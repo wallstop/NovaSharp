@@ -1,10 +1,10 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-18 21:33 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-18 21:53 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
 - Overall line coverage: **86.2 %**
-- NovaSharp.Interpreter line coverage: **95.5 %**
+- NovaSharp.Interpreter line coverage: **95.6 %**
 - NovaSharp.Cli line coverage: **80.0 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **92.4 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
@@ -13,7 +13,6 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 ## Prioritized Red List (Interpreter < 90 %)
 - `Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` – **90.0 % line / 83.3 % branch** (static/instance fallback paths still lack direct coverage).
 - `Tree.Expressions.BinaryOperatorExpression` – **90.0 % line / 82.5 % branch** (the short-circuit/defer branches still lack targeted unit coverage).
-- `Execution.VM.ByteCode` – **90.3 % line / 66.6 % branch** (error/bounds paths for instruction metadata and relocation logic remain untested).
 - `Execution.VM.Processor` – **90.7 % line / 89.6 % branch** (resume/pause and instruction-range guards need explicit tests to flip the last branch to green).
 - `Interop.StandardDescriptors.ReflectionMemberDescriptors.MethodMemberDescriptor` – **91.0 % line / 86.2 % branch** (descriptor fallback + argument coercion needs a dedicated suite).
 - `CoreLib.LoadModule` – **91.3 % line / 76.9 % branch** (error-handling and loader fallback combinations remain uncovered).
@@ -150,7 +149,9 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 - `DotNetCorePlatformAccessorTests` validate file mode parsing, console output, filesystem helpers, and the NotSupported command path, tightening coverage for the .NET Core platform accessor shim.
 - `JsonModuleTests` exercise invalid parse/serialize inputs plus `json.isnull`/`json.null`, backfilling JsonModule’s error and null-handling branches.
 - `ClosureContextTests` ensure closure symbol arrays and stored values are covered, trimming Execution.Scopes coverage debt.
-- (2025-11-18 21:33 UTC) Extended `Units/TablePairTests` to cover the `Equals(object)` mismatches, key-miss short-circuit branch, and null-hash paths. `NovaSharp.Interpreter.DataTypes.TablePair` now reports **93.3 % line / 100 % branch / 90 % method** coverage, contributing to the interpreter’s **92.5 %** branch total.
+- (2025-11-18 21:40 UTC) Expanded `Units/ByteCodeTests` with coverage for the jump-point helpers (`GetJumpPointForNextInstruction`, `GetJumpPointForLastInstruction`, `GetLastInstruction`), `EmitInvalid`, and the filtered `EmitClean` subset path. `NovaSharp.Interpreter.Execution.VM.ByteCode` now reports **100 % line / 100 % branch / 100 % method** coverage, pushing interpreter aggregates to **95.6 % line / 92.6 % branch / 97.8 % method** across **2 268** Release tests.
+- (2025-11-18 21:53 UTC) Added guard-rail tests to `Units/DebugServiceTests`, covering the null `src` and `lines` branches inside `DebugService.ResetBreakpoints`. `NovaSharp.Interpreter.Debugging.DebugService` now reports **100 % line / 100 % branch / 100 % method** coverage, nudging interpreter totals to **95.6 % line / 92.6 % branch / 97.8 % method** across **2 270** Release tests.
+- (2025-11-18 21:33 UTC) Extended `Units/TablePairTests` to cover the `Equals(object)` mismatches, key-miss short-circuit branch, and null-hash paths. `NovaSharp.Interpreter.DataTypes.TablePair` now reports **93.3 % line / 100 % branch / 90 % method** coverage, contributing to the interpreter’s **92.6 %** branch total.
 - `PropertyTableAssignerTests` exercise expected/missing properties, subassigners, fuzzy matching, and type guards across both generic and non-generic assigners.
 - `SliceTests` verify indexing, enumeration order, conversions, and NotSupported pathways for the slice view helper.
 - `InteropRegistrationPolicyTests` ensure the default/automatic/explicit policy factories return the expected registration policies and that `Explicit` remains marked obsolete.
@@ -161,4 +162,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-18 (21:33 UTC)_
+_Last updated: 2025-11-18 (21:53 UTC)_

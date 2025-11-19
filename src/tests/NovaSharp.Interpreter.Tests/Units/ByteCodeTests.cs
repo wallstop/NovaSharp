@@ -32,6 +32,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(second.SourceCodeRef, Is.Null, "PopSourceRef should clear the current ref");
         }
 
+        [Test]
+        public void JumpPointHelpersExposeCodeCountAndLastInstruction()
+        {
+            ByteCode byteCode = new(new Script());
+            byteCode.EmitNop("first");
+            byteCode.EmitNop("second");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(byteCode.GetJumpPointForNextInstruction(), Is.EqualTo(2));
+                Assert.That(byteCode.GetJumpPointForLastInstruction(), Is.EqualTo(1));
+                Assert.That(byteCode.GetLastInstruction().Name, Is.EqualTo("second"));
+            });
+        }
+
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
         [Test]
         public void DumpWritesInstructionsAndDebugLines()
@@ -123,6 +138,20 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void EmitInvalidAddsInvalidInstructionWithReason()
+        {
+            ByteCode byteCode = new(new Script());
+
+            Instruction instruction = byteCode.EmitInvalid("unsupported");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.OpCode, Is.EqualTo(OpCode.Invalid));
+                Assert.That(instruction.Name, Is.EqualTo("unsupported"));
+            });
+        }
+
+        [Test]
         public void EmitLoadHandlesGlobalSymbols()
         {
             ByteCode byteCode = new(new Script());
@@ -211,6 +240,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(setter.NumVal, Is.EqualTo(6));
             Assert.That(setter.NumVal2, Is.EqualTo(0));
             Assert.That(setter.Symbol, Is.EqualTo(symbol));
+        }
+
+        [Test]
+        public void EmitCleanFiltersSymbolsAboveScopeRange()
+        {
+            ByteCode byteCode = new(new Script());
+            SymbolRef retained = SymbolRef.Local("retained", 5);
+            RuntimeScopeBlock scope = new()
+            {
+                From = 0,
+                To = 2,
+                ToInclusive = 4,
+                ToBeClosed = new[] { SymbolRef.Local("ignored", 1), retained },
+            };
+
+            Instruction instruction = byteCode.EmitClean(scope);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.OpCode, Is.EqualTo(OpCode.Clean));
+                Assert.That(instruction.NumVal, Is.EqualTo(scope.To + 1));
+                Assert.That(instruction.NumVal2, Is.EqualTo(scope.ToInclusive));
+                Assert.That(instruction.SymbolList, Is.EquivalentTo(new[] { retained }));
+            });
         }
 
         [Test]

@@ -1,6 +1,7 @@
 #nullable enable
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp;
@@ -14,25 +15,20 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebugServiceTests
     {
+        private const string SampleScript =
+            @"
+            local a = 1
+            local b = 2
+            if a < b then
+                return b - a
+            end
+            return a + b
+        ";
+
         [Test]
         public void ResetBreakpointsMarksExistingLinesAndReturnsFilteredSet()
         {
-            Script script = new(CoreModules.PresetComplete);
-            BreakpointRecordingDebugger debugger = new();
-
-            script.AttachDebugger(debugger);
-            script.DebuggerEnabled = true;
-
-            script.DoString(
-                @"
-                local a = 1
-                local b = 2
-                if a < b then
-                    return b - a
-                end
-                return a + b
-            "
-            );
+            (Script script, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
 
             Assert.That(
                 debugger.DebugService,
@@ -64,6 +60,48 @@ namespace NovaSharp.Interpreter.Tests.Units
                 .ToHashSet();
 
             Assert.That(flaggedLines, Is.EquivalentTo(applied));
+        }
+
+        [Test]
+        public void ResetBreakpointsThrowsWhenSourceCodeIsNull()
+        {
+            (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
+            DebugService service = debugger.DebugService;
+            HashSet<int> lines = new(debugger.RequestedBreakpoints);
+
+            ArgumentNullException? ex = Assert.Throws<ArgumentNullException>(() =>
+                service.ResetBreakpoints(null!, lines)
+            );
+
+            Assert.That(ex!.ParamName, Is.EqualTo("src"));
+        }
+
+        [Test]
+        public void ResetBreakpointsThrowsWhenLinesSetIsNull()
+        {
+            (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
+            DebugService service = debugger.DebugService;
+
+            ArgumentNullException? ex = Assert.Throws<ArgumentNullException>(() =>
+                service.ResetBreakpoints(debugger.LastSourceCode!, null!)
+            );
+
+            Assert.That(ex!.ParamName, Is.EqualTo("lines"));
+        }
+
+        private static (
+            Script Script,
+            BreakpointRecordingDebugger Debugger
+        ) RunScriptAndAttachDebugger()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            BreakpointRecordingDebugger debugger = new();
+
+            script.AttachDebugger(debugger);
+            script.DebuggerEnabled = true;
+            script.DoString(SampleScript);
+
+            return (script, debugger);
         }
 
         private sealed class BreakpointRecordingDebugger : IDebugger
