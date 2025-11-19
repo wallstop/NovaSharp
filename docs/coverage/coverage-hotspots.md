@@ -1,11 +1,11 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-18 10:13 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-18 21:33 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
-- Overall line coverage: **86.0 %**
-- NovaSharp.Interpreter line coverage: **95.3 %**
-- NovaSharp.Cli line coverage: **79.7 %**
+- Overall line coverage: **86.2 %**
+- NovaSharp.Interpreter line coverage: **95.5 %**
+- NovaSharp.Cli line coverage: **80.0 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
 - NovaSharp.RemoteDebugger line coverage: **92.4 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
@@ -150,7 +150,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 - `DotNetCorePlatformAccessorTests` validate file mode parsing, console output, filesystem helpers, and the NotSupported command path, tightening coverage for the .NET Core platform accessor shim.
 - `JsonModuleTests` exercise invalid parse/serialize inputs plus `json.isnull`/`json.null`, backfilling JsonModule’s error and null-handling branches.
 - `ClosureContextTests` ensure closure symbol arrays and stored values are covered, trimming Execution.Scopes coverage debt.
-- `TablePairTests` now cover constructor, nil sentinel, and guarded setter behavior for `TablePair`.
+- (2025-11-18 21:33 UTC) Extended `Units/TablePairTests` to cover the `Equals(object)` mismatches, key-miss short-circuit branch, and null-hash paths. `NovaSharp.Interpreter.DataTypes.TablePair` now reports **93.3 % line / 100 % branch / 90 % method** coverage, contributing to the interpreter’s **92.5 %** branch total.
 - `PropertyTableAssignerTests` exercise expected/missing properties, subassigners, fuzzy matching, and type guards across both generic and non-generic assigners.
 - `SliceTests` verify indexing, enumeration order, conversions, and NotSupported pathways for the slice view helper.
 - `InteropRegistrationPolicyTests` ensure the default/automatic/explicit policy factories return the expected registration policies and that `Explicit` remains marked obsolete.
@@ -161,4 +161,4 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-18 (05:25 UTC)_
+_Last updated: 2025-11-18 (21:33 UTC)_
