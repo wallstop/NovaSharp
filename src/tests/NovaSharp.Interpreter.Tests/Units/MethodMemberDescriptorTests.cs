@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Reflection.Emit;
     using System.Runtime.CompilerServices;
     using System.Text;
     using NovaSharp.Interpreter;
@@ -87,6 +88,28 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = descriptor.Execute(script, host, context, args);
 
             Assert.That(result.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void ExecuteReflectionModeInvokesVoidMethodThroughActionBranch()
+        {
+            MethodMemberDescriptorHost host = new();
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.SetName)
+            );
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
+
+            Script script = new Script();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewString("Reflection"));
+
+            DynValue result = descriptor.Execute(script, host, context, args);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(host.LastName, Is.EqualTo("Reflection"));
+                Assert.That(result.IsVoid(), Is.True);
+            });
         }
 
         [Test]
@@ -217,6 +240,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstructorThrowsWhenHideMembersAccessModeRequested()
+        {
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Sum),
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            IPlatformAccessor original = Script.GlobalOptions.Platform;
+            try
+            {
+                Script.GlobalOptions.Platform = new NonAotStubPlatformAccessor();
+                Assert.That(
+                    () => new MethodMemberDescriptor(method, InteropAccessMode.HideMembers),
+                    Throws.ArgumentException.With.Message.EqualTo("Invalid accessMode")
+                );
+            }
+            finally
+            {
+                Script.GlobalOptions.Platform = original;
+            }
+        }
+
+        [Test]
         public void TryCreateIfVisibleHonorsVisibility()
         {
             MethodInfo hidden = typeof(MethodMemberDescriptorHost).GetMethod(
@@ -268,15 +314,148 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckMethodIsCompatibleRejectsPointerParameters()
         {
-            MethodInfo pointerMethod = typeof(Buffer)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .First(m =>
-                    m.Name == "MemoryCopy" && m.GetParameters().Any(p => p.ParameterType.IsPointer)
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "PointerParameter",
+                typeof(void),
+                new[] { pointerType },
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(pointerMethod.GetParameters()[0].ParameterType.IsPointer, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                    Is.False
                 );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("pointer parameters")
+                );
+            });
+        }
+
+        [Test]
+        public void CheckMethodIsCompatibleRejectsPointerReturnTypes()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "ReturnPointer",
+                pointerType,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(pointerMethod.ReturnType.IsPointer, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("pointer return type")
+                );
+            });
+        }
+
+        [Test]
+        public void CheckMethodIsCompatibleRejectsUnboundGenericReturnTypes()
+        {
+            Type openGeneric = typeof(System.Collections.Generic.List<>);
+            DynamicMethod openReturnMethod = new(
+                "ReturnOpenGeneric",
+                openGeneric,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(openReturnMethod.ReturnType.IsGenericTypeDefinition, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(openReturnMethod, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(openReturnMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("unresolved generic return type")
+                );
+            });
+        }
+
+        [Test]
+        public void OptimizeThrowsWhenParametersContainByRefArguments()
+        {
+            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.TryDouble)
+            );
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Assert.That(
-                MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
-                Is.False
+                () => ((IOptimizableDescriptor)descriptor).Optimize(),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contains("Out/Ref params cannot be precompiled")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsPointerParameterMethods()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "CtorPointerParameter",
+                typeof(void),
+                new[] { pointerType },
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(pointerMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("pointer parameters")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsPointerReturnMethods()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "CtorPointerReturn",
+                pointerType,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(pointerMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("pointer return type")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsUnboundGenericReturnMethods()
+        {
+            Type openGeneric = typeof(System.Collections.Generic.List<>);
+            DynamicMethod openReturnMethod = new(
+                "CtorOpenGenericReturn",
+                openGeneric,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(openReturnMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("unresolved generic return type")
             );
         }
 
@@ -401,6 +580,76 @@ namespace NovaSharp.Interpreter.Tests.Units
         public string GetPlatformName()
         {
             return "stub.aot";
+        }
+
+        public void DefaultPrint(string content) { }
+
+        public string DefaultInput(string prompt)
+        {
+            return null;
+        }
+
+        public Stream OpenFile(Script script, string filename, Encoding encoding, string mode)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Stream GetStandardStream(StandardFileType type)
+        {
+            return Stream.Null;
+        }
+
+        public string GetTempFileName()
+        {
+            return Path.GetTempFileName();
+        }
+
+        public void ExitFast(int exitCode)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool FileExists(string file)
+        {
+            return false;
+        }
+
+        public void DeleteFile(string file)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void MoveFile(string src, string dst)
+        {
+            throw new NotSupportedException();
+        }
+
+        public int ExecuteCommand(string cmdline)
+        {
+            return 0;
+        }
+    }
+
+    internal sealed class NonAotStubPlatformAccessor : IPlatformAccessor
+    {
+        public CoreModules FilterSupportedCoreModules(CoreModules module)
+        {
+            return module;
+        }
+
+        public string GetEnvironmentVariable(string envvarname)
+        {
+            return null;
+        }
+
+        public bool IsRunningOnAOT()
+        {
+            return false;
+        }
+
+        public string GetPlatformName()
+        {
+            return "stub.host";
         }
 
         public void DefaultPrint(string content) { }
