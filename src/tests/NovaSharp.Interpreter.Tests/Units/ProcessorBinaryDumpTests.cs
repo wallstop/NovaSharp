@@ -67,17 +67,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             int invalidBase = entry;
 
             while (
-                invalidBase < byteCode.code.Count
+                invalidBase < byteCode.Code.Count
                 && (
-                    byteCode.code[invalidBase].OpCode == OpCode.Meta
-                    || byteCode.code[invalidBase].OpCode == OpCode.Nop
+                    byteCode.Code[invalidBase].OpCode == OpCode.Meta
+                    || byteCode.Code[invalidBase].OpCode == OpCode.Nop
                 )
             )
             {
                 invalidBase++;
             }
 
-            Assert.That(invalidBase, Is.LessThan(byteCode.code.Count));
+            Assert.That(invalidBase, Is.LessThan(byteCode.Code.Count));
 
             using MemoryStream stream = new();
             Assert.That(

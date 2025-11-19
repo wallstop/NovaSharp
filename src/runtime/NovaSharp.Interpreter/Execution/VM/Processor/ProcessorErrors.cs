@@ -7,9 +7,9 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         private SourceRef GetCurrentSourceRef(int instructionPtr)
         {
-            if (instructionPtr >= 0 && instructionPtr < _rootChunk.code.Count)
+            if (instructionPtr >= 0 && instructionPtr < _rootChunk.Code.Count)
             {
-                return _rootChunk.code[instructionPtr].SourceCodeRef;
+                return _rootChunk.Code[instructionPtr].SourceCodeRef;
             }
             return null;
         }
@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         private void FillDebugData(InterpreterException ex, int ip)
         {
             // adjust IP
-            if (ip == YIELD_SPECIAL_TRAP)
+            if (ip == YieldSpecialTrap)
             {
                 ip = _savedInstructionPtr;
             }
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             ex.DecorateMessage(_script, sref, ip);
 
-            ex.CallStack = Debugger_GetCallStack(sref);
+            ex.CallStack = GetDebuggerCallStack(sref);
         }
     }
 }

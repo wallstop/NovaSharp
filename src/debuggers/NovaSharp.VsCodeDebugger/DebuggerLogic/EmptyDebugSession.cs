@@ -47,19 +47,19 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 new Capabilities()
                 {
                     // This debug adapter does not need the configurationDoneRequest.
-                    supportsConfigurationDoneRequest = false,
+                    SupportsConfigurationDoneRequest = false,
 
                     // This debug adapter does not support function breakpoints.
-                    supportsFunctionBreakpoints = false,
+                    SupportsFunctionBreakpoints = false,
 
                     // This debug adapter doesn't support conditional breakpoints.
-                    supportsConditionalBreakpoints = false,
+                    SupportsConditionalBreakpoints = false,
 
                     // This debug adapter does not support a side effect free evaluate request for data hovers.
-                    supportsEvaluateForHovers = false,
+                    SupportsEvaluateForHovers = false,
 
                     // This debug adapter does not support exception breakpoint filters
-                    exceptionBreakpointFilters = Array.Empty<object>(),
+                    ExceptionBreakpointFilters = Array.Empty<object>(),
                 }
             );
 

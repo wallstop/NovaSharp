@@ -24,6 +24,7 @@ FILE_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
+    Path("src/runtime/NovaSharp.Interpreter/CoreLib/StringLib/KopiLuaStringLib.cs"),
 }
 FIELD_ALLOWLIST: dict[Path, set[str]] = {
     # Lua-facing DTOs keep lowercase fields so script fixtures can reference the
@@ -53,6 +54,26 @@ FIELD_ALLOWLIST: dict[Path, set[str]] = {
     Path(
         "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/StructAssignmentTechnique.cs"
     ): {"x", "y", "z", "position"},
+    # Lua interop shims mirror the original KopiLua/KeraLua identifiers so
+    # native parity (docs, tutorials, upstream diffs) stays intact.
+    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/CharPtr.cs"): {
+        "chars",
+        "index",
+    },
+    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/LuaBase.cs"): {
+        "LUA_TNONE",
+        "LUA_TNIL",
+        "LUA_TBOOLEAN",
+        "LUA_TLIGHTUSERDATA",
+        "LUA_TNUMBER",
+        "LUA_TSTRING",
+        "LUA_TTABLE",
+        "LUA_TFUNCTION",
+        "LUA_TUSERDATA",
+        "LUA_TTHREAD",
+        "LUA_MULTRET",
+        "LUA_INTFRMLEN",
+    },
 }
 TYPE_ALLOWLIST = {
     "ILua",
@@ -70,6 +91,7 @@ MEMBER_ALLOWLIST = {
     "op_Modulus",
     "op_Equality",
     "op_Inequality",
+    "operator",
 }
 MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/ErrorHandlingModule.cs"): {
@@ -78,6 +100,7 @@ MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
     },
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/LoadModule.cs"): {"__require_clr_impl"},
+    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
 }
 TYPE_PATTERN = re.compile(
     r"^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+)*"
@@ -95,6 +118,7 @@ FIELD_PATTERN = re.compile(
     r"^\s*(public|protected|internal)\s+(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*"
     r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*(?:=|;)"
 )
+FIELD_NAME_ALLOWLIST = {"operator"}
 PRIVATE_FIELD_PATTERN = re.compile(
     r"^\s*private\s+(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
     r"[A-Za-z0-9_<>,\[\].?]+\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
@@ -227,7 +251,11 @@ def audit_file(path: Path) -> list[NamingIssue]:
                 field_match = FIELD_PATTERN.match(line)
                 if field_match:
                     field_name = field_match.group(2)
-                    if field_name and not is_allowlisted(rel_path, field_name, FIELD_ALLOWLIST):
+                    if (
+                        field_name
+                        and field_name not in FIELD_NAME_ALLOWLIST
+                        and not is_allowlisted(rel_path, field_name, FIELD_ALLOWLIST)
+                    ):
                         if not is_pascal_case(field_name):
                             issues.append(
                                 NamingIssue(

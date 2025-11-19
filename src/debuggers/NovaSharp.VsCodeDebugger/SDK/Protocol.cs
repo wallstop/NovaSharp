@@ -37,7 +37,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class ProtocolMessage
     {
-        public int seq;
+        public int Sequenceuence;
         public string Type { get; private set; }
 
         public ProtocolMessage(string typ)
@@ -48,25 +48,25 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public ProtocolMessage(string typ, int sq)
         {
             Type = typ;
-            seq = sq;
+            Sequenceuence = sq;
         }
     }
 
     public class Request : ProtocolMessage
     {
-        public string command;
-        public Table arguments;
+        public string Command;
+        public Table Arguments;
 
         public Request(int id, string cmd, Table arg)
             : base("request", id)
         {
-            command = cmd;
-            arguments = arg;
+            Command = cmd;
+            Arguments = arg;
         }
     }
 
     /*
-     * subclasses of ResponseBody are serialized as the body of a response.
+     * subclasses of ResponseBody are serialized as the Body of a response.
      * Don't change their instance variables since that will break the debug protocol.
      */
     public class ResponseBody
@@ -78,7 +78,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     {
         public bool Success { get; private set; }
         public string Message { get; private set; }
-        public int RequestSeq { get; private set; }
+        public int RequestSequenceuence { get; private set; }
         public string Command { get; private set; }
         public ResponseBody Body { get; private set; }
 
@@ -86,8 +86,8 @@ namespace NovaSharp.VsCodeDebugger.SDK
             : base("response")
         {
             Success = true;
-            RequestSeq = req.Get("seq").ToObject<int>();
-            Command = req.Get("command").ToObject<string>();
+            RequestSequenceuence = req.Get("Sequenceuence").ToObject<int>();
+            Command = req.Get("Command").ToObject<string>();
         }
 
         public void SetBody(ResponseBody bdy)
@@ -107,13 +107,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
     public class Event : ProtocolMessage
     {
         public readonly string @event;
-        public readonly object body;
+        public readonly object Body;
 
         public Event(string type, object bdy = null)
             : base("event")
         {
             @event = type;
-            this.body = bdy;
+            this.Body = bdy;
         }
     }
 
@@ -122,11 +122,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
      */
     public abstract class ProtocolServer
     {
-        public bool trace;
-        public bool traceResponse;
+        public bool Trace;
+        public bool TraceResponse;
 
-        protected const int BUFFER_SIZE = 4096;
-        protected const string TWO_CRLF = "\r\n\r\n";
+        protected const int BufferSize = 4096;
+        protected const string TwoCrLf = "\r\n\r\n";
         protected static readonly Regex ContentLengthMatcher = new(@"Content-Length: (\d+)");
 
         protected static readonly Encoding Encoding = Encoding.UTF8;
@@ -151,7 +151,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         {
             _outputStream = outputStream;
 
-            byte[] buffer = new byte[BUFFER_SIZE];
+            byte[] buffer = new byte[BufferSize];
 
             _stopRequested = false;
             while (!_stopRequested)
@@ -182,7 +182,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
             SendMessage(e);
         }
 
-        protected abstract void DispatchRequest(string command, Table args, Response response);
+        protected abstract void DispatchRequest(string Command, Table args, Response response);
 
         // ---- private ------------------------------------------------------------------------
 
@@ -206,7 +206,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 else
                 {
                     string s = _rawData.GetString(Encoding);
-                    int idx = s.IndexOf(TWO_CRLF);
+                    int idx = s.IndexOf(TwoCrLf);
                     if (idx != -1)
                     {
                         Match m = ContentLengthMatcher.Match(s);
@@ -214,7 +214,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                         {
                             _bodyLength = Convert.ToInt32(m.Groups[1].ToString());
 
-                            _rawData.RemoveFirst(idx + TWO_CRLF.Length);
+                            _rawData.RemoveFirst(idx + TwoCrLf.Length);
 
                             continue; // try to handle a complete message
                         }
@@ -231,16 +231,16 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 Table request = JsonTableConverter.JsonToTable(req);
                 if (request != null && request["type"].ToString() == "request")
                 {
-                    if (trace)
+                    if (Trace)
                     {
-                        Console.Error.WriteLine($"C {request["command"]}: {req}");
+                        Console.Error.WriteLine($"C {request["Command"]}: {req}");
                     }
 
                     Response response = new(request);
 
                     DispatchRequest(
-                        request.Get("command").String,
-                        request.Get("arguments").Table,
+                        request.Get("Command").String,
+                        request.Get("Arguments").Table,
                         response
                     );
 
@@ -255,16 +255,16 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
         protected void SendMessage(ProtocolMessage message)
         {
-            message.seq = _sequenceNumber++;
+            message.Sequenceuence = _sequenceNumber++;
 
-            if (traceResponse && message.Type == "response")
+            if (TraceResponse && message.Type == "response")
             {
                 Console.Error.WriteLine($" R: {JsonTableConverter.ObjectToJson(message)}");
             }
-            if (trace && message.Type == "event")
+            if (Trace && message.Type == "event")
             {
                 Event e = (Event)message;
-                Console.Error.WriteLine($"E {e.@event}: {JsonTableConverter.ObjectToJson(e.body)}");
+                Console.Error.WriteLine($"E {e.@event}: {JsonTableConverter.ObjectToJson(e.Body)}");
             }
 
             byte[] data = ConvertToBytes(message);
@@ -284,7 +284,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
             string asJson = JsonTableConverter.ObjectToJson(request);
             byte[] jsonBytes = Encoding.GetBytes(asJson);
 
-            string header = $"Content-Length: {jsonBytes.Length}{TWO_CRLF}";
+            string header = $"Content-Length: {jsonBytes.Length}{TwoCrLf}";
             byte[] headerBytes = Encoding.GetBytes(header);
 
             byte[] data = new byte[headerBytes.Length + jsonBytes.Length];

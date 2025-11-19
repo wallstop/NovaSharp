@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
     internal sealed partial class Processor
     {
-        private DynValue[] Internal_AdjustTuple(IList<DynValue> values)
+        private DynValue[] InternalAdjustTuple(IList<DynValue> values)
         {
             if (values == null || values.Count == 0)
             {
@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 if (result[^1].Type == DataType.Tuple)
                 {
-                    return Internal_AdjustTuple(result);
+                    return InternalAdjustTuple(result);
                 }
                 else
                 {
@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private int Internal_InvokeUnaryMetaMethod(
+        private int InternalInvokeUnaryMetaMethod(
             DynValue op1,
             string eventName,
             int instructionPtr
@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 _valueStack.Push(m);
                 _valueStack.Push(op1);
-                return Internal_ExecCall(1, instructionPtr);
+                return InternalExecCall(1, instructionPtr);
             }
             else
             {
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private int Internal_InvokeBinaryMetaMethod(
+        private int InternalInvokeBinaryMetaMethod(
             DynValue l,
             DynValue r,
             string eventName,
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(m);
                 _valueStack.Push(l);
                 _valueStack.Push(r);
-                return Internal_ExecCall(2, instructionPtr);
+                return InternalExecCall(2, instructionPtr);
             }
             else
             {

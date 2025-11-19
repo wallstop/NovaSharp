@@ -51,7 +51,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Clean(_stackFrame);
+            bc.EmitClean(_stackFrame);
 
             Address = bc.GetJumpPointForLastInstruction();
 

@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             expression.Compile(byteCode);
 
-            Instruction call = byteCode.code[^1];
+            Instruction call = byteCode.Code[^1];
 
             Assert.Multiple(() =>
             {
@@ -30,13 +30,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(call.NumVal, Is.EqualTo(2));
                 Assert.That(call.Name, Is.EqualTo("stub::callee"));
                 Assert.That(
-                    byteCode.code.Any(instruction =>
+                    byteCode.Code.Any(instruction =>
                         instruction.OpCode == OpCode.Literal && instruction.Value.Number == 1
                     ),
                     Is.True
                 );
                 Assert.That(
-                    byteCode.code.Any(instruction =>
+                    byteCode.Code.Any(instruction =>
                         instruction.OpCode == OpCode.Literal && instruction.Value.String == "two"
                     ),
                     Is.True
@@ -56,16 +56,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             expression.Compile(byteCode);
 
-            int copyIndex = byteCode.code.FindIndex(instruction =>
+            int copyIndex = byteCode.Code.FindIndex(instruction =>
                 instruction.OpCode == OpCode.Copy
             );
-            int indexIndex = byteCode.code.FindIndex(instruction =>
+            int indexIndex = byteCode.Code.FindIndex(instruction =>
                 instruction.OpCode == OpCode.IndexN
             );
-            int swapIndex = byteCode.code.FindIndex(instruction =>
+            int swapIndex = byteCode.Code.FindIndex(instruction =>
                 instruction.OpCode == OpCode.Swap
             );
-            Instruction thisCall = byteCode.code[^1];
+            Instruction thisCall = byteCode.Code[^1];
 
             Assert.Multiple(() =>
             {
@@ -73,9 +73,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(indexIndex, Is.EqualTo(copyIndex + 1));
                 Assert.That(swapIndex, Is.EqualTo(indexIndex + 1));
 
-                Instruction copy = byteCode.code[copyIndex];
-                Instruction index = byteCode.code[indexIndex];
-                Instruction swap = byteCode.code[swapIndex];
+                Instruction copy = byteCode.Code[copyIndex];
+                Instruction index = byteCode.Code[indexIndex];
+                Instruction swap = byteCode.Code[swapIndex];
 
                 Assert.That(copy.NumVal, Is.EqualTo(0));
                 Assert.That(index.Value.String, Is.EqualTo("withColon"));
@@ -100,14 +100,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             expression.Compile(byteCode);
 
-            Instruction call = byteCode.code[^1];
+            Instruction call = byteCode.Code[^1];
 
             Assert.Multiple(() =>
             {
                 Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
                 Assert.That(call.NumVal, Is.EqualTo(1));
                 Assert.That(
-                    byteCode.code.Any(instruction =>
+                    byteCode.Code.Any(instruction =>
                         instruction.OpCode == OpCode.Literal
                         && instruction.Value.String == "payload"
                     ),
@@ -127,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             expression.Compile(byteCode);
 
-            Instruction call = byteCode.code[^1];
+            Instruction call = byteCode.Code[^1];
 
             Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
             Assert.That(call.NumVal, Is.EqualTo(1));
@@ -184,7 +184,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override void Compile(ByteCode bc)
             {
-                bc.Emit_Literal(DynValue.NewString("function-stub"));
+                bc.EmitLiteral(DynValue.NewString("function-stub"));
             }
 
             public override string GetFriendlyDebugName()

@@ -28,14 +28,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
         private class UnresolvedGenericMethod
         {
-            public readonly MethodInfo method;
-            public readonly InteropAccessMode accessMode;
-            public readonly HashSet<Type> alreadyAddedTypes = new();
+            public readonly MethodInfo Method;
+            public readonly InteropAccessMode AccessMode;
+            public readonly HashSet<Type> AlreadyAddedTypes = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)
             {
-                accessMode = mode;
-                method = mi;
+                AccessMode = mode;
+                Method = mi;
             }
         }
 
@@ -138,7 +138,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             foreach (UnresolvedGenericMethod ugm in unresolvedGenerics)
             {
-                ParameterInfo[] args = ugm.method.GetParameters();
+                ParameterInfo[] args = ugm.Method.GetParameters();
                 if (args.Length == 0)
                 {
                     continue;
@@ -148,12 +148,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                 Type genericType = GetGenericMatch(extensionType, extendedType);
 
-                if (ugm.alreadyAddedTypes.Add(genericType))
+                if (ugm.AlreadyAddedTypes.Add(genericType))
                 {
                     if (genericType != null)
                     {
                         MethodInfo mi = InstantiateMethodInfo(
-                            ugm.method,
+                            ugm.Method,
                             extensionType,
                             genericType,
                             extendedType
@@ -165,9 +165,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                                 continue;
                             }
 
-                            MethodMemberDescriptor desc = new(mi, ugm.accessMode);
+                            MethodMemberDescriptor desc = new(mi, ugm.AccessMode);
 
-                            SRegistry.Add(ugm.method.Name, desc);
+                            SRegistry.Add(ugm.Method.Name, desc);
                             ++ExtensionMethodChangeVersion;
                         }
                     }

@@ -22,21 +22,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SingleScriptModeServesIframeWithConfiguredRpcPort()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = true;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = true;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
 
-            string body = GetHttpBody(options.httpPort.Value, "/");
+            string body = GetHttpBody(options.HttpPort.Value, "/");
 
             Assert.Multiple(() =>
             {
-                Assert.That(body, Does.Contain($"Debugger?port={options.rpcPortBase}"));
+                Assert.That(body, Does.Contain($"Debugger?port={options.RpcPortBase}"));
                 Assert.That(
                     service.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.httpPort.Value}/")
+                    Is.EqualTo($"http://127.0.0.1:{options.HttpPort.Value}/")
                 );
             });
         }
@@ -45,21 +45,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void JumpPageListsAttachedScripts()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = false;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             Script script = BuildScript("return 1", "jump.lua");
             service.Attach(script, "JumpScript");
 
-            string body = GetHttpBody(options.httpPort.Value, "/");
+            string body = GetHttpBody(options.HttpPort.Value, "/");
 
             Assert.Multiple(() =>
             {
                 Assert.That(body, Does.Contain("JumpScript"));
-                Assert.That(body, Does.Contain("Debugger?port=" + options.rpcPortBase));
+                Assert.That(body, Does.Contain("Debugger?port=" + options.RpcPortBase));
             });
         }
 
@@ -67,10 +67,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CliBridgeForwardsAttachAndHttpUrl()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = true;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = true;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             RemoteDebuggerServiceBridge bridge = new(service);
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(script.DebuggerEnabled, Is.True);
                 Assert.That(
                     bridge.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.httpPort.Value}/")
+                    Is.EqualTo($"http://127.0.0.1:{options.HttpPort.Value}/")
                 );
             });
         }
@@ -92,18 +92,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebuggerPageServesEmbeddedUi()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = false;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             Script script = BuildScript("return 1", "debugger.lua");
             service.Attach(script, "DebuggerScript");
 
             string debuggerResponse = SendHttpRequest(
-                options.httpPort.Value,
-                $"/Debugger?port={options.rpcPortBase}"
+                options.HttpPort.Value,
+                $"/Debugger?port={options.RpcPortBase}"
             );
 
             Assert.Multiple(() =>

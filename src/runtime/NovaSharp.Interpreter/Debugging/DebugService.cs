@@ -32,9 +32,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// <param name="src">The source.</param>
         /// <param name="lines">The lines.</param>
         /// <returns>The lines for which breakpoints have been set</returns>
-        public HashSet<int> ResetBreakPoints(SourceCode src, HashSet<int> lines)
+        public HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
-            return _processor.ResetBreakPoints(src, lines);
+            return _processor.ResetBreakpoints(src, lines);
         }
     }
 }

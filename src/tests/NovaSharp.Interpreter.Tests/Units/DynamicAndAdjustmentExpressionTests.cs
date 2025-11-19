@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(inner.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Scalar));
+                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Scalar));
             });
         }
     }
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public override void Compile(ByteCode bc)
         {
             CompileCount++;
-            bc.Emit_Nop("stub");
+            bc.EmitNop("stub");
         }
 
         public override DynValue Eval(ScriptExecutionContext context)

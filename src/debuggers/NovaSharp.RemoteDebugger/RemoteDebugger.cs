@@ -24,13 +24,13 @@ namespace NovaSharp.RemoteDebugger
         {
             _options = options;
 
-            if (options.httpPort.HasValue)
+            if (options.HttpPort.HasValue)
             {
                 Utf8TcpServerOptions httpopts =
-                    options.networkOptions & (~Utf8TcpServerOptions.SingleClientOnly);
-                _httpServer = new DebugWebHost(options.httpPort.Value, httpopts);
+                    options.NetworkOptions & (~Utf8TcpServerOptions.SingleClientOnly);
+                _httpServer = new DebugWebHost(options.HttpPort.Value, httpopts);
 
-                if (options.singleScriptMode)
+                if (options.SingleScriptMode)
                 {
                     _httpServer.RegisterResource(
                         "/",
@@ -38,7 +38,7 @@ namespace NovaSharp.RemoteDebugger
                             HttpResourceType.Html,
                             string.Format(
                                 "<html><body><iframe height='100%' width='100%' src='Debugger?port={0}'>Please follow <a href='{0}'>link</a>.</iframe></body></html>",
-                                options.rpcPortBase
+                                options.RpcPortBase
                             )
                         )
                     );
@@ -53,7 +53,7 @@ namespace NovaSharp.RemoteDebugger
                 _httpServer.Start();
             }
 
-            _rpcPortMax = options.rpcPortBase;
+            _rpcPortMax = options.RpcPortBase;
         }
 
         private HttpResource GetJumpPageData(Dictionary<string, string> arg)
@@ -75,7 +75,7 @@ namespace NovaSharp.RemoteDebugger
                     scriptName,
                     s,
                     _rpcPortMax,
-                    _options.networkOptions,
+                    _options.NetworkOptions,
                     freeRunAfterAttach
                 );
                 s.AttachDebugger(d);
@@ -114,7 +114,7 @@ namespace NovaSharp.RemoteDebugger
             {
                 if (_httpServer != null)
                 {
-                    return $"http://127.0.0.1:{_options.httpPort.Value}/";
+                    return $"http://127.0.0.1:{_options.HttpPort.Value}/";
                 }
                 return null;
             }

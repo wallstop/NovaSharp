@@ -11,6 +11,6 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
     internal class LoopTracker
     {
-        public FastStack<ILoop> loops = new(16384);
+        public FastStack<ILoop> Loops { get; } = new(16384);
     }
 }

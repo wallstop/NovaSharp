@@ -32,21 +32,21 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
-        private const int CACHE_SIZE = 5;
+        private const int CacheSize = 5;
 
         private class OverloadCacheItem
         {
-            public bool hasObject;
-            public IOverloadableMemberDescriptor method;
-            public List<DataType> argsDataType;
-            public List<Type> argsUserDataType;
-            public int hitIndexAtLastHit;
+            public bool HasObject;
+            public IOverloadableMemberDescriptor Method;
+            public List<DataType> ArgumentDataTypes;
+            public List<Type> ArgumentUserDataTypes;
+            public int HitIndexAtLastHit;
         }
 
         private readonly List<IOverloadableMemberDescriptor> _overloads = new();
         private List<IOverloadableMemberDescriptor> _extOverloads = new();
         private bool _unsorted = true;
-        private OverloadCacheItem[] _cache = new OverloadCacheItem[CACHE_SIZE];
+        private OverloadCacheItem[] _cache = new OverloadCacheItem[CacheSize];
         private int _cacheHits;
         private int _extensionMethodVersion;
 
@@ -185,7 +185,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                             string.Format("[OVERLOAD] : CACHED! slot {0}, hits: {1}", i, _CacheHits)
                         );
 #endif
-                        return _cache[i].method.Execute(script, obj, context, args);
+                        return _cache[i].Method.Execute(script, obj, context, args);
                     }
                 }
             }
@@ -251,15 +251,15 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 {
                     found = new OverloadCacheItem()
                     {
-                        argsDataType = new List<DataType>(),
-                        argsUserDataType = new List<Type>(),
+                        ArgumentDataTypes = new List<DataType>(),
+                        ArgumentUserDataTypes = new List<Type>(),
                     };
                     _cache[i] = found;
                     break;
                 }
-                else if (_cache[i].hitIndexAtLastHit < lowestHits)
+                else if (_cache[i].HitIndexAtLastHit < lowestHits)
                 {
-                    lowestHits = _cache[i].hitIndexAtLastHit;
+                    lowestHits = _cache[i].HitIndexAtLastHit;
                     found = _cache[i];
                 }
             }
@@ -267,32 +267,33 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             if (found == null)
             {
                 // overflow..
-                _cache = new OverloadCacheItem[CACHE_SIZE];
+                _cache = new OverloadCacheItem[CacheSize];
                 found = new OverloadCacheItem()
                 {
-                    argsDataType = new List<DataType>(),
-                    argsUserDataType = new List<Type>(),
+                    ArgumentDataTypes = new List<DataType>(),
+                    ArgumentUserDataTypes = new List<Type>(),
                 };
                 _cache[0] = found;
                 _cacheHits = 0;
             }
 
-            found.method = bestOverload;
-            found.hitIndexAtLastHit = ++_cacheHits;
-            found.argsDataType.Clear();
-            found.hasObject = hasObject;
+            found.Method = bestOverload;
+            found.HitIndexAtLastHit = ++_cacheHits;
+            found.ArgumentDataTypes.Clear();
+            found.ArgumentUserDataTypes.Clear();
+            found.HasObject = hasObject;
 
             for (int i = 0; i < args.Count; i++)
             {
-                found.argsDataType.Add(args[i].Type);
+                found.ArgumentDataTypes.Add(args[i].Type);
 
                 if (args[i].Type == DataType.UserData)
                 {
-                    found.argsUserDataType.Add(args[i].UserData.Descriptor.Type);
+                    found.ArgumentUserDataTypes.Add(args[i].UserData.Descriptor.Type);
                 }
                 else
                 {
-                    found.argsUserDataType.Add(null);
+                    found.ArgumentUserDataTypes.Add(null);
                 }
             }
         }
@@ -303,33 +304,40 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             OverloadCacheItem overloadCacheItem
         )
         {
-            if (overloadCacheItem.hasObject && !hasObject)
+            if (overloadCacheItem.HasObject && !hasObject)
             {
                 return false;
             }
 
-            if (args.Count != overloadCacheItem.argsDataType.Count)
+            if (args.Count != overloadCacheItem.ArgumentDataTypes.Count)
             {
                 return false;
             }
 
             for (int i = 0; i < args.Count; i++)
             {
-                if (args[i].Type != overloadCacheItem.argsDataType[i])
+                if (args[i].Type != overloadCacheItem.ArgumentDataTypes[i])
                 {
                     return false;
                 }
 
                 if (args[i].Type == DataType.UserData)
                 {
-                    if (args[i].UserData.Descriptor.Type != overloadCacheItem.argsUserDataType[i])
+                    if (
+                        args[i].UserData.Descriptor.Type
+                        != overloadCacheItem.ArgumentUserDataTypes[i]
+                    )
                     {
                         return false;
                     }
                 }
+                else if (overloadCacheItem.ArgumentUserDataTypes[i] != null)
+                {
+                    return false;
+                }
             }
 
-            overloadCacheItem.hitIndexAtLastHit = ++_cacheHits;
+            overloadCacheItem.HitIndexAtLastHit = ++_cacheHits;
             return true;
         }
 
@@ -348,7 +356,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             bool isExtMethod
         )
         {
-            int totalScore = ScriptToClrConversions.WEIGHT_EXACT_MATCH;
+            int totalScore = ScriptToClrConversions.WeightExactMatch;
             int argsBase = args.IsMethodCall ? 1 : 0;
             int argsCnt = argsBase;
             bool varArgsUsed = false;
@@ -432,7 +440,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                     {
                         totalScore = Math.Min(
                             totalScore,
-                            ScriptToClrConversions.WEIGHT_VARARGS_EMPTY
+                            ScriptToClrConversions.WeightVarArgsEmpty
                         );
                     }
 
@@ -459,19 +467,19 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             {
                 if ((args.Count - argsBase) <= method.Parameters.Count)
                 {
-                    totalScore += ScriptToClrConversions.WEIGHT_NO_EXTRA_PARAMS_BONUS;
+                    totalScore += ScriptToClrConversions.WeightNoExtraParamsBonus;
                     totalScore *= 1000;
                 }
                 else if (varArgsUsed)
                 {
-                    totalScore -= ScriptToClrConversions.WEIGHT_VARARGS_MALUS;
+                    totalScore -= ScriptToClrConversions.WeightVarArgsMalus;
                     totalScore *= 1000;
                 }
                 else
                 {
                     totalScore *= 1000;
                     totalScore -=
-                        ScriptToClrConversions.WEIGHT_EXTRA_PARAMS_MALUS
+                        ScriptToClrConversions.WeightExtraParamsMalus
                         * ((args.Count - argsBase) - method.Parameters.Count);
                     totalScore = Math.Max(1, totalScore);
                 }
@@ -504,7 +512,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             if (parameterType.IsByRef || desc.IsOut || desc.IsRef)
             {
-                score = Math.Max(0, score + ScriptToClrConversions.WEIGHT_BYREF_BONUSMALUS);
+                score = Math.Max(0, score + ScriptToClrConversions.WeightByRefBonusMalus);
             }
 
             return score;

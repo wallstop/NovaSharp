@@ -390,7 +390,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_TABLE_CONVERSION));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightTableConversion));
         }
 
         [Test]
@@ -468,7 +468,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_NIL_TO_NULLABLE));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightNilToNullable));
         }
 
         [Test]
@@ -480,7 +480,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_NUMBER_DOWNCAST));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightNumberDowncast));
         }
 
         [Test]
@@ -492,7 +492,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_STRING_TO_CHAR));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightStringToChar));
         }
 
         [Test]
@@ -508,7 +508,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_TABLE_CONVERSION));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightTableConversion));
         }
 
         [Test]
@@ -526,7 +526,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_CUSTOM_CONVERTER_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightCustomConverterMatch));
         }
 
         [Test]
@@ -538,7 +538,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         [Test]
@@ -552,7 +552,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         [Test]
@@ -566,7 +566,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         [Test]
@@ -580,7 +580,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         [Test]
@@ -594,7 +594,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         [Test]
@@ -606,7 +606,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: true
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_NIL_WITH_DEFAULT));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightNilWithDefault));
         }
 
         [Test]
@@ -620,7 +620,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isOptional: false
             );
 
-            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WEIGHT_EXACT_MATCH));
+            Assert.That(weight, Is.EqualTo(ScriptToClrConversions.WeightExactMatch));
         }
 
         private static DynValue CreateConstantClosure(string code)

@@ -334,7 +334,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     _originalValues[key] = property.GetValue(null, null);
                 }
 
-                FieldInfo aotField = GetField("_isRunningOnAot");
+                FieldInfo aotField = GetField("RunningOnAotCache");
                 _originalAot = (bool?)aotField.GetValue(null);
 
                 FieldInfo autoField = GetField("AutoDetectionsDone");
@@ -358,7 +358,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 scope.SetProperty(Properties["Portable"], portable);
                 scope.SetProperty(Properties["Clr4"], clr4);
 
-                FieldInfo aotField = GetField("_isRunningOnAot");
+                FieldInfo aotField = GetField("RunningOnAotCache");
                 aotField.SetValue(null, aot ? (bool?)true : (bool?)false);
 
                 FieldInfo autoField = GetField("AutoDetectionsDone");
@@ -374,7 +374,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     SetProperty(Properties[key], value);
                 }
 
-                FieldInfo aotField = GetField("_isRunningOnAot");
+                FieldInfo aotField = GetField("RunningOnAotCache");
                 aotField.SetValue(null, _originalAot);
 
                 FieldInfo autoField = GetField("AutoDetectionsDone");

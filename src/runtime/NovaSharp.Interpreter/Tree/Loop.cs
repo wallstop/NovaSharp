@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Tree
 
         public void CompileBreak(ByteCode bc)
         {
-            bc.Emit_Exit(Scope);
-            BreakJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
+            bc.EmitExit(Scope);
+            BreakJumps.Add(bc.EmitJump(OpCode.Jump, -1));
         }
 
         public bool IsBoundary()

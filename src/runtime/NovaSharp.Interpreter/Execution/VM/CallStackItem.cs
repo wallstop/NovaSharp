@@ -7,24 +7,24 @@ namespace NovaSharp.Interpreter.Execution.VM
 
     internal class CallStackItem
     {
-        public int debugEntryPoint;
-        public SymbolRef[] debugSymbols;
+        public int DebugEntryPoint;
+        public SymbolRef[] DebugSymbols;
 
-        public SourceRef callingSourceRef;
+        public SourceRef CallingSourceRef;
 
-        public CallbackFunction clrFunction;
-        public CallbackFunction continuation;
-        public CallbackFunction errorHandler;
-        public DynValue errorHandlerBeforeUnwind;
+        public CallbackFunction ClrFunction;
+        public CallbackFunction Continuation;
+        public CallbackFunction ErrorHandler;
+        public DynValue ErrorHandlerBeforeUnwind;
 
-        public int basePointer;
-        public int returnAddress;
-        public DynValue[] localScope;
-        public ClosureContext closureScope;
+        public int BasePointer;
+        public int ReturnAddress;
+        public DynValue[] LocalScope;
+        public ClosureContext ClosureScope;
 
-        public CallStackItemFlags flags;
+        public CallStackItemFlags Flags;
 
-        public List<List<SymbolRef>> blocksToClose;
-        public HashSet<int> toBeClosedIndices;
+        public List<List<SymbolRef>> BlocksToClose;
+        public HashSet<int> ToBeClosedIndices;
     }
 }

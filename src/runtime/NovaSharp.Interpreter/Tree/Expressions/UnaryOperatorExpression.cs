@@ -29,13 +29,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             switch (_opText)
             {
                 case "not":
-                    bc.Emit_Operator(OpCode.Not);
+                    bc.EmitOperator(OpCode.Not);
                     break;
                 case "#":
-                    bc.Emit_Operator(OpCode.Len);
+                    bc.EmitOperator(OpCode.Len);
                     break;
                 case "-":
-                    bc.Emit_Operator(OpCode.Neg);
+                    bc.EmitOperator(OpCode.Neg);
                     break;
                 default:
                     throw new InternalErrorException("Unexpected unary operator '{0}'", _opText);

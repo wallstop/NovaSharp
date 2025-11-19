@@ -199,7 +199,7 @@ namespace NovaSharp.Interpreter
         {
             if (_debugger != null)
             {
-                _debugger.SetByteCode(_byteCode.code.Select(s => s.ToString()).ToArray());
+                _debugger.SetByteCode(_byteCode.Code.Select(s => s.ToString()).ToArray());
             }
         }
 
@@ -660,7 +660,7 @@ namespace NovaSharp.Interpreter
 
             if (function.Type == DataType.Function)
             {
-                return _mainProcessor.Coroutine_Create(function.Function);
+                return _mainProcessor.CreateCoroutine(function.Function);
             }
             else if (function.Type == DataType.ClrFunction)
             {

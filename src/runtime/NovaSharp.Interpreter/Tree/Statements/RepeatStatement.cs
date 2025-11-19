@@ -41,22 +41,22 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             bc.PushSourceRef(_repeat);
 
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             int start = bc.GetJumpPointForNextInstruction();
 
-            bc.Emit_Enter(_stackFrame);
+            bc.EmitEnter(_stackFrame);
             _block.Compile(bc);
 
             bc.PopSourceRef();
             bc.PushSourceRef(_until);
-            bc.Emit_Debug("..end");
+            bc.EmitDebug("..end");
 
             _condition.Compile(bc);
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Jump(OpCode.Jf, start);
+            bc.EmitLeave(_stackFrame);
+            bc.EmitJump(OpCode.Jf, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 

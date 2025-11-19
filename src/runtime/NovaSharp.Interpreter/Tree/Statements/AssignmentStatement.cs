@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                         ); // index in last tuple
                 }
 
-                bc.Emit_Pop(_rValues.Count);
+                bc.EmitPop(_rValues.Count);
             }
         }
 

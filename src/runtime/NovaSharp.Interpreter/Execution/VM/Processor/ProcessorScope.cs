@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             int from = i.NumVal;
             int to = i.NumVal2;
 
-            DynValue[] array = stackframe.localScope;
+            DynValue[] array = stackframe.LocalScope;
 
             if (to >= 0 && from >= 0 && to >= from)
             {
@@ -41,17 +41,17 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             foreach (SymbolRef sym in symbols)
             {
-                stackframe.toBeClosedIndices?.Remove(sym.IndexValue);
+                stackframe.ToBeClosedIndices?.Remove(sym.IndexValue);
 
-                if (stackframe.blocksToClose != null)
+                if (stackframe.BlocksToClose != null)
                 {
                     for (
-                        int listIndex = stackframe.blocksToClose.Count - 1;
+                        int listIndex = stackframe.BlocksToClose.Count - 1;
                         listIndex >= 0;
                         listIndex--
                     )
                     {
-                        List<SymbolRef> list = stackframe.blocksToClose[listIndex];
+                        List<SymbolRef> list = stackframe.BlocksToClose[listIndex];
                         int foundIndex = list.FindIndex(s => s.IndexValue == sym.IndexValue);
                         if (foundIndex >= 0)
                         {
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                DynValue slot = stackframe.localScope[sym.IndexValue];
+                DynValue slot = stackframe.LocalScope[sym.IndexValue];
 
                 if (slot != null && !slot.IsNil())
                 {
@@ -84,9 +84,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                         symref.NameValue
                     );
                 case SymbolRefType.Local:
-                    return GetTopNonClrFunction().localScope[symref.IndexValue];
+                    return GetTopNonClrFunction().LocalScope[symref.IndexValue];
                 case SymbolRefType.Upvalue:
-                    return GetTopNonClrFunction().closureScope[symref.IndexValue];
+                    return GetTopNonClrFunction().ClosureScope[symref.IndexValue];
                 default:
                     throw new InternalErrorException(
                         "Unexpected {0} LRef at resolution: {1}",
@@ -134,10 +134,10 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
 
-                        DynValue v = stackframe.closureScope[symref.IndexValue];
+                        DynValue v = stackframe.ClosureScope[symref.IndexValue];
                         if (v == null)
                         {
-                            stackframe.closureScope[symref.IndexValue] = v = DynValue.NewNil();
+                            stackframe.ClosureScope[symref.IndexValue] = v = DynValue.NewNil();
                         }
 
                         v.Assign(value);
@@ -164,7 +164,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 stackframe = _executionStack.Peek(i);
 
-                if (stackframe.clrFunction == null)
+                if (stackframe.ClrFunction == null)
                 {
                     break;
                 }
@@ -181,20 +181,20 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 if (stackframe != null)
                 {
-                    if (stackframe.debugSymbols != null)
+                    if (stackframe.DebugSymbols != null)
                     {
-                        for (int i = stackframe.debugSymbols.Length - 1; i >= 0; i--)
+                        for (int i = stackframe.DebugSymbols.Length - 1; i >= 0; i--)
                         {
-                            SymbolRef l = stackframe.debugSymbols[i];
+                            SymbolRef l = stackframe.DebugSymbols[i];
 
-                            if (l.NameValue == name && stackframe.localScope[i] != null)
+                            if (l.NameValue == name && stackframe.LocalScope[i] != null)
                             {
                                 return l;
                             }
                         }
                     }
 
-                    ClosureContext closure = stackframe.closureScope;
+                    ClosureContext closure = stackframe.ClosureScope;
 
                     if (closure != null)
                     {

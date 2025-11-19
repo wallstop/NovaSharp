@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class DebugServiceTests
     {
         [Test]
-        public void ResetBreakPointsMarksExistingLinesAndReturnsFilteredSet()
+        public void ResetBreakpointsMarksExistingLinesAndReturnsFilteredSet()
         {
             Script script = new(CoreModules.PresetComplete);
             BreakpointRecordingDebugger debugger = new();
@@ -34,11 +34,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.That(debugger.DebugService, Is.Not.Null, "Debugger never received DebugService.");
+            Assert.That(
+                debugger.DebugService,
+                Is.Not.Null,
+                "Debugger never received DebugService."
+            );
             Assert.That(debugger.DebugService.OwnerScript, Is.SameAs(script));
-            Assert.That(debugger.LastSourceCode, Is.Not.Null, "Debugger never received source code.");
+            Assert.That(
+                debugger.LastSourceCode,
+                Is.Not.Null,
+                "Debugger never received source code."
+            );
 
-            HashSet<int> applied = debugger.DebugService.ResetBreakPoints(
+            HashSet<int> applied = debugger.DebugService.ResetBreakpoints(
                 debugger.LastSourceCode!,
                 new HashSet<int>(debugger.RequestedBreakpoints)
             );
@@ -47,11 +55,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 applied,
                 Is.SubsetOf(debugger.RequestedBreakpoints),
-                "ResetBreakPoints should ignore lines with no SourceRef."
+                "ResetBreakpoints should ignore lines with no SourceRef."
             );
 
-            HashSet<int> flaggedLines = debugger.LastSourceCode!.Refs
-                .Where(r => r.Breakpoint)
+            HashSet<int> flaggedLines = debugger
+                .LastSourceCode!.Refs.Where(r => r.Breakpoint)
                 .Select(r => r.FromLine)
                 .ToHashSet();
 

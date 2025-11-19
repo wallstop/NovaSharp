@@ -57,7 +57,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Literal(_value);
+            bc.EmitLiteral(_value);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)

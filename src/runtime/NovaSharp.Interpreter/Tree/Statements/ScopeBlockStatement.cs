@@ -34,14 +34,14 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             using (bc.EnterSource(_do))
             {
-                bc.Emit_Enter(_stackFrame);
+                bc.EmitEnter(_stackFrame);
             }
 
             _block.Compile(bc);
 
             using (bc.EnterSource(_end))
             {
-                bc.Emit_Leave(_stackFrame);
+                bc.EmitLeave(_stackFrame);
             }
         }
     }

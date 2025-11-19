@@ -11,8 +11,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
     internal sealed partial class Processor
     {
-        private const ulong DUMP_CHUNK_MAGIC = 0x1A0D234E4F4F4D1D;
-        private const int DUMP_CHUNK_VERSION = 0x150;
+        private const ulong DumpChunkMagic = 0x1A0D234E4F4F4D1D;
+        private const int DumpChunkVersion = 0x150;
 
         internal static bool IsDumpStream(Stream stream)
         {
@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 using BinaryReader br = new(stream, Encoding.UTF8);
                 ulong magic = br.ReadUInt64();
                 stream.Seek(-8, SeekOrigin.Current);
-                return magic == DUMP_CHUNK_MAGIC;
+                return magic == DumpChunkMagic;
             }
             return false;
         }
@@ -38,15 +38,15 @@ namespace NovaSharp.Interpreter.Execution.VM
                 throw new ArgumentException("baseAddress");
             }
 
-            bw.Write(DUMP_CHUNK_MAGIC);
-            bw.Write(DUMP_CHUNK_VERSION);
+            bw.Write(DumpChunkMagic);
+            bw.Write(DumpChunkVersion);
             bw.Write(hasUpvalues);
             bw.Write(meta.NumVal);
 
             for (int i = 0; i <= meta.NumVal; i++)
             {
                 _rootChunk
-                    .code[baseAddress + i]
+                    .Code[baseAddress + i]
                     .GetSymbolReferences(out SymbolRef[] symbolList, out SymbolRef symbol);
 
                 if (symbol != null)
@@ -92,7 +92,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             for (int i = 0; i <= meta.NumVal; i++)
             {
-                _rootChunk.code[baseAddress + i].WriteBinary(bw, baseAddress, symbolMap);
+                _rootChunk.Code[baseAddress + i].WriteBinary(bw, baseAddress, symbolMap);
             }
 
             return meta.NumVal + baseAddress + 1;
@@ -108,20 +108,20 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal int Undump(Stream stream, int sourceId, Table envTable, out bool hasUpvalues)
         {
-            int baseAddress = _rootChunk.code.Count;
+            int baseAddress = _rootChunk.Code.Count;
             SourceRef sourceRef = new(sourceId, 0, 0, 0, 0, false);
 
             using BinaryReader br = new BinDumpBinaryReader(stream, Encoding.UTF8);
             ulong headerMark = br.ReadUInt64();
 
-            if (headerMark != DUMP_CHUNK_MAGIC)
+            if (headerMark != DumpChunkMagic)
             {
                 throw new ArgumentException("Not a NovaSharp chunk");
             }
 
             int version = br.ReadInt32();
 
-            if (version != DUMP_CHUNK_VERSION)
+            if (version != DumpChunkVersion)
             {
                 throw new ArgumentException("Invalid version");
             }
@@ -152,7 +152,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     envTable,
                     allSymbs
                 );
-                _rootChunk.code.Add(instruction);
+                _rootChunk.Code.Add(instruction);
             }
 
             return baseAddress;

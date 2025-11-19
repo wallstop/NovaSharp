@@ -1,4 +1,4 @@
-#define EMIT_DEBUG_OPS
+#define EmitDebug_OPS
 
 namespace NovaSharp.Interpreter.Tests.Units
 {
@@ -24,11 +24,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             using (byteCode.EnterSource(sourceRef))
             {
-                Instruction first = byteCode.Emit_Nop("first");
+                Instruction first = byteCode.EmitNop("first");
                 Assert.That(first.SourceCodeRef, Is.SameAs(sourceRef));
             }
 
-            Instruction second = byteCode.Emit_Nop("second");
+            Instruction second = byteCode.EmitNop("second");
             Assert.That(second.SourceCodeRef, Is.Null, "PopSourceRef should clear the current ref");
         }
 
@@ -38,9 +38,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new();
             ByteCode byteCode = new(script);
-            byteCode.Emit_Nop("first");
-            byteCode.Emit_Debug("trace");
-            byteCode.Emit_Operator(OpCode.Add);
+            byteCode.EmitNop("first");
+            byteCode.EmitDebug("trace");
+            byteCode.EmitOperator(OpCode.Add);
 
             string path = Path.Combine(Path.GetTempPath(), $"bytecode-{Guid.NewGuid():N}.txt");
             try
@@ -70,10 +70,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             OpCode appended = (OpCode)appendedValue;
             ByteCode byteCode = new(new Script());
 
-            byteCode.Emit_Operator(input);
+            byteCode.EmitOperator(input);
 
-            Assert.That(byteCode.code[^2].OpCode, Is.EqualTo(input));
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(appended));
+            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(input));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(appended));
         }
 
         [TestCase(true, false, (int)OpCode.IndexN)]
@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             OpCode expected = (OpCode)expectedValue;
             ByteCode byteCode = new(new Script());
-            Instruction instruction = byteCode.Emit_Index(
+            Instruction instruction = byteCode.EmitIndex(
                 DynValue.NewString("name"),
                 isNameIndex,
                 isExpList
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             OpCode expected = (OpCode)expectedValue;
             ByteCode byteCode = new(new Script());
-            Instruction instruction = byteCode.Emit_IndexSet(
+            Instruction instruction = byteCode.EmitIndexSet(
                 stackofs: 1,
                 tupleidx: 2,
                 index: DynValue.NewString("idx"),
@@ -129,12 +129,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             SymbolRef env = SymbolRef.Upvalue("_ENV", 0);
             SymbolRef symbol = SymbolRef.Global("globalValue", env);
 
-            int stackSlots = byteCode.Emit_Load(symbol);
+            int stackSlots = byteCode.EmitLoad(symbol);
 
             Assert.That(stackSlots, Is.EqualTo(2));
-            Assert.That(byteCode.code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Index));
-            Assert.That(byteCode.code[^1].Value.String, Is.EqualTo("globalValue"));
+            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Index));
+            Assert.That(byteCode.Code[^1].Value.String, Is.EqualTo("globalValue"));
         }
 
         [Test]
@@ -143,11 +143,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Local("localValue", 1);
 
-            int stackSlots = byteCode.Emit_Load(symbol);
+            int stackSlots = byteCode.EmitLoad(symbol);
 
             Assert.That(stackSlots, Is.EqualTo(1));
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Local));
-            Assert.That(byteCode.code[^1].Symbol, Is.EqualTo(symbol));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Local));
+            Assert.That(byteCode.Code[^1].Symbol, Is.EqualTo(symbol));
         }
 
         [Test]
@@ -156,11 +156,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Upvalue("upvalue", 2);
 
-            int stackSlots = byteCode.Emit_Load(symbol);
+            int stackSlots = byteCode.EmitLoad(symbol);
 
             Assert.That(stackSlots, Is.EqualTo(1));
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Upvalue));
-            Assert.That(byteCode.code[^1].Symbol, Is.EqualTo(symbol));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Assert.That(byteCode.Code[^1].Symbol, Is.EqualTo(symbol));
         }
 
         [Test]
@@ -170,11 +170,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             SymbolRef env = SymbolRef.Upvalue("_ENV", 0);
             SymbolRef symbol = SymbolRef.Global("globalValue", env);
 
-            int stackSlots = byteCode.Emit_Store(symbol, stackofs: 1, tupleidx: 2);
+            int stackSlots = byteCode.EmitStore(symbol, stackofs: 1, tupleidx: 2);
 
             Assert.That(stackSlots, Is.EqualTo(2));
-            Assert.That(byteCode.code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
-            Instruction setter = byteCode.code[^1];
+            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Instruction setter = byteCode.Code[^1];
             Assert.That(setter.OpCode, Is.EqualTo(OpCode.IndexSet));
             Assert.That(setter.NumVal, Is.EqualTo(1));
             Assert.That(setter.NumVal2, Is.EqualTo(2));
@@ -187,10 +187,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Local("localValue", 3);
 
-            int stackSlots = byteCode.Emit_Store(symbol, stackofs: 4, tupleidx: 1);
+            int stackSlots = byteCode.EmitStore(symbol, stackofs: 4, tupleidx: 1);
 
             Assert.That(stackSlots, Is.EqualTo(1));
-            Instruction setter = byteCode.code[^1];
+            Instruction setter = byteCode.Code[^1];
             Assert.That(setter.OpCode, Is.EqualTo(OpCode.StoreLcl));
             Assert.That(setter.NumVal, Is.EqualTo(4));
             Assert.That(setter.NumVal2, Is.EqualTo(1));
@@ -203,10 +203,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Upvalue("upvalue", 5);
 
-            int stackSlots = byteCode.Emit_Store(symbol, stackofs: 6, tupleidx: 0);
+            int stackSlots = byteCode.EmitStore(symbol, stackofs: 6, tupleidx: 0);
 
             Assert.That(stackSlots, Is.EqualTo(1));
-            Instruction setter = byteCode.code[^1];
+            Instruction setter = byteCode.Code[^1];
             Assert.That(setter.OpCode, Is.EqualTo(OpCode.StoreUpv));
             Assert.That(setter.NumVal, Is.EqualTo(6));
             Assert.That(setter.NumVal2, Is.EqualTo(0));
@@ -221,7 +221,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             frame.DebugSymbols.Add(SymbolRef.Local("a", 0));
             frame.DebugSymbols.Add(SymbolRef.Local("b", 1));
 
-            Instruction instruction = byteCode.Emit_BeginFn(frame);
+            Instruction instruction = byteCode.EmitBeginFn(frame);
 
             Assert.That(instruction.OpCode, Is.EqualTo(OpCode.BeginFn));
             Assert.That(instruction.SymbolList, Is.EquivalentTo(frame.DebugSymbols));
@@ -235,7 +235,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ByteCode byteCode = new(new Script());
 
-            Instruction instruction = byteCode.Emit_TblInitI(lastPos);
+            Instruction instruction = byteCode.EmitTblInitI(lastPos);
 
             Assert.That(instruction.OpCode, Is.EqualTo(OpCode.TblInitI));
             Assert.That(instruction.NumVal, Is.EqualTo(expectedFlag));
@@ -246,10 +246,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ByteCode byteCode = new(new Script());
 
-            byteCode.Emit_Debug("trace");
+            byteCode.EmitDebug("trace");
 
-            Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Debug));
-            Assert.That(byteCode.code[^1].Name, Is.EqualTo("trace"));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Debug));
+            Assert.That(byteCode.Code[^1].Name, Is.EqualTo("trace"));
         }
 
         [Test]
@@ -257,7 +257,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ByteCode byteCode = new(new Script());
             Assert.That(
-                () => byteCode.Emit_Load(SymbolRef.DefaultEnv),
+                () => byteCode.EmitLoad(SymbolRef.DefaultEnv),
                 Throws
                     .TypeOf<InternalErrorException>()
                     .With.Message.Contain("Unexpected symbol type")
@@ -269,7 +269,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ByteCode byteCode = new(new Script());
             Assert.That(
-                () => byteCode.Emit_Store(SymbolRef.DefaultEnv, stackofs: 0, tupleidx: 0),
+                () => byteCode.EmitStore(SymbolRef.DefaultEnv, stackofs: 0, tupleidx: 0),
                 Throws
                     .TypeOf<InternalErrorException>()
                     .With.Message.Contain("Unexpected symbol type")

@@ -11,10 +11,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
     {
         private class IfBlock
         {
-            public Expression exp;
-            public Statement block;
-            public RuntimeScopeBlock stackFrame;
-            public SourceRef source;
+            public Expression Condition;
+            public Statement Body;
+            public RuntimeScopeBlock StackFrame;
+            public SourceRef Source;
         }
 
         private readonly List<IfBlock> _ifs = new();
@@ -49,13 +49,13 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             IfBlock ifblock = new()
             {
-                exp = Expression.Expr(lcontext),
-                source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then)),
-                block = new CompositeStatement(lcontext),
-                stackFrame = lcontext.Scope.PopBlock(),
+                Condition = Expression.Expr(lcontext),
+                Source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then)),
+                Body = new CompositeStatement(lcontext),
+                StackFrame = lcontext.Scope.PopBlock(),
             };
 
-            lcontext.Source.Refs.Add(ifblock.source);
+            lcontext.Source.Refs.Add(ifblock.Source);
 
             return ifblock;
         }
@@ -68,11 +68,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             IfBlock ifblock = new()
             {
-                block = new CompositeStatement(lcontext),
-                stackFrame = lcontext.Scope.PopBlock(),
-                source = type.GetSourceRef(),
+                Body = new CompositeStatement(lcontext),
+                StackFrame = lcontext.Scope.PopBlock(),
+                Source = type.GetSourceRef(),
             };
-            lcontext.Source.Refs.Add(ifblock.source);
+            lcontext.Source.Refs.Add(ifblock.Source);
             return ifblock;
         }
 
@@ -84,39 +84,39 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             foreach (IfBlock ifblock in _ifs)
             {
-                using (bc.EnterSource(ifblock.source))
+                using (bc.EnterSource(ifblock.Source))
                 {
                     if (lastIfJmp != null)
                     {
                         lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
                     }
 
-                    ifblock.exp.Compile(bc);
-                    lastIfJmp = bc.Emit_Jump(OpCode.Jf, -1);
-                    bc.Emit_Enter(ifblock.stackFrame);
-                    ifblock.block.Compile(bc);
+                    ifblock.Condition.Compile(bc);
+                    lastIfJmp = bc.EmitJump(OpCode.Jf, -1);
+                    bc.EmitEnter(ifblock.StackFrame);
+                    ifblock.Body.Compile(bc);
                 }
 
                 using (bc.EnterSource(_end))
                 {
-                    bc.Emit_Leave(ifblock.stackFrame);
+                    bc.EmitLeave(ifblock.StackFrame);
                 }
 
-                endJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
+                endJumps.Add(bc.EmitJump(OpCode.Jump, -1));
             }
 
             lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
 
             if (_else != null)
             {
-                using (bc.EnterSource(_else.source))
+                using (bc.EnterSource(_else.Source))
                 {
-                    bc.Emit_Enter(_else.stackFrame);
-                    _else.block.Compile(bc);
+                    bc.EmitEnter(_else.StackFrame);
+                    _else.Body.Compile(bc);
                 }
 
                 {
-                    bc.Emit_Leave(_else.stackFrame);
+                    bc.EmitLeave(_else.StackFrame);
                 }
             }
 

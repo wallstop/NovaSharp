@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void WriteReturnsTupleWhenExceptionOccurs()
+        public void WritereturnsTupleWhenExceptionOccurs()
         {
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true) { ThrowOnWrite = true };
@@ -796,7 +796,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             private readonly FaultyMemoryStream _innerStream;
             private readonly StreamReader _innerReader;
-            private FaultyStreamWriter _innerWriter;
+            private FaultyStreamWriter _inner_writer;
             private readonly Encoding _encoding = new UTF8Encoding(
                 encoderShouldEmitUTF8Identifier: false
             );
@@ -837,7 +837,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 if (allowWrite)
                 {
-                    _innerWriter = new FaultyStreamWriter(
+                    _inner_writer = new FaultyStreamWriter(
                         _innerStream,
                         _encoding,
                         bufferSize: 1024,
@@ -851,7 +851,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Initialize(
                     _innerStream,
                     allowRead ? _innerReader : null,
-                    allowWrite ? _innerWriter : null
+                    allowWrite ? _inner_writer : null
                 );
             }
 
@@ -869,7 +869,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal string CloseMessage { get; set; }
 
-            internal bool WriterAutoFlush => _innerWriter != null && _innerWriter.AutoFlush;
+            internal bool WriterAutoFlush =>
+                StreamWriterInstance != null && StreamWriterInstance.AutoFlush;
 
             internal string GetContent()
             {
@@ -954,7 +955,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal void TriggerFlushFailure()
             {
-                _innerWriter.ThrowOnFlush = true;
+                _inner_writer.ThrowOnFlush = true;
             }
 
             internal void TriggerSeekFailure()
@@ -971,8 +972,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                     leaveOpen: true
                 );
                 disposed.Dispose();
-                _innerWriter = disposed;
-                _writer = disposed;
+                _inner_writer = disposed;
+                StreamWriterInstance = disposed;
             }
 
             internal void DisposeUnderlyingStream()

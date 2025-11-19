@@ -427,7 +427,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
         #endregion
         #region sprintf
-        internal static Regex r = new(
+        internal static Regex FormatRegex = new(
             @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
@@ -435,7 +435,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         {
             #region Variables
             StringBuilder f = new();
-            //Regex r = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );
+            //Regex FormatRegex = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );
             //"%[parameter][flags][width][.precision][length]type"
             Match m = null;
             string w = String.Empty;
@@ -459,7 +459,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
 
             // find all format parameters in format string
             f.Append(format);
-            m = r.Match(f.ToString());
+            m = FormatRegex.Match(f.ToString());
             while (m.Success)
             {
                 #region parameter index
@@ -866,7 +866,7 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
                 // includes a format specifier
                 f.Remove(m.Index, m.Length);
                 f.Insert(m.Index, w);
-                m = r.Match(f.ToString(), m.Index + w.Length);
+                m = FormatRegex.Match(f.ToString(), m.Index + w.Length);
             }
 
             return f.ToString();

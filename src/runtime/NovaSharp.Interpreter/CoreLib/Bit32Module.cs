@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "bit32")]
     public class Bit32Module
     {
-        private static readonly uint[] Masks = new uint[]
+        private static readonly uint[] Masks =
         {
             0x1,
             0x3,

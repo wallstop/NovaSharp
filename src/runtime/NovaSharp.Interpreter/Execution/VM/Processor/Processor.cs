@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
     internal sealed partial class Processor
     {
-        private const int STACK_SIZE = 131072;
+        private const int StackSize = 131072;
 
         private readonly ByteCode _rootChunk;
 
@@ -34,8 +34,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            _valueStack = new FastStack<DynValue>(STACK_SIZE);
-            _executionStack = new FastStack<CallStackItem>(STACK_SIZE);
+            _valueStack = new FastStack<DynValue>(StackSize);
+            _executionStack = new FastStack<CallStackItem>(StackSize);
             _coroutinesStack = new List<Processor>();
 
             _debug = new DebugContext();
@@ -48,8 +48,8 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private Processor(Processor parentProcessor)
         {
-            _valueStack = new FastStack<DynValue>(STACK_SIZE);
-            _executionStack = new FastStack<CallStackItem>(STACK_SIZE);
+            _valueStack = new FastStack<DynValue>(StackSize);
+            _executionStack = new FastStack<CallStackItem>(StackSize);
             _debug = parentProcessor._debug;
             _rootChunk = parentProcessor._rootChunk;
             _globalTable = parentProcessor._globalTable;
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         function,
                         args
                     );
-                    return Processing_Loop(entrypoint);
+                    return ProcessingLoop(entrypoint);
                 }
                 finally
                 {
@@ -120,7 +120,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         // pushes all what's required to perform a clr-to-script function call. function can be null if it's already
         // at vstack top.
         private int PushClrToScriptStackFrame(
-            CallStackItemFlags flags,
+            CallStackItemFlags Flags,
             DynValue function,
             DynValue[] args
         )
@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(function); // func val
             }
 
-            args = Internal_AdjustTuple(args);
+            args = InternalAdjustTuple(args);
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -146,12 +146,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             _executionStack.Push(
                 new CallStackItem()
                 {
-                    basePointer = _valueStack.Count,
-                    debugEntryPoint = function.Function.EntryPointByteCodeLocation,
-                    returnAddress = -1,
-                    closureScope = function.Function.ClosureContext,
-                    callingSourceRef = SourceRef.GetClrLocation(),
-                    flags = flags,
+                    BasePointer = _valueStack.Count,
+                    DebugEntryPoint = function.Function.EntryPointByteCodeLocation,
+                    ReturnAddress = -1,
+                    ClosureScope = function.Function.ClosureContext,
+                    CallingSourceRef = SourceRef.GetClrLocation(),
+                    Flags = Flags,
                 }
             );
 
@@ -174,11 +174,11 @@ namespace NovaSharp.Interpreter.Execution.VM
             if (
                 _executionNesting == 0
                 && _debug != null
-                && _debug.debuggerEnabled
-                && _debug.debuggerAttached != null
+                && _debug.DebuggerEnabled
+                && _debug.DebuggerAttached != null
             )
             {
-                _debug.debuggerAttached.SignalExecutionEnded();
+                _debug.DebuggerAttached.SignalExecutionEnded();
             }
         }
 

@@ -299,7 +299,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             expr.Compile(byteCode);
 
             Assert.That(
-                byteCode.code.ToArray().Select(i => i.OpCode),
+                byteCode.Code.ToArray().Select(i => i.OpCode),
                 Does.Contain(expectedOpCode)
             );
         }
@@ -646,11 +646,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(byteCode.code[0].OpCode, Is.EqualTo(OpCode.Literal));
-                Instruction jump = byteCode.code[1];
+                Assert.That(byteCode.Code[0].OpCode, Is.EqualTo(OpCode.Literal));
+                Instruction jump = byteCode.Code[1];
                 Assert.That(jump.OpCode, Is.EqualTo(OpCode.JtOrPop));
-                Assert.That(jump.NumVal, Is.EqualTo(byteCode.code.Count));
-                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.Literal));
+                Assert.That(jump.NumVal, Is.EqualTo(byteCode.Code.Count));
+                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.Literal));
             });
         }
 
@@ -672,11 +672,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(byteCode.code[0].OpCode, Is.EqualTo(OpCode.Literal));
-                Instruction jump = byteCode.code[1];
+                Assert.That(byteCode.Code[0].OpCode, Is.EqualTo(OpCode.Literal));
+                Instruction jump = byteCode.Code[1];
                 Assert.That(jump.OpCode, Is.EqualTo(OpCode.JfOrPop));
-                Assert.That(jump.NumVal, Is.EqualTo(byteCode.code.Count));
-                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.Literal));
+                Assert.That(jump.NumVal, Is.EqualTo(byteCode.Code.Count));
+                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.Literal));
             });
         }
 
@@ -698,9 +698,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(byteCode.code[2].OpCode, Is.EqualTo(OpCode.LessEq));
-                Assert.That(byteCode.code[3].OpCode, Is.EqualTo(OpCode.CNot));
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Not));
+                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.LessEq));
+                Assert.That(byteCode.Code[3].OpCode, Is.EqualTo(OpCode.CNot));
+                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Not));
             });
         }
 
@@ -745,7 +745,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ByteCode byteCode = new(script);
                 expr.Compile(byteCode);
 
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(expectedOpCode), tokenText);
+                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(expectedOpCode), tokenText);
             }
         }
 
@@ -772,7 +772,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ByteCode byteCode = new(script);
                 expr.Compile(byteCode);
 
-                Instruction[] instructions = byteCode.code.ToArray();
+                Instruction[] instructions = byteCode.Code.ToArray();
                 int comparisonIndex = Array.FindLastIndex(
                     instructions,
                     i => i.OpCode == expectedOpCode
@@ -816,7 +816,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
-            Instruction[] instructions = byteCode.code.ToArray();
+            Instruction[] instructions = byteCode.Code.ToArray();
             int eqIndex = Array.FindLastIndex(instructions, i => i.OpCode == OpCode.Eq);
 
             Assert.Multiple(() =>

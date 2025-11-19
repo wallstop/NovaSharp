@@ -14,13 +14,13 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         internal Instruction FindMeta(ref int baseAddress)
         {
-            Instruction meta = _rootChunk.code[baseAddress];
+            Instruction meta = _rootChunk.Code[baseAddress];
 
             // skip nops
             while (meta.OpCode == OpCode.Nop)
             {
                 baseAddress++;
-                meta = _rootChunk.code[baseAddress];
+                meta = _rootChunk.Code[baseAddress];
             }
 
             if (meta.OpCode != OpCode.Meta)
@@ -33,42 +33,42 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal void AttachDebugger(IDebugger debugger)
         {
-            _debug.debuggerAttached = debugger;
-            _debug.lineBasedBreakPoints =
+            _debug.DebuggerAttached = debugger;
+            _debug.LineBasedBreakPoints =
                 (debugger.GetDebuggerCaps() & DebuggerCaps.HasLineBasedBreakpoints) != 0;
             debugger.SetDebugService(new DebugService(_script, this));
         }
 
         internal bool DebuggerEnabled
         {
-            get { return _debug.debuggerEnabled; }
-            set { _debug.debuggerEnabled = value; }
+            get { return _debug.DebuggerEnabled; }
+            set { _debug.DebuggerEnabled = value; }
         }
 
         private void ListenDebugger(Instruction instr, int instructionPtr)
         {
             bool isOnDifferentRef = false;
 
-            if (instr.SourceCodeRef != null && _debug.lastHlRef != null)
+            if (instr.SourceCodeRef != null && _debug.LastHlRef != null)
             {
-                if (_debug.lineBasedBreakPoints)
+                if (_debug.LineBasedBreakPoints)
                 {
                     isOnDifferentRef =
-                        instr.SourceCodeRef.SourceIdx != _debug.lastHlRef.SourceIdx
-                        || instr.SourceCodeRef.FromLine != _debug.lastHlRef.FromLine;
+                        instr.SourceCodeRef.SourceIdx != _debug.LastHlRef.SourceIdx
+                        || instr.SourceCodeRef.FromLine != _debug.LastHlRef.FromLine;
                 }
                 else
                 {
-                    isOnDifferentRef = instr.SourceCodeRef != _debug.lastHlRef;
+                    isOnDifferentRef = instr.SourceCodeRef != _debug.LastHlRef;
                 }
             }
-            else if (_debug.lastHlRef == null)
+            else if (_debug.LastHlRef == null)
             {
                 isOnDifferentRef = instr.SourceCodeRef != null;
             }
 
             if (
-                _debug.debuggerAttached.IsPauseRequested()
+                _debug.DebuggerAttached.IsPauseRequested()
                 || (
                     instr.SourceCodeRef != null
                     && instr.SourceCodeRef.Breakpoint
@@ -76,21 +76,21 @@ namespace NovaSharp.Interpreter.Execution.VM
                 )
             )
             {
-                _debug.debuggerCurrentAction = default;
-                _debug.debuggerCurrentActionTarget = -1;
+                _debug.DebuggerCurrentAction = default;
+                _debug.DebuggerCurrentActionTarget = -1;
             }
 
-            switch (_debug.debuggerCurrentAction)
+            switch (_debug.DebuggerCurrentAction)
             {
                 case DebuggerAction.ActionType.Run:
-                    if (_debug.lineBasedBreakPoints)
+                    if (_debug.LineBasedBreakPoints)
                     {
-                        _debug.lastHlRef = instr.SourceCodeRef;
+                        _debug.LastHlRef = instr.SourceCodeRef;
                     }
 
                     return;
                 case DebuggerAction.ActionType.ByteCodeStepOver:
-                    if (_debug.debuggerCurrentActionTarget != instructionPtr)
+                    if (_debug.DebuggerCurrentActionTarget != instructionPtr)
                     {
                         return;
                     }
@@ -98,7 +98,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     break;
                 case DebuggerAction.ActionType.ByteCodeStepOut:
                 case DebuggerAction.ActionType.StepOut:
-                    if (_executionStack.Count >= _debug.exStackDepthAtStep)
+                    if (_executionStack.Count >= _debug.ExecutionStackDepthAtStep)
                     {
                         return;
                     }
@@ -106,8 +106,8 @@ namespace NovaSharp.Interpreter.Execution.VM
                     break;
                 case DebuggerAction.ActionType.StepIn:
                     if (
-                        (_executionStack.Count >= _debug.exStackDepthAtStep)
-                        && (instr.SourceCodeRef == null || instr.SourceCodeRef == _debug.lastHlRef)
+                        (_executionStack.Count >= _debug.ExecutionStackDepthAtStep)
+                        && (instr.SourceCodeRef == null || instr.SourceCodeRef == _debug.LastHlRef)
                     )
                     {
                         return;
@@ -117,8 +117,8 @@ namespace NovaSharp.Interpreter.Execution.VM
                 case DebuggerAction.ActionType.StepOver:
                     if (
                         instr.SourceCodeRef == null
-                        || instr.SourceCodeRef == _debug.lastHlRef
-                        || _executionStack.Count > _debug.exStackDepthAtStep
+                        || instr.SourceCodeRef == _debug.LastHlRef
+                        || _executionStack.Count > _debug.ExecutionStackDepthAtStep
                     )
                     {
                         return;
@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             while (true)
             {
-                DebuggerAction action = _debug.debuggerAttached.GetAction(
+                DebuggerAction action = _debug.DebuggerAttached.GetAction(
                     instructionPtr,
                     instr.SourceCodeRef
                 );
@@ -142,29 +142,29 @@ namespace NovaSharp.Interpreter.Execution.VM
                     case DebuggerAction.ActionType.StepOver:
                     case DebuggerAction.ActionType.StepOut:
                     case DebuggerAction.ActionType.ByteCodeStepOut:
-                        _debug.debuggerCurrentAction = action.Action;
-                        _debug.lastHlRef = instr.SourceCodeRef;
-                        _debug.exStackDepthAtStep = _executionStack.Count;
+                        _debug.DebuggerCurrentAction = action.Action;
+                        _debug.LastHlRef = instr.SourceCodeRef;
+                        _debug.ExecutionStackDepthAtStep = _executionStack.Count;
                         return;
                     case DebuggerAction.ActionType.ByteCodeStepIn:
-                        _debug.debuggerCurrentAction = DebuggerAction.ActionType.ByteCodeStepIn;
-                        _debug.debuggerCurrentActionTarget = -1;
+                        _debug.DebuggerCurrentAction = DebuggerAction.ActionType.ByteCodeStepIn;
+                        _debug.DebuggerCurrentActionTarget = -1;
                         return;
                     case DebuggerAction.ActionType.ByteCodeStepOver:
-                        _debug.debuggerCurrentAction = DebuggerAction.ActionType.ByteCodeStepOver;
-                        _debug.debuggerCurrentActionTarget = instructionPtr + 1;
+                        _debug.DebuggerCurrentAction = DebuggerAction.ActionType.ByteCodeStepOver;
+                        _debug.DebuggerCurrentActionTarget = instructionPtr + 1;
                         return;
                     case DebuggerAction.ActionType.Run:
-                        _debug.debuggerCurrentAction = DebuggerAction.ActionType.Run;
-                        _debug.lastHlRef = instr.SourceCodeRef;
-                        _debug.debuggerCurrentActionTarget = -1;
+                        _debug.DebuggerCurrentAction = DebuggerAction.ActionType.Run;
+                        _debug.LastHlRef = instr.SourceCodeRef;
+                        _debug.DebuggerCurrentActionTarget = -1;
                         return;
                     case DebuggerAction.ActionType.ToggleBreakpoint:
                         ToggleBreakPoint(action, null);
                         RefreshDebugger(true, instructionPtr);
                         break;
                     case DebuggerAction.ActionType.ResetBreakpoints:
-                        ResetBreakPoints(action);
+                        ResetBreakpoints(action);
                         RefreshDebugger(true, instructionPtr);
                         break;
                     case DebuggerAction.ActionType.SetBreakpoint:
@@ -187,13 +187,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private void ResetBreakPoints(DebuggerAction action)
+        private void ResetBreakpoints(DebuggerAction action)
         {
             SourceCode src = _script.GetSourceCode(action.SourceId);
-            ResetBreakPoints(src, new HashSet<int>(action.Lines));
+            ResetBreakpoints(src, new HashSet<int>(action.Lines));
         }
 
-        internal HashSet<int> ResetBreakPoints(SourceCode src, HashSet<int> lines)
+        internal HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
             HashSet<int> result = new();
 
@@ -244,11 +244,11 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                     if (srf.Breakpoint)
                     {
-                        _debug.breakPoints.Add(srf);
+                        _debug.BreakPoints.Add(srf);
                     }
                     else
                     {
-                        _debug.breakPoints.Remove(srf);
+                        _debug.BreakPoints.Remove(srf);
                     }
                 }
             }
@@ -293,11 +293,11 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                     if (nearest.Breakpoint)
                     {
-                        _debug.breakPoints.Add(nearest);
+                        _debug.BreakPoints.Add(nearest);
                     }
                     else
                     {
-                        _debug.breakPoints.Remove(nearest);
+                        _debug.BreakPoints.Remove(nearest);
                     }
 
                     return true;
@@ -318,26 +318,26 @@ namespace NovaSharp.Interpreter.Execution.VM
             SourceRef sref = GetCurrentSourceRef(instructionPtr);
             ScriptExecutionContext context = new(this, null, sref);
 
-            List<DynamicExpression> watchList = _debug.debuggerAttached.GetWatchItems();
-            List<WatchItem> callStack = Debugger_GetCallStack(sref);
-            List<WatchItem> watches = Debugger_RefreshWatches(context, watchList);
-            List<WatchItem> vstack = Debugger_RefreshVStack();
-            List<WatchItem> locals = Debugger_RefreshLocals(context);
-            List<WatchItem> threads = Debugger_RefreshThreads(context);
+            List<DynamicExpression> watchList = _debug.DebuggerAttached.GetWatchItems();
+            List<WatchItem> callStack = GetDebuggerCallStack(sref);
+            List<WatchItem> watches = RefreshDebuggerWatches(context, watchList);
+            List<WatchItem> vstack = RefreshValueStack();
+            List<WatchItem> locals = RefreshDebuggerLocals(context);
+            List<WatchItem> threads = RefreshDebuggerThreads(context);
 
-            _debug.debuggerAttached.Update(WatchType.CallStack, callStack);
-            _debug.debuggerAttached.Update(WatchType.Watches, watches);
-            _debug.debuggerAttached.Update(WatchType.VStack, vstack);
-            _debug.debuggerAttached.Update(WatchType.Locals, locals);
-            _debug.debuggerAttached.Update(WatchType.Threads, threads);
+            _debug.DebuggerAttached.Update(WatchType.CallStack, callStack);
+            _debug.DebuggerAttached.Update(WatchType.Watches, watches);
+            _debug.DebuggerAttached.Update(WatchType.VStack, vstack);
+            _debug.DebuggerAttached.Update(WatchType.Locals, locals);
+            _debug.DebuggerAttached.Update(WatchType.Threads, threads);
 
             if (hard)
             {
-                _debug.debuggerAttached.RefreshBreakpoints(_debug.breakPoints);
+                _debug.DebuggerAttached.RefreshBreakpoints(_debug.BreakPoints);
             }
         }
 
-        private List<WatchItem> Debugger_RefreshThreads(ScriptExecutionContext context)
+        private List<WatchItem> RefreshDebuggerThreads(ScriptExecutionContext context)
         {
             List<Processor> coroutinesStack =
                 _parent != null ? _parent._coroutinesStack : _coroutinesStack;
@@ -351,7 +351,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 .ToList();
         }
 
-        private List<WatchItem> Debugger_RefreshVStack()
+        private List<WatchItem> RefreshValueStack()
         {
             List<WatchItem> lwi = new();
             for (int i = 0; i < Math.Min(32, _valueStack.Count); i++)
@@ -362,22 +362,22 @@ namespace NovaSharp.Interpreter.Execution.VM
             return lwi;
         }
 
-        private List<WatchItem> Debugger_RefreshWatches(
+        private List<WatchItem> RefreshDebuggerWatches(
             ScriptExecutionContext context,
             List<DynamicExpression> watchList
         )
         {
-            return watchList.Select(w => Debugger_RefreshWatch(context, w)).ToList();
+            return watchList.Select(w => RefreshDebuggerWatch(context, w)).ToList();
         }
 
-        private List<WatchItem> Debugger_RefreshLocals(ScriptExecutionContext context)
+        private List<WatchItem> RefreshDebuggerLocals(ScriptExecutionContext context)
         {
             List<WatchItem> locals = new();
             CallStackItem top = _executionStack.Peek();
 
-            if (top != null && top.debugSymbols != null && top.localScope != null)
+            if (top != null && top.DebugSymbols != null && top.LocalScope != null)
             {
-                int len = Math.Min(top.debugSymbols.Length, top.localScope.Length);
+                int len = Math.Min(top.DebugSymbols.Length, top.LocalScope.Length);
 
                 for (int i = 0; i < len; i++)
                 {
@@ -385,9 +385,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                         new WatchItem()
                         {
                             IsError = false,
-                            LValue = top.debugSymbols[i],
-                            Value = top.localScope[i],
-                            Name = top.debugSymbols[i].NameValue,
+                            LValue = top.DebugSymbols[i],
+                            Value = top.LocalScope[i],
+                            Name = top.DebugSymbols[i].NameValue,
                         }
                     );
                 }
@@ -396,7 +396,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return locals;
         }
 
-        private WatchItem Debugger_RefreshWatch(
+        private WatchItem RefreshDebuggerWatch(
             ScriptExecutionContext context,
             DynamicExpression dynExpr
         )
@@ -425,7 +425,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        internal List<WatchItem> Debugger_GetCallStack(SourceRef startingRef)
+        internal List<WatchItem> GetDebuggerCallStack(SourceRef startingRef)
         {
             List<WatchItem> wis = new();
 
@@ -433,20 +433,20 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 CallStackItem c = _executionStack.Peek(i);
 
-                Instruction instruction = _rootChunk.code[c.debugEntryPoint];
+                Instruction instruction = _rootChunk.Code[c.DebugEntryPoint];
 
                 string callname = instruction.OpCode == OpCode.Meta ? instruction.Name : null;
 
-                if (c.clrFunction != null)
+                if (c.ClrFunction != null)
                 {
                     wis.Add(
                         new WatchItem()
                         {
                             Address = -1,
                             BasePtr = -1,
-                            RetAddress = c.returnAddress,
+                            RetAddress = c.ReturnAddress,
                             Location = startingRef,
-                            Name = c.clrFunction.Name,
+                            Name = c.ClrFunction.Name,
                         }
                     );
                 }
@@ -455,23 +455,23 @@ namespace NovaSharp.Interpreter.Execution.VM
                     wis.Add(
                         new WatchItem()
                         {
-                            Address = c.debugEntryPoint,
-                            BasePtr = c.basePointer,
-                            RetAddress = c.returnAddress,
+                            Address = c.DebugEntryPoint,
+                            BasePtr = c.BasePointer,
+                            RetAddress = c.ReturnAddress,
                             Name = callname,
                             Location = startingRef,
                         }
                     );
                 }
 
-                startingRef = c.callingSourceRef;
+                startingRef = c.CallingSourceRef;
 
-                if (c.continuation != null)
+                if (c.Continuation != null)
                 {
                     wis.Add(
                         new WatchItem()
                         {
-                            Name = c.continuation.Name,
+                            Name = c.Continuation.Name,
                             Location = SourceRef.GetClrLocation(),
                         }
                     );

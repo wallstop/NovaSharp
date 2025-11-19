@@ -37,25 +37,26 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private class Node
         {
-            public Expression expr;
-            public Operator op;
-            public Node prev;
-            public Node next;
+            public Expression Expression;
+            public Operator Operator;
+            public Node Previous;
+            public Node Next;
         }
 
         private class LinkedList
         {
-            public Node nodes;
-            public Node last;
-            public Operator operatorMask;
+            public Node Head;
+            public Node Tail;
+            public Operator OperatorMask;
         }
 
-        private const Operator POWER = Operator.Power;
-        private const Operator MUL_DIV_MOD = Operator.Mul | Operator.Div | Operator.Mod;
-        private const Operator ADD_SUB = Operator.Add | Operator.Sub;
-        private const Operator STRCAT = Operator.StrConcat;
+        private const Operator PowerOperator = Operator.Power;
+        private const Operator MultiplicationDivisionModuloOperators =
+            Operator.Mul | Operator.Div | Operator.Mod;
+        private const Operator AdditionSubtractionOperators = Operator.Add | Operator.Sub;
+        private const Operator StringConcatenationOperator = Operator.StrConcat;
 
-        private const Operator COMPARES =
+        private const Operator ComparisonOperators =
             Operator.Less
             | Operator.Greater
             | Operator.GreaterOrEqual
@@ -63,8 +64,8 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             | Operator.Equal
             | Operator.NotEqual;
 
-        private const Operator LOGIC_AND = Operator.And;
-        private const Operator LOGIC_OR = Operator.Or;
+        private const Operator LogicalAndOperator = Operator.And;
+        private const Operator LogicalOrOperator = Operator.Or;
 
         public static object BeginOperatorChain()
         {
@@ -74,14 +75,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public static void AddExpressionToChain(object chain, Expression exp)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { expr = exp };
+            Node node = new() { Expression = exp };
             AddNode(list, node);
         }
 
         public static void AddOperatorToChain(object chain, Token op)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { op = ParseBinaryOperator(op) };
+            Node node = new() { Operator = ParseBinaryOperator(op) };
             AddNode(list, node);
         }
 
@@ -101,17 +102,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private static void AddNode(LinkedList list, Node node)
         {
-            list.operatorMask |= node.op;
+            list.OperatorMask |= node.Operator;
 
-            if (list.nodes == null)
+            if (list.Head == null)
             {
-                list.nodes = list.last = node;
+                list.Head = list.Tail = node;
             }
             else
             {
-                list.last.next = node;
-                node.prev = list.last;
-                list.last = node;
+                list.Tail.Next = node;
+                node.Previous = list.Tail;
+                list.Tail = node;
             }
         }
 
@@ -120,56 +121,60 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         /// </summary>
         private static Expression CreateSubTree(LinkedList list, ScriptLoadingContext lcontext)
         {
-            Operator opfound = list.operatorMask;
+            Operator opfound = list.OperatorMask;
 
-            Node nodes = list.nodes;
+            Node nodes = list.Head;
 
-            if ((opfound & POWER) != 0)
+            if ((opfound & PowerOperator) != 0)
             {
-                nodes = PrioritizeRightAssociative(nodes, lcontext, POWER);
+                nodes = PrioritizeRightAssociative(nodes, lcontext, PowerOperator);
             }
 
-            if ((opfound & MUL_DIV_MOD) != 0)
+            if ((opfound & MultiplicationDivisionModuloOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, MUL_DIV_MOD);
+                nodes = PrioritizeLeftAssociative(
+                    nodes,
+                    lcontext,
+                    MultiplicationDivisionModuloOperators
+                );
             }
 
-            if ((opfound & ADD_SUB) != 0)
+            if ((opfound & AdditionSubtractionOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, ADD_SUB);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, AdditionSubtractionOperators);
             }
 
-            if ((opfound & STRCAT) != 0)
+            if ((opfound & StringConcatenationOperator) != 0)
             {
-                nodes = PrioritizeRightAssociative(nodes, lcontext, STRCAT);
+                nodes = PrioritizeRightAssociative(nodes, lcontext, StringConcatenationOperator);
             }
 
-            if ((opfound & COMPARES) != 0)
+            if ((opfound & ComparisonOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, COMPARES);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, ComparisonOperators);
             }
 
-            if ((opfound & LOGIC_AND) != 0)
+            if ((opfound & LogicalAndOperator) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_AND);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, LogicalAndOperator);
             }
 
-            if ((opfound & LOGIC_OR) != 0)
+            if ((opfound & LogicalOrOperator) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_OR);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, LogicalOrOperator);
             }
 
-            if (nodes.next != null || nodes.prev != null)
+            if (nodes.Next != null || nodes.Previous != null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 1");
             }
 
-            if (nodes.expr == null)
+            if (nodes.Expression == null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 2");
             }
 
-            return nodes.expr;
+            return nodes.Expression;
         }
 
         private static Node PrioritizeLeftAssociative(
@@ -178,30 +183,37 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Operator operatorsToFind
         )
         {
-            for (Node n = nodes; n != null; n = n.next)
+            for (Node n = nodes; n != null; n = n.Next)
             {
-                Operator o = n.op;
+                Operator o = n.Operator;
 
-                if ((o & operatorsToFind) != 0)
+                if ((o & operatorsToFind) == 0)
                 {
-                    n.op = Operator.NotAnOperator;
-                    n.expr = new BinaryOperatorExpression(n.prev.expr, n.next.expr, o, lcontext);
-                    n.prev = n.prev.prev;
-                    n.next = n.next.next;
+                    continue;
+                }
 
-                    if (n.next != null)
-                    {
-                        n.next.prev = n;
-                    }
+                n.Operator = Operator.NotAnOperator;
+                n.Expression = new BinaryOperatorExpression(
+                    n.Previous.Expression,
+                    n.Next.Expression,
+                    o,
+                    lcontext
+                );
+                n.Previous = n.Previous.Previous;
+                n.Next = n.Next.Next;
 
-                    if (n.prev != null)
-                    {
-                        n.prev.next = n;
-                    }
-                    else
-                    {
-                        nodes = n;
-                    }
+                if (n.Next != null)
+                {
+                    n.Next.Previous = n;
+                }
+
+                if (n.Previous != null)
+                {
+                    n.Previous.Next = n;
+                }
+                else
+                {
+                    nodes = n;
                 }
             }
 
@@ -215,32 +227,39 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
         {
             Node last;
-            for (last = nodes; last.next != null; last = last.next) { }
+            for (last = nodes; last.Next != null; last = last.Next) { }
 
-            for (Node n = last; n != null; n = n.prev)
+            for (Node n = last; n != null; n = n.Previous)
             {
-                Operator o = n.op;
+                Operator o = n.Operator;
 
-                if ((o & operatorsToFind) != 0)
+                if ((o & operatorsToFind) == 0)
                 {
-                    n.op = Operator.NotAnOperator;
-                    n.expr = new BinaryOperatorExpression(n.prev.expr, n.next.expr, o, lcontext);
-                    n.prev = n.prev.prev;
-                    n.next = n.next.next;
+                    continue;
+                }
 
-                    if (n.next != null)
-                    {
-                        n.next.prev = n;
-                    }
+                n.Operator = Operator.NotAnOperator;
+                n.Expression = new BinaryOperatorExpression(
+                    n.Previous.Expression,
+                    n.Next.Expression,
+                    o,
+                    lcontext
+                );
+                n.Previous = n.Previous.Previous;
+                n.Next = n.Next.Next;
 
-                    if (n.prev != null)
-                    {
-                        n.prev.next = n;
-                    }
-                    else
-                    {
-                        nodes = n;
-                    }
+                if (n.Next != null)
+                {
+                    n.Next.Previous = n;
+                }
+
+                if (n.Previous != null)
+                {
+                    n.Previous.Next = n;
+                }
+                else
+                {
+                    nodes = n;
                 }
             }
 
@@ -353,7 +372,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_operator == Operator.Or)
             {
-                Instruction i = bc.Emit_Jump(OpCode.JtOrPop, -1);
+                Instruction i = bc.EmitJump(OpCode.JtOrPop, -1);
                 _exp2.Compile(bc);
                 i.NumVal = bc.GetJumpPointForNextInstruction();
                 return;
@@ -361,7 +380,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_operator == Operator.And)
             {
-                Instruction i = bc.Emit_Jump(OpCode.JfOrPop, -1);
+                Instruction i = bc.EmitJump(OpCode.JfOrPop, -1);
                 _exp2.Compile(bc);
                 i.NumVal = bc.GetJumpPointForNextInstruction();
                 return;
@@ -372,11 +391,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _exp2.Compile(bc);
             }
 
-            bc.Emit_Operator(OperatorToOpCode(_operator));
+            bc.EmitOperator(OperatorToOpCode(_operator));
 
             if (ShouldInvertBoolean(_operator))
             {
-                bc.Emit_Operator(OpCode.Not);
+                bc.EmitOperator(OpCode.Not);
             }
         }
 
@@ -410,7 +429,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             DynValue v2 = _exp2.Eval(context).ToScalar();
 
-            if ((_operator & COMPARES) != 0)
+            if ((_operator & ComparisonOperators) != 0)
             {
                 return DynValue.NewBoolean(EvalComparison(v1, v2, _operator));
             }

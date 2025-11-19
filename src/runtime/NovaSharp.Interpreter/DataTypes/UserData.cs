@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.DataTypes
             string friendlyName = null
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 typeof(T),
                 accessMode,
                 friendlyName,
@@ -84,7 +84,7 @@ namespace NovaSharp.Interpreter.DataTypes
             string friendlyName = null
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(type, accessMode, friendlyName, null);
+            return TypeDescriptorRegistry.RegisterTypeImpl(type, accessMode, friendlyName, null);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(proxyFactory));
             }
 
-            return TypeDescriptorRegistry.RegisterProxyType_Impl(
+            return TypeDescriptorRegistry.RegisterProxyTypeImpl(
                 proxyFactory,
                 accessMode,
                 friendlyName
@@ -143,7 +143,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="customDescriptor">The custom descriptor.</param>
         public static IUserDataDescriptor RegisterType<T>(IUserDataDescriptor customDescriptor)
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 typeof(T),
                 InteropAccessMode.Default,
                 null,
@@ -161,7 +161,7 @@ namespace NovaSharp.Interpreter.DataTypes
             IUserDataDescriptor customDescriptor
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 type,
                 InteropAccessMode.Default,
                 null,
@@ -175,7 +175,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="customDescriptor">The custom descriptor.</param>
         public static IUserDataDescriptor RegisterType(IUserDataDescriptor customDescriptor)
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 customDescriptor.Type,
                 InteropAccessMode.Default,
                 null,

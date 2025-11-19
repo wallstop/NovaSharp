@@ -41,7 +41,7 @@ namespace NovaSharp.RemoteDebugger
 
             _server = new Utf8TcpServer(port, 1 << 20, '\0', options);
             _server.Start();
-            _server.OnDataReceived += _Server_DataReceived;
+            _server.OnDataReceived += OnServerDataReceived;
             _script = script;
             _freeRunAfterAttach = freeRunAfterAttach;
         }
@@ -337,7 +337,7 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
-        private void _Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
+        private void OnServerDataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
             XmlDocument xdoc = new();
             xdoc.LoadXml(e.Message);

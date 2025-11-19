@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue left = UserData.Create(SampleFlags.Fast, descriptor);
             DynValue right = UserData.Create(SampleFlags.Safe, descriptor);
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(left, right)
             );
@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue result = descriptor.Callback_Xor(
+            DynValue result = descriptor.CallbackXor(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
@@ -93,7 +93,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue result = descriptor.Callback_BwNot(
+            DynValue result = descriptor.CallbackBwNot(
                 context,
                 TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
             );
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(4))
             );
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor);
             DynValue mask = UserData.Create(SampleFlags.Safe, descriptor);
 
-            DynValue hasAll = descriptor.Callback_HasAll(
+            DynValue hasAll = descriptor.CallbackHasAll(
                 context,
                 TestHelpers.CreateArguments(value, mask)
             );
@@ -142,7 +142,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             DynValue value = UserData.Create(SampleFlags.Fast, descriptor);
-            DynValue hasAny = descriptor.Callback_HasAny(
+            DynValue hasAny = descriptor.CallbackHasAny(
                 context,
                 TestHelpers.CreateArguments(value, UserData.Create(SampleFlags.Safe, descriptor))
             );
@@ -162,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             SignedIntFlags leftValue = SignedIntFlags.Left | SignedIntFlags.Right;
             SignedIntFlags rightValue = SignedIntFlags.Left;
 
-            DynValue result = descriptor.Callback_And(
+            DynValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(leftValue, descriptor),
@@ -179,7 +179,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue result = descriptor.Callback_Xor(
+            DynValue result = descriptor.CallbackXor(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
@@ -196,7 +196,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue hasAll = descriptor.Callback_HasAll(
+            DynValue hasAll = descriptor.CallbackHasAll(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
@@ -217,7 +217,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue hasAny = descriptor.Callback_HasAny(
+            DynValue hasAny = descriptor.CallbackHasAny(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left, descriptor),
@@ -240,7 +240,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () =>
-                    descriptor.Callback_And(
+                    descriptor.CallbackAnd(
                         context,
                         TestHelpers.CreateArguments(
                             UserData.Create(SignedIntFlags.Left, descriptor)
@@ -260,10 +260,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = UserData.Create(SampleSignedEnum.NegativeOne, descriptor);
 
-            DynValue result = descriptor.Callback_BwNot(
-                context,
-                TestHelpers.CreateArguments(value)
-            );
+            DynValue result = descriptor.CallbackBwNot(context, TestHelpers.CreateArguments(value));
 
             SampleSignedEnum negated = (SampleSignedEnum)result.UserData.Object;
             Assert.That((int)negated, Is.EqualTo(0));
@@ -277,7 +274,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             DynValue left = UserData.Create(flagValue, descriptor);
-            DynValue result = descriptor.Callback_And(
+            DynValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(left, left)
             );
@@ -299,7 +296,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             DynValue left = UserData.Create(flagValue, descriptor);
-            DynValue result = descriptor.Callback_And(
+            DynValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(left, left)
             );
@@ -320,7 +317,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
             );
@@ -336,7 +333,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () =>
-                    descriptor.Callback_Or(
+                    descriptor.CallbackOr(
                         context,
                         TestHelpers.CreateArguments(
                             DynValue.NewString("bad"),
@@ -360,7 +357,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () =>
-                    descriptor.Callback_Or(
+                    descriptor.CallbackOr(
                         context,
                         TestHelpers.CreateArguments(foreignValue, DynValue.NewNumber(1))
                     ),
@@ -381,7 +378,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () =>
-                    descriptor.Callback_Or(
+                    descriptor.CallbackOr(
                         context,
                         TestHelpers.CreateArguments(
                             foreignValue,
@@ -402,7 +399,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = UserData.Create(SampleFlags.Fast, descriptor);
 
             Assert.That(
-                () => descriptor.Callback_Or(context, TestHelpers.CreateArguments(value)),
+                () => descriptor.CallbackOr(context, TestHelpers.CreateArguments(value)),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("expects two arguments")
@@ -416,7 +413,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             Assert.That(
-                () => descriptor.Callback_BwNot(context, TestHelpers.CreateArguments()),
+                () => descriptor.CallbackBwNot(context, TestHelpers.CreateArguments()),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("expects one argument")

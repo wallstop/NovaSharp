@@ -143,19 +143,19 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="accessMode">The access mode.</param>
         /// <param name="friendlyName">Name of the friendly.</param>
         /// <returns></returns>
-        internal static IUserDataDescriptor RegisterProxyType_Impl(
+        internal static IUserDataDescriptor RegisterProxyTypeImpl(
             IProxyFactory proxyFactory,
             InteropAccessMode accessMode,
             string friendlyName
         )
         {
-            IUserDataDescriptor proxyDescriptor = RegisterType_Impl(
+            IUserDataDescriptor proxyDescriptor = RegisterTypeImpl(
                 proxyFactory.ProxyType,
                 accessMode,
                 friendlyName,
                 null
             );
-            return RegisterType_Impl(
+            return RegisterTypeImpl(
                 proxyFactory.TargetType,
                 accessMode,
                 friendlyName,
@@ -171,7 +171,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="friendlyName">Friendly name of the descriptor.</param>
         /// <param name="descriptor">The descriptor, or null to use a default one.</param>
         /// <returns></returns>
-        internal static IUserDataDescriptor RegisterType_Impl(
+        internal static IUserDataDescriptor RegisterTypeImpl(
             Type type,
             InteropAccessMode accessMode,
             string friendlyName,
@@ -316,7 +316,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     // no autoreg of delegates
                     if (!Framework.Do.IsAssignableFrom((typeof(Delegate)), type))
                     {
-                        return RegisterType_Impl(type, DefaultAccessMode, type.FullName, null);
+                        return RegisterTypeImpl(type, DefaultAccessMode, type.FullName, null);
                     }
                 }
 

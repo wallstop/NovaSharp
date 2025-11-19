@@ -81,7 +81,7 @@ namespace NovaSharp.Interpreter.DataTypes
         internal DynValue Recycle(Processor mainProcessor, Closure closure)
         {
             Type = CoroutineType.Recycled;
-            return _processor.Coroutine_Recycle(mainProcessor, closure);
+            return _processor.RecycleCoroutine(mainProcessor, closure);
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
             if (Type == CoroutineType.Coroutine)
             {
-                return _processor.Coroutine_Resume(args);
+                return _processor.ResumeCoroutine(args);
             }
             else
             {
@@ -193,7 +193,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
             if (Type == CoroutineType.Coroutine)
             {
-                return _processor.Coroutine_Resume(args);
+                return _processor.ResumeCoroutine(args);
             }
             else if (Type == CoroutineType.ClrCallback)
             {
@@ -307,7 +307,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 entrySourceRef = _processor.GetCoroutineSuspendedLocation();
             }
 
-            List<WatchItem> stack = _processor.Debugger_GetCallStack(entrySourceRef);
+            List<WatchItem> stack = _processor.GetDebuggerCallStack(entrySourceRef);
             return stack.Skip(skip).ToArray();
         }
 
@@ -339,7 +339,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 return DynValue.True;
             }
 
-            return _processor.Coroutine_Close();
+            return _processor.CloseCoroutine();
         }
 
         internal void ForceStateForTests(CoroutineState state)

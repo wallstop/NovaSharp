@@ -232,27 +232,27 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             bc.PushSourceRef(_begin);
 
-            Instruction i = bc.Emit_Jump(OpCode.Jump, -1);
+            Instruction i = bc.EmitJump(OpCode.Jump, -1);
 
-            Instruction meta = bc.Emit_Meta(funcName, OpCodeMetadataType.FunctionEntrypoint);
+            Instruction meta = bc.EmitMeta(funcName, OpCodeMetadataType.FunctionEntrypoint);
             int metaip = bc.GetJumpPointForLastInstruction();
 
-            bc.Emit_BeginFn(_stackFrame);
+            bc.EmitBeginFn(_stackFrame);
 
-            bc.LoopTracker.loops.Push(new LoopBoundary());
+            bc.LoopTracker.Loops.Push(new LoopBoundary());
 
             int entryPoint = bc.GetJumpPointForLastInstruction();
 
             if (_usesGlobalEnv)
             {
-                bc.Emit_Load(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
-                bc.Emit_Store(_env, 0, 0);
-                bc.Emit_Pop();
+                bc.EmitLoad(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
+                bc.EmitStore(_env, 0, 0);
+                bc.EmitPop();
             }
 
             if (_paramNames.Length > 0)
             {
-                bc.Emit_Args(_paramNames);
+                bc.EmitArgs(_paramNames);
             }
 
             _statement.Compile(bc);
@@ -260,9 +260,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bc.PopSourceRef();
             bc.PushSourceRef(_end);
 
-            bc.Emit_Ret(0);
+            bc.EmitRet(0);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             i.NumVal = bc.GetJumpPointForNextInstruction();
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
@@ -280,7 +280,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 //.Select((s, idx) => s.CloneLocalAndSetFrame(_ClosureFrames[idx]))
                 .ToArray();
 
-                _closureInstruction = bc.Emit_Closure(symbs, bc.GetJumpPointForNextInstruction());
+                _closureInstruction = bc.EmitClosure(symbs, bc.GetJumpPointForNextInstruction());
                 int ops = afterDecl();
 
                 _closureInstruction.NumVal += 2 + ops;

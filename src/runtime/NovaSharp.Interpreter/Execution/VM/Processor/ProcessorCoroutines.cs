@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     // Same reason for the "sealed" declaration.
     internal sealed partial class Processor
     {
-        public DynValue Coroutine_Create(Closure closure)
+        public DynValue CreateCoroutine(Closure closure)
         {
             // create a processor instance
             Processor p = new(this);
@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return DynValue.NewCoroutine(new Coroutine(p));
         }
 
-        public DynValue Coroutine_Recycle(Processor mainProcessor, Closure closure)
+        public DynValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
             // Clear the used parts of the stacks to prep for reuse
             _valueStack.ClearUsed();
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         }
         public Coroutine AssociatedCoroutine { get; set; }
 
-        public DynValue Coroutine_Resume(DynValue[] args)
+        public DynValue ResumeCoroutine(DynValue[] args)
         {
             EnterProcessor();
 
@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 }
 
                 _state = CoroutineState.Running;
-                DynValue retVal = Processing_Loop(entrypoint);
+                DynValue retVal = ProcessingLoop(entrypoint);
 
                 if (retVal.Type == DataType.YieldRequest)
                 {
@@ -127,7 +127,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        public DynValue Coroutine_Close()
+        public DynValue CloseCoroutine()
         {
             EnterProcessor();
 

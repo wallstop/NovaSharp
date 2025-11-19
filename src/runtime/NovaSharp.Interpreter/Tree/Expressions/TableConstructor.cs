@@ -99,19 +99,19 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_NewTable(_shared);
+            bc.EmitNewTable(_shared);
 
             foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
                 kvp.Key.Compile(bc);
                 kvp.Value.Compile(bc);
-                bc.Emit_TblInitN();
+                bc.EmitTblInitN();
             }
 
             for (int i = 0; i < _positionalValues.Count; i++)
             {
                 _positionalValues[i].Compile(bc);
-                bc.Emit_TblInitI(i == _positionalValues.Count - 1);
+                bc.EmitTblInitI(i == _positionalValues.Count - 1);
             }
         }
 

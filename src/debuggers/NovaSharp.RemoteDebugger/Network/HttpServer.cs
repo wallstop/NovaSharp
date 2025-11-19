@@ -16,7 +16,7 @@ namespace NovaSharp.RemoteDebugger.Network
         private readonly Dictionary<string, HttpResource> _resources = new();
         private readonly object _lock = new();
 
-        private const string ERROR_TEMPLATE =
+        private const string ErrorTemplate =
             "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>{0}</title></head><body><h1>{0}</h1>{1}<hr><address>NovaSharp Remote Debugger / {2}</address></body></html><!-- This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. -->";
 
         private static readonly string Version = Assembly
@@ -25,21 +25,21 @@ namespace NovaSharp.RemoteDebugger.Network
             .Version.ToString();
 
         private readonly string _error401 = string.Format(
-            ERROR_TEMPLATE,
+            ErrorTemplate,
             "401 Unauthorized",
             "Please login.",
             Version
         );
 
         private readonly string _error404 = string.Format(
-            ERROR_TEMPLATE,
+            ErrorTemplate,
             "404 Not Found",
             "The specified resource cannot be found.",
             Version
         );
 
         private readonly string _error500 = string.Format(
-            ERROR_TEMPLATE,
+            ErrorTemplate,
             "500 Internal Server Error",
             "An internal server error occurred.",
             Version

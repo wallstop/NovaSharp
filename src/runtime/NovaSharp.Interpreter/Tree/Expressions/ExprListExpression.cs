@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_expressions.Count > 1)
             {
-                bc.Emit_MkTuple(_expressions.Count);
+                bc.EmitMkTuple(_expressions.Count);
             }
         }
 

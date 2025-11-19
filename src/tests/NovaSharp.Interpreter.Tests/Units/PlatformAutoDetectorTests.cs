@@ -72,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     _originalFlags[property] = property.GetValue(null, null)!;
                 }
 
-                _originalAot = (bool?)GetField("_isRunningOnAot").GetValue(null);
+                _originalAot = (bool?)GetField("RunningOnAotCache").GetValue(null);
                 _originalAutoDetectionsDone = (bool)GetField("AutoDetectionsDone").GetValue(null);
             }
 
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public static void SetAotValue(bool? value)
             {
-                GetField("_isRunningOnAot").SetValue(null, value);
+                GetField("RunningOnAotCache").SetValue(null, value);
             }
 
             public void Dispose()

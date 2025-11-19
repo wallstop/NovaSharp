@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             PerformanceStatistics.GlobalClock = SystemHighResolutionClock.Instance;
             FieldInfo globalField = typeof(PerformanceStatistics).GetField(
-                "_globalStopwatches",
+                "GlobalStopwatches",
                 BindingFlags.NonPublic | BindingFlags.Static
             );
             globalField.SetValue(
@@ -53,7 +53,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result.Counter, Is.EqualTo(25));
                 Assert.That(result.Instances, Is.EqualTo(1));
-                Assert.That(result.Name, Is.EqualTo(_executionCounter.ToString()));
+                Assert.That(result.Name, Is.EqualTo(ExecutionCounter.ToString()));
                 Assert.That(result.Global, Is.False);
             });
         }

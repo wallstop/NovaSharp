@@ -7,14 +7,14 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         private class DebugContext
         {
-            public bool debuggerEnabled = true;
-            public IDebugger debuggerAttached;
-            public DebuggerAction.ActionType debuggerCurrentAction;
-            public int debuggerCurrentActionTarget = -1;
-            public SourceRef lastHlRef;
-            public int exStackDepthAtStep = -1;
-            public readonly List<SourceRef> breakPoints = new();
-            public bool lineBasedBreakPoints;
+            public bool DebuggerEnabled = true;
+            public IDebugger DebuggerAttached;
+            public DebuggerAction.ActionType DebuggerCurrentAction;
+            public int DebuggerCurrentActionTarget = -1;
+            public SourceRef LastHlRef;
+            public int ExecutionStackDepthAtStep = -1;
+            public readonly List<SourceRef> BreakPoints = new();
+            public bool LineBasedBreakPoints;
         }
     }
 }

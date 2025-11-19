@@ -128,6 +128,7 @@ function m.Type_ok (val, t, name)
         tb:diag("    " .. tostring(val) .. " isn't a '" .. t .."' it's a '" .. type(val) .. "'")
     end
 end
+m.type_ok = m.Type_ok
 
 function m.subtest (name, func)
     tb:subtest(name, func)

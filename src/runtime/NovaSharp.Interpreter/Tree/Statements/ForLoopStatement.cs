@@ -64,33 +64,33 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             Loop l = new() { Scope = _stackFrame };
 
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             _end.Compile(bc);
-            bc.Emit_ToNum(3);
+            bc.EmitToNum(3);
             _step.Compile(bc);
-            bc.Emit_ToNum(2);
+            bc.EmitToNum(2);
             _start.Compile(bc);
-            bc.Emit_ToNum(1);
+            bc.EmitToNum(1);
 
             int start = bc.GetJumpPointForNextInstruction();
-            Instruction jumpend = bc.Emit_Jump(OpCode.JFor, -1);
-            bc.Emit_Enter(_stackFrame);
+            Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);
+            bc.EmitEnter(_stackFrame);
             //bc.Emit_SymStorN(_VarName);
 
-            bc.Emit_Store(_varName, 0, 0);
+            bc.EmitStore(_varName, 0, 0);
 
             _innerBlock.Compile(bc);
 
             bc.PopSourceRef();
             bc.PushSourceRef(_refEnd);
 
-            bc.Emit_Debug("..end");
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Incr(1);
-            bc.Emit_Jump(OpCode.Jump, start);
+            bc.EmitDebug("..end");
+            bc.EmitLeave(_stackFrame);
+            bc.EmitIncr(1);
+            bc.EmitJump(OpCode.Jump, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             jumpend.NumVal = exitpoint;
-            bc.Emit_Pop(3);
+            bc.EmitPop(3);
 
             bc.PopSourceRef();
         }

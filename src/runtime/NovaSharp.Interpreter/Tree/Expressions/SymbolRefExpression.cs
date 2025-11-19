@@ -57,12 +57,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Load(_ref);
+            bc.EmitLoad(_ref);
         }
 
         public void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx)
         {
-            bc.Emit_Store(_ref, stackofs, tupleidx);
+            bc.EmitStore(_ref, stackofs, tupleidx);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)

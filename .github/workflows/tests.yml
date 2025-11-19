@@ -21,6 +21,8 @@ jobs:
         shell: bash
       - name: Verify namespace alignment
         run: python3 tools/NamespaceAudit/namespace_audit.py
+      - name: Enforce naming conventions
+        run: python3 tools/NamingAudit/naming_audit.py
       - name: Enforce script/doc README coverage
         run: ./scripts/ci/ensure-readme-updates.sh
         shell: bash
@@ -61,6 +63,8 @@ jobs:
         shell: bash
       - name: Verify namespace alignment
         run: python3 tools/NamespaceAudit/namespace_audit.py
+      - name: Enforce naming conventions
+        run: python3 tools/NamingAudit/naming_audit.py
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5

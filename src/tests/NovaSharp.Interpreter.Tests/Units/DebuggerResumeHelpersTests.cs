@@ -110,7 +110,7 @@ return caller()
 
                 if (sourceCode.OwnerScript == _service.OwnerScript && sourceCode.Name == "chunk")
                 {
-                    _service.ResetBreakPoints(sourceCode, _breakLines);
+                    _service.ResetBreakpoints(sourceCode, _breakLines);
                     _breakpointsInstalled = true;
                 }
             }

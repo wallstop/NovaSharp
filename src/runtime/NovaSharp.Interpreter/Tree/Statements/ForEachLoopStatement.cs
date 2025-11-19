@@ -73,23 +73,23 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.PushSourceRef(_refFor);
 
             Loop l = new() { Scope = _stackFrame };
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             // get iterator tuple
             _rValues.Compile(bc);
 
             // prepares iterator tuple - stack : iterator-tuple
-            bc.Emit_IterPrep();
+            bc.EmitIterPrep();
 
             // loop start - stack : iterator-tuple
             int start = bc.GetJumpPointForNextInstruction();
-            bc.Emit_Enter(_stackFrame);
+            bc.EmitEnter(_stackFrame);
 
             // expand the tuple - stack : iterator-tuple, f, var, s
-            bc.Emit_ExpTuple(0);
+            bc.EmitExpTuple(0);
 
             // calls f(s, var) - stack : iterator-tuple, iteration result
-            bc.Emit_Call(2, "for..in");
+            bc.EmitCall(2, "for..in");
 
             // perform assignment of iteration result- stack : iterator-tuple, iteration result
             for (int i = 0; i < _nameExps.Length; i++)
@@ -98,16 +98,16 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             // pops  - stack : iterator-tuple
-            bc.Emit_Pop();
+            bc.EmitPop();
 
             // repushes the main iterator var - stack : iterator-tuple, main-iterator-var
-            bc.Emit_Load(_names[0]);
+            bc.EmitLoad(_names[0]);
 
             // updates the iterator tuple - stack : iterator-tuple, main-iterator-var
-            bc.Emit_IterUpd();
+            bc.EmitIterUpd();
 
             // checks head, jumps if nil - stack : iterator-tuple, main-iterator-var
-            Instruction endjump = bc.Emit_Jump(OpCode.JNil, -1);
+            Instruction endjump = bc.EmitJump(OpCode.JNil, -1);
 
             // executes the stuff - stack : iterator-tuple
             _block.Compile(bc);
@@ -116,17 +116,17 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.PushSourceRef(_refEnd);
 
             // loop back again - stack : iterator-tuple
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Jump(OpCode.Jump, start);
+            bc.EmitLeave(_stackFrame);
+            bc.EmitJump(OpCode.Jump, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpointLoopExit = bc.GetJumpPointForNextInstruction();
-            bc.Emit_Leave(_stackFrame);
+            bc.EmitLeave(_stackFrame);
 
             int exitpointBreaks = bc.GetJumpPointForNextInstruction();
 
-            bc.Emit_Pop();
+            bc.EmitPop();
 
             foreach (Instruction i in l.BreakJumps)
             {

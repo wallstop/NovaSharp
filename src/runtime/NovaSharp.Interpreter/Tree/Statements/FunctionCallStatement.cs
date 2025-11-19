@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             using (bc.EnterSource(_functionCallExpression.SourceRef))
             {
                 _functionCallExpression.Compile(bc);
-                RemoveBreakpointStop(bc.Emit_Pop());
+                RemoveBreakpointStop(bc.EmitPop());
             }
         }
 
