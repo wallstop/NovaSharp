@@ -15,7 +15,6 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Infrastructure;
-    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
     using Tree.Expressions;

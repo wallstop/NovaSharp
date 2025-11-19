@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution.VM;
@@ -34,6 +35,16 @@ namespace NovaSharp.Interpreter.Debugging
         /// <returns>The lines for which breakpoints have been set</returns>
         public HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
+            if (src == null)
+            {
+                throw new ArgumentNullException(nameof(src));
+            }
+
+            if (lines == null)
+            {
+                throw new ArgumentNullException(nameof(lines));
+            }
+
             return _processor.ResetBreakpoints(src, lines);
         }
     }
