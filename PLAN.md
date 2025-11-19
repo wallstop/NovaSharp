@@ -111,7 +111,9 @@
 
 • Next Work Items
   1. Run the Lua `<close>` TAP suites (or craft NUnit mirrors) to exercise error unwinds, `goto`/`break` exits, and nested closures; extend coverage where the new runtime paths still lack assertions.
-     - 🔄 Local TAP mirror `TestMore/310-close-var.t` now runs via `TestMore310CloseVar`, covering return/goto/break/nested-closure unwinds plus coroutine yield/error flows, nil/false semantics, and `coroutine.close` tuples (§§3.3.8 & 6.2). Remaining TODO: re-enable the upstream TAP file once the same coverage passes on Windows/macOS CI.
+     - ✅ `ExecRet` now keeps the active frame on the execution stack until all `<close>` scopes finish unwinding so `pcall`/`xpcall` handlers see `__close` failures. `CloseAttributeTests.CloseMetamethodErrorsAreCapturedByPcallAndOtherClosersRun` exercises the §3.3.8 semantics (error propagation + reverse-order flushing) without relying on TAP loaders.
+     - ✅ Added `CoroutineCloseTests.CoroutineCloseFlushesAllClosersEvenWhenOneRaises` to mirror §6.2 (`coroutine.close`) when pending `<close>` upvalues raise; the test asserts `coroutine.close` returns the failure tuple and the non-failing closers still run.
+     - ⚠️ `TestMore310CloseVar` stays `[Ignore]` for now—NovaSharp’s `require "Test.More"` loader currently returns a bogus numeric handle when the TAP file itself defines `<close>` locals, so the upstream TAP cannot bootstrap (tracked in PLAN; mirrors above keep the coverage live until the loader bug is fixed and the TAP can be re-enabled).
   2. Design a versioned compatibility mode so scripts can opt into Lua 5.5, 5.4, 5.3, or 5.2 semantics while defaulting to latest; capture spec deltas and config surface.
   3. Audit naming consistency across the runtime (methods like `Emit_Op`, members such as `i_variable`, and other Hungarian-style locals), then propose a final alignment plan with tooling impacts documented.
   4. Tackle remaining hotspots listed in docs/coverage/coverage-hotspots.md (e.g., HardwiredDescriptors.DefaultValue,

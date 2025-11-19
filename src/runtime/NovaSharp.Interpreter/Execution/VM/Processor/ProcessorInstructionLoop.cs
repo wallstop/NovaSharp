@@ -1275,26 +1275,18 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private int ExecRet(Instruction i)
         {
-            CallStackItem csi;
-            int retpoint = 0;
+            CallStackItem csi = _executionStack.Peek();
+            int retpoint = csi.ReturnAddress;
+
+            DynValue returnValue;
 
             if (i.NumVal == 0)
             {
-                csi = PopToBasePointer();
-                retpoint = csi.ReturnAddress;
-                int argscnt = (int)(_valueStack.Pop().Number);
-                _valueStack.RemoveLast(argscnt + 1);
-                _valueStack.Push(DynValue.Void);
+                returnValue = DynValue.Void;
             }
             else if (i.NumVal == 1)
             {
-                DynValue retval = _valueStack.Pop();
-                csi = PopToBasePointer();
-                retpoint = csi.ReturnAddress;
-                int argscnt = (int)(_valueStack.Pop().Number);
-                _valueStack.RemoveLast(argscnt + 1);
-                _valueStack.Push(retval);
-                retpoint = InternalCheckForTailRequests(i, retpoint);
+                returnValue = _valueStack.Pop();
             }
             else
             {
@@ -1302,6 +1294,19 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             CloseAllPendingBlocks(csi, DynValue.Nil);
+
+            CallStackItem popped = PopToBasePointer();
+            System.Diagnostics.Debug.Assert(object.ReferenceEquals(csi, popped));
+
+            int argscnt = (int)(_valueStack.Pop().Number);
+            _valueStack.RemoveLast(argscnt + 1);
+
+            _valueStack.Push(returnValue);
+
+            if (i.NumVal == 1)
+            {
+                retpoint = InternalCheckForTailRequests(i, retpoint);
+            }
 
             if (csi.Continuation != null)
             {
