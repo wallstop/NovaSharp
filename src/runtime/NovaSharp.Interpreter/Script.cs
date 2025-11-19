@@ -893,6 +893,11 @@ namespace NovaSharp.Interpreter
             return new ScriptExecutionContext(_mainProcessor, func, null, isDynamic: true);
         }
 
+        internal Processor GetMainProcessorForTests()
+        {
+            return _mainProcessor;
+        }
+
         /// <summary>
         /// NovaSharp (like Lua itself) provides a registry, a predefined table that can be used by any CLR code to
         /// store whatever Lua values it needs to store.

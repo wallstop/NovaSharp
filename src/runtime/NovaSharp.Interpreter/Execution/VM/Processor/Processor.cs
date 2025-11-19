@@ -228,5 +228,23 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             _state = state;
         }
+
+        internal void PushCallStackFrameForTests(CallStackItem frame)
+        {
+            if (frame == null)
+            {
+                throw new ArgumentNullException(nameof(frame));
+            }
+
+            _executionStack.Push(frame);
+        }
+
+        internal void ClearCallStackForTests()
+        {
+            while (_executionStack.Count > 0)
+            {
+                _executionStack.Pop();
+            }
+        }
     }
 }

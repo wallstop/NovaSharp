@@ -39,6 +39,45 @@ namespace NovaSharp.Interpreter.Execution.VM
             debugger.SetDebugService(new DebugService(_script, this));
         }
 
+        internal void AttachDebuggerForTests(IDebugger debugger, bool lineBasedBreakpoints)
+        {
+            _debug.DebuggerAttached = debugger;
+            _debug.LineBasedBreakPoints = lineBasedBreakpoints;
+        }
+
+        internal void ConfigureDebuggerActionForTests(
+            DebuggerAction.ActionType action,
+            int actionTarget,
+            int executionStackDepth,
+            SourceRef lastHighlight
+        )
+        {
+            _debug.DebuggerCurrentAction = action;
+            _debug.DebuggerCurrentActionTarget = actionTarget;
+            _debug.ExecutionStackDepthAtStep = executionStackDepth;
+            _debug.LastHlRef = lastHighlight;
+        }
+
+        internal DebuggerAction.ActionType GetDebuggerActionForTests()
+        {
+            return _debug.DebuggerCurrentAction;
+        }
+
+        internal int GetDebuggerActionTargetForTests()
+        {
+            return _debug.DebuggerCurrentActionTarget;
+        }
+
+        internal SourceRef GetLastHighlightForTests()
+        {
+            return _debug.LastHlRef;
+        }
+
+        internal void ListenDebuggerForTests(Instruction instr, int instructionPtr)
+        {
+            ListenDebugger(instr, instructionPtr);
+        }
+
         internal bool DebuggerEnabled
         {
             get { return _debug.DebuggerEnabled; }
