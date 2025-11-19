@@ -377,6 +377,34 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Number, Is.EqualTo(1));
         }
 
+        [TestCase((int)TokenType.OpAdd, "+", 4, 6, 10)]
+        [TestCase((int)TokenType.OpMinusOrSub, "-", 9, 3, 6)]
+        [TestCase((int)TokenType.OpMul, "*", 7, 8, 56)]
+        [TestCase((int)TokenType.OpDiv, "/", 9, 3, 3)]
+        [TestCase((int)TokenType.OpPwr, "^", 2, 3, 8)]
+        public void ArithmeticOperatorsProduceExpectedNumbers(
+            int tokenType,
+            string tokenText,
+            double left,
+            double right,
+            double expected
+        )
+        {
+            Script script = new();
+            TokenType parsedType = (TokenType)tokenType;
+            Expression expr = BuildBinaryExpression(
+                script,
+                parsedType,
+                tokenText,
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(left)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(right))
+            );
+
+            double result = expr.Eval(TestHelpers.CreateExecutionContext(script)).Number;
+
+            Assert.That(result, Is.EqualTo(expected));
+        }
+
         [Test]
         public void ArithmeticThrowsOnNonNumericOperands()
         {
@@ -577,6 +605,78 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
                 Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("compare")
             );
+        }
+
+        [Test]
+        public void LessComparisonSupportsStrings()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(ctx, DynValue.NewString("alpha")),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("beta"))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void GreaterComparisonUsesInvertedLessOrEqualResult()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpGreaterThan,
+                ">",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void LessOrEqualThrowsForMismatchedTypes()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThanEqual,
+                "<=",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, DynValue.NewString("x"))
+            );
+
+            Assert.That(
+                () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
+                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("compare")
+            );
+        }
+
+        [Test]
+        public void EqualityHandlesNilAndVoidEquivalence()
+        {
+            Script script = new();
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpEqual,
+                "==",
+                ctx => new LiteralExpression(ctx, DynValue.Nil),
+                ctx => new LiteralExpression(ctx, DynValue.Void)
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Boolean, Is.True);
         }
 
         [Test]
@@ -825,6 +925,92 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(instructions[eqIndex + 1].OpCode, Is.EqualTo(OpCode.ToBool));
                 Assert.That(instructions[^1].OpCode, Is.EqualTo(OpCode.Not));
             });
+        }
+
+        [Test]
+        public void CommitOperatorChainThrowsWhenReductionLeavesMultipleNodes()
+        {
+            Script script = new();
+            ScriptLoadingContext context = new(script);
+            object chain = BinaryOperatorExpression.BeginOperatorChain();
+            BinaryOperatorExpression.AddExpressionToChain(
+                chain,
+                new LiteralExpression(context, DynValue.NewNumber(1))
+            );
+            BinaryOperatorExpression.AddExpressionToChain(
+                chain,
+                new LiteralExpression(context, DynValue.NewNumber(2))
+            );
+
+            Assert.That(
+                () => BinaryOperatorExpression.CommitOperatorChain(chain, context),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contain("Expression reduction didn't work! - 1")
+            );
+        }
+
+        [Test]
+        public void CommitOperatorChainThrowsWhenExpressionMissing()
+        {
+            Script script = new();
+            ScriptLoadingContext context = new(script);
+            object chain = BinaryOperatorExpression.BeginOperatorChain();
+            BinaryOperatorExpression.AddExpressionToChain(
+                chain,
+                new LiteralExpression(context, DynValue.NewNumber(42))
+            );
+            BinaryOperatorExpression.RemoveFirstExpressionForTests(chain);
+
+            Assert.That(
+                () => BinaryOperatorExpression.CommitOperatorChain(chain, context),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contain("Expression reduction didn't work! - 2")
+            );
+        }
+
+        [Test]
+        public void CompileThrowsWhenOperatorMappingMissing()
+        {
+            Script script = new();
+            ScriptLoadingContext context = new(script);
+            BinaryOperatorExpression expression = (BinaryOperatorExpression)
+                BinaryOperatorExpression.CreatePowerExpression(
+                    new LiteralExpression(context, DynValue.NewNumber(1)),
+                    new LiteralExpression(context, DynValue.NewNumber(2)),
+                    context
+                );
+            expression.SetOperatorForTests(BinaryOperatorExpression.Operator.NotAnOperator);
+
+            Assert.That(
+                () => expression.Compile(new ByteCode(script)),
+                Throws.TypeOf<InternalErrorException>().With.Message.Contain("Unsupported operator")
+            );
+        }
+
+        [Test]
+        public void EvalThrowsWhenComparisonOperatorCombinationUnsupported()
+        {
+            Script script = new();
+            ScriptLoadingContext context = new(script);
+            BinaryOperatorExpression expression = (BinaryOperatorExpression)
+                BinaryOperatorExpression.CreatePowerExpression(
+                    new LiteralExpression(context, DynValue.NewNumber(3)),
+                    new LiteralExpression(context, DynValue.NewNumber(4)),
+                    context
+                );
+            BinaryOperatorExpression.Operator combined =
+                BinaryOperatorExpression.Operator.Equal
+                | BinaryOperatorExpression.Operator.StrConcat;
+            expression.SetOperatorForTests(combined);
+
+            Assert.That(
+                () => expression.Eval(TestHelpers.CreateExecutionContext(script)),
+                Throws
+                    .TypeOf<DynamicExpressionException>()
+                    .With.Message.Contain("Unsupported operator")
+            );
         }
 
         private static Expression BuildBinaryExpression(

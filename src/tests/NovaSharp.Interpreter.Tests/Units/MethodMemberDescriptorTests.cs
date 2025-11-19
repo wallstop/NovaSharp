@@ -9,8 +9,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
@@ -396,6 +399,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 nameof(MethodMemberDescriptorHost.TryDouble)
             );
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
+            typeof(MethodMemberDescriptor)
+                .GetProperty("AccessMode", BindingFlags.Instance | BindingFlags.Public)
+                ?.SetValue(descriptor, InteropAccessMode.Preoptimized);
 
             Assert.That(
                 () => ((IOptimizableDescriptor)descriptor).Optimize(),

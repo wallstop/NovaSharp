@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     internal class BinaryOperatorExpression : Expression
     {
         [Flags]
-        private enum Operator
+        internal enum Operator
         {
             NotAnOperator = 0,
 
@@ -66,6 +66,25 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private const Operator LogicalAndOperator = Operator.And;
         private const Operator LogicalOrOperator = Operator.Or;
+
+        internal void SetOperatorForTests(Operator op)
+        {
+            _operator = op;
+        }
+
+        internal static void RemoveFirstExpressionForTests(object chain)
+        {
+            if (chain == null)
+            {
+                throw new ArgumentNullException(nameof(chain));
+            }
+
+            LinkedList list = (LinkedList)chain;
+            if (list.Head != null)
+            {
+                list.Head.Expression = null;
+            }
+        }
 
         public static object BeginOperatorChain()
         {
@@ -312,7 +331,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private readonly Expression _exp2;
 
-        private readonly Operator _operator;
+        private Operator _operator;
 
         private BinaryOperatorExpression(
             Expression exp1,

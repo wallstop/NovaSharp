@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
@@ -188,9 +188,19 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
+        }
+
+        internal static string GetSyntaxErrorMessage(SyntaxErrorException ex)
+        {
+            if (ex == null)
+            {
+                return string.Empty;
+            }
+
+            return ex.DecoratedMessage ?? ex.Message;
         }
 
         private static Table GetSafeDefaultEnv(ScriptExecutionContext executionContext)

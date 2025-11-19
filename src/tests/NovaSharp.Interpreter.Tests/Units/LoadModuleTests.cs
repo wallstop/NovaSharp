@@ -87,6 +87,32 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Globals["throw_reader_helper"] = DynValue.NewCallback(
+                (_, _) => throw new SyntaxErrorException("reader failure")
+            );
+
+            DynValue loadResult = script.DoString(
+                @"
+                local function throwing_reader()
+                    return throw_reader_helper()
+                end
+                return load(throwing_reader)
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loadResult.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(loadResult.Tuple[0].IsNil());
+                Assert.That(loadResult.Tuple[1].String, Does.Contain("reader failure"));
+                Assert.That(loadResult.Tuple[1].String, Does.Contain("chunk_"));
+            });
+        }
+
+        [Test]
         public void LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -248,6 +274,51 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.Options.ScriptLoader = new ThrowingSyntaxErrorScriptLoader();
+
+            DynValue result = script.DoString("return loadfile('anything.lua')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple[0].IsNil());
+                Assert.That(result.Tuple[1].String, Is.EqualTo("loader failure"));
+            });
+        }
+
+        [Test]
+        public void GetSyntaxErrorMessagePrefersDecoratedTextWhenAvailable()
+        {
+            SyntaxErrorException exception = new("raw message")
+            {
+                DecoratedMessage = "decorated message",
+            };
+
+            string message = LoadModule.GetSyntaxErrorMessage(exception);
+
+            Assert.That(message, Is.EqualTo("decorated message"));
+        }
+
+        [Test]
+        public void GetSyntaxErrorMessageFallsBackToRawMessageWhenDecorationMissing()
+        {
+            SyntaxErrorException exception = new("raw message") { DecoratedMessage = null };
+
+            string message = LoadModule.GetSyntaxErrorMessage(exception);
+
+            Assert.That(message, Is.EqualTo("raw message"));
+        }
+
+        [Test]
+        public void GetSyntaxErrorMessageReturnsEmptyStringWhenExceptionIsNull()
+        {
+            Assert.That(LoadModule.GetSyntaxErrorMessage(null), Is.EqualTo(string.Empty));
+        }
+
+        [Test]
         public void DoFileExecutesLoadedChunk()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -361,6 +432,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             public object LoadFile(string file, Table globalContext)
             {
                 return "function(";
+            }
+
+            public string ResolveFileName(string filename, Table globalContext)
+            {
+                return filename;
+            }
+
+            public string ResolveModuleName(string modname, Table globalContext)
+            {
+                return modname;
+            }
+        }
+
+        private sealed class ThrowingSyntaxErrorScriptLoader : IScriptLoader
+        {
+            public object LoadFile(string file, Table globalContext)
+            {
+                throw new SyntaxErrorException("loader failure");
             }
 
             public string ResolveFileName(string filename, Table globalContext)
