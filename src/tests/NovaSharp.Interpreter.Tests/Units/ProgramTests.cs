@@ -135,6 +135,48 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CheckArgsRunScriptAppliesManifestCompatibility()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(scriptPath, "if warn ~= nil then error('warn available') end");
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua53\"\n"
+                    + "}"
+            );
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            try
+            {
+                bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(handled, Is.True);
+                    Assert.That(
+                        writer.ToString(),
+                        Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                    );
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
+        }
+
+        [Test]
         public void CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
         {
             using StringWriter writer = new();

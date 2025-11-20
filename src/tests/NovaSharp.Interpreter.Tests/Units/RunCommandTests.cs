@@ -79,6 +79,53 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void ExecuteWithManifestRunsScriptInCompatibilityInstance()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(
+                scriptPath,
+                "if warn ~= nil then error('warn available') end\ncontextFlag = true\n"
+            );
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua53\"\n"
+                    + "}\n"
+            );
+
+            RunCommand command = new();
+            Script script = new();
+            ShellContext context = new(script);
+
+            try
+            {
+                command.Execute(context, scriptPath);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(
+                        _writer.ToString(),
+                        Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                    );
+                    Assert.That(script.Globals.Get("contextFlag").IsNil());
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
+        }
+
         private sealed class RecordingScriptLoader : IScriptLoader
         {
             public string ScriptBody { get; set; } = "return";

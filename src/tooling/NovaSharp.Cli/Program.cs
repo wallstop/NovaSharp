@@ -105,10 +105,9 @@ namespace NovaSharp.Cli
                 return false;
             }
 
-            if (args.Length == 1 && args[0].Length > 0 && args[0][0] != '-')
+            if (TryRunScriptArgument(args))
             {
-                Script script = new();
-                script.DoFile(args[0]);
+                return true;
             }
 
             if (args[0] == "-H" || args[0] == "--help" || args[0] == "/?" || args[0] == "-?")
@@ -188,6 +187,22 @@ namespace NovaSharp.Cli
                 }
             }
 
+            return true;
+        }
+
+        private static bool TryRunScriptArgument(string[] args)
+        {
+            if (args.Length != 1 || string.IsNullOrWhiteSpace(args[0]) || args[0][0] == '-')
+            {
+                return false;
+            }
+
+            string resolvedScriptPath = ManifestCompatibilityHelper.ResolveScriptPath(args[0]);
+            ScriptOptions options = new(Script.DefaultOptions);
+            ManifestCompatibilityHelper.TryApplyManifestCompatibility(resolvedScriptPath, options);
+
+            Script script = new(CoreModules.PresetComplete, options);
+            script.DoFile(resolvedScriptPath);
             return true;
         }
 
