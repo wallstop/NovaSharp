@@ -212,3 +212,18 @@ tab_width = 4
 [*.lua]
 indent_style = space
 indent_size = 2
+
+dotnet_naming_rule.methods_must_be_pascal.symbols = methods_symbols
+dotnet_naming_rule.methods_must_be_pascal.style = upper_camel_case_style
+dotnet_naming_rule.methods_must_be_pascal.severity = error
+
+dotnet_naming_symbols.methods_symbols.applicable_kinds = method
+# exclude LuaPort namespace so KopiLua mirrors stay snake_case
+dotnet_naming_symbols.methods_symbols.applicable_accessibilities = *
+dotnet_naming_symbols.methods_symbols.applicable_namespaces = -:NovaSharp.Interpreter.LuaPort
+dotnet_naming_rule.private_fields_must_be_camel.symbols = private_fields_symbols
+dotnet_naming_rule.private_fields_must_be_camel.style = lower_camel_case_style
+dotnet_naming_rule.private_fields_must_be_camel.severity = error
+
+dotnet_naming_symbols.private_fields_symbols.applicable_accessibilities = private
+

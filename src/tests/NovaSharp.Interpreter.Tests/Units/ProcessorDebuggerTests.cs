@@ -1080,6 +1080,41 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RefreshActionProcessesNextQueuedDebuggerCommand()
+        {
+            Script script = new();
+            script.LoadString("return 20");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new() { PauseRequested = true };
+            debugger.EnqueueAction(DebuggerAction.ActionType.Refresh);
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 8);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+                Assert.That(debugger.UpdateCallCount, Is.GreaterThanOrEqualTo(2));
+            });
+        }
+
+        [Test]
         public void RefreshDebuggerEvaluatesWatchExpressions()
         {
             Script script = new();
@@ -1150,6 +1185,37 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(watch.IsError, Is.True);
                 Assert.That(watch.Value.Type, Is.EqualTo(DataType.String));
                 Assert.That(watch.Value.String, Does.Contain("cannot call functions"));
+            });
+        }
+
+        [Test]
+        public void RefreshDebuggerHandlesEmptyWatchList()
+        {
+            Script script = new();
+            script.LoadString("return 17");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new() { PauseRequested = true };
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 6);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(debugger.LastWatchUpdates.ContainsKey(WatchType.Watches), Is.True);
+                Assert.That(debugger.LastWatchUpdates[WatchType.Watches], Is.Empty);
             });
         }
 
