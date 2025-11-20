@@ -1,17 +1,17 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-19 13:24 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-19 16:03 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
-- Overall line coverage: **86.5 %**
-- NovaSharp.Interpreter line coverage: **95.8 %**
+- Overall line coverage: **86.6 %**
+- NovaSharp.Interpreter line coverage: **95.9 %**
 - NovaSharp.Cli line coverage: **80.0 %**
 - NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **92.4 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
+- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- `Execution.VM.Processor` – **90.7 % line / 89.6 % branch** (resume/pause and instruction-range guards need explicit tests to flip the last branch to green).
+- `Execution.VM.Processor` – **91.9 % line / 90.9 % branch** (resume/pause and instruction-range guards still need explicit tests to flip the last branch to green).
 
 See `docs/coverage/latest/Summary.json` for the full breakdown; update this list after each burn-down.
 
@@ -34,6 +34,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 - (2025-11-19 12:08 UTC) Added sentinel-aware `HardwiredMethodMemberDescriptorTests` mirroring the generator’s `DefaultValue` placeholders so `CalcArgsCount` decrements when optional arguments are omitted and stays flat when custom values are supplied. The updated suite (Release total **2 301** tests) drives `NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor` to **100 % line / 100 % branch / 100 % method** coverage while keeping interpreter aggregates at **95.79 % line / 92.89 % branch / 97.83 % method**.
 - (2025-11-19 12:34 UTC) Layered guard-rail coverage onto `BinaryOperatorExpression`: new NUnit fixtures intentionally corrupt the operator chain, force the internal operator enum into unsupported combinations, and assert the resulting `InternalErrorException`/`DynamicExpressionException` flows. The latest `./scripts/coverage/coverage.ps1` run (Release suite **2 305** tests) reports `NovaSharp.Interpreter.Tree.Expressions.BinaryOperatorExpression` at **98.0 % line / 96.8 % branch / 100 % method**, bumping interpreter aggregates to **95.81 % line / 93.01 % branch / 97.83 % method**.
 - (2025-11-19 13:24 UTC) Expanded `Units/ProcessorDebuggerTests` to hammer the remaining debugger-action branches (`StepIn` early returns, bytecode step-over/step-out targets, and the breakpoint toggle fallback). `./scripts/coverage/coverage.ps1 -SkipBuild` (Release suite **2 311** tests) now reports `Execution.VM.Processor` at **90.8 % line / 90.0 % branch / 95.5 % method** while interpreter aggregates climb to **95.88 % line / 93.13 % branch / 97.84 % method**; the leftover Processor debt is confined to the debugger action loop’s less-common cases and coroutine bookkeeping.
+- (2025-11-19 16:03 UTC) Added `ProcessorDebuggerTests.DebuggerActionQueueSetsByteCodeStepInState` to cover the bytecode step-in action loop and `ProcessorDebuggerTests.RefreshDebuggerThreadsUsesParentCoroutineStack` to exercise the parent-stack branch in `RefreshDebuggerThreads`. The latest `./scripts/coverage/coverage.ps1 -SkipBuild` run (Release suite **2 328** tests) lifts `Execution.VM.Processor` to **91.9 % line / 90.9 % branch / 95.9 % method** and NovaSharp.Interpreter overall to **95.91 % line / 92.99 % branch / 97.86 % method**. Remaining debt sits in the debugger loop’s rarely-requested actions plus the coroutine resume/pause edge cases called out above.
 - (2025-11-18 20:28 UTC) Added `Units/ByteCodeTests` to cover SourceRef stacking/guard disposal, `ByteCode.Dump`, comparison normalisation (`LessEq`/`Eq`/`Less` → `CNot`/`ToBool`), name/list indexers, global/local/upvalue `Emit_Load` & `Emit_Store`, table initialiser flags, and scope-frame serialisation. Fresh coverage (`./scripts/coverage/coverage.ps1 -SkipBuild`, 2 261 tests) now reports `Execution.VM.ByteCode` at **95.5 % line / 77.7 % branch / 95.6 % method** (276/289 lines, 28/36 branches). The remaining eight branches are strictly defensive: the `SymbolRefType.DefaultEnv` guard paths in `Emit_Load`/`Emit_Store`, the exception-only `Emit_Index*` fallbacks, and the never-hit `InternalErrorException` cases. Leaving them red-listed for now until we either delete that dead code or craft synthetic AST fixtures to assert the failure modes.
 - (2025-11-18 10:34 UTC) TablePair’s properties are now immutable and the recursive setter bug was removed (`Key`/`Value` expose the readonly backing fields). `Units/TablePairTests` assert the Nil sentinel contents, equality/hash behaviour, and constructor storage guarantees. `NovaSharp.Interpreter.DataTypes.TablePair` rises to **93.3 % line / 50 % branch / 100 % method**; the remaining branch debt is isolated to the equality operators, but the class no longer sits on the red list.
 - (2025-11-18 11:06 UTC) Added the missing adapter tests so `AutoDescribingUserDataDescriptor` now exercises both the userdata and non-userdata paths (`IndexReturnsNullWhenObjIsNotUserDataType`, `MetaIndexReturnsNullWhenObjIsNotUserDataType`). Paired with the existing delegate assertions, the descriptor now reports **100 % line / 100 % branch / 100 % method** coverage.

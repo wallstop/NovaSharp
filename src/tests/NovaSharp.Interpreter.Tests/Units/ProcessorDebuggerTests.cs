@@ -2,7 +2,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -530,6 +532,91 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(processor.GetDebuggerActionTargetForTests(), Is.EqualTo(-1));
                 Assert.That(debugger.UpdateCallCount, Is.GreaterThan(0));
             });
+        }
+
+        [Test]
+        public void DebuggerActionQueueSetsByteCodeStepInState()
+        {
+            Script script = new();
+            script.LoadString("return 27");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(DebuggerAction.ActionType.ByteCodeStepIn);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 11);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.ByteCodeStepIn)
+                );
+                Assert.That(processor.GetDebuggerActionTargetForTests(), Is.EqualTo(-1));
+            });
+        }
+
+        [Test]
+        public void RefreshDebuggerThreadsUsesParentCoroutineStack()
+        {
+            Script script = new();
+            script.DoString("function idle() return 5 end");
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
+            Coroutine coroutine = coroutineValue.Coroutine;
+
+            FieldInfo processorField = typeof(Coroutine).GetField(
+                "_processor",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+            Processor coroutineProcessor = (Processor)processorField.GetValue(coroutine)!;
+
+            Processor parentProcessor = script.GetMainProcessorForTests();
+
+            FieldInfo stackField = typeof(Processor).GetField(
+                "_coroutinesStack",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+            List<Processor> parentStack = (List<Processor>)stackField.GetValue(parentProcessor)!;
+            List<Processor> originalStack = parentStack.ToList();
+
+            try
+            {
+                parentStack.Clear();
+                parentStack.Add(coroutineProcessor);
+
+                MethodInfo refreshThreadsMethod = typeof(Processor).GetMethod(
+                    "RefreshDebuggerThreads",
+                    BindingFlags.NonPublic | BindingFlags.Instance
+                )!;
+                List<WatchItem> threads =
+                    (List<WatchItem>)
+                        refreshThreadsMethod.Invoke(coroutineProcessor, new object[] { null });
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(threads, Has.Count.EqualTo(1));
+                    Assert.That(threads[0].Address, Is.EqualTo(coroutine.ReferenceId));
+                    Assert.That(threads[0].Name, Is.EqualTo($"coroutine #{coroutine.ReferenceId}"));
+                });
+            }
+            finally
+            {
+                parentStack.Clear();
+                parentStack.AddRange(originalStack);
+            }
         }
 
         [Test]
