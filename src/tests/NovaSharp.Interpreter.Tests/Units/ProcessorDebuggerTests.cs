@@ -1153,6 +1153,39 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause()
+        {
+            Script script = new();
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new() { SignalRuntimeExceptionResult = true };
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+            processor.DebuggerEnabled = true;
+
+            string failingChunk =
+                @"
+                local function explode()
+                    error('boom')
+                end
+                explode()
+            ";
+
+            Assert.That(
+                () => script.DoString(failingChunk),
+                Throws.TypeOf<ScriptRuntimeException>()
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(debugger.SignalRuntimeExceptionCallCount, Is.EqualTo(1));
+                Assert.That(debugger.UpdateCallCount, Is.GreaterThan(0));
+            });
+        }
+
         private static void PrepareCallStack(Processor processor, int frameCount = 1)
         {
             processor.ClearCallStackForTests();
@@ -1180,12 +1213,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             private readonly Queue<DebuggerAction> actions = new();
 
             public bool PauseRequested { get; set; }
+            public bool SignalRuntimeExceptionResult { get; set; }
 
             public DebuggerCaps Caps { get; set; } =
                 DebuggerCaps.CanDebugSourceCode | DebuggerCaps.HasLineBasedBreakpoints;
 
             public int UpdateCallCount { get; private set; }
             public int RefreshBreakpointsCallCount { get; private set; }
+            public int SignalRuntimeExceptionCallCount { get; private set; }
             public List<DynamicExpression> WatchItems { get; } = new();
             public Dictionary<WatchType, List<WatchItem>> LastWatchUpdates { get; } = new();
 
@@ -1217,7 +1252,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public bool SignalRuntimeException(ScriptRuntimeException ex)
             {
-                return false;
+                SignalRuntimeExceptionCallCount++;
+                return SignalRuntimeExceptionResult;
             }
 
             public DebuggerAction GetAction(int ip, SourceRef sourceref)

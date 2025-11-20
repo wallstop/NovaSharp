@@ -2,11 +2,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
     using System.Threading;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Modules;
@@ -251,6 +253,183 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ExecIncrClonesReadOnlyValueBeforeIncrement()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+            FastStack<DynValue> valueStack = GetPrivateField<FastStack<DynValue>>(
+                processor,
+                "_valueStack"
+            );
+            valueStack.Clear();
+            valueStack.Push(DynValue.NewNumber(1)); // step value at offset 1
+            valueStack.Push(DynValue.NewNumber(2).AsReadOnly());
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
+            MethodInfo execIncr = typeof(Processor).GetMethod(
+                "ExecIncr",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+
+            execIncr.Invoke(processor, new object[] { instruction });
+
+            DynValue result = valueStack.Peek();
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Number, Is.EqualTo(3));
+                Assert.That(result.ReadOnly, Is.False);
+            });
+        }
+
+        [Test]
+        public void PopExecStackAndCheckVStackReturnsReturnAddressWhenGuardMatches()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+            processor.ClearCallStackForTests();
+            processor.PushCallStackFrameForTests(
+                new CallStackItem() { BasePointer = 3, ReturnAddress = 42 }
+            );
+
+            MethodInfo popGuard = typeof(Processor).GetMethod(
+                "PopExecStackAndCheckVStack",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+
+            int returnAddress = (int)popGuard.Invoke(processor, new object[] { 3 });
+            Assert.That(returnAddress, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void PopExecStackAndCheckVStackThrowsWhenGuardDiffers()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+            processor.ClearCallStackForTests();
+            processor.PushCallStackFrameForTests(
+                new CallStackItem() { BasePointer = 2, ReturnAddress = 7 }
+            );
+
+            MethodInfo popGuard = typeof(Processor).GetMethod(
+                "PopExecStackAndCheckVStack",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+
+            TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() =>
+                popGuard.Invoke(processor, new object[] { 0 })
+            )!;
+            Assert.That(ex.InnerException, Is.TypeOf<InternalErrorException>());
+        }
+
+        [Test]
+        public void SetGlobalSymbolThrowsWhenEnvIsNotTable()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+
+            MethodInfo setGlobal = typeof(Processor).GetMethod(
+                "SetGlobalSymbol",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+
+            TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() =>
+                setGlobal.Invoke(
+                    processor,
+                    new object[] { DynValue.NewString("not-table"), "value", DynValue.NewNumber(1) }
+                )
+            )!;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ex.InnerException, Is.TypeOf<InvalidOperationException>());
+                Assert.That(ex.InnerException?.Message, Does.Contain("_ENV is not a table"));
+            });
+        }
+
+        [Test]
+        public void AssignGenericSymbolRejectsDefaultEnvSymbol()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+
+            Assert.That(
+                () => processor.AssignGenericSymbol(SymbolRef.DefaultEnv, DynValue.NewNumber(1)),
+                Throws
+                    .TypeOf<ArgumentException>()
+                    .With.Message.Contains("Can't AssignGenericSymbol on a DefaultEnv symbol")
+            );
+        }
+
+        [Test]
+        public void StackTopToArrayReturnsValuesWithoutAlteringStackWhenNotPopping()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+            FastStack<DynValue> stack = GetPrivateField<FastStack<DynValue>>(
+                processor,
+                "_valueStack"
+            );
+            stack.Clear();
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+
+            DynValue[] peeked = InvokeStackArrayHelper(processor, "StackTopToArray", 2, pop: false);
+            Assert.Multiple(() =>
+            {
+                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(new[] { 3d, 2d }));
+                Assert.That(stack.Count, Is.EqualTo(3));
+            });
+
+            DynValue[] popped = InvokeStackArrayHelper(processor, "StackTopToArray", 2, pop: true);
+            Assert.Multiple(() =>
+            {
+                Assert.That(popped.Select(v => v.Number), Is.EqualTo(new[] { 3d, 2d }));
+                Assert.That(stack.Count, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void StackTopToArrayReverseReturnsValuesInAscendingOrder()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+            FastStack<DynValue> stack = GetPrivateField<FastStack<DynValue>>(
+                processor,
+                "_valueStack"
+            );
+            stack.Clear();
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+            stack.Push(DynValue.NewNumber(4));
+
+            DynValue[] peeked = InvokeStackArrayHelper(
+                processor,
+                "StackTopToArrayReverse",
+                3,
+                pop: false
+            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(new[] { 2d, 3d, 4d }));
+                Assert.That(stack.Count, Is.EqualTo(4));
+            });
+
+            DynValue[] popped = InvokeStackArrayHelper(
+                processor,
+                "StackTopToArrayReverse",
+                3,
+                pop: true
+            );
+            Assert.Multiple(() =>
+            {
+                Assert.That(popped.Select(v => v.Number), Is.EqualTo(new[] { 2d, 3d, 4d }));
+                Assert.That(stack.Count, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
         public void PushCallStackFrameForTestsRejectsNullFrames()
         {
             Script script = new();
@@ -309,6 +488,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             bool original = (bool)field.GetValue(processor)!;
             field.SetValue(processor, value);
             return original;
+        }
+
+        private static DynValue[] InvokeStackArrayHelper(
+            Processor processor,
+            string methodName,
+            int items,
+            bool pop
+        )
+        {
+            MethodInfo method = typeof(Processor).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+            return (DynValue[])method.Invoke(processor, new object[] { items, pop });
         }
 
         private static T GetPrivateField<T>(Processor processor, string fieldName)
