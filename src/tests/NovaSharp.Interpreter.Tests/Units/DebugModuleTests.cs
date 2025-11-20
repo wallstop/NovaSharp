@@ -32,6 +32,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetUserValueDefaultsToNilWhenUnset()
+        {
+            Script script = CreateScript();
+            DynValue userdata = UserData.Create(new SampleUserData());
+            script.Globals["ud"] = userdata;
+
+            DynValue result = script.DoString("return debug.getuservalue(ud)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void GetUserValueReturnsNilWhenNotUserData()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.getuservalue('not-userdata')");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
         public void SetUserValueUpdatesDescriptor()
         {
             Script script = CreateScript();
@@ -44,6 +65,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(userValue.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void SetUserValueAllowsClearingWithNil()
+        {
+            Script script = CreateScript();
+            DynValue userdata = UserData.Create(new SampleUserData());
+            script.Globals["ud"] = userdata;
+
+            script.DoString("debug.setuservalue(ud, { foo = 'value' })");
+            script.DoString("debug.setuservalue(ud, nil)");
+
+            DynValue cleared = script.DoString("return debug.getuservalue(ud)");
+            Assert.That(cleared.IsNil(), Is.True);
         }
 
         [Test]
@@ -82,6 +117,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void SetMetatableAllowsClearingTableMetatable()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                @"
+                return debug.setmetatable({}, nil) ~= nil
+                "
+            );
+
+            Assert.That(result.Boolean, Is.True);
         }
 
         [Test]
@@ -158,10 +206,67 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetUpvalueReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 10
+                    return function(a) return secret + a end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.getupvalue(fn, 99)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void GetUpvalueReturnsNilWhenZeroIndexRequested()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 5
+                    return function() return secret end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.getupvalue(fn, 0)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
         public void SetupvalueReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.setupvalue(print, 1, 10)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void SetupvalueReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 10
+                    return function(a) return secret + a end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.setupvalue(fn, 99, 20)");
 
             Assert.That(result.IsNil(), Is.True);
         }
@@ -216,6 +321,34 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void UpvalueIdReturnsNilForClrFunctions()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.upvalueid(print, 1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void UpvalueIdReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local value = 0
+                    return function() return value end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.upvalueid(fn, 99)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
         public void UpvalueJoinThrowsOnInvalidIndex()
         {
             Script script = CreateScript();
@@ -230,6 +363,29 @@ namespace NovaSharp.Interpreter.Tests.Units
                         end
                         local fn = factory()
                         debug.upvaluejoin(fn, 5, fn, 1)
+                        "
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("invalid upvalue index")
+            );
+        }
+
+        [Test]
+        public void UpvalueJoinThrowsWhenSecondIndexInvalid()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                        local function factory()
+                            local value = 0
+                            return function() return value end
+                        end
+                        local fn = factory()
+                        debug.upvaluejoin(fn, 1, fn, 5)
                         "
                     ),
                 Throws
@@ -260,6 +416,35 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void TracebackOmitsMessageWhenNil()
+        {
+            Script script = CreateScript();
+            DynValue trace = script.DoString("return debug.traceback(nil, 0)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(trace.String, Does.StartWith("stack traceback:"));
+                Assert.That(trace.String, Does.Not.Contain("nil"));
+            });
+        }
+
+        [Test]
+        public void TracebackIncludesFunctionNameWhenAvailable()
+        {
+            Script script = CreateScript();
+            DynValue trace = script.DoString(
+                @"
+                local function inner()
+                    return debug.traceback('from inner', 0)
+                end
+                return inner()
+                "
+            );
+
+            Assert.That(trace.String, Does.Contain("function 'inner"));
         }
 
         [Test]

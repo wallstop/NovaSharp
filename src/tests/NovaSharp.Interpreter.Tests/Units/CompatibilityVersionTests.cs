@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
@@ -153,6 +154,60 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Tuple[0].String, Is.EqualTo("a"));
             Assert.That(result.Tuple[1].String, Is.EqualTo("b"));
             Assert.That(result.Tuple[2].String, Is.EqualTo("c"));
+        }
+
+        [Test]
+        public void ForVersionReturnsSingletonsWithExpectedFeatureFlags()
+        {
+            LuaCompatibilityProfile lua52 = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Lua52
+            );
+            LuaCompatibilityProfile lua53 = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Lua53
+            );
+            LuaCompatibilityProfile lua54 = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Lua54
+            );
+            LuaCompatibilityProfile lua55 = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Lua55
+            );
+            LuaCompatibilityProfile latest = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Latest
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    LuaCompatibilityProfile.ForVersion(LuaCompatibilityVersion.Lua52),
+                    Is.SameAs(lua52)
+                );
+                Assert.That(lua52.SupportsBitwiseOperators, Is.False);
+                Assert.That(lua52.SupportsBit32Library, Is.True);
+                Assert.That(lua52.SupportsUtf8Library, Is.False);
+                Assert.That(lua52.SupportsWarnFunction, Is.False);
+
+                Assert.That(lua53.SupportsBitwiseOperators, Is.True);
+                Assert.That(lua53.SupportsTableMove, Is.True);
+                Assert.That(lua53.SupportsConstLocals, Is.False);
+
+                Assert.That(lua54.SupportsToBeClosedVariables, Is.True);
+                Assert.That(lua54.SupportsConstLocals, Is.True);
+                Assert.That(lua54.SupportsWarnFunction, Is.True);
+
+                Assert.That(lua55, Is.SameAs(latest));
+                Assert.That(lua55.SupportsWarnFunction, Is.True);
+            });
+        }
+
+        [Test]
+        public void ForVersionThrowsWhenVersionIsUnsupported()
+        {
+            const LuaCompatibilityVersion invalid = (LuaCompatibilityVersion)999;
+
+            Assert.That(
+                () => LuaCompatibilityProfile.ForVersion(invalid),
+                Throws.TypeOf<ArgumentOutOfRangeException>()
+            );
         }
     }
 }
