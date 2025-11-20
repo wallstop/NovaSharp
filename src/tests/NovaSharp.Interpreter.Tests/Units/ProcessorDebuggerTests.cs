@@ -846,6 +846,136 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetBreakpointForcesStateWhenLocationMatches()
+        {
+            Script script = new();
+            script.LoadString("return 17");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+            processor.ClearBreakpointsForTests();
+
+            SourceRef target = GetFirstBreakableSourceRef(script);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.SetBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine,
+                    SourceCol = target.FromChar,
+                    Lines = new[] { target.FromLine },
+                }
+            );
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 2);
+
+            IReadOnlyList<SourceRef> breakpoints = processor.GetBreakpointsForTests();
+            Assert.That(breakpoints, Has.Member(target));
+            Assert.That(breakpoints.Single(s => s == target).Breakpoint, Is.True);
+        }
+
+        [Test]
+        public void ClearBreakpointForcesStateWhenLocationMatches()
+        {
+            Script script = new();
+            script.LoadString("return 18");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+            processor.ClearBreakpointsForTests();
+
+            SourceRef target = GetFirstBreakableSourceRef(script);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.SetBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine,
+                    SourceCol = target.FromChar,
+                    Lines = new[] { target.FromLine },
+                }
+            );
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.ClearBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine,
+                    SourceCol = target.FromChar,
+                    Lines = new[] { target.FromLine },
+                }
+            );
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 4);
+
+            IReadOnlyList<SourceRef> breakpoints = processor.GetBreakpointsForTests();
+            Assert.That(breakpoints.Any(r => r == target && r.Breakpoint), Is.False);
+        }
+
+        [Test]
+        public void SetBreakpointReturnsFalseWhenSourceHasNoRefs()
+        {
+            Script script = new();
+            script.LoadString("return 19");
+
+            SourceCode source = script.GetSourceCode(0);
+            source.Refs.Clear();
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+            processor.ClearBreakpointsForTests();
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.SetBreakpoint,
+                    SourceId = source.SourceId,
+                    SourceLine = 1,
+                    SourceCol = 1,
+                    Lines = new[] { 1 },
+                }
+            );
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 5);
+
+            Assert.That(processor.GetBreakpointsForTests(), Is.Empty);
+        }
+
+        [Test]
         public void RefreshDebuggerEvaluatesWatchExpressions()
         {
             Script script = new();
