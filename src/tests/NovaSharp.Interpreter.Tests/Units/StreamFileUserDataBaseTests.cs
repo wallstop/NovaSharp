@@ -71,6 +71,25 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void WriteRethrowsScriptRuntimeException()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed", allowWrite: true)
+            {
+                ThrowScriptRuntimeOnWrite = true,
+            };
+
+            script.Globals["file"] = UserData.Create(file);
+
+            Assert.That(
+                () => script.DoString("return file:write('boom')"),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("script write failure")
+            );
+        }
+
+        [Test]
         public void CloseReturnsTupleWithMessage()
         {
             Script script = CreateScript();
@@ -105,6 +124,22 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple[1].String, Does.Contain("close failure"));
                 Assert.That(result.Tuple[2].Number, Is.EqualTo(-1));
             });
+        }
+
+        [Test]
+        public void CloseRethrowsScriptRuntimeException()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("seed") { ThrowScriptRuntimeOnClose = true };
+
+            script.Globals["file"] = UserData.Create(file);
+
+            Assert.That(
+                () => script.DoString("return file:close()"),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("script close failure")
+            );
         }
 
         [Test]
@@ -605,6 +640,54 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadParsesHexFloatLiteralWithSignedPrefix()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("-0x2p1 rest");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local remainder = f:read('*a')
+                return number, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(-4d));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("rest"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesHexFloatLiteralWithSignedExponent()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x1p-4 tail");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local remainder = f:read('*a')
+                return number, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(Math.Pow(2, -4)).Within(1e-12));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("tail"));
+            });
+        }
+
+        [Test]
         public void ReadParsesNumbersWithLeadingWhitespace()
         {
             Script script = CreateScript();
@@ -649,6 +732,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(tuple.Tuple[0].IsNil(), Is.True);
                 Assert.That(tuple.Tuple[1].String, Does.StartWith("+ remainder"));
+            });
+        }
+
+        [Test]
+        public void ReadNumberReturnsNilWhenReaderCannotConsumeChar()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("7\nnext") { ForceReadBufferFailureCount = 1 };
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n'), file:read('*l')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("7"));
+                Assert.That(file.ForcedReadBufferFailuresTriggered, Is.EqualTo(1));
             });
         }
 
@@ -926,6 +1027,28 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.String, Is.EqualTo("one,two"));
         }
 
+        [Test]
+        public void ToStringTracksOpenAndClosedState()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("contents");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            string beforeClose = file.ToString();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(beforeClose, Does.StartWith("file ("));
+                Assert.That(beforeClose, Does.Not.Contain("closed"));
+            });
+
+            script.DoString("file:close()");
+
+            string afterClose = file.ToString();
+            Assert.That(afterClose, Is.EqualTo("file (closed)"));
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
@@ -941,6 +1064,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             private readonly Encoding _encoding = new UTF8Encoding(
                 encoderShouldEmitUTF8Identifier: false
             );
+            private int _remainingForcedReadFailures;
+            private int _forcedReadBufferFailuresTriggered;
 
             internal TestStreamFileUserData(
                 string initialContent,
@@ -1002,7 +1127,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal bool ThrowOnWrite { get; set; }
 
+            internal bool ThrowScriptRuntimeOnWrite { get; set; }
+
             internal bool ThrowOnClose { get; set; }
+
+            internal bool ThrowScriptRuntimeOnClose { get; set; }
 
             internal bool ThrowOnFlush { get; set; }
 
@@ -1011,6 +1140,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             internal bool ThrowOnSetvbuf { get; set; }
 
             internal string CloseMessage { get; set; }
+
+            internal int ForceReadBufferFailureCount
+            {
+                get => _remainingForcedReadFailures;
+                set => _remainingForcedReadFailures = value;
+            }
+
+            internal int ForcedReadBufferFailuresTriggered => _forcedReadBufferFailuresTriggered;
 
             internal bool WriterAutoFlush =>
                 StreamWriterInstance != null && StreamWriterInstance.AutoFlush;
@@ -1040,8 +1177,25 @@ namespace NovaSharp.Interpreter.Tests.Units
                     throw new InvalidOperationException("write failure");
                 }
 
+                if (ThrowScriptRuntimeOnWrite)
+                {
+                    throw new ScriptRuntimeException("script write failure");
+                }
+
                 Writes.Add(value);
                 base.Write(value);
+            }
+
+            protected override string ReadBuffer(int p)
+            {
+                if (_remainingForcedReadFailures > 0 && p == 1)
+                {
+                    _remainingForcedReadFailures--;
+                    _forcedReadBufferFailuresTriggered++;
+                    return string.Empty;
+                }
+
+                return base.ReadBuffer(p);
             }
 
             protected override string Close()
@@ -1049,6 +1203,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 if (ThrowOnClose)
                 {
                     throw new IOException("close failure");
+                }
+
+                if (ThrowScriptRuntimeOnClose)
+                {
+                    throw new ScriptRuntimeException("script close failure");
                 }
 
                 string message = CloseMessage;
