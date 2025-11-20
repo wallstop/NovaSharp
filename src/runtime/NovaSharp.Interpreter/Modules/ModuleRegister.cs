@@ -42,6 +42,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.Basic))
             {
                 RegisterModuleType<BasicModule>(table);
+
+                if (!profile.SupportsWarnFunction)
+                {
+                    RemoveGlobalFunction(table, "warn");
+                }
             }
 
             if (modules.Has(CoreModules.Metatables))
@@ -67,6 +72,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.Table))
             {
                 RegisterModuleType<TableModule>(table);
+
+                if (!profile.SupportsTableMove)
+                {
+                    RemoveTableFunction(table, "move");
+                }
             }
 
             if (modules.Has(CoreModules.Table))
@@ -449,6 +459,31 @@ namespace NovaSharp.Interpreter.Modules
             return script != null
                 ? script.CompatibilityProfile
                 : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
+        }
+
+        private static void RemoveGlobalFunction(Table globals, string functionName)
+        {
+            if (globals == null || string.IsNullOrEmpty(functionName))
+            {
+                return;
+            }
+
+            globals.Set(functionName, DynValue.Nil);
+        }
+
+        private static void RemoveTableFunction(Table globals, string memberName)
+        {
+            if (globals == null || string.IsNullOrEmpty(memberName))
+            {
+                return;
+            }
+
+            DynValue tableNamespace = globals.RawGet("table");
+
+            if (tableNamespace != null && tableNamespace.Type == DataType.Table)
+            {
+                tableNamespace.Table.Set(memberName, DynValue.Nil);
+            }
         }
     }
 }

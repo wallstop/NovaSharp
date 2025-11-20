@@ -108,6 +108,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CoreModules.Basic,
                 new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua53 }
             );
+            Assert.That(lua53.CompatibilityProfile.SupportsWarnFunction, Is.False);
             Assert.That(lua53.Globals.Get("warn").IsNil(), Is.True);
 
             List<string> warnings = new();
@@ -115,6 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CoreModules.Basic,
                 new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua54 }
             );
+            Assert.That(lua54.CompatibilityProfile.SupportsWarnFunction, Is.True);
             lua54.Options.DebugPrint = s => warnings.Add(s);
 
             lua54.DoString("warn('hello', 'world')");
@@ -130,6 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CoreModules.Table,
                 new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua52 }
             );
+            Assert.That(lua52.CompatibilityProfile.SupportsTableMove, Is.False);
             Assert.That(
                 lua52.Globals.Get("table").Table.Get("move").IsNil(),
                 Is.True,
@@ -140,6 +143,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CoreModules.Table,
                 new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua53 }
             );
+            Assert.That(lua53.CompatibilityProfile.SupportsTableMove, Is.True);
 
             DynValue result = lua53.DoString(
                 @"
