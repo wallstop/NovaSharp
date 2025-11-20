@@ -149,6 +149,40 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void StepOutAdvancesWhenStackDepthDrops()
+        {
+            Script script = new();
+            script.LoadString("return 8");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor, frameCount: 1);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.StepOut,
+                actionTarget: -1,
+                executionStackDepth: 2,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 3);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+                Assert.That(processor.GetDebuggerActionTargetForTests(), Is.EqualTo(-1));
+            });
+        }
+
+        [Test]
         public void StepOverReturnsWhenSameLocationAndDeeperStack()
         {
             Script script = new();
@@ -178,6 +212,43 @@ namespace NovaSharp.Interpreter.Tests.Units
                 processor.GetDebuggerActionForTests(),
                 Is.EqualTo(DebuggerAction.ActionType.StepOver)
             );
+        }
+
+        [Test]
+        public void StepOverContinuesWhenLocationChanges()
+        {
+            Script script = new();
+            script.LoadString("return 9");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor, frameCount: 1);
+
+            SourceRef previous = new SourceRef(0, 0, 0, 1, 1, true);
+            SourceRef updated = new SourceRef(0, 0, 0, 2, 2, true);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.StepOver,
+                actionTarget: -1,
+                executionStackDepth: 1,
+                lastHighlight: previous
+            );
+
+            Instruction instruction = new(updated) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+                Assert.That(processor.GetLastHighlightForTests(), Is.SameAs(updated));
+            });
         }
 
         [Test]
@@ -463,6 +534,43 @@ namespace NovaSharp.Interpreter.Tests.Units
                     processor.GetDebuggerActionForTests(),
                     Is.EqualTo(DebuggerAction.ActionType.StepIn)
                 );
+            });
+        }
+
+        [Test]
+        public void StepInContinuesWhenLocationIsNew()
+        {
+            Script script = new();
+            script.LoadString("return 12");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor, frameCount: 1);
+
+            SourceRef previous = new SourceRef(0, 0, 0, 1, 1, true);
+            SourceRef updated = new SourceRef(0, 0, 0, 3, 3, true);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.StepIn,
+                actionTarget: -1,
+                executionStackDepth: 1,
+                lastHighlight: previous
+            );
+
+            Instruction instruction = new(updated) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 6);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+                Assert.That(processor.GetLastHighlightForTests(), Is.SameAs(updated));
             });
         }
 
