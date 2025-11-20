@@ -12,6 +12,7 @@ Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./s
 
 ## Prioritized Red List (Interpreter < 90 %)
 - `Execution.VM.Processor` – **92.5 % line / 91.1 % branch** (resume/pause and instruction-range guards still need explicit tests to flip the last branch to green).
+- (2025-11-20 04:15 UTC) Latest `./scripts/coverage/coverage.ps1 -SkipBuild` run reports NovaSharp.Interpreter at **96.0 % line / 93.1 % branch / 97.9 % method**. `Execution.VM.Processor` now sits at **92.8 % line / 91.7 % branch / 95.9 % method** thanks to the new coroutine-yield tests, leaving the debugger pause/range guards as the remaining red-list items.
 
 See `docs/coverage/latest/Summary.json` for the full breakdown; update this list after each burn-down.
 

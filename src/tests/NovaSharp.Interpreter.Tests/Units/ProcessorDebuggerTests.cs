@@ -937,6 +937,110 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetBreakpointSnapsToNearestLocationWhenNoExactMatchExists()
+        {
+            Script script = new();
+            script.LoadString(
+                @"
+                local value = 0
+                return value
+            "
+            );
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+            processor.ClearBreakpointsForTests();
+
+            SourceRef target = GetFirstBreakableSourceRef(script);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.SetBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine + 50,
+                    SourceCol = target.FromChar + 25,
+                    Lines = new[] { target.FromLine + 50 },
+                }
+            );
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 6);
+
+            IReadOnlyList<SourceRef> breakpoints = processor.GetBreakpointsForTests();
+            Assert.Multiple(() =>
+            {
+                Assert.That(breakpoints, Is.Not.Empty);
+                Assert.That(breakpoints.Single().Breakpoint, Is.True);
+                Assert.That(breakpoints.Single().SourceIdx, Is.EqualTo(target.SourceIdx));
+            });
+        }
+
+        [Test]
+        public void ClearBreakpointSnapsToNearestLocationWhenNoExactMatchExists()
+        {
+            Script script = new();
+            script.LoadString(
+                @"
+                local data = 0
+                return data
+            "
+            );
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+            processor.ClearBreakpointsForTests();
+
+            SourceRef target = GetFirstBreakableSourceRef(script);
+
+            StubDebugger debugger = new();
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.SetBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine + 40,
+                    SourceCol = target.FromChar + 20,
+                    Lines = new[] { target.FromLine + 40 },
+                }
+            );
+            debugger.EnqueueAction(
+                new DebuggerAction()
+                {
+                    Action = DebuggerAction.ActionType.ClearBreakpoint,
+                    SourceId = target.SourceIdx,
+                    SourceLine = target.FromLine + 40,
+                    SourceCol = target.FromChar + 20,
+                    Lines = new[] { target.FromLine + 40 },
+                }
+            );
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: null
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 9);
+
+            Assert.That(processor.GetBreakpointsForTests(), Is.Empty);
+        }
+
+        [Test]
         public void SetBreakpointReturnsFalseWhenSourceHasNoRefs()
         {
             Script script = new();

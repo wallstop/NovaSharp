@@ -5,8 +5,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Reflection;
     using System.Threading;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
@@ -177,6 +180,106 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Number, Is.EqualTo(321d));
         }
 
+        [Test]
+        public void CoroutineYieldPassesValuesWhenYieldingIsAllowed()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function worker()
+                    coroutine.yield('pause')
+                    return 'done'
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("worker"));
+
+            DynValue yielded = coroutineValue.Coroutine.Resume();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(yielded.Type, Is.EqualTo(DataType.String));
+                Assert.That(yielded.String, Is.EqualTo("pause"));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+            });
+        }
+
+        [Test]
+        public void YieldingFromMainChunkThrowsCannotYieldMain()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("coroutine.yield('outside')")
+            );
+
+            Assert.That(ex.Message, Does.Contain("attempt to yield from outside a coroutine"));
+        }
+
+        [Test]
+        public void YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function boundary()
+                    coroutine.yield('pause')
+                    return 'done'
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("boundary"));
+            Processor coroutineProcessor = GetProcessorFromCoroutine(coroutineValue.Coroutine);
+            bool originalCanYield = SetCanYield(coroutineProcessor, false);
+
+            try
+            {
+                ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                    coroutineValue.Coroutine.Resume()
+                );
+                Assert.That(
+                    ex.Message,
+                    Does.Contain("attempt to yield across a CLR-call boundary")
+                );
+            }
+            finally
+            {
+                SetCanYield(coroutineProcessor, originalCanYield);
+            }
+        }
+
+        [Test]
+        public void PushCallStackFrameForTestsRejectsNullFrames()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+
+            Assert.That(
+                () => processor.PushCallStackFrameForTests(null),
+                Throws.TypeOf<ArgumentNullException>()
+            );
+        }
+
+        [Test]
+        public void ClearCallStackForTestsEmptiesExistingFrames()
+        {
+            Script script = new();
+            Processor processor = GetMainProcessor(script);
+
+            processor.PushCallStackFrameForTests(new CallStackItem());
+            processor.PushCallStackFrameForTests(new CallStackItem());
+
+            processor.ClearCallStackForTests();
+
+            FastStack<CallStackItem> executionStack = GetPrivateField<FastStack<CallStackItem>>(
+                processor,
+                "_executionStack"
+            );
+            Assert.That(executionStack.Count, Is.EqualTo(0));
+        }
+
         private static Processor CreateChildProcessor(Processor parent)
         {
             ConstructorInfo childCtor = typeof(Processor).GetConstructor(
@@ -186,6 +289,26 @@ namespace NovaSharp.Interpreter.Tests.Units
                 null
             )!;
             return (Processor)childCtor.Invoke(new object[] { parent });
+        }
+
+        private static Processor GetProcessorFromCoroutine(Coroutine coroutine)
+        {
+            FieldInfo field = typeof(Coroutine).GetField(
+                "_processor",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+            return (Processor)field.GetValue(coroutine)!;
+        }
+
+        private static bool SetCanYield(Processor processor, bool value)
+        {
+            FieldInfo field = typeof(Processor).GetField(
+                "_canYield",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!;
+            bool original = (bool)field.GetValue(processor)!;
+            field.SetValue(processor, value);
+            return original;
         }
 
         private static T GetPrivateField<T>(Processor processor, string fieldName)
