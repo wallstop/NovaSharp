@@ -44,7 +44,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace NovaSharp.Interpreter.Interop.LuaStateInterop
+namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 {
     #region Usings
     using System;
@@ -1059,3 +1059,4 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         #endregion
     }
 }
+

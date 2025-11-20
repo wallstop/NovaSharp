@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Execution
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
 
     /// <summary>
     /// Class giving access to details of the environment where the script is executing

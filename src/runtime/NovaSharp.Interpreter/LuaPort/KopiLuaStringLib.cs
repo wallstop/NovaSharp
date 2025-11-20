@@ -53,7 +53,7 @@ namespace NovaSharp.Interpreter.LuaPort
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    using Interop.LuaStateInterop;
+    using LuaPort.LuaStateInterop;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using lua_Integer = System.Int32;

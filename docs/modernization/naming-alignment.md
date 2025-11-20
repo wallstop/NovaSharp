@@ -35,7 +35,7 @@
    - ✅ (2025-11-20) Renamed `pcall_continuation` → `PcallContinuation` and `pcall_onerror` → `PcallOnError`, updated the delegate factories, and added null-argument guards so stack traces stay PascalCase and CA1062 is satisfied without suppressions.
 1. **Lua port strategy**
    - ✅ (2025-11-20) Relocated `KopiLuaStringLib` to `src/runtime/NovaSharp.Interpreter/LuaPort`, added an explicit header comment describing the naming divergence, and disabled IDE1006 locally so the audit no longer needs bespoke member allowlists for this file.
-   - Next: migrate the other Lua-port shims (e.g., `LuaStateInterop` helpers) into the same folder or add per-file suppressions so we can keep IDE1006 enabled elsewhere without churn.
+   - ✅ (2025-11-20) Moved `CharPtr`, `LuaBase`, `LuaBaseCLib`, `LuaLBuffer`, `LuaState`, and `Tools` under `LuaPort/LuaStateInterop`, switched them to the `NovaSharp.Interpreter.LuaPort.LuaStateInterop` namespace, and added IDE1006 suppressions plus documentation so their snake_case members remain in sync with the Lua C API. Updated all call sites/tests and refreshed the naming-audit allowlists so the analyzer does not emit false positives.
    - For newly written code paths (e.g., `Utf8Module`), keep PascalCase even when mirroring Lua names and use the existing `NovaSharpModuleMethodAttribute(Name = "str_find")` to control the public Lua symbol instead of encoding the Lua name in the method identifier.
 1. **Analyzer enforcement**
    - Add a `.editorconfig` rule (`dotnet_naming_rule.methods_must_be_pascal`) that targets all methods (all accessibilities) with severity `error` and references the existing `upper_camel_case_style`. This will start surfacing IDE1006/IDE1007 warnings anywhere snake_case methods are introduced.
@@ -46,5 +46,4 @@
 
 ## Next Steps
 
-- Apply the LuaPort treatment to the remaining legacy Lua interop files (CharPtr, LuaBase, etc.) so IDE1006 can be enforced everywhere else without allowlists.
-- Add the naming rule(s) + CI audit, regenerate `naming_audit.log`, and update PLAN.md once enforcement is live.
+- Add the naming rule(s) + CI audit, regenerate `naming_audit.log`, and update PLAN.md once enforcement is live so IDE1006 can be flipped to `error` outside of `LuaPort`.

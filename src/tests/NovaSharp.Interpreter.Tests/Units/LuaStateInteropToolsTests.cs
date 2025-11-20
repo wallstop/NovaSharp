@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NUnit.Framework;
 
     [TestFixture]

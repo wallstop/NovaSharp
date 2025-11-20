@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NUnit.Framework;
 
     [TestFixture]

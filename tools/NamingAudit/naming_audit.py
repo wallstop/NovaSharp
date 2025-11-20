@@ -56,11 +56,11 @@ FIELD_ALLOWLIST: dict[Path, set[str]] = {
     ): {"x", "y", "z", "position"},
     # Lua interop shims mirror the original KopiLua/KeraLua identifiers so
     # native parity (docs, tutorials, upstream diffs) stays intact.
-    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/CharPtr.cs"): {
+    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/CharPtr.cs"): {
         "chars",
         "index",
     },
-    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/LuaBase.cs"): {
+    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {
         "LUA_TNONE",
         "LUA_TNIL",
         "LUA_TBOOLEAN",
@@ -96,7 +96,7 @@ MEMBER_ALLOWLIST = {
 MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/LoadModule.cs"): {"__require_clr_impl"},
-    Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
+    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
 }
 TYPE_PATTERN = re.compile(
     r"^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+)*"

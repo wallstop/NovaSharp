@@ -1,7 +1,8 @@
 // Disable warnings about XML documentation
-namespace NovaSharp.Interpreter.Interop.LuaStateInterop
+namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 {
-#pragma warning disable 1591
+#pragma warning disable IDE1006 // Mirrors upstream Lua C API naming (snake_case preserved intentionally).
+
 
     using System.Text;
 
@@ -17,3 +18,4 @@ namespace NovaSharp.Interpreter.Interop.LuaStateInterop
         }
     }
 }
+
