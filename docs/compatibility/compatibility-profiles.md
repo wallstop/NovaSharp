@@ -12,6 +12,10 @@ NovaSharp targets Lua 5.4.8 today, but mod authors often need to pin older seman
 
 The `LuaCompatibilityProfile` exposes boolean feature toggles that map directly to spec additions between Lua versions. Downstream work (parser tweaks, library shims, analyzer hints) switches on these flags rather than hard-coding version checks.
 
+### Runtime Metadata
+
+Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the active compatibility profile display name (for example, "Lua 5.3"). Hosts and modding tools can read this value to confirm which feature set a script is currently running under without reaching back into the hosting API.
+
 ## Feature Matrix
 
 | Feature                    | Lua 5.2        | Lua 5.3 | Lua 5.4 | Lua 5.5 / Latest | Reference                                                                                                     |

@@ -32,9 +32,9 @@ namespace NovaSharp.Interpreter
         public const string VERSION = "2.0.0.0";
 
         /// <summary>
-        /// The Lua version being supported
+        /// The default Lua version targeted by NovaSharp.
         /// </summary>
-        public const string LuaVersion = "5.2";
+        public const string LuaVersion = "5.4";
 
         private readonly Processor _mainProcessor;
         private readonly ByteCode _byteCode;

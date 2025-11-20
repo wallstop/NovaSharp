@@ -160,6 +160,27 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Tuple[2].String, Is.EqualTo("c"));
         }
 
+        [TestCase(LuaCompatibilityVersion.Lua52)]
+        [TestCase(LuaCompatibilityVersion.Lua53)]
+        [TestCase(LuaCompatibilityVersion.Lua54)]
+        [TestCase(LuaCompatibilityVersion.Latest)]
+        public void NovaSharpMetadataReflectsActiveCompatibilityProfile(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            Script script = new(CoreModules.PresetDefault, options);
+
+            DynValue metadata = script.Globals.Get("_NovaSharp");
+            Assert.That(metadata.Type, Is.EqualTo(DataType.Table));
+
+            DynValue compatibility = metadata.Table.Get("luacompat");
+            Assert.That(compatibility.Type, Is.EqualTo(DataType.String));
+
+            string expected = LuaCompatibilityProfile.ForVersion(version).DisplayName;
+            Assert.That(compatibility.String, Is.EqualTo(expected));
+        }
+
         [Test]
         public void ForVersionReturnsSingletonsWithExpectedFeatureFlags()
         {

@@ -144,15 +144,20 @@ namespace NovaSharp.Interpreter.Modules
         /// <returns></returns>
         public static Table RegisterConstants(this Table table)
         {
-            DynValue novaSharpTable = DynValue.NewTable(table.OwnerScript);
+            Script ownerScript = table.OwnerScript;
+            DynValue novaSharpTable = DynValue.NewTable(ownerScript);
             Table m = novaSharpTable.Table;
+            LuaCompatibilityProfile profile =
+                ownerScript != null
+                    ? ownerScript.CompatibilityProfile
+                    : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
 
             table.Set("_G", DynValue.NewTable(table));
             table.Set("_VERSION", DynValue.NewString($"NovaSharp {Script.VERSION}"));
             table.Set("_NovaSharp", novaSharpTable);
 
             m.Set("version", DynValue.NewString(Script.VERSION));
-            m.Set("luacompat", DynValue.NewString(Script.LuaVersion));
+            m.Set("luacompat", DynValue.NewString(profile.DisplayName));
             m.Set("platform", DynValue.NewString(Script.GlobalOptions.Platform.GetPlatformName()));
             m.Set("is_aot", DynValue.NewBoolean(Script.GlobalOptions.Platform.IsRunningOnAOT()));
             m.Set("is_unity", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnUnity));
