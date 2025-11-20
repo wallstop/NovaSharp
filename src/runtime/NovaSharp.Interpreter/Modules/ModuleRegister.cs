@@ -52,6 +52,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.StringLib))
             {
                 RegisterModuleType<StringModule>(table);
+
+                if (profile.SupportsUtf8Library)
+                {
+                    RegisterModuleType(table, typeof(Utf8Module));
+                }
             }
 
             if (modules.Has(CoreModules.LoadMethods))
