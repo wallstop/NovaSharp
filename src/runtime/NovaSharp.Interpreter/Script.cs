@@ -231,28 +231,31 @@ namespace NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            this.CheckScriptOwnership(globalTable);
-
-            if (code.StartsWith(StringModule.Base64DumpHeader))
+            return ExecuteWithCompatibilityGuard(() =>
             {
-                code = code.Substring(StringModule.Base64DumpHeader.Length);
-                byte[] data = Convert.FromBase64String(code);
-                using MemoryStream ms = new(data);
-                return LoadStream(ms, globalTable, codeFriendlyName);
-            }
+                this.CheckScriptOwnership(globalTable);
 
-            string chunkName = $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString()}";
+                if (code.StartsWith(StringModule.Base64DumpHeader))
+                {
+                    code = code.Substring(StringModule.Base64DumpHeader.Length);
+                    byte[] data = Convert.FromBase64String(code);
+                    using MemoryStream ms = new(data);
+                    return LoadStream(ms, globalTable, codeFriendlyName);
+                }
 
-            SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
+                string chunkName = $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString()}";
 
-            _sources.Add(source);
+                SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
-            int address = LoaderFast.LoadChunk(this, source, _byteCode);
+                _sources.Add(source);
 
-            SignalSourceCodeChange(source);
-            SignalByteCodeChange();
+                int address = LoaderFast.LoadChunk(this, source, _byteCode);
 
-            return MakeClosure(address, globalTable ?? _globalTable);
+                SignalSourceCodeChange(source);
+                SignalByteCodeChange();
+
+                return MakeClosure(address, globalTable ?? _globalTable);
+            });
         }
 
         /// <summary>
@@ -270,48 +273,51 @@ namespace NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            this.CheckScriptOwnership(globalTable);
-
-            Stream codeStream = new UndisposableStream(stream);
-
-            if (!Processor.IsDumpStream(codeStream))
+            return ExecuteWithCompatibilityGuard(() =>
             {
-                using StreamReader sr = new(codeStream);
-                string scriptCode = sr.ReadToEnd();
-                return LoadString(scriptCode, globalTable, codeFriendlyName);
-            }
-            else
-            {
-                string chunkName = $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString()}";
+                this.CheckScriptOwnership(globalTable);
 
-                SourceCode source = new(
-                    codeFriendlyName ?? chunkName,
-                    $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
-                    _sources.Count,
-                    this
-                );
+                Stream codeStream = new UndisposableStream(stream);
 
-                _sources.Add(source);
-
-                int address = _mainProcessor.Undump(
-                    codeStream,
-                    _sources.Count - 1,
-                    globalTable ?? _globalTable,
-                    out bool hasUpvalues
-                );
-
-                SignalSourceCodeChange(source);
-                SignalByteCodeChange();
-
-                if (hasUpvalues)
+                if (!Processor.IsDumpStream(codeStream))
                 {
-                    return MakeClosure(address, globalTable ?? _globalTable);
+                    using StreamReader sr = new(codeStream);
+                    string scriptCode = sr.ReadToEnd();
+                    return LoadString(scriptCode, globalTable, codeFriendlyName);
                 }
                 else
                 {
-                    return MakeClosure(address);
+                    string chunkName = $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString()}";
+
+                    SourceCode source = new(
+                        codeFriendlyName ?? chunkName,
+                        $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
+                        _sources.Count,
+                        this
+                    );
+
+                    _sources.Add(source);
+
+                    int address = _mainProcessor.Undump(
+                        codeStream,
+                        _sources.Count - 1,
+                        globalTable ?? _globalTable,
+                        out bool hasUpvalues
+                    );
+
+                    SignalSourceCodeChange(source);
+                    SignalByteCodeChange();
+
+                    if (hasUpvalues)
+                    {
+                        return MakeClosure(address, globalTable ?? _globalTable);
+                    }
+                    else
+                    {
+                        return MakeClosure(address);
+                    }
                 }
-            }
+            });
         }
 
         /// <summary>
@@ -501,6 +507,28 @@ namespace NovaSharp.Interpreter
         /// <param name="address">The address.</param>
         /// <param name="envTable">The env table to create a 0-upvalue</param>
         /// <returns></returns>
+        private T ExecuteWithCompatibilityGuard<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (InterpreterException ex)
+            {
+                ex.AppendCompatibilityContext(this);
+                throw;
+            }
+        }
+
+        private void ExecuteWithCompatibilityGuard(Action action)
+        {
+            ExecuteWithCompatibilityGuard(() =>
+            {
+                action();
+                return 0;
+            });
+        }
+
         private DynValue MakeClosure(int address, Table envTable = null)
         {
             this.CheckScriptOwnership(envTable);
@@ -604,7 +632,7 @@ namespace NovaSharp.Interpreter
                 );
             }
 
-            return _mainProcessor.Call(function, args);
+            return ExecuteWithCompatibilityGuard(() => _mainProcessor.Call(function, args));
         }
 
         /// <summary>

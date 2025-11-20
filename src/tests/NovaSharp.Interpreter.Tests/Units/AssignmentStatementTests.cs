@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
@@ -50,6 +51,34 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstAttributeRequiresLua54Compatibility()
+        {
+            Script script = new();
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                ParseLocalAssignment("local legacy <const> = 1", script)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("Lua 5.4+ compatibility"));
+            Assert.That(exception.Message, Does.Contain("§3.3.7"));
+        }
+
+        [Test]
+        public void CloseAttributeRequiresLua54Compatibility()
+        {
+            Script script = new();
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                ParseLocalAssignment("local guard <close> = newcloser()", script)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("Lua 5.4+ compatibility"));
+            Assert.That(exception.Message, Does.Contain("§3.3.8"));
+        }
+
+        [Test]
         public void AssignmentRequiresWritableVariables()
         {
             Script script = new();
@@ -57,19 +86,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Throws<SyntaxErrorException>(() => script.DoString("1 = 2"));
         }
 
-        private static AssignmentStatement ParseLocalAssignment(string code)
+        private static AssignmentStatement ParseLocalAssignment(string code, Script script = null)
         {
-            ScriptLoadingContext context = CreateContext(code);
+            ScriptLoadingContext context = CreateContext(code, script);
             Token localToken = context.Lexer.Current;
             context.Lexer.Next();
             return new AssignmentStatement(context, localToken);
         }
 
-        private static ScriptLoadingContext CreateContext(string code)
+        private static ScriptLoadingContext CreateContext(string code, Script script = null)
         {
-            Script script = new();
-            SourceCode source = new("units/assignment", code, script.SourceCodeCount, script);
-            ScriptLoadingContext context = new(script)
+            Script effectiveScript = script ?? new Script();
+            SourceCode source = new(
+                "units/assignment",
+                code,
+                effectiveScript.SourceCodeCount,
+                effectiveScript
+            );
+            ScriptLoadingContext context = new(effectiveScript)
             {
                 Source = source,
                 Scope = new BuildTimeScope(),

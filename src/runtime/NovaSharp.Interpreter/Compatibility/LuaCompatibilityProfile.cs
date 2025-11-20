@@ -113,6 +113,11 @@ namespace NovaSharp.Interpreter.Compatibility
         public bool SupportsWarnFunction { get; }
 
         /// <summary>
+        /// Gets the human-readable display name for the active compatibility profile (e.g., "Lua 5.3").
+        /// </summary>
+        public string DisplayName => GetDisplayName(Version);
+
+        /// <summary>
         /// Returns the profile associated with the specified compatibility version.
         /// </summary>
         public static LuaCompatibilityProfile ForVersion(LuaCompatibilityVersion version)
@@ -129,6 +134,19 @@ namespace NovaSharp.Interpreter.Compatibility
                     version,
                     "Unsupported compatibility version."
                 ),
+            };
+        }
+
+        private static string GetDisplayName(LuaCompatibilityVersion version)
+        {
+            return version switch
+            {
+                LuaCompatibilityVersion.Lua52 => "Lua 5.2",
+                LuaCompatibilityVersion.Lua53 => "Lua 5.3",
+                LuaCompatibilityVersion.Lua54 => "Lua 5.4",
+                LuaCompatibilityVersion.Lua55 => "Lua 5.5",
+                LuaCompatibilityVersion.Latest => "Lua Latest",
+                _ => version.ToString(),
             };
         }
     }

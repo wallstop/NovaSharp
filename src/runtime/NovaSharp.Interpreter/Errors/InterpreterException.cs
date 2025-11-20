@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Errors
     using System;
     using System.Collections.Generic;
     using Debugging;
+    using NovaSharp.Interpreter.Compatibility;
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     using System.Runtime.Serialization;
 #endif
@@ -82,7 +83,6 @@ namespace NovaSharp.Interpreter.Errors
                 if (DoNotDecorateMessage)
                 {
                     DecoratedMessage = Message;
-                    return;
                 }
                 else if (sref != null)
                 {
@@ -104,5 +104,20 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <returns></returns>
         public virtual void Rethrow() { }
+
+        internal void AppendCompatibilityContext(Script script)
+        {
+            if (
+                script == null
+                || string.IsNullOrEmpty(DecoratedMessage)
+                || DecoratedMessage.Contains("[compatibility:")
+            )
+            {
+                return;
+            }
+
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            DecoratedMessage = $"{DecoratedMessage} [compatibility: {profile.DisplayName}]";
+        }
     }
 }
