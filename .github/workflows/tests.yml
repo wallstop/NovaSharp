@@ -163,7 +163,9 @@ jobs:
       - name: Generate coverage
         shell: pwsh
         env:
-          COVERAGE_GATING_TARGET_LINE: "90"
+          COVERAGE_GATING_TARGET_LINE: "95"
+          COVERAGE_GATING_TARGET_BRANCH: "95"
+          COVERAGE_GATING_TARGET_METHOD: "95"
           COVERAGE_GATING_MODE: monitor
         run: ./scripts/coverage/coverage.ps1
       - name: Publish coverage summary
@@ -183,7 +185,9 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          COVERAGE_THRESHOLD: "90"
+          COVERAGE_THRESHOLD_LINE: "95"
+          COVERAGE_THRESHOLD_BRANCH: "95"
+          COVERAGE_THRESHOLD_METHOD: "95"
           COVERAGE_GATING_MODE: monitor
         with:
           script: |
@@ -199,7 +203,9 @@ jobs:
             const line = Number(summary.linecoverage);
             const branch = Number(summary.branchcoverage);
             const method = Number(summary.methodcoverage);
-            const threshold = Number(process.env.COVERAGE_THRESHOLD ?? '85');
+            const lineThreshold = Number(process.env.COVERAGE_THRESHOLD_LINE ?? '95');
+            const branchThreshold = Number(process.env.COVERAGE_THRESHOLD_BRANCH ?? '95');
+            const methodThreshold = Number(process.env.COVERAGE_THRESHOLD_METHOD ?? '95');
             let mode = (process.env.COVERAGE_GATING_MODE ?? 'monitor').trim().toLowerCase();
 
             if (!Number.isFinite(line)) {
@@ -213,18 +219,19 @@ jobs:
             }
 
             const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-            const lines = [
+            const fmt = (value) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'n/a';
+            const summaryLines = [
               '### Coverage Gate',
               '',
               `- Mode: ${mode}`,
-              `- Line: ${line.toFixed(2)}% (threshold ${threshold.toFixed(2)}%)`,
-              `- Branch: ${Number.isFinite(branch) ? branch.toFixed(2) + '%' : 'n/a'}`,
-              `- Method: ${Number.isFinite(method) ? method.toFixed(2) + '%' : 'n/a'}`,
+              `- Line: ${fmt(line)} (threshold ${lineThreshold.toFixed(2)}%)`,
+              `- Branch: ${fmt(branch)} (threshold ${branchThreshold.toFixed(2)}%)`,
+              `- Method: ${fmt(method)} (threshold ${methodThreshold.toFixed(2)}%)`,
               ''
             ];
 
             if (summaryPath) {
-              fs.appendFileSync(summaryPath, `${lines.join('\n')}\n`);
+              fs.appendFileSync(summaryPath, `${summaryLines.join('\n')}\n`);
             }
 
             if (mode === 'disabled') {
@@ -232,18 +239,36 @@ jobs:
               return;
             }
 
-            const delta = line - threshold;
-            if (delta < 0) {
-              const message = `Line coverage ${line.toFixed(2)}% is ${Math.abs(delta).toFixed(2)}% below the ${threshold.toFixed(2)}% threshold.`;
+            const violations = [];
+            const compare = (value, threshold, label) => {
+              if (!Number.isFinite(value)) {
+                if (threshold > 0) {
+                  violations.push(`${label} coverage unavailable (threshold ${threshold.toFixed(2)}%)`);
+                }
+                return;
+              }
+
+              const delta = value - threshold;
+              if (threshold > 0 && delta < 0) {
+                violations.push(`${label} coverage ${value.toFixed(2)}% is ${Math.abs(delta).toFixed(2)}% below the ${threshold.toFixed(2)}% threshold`);
+              }
+            };
+
+            compare(line, lineThreshold, 'Line');
+            compare(branch, branchThreshold, 'Branch');
+            compare(method, methodThreshold, 'Method');
+
+            if (violations.length > 0) {
+              const message = violations.join('; ');
               if (mode === 'enforce') {
-                core.setFailed(`${message} Gating mode set to "enforce"; failing job.`);
+                core.setFailed(`${message}. Gating mode set to "enforce"; failing job.`);
               } else {
-                core.warning(`${message} Monitoring mode active; job will continue. Set COVERAGE_GATING_MODE=enforce once sustained coverage meets the target.`);
+                core.warning(`${message}. Monitoring mode active; job will continue.`);
               }
               return;
             }
 
-            const success = `Line coverage ${line.toFixed(2)}% meets or exceeds the ${threshold.toFixed(2)}% threshold (mode: ${mode}).`;
+            const success = `Line/Branch/Method coverage meet or exceed the configured thresholds (mode: ${mode}).`;
             if (mode === 'enforce') {
               core.notice(success);
             } else {

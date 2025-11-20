@@ -514,6 +514,97 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadParsesNumbersWhenStreamCannotRewind()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new(
+                "99",
+                allowWrite: true,
+                autoFlush: true,
+                allowRead: true,
+                allowSeek: false
+            );
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue result = script.DoString("return file:read('*n')");
+
+            Assert.That(result.Number, Is.EqualTo(99));
+        }
+
+        [Test]
+        public void ReadParsesHexFloatLiteralWithFraction()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x1.fp1 tail");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local remainder = f:read('*a')
+                return number, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(3.875d).Within(1e-12));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("tail"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesHexFloatLiteralWithoutFraction()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x10p0 done");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local remainder = f:read('*a')
+                return number, remainder
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(16d));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("done"));
+            });
+        }
+
+        [Test]
+        public void ReadReturnsNilForInvalidHexFloatExponent()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x1p remainder");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local rest = f:read('*a')
+                return number, rest
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Does.StartWith("0x1p remainder"));
+            });
+        }
+
+        [Test]
         public void ReadParsesNumbersWithLeadingWhitespace()
         {
             Script script = CreateScript();
@@ -590,6 +681,30 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadUppercaseLineKeepsTrailingNewLine()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("first\nsecond\n");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local a = f:read('*L')
+                local b = f:read('*L')
+                return a, b
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("first\n"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("second\n"));
+            });
+        }
+
+        [Test]
         public void ReadToEndAfterLineReadsReturnsRemainingContent()
         {
             Script script = CreateScript();
@@ -611,6 +726,32 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(tuple.Tuple[0].String, Is.EqualTo("line1"));
                 Assert.That(tuple.Tuple[1].String, Is.EqualTo("line2\nline3"));
             });
+        }
+
+        [Test]
+        public void ReadAllReturnsEmptyStringWhenAlreadyAtEof()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new(string.Empty);
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue result = script.DoString("return file:read('*a')");
+
+            Assert.That(result.String, Is.EqualTo(string.Empty));
+        }
+
+        [Test]
+        public void ReadReturnsNilWhenEofAndModeIsNotAll()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new(string.Empty);
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue result = script.DoString("return file:read('*l')");
+
+            Assert.That(result.IsNil(), Is.True);
         }
 
         [Test]
@@ -796,7 +937,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             private readonly FaultyMemoryStream _innerStream;
             private readonly StreamReader _innerReader;
-            private FaultyStreamWriter _inner_writer;
+            private FaultyStreamWriter _innerWriter;
             private readonly Encoding _encoding = new UTF8Encoding(
                 encoderShouldEmitUTF8Identifier: false
             );
@@ -805,10 +946,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 string initialContent,
                 bool allowWrite = true,
                 bool autoFlush = true,
-                bool allowRead = true
+                bool allowRead = true,
+                bool allowSeek = true
             )
             {
                 _innerStream = new FaultyMemoryStream();
+                _innerStream.AllowSeek = allowSeek;
 
                 if (!string.IsNullOrEmpty(initialContent))
                 {
@@ -837,7 +980,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 if (allowWrite)
                 {
-                    _inner_writer = new FaultyStreamWriter(
+                    _innerWriter = new FaultyStreamWriter(
                         _innerStream,
                         _encoding,
                         bufferSize: 1024,
@@ -851,7 +994,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Initialize(
                     _innerStream,
                     allowRead ? _innerReader : null,
-                    allowWrite ? _inner_writer : null
+                    allowWrite ? _innerWriter : null
                 );
             }
 
@@ -955,7 +1098,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal void TriggerFlushFailure()
             {
-                _inner_writer.ThrowOnFlush = true;
+                _innerWriter.ThrowOnFlush = true;
             }
 
             internal void TriggerSeekFailure()
@@ -972,7 +1115,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     leaveOpen: true
                 );
                 disposed.Dispose();
-                _inner_writer = disposed;
+                _innerWriter = disposed;
                 StreamWriterInstance = disposed;
             }
 
@@ -989,8 +1132,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class FaultyMemoryStream : MemoryStream
         {
+            internal bool AllowSeek { get; set; } = true;
             internal bool ThrowOnSeek { get; set; }
             internal bool ThrowOnWrite { get; set; }
+
+            public override bool CanSeek => AllowSeek && base.CanSeek;
 
             public override long Seek(long offset, SeekOrigin loc)
             {

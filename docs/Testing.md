@@ -39,17 +39,40 @@ pwsh ./scripts/coverage/coverage.ps1
 ```
 
 - If the host only has .NET 9 installed (common on new Ubuntu images), set `DOTNET_ROLL_FORWARD=Major` when invoking the script (PowerShell or Bash) so the .NET 9 runtime can execute the net8.0 testhost.
+
 - Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
+
 - Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
+
 - Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
+
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
+
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
+
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI currently runs with `COVERAGE_GATING_MODE=monitor` at **95 %** line/branch/method so it warns without failing while interpreter branch coverage sits just below the goal. To rehearse the enforced experience (or flip CI once ≥95 % holds), export the stricter settings locally:
+
+  ```powershell
+  $env:COVERAGE_GATING_MODE = "enforce"
+  $env:COVERAGE_GATING_TARGET_LINE = "95"
+  $env:COVERAGE_GATING_TARGET_BRANCH = "95"
+  $env:COVERAGE_GATING_TARGET_METHOD = "95"
+  pwsh ./scripts/coverage/coverage.ps1 -SkipBuild
+  ```
+
+  ```bash
+  COVERAGE_GATING_MODE=enforce \
+  COVERAGE_GATING_TARGET_LINE=95 \
+  COVERAGE_GATING_TARGET_BRANCH=95 \
+  COVERAGE_GATING_TARGET_METHOD=95 \
+  bash ./scripts/coverage/coverage.sh --skip-build
+  ```
 
 ### Coverage in CI
 
 - `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
-- The job appends the Markdown summary to the GitHub Action run, posts a PR comment with line/branch/method coverage, and uploads raw + HTML artefacts for inspection.
-- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise.
+- The job now exports `COVERAGE_GATING_MODE=enforce` together with 95 % line/branch/method targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow’s `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
+- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a “Coverage Gate” summary showing both the current percentages and thresholds.
 
 ## Pass/Fail Policy
 
@@ -57,9 +80,9 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Baseline (Release via `scripts/coverage/coverage.ps1`, 2025-11-11)**: 68.5 % line, 70.5 % branch, 73.0 % method coverage (interpreter module at 81.9 % line).
+- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 04:49 UTC)**: 96.66 % line / 94.51 % branch / 98.29 % method for `NovaSharp.Interpreter` across 2 486 Release tests (overall repository line coverage 87.2 %).
 
-- **Fixtures**: 42 `[TestFixture]` types, 1095 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
+- **Fixtures**: ~45 `[TestFixture]` types, 2 486 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 

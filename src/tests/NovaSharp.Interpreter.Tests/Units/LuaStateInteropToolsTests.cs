@@ -12,14 +12,25 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class LuaStateInteropToolsTests
     {
         [TestCase(typeof(sbyte), -1, true, ExpectedResult = false)]
+        [TestCase(typeof(sbyte), 0, false, ExpectedResult = false)]
         [TestCase(typeof(short), 0, true, ExpectedResult = true)]
+        [TestCase(typeof(short), 0, false, ExpectedResult = false)]
         [TestCase(typeof(int), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(int), 1, true, ExpectedResult = true)]
         [TestCase(typeof(uint), 10, false, ExpectedResult = true)]
+        [TestCase(typeof(uint), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(uint), 0, true, ExpectedResult = true)]
         [TestCase(typeof(ushort), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(ushort), 0, true, ExpectedResult = true)]
         [TestCase(typeof(ulong), 2, false, ExpectedResult = true)]
+        [TestCase(typeof(ulong), 0, false, ExpectedResult = false)]
         [TestCase(typeof(double), 0.5, false, ExpectedResult = true)]
+        [TestCase(typeof(double), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(long), 0, true, ExpectedResult = true)]
         [TestCase(typeof(decimal), 0, false, ExpectedResult = false)]
+        [TestCase(typeof(decimal), 0, true, ExpectedResult = true)]
         [TestCase(typeof(float), 0.5, true, ExpectedResult = true)]
+        [TestCase(typeof(float), 0, false, ExpectedResult = false)]
         public bool IsPositiveHandlesPrimitiveTypes(Type type, double rawValue, bool zeroIsPositive)
         {
             object boxed = ConvertNumeric(rawValue, type);
@@ -99,6 +110,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void ToIntegerReturnsDecimalWithoutRounding()
+        {
+            object result = Tools.ToInteger((decimal)1.75m, round: false);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.InstanceOf<decimal>());
+                Assert.That(result, Is.EqualTo(1.75m));
+            });
+        }
+
         [TestCase(typeof(sbyte), -12)]
         [TestCase(typeof(short), 1200)]
         [TestCase(typeof(int), 42)]
@@ -116,6 +138,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(result, Is.InstanceOf(type));
                 Assert.That(result, Is.EqualTo(boxed));
+            });
+        }
+
+        [Test]
+        public void UnboxToLongHandlesDecimalValues()
+        {
+            long rounded = Tools.UnboxToLong((decimal)1.6m, round: true);
+            long truncated = Tools.UnboxToLong((decimal)1.6m, round: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(rounded, Is.EqualTo(2));
+                Assert.That(truncated, Is.EqualTo(1));
             });
         }
 
@@ -197,6 +232,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReplaceMetaCharsLeavesUnknownSequencesIntact()
+        {
+            Assert.That(Tools.ReplaceMetaChars(@"\q"), Is.EqualTo("q"));
+        }
+
+        [Test]
         public void SprintfSupportsNumericFormatting()
         {
             string result = Tools.Sprintf("Value: %+06d, Hex: %#x, Text: %-5s", -42, 255, "Hi");
@@ -268,6 +309,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfSupportsLiteralPercent()
+        {
+            string result = Tools.Sprintf("Progress: 50%% done");
+            Assert.That(result, Is.EqualTo("Progress: 50% done"));
+        }
+
+        [Test]
         public void SprintfLeftAlignmentDisablesZeroPadding()
         {
             string result = Tools.Sprintf("%-05d", 12);
@@ -296,10 +344,45 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SprintfShortIndicatorCastsUnsignedIntegers()
+        {
+            string result = Tools.Sprintf("%hu", 131071u);
+            Assert.That(result, Is.EqualTo("65535"));
+        }
+
+        [Test]
         public void SprintfLongIndicatorExtendsNarrowInputs()
         {
             string result = Tools.Sprintf("%ld %lu", (short)-3, uint.MaxValue);
             Assert.That(result, Is.EqualTo("-3 4294967295"));
+        }
+
+        [Test]
+        public void SprintfAlternateHexLeftAlignedPadsWithSpaces()
+        {
+            string result = Tools.Sprintf("%-#6x", 26);
+            Assert.That(result, Is.EqualTo("0x1a  "));
+        }
+
+        [Test]
+        public void SprintfAlternateOctalLeftAlignedPadsWithSpaces()
+        {
+            string result = Tools.Sprintf("%-#6o", 8);
+            Assert.That(result, Is.EqualTo("010   "));
+        }
+
+        [Test]
+        public void SprintfUnsignedIgnoresNonNumericValues()
+        {
+            string result = Tools.Sprintf("%u", "text");
+            Assert.That(result, Is.EqualTo(string.Empty));
+        }
+
+        [Test]
+        public void SprintfFloatIgnoresNonNumericValues()
+        {
+            string result = Tools.Sprintf("%f", "text");
+            Assert.That(result, Is.EqualTo(string.Empty));
         }
 
         [Test]
@@ -384,6 +467,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result, Is.InstanceOf(type));
                 Assert.That(result, Is.EqualTo(boxed));
             });
+        }
+
+        [Test]
+        public void SprintfDropsNonNumericValuesForNumericFormats()
+        {
+            string result = Tools.Sprintf("Value:%d", "text");
+            Assert.That(result, Is.EqualTo("Value:"));
         }
 
         [Test]

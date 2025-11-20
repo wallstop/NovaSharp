@@ -1210,7 +1210,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class StubDebugger : IDebugger
         {
-            private readonly Queue<DebuggerAction> actions = new();
+            private readonly Queue<DebuggerAction> _actions = new();
 
             public bool PauseRequested { get; set; }
             public bool SignalRuntimeExceptionResult { get; set; }
@@ -1226,12 +1226,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void EnqueueAction(DebuggerAction.ActionType actionType)
             {
-                actions.Enqueue(new DebuggerAction() { Action = actionType });
+                _actions.Enqueue(new DebuggerAction() { Action = actionType });
             }
 
             public void EnqueueAction(DebuggerAction action)
             {
-                actions.Enqueue(action);
+                _actions.Enqueue(action);
             }
 
             public DebuggerCaps GetDebuggerCaps()
@@ -1258,12 +1258,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public DebuggerAction GetAction(int ip, SourceRef sourceref)
             {
-                if (actions.Count == 0)
+                if (_actions.Count == 0)
                 {
                     return new DebuggerAction() { Action = DebuggerAction.ActionType.Run };
                 }
 
-                return actions.Dequeue();
+                return _actions.Dequeue();
             }
 
             public void SignalExecutionEnded() { }

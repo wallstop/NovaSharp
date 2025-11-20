@@ -296,6 +296,26 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void RecycleCoroutineRequiresCoroutineInstance()
+        {
+            Script script = new();
+            DynValue worker = CompileFunction(script, "function() return 0 end");
+
+            Assert.Throws<InvalidOperationException>(() => script.RecycleCoroutine(null, worker));
+        }
+
+        [Test]
+        public void DoStreamExecutesTextStreams()
+        {
+            Script script = new();
+            using MemoryStream stream = new(Encoding.UTF8.GetBytes("return 123"));
+
+            DynValue result = script.DoStream(stream);
+
+            Assert.That(result.Number, Is.EqualTo(123));
+        }
+
         private static DynValue CompileFunction(Script script, string luaFunctionSource)
         {
             DynValue chunk = script.LoadString($"return {luaFunctionSource}");
