@@ -1,7 +1,11 @@
 // Disable warnings about XML documentation
-namespace NovaSharp.Interpreter.CoreLib.StringLib
+namespace NovaSharp.Interpreter.LuaPort
 {
 #pragma warning disable 1591
+#pragma warning disable IDE1006 // Mirrors upstream KopiLua naming (snake_case kept intentionally).
+
+    // NOTE: This file mirrors the upstream KopiLua string library so we can diff and port fixes
+    // without translating every identifier to PascalCase. Keep the intentional snake_case members.
 
     //
     // This part taken from KopiLua - https://github.com/NLua/KopiLua

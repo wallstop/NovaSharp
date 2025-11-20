@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.CoreLib
 {
 #pragma warning disable 1591
 
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
@@ -69,8 +70,8 @@ namespace NovaSharp.Interpreter.CoreLib
                             {
                                 Args = ret.TailCallData.Args,
                                 Function = ret.TailCallData.Function,
-                                Continuation = new CallbackFunction(pcall_continuation, funcName),
-                                ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                                Continuation = new CallbackFunction(PcallContinuation, funcName),
+                                ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                                 ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                             }
                         );
@@ -110,8 +111,8 @@ namespace NovaSharp.Interpreter.CoreLib
                     {
                         Args = a,
                         Function = v,
-                        Continuation = new CallbackFunction(pcall_continuation, funcName),
-                        ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                        Continuation = new CallbackFunction(PcallContinuation, funcName),
+                        ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                         ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                     }
                 );
@@ -132,19 +133,29 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(rets);
         }
 
-        public static DynValue pcall_continuation(
+        public static DynValue PcallContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             return MakeReturnTuple(true, args);
         }
 
-        public static DynValue pcall_onerror(
+        public static DynValue PcallOnError(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             return MakeReturnTuple(false, args);
         }
 

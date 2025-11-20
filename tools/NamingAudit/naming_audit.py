@@ -24,7 +24,7 @@ FILE_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/CoreLib/StringLib/KopiLuaStringLib.cs"),
+    Path("src/runtime/NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs"),
 }
 FIELD_ALLOWLIST: dict[Path, set[str]] = {
     # Lua-facing DTOs keep lowercase fields so script fixtures can reference the
@@ -94,10 +94,6 @@ MEMBER_ALLOWLIST = {
     "operator",
 }
 MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
-    Path("src/runtime/NovaSharp.Interpreter/CoreLib/ErrorHandlingModule.cs"): {
-        "pcall_onerror",
-        "pcall_continuation",
-    },
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/LoadModule.cs"): {"__require_clr_impl"},
     Path("src/runtime/NovaSharp.Interpreter/Interop/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},

@@ -6,12 +6,13 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter.CoreLib.StringLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.LuaPort;
     using NovaSharp.Interpreter.Modules;
-    using StringLib;
 
     /// <summary>
     /// Class implementing string Lua functions
