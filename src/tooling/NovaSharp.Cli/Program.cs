@@ -1,11 +1,13 @@
 namespace NovaSharp.Cli
 {
     using System;
+    using System.IO;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
 
@@ -197,13 +199,36 @@ namespace NovaSharp.Cli
                 return false;
             }
 
-            string resolvedScriptPath = ManifestCompatibilityHelper.ResolveScriptPath(args[0]);
+            string resolvedScriptPath = ResolveScriptPath(args[0]);
             ScriptOptions options = new(Script.DefaultOptions);
-            ManifestCompatibilityHelper.TryApplyManifestCompatibility(resolvedScriptPath, options);
+            ModManifestCompatibility.TryApplyFromScriptPath(
+                resolvedScriptPath,
+                options,
+                Script.GlobalOptions.CompatibilityVersion,
+                info => Console.WriteLine($"[compatibility] {info}"),
+                warning => Console.WriteLine($"[compatibility] {warning}")
+            );
 
             Script script = new(CoreModules.PresetComplete, options);
             script.DoFile(resolvedScriptPath);
             return true;
+        }
+
+        private static string ResolveScriptPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (Exception)
+            {
+                return path;
+            }
         }
 
         private static void ShowCmdLineHelpBig()

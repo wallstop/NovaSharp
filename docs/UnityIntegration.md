@@ -50,6 +50,35 @@ Copy the published DLLs into the matching folders:
 
 For IL2CPP builds, keep the PDBs out of the final player by leaving their `Inspector → Assembly Definition` settings unchecked, or omit them entirely once debugging is complete.
 
+### Apply Manifest Compatibility Before Spinning Up Scripts
+
+Mods that ship a `mod.json` next to their entry point can declare the Lua profile they require. Call the runtime helper before instantiating each `Script` so the correct modules are registered (Lua 5.2 vs 5.4 features, `warn`, `table.move`, etc.):
+
+```csharp
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Loaders;
+using NovaSharp.Interpreter.Modding;
+using UnityEngine;
+
+string modRoot = Path.GetDirectoryName(entryPointPath); // e.g., Application.streamingAssetsPath + "/Mods/SampleMod"
+ScriptOptions baseOptions = new ScriptOptions(Script.DefaultOptions)
+{
+    ScriptLoader = new FileSystemScriptLoader(),
+};
+
+Script script = ModManifestCompatibility.CreateScriptFromDirectory(
+    modRoot,
+    CoreModules.PresetComplete,
+    baseOptions,
+    info => Debug.Log($"[NovaSharp] {info}"),
+    warning => Debug.LogWarning($"[NovaSharp] {warning}")
+);
+
+script.DoFile(entryPointPath);
+```
+
+When no manifest is present, the helper returns the original options unchanged (it simply calls `TryApplyFromDirectory` under the hood), so it is safe to invoke for every mod load.
+
 ## 3. Reference the Assemblies
 
 1. In Unity, select each DLL and ensure **Any Platform** is enabled (or restrict as needed).

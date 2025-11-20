@@ -1,7 +1,9 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
+    using System.IO;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
 
     internal sealed class RunCommand : ICommand
@@ -29,11 +31,14 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
             else
             {
-                string resolvedPath = ManifestCompatibilityHelper.ResolveScriptPath(arguments);
+                string resolvedPath = ResolveScriptPath(arguments);
                 ScriptOptions options = new(context.Script.Options);
-                bool manifestApplied = ManifestCompatibilityHelper.TryApplyManifestCompatibility(
+                bool manifestApplied = ModManifestCompatibility.TryApplyFromScriptPath(
                     resolvedPath,
-                    options
+                    options,
+                    Script.GlobalOptions.CompatibilityVersion,
+                    info => Console.WriteLine($"[compatibility] {info}"),
+                    warning => Console.WriteLine($"[compatibility] {warning}")
                 );
 
                 if (!manifestApplied)
@@ -44,6 +49,23 @@ namespace NovaSharp.Cli.Commands.Implementations
 
                 Script script = new(CoreModules.PresetComplete, options);
                 script.DoFile(resolvedPath);
+            }
+        }
+
+        private static string ResolveScriptPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (Exception)
+            {
+                return path;
             }
         }
     }
