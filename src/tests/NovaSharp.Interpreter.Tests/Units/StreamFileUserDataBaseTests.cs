@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib.IO;
@@ -688,6 +689,98 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ReadReturnsNilWhenHexPrefixStartsWithX()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("x12");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("x12"));
+            });
+        }
+
+        [Test]
+        public void ReadReturnsNilWhenHexPrefixLacksZeroAfterSign()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("+x12");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("+x12"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesHexFloatLiteralWithPositiveExponentSign()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x1p+4 remainder");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local rest = f:read('*a')
+                return number, rest
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(16d));
+                Assert.That(tuple.Tuple[1].String.TrimStart(), Does.StartWith("remainder"));
+            });
+        }
+
+        [Test]
+        public void ReadReturnsNilWhenHexLiteralHasNoDigitsAfterPrefix()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x rest");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("0x rest"));
+            });
+        }
+
+        [Test]
+        public void ReadParsesHexLiteralAndLeavesTrailingCharacters()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0x1p0garbage");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(1d));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("garbage"));
+            });
+        }
+
+        [Test]
         public void ReadParsesNumbersWithLeadingWhitespace()
         {
             Script script = CreateScript();
@@ -749,6 +842,31 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(tuple.Tuple[0].IsNil(), Is.True);
                 Assert.That(tuple.Tuple[1].String, Is.EqualTo("7"));
+                Assert.That(file.ForcedReadBufferFailuresTriggered, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void ReadNumberStopsWhenLeadingSignCannotBeConsumed()
+        {
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("+42") { ForceReadBufferFailureCount = 1 };
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                local number = f:read('*n')
+                local rest = f:read('*a')
+                return number, rest
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("+42"));
                 Assert.That(file.ForcedReadBufferFailuresTriggered, Is.EqualTo(1));
             });
         }
@@ -1047,6 +1165,144 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             string afterClose = file.ToString();
             Assert.That(afterClose, Is.EqualTo("file (closed)"));
+        }
+
+        [Test]
+        public void HexPrefixValidationRejectsEmptyBuilder()
+        {
+            bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder());
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void HexPrefixValidationAcceptsSignedZero()
+        {
+            bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder("-0"));
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public void HexPrefixValidationRejectsNonZeroAfterSign()
+        {
+            bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder("+1"));
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void TryParseHexFloatLiteralFailsOnEmptyString()
+        {
+            bool parsed = FileUserDataBase.TryParseHexFloatLiteral(string.Empty, out double value);
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(value, Is.EqualTo(0d));
+            });
+        }
+
+        [Test]
+        public void TryParseHexFloatLiteralFailsWhenNoDigitsAfterPrefix()
+        {
+            bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x", out double value);
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(value, Is.EqualTo(0d));
+            });
+        }
+
+        [Test]
+        public void TryParseHexFloatLiteralFailsWhenExponentDigitsMissing()
+        {
+            bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p", out double value);
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(value, Is.EqualTo(0d));
+            });
+        }
+
+        [Test]
+        public void TryParseHexFloatLiteralFailsWhenTrailingCharactersRemain()
+        {
+            bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p0junk", out double value);
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(value, Is.EqualTo(0d));
+            });
+        }
+
+        [Test]
+        public void TryParseHexFloatLiteralParsesPositiveExponentSign()
+        {
+            bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p+1", out double value);
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.True);
+                Assert.That(value, Is.EqualTo(2d));
+            });
+        }
+
+        [Test]
+        public void SignAllowancePermitsDecimalExponentSign()
+        {
+            bool allowed = FileUserDataBase.IsSignAllowed(
+                new StringBuilder("1e"),
+                isHex: false,
+                exponentSeen: true,
+                exponentHasDigits: false,
+                hexExponentSeen: false,
+                hexExponentHasDigits: false,
+                candidate: '+'
+            );
+
+            Assert.That(allowed, Is.True);
+        }
+
+        [Test]
+        public void SignAllowancePermitsHexExponentSign()
+        {
+            bool allowed = FileUserDataBase.IsSignAllowed(
+                new StringBuilder("0xp"),
+                isHex: true,
+                exponentSeen: false,
+                exponentHasDigits: false,
+                hexExponentSeen: true,
+                hexExponentHasDigits: false,
+                candidate: '-'
+            );
+
+            Assert.That(allowed, Is.True);
+        }
+
+        [Test]
+        public void SignAllowanceRejectsUnexpectedSign()
+        {
+            bool allowed = FileUserDataBase.IsSignAllowed(
+                new StringBuilder("12"),
+                isHex: false,
+                exponentSeen: false,
+                exponentHasDigits: false,
+                hexExponentSeen: false,
+                hexExponentHasDigits: false,
+                candidate: '+'
+            );
+
+            Assert.That(allowed, Is.False);
+        }
+
+        [Test]
+        public void StandaloneSignOrDotRejectsLongerStrings()
+        {
+            bool result = FileUserDataBase.IsStandaloneSignOrDot("++");
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void StandaloneSignOrDotAcceptsDot()
+        {
+            bool result = FileUserDataBase.IsStandaloneSignOrDot(".");
+            Assert.That(result, Is.True);
         }
 
         private static Script CreateScript()

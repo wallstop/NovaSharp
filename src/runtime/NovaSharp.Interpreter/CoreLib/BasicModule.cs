@@ -185,7 +185,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return tail;
         }
 
-        private static DynValue TostringContinuation(
+        internal static DynValue TostringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

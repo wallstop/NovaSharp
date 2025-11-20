@@ -450,7 +450,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return true;
         }
 
-        private static bool IsSignAllowed(
+        internal static bool IsSignAllowed(
             StringBuilder literal,
             bool isHex,
             bool exponentSeen,
@@ -495,7 +495,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool IsStandaloneSignOrDot(string numericText)
+        internal static bool IsStandaloneSignOrDot(string numericText)
         {
             if (numericText.Length != 1)
             {
@@ -506,7 +506,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return single == '+' || single == '-' || single == '.';
         }
 
-        private static bool IsValidHexPrefix(StringBuilder literal)
+        internal static bool IsValidHexPrefix(StringBuilder literal)
         {
             if (literal.Length == 0)
             {
@@ -530,7 +530,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool TryParseHexFloatLiteral(string literal, out double value)
+        internal static bool TryParseHexFloatLiteral(string literal, out double value)
         {
             value = 0;
 

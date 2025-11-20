@@ -71,7 +71,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             _declaringBlock = block;
         }
 
-        private static List<RuntimeScopeBlock> BuildExitScopes(
+        internal static List<RuntimeScopeBlock> BuildExitScopes(
             BuildTimeScopeBlock gotoBlock,
             BuildTimeScopeBlock labelBlock
         )

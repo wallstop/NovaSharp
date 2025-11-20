@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
-    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
@@ -63,17 +62,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TostringContinuationThrowsWhenMetamethodReturnsNonString()
         {
-            MethodInfo continuation = typeof(BasicModule).GetMethod(
-                "TostringContinuation",
-                BindingFlags.NonPublic | BindingFlags.Static
-            )!;
             CallbackArguments args = new(new[] { DynValue.NewNumber(5) }, isMethodCall: false);
 
-            TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() =>
-                continuation.Invoke(null, new object[] { null, args })
-            )!;
-
-            Assert.That(ex.InnerException, Is.TypeOf<ScriptRuntimeException>());
+            Assert.That(
+                () => BasicModule.TostringContinuation(null, args),
+                Throws.TypeOf<ScriptRuntimeException>()
+            );
         }
 
         [Test]
