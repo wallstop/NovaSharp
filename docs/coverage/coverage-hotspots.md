@@ -1,16 +1,17 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-19 17:08 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-20 10:23 UTC; coverlet still prints the transient `NovaSharp.Cli.dll` “in use” warning before succeeding on retry).
 
 ## Snapshot
-- Overall line coverage: **86.6 %**
-- NovaSharp.Interpreter line coverage: **95.9 %**
+- Overall line coverage: **87.5 %**
+- NovaSharp.Interpreter line coverage: **96.98 %**
 - NovaSharp.Cli line coverage: **80.0 %**
-- NovaSharp.Hardwire line coverage: **55.0 %**
-- NovaSharp.RemoteDebugger line coverage: **92.7 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
+- NovaSharp.Hardwire line coverage: **55.01 %**
+- NovaSharp.RemoteDebugger line coverage: **92.73 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; remaining focus is on the VS command handlers and Tcp helpers still below 85 % line coverage)
 - NovaSharp.VsCodeDebugger line coverage: **0 %** (no tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
+- (2025-11-20 10:23 UTC) Latest `./scripts/coverage/coverage.ps1 -SkipBuild` run (2 547 tests) reports NovaSharp.Interpreter at **96.98 % line / 95.13 % branch / 98.57 % method** and overall repository line coverage at **87.5 %**. CI coverage gating is now locked to `enforce` mode with 95 % thresholds, so the remaining burn-down focuses on raising NovaSharp.Cli + Hardwire coverage and keeping the interpreter’s duplicated coroutine fallbacks above the bar.
 - `Execution.VM.Processor` – **92.5 % line / 91.1 % branch** (resume/pause and instruction-range guards still need explicit tests to flip the last branch to green).
 - (2025-11-20 04:15 UTC) Latest `./scripts/coverage/coverage.ps1 -SkipBuild` run reports NovaSharp.Interpreter at **96.0 % line / 93.1 % branch / 97.9 % method**. `Execution.VM.Processor` now sits at **92.8 % line / 91.7 % branch / 95.9 % method** thanks to the new coroutine-yield tests, leaving the debugger pause/range guards as the remaining red-list items.
 - (2025-11-20 02:14 UTC) Refreshed coverage after landing ExecIncr/stack-guard/_ENV/stack-array tests—NovaSharp.Interpreter now reports **96.1 % line / 93.2 % branch / 98.1 % method**, `Execution.VM.Processor` remains **92.8 % line / 91.7 % branch / 95.9 % method**, and `SetGlobalSymbol`/`AssignGenericSymbol`/`PopExecStackAndCheckVStack`/`StackTopToArray*` no longer appear red. Remaining debt is now confined to the debugger pause/range helpers.
@@ -128,6 +129,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 - `IoModule` climbed to **93.2 %** line / **88.0 %** branch coverage via expanded tests (default stream setters, flush/close, iterator API, binary encoding guardrails, tmpfile lifecycle, and `IoExceptionToLuaMessage` fallbacks).
 - (2025-11-20 10:08 UTC) Followed up with property/SetDefaultFile/binary-encoding tests so `NovaSharp.Interpreter.CoreLib.IoModule` now reports **98.7 % line / 94.4 % branch / 100 % method** coverage. The new suites exercise `io.stdin`/`stdout`/`stderr` discovery, default-stream overrides, binary `io.open` paths, and the error tuple for illegal encoding combinations.
 - `ScriptRuntimeException` factory helpers now execute under `ScriptRuntimeExceptionTests`, covering table index errors, conversion failures, coroutine guard rails, access-on-statics paths, and `Rethrow` behaviour (interpreter line coverage holds at 86.5 % with the new tests).
+- (2025-11-20 10:08 UTC) Extended `ScriptRuntimeExceptionTests` to cover the arithmetic/concat factories, userdata argument helpers, negative-number guard, and the loop-in-__index/`__call` diagnostics. `NovaSharp.Interpreter.Errors.ScriptRuntimeException` now reports **97.6 % line / 88.4 % branch / 95.0 % method** coverage; remaining branch debt is limited to the defensive `BadArgumentNoNegativeNumbers` throw sites invoked only when the runtime itself misbehaves.
 - `ExprListExpression` tuple compilation/evaluation paths now run under NUnit, retiring the parser red list entry (91.6 % line coverage).
 - `ScriptExecutionContext` reached 96.2 % line / 86.3 % branch coverage after backfilling AdditionalData, Call (yield/tail/metamethod), and EvaluateSymbol edge paths.
 - `FastStack<T>` is now fully exercised (100 % line/method coverage) through explicit interface validation and reflection-based zeroing checks.

@@ -50,7 +50,7 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
 
-- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI currently runs with `COVERAGE_GATING_MODE=monitor` at **95 %** line/branch/method so it warns without failing while interpreter branch coverage sits just below the goal. To rehearse the enforced experience (or flip CI once ≥95 % holds), export the stricter settings locally:
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **95 %** line/branch/method thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
 
   ```powershell
   $env:COVERAGE_GATING_MODE = "enforce"
@@ -80,9 +80,9 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 04:49 UTC)**: 96.66 % line / 94.51 % branch / 98.29 % method for `NovaSharp.Interpreter` across 2 486 Release tests (overall repository line coverage 87.2 %).
+- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 10:23 UTC)**: 96.98 % line / 95.13 % branch / 98.57 % method for `NovaSharp.Interpreter` across 2 547 Release tests (overall repository line coverage 87.5 %).
 
-- **Fixtures**: ~45 `[TestFixture]` types, 2 486 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
+- **Fixtures**: ~45 `[TestFixture]` types, 2 547 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 

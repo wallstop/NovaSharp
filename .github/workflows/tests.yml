@@ -166,7 +166,7 @@ jobs:
           COVERAGE_GATING_TARGET_LINE: "95"
           COVERAGE_GATING_TARGET_BRANCH: "95"
           COVERAGE_GATING_TARGET_METHOD: "95"
-          COVERAGE_GATING_MODE: monitor
+          COVERAGE_GATING_MODE: enforce
         run: ./scripts/coverage/coverage.ps1
       - name: Publish coverage summary
         if: always()
@@ -188,7 +188,7 @@ jobs:
           COVERAGE_THRESHOLD_LINE: "95"
           COVERAGE_THRESHOLD_BRANCH: "95"
           COVERAGE_THRESHOLD_METHOD: "95"
-          COVERAGE_GATING_MODE: monitor
+          COVERAGE_GATING_MODE: enforce
         with:
           script: |
             const fs = require('fs');
