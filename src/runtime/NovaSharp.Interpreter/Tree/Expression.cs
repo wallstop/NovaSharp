@@ -74,6 +74,7 @@ namespace NovaSharp.Interpreter.Tree
 
             if (t.IsUnaryOperator())
             {
+                EnsureUnaryOperatorSupported(lcontext, t);
                 lcontext.Lexer.Next();
                 e = SubExpr(lcontext, false);
 
@@ -122,6 +123,7 @@ namespace NovaSharp.Interpreter.Tree
 
                 while (t.IsBinaryOperator())
                 {
+                    EnsureBinaryOperatorSupported(lcontext, t);
                     BinaryOperatorExpression.AddOperatorToChain(chain, t);
                     lcontext.Lexer.Next();
                     Expression right = SubExpr(lcontext, false);
@@ -158,7 +160,7 @@ namespace NovaSharp.Interpreter.Tree
                 case TokenType.Function:
                     lcontext.Lexer.Next();
                     return new FunctionDefinitionExpression(lcontext, false, false);
-                case TokenType.Lambda:
+                case TokenType.Pipe:
                     return new FunctionDefinitionExpression(lcontext, false, true);
                 default:
                     return PrimaryExp(lcontext);
@@ -220,6 +222,63 @@ namespace NovaSharp.Interpreter.Tree
                         return e;
                 }
             }
+        }
+
+        private static void EnsureUnaryOperatorSupported(ScriptLoadingContext lcontext, Token token)
+        {
+            if (token.Type == TokenType.OpBitNotOrXor)
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
+            }
+        }
+
+        private static void EnsureBinaryOperatorSupported(
+            ScriptLoadingContext lcontext,
+            Token token
+        )
+        {
+            if (token.Type == TokenType.OpFloorDiv)
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.1");
+            }
+            else if (IsBitwiseToken(token.Type))
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
+            }
+        }
+
+        private static void EnsureLua53ExpressionFeature(
+            ScriptLoadingContext lcontext,
+            Token token,
+            string manualReference
+        )
+        {
+            Script script = lcontext.Script;
+            if (script == null)
+            {
+                return;
+            }
+
+            if (script.CompatibilityProfile.SupportsBitwiseOperators)
+            {
+                return;
+            }
+
+            throw new SyntaxErrorException(
+                token,
+                "'{0}' operator requires Lua 5.3+ compatibility ({1}). Set Script.Options.CompatibilityVersion accordingly.",
+                token.Text,
+                manualReference
+            );
+        }
+
+        private static bool IsBitwiseToken(TokenType type)
+        {
+            return type == TokenType.OpBitAnd
+                || type == TokenType.OpBitNotOrXor
+                || type == TokenType.OpShiftLeft
+                || type == TokenType.OpShiftRight
+                || type == TokenType.Pipe;
         }
 
         private static Expression PrefixExp(ScriptLoadingContext lcontext)

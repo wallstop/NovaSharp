@@ -53,7 +53,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer should be at the '(' or at the '|'
             Token openRound = CheckTokenType(
                 lcontext,
-                isLambda ? TokenType.Lambda : TokenType.BrkOpenRound
+                isLambda ? TokenType.Pipe : TokenType.BrkOpenRound
             );
 
             List<string> paramnames = BuildParamList(lcontext, pushSelfParam, openRound, isLambda);
@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bool isLambda
         )
         {
-            TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.BrkCloseRound;
+            TokenType closeToken = isLambda ? TokenType.Pipe : TokenType.BrkCloseRound;
 
             List<string> paramnames = new();
 

@@ -95,6 +95,24 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
+        /// Creates a ScriptRuntimeException specifying that a bitwise operation received a non-integer operand.
+        /// </summary>
+        public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
+        {
+            string descriptor = value.Type switch
+            {
+                DataType.Number => "float",
+                DataType.String => "string",
+                _ => value.Type.ToLuaTypeString(),
+            };
+
+            return new ScriptRuntimeException(
+                "attempt to perform bitwise operation on a {0} value",
+                descriptor
+            );
+        }
+
+        /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a concat operation was attempted on non-strings
         /// </summary>

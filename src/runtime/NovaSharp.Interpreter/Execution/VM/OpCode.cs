@@ -88,6 +88,15 @@ namespace NovaSharp.Interpreter.Execution.VM
         IterPrep = 56, // Prepares an iterator for execution
         IterUpd = 57, // Updates the var part of an iterator
 
+        // Extended operators
+        BitAnd = 59,
+        BitOr = 60,
+        BitXor = 61,
+        BitNot = 62,
+        ShiftLeft = 63,
+        ShiftRight = 64,
+        FloorDiv = 65,
+
         // Meta
         Invalid = 58, // Crashes the executor with an unrecoverable NotImplementedException. This MUST always be the last opcode in enum
     }

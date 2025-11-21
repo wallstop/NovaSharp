@@ -146,6 +146,65 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void FloorDivisionUsesFlooredQuotient()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpFloorDiv,
+                "//",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(-5)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.EqualTo(-3));
+        }
+
+        [Test]
+        public void BitwiseAndReturnsIntegerResult()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpBitAnd,
+                "&",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(0xF0)),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(0x0F))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.Zero);
+        }
+
+        [Test]
+        public void AdditionHasHigherPrecedenceThanShiftOperators()
+        {
+            Script script = new();
+            DynValue[] operands = new DynValue[]
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(1),
+            };
+            (TokenType Type, string Text)[] operators = new (TokenType, string)[]
+            {
+                (TokenType.OpAdd, "+"),
+                (TokenType.OpShiftLeft, "<<"),
+            };
+
+            Expression expr = BuildExpressionChain(script, operands, operators);
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            Assert.That(result.Number, Is.EqualTo(6));
+        }
+
+        [Test]
         public void ArithmeticFailsWhenOperandsAreNotNumbers()
         {
             Script script = new();

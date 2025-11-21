@@ -40,7 +40,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new Script();
             Execution.ScriptLoadingContext ctx = new(script);
-            Token fakeToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0) { Text = "~" };
+            Token fakeToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "++",
+            };
             LiteralExpression literal = new(ctx, DynValue.NewNumber(1));
 
             UnaryOperatorExpression expression = new(ctx, literal, fakeToken);
@@ -61,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             LiteralExpression literal = new(ctx, DynValue.NewNumber(1));
             Token unexpectedToken = new Token(TokenType.OpMinusOrSub, 0, 0, 0, 0, 0, 0, 0)
             {
-                Text = "~",
+                Text = "++",
             };
             UnaryOperatorExpression expression = new(ctx, literal, unexpectedToken);
 

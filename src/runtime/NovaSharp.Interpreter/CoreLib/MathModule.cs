@@ -5,7 +5,6 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -44,54 +43,12 @@ namespace NovaSharp.Interpreter.CoreLib
             s.Registry.Set("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM", rr);
         }
 
-        private static bool TryGetIntegerFromDouble(double number, out long value)
-        {
-            if (double.IsNaN(number) || double.IsInfinity(number))
-            {
-                value = 0;
-                return false;
-            }
-
-            if (number < long.MinValue || number > long.MaxValue)
-            {
-                value = 0;
-                return false;
-            }
-
-            double truncated = Math.Truncate(number);
-
-            if (truncated != number)
-            {
-                value = 0;
-                return false;
-            }
-
-            value = (long)truncated;
-            return true;
-        }
+        private static bool TryGetIntegerFromDouble(double number, out long value) =>
+            LuaIntegerHelper.TryGetInteger(number, out value);
 
         private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
         {
-            if (value.Type == DataType.Number)
-            {
-                return TryGetIntegerFromDouble(value.Number, out integer);
-            }
-
-            if (
-                value.Type == DataType.String
-                && double.TryParse(
-                    value.String,
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out double parsed
-                )
-            )
-            {
-                return TryGetIntegerFromDouble(parsed, out integer);
-            }
-
-            integer = 0;
-            return false;
+            return LuaIntegerHelper.TryGetInteger(value, out integer);
         }
 
         private static long RequireIntegerArgument(

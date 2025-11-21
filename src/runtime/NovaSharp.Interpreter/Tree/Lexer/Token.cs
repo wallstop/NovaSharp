@@ -146,7 +146,8 @@ namespace NovaSharp.Interpreter.Tree.Lexer
         {
             return Type == TokenType.OpMinusOrSub
                 || Type == TokenType.Not
-                || Type == TokenType.OpLen;
+                || Type == TokenType.OpLen
+                || Type == TokenType.OpBitNotOrXor;
         }
 
         public bool IsBinaryOperator()
@@ -165,9 +166,15 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 case TokenType.OpPwr:
                 case TokenType.OpMod:
                 case TokenType.OpDiv:
+                case TokenType.OpFloorDiv:
                 case TokenType.OpMul:
                 case TokenType.OpMinusOrSub:
                 case TokenType.OpAdd:
+                case TokenType.OpBitAnd:
+                case TokenType.OpBitNotOrXor:
+                case TokenType.OpShiftLeft:
+                case TokenType.OpShiftRight:
+                case TokenType.Pipe:
                     return true;
                 default:
                     return false;

@@ -37,6 +37,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 case "-":
                     bc.EmitOperator(OpCode.Neg);
                     break;
+                case "~":
+                    bc.EmitOperator(OpCode.BitNot);
+                    break;
                 default:
                     throw new InternalErrorException("Unexpected unary operator '{0}'", _opText);
             }
@@ -65,6 +68,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                         "Attempt to perform arithmetic on non-numbers."
                     );
                 }
+                case "~":
+                    if (LuaIntegerHelper.TryGetInteger(v, out long operand))
+                    {
+                        return DynValue.NewNumber(~operand);
+                    }
+
+                    throw new DynamicExpressionException(
+                        "Attempt to perform bitwise operation on non-integers."
+                    );
                 default:
                     throw new DynamicExpressionException(
                         "Unexpected unary operator '{0}'",

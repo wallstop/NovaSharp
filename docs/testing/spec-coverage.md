@@ -48,10 +48,10 @@ NovaSharp currently aims to support the following Lua versions:
 
 ## Lua 5.3 Reference Manual Coverage (Snapshot)
 
-| Section                                      | Manual Link        | Status | Notes                                                                                              |
-| -------------------------------------------- | ------------------ | ------ | -------------------------------------------------------------------------------------------------- |
-| Core language deltas (integers, bitwise ops) | §3.4, §3.3, §3.4.3 | 🔴     | Create targeted tests for integer division, `%`, `//`, bitwise operators, and `math.type`.         |
-| Standard library differences                 | §6.\*              | 🔴     | Verify behaviour of `utf8` introduction, `table.move`, and `math` library changes compared to 5.4. |
+| Section                                      | Manual Link        | Status | Notes                                                                                                                                                                                                          |
+| -------------------------------------------- | ------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core language deltas (integers, bitwise ops) | §3.4, §3.3, §3.4.3 | 🟡     | `BitwiseOperatorTests` + refreshed `BinaryOperatorExpressionTests` cover Lua 5.3 bitwise operators and floor division (Lua 5.3 manual §§3.4.1/3.4.7); still need spec-driven `%`/`math.type` regression tests. |
+| Standard library differences                 | §6.\*              | 🔴     | Verify behaviour of `utf8` introduction, `table.move`, and `math` library changes compared to 5.4.                                                                                                             |
 
 ## Lua 5.2 Reference Manual Coverage (Snapshot)
 
@@ -74,3 +74,4 @@ Progress updates should be reflected in `PLAN.md` under “Lua Spec Conformance 
 - ✅ (2025-11-21) Expanded the harness with `LuaUtf8MultiVersionSpecTests`, which cites Lua 5.3 manual §6.5 scenarios for `utf8.len`, `utf8.codepoint`, `utf8.offset`, `utf8.codes`, and `utf8.charpattern` across Lua 5.2–Latest, ensuring the library stays hidden in Lua 5.2 and spec behaviours remain intact elsewhere.
 - ✅ (2025-11-21) Added `LuaMathMultiVersionSpecTests` to exercise the Lua 5.3 manual §6.7 helpers (`math.type`, `math.tointeger`, `math.ult`) across compatibility profiles, including the Lua 5.2 absence checks, conversion edge cases, and unsigned comparisons.
 - ✅ (2025-11-21) Added `LuaBasicMultiVersionSpecTests`, mirroring Lua 5.4 manual §6.1 expectations for `tonumber` with arbitrary bases (2–36), invalid numerals, and base argument validation.
+- ✅ (2025-11-21) Introduced `BitwiseOperatorTests` + extended `BinaryOperatorExpressionTests` to mirror Lua 5.3 manual §§3.4.1/3.4.7 (bitwise & floor-division semantics, compatibility gating, shift saturation, unary `~`).

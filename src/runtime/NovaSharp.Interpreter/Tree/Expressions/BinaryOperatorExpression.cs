@@ -33,6 +33,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Div = 0x2000,
             Mod = 0x4000,
             Power = 0x8000,
+            FloorDiv = 0x10000,
+            BitAnd = 0x20000,
+            BitOr = 0x40000,
+            BitXor = 0x80000,
+            ShiftLeft = 0x100000,
+            ShiftRight = 0x200000,
         }
 
         private class Node
@@ -52,9 +58,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private const Operator PowerOperator = Operator.Power;
         private const Operator MultiplicationDivisionModuloOperators =
-            Operator.Mul | Operator.Div | Operator.Mod;
+            Operator.Mul | Operator.Div | Operator.Mod | Operator.FloorDiv;
         private const Operator AdditionSubtractionOperators = Operator.Add | Operator.Sub;
         private const Operator StringConcatenationOperator = Operator.StrConcat;
+        private const Operator ShiftOperators = Operator.ShiftLeft | Operator.ShiftRight;
+        private const Operator BitwiseOperatorMask =
+            Operator.BitAnd | Operator.BitOr | Operator.BitXor | ShiftOperators;
 
         private const Operator ComparisonOperators =
             Operator.Less
@@ -166,6 +175,26 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             if ((opfound & StringConcatenationOperator) != 0)
             {
                 nodes = PrioritizeRightAssociative(nodes, lcontext, StringConcatenationOperator);
+            }
+
+            if ((opfound & ShiftOperators) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, ShiftOperators);
+            }
+
+            if ((opfound & Operator.BitAnd) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitAnd);
+            }
+
+            if ((opfound & Operator.BitXor) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitXor);
+            }
+
+            if ((opfound & Operator.BitOr) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitOr);
             }
 
             if ((opfound & ComparisonOperators) != 0)
@@ -315,10 +344,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     return Operator.Mul;
                 case TokenType.OpDiv:
                     return Operator.Div;
+                case TokenType.OpFloorDiv:
+                    return Operator.FloorDiv;
                 case TokenType.OpMod:
                     return Operator.Mod;
                 case TokenType.OpPwr:
                     return Operator.Power;
+                case TokenType.OpBitAnd:
+                    return Operator.BitAnd;
+                case TokenType.OpBitNotOrXor:
+                    return Operator.BitXor;
+                case TokenType.Pipe:
+                    return Operator.BitOr;
+                case TokenType.OpShiftLeft:
+                    return Operator.ShiftLeft;
+                case TokenType.OpShiftRight:
+                    return Operator.ShiftRight;
                 default:
                     throw new InternalErrorException(
                         "Unexpected binary operator '{0}'",
@@ -376,10 +417,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     return OpCode.Mul;
                 case Operator.Div:
                     return OpCode.Div;
+                case Operator.FloorDiv:
+                    return OpCode.FloorDiv;
                 case Operator.Mod:
                     return OpCode.Mod;
                 case Operator.Power:
                     return OpCode.Power;
+                case Operator.BitAnd:
+                    return OpCode.BitAnd;
+                case Operator.BitOr:
+                    return OpCode.BitOr;
+                case Operator.BitXor:
+                    return OpCode.BitXor;
+                case Operator.ShiftLeft:
+                    return OpCode.ShiftLeft;
+                case Operator.ShiftRight:
+                    return OpCode.ShiftRight;
                 default:
                     throw new InternalErrorException("Unsupported operator {0}", op);
             }
@@ -466,10 +519,58 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 return DynValue.NewString(s1 + s2);
             }
+            else if ((_operator & BitwiseOperatorMask) != 0)
+            {
+                return DynValue.NewNumber(EvalBitwise(v1, v2));
+            }
+            else if (_operator == Operator.FloorDiv)
+            {
+                return DynValue.NewNumber(EvalFloorDivision(v1, v2));
+            }
             else
             {
                 return DynValue.NewNumber(EvalArithmetic(v1, v2));
             }
+        }
+
+        private double EvalBitwise(DynValue v1, DynValue v2)
+        {
+            if (
+                !LuaIntegerHelper.TryGetInteger(v1, out long left)
+                || !LuaIntegerHelper.TryGetInteger(v2, out long right)
+            )
+            {
+                throw new DynamicExpressionException(
+                    "Attempt to perform bitwise operation on non-integers."
+                );
+            }
+
+            long result = _operator switch
+            {
+                Operator.BitAnd => left & right,
+                Operator.BitOr => left | right,
+                Operator.BitXor => left ^ right,
+                Operator.ShiftLeft => LuaIntegerHelper.ShiftLeft(left, right),
+                Operator.ShiftRight => LuaIntegerHelper.ShiftRight(left, right),
+                _ => throw new DynamicExpressionException("Unsupported operator {0}", _operator),
+            };
+
+            return result;
+        }
+
+        private double EvalFloorDivision(DynValue v1, DynValue v2)
+        {
+            double? nd1 = v1.CastToNumber();
+            double? nd2 = v2.CastToNumber();
+
+            if (nd1 == null || nd2 == null)
+            {
+                throw new DynamicExpressionException(
+                    "Attempt to perform arithmetic on non-numbers."
+                );
+            }
+
+            return Math.Floor(nd1.Value / nd2.Value);
         }
 
         private double EvalArithmetic(DynValue v1, DynValue v2)

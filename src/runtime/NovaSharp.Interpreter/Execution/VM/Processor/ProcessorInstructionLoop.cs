@@ -124,8 +124,40 @@ namespace NovaSharp.Interpreter.Execution.VM
                             }
 
                             break;
+                        case OpCode.FloorDiv:
+                            instructionPtr = ExecFloorDiv(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
                         case OpCode.Power:
                             instructionPtr = ExecPower(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
+                        case OpCode.BitAnd:
+                            instructionPtr = ExecBitAnd(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
+                        case OpCode.BitOr:
+                            instructionPtr = ExecBitOr(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
+                        case OpCode.BitXor:
+                            instructionPtr = ExecBitXor(i, instructionPtr);
                             if (instructionPtr == YieldSpecialTrap)
                             {
                                 goto yield_to_calling_coroutine;
@@ -164,6 +196,14 @@ namespace NovaSharp.Interpreter.Execution.VM
                             }
 
                             break;
+                        case OpCode.BitNot:
+                            instructionPtr = ExecBitNot(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
                         case OpCode.Call:
                         case OpCode.ThisCall:
                             instructionPtr = InternalExecCall(
@@ -185,6 +225,22 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.Not:
                             ExecNot(i);
+                            break;
+                        case OpCode.ShiftLeft:
+                            instructionPtr = ExecShiftLeft(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
+                            break;
+                        case OpCode.ShiftRight:
+                            instructionPtr = ExecShiftRight(i, instructionPtr);
+                            if (instructionPtr == YieldSpecialTrap)
+                            {
+                                goto yield_to_calling_coroutine;
+                            }
+
                             break;
                         case OpCode.CNot:
                             ExecCNot(i);
@@ -1527,6 +1583,33 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        private int ExecFloorDiv(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+
+            double? rn = r.CastToNumber();
+            double? ln = l.CastToNumber();
+
+            if (ln.HasValue && rn.HasValue)
+            {
+                _valueStack.Push(DynValue.NewNumber(Math.Floor(ln.Value / rn.Value)));
+                return instructionPtr;
+            }
+            else
+            {
+                int ip = InternalInvokeBinaryMetaMethod(l, r, "__idiv", instructionPtr);
+                if (ip >= 0)
+                {
+                    return ip;
+                }
+                else
+                {
+                    throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
+                }
+            }
+        }
+
         private int ExecPower(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
@@ -1552,6 +1635,99 @@ namespace NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(l, r);
                 }
             }
+        }
+
+        private int ExecBitAnd(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+            return ExecBitwiseBinary(l, r, "__band", (x, y) => x & y, instructionPtr);
+        }
+
+        private int ExecBitOr(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+            return ExecBitwiseBinary(l, r, "__bor", (x, y) => x | y, instructionPtr);
+        }
+
+        private int ExecBitXor(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+            return ExecBitwiseBinary(l, r, "__bxor", (x, y) => x ^ y, instructionPtr);
+        }
+
+        private int ExecShiftLeft(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+            return ExecBitwiseBinary(
+                l,
+                r,
+                "__shl",
+                (x, y) => LuaIntegerHelper.ShiftLeft(x, y),
+                instructionPtr
+            );
+        }
+
+        private int ExecShiftRight(Instruction i, int instructionPtr)
+        {
+            DynValue r = _valueStack.Pop().ToScalar();
+            DynValue l = _valueStack.Pop().ToScalar();
+            return ExecBitwiseBinary(
+                l,
+                r,
+                "__shr",
+                (x, y) => LuaIntegerHelper.ShiftRight(x, y),
+                instructionPtr
+            );
+        }
+
+        private int ExecBitNot(Instruction i, int instructionPtr)
+        {
+            DynValue value = _valueStack.Pop().ToScalar();
+
+            if (LuaIntegerHelper.TryGetInteger(value, out long operand))
+            {
+                _valueStack.Push(DynValue.NewNumber(~operand));
+                return instructionPtr;
+            }
+
+            int ip = InternalInvokeUnaryMetaMethod(value, "__bnot", instructionPtr);
+            if (ip >= 0)
+            {
+                return ip;
+            }
+
+            throw ScriptRuntimeException.BitwiseOnNonInteger(value);
+        }
+
+        private int ExecBitwiseBinary(
+            DynValue l,
+            DynValue r,
+            string metamethodName,
+            Func<long, long, long> operation,
+            int instructionPtr
+        )
+        {
+            bool leftOk = LuaIntegerHelper.TryGetInteger(l, out long left);
+            bool rightOk = LuaIntegerHelper.TryGetInteger(r, out long right);
+
+            if (leftOk && rightOk)
+            {
+                _valueStack.Push(DynValue.NewNumber(operation(left, right)));
+                return instructionPtr;
+            }
+
+            int ip = InternalInvokeBinaryMetaMethod(l, r, metamethodName, instructionPtr);
+            if (ip >= 0)
+            {
+                return ip;
+            }
+
+            DynValue invalid = leftOk ? r : l;
+            throw ScriptRuntimeException.BitwiseOnNonInteger(invalid);
         }
 
         private int ExecNeg(Instruction i, int instructionPtr)
