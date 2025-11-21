@@ -71,7 +71,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "getenv")]
-        public static DynValue Getenv(
+        public static DynValue GetEnv(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "setlocale")]
-        public static DynValue Setlocale(
+        public static DynValue SetLocale(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -167,7 +167,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "tmpname")]
-        public static DynValue Tmpname(
+        public static DynValue TmpName(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

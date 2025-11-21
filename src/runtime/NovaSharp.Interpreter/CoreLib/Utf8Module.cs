@@ -35,7 +35,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "codepoint")]
-        public static DynValue Codepoint(
+        public static DynValue CodePoint(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

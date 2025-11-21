@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.Spec
         [Description(
             "Lua 5.4 manual §6.1: tonumber with base accepts digits up to base 36 and optional sign."
         )]
-        public void TonumberParsesIntegersAcrossSupportedBases()
+        public void ToNumberParsesIntegersAcrossSupportedBases()
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Spec
         [Description(
             "Lua 5.4 manual §6.1: tonumber returns nil when the numeral is invalid for the given base."
         )]
-        public void TonumberReturnsNilWhenDigitsExceedBase()
+        public void ToNumberReturnsNilWhenDigitsExceedBase()
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -58,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.Spec
 
         [Test]
         [Description("Lua 5.4 manual §6.1: tonumber errors if the base is outside the 2–36 range.")]
-        public void TonumberErrorsWhenBaseIsOutOfRange()
+        public void ToNumberErrorsWhenBaseIsOutOfRange()
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.Spec
         [Description(
             "Lua 5.4 manual §6.1: tonumber errors when the base argument is not an integer."
         )]
-        public void TonumberErrorsWhenBaseIsFractional()
+        public void ToNumberErrorsWhenBaseIsFractional()
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,

@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CollectGarbageThrowsWhenArgumentsAreNull()
         {
             Assert.That(
-                () => BasicModule.Collectgarbage(null, null),
+                () => BasicModule.CollectGarbage(null, null),
                 Throws.TypeOf<ArgumentNullException>()
             );
         }
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             CallbackArguments args = new(new[] { DynValue.Nil }, isMethodCall: false);
 
-            DynValue result = BasicModule.Collectgarbage(null, args);
+            DynValue result = BasicModule.CollectGarbage(null, args);
 
             Assert.That(result, Is.EqualTo(DynValue.Nil));
         }
@@ -54,18 +54,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             CallbackArguments args = new(new[] { DynValue.NewString("stop") }, isMethodCall: false);
 
-            DynValue result = BasicModule.Collectgarbage(null, args);
+            DynValue result = BasicModule.CollectGarbage(null, args);
 
             Assert.That(result, Is.EqualTo(DynValue.Nil));
         }
 
         [Test]
-        public void TostringContinuationThrowsWhenMetamethodReturnsNonString()
+        public void ToStringContinuationThrowsWhenMetamethodReturnsNonString()
         {
             CallbackArguments args = new(new[] { DynValue.NewNumber(5) }, isMethodCall: false);
 
             Assert.That(
-                () => BasicModule.TostringContinuation(null, args),
+                () => BasicModule.ToStringContinuation(null, args),
                 Throws.TypeOf<ScriptRuntimeException>()
             );
         }

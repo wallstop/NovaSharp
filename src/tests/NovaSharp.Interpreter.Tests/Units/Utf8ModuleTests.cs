@@ -58,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         [Test]
         [Description("Lua 5.3 manual §6.5: utf8.char builds strings from code points.")]
-        public void Utf8CharBuildsStringsFromCodepoints()
+        public void Utf8CharBuildsStringsFromCodePoints()
         {
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
             DynValue result = script.DoString("return utf8.char(0x41, 0x1F600, 0x20AC)");
@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         [Test]
         [Description("Lua 5.3 manual §6.5: utf8.codepoint returns the decoded scalars.")]
-        public void Utf8CodepointReturnsCodepoints()
+        public void Utf8CodePointReturnsCodePoints()
         {
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
             script.Globals.Set("word", DynValue.NewString("A😀€"));

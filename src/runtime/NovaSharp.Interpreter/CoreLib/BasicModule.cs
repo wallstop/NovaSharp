@@ -59,6 +59,16 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue v = args[0];
             DynValue message = args[1];
 
@@ -81,7 +91,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------------------------------------------------------
         // This function is mostly a stub towards the CLR GC. If mode is nil, "collect" or "restart", a GC is forced.
         [NovaSharpModuleMethod(Name = "collectgarbage")]
-        public static DynValue Collectgarbage(
+        public static DynValue CollectGarbage(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -159,11 +169,21 @@ namespace NovaSharp.Interpreter.CoreLib
         // If the metatable of v has a "__tostring" field, then tostring calls the corresponding value with v as argument,
         // and uses the result of the call as its result.
         [NovaSharpModuleMethod(Name = "tostring")]
-        public static DynValue Tostring(
+        public static DynValue ToString(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
@@ -178,18 +198,23 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             tail.TailCallData.Continuation = new CallbackFunction(
-                TostringContinuation,
+                ToStringContinuation,
                 "__tostring"
             );
 
             return tail;
         }
 
-        internal static DynValue TostringContinuation(
+        internal static DynValue ToStringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue b = args[0].ToScalar();
 
             if (b.IsNil())
@@ -273,7 +298,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // upper or lower case) represents 10, 'B' represents 11, and so forth, with 'Z' representing 35. If the
         // string e is not a valid numeral in the given base, the function returns nil.
         [NovaSharpModuleMethod(Name = "tonumber")]
-        public static DynValue Tonumber(
+        public static DynValue ToNumber(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

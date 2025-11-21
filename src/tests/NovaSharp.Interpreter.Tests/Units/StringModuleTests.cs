@@ -282,7 +282,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GsubAppliesGlobalReplacement()
+        public void GSubAppliesGlobalReplacement()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -375,7 +375,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GmatchIteratesOverMatches()
+        public void GMatchIteratesOverMatches()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(

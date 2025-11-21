@@ -472,7 +472,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "randomseed")]
-        public static DynValue Randomseed(
+        public static DynValue RandomSeed(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

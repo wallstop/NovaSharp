@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.Spec
         [Description(
             "Lua 5.3 manual §6.5: utf8.codepoint decodes the requested slice and defaults j=i."
         )]
-        public void Utf8CodepointDecodesRequestedSlice(LuaCompatibilityVersion version)
+        public void Utf8CodePointDecodesRequestedSlice(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version, CoreModules.PresetDefault);
             script.Globals.Set("word", DynValue.NewString("A😀€"));

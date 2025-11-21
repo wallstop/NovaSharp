@@ -93,6 +93,16 @@ namespace NovaSharp.Interpreter.CoreLib
             Func<uint, uint, uint> accumFunc
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (accumFunc == null)
+            {
+                throw new ArgumentNullException(nameof(accumFunc));
+            }
+
             uint accum = ToUInt32(args.AsType(0, funcName, DataType.Number, false));
 
             for (int i = 1; i < args.Count; i++)

@@ -412,7 +412,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "tmpfile")]
-        public static DynValue Tmpfile(
+        public static DynValue TmpFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

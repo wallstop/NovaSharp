@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "difftime")]
-        public static DynValue Difftime(
+        public static DynValue DiffTime(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

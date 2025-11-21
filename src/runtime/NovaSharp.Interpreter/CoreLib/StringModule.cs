@@ -192,7 +192,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "gmatch")]
-        public static DynValue Gmatch(
+        public static DynValue GMatch(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -201,7 +201,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "gsub")]
-        public static DynValue Gsub(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static DynValue GSub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             return executionContext.EmulateClassicCall(args, "gsub", KopiLuaStringLib.str_gsub);
         }

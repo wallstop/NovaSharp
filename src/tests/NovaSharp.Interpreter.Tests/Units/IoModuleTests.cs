@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TmpfileCreatesWritableFile()
+        public void TmpFileCreatesWritableFile()
         {
             Script script = CreateScript();
 
@@ -642,7 +642,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TmpfileCreatesWritableStream()
+        public void TmpFileCreatesWritableStream()
         {
             Script script = CreateScript();
             DynValue tuple = script.DoString(
