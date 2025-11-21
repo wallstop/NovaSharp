@@ -14,23 +14,7 @@ namespace Tutorials.Chapters
     {
         static RemoteDebuggerService remoteDebugger;
 
-        static void ActivateRemoteDebugger(Script script)
-        {
-            if (remoteDebugger == null)
-            {
-                remoteDebugger = new RemoteDebuggerService();
-
-                // the last boolean is to specify if the script is free to run
-                // after attachment, defaults to false
-                remoteDebugger.Attach(script, "Description of the script", false);
-            }
-
-            // start the web-browser at the correct url. Replace this or just
-            // pass the url to the user in some way.
-            Process.Start(remoteDebugger.HttpUrlStringLocalHost);
-        }
-
-        private static Script CreateDebuggerScript(out string modDirectory)
+        private static Script AttachDebuggerScript(out string modDirectory)
         {
             modDirectory = LocateDebuggerModPath();
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
@@ -38,13 +22,27 @@ namespace Tutorials.Chapters
                 ScriptLoader = new FileSystemScriptLoader(),
             };
 
-            Script script = ModManifestCompatibility.CreateScriptFromDirectory(
+            if (remoteDebugger == null)
+            {
+                remoteDebugger = new RemoteDebuggerService();
+            }
+
+            Script script = remoteDebugger.AttachFromDirectory(
                 modDirectory,
+                "Description of the script",
                 CoreModules.PresetComplete,
                 options,
                 infoSink: message => Console.WriteLine($"[compatibility] {message}"),
                 warningSink: message => Console.WriteLine($"[compatibility] {message}")
             );
+
+            string debuggerUrl = remoteDebugger.HttpUrlStringLocalHost;
+            if (!string.IsNullOrWhiteSpace(debuggerUrl))
+            {
+                // start the web browser at the correct URL. Replace this or just
+                // pass the URL to the user in some other way.
+                Process.Start(debuggerUrl);
+            }
 
             return script;
         }
@@ -83,9 +81,7 @@ namespace Tutorials.Chapters
         [Tutorial]
         static void DebuggerDemo()
         {
-            Script script = CreateDebuggerScript(out string modDirectory);
-
-            ActivateRemoteDebugger(script);
+            Script script = AttachDebuggerScript(out string modDirectory);
 
             string entryPoint = Path.Combine(modDirectory, "main.lua");
             script.DoFile(entryPoint);

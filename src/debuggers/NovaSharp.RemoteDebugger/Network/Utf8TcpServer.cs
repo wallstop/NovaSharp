@@ -64,9 +64,15 @@ namespace NovaSharp.RemoteDebugger.Network
         {
             try
             {
-                Socket s = _listener.EndAcceptSocket(ar);
+                TcpListener listener = _listener;
+                if (listener == null)
+                {
+                    return;
+                }
+
+                Socket s = listener.EndAcceptSocket(ar);
                 AddNewClient(s);
-                _listener.BeginAcceptSocket(OnAcceptSocket, null);
+                listener.BeginAcceptSocket(OnAcceptSocket, null);
             }
             catch (SocketException ex)
             {
@@ -186,7 +192,8 @@ namespace NovaSharp.RemoteDebugger.Network
 
         public void Stop()
         {
-            _listener.Stop();
+            _listener?.Stop();
+            _listener = null;
         }
 
         public void Dispose()

@@ -79,6 +79,45 @@ script.DoFile(entryPointPath);
 
 When no manifest is present, the helper returns the original options unchanged (it simply calls `TryApplyFromDirectory` under the hood), so it is safe to invoke for every mod load.
 
+#### Remote Debugger Quick Start
+
+When hosting the remote debugger inside Unity (or any .NET game host), you can let the debugger service create and attach manifest-aware scripts directly:
+
+```csharp
+using System.Diagnostics;
+using NovaSharp.Interpreter;
+using NovaSharp.Interpreter.Loaders;
+using NovaSharp.Interpreter.Modules;
+using NovaSharp.Interpreter.Modding;
+using NovaSharp.RemoteDebugger;
+using UnityEngine;
+
+RemoteDebuggerService debugger = new RemoteDebuggerService();
+ScriptOptions debugOptions = new ScriptOptions(Script.DefaultOptions)
+{
+    ScriptLoader = new FileSystemScriptLoader(),
+};
+
+string modRoot = Path.GetDirectoryName(entryPointPath);
+Script script = debugger.AttachFromDirectory(
+    modRoot,
+    "Streaming Assets Mod",
+    CoreModules.PresetComplete,
+    debugOptions,
+    info => Debug.Log($"[NovaSharp] {info}"),
+    warning => Debug.LogWarning($"[NovaSharp] {warning}")
+);
+
+script.DoFile(entryPointPath);
+string debuggerUrl = debugger.HttpUrlStringLocalHost;
+if (!string.IsNullOrEmpty(debuggerUrl))
+{
+    Application.OpenURL(debuggerUrl); // or surface the URL in your own UI
+}
+```
+
+This keeps the debugger pipeline in sync with `mod.json` declarations while reusing the same sinks/logging you already expose for the general manifest helper.
+
 ## 3. Reference the Assemblies
 
 1. In Unity, select each DLL and ensure **Any Platform** is enabled (or restrict as needed).
