@@ -26,6 +26,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             long executedInstructions = 0;
             bool canAutoYield =
                 (AutoYieldCounter > 0) && _canYield && (State != CoroutineState.Main);
+            bool shouldYieldToCaller = false;
 
             repeat_execution:
 
@@ -33,6 +34,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 while (true)
                 {
+                    shouldYieldToCaller = false;
                     Instruction i = _rootChunk.Code[instructionPtr];
 
                     if (_debug.DebuggerAttached != null)
@@ -70,138 +72,87 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.Add:
                             instructionPtr = ExecAdd(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Concat:
                             instructionPtr = ExecConcat(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Neg:
                             instructionPtr = ExecNeg(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Sub:
                             instructionPtr = ExecSub(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Mul:
                             instructionPtr = ExecMul(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Div:
                             instructionPtr = ExecDiv(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Mod:
                             instructionPtr = ExecMod(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.FloorDiv:
                             instructionPtr = ExecFloorDiv(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Power:
                             instructionPtr = ExecPower(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.BitAnd:
                             instructionPtr = ExecBitAnd(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.BitOr:
                             instructionPtr = ExecBitOr(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.BitXor:
                             instructionPtr = ExecBitXor(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Eq:
                             instructionPtr = ExecEq(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.LessEq:
                             instructionPtr = ExecLessEq(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Less:
                             instructionPtr = ExecLess(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Len:
                             instructionPtr = ExecLen(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.BitNot:
                             instructionPtr = ExecBitNot(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Call:
@@ -214,10 +165,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                                 i.OpCode == OpCode.ThisCall,
                                 i.Name
                             );
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Scalar:
@@ -228,18 +176,12 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.ShiftLeft:
                             instructionPtr = ExecShiftLeft(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.ShiftRight:
                             instructionPtr = ExecShiftRight(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.CNot:
@@ -248,10 +190,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.JfOrPop:
                         case OpCode.JtOrPop:
                             instructionPtr = ExecShortCircuitingOperator(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.JNil:
@@ -263,26 +202,17 @@ namespace NovaSharp.Interpreter.Execution.VM
                                     instructionPtr = i.NumVal;
                                 }
                             }
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Jf:
                             instructionPtr = JumpBool(i, false, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Jump:
                             instructionPtr = i.NumVal;
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.MkTuple:
@@ -316,10 +246,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.Ret:
                             instructionPtr = ExecRet(i);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             if (instructionPtr < 0)
                             {
@@ -335,10 +262,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             break;
                         case OpCode.JFor:
                             instructionPtr = ExecJFor(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.NewTable:
@@ -390,20 +314,14 @@ namespace NovaSharp.Interpreter.Execution.VM
                         case OpCode.IndexN:
                         case OpCode.IndexL:
                             instructionPtr = ExecIndex(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.IndexSet:
                         case OpCode.IndexSetN:
                         case OpCode.IndexSetL:
                             instructionPtr = ExecIndexSet(i, instructionPtr);
-                            if (instructionPtr == YieldSpecialTrap)
-                            {
-                                goto yield_to_calling_coroutine;
-                            }
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.Invalid:
@@ -412,6 +330,11 @@ namespace NovaSharp.Interpreter.Execution.VM
                             throw new NotImplementedException(
                                 $"Execution for {i.OpCode} not implented yet!"
                             );
+                    }
+
+                    if (shouldYieldToCaller)
+                    {
+                        goto yield_to_calling_coroutine;
                     }
                 }
 

@@ -16,6 +16,7 @@
         <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
         <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
         <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
