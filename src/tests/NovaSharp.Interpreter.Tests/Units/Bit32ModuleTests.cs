@@ -90,14 +90,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         [TestCase(0xFFu, 0x01u, true)]
         [TestCase(0xF0u, 0x0Fu, false)]
-        public void BtestEvaluatesBitwiseAnd(uint left, uint right, bool expected)
+        public void BitTestEvaluatesBitwiseAnd(uint left, uint right, bool expected)
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(left), DynValue.NewNumber(right) },
                 false
             );
 
-            DynValue result = Bit32Module.Btest(null, args);
+            DynValue result = Bit32Module.BitTest(null, args);
 
             Assert.That(result.Boolean, Is.EqualTo(expected));
         }
@@ -127,49 +127,61 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         [TestCase(0x10u, 2, 0x4u)]
         [TestCase(0x10u, -2, 0x40u)]
-        public void RshiftHandlesPositiveAndNegativeOffsets(uint value, int offset, uint expected)
+        public void RightShiftHandlesPositiveAndNegativeOffsets(
+            uint value,
+            int offset,
+            uint expected
+        )
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(value), DynValue.NewNumber(offset) },
                 false
             );
 
-            DynValue result = Bit32Module.Rshift(null, args);
+            DynValue result = Bit32Module.RightShift(null, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
 
         [TestCase(1u, 3, 8u)]
         [TestCase(8u, -1, 4u)]
-        public void LshiftHandlesPositiveAndNegativeOffsets(uint value, int offset, uint expected)
+        public void LeftShiftHandlesPositiveAndNegativeOffsets(
+            uint value,
+            int offset,
+            uint expected
+        )
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(value), DynValue.NewNumber(offset) },
                 false
             );
 
-            DynValue result = Bit32Module.Lshift(null, args);
+            DynValue result = Bit32Module.LeftShift(null, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
 
         [TestCase(-8, 2, -2)]
         [TestCase(8, -1, 16)]
-        public void ArshiftHandlesPositiveAndNegativeOffsets(int value, int offset, int expected)
+        public void ArithmeticShiftHandlesPositiveAndNegativeOffsets(
+            int value,
+            int offset,
+            int expected
+        )
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(value), DynValue.NewNumber(offset) },
                 false
             );
 
-            DynValue result = Bit32Module.Arshift(null, args);
+            DynValue result = Bit32Module.ArithmeticShift(null, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
 
         [TestCase(0x12345678u, 4)]
         [TestCase(0x12345678u, -8)]
-        public void LrotateMatchesBitOperationsRotateLeft(uint value, int offset)
+        public void LeftRotateMatchesBitOperationsRotateLeft(uint value, int offset)
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(value), DynValue.NewNumber(offset) },
@@ -177,14 +189,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             uint expected = BitOperations.RotateLeft(value, offset);
-            DynValue result = Bit32Module.Lrotate(null, args);
+            DynValue result = Bit32Module.LeftRotate(null, args);
 
             Assert.That(Convert.ToUInt32(result.Number), Is.EqualTo(expected));
         }
 
         [TestCase(0x89ABCDEFu, 5)]
         [TestCase(0x89ABCDEFu, -7)]
-        public void RrotateMatchesBitOperationsRotateRight(uint value, int offset)
+        public void RightRotateMatchesBitOperationsRotateRight(uint value, int offset)
         {
             CallbackArguments args = new(
                 new[] { DynValue.NewNumber(value), DynValue.NewNumber(offset) },
@@ -192,7 +204,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             uint expected = BitOperations.RotateRight(value, offset);
-            DynValue result = Bit32Module.Rrotate(null, args);
+            DynValue result = Bit32Module.RightRotate(null, args);
 
             Assert.That(Convert.ToUInt32(result.Number), Is.EqualTo(expected));
         }

@@ -53,7 +53,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "isnull")]
-        public static DynValue Isnull(
+        public static DynValue IsNull(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

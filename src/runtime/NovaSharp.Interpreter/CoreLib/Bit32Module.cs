@@ -189,7 +189,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "arshift")]
-        public static DynValue Arshift(
+        public static DynValue ArithmeticShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -214,7 +214,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "rshift")]
-        public static DynValue Rshift(
+        public static DynValue RightShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -239,7 +239,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "lshift")]
-        public static DynValue Lshift(
+        public static DynValue LeftShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -270,7 +270,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "btest")]
-        public static DynValue Btest(
+        public static DynValue BitTest(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -299,7 +299,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "lrotate")]
-        public static DynValue Lrotate(
+        public static DynValue LeftRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -324,7 +324,7 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "rrotate")]
-        public static DynValue Rrotate(
+        public static DynValue RightRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
