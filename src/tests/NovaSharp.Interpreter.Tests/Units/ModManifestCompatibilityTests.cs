@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
@@ -101,6 +102,37 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void CustomFileSystemCanProvideManifest()
+        {
+            TestModFileSystem fileSystem = new();
+            string directory = fileSystem.AddDirectory("mods/sample");
+            fileSystem.AddFile(
+                Path.Combine(directory, "mod.json"),
+                "{ \"luaCompatibility\": \"Lua53\" }"
+            );
+
+            ScriptOptions options = new(Script.DefaultOptions);
+            bool applied = ModManifestCompatibility.TryApplyFromDirectory(
+                directory,
+                options,
+                LuaCompatibilityVersion.Lua55,
+                infoSink: null,
+                warningSink: null,
+                fileSystem: fileSystem
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(applied, Is.True);
+                Assert.That(
+                    options.CompatibilityVersion,
+                    Is.EqualTo(LuaCompatibilityVersion.Lua53)
+                );
+                Assert.That(fileSystem.OpenReadCallCount, Is.EqualTo(1));
+            });
+        }
+
         private static string CreateTempDirectory()
         {
             string path = Path.Combine(
@@ -109,6 +141,83 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Directory.CreateDirectory(path);
             return path;
+        }
+
+        private sealed class TestModFileSystem : IModFileSystem
+        {
+            private readonly Dictionary<string, string> _files = new(
+                StringComparer.OrdinalIgnoreCase
+            );
+            private readonly HashSet<string> _directories = new(StringComparer.OrdinalIgnoreCase);
+
+            internal int OpenReadCallCount { get; private set; }
+
+            internal string AddDirectory(string path)
+            {
+                string normalized = Normalize(path);
+                _directories.Add(normalized);
+                return normalized;
+            }
+
+            internal void AddFile(string path, string contents)
+            {
+                string normalized = Normalize(path);
+                string directory = Path.GetDirectoryName(normalized);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    _directories.Add(directory);
+                }
+
+                _files[normalized] = contents;
+            }
+
+            public bool FileExists(string path)
+            {
+                return _files.ContainsKey(Normalize(path));
+            }
+
+            public bool DirectoryExists(string path)
+            {
+                return _directories.Contains(Normalize(path));
+            }
+
+            public Stream OpenRead(string path)
+            {
+                OpenReadCallCount++;
+                string normalized = Normalize(path);
+                return new MemoryStream(Encoding.UTF8.GetBytes(_files[normalized]));
+            }
+
+            public string GetFullPath(string path)
+            {
+                return Normalize(path);
+            }
+
+            public string GetDirectoryName(string path)
+            {
+                string normalized = Normalize(path);
+                string directory = Path.GetDirectoryName(normalized);
+                return string.IsNullOrEmpty(directory) ? null : directory;
+            }
+
+            private static string Normalize(string path)
+            {
+                if (string.IsNullOrEmpty(path))
+                {
+                    return path;
+                }
+
+                string replaced = path.Replace('/', Path.DirectorySeparatorChar)
+                    .Replace('\\', Path.DirectorySeparatorChar);
+
+                if (Path.IsPathRooted(replaced))
+                {
+                    return Path.GetFullPath(replaced);
+                }
+
+                string basePath = Path.Combine(Path.GetTempPath(), replaced);
+                return Path.GetFullPath(basePath);
+            }
         }
     }
 }

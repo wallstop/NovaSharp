@@ -33,18 +33,18 @@ NovaSharp currently aims to support the following Lua versions:
 
 ### Standard Library Matrix (Lua 5.4)
 
-| Library                    | Manual Section | Current Status | Notes / TODO                                                                                                                                             |
-| -------------------------- | -------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `basic` (global functions) | §6.1           | 🟡             | Verify `tonumber`, `tostring`, `pairs`, `_G`, `pcall`, `xpcall` edge cases.                                                                              |
-| `coroutine`                | §6.2           | 🟡             | Expand tests for `coroutine.isyieldable`, wrap/resume error paths, to-be-closed interactions.                                                            |
-| `package`                  | §6.3           | 🔴             | Need harness for loader searchers, `package.config`, and `require` error sequencing.                                                                     |
-| `string`                   | §6.4           | 🟡             | Harness covers manual examples for byte/char/sub/len/rep/find/reverse/format; add pattern/error-path coverage (`%f`, backtracking limits, `plain` flag). |
-| `utf8`                     | §6.5           | 🔴             | Build fixtures for `utf8.offset`, `utf8.len`, error returns, and continuation byte validation.                                                           |
-| `table`                    | §6.6           | 🟡             | Add thorough tests for `table.move`, boundary errors, and in-place mutation semantics.                                                                   |
-| `math`                     | §6.7           | 🟡             | Extend coverage to `math.tointeger`, `math.type`, and corner rounding rules.                                                                             |
-| `io`                       | §6.8           | 🟡             | Spec-driven behaviours for binary/text mode, file handle metamethods, and error messaging.                                                               |
-| `os`                       | §6.9           | 🟡             | Confirm locale-dependent formatting (`os.date`), `os.execute` return triples, and `os.time` defaults.                                                    |
-| `debug`                    | §6.10          | 🔴             | Add spec-specific tests for `debug.getlocal`, `debug.upvaluejoin`, hook masks, and safety toggles.                                                       |
+| Library                    | Manual Section | Current Status | Notes / TODO                                                                                                                                                                                                                        |
+| -------------------------- | -------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `basic` (global functions) | §6.1           | 🟡             | Verify `tonumber`, `tostring`, `pairs`, `_G`, `pcall`, `xpcall` edge cases.                                                                                                                                                         |
+| `coroutine`                | §6.2           | 🟡             | Expand tests for `coroutine.isyieldable`, wrap/resume error paths, to-be-closed interactions.                                                                                                                                       |
+| `package`                  | §6.3           | 🔴             | Need harness for loader searchers, `package.config`, and `require` error sequencing.                                                                                                                                                |
+| `string`                   | §6.4           | 🟡             | Harness covers manual examples for byte/char/sub/len/rep/find/reverse/format; add pattern/error-path coverage (`%f`, backtracking limits, `plain` flag).                                                                            |
+| `utf8`                     | §6.5           | 🟡             | `LuaUtf8MultiVersionSpecTests` runs Lua 5.3+ coverage for `utf8.len`, `utf8.codepoint`, `utf8.codes`, `utf8.offset`, and `utf8.charpattern`, plus gating absent in Lua 5.2; extend to failure tuples for `utf8.char`/`utf8.insert`. |
+| `table`                    | §6.6           | 🟡             | `LuaTableMoveMultiVersionSpecTests` exercises `table.move` across Lua 5.2–Latest (availability, overlapping ranges, destination defaults); extend to error tuples and metamethod interactions.                                      |
+| `math`                     | §6.7           | 🟡             | Extend coverage to `math.tointeger`, `math.type`, and corner rounding rules.                                                                                                                                                        |
+| `io`                       | §6.8           | 🟡             | Spec-driven behaviours for binary/text mode, file handle metamethods, and error messaging.                                                                                                                                          |
+| `os`                       | §6.9           | 🟡             | Confirm locale-dependent formatting (`os.date`), `os.execute` return triples, and `os.time` defaults.                                                                                                                               |
+| `debug`                    | §6.10          | 🔴             | Add spec-specific tests for `debug.getlocal`, `debug.upvaluejoin`, hook masks, and safety toggles.                                                                                                                                  |
 
 ## Lua 5.3 Reference Manual Coverage (Snapshot)
 
@@ -69,3 +69,6 @@ NovaSharp currently aims to support the following Lua versions:
 1. **Documentation Sync** – Whenever coverage improves, update `docs/LuaCompatibility.md`, release notes, and this file to keep contributors aligned.
 
 Progress updates should be reflected in `PLAN.md` under “Lua Spec Conformance Harness” and linked back to the relevant spec sections here.
+
+- ✅ (2025-11-21) Added the first multi-version harness (`LuaTableMoveMultiVersionSpecTests`) covering Lua 5.2–Latest `table.move` availability, overlapping-copy semantics, and the destination-default rule cited in Lua 5.3 manual §6.6.
+- ✅ (2025-11-21) Expanded the harness with `LuaUtf8MultiVersionSpecTests`, which cites Lua 5.3 manual §6.5 scenarios for `utf8.len`, `utf8.codepoint`, `utf8.offset`, `utf8.codes`, and `utf8.charpattern` across Lua 5.2–Latest, ensuring the library stays hidden in Lua 5.2 and spec behaviours remain intact elsewhere.

@@ -64,6 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(profile.Version, Is.EqualTo(LuaCompatibilityVersion.Lua52));
                 Assert.That(profile.SupportsBitwiseOperators, Is.False);
+                Assert.That(profile.SupportsBit32Library, Is.True);
                 Assert.That(profile.SupportsUtf8Library, Is.False);
                 Assert.That(profile.SupportsTableMove, Is.False);
                 Assert.That(profile.SupportsToBeClosedVariables, Is.False);
@@ -77,6 +78,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(profile.Version, Is.EqualTo(LuaCompatibilityVersion.Lua55));
                 Assert.That(profile.SupportsBitwiseOperators, Is.True);
+                Assert.That(profile.SupportsBit32Library, Is.False);
                 Assert.That(profile.SupportsUtf8Library, Is.True);
                 Assert.That(profile.SupportsTableMove, Is.True);
                 Assert.That(profile.SupportsToBeClosedVariables, Is.True);
@@ -86,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Bit32LibraryRemainsAvailableAcrossProfiles()
+        public void Bit32LibraryOnlyAvailableInLua52()
         {
             Script lua52 = new(
                 CoreModules.PresetComplete,
@@ -98,7 +100,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 CoreModules.PresetComplete,
                 new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua53 }
             );
-            Assert.That(lua53.Globals.Get("bit32").Type, Is.EqualTo(DataType.Table));
+            Assert.That(lua53.CompatibilityProfile.SupportsBit32Library, Is.False);
+            Assert.That(lua53.Globals.Get("bit32").IsNil(), Is.True);
+
+            Script lua54 = new(
+                CoreModules.PresetComplete,
+                new ScriptOptions() { CompatibilityVersion = LuaCompatibilityVersion.Lua54 }
+            );
+            Assert.That(lua54.CompatibilityProfile.SupportsBit32Library, Is.False);
+            Assert.That(lua54.Globals.Get("bit32").IsNil(), Is.True);
         }
 
         [Test]
@@ -212,15 +222,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(lua52.SupportsWarnFunction, Is.False);
 
                 Assert.That(lua53.SupportsBitwiseOperators, Is.True);
+                Assert.That(lua53.SupportsBit32Library, Is.False);
                 Assert.That(lua53.SupportsTableMove, Is.True);
                 Assert.That(lua53.SupportsConstLocals, Is.False);
 
                 Assert.That(lua54.SupportsToBeClosedVariables, Is.True);
                 Assert.That(lua54.SupportsConstLocals, Is.True);
                 Assert.That(lua54.SupportsWarnFunction, Is.True);
+                Assert.That(lua54.SupportsBit32Library, Is.False);
 
                 Assert.That(lua55, Is.SameAs(latest));
                 Assert.That(lua55.SupportsWarnFunction, Is.True);
+                Assert.That(lua55.SupportsBit32Library, Is.False);
             });
         }
 

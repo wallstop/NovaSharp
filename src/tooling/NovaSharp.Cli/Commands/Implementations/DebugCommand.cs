@@ -1,7 +1,6 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
-    using System.Diagnostics;
     using RemoteDebugger;
 
     internal sealed class DebugCommand : ICommand
@@ -9,16 +8,8 @@ namespace NovaSharp.Cli.Commands.Implementations
         internal static Func<IRemoteDebuggerBridge> DebuggerFactory { get; set; } =
             () => new RemoteDebuggerServiceBridge();
 
-        internal static Action<string> BrowserLauncher { get; set; } =
-            url =>
-            {
-                if (string.IsNullOrWhiteSpace(url))
-                {
-                    return;
-                }
-
-                Process.Start(url);
-            };
+        internal static IBrowserLauncher BrowserLauncher { get; set; } =
+            ProcessBrowserLauncher.Instance;
 
         private IRemoteDebuggerBridge _debugger;
 
@@ -46,9 +37,12 @@ namespace NovaSharp.Cli.Commands.Implementations
                 _debugger = DebuggerFactory();
                 _debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
                 string url = _debugger.HttpUrlStringLocalHost;
-                if (!string.IsNullOrWhiteSpace(url))
+                if (
+                    !string.IsNullOrWhiteSpace(url)
+                    && Uri.TryCreate(url, UriKind.Absolute, out Uri parsed)
+                )
                 {
-                    BrowserLauncher(url);
+                    BrowserLauncher?.Launch(parsed);
                 }
             }
         }

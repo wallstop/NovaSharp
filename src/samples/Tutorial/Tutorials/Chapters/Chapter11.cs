@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.Loaders;
@@ -37,11 +36,14 @@ namespace Tutorials.Chapters
             );
 
             string debuggerUrl = remoteDebugger.HttpUrlStringLocalHost;
-            if (!string.IsNullOrWhiteSpace(debuggerUrl))
+            if (
+                !string.IsNullOrWhiteSpace(debuggerUrl)
+                && Uri.TryCreate(debuggerUrl, UriKind.Absolute, out Uri debuggerUri)
+            )
             {
                 // start the web browser at the correct URL. Replace this or just
                 // pass the URL to the user in some other way.
-                Process.Start(debuggerUrl);
+                ProcessBrowserLauncher.Instance.Launch(debuggerUri);
             }
 
             return script;

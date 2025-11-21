@@ -4,13 +4,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.RemoteDebugger;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class DebugCommandTests
     {
         private Func<IRemoteDebuggerBridge> _originalFactory = null!;
-        private Action<string> _originalLauncher = null!;
+        private IBrowserLauncher _originalLauncher = null!;
 
         [SetUp]
         public void SetUp()
@@ -30,10 +31,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteStartsDebuggerAndOpensBrowserOnce()
         {
             FakeDebuggerBridge bridge = new() { Url = "http://debugger" };
-            int launchCount = 0;
+            TestBrowserLauncher launcher = new();
 
             DebugCommand.DebuggerFactory = () => bridge;
-            DebugCommand.BrowserLauncher = _ => launchCount++;
+            DebugCommand.BrowserLauncher = launcher;
 
             DebugCommand command = new();
             ShellContext context = new(new Script());
@@ -44,7 +45,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(bridge.AttachCount, Is.EqualTo(1));
-                Assert.That(launchCount, Is.EqualTo(1));
+                Assert.That(launcher.LaunchCount, Is.EqualTo(1));
+                Assert.That(launcher.LastUrl, Is.Not.Null);
+                Assert.That(launcher.LastUrl.AbsoluteUri, Is.EqualTo("http://debugger/"));
                 Assert.That(bridge.LastScript, Is.SameAs(context.Script));
                 Assert.That(bridge.LastScriptName, Is.EqualTo("NovaSharp REPL interpreter"));
                 Assert.That(bridge.LastFreeRun, Is.False);
@@ -55,10 +58,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteSkipsBrowserLaunchWhenUrlIsEmpty()
         {
             FakeDebuggerBridge bridge = new() { Url = string.Empty };
-            bool launched = false;
+            TestBrowserLauncher launcher = new();
 
             DebugCommand.DebuggerFactory = () => bridge;
-            DebugCommand.BrowserLauncher = _ => launched = true;
+            DebugCommand.BrowserLauncher = launcher;
 
             DebugCommand command = new();
             command.Execute(new ShellContext(new Script()), string.Empty);
@@ -66,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(bridge.AttachCount, Is.EqualTo(1));
-                Assert.That(launched, Is.False);
+                Assert.That(launcher.LaunchCount, Is.EqualTo(0));
             });
         }
 
@@ -93,6 +96,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             public string HttpUrlStringLocalHost
             {
                 get { return Url; }
+            }
+        }
+
+        private sealed class TestBrowserLauncher : IBrowserLauncher
+        {
+            public int LaunchCount { get; private set; }
+
+            public Uri LastUrl { get; private set; }
+
+            public void Launch(Uri url)
+            {
+                LaunchCount++;
+                LastUrl = url;
             }
         }
     }

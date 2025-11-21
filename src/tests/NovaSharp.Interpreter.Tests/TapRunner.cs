@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests
     using System;
     using System.IO;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
@@ -26,6 +27,7 @@ namespace NovaSharp.Interpreter.Tests
     public class TapRunner
     {
         private readonly string _file;
+        private readonly LuaCompatibilityVersion _compatibilityVersion;
 
         /// <summary>
         /// Prints the specified string.
@@ -36,14 +38,22 @@ namespace NovaSharp.Interpreter.Tests
             Assert.That(str.Trim().StartsWith("not ok"), Is.False, $"TAP fail ({_file}) : {str}");
         }
 
-        public TapRunner(string filename)
+        public TapRunner(string filename, LuaCompatibilityVersion? compatibilityVersion = null)
         {
             _file = filename;
+            _compatibilityVersion =
+                compatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
         }
 
         public void Run()
         {
-            Script s = new() { Options = { DebugPrint = Print, UseLuaErrorLocations = true } };
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                DebugPrint = Print,
+                UseLuaErrorLocations = true,
+                CompatibilityVersion = _compatibilityVersion,
+            };
+            Script s = new(options);
 
             ConfigureScriptLoader(s);
             s.Globals.Set("arg", DynValue.NewTable(s));
@@ -51,9 +61,12 @@ namespace NovaSharp.Interpreter.Tests
             s.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
         }
 
-        public static void Run(string filename)
+        public static void Run(
+            string filename,
+            LuaCompatibilityVersion? compatibilityVersion = null
+        )
         {
-            TapRunner t = new(filename);
+            TapRunner t = new(filename, compatibilityVersion);
             t.Run();
         }
 

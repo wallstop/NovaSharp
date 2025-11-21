@@ -44,6 +44,7 @@ namespace NovaSharp.Interpreter
         private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
+        private bool _bit32CompatibilityWarningEmitted;
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -817,6 +818,9 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(globalContext);
 
             Table globals = globalContext ?? _globalTable;
+
+            WarnIfBit32CompatibilityDisabled(modname);
+
             string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
 
             if (filename == null)
@@ -826,6 +830,32 @@ namespace NovaSharp.Interpreter
 
             DynValue func = LoadFile(filename, globalContext, filename);
             return func;
+        }
+
+        private void WarnIfBit32CompatibilityDisabled(string moduleName)
+        {
+            if (
+                _bit32CompatibilityWarningEmitted
+                || !string.Equals(moduleName, "bit32", StringComparison.Ordinal)
+            )
+            {
+                return;
+            }
+
+            LuaCompatibilityProfile profile = CompatibilityProfile;
+
+            if (profile.SupportsBit32Library)
+            {
+                return;
+            }
+
+            string message =
+                $"[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: {profile.DisplayName}. Update Script.Options.CompatibilityVersion or ship a custom bit32 module.";
+
+            Action<string> sink = Options.DebugPrint ?? Script.GlobalOptions.Platform.DefaultPrint;
+            sink?.Invoke(message);
+
+            _bit32CompatibilityWarningEmitted = true;
         }
 
         /// <summary>

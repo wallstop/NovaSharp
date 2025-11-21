@@ -18,15 +18,15 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
 
 ## Feature Matrix
 
-| Feature                    | Lua 5.2        | Lua 5.3 | Lua 5.4 | Lua 5.5 / Latest | Reference                                                                                                     |
-| -------------------------- | -------------- | ------- | ------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| `bit32` library            | ✅             | ✅      | ✅      | ✅               | Lua 5.2 reference manual §6.7 (NovaSharp keeps the compatibility library enabled by default for all versions) |
-| Bitwise operators (`&`, \` | `, `~\`, etc.) | ❌      | ✅      | ✅               | ✅                                                                                                            |
-| `utf8` standard library    | ❌             | ✅      | ✅      | ✅               | Lua 5.3 manual §6.5                                                                                           |
-| `table.move` helper        | ❌             | ✅      | ✅      | ✅               | Lua 5.3 manual §6.5                                                                                           |
-| `<close>` variables        | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §3.3.8                                                                                         |
-| `<const>` locals           | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §3.3.7                                                                                         |
-| Built-in `warn` function   | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §6.1                                                                                           |
+| Feature                    | Lua 5.2        | Lua 5.3 | Lua 5.4 | Lua 5.5 / Latest | Reference                                                                                               |
+| -------------------------- | -------------- | ------- | ------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `bit32` library            | ✅             | ❌      | ❌      | ❌               | Lua 5.2 reference manual §6.7 (NovaSharp only exposes the compatibility library when targeting Lua 5.2) |
+| Bitwise operators (`&`, \` | `, `~\`, etc.) | ❌      | ✅      | ✅               | ✅                                                                                                      |
+| `utf8` standard library    | ❌             | ✅      | ✅      | ✅               | Lua 5.3 manual §6.5                                                                                     |
+| `table.move` helper        | ❌             | ✅      | ✅      | ✅               | Lua 5.3 manual §6.5                                                                                     |
+| `<close>` variables        | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §3.3.8                                                                                   |
+| `<const>` locals           | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §3.3.7                                                                                   |
+| Built-in `warn` function   | ❌             | ❌      | ✅      | ✅               | Lua 5.4 manual §6.1                                                                                     |
 
 > ℹ️ Future additions (e.g., Lua 5.5 once the upstream manual stabilizes) simply extend the profile table without touching every call site that reads these booleans.
 
@@ -34,7 +34,7 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
 
 1. ✅ **Parser/AST toggles** – `AssignmentStatement` now checks the active `LuaCompatibilityProfile` before accepting `<const>`/`<close>` attributes, throwing spec-cited syntax errors (Lua 5.4 manual §§3.3.7–3.3.8) when a Lua 5.2/5.3 profile attempts to use them. Guarded by `AssignmentStatementTests.ConstAttributeRequiresLua54Compatibility` / `CloseAttributeRequiresLua54Compatibility`.
 
-1. 🔄 **Standard library shims** – `SupportsUtf8Library` now gates the `utf8` module (Lua 5.4 manual §6.5), `SupportsTableMove` strips `table.move` when profiles opt out (Lua 5.3 manual §6.6), and `SupportsWarnFunction` removes the Lua 5.4+ `warn` helper when disabled (Lua 5.4 manual §6.1). Covered by `Utf8ModuleTests`, `CompatibilityVersionTests.TableMoveOnlyAvailableInLua53Plus`, and `CompatibilityVersionTests.WarnFunctionOnlyAvailableInLua54Plus`.
+1. ✅ **Standard library shims** – `SupportsUtf8Library` now gates the `utf8` module (Lua 5.4 manual §6.5), `SupportsTableMove` strips `table.move` when profiles opt out (Lua 5.3 manual §6.6), `SupportsWarnFunction` removes the Lua 5.4+ `warn` helper when disabled (Lua 5.4 manual §6.1), and `SupportsBit32Library` hides the legacy `bit32` namespace unless the script targets Lua 5.2. Covered by `Utf8ModuleTests`, `CompatibilityVersionTests.TableMoveOnlyAvailableInLua53Plus`, `CompatibilityVersionTests.WarnFunctionOnlyAvailableInLua54Plus`, and `CompatibilityVersionTests.Bit32LibraryOnlyAvailableInLua52`.
 
 1. ✅ **Documentation/diagnostics** – `InterpreterException` now appends `[compatibility: Lua X.Y]` to every decorated message so Syntax/Runtime errors cite the active profile. Guarded by `CompatibilityDiagnosticsTests`.
 

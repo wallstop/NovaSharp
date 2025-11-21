@@ -18,7 +18,8 @@ namespace NovaSharp.Interpreter.Modding
             ScriptOptions options,
             LuaCompatibilityVersion? hostCompatibility = null,
             Action<string> infoSink = null,
-            Action<string> warningSink = null
+            Action<string> warningSink = null,
+            IModFileSystem fileSystem = null
         )
         {
             if (string.IsNullOrWhiteSpace(scriptPath))
@@ -26,13 +27,15 @@ namespace NovaSharp.Interpreter.Modding
                 return false;
             }
 
-            string directory = ResolveDirectory(scriptPath);
+            IModFileSystem fs = fileSystem ?? PhysicalModFileSystem.Instance;
+            string directory = ResolveDirectory(fs, scriptPath);
             return TryApplyFromDirectory(
                 directory,
                 options,
                 hostCompatibility,
                 infoSink,
-                warningSink
+                warningSink,
+                fs
             );
         }
 
@@ -41,7 +44,8 @@ namespace NovaSharp.Interpreter.Modding
             ScriptOptions options,
             LuaCompatibilityVersion? hostCompatibility = null,
             Action<string> infoSink = null,
-            Action<string> warningSink = null
+            Action<string> warningSink = null,
+            IModFileSystem fileSystem = null
         )
         {
             if (options == null)
@@ -54,16 +58,17 @@ namespace NovaSharp.Interpreter.Modding
                 return false;
             }
 
+            IModFileSystem fs = fileSystem ?? PhysicalModFileSystem.Instance;
             string manifestPath = Path.Combine(directory, "mod.json");
 
-            if (!File.Exists(manifestPath))
+            if (!fs.FileExists(manifestPath))
             {
                 return false;
             }
 
             try
             {
-                using FileStream stream = File.OpenRead(manifestPath);
+                using Stream stream = fs.OpenRead(manifestPath);
                 ModManifest manifest = ModManifest.Load(stream);
 
                 LuaCompatibilityVersion hostVersion =
@@ -94,13 +99,13 @@ namespace NovaSharp.Interpreter.Modding
             }
         }
 
-        private static string ResolveDirectory(string scriptPath)
+        private static string ResolveDirectory(IModFileSystem fileSystem, string scriptPath)
         {
             string fullPath;
 
             try
             {
-                fullPath = Path.GetFullPath(scriptPath);
+                fullPath = fileSystem.GetFullPath(scriptPath);
             }
             catch (Exception)
             {
@@ -112,7 +117,9 @@ namespace NovaSharp.Interpreter.Modding
                 return null;
             }
 
-            return Directory.Exists(fullPath) ? fullPath : Path.GetDirectoryName(fullPath);
+            return fileSystem.DirectoryExists(fullPath)
+                ? fullPath
+                : fileSystem.GetDirectoryName(fullPath);
         }
 
         /// <summary>
@@ -123,17 +130,20 @@ namespace NovaSharp.Interpreter.Modding
             CoreModules modules = CoreModules.PresetComplete,
             ScriptOptions baseOptions = null,
             Action<string> infoSink = null,
-            Action<string> warningSink = null
+            Action<string> warningSink = null,
+            IModFileSystem fileSystem = null
         )
         {
             ScriptOptions options = new(baseOptions ?? Script.DefaultOptions);
+            IModFileSystem fs = fileSystem ?? PhysicalModFileSystem.Instance;
 
             TryApplyFromDirectory(
                 directory,
                 options,
                 Script.GlobalOptions.CompatibilityVersion,
                 infoSink,
-                warningSink
+                warningSink,
+                fs
             );
 
             return new Script(modules, options);

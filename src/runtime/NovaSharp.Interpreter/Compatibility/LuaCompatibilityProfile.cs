@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Compatibility
         private static readonly LuaCompatibilityProfile Lua53Profile = new(
             LuaCompatibilityVersion.Lua53,
             supportsBitwiseOperators: true,
-            supportsBit32Library: true,
+            supportsBit32Library: false,
             supportsUtf8Library: true,
             supportsTableMove: true,
             supportsToBeClosedVariables: false,
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Compatibility
         private static readonly LuaCompatibilityProfile Lua54Profile = new(
             LuaCompatibilityVersion.Lua54,
             supportsBitwiseOperators: true,
-            supportsBit32Library: true,
+            supportsBit32Library: false,
             supportsUtf8Library: true,
             supportsTableMove: true,
             supportsToBeClosedVariables: true,
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Compatibility
         private static readonly LuaCompatibilityProfile Lua55Profile = new(
             LuaCompatibilityVersion.Lua55,
             supportsBitwiseOperators: true,
-            supportsBit32Library: true,
+            supportsBit32Library: false,
             supportsUtf8Library: true,
             supportsTableMove: true,
             supportsToBeClosedVariables: true,
