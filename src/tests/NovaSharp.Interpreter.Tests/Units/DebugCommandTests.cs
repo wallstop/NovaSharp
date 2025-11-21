@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.IO;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.RemoteDebugger;
     using NUnit.Framework;
 
@@ -39,8 +41,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             DebugCommand command = new();
             ShellContext context = new(new Script());
 
-            command.Execute(context, string.Empty);
-            command.Execute(context, string.Empty);
+            TextWriter originalOut = Console.Out;
+            Console.SetOut(TextWriter.Null);
+            try
+            {
+                command.Execute(context, string.Empty);
+                command.Execute(context, string.Empty);
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
 
             Assert.Multiple(() =>
             {
@@ -64,13 +75,54 @@ namespace NovaSharp.Interpreter.Tests.Units
             DebugCommand.BrowserLauncher = launcher;
 
             DebugCommand command = new();
-            command.Execute(new ShellContext(new Script()), string.Empty);
+            TextWriter originalOut = Console.Out;
+            Console.SetOut(TextWriter.Null);
+            try
+            {
+                command.Execute(
+                    new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
+                    string.Empty
+                );
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
 
             Assert.Multiple(() =>
             {
                 Assert.That(bridge.AttachCount, Is.EqualTo(1));
                 Assert.That(launcher.LaunchCount, Is.EqualTo(0));
             });
+        }
+
+        [Test]
+        public void ExecuteLogsCompatibilityProfile()
+        {
+            FakeDebuggerBridge bridge = new() { Url = string.Empty };
+            DebugCommand.DebuggerFactory = () => bridge;
+            DebugCommand.BrowserLauncher = new TestBrowserLauncher();
+
+            DebugCommand command = new();
+            ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua52));
+            StringWriter writer = new();
+            TextWriter originalOut = Console.Out;
+            try
+            {
+                Console.SetOut(writer);
+                command.Execute(context, string.Empty);
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+                writer.Dispose();
+            }
+
+            string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
+            Assert.That(
+                writer.ToString(),
+                Does.Contain($"[compatibility] Debugger session running under {expectedSummary}")
+            );
         }
 
         private sealed class FakeDebuggerBridge : IRemoteDebuggerBridge
@@ -110,6 +162,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 LaunchCount++;
                 LastUrl = url;
             }
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new() { CompatibilityVersion = version };
+
+            return new Script(options);
         }
     }
 }

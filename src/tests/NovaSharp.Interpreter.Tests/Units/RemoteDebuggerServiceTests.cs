@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Sockets;
     using System.Text;
@@ -209,8 +210,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                         Is.EqualTo(LuaCompatibilityVersion.Lua52)
                     );
                     Assert.That(script.DebuggerEnabled, Is.True);
-                    Assert.That(info, Has.Count.GreaterThanOrEqualTo(1));
+                    Assert.That(info, Has.Count.GreaterThanOrEqualTo(2));
                     Assert.That(info[0], Does.Contain("Lua 5.2"));
+                    Assert.That(
+                        info.Any(message => message.Contains("running under")),
+                        Is.True,
+                        "Expected compatibility summary message."
+                    );
                     Assert.That(warnings, Is.Empty);
                 });
             }

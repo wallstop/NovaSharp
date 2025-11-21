@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
 
@@ -33,6 +34,26 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             return args;
+        }
+
+        public static Table RequireTable(Table table, string parameterName)
+        {
+            if (table == null)
+            {
+                throw new ArgumentNullException(parameterName);
+            }
+
+            return table;
+        }
+
+        public static Script RequireScript(Script script, string parameterName)
+        {
+            if (script == null)
+            {
+                throw new ArgumentNullException(parameterName);
+            }
+
+            return script;
         }
     }
 }

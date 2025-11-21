@@ -23,6 +23,8 @@ jobs:
         run: python3 tools/NamespaceAudit/namespace_audit.py
       - name: Enforce naming conventions
         run: python3 tools/NamingAudit/naming_audit.py
+      - name: Verify naming audit log
+        run: python3 tools/NamingAudit/naming_audit.py --verify-log naming_audit.log
       - name: Enforce script/doc README coverage
         run: ./scripts/ci/ensure-readme-updates.sh
         shell: bash
@@ -67,6 +69,8 @@ jobs:
         run: python3 tools/NamespaceAudit/namespace_audit.py
       - name: Enforce naming conventions
         run: python3 tools/NamingAudit/naming_audit.py
+      - name: Verify naming audit log
+        run: python3 tools/NamingAudit/naming_audit.py --verify-log naming_audit.log
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5

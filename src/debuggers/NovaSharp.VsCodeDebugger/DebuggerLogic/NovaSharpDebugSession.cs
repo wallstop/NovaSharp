@@ -8,6 +8,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using System.Linq;
     using System.Text.RegularExpressions;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
@@ -54,6 +55,15 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             );
 
             SendText("Type '!help' in the Debug Console for available Commands.");
+
+            LuaCompatibilityProfile profile = _debug.Script?.CompatibilityProfile;
+            if (profile != null)
+            {
+                SendText(
+                    "[compatibility] Debugger session running under {0}",
+                    profile.GetFeatureSummary()
+                );
+            }
 
             SendResponse(
                 response,

@@ -16,6 +16,13 @@ The `LuaCompatibilityProfile` exposes boolean feature toggles that map directly 
 
 Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the active compatibility profile display name (for example, "Lua 5.3"). Hosts and modding tools can read this value to confirm which feature set a script is currently running under without reaching back into the hosting API.
 
+### Tooling Surfacing
+
+- The NovaSharp CLI `!help` output now prints `Active compatibility profile: …` along with the key feature toggles (bitwise operators, `bit32`, `utf8`, `table.move`, `<const>`, `<close>`, `warn`). This gives script authors an immediate reminder of which Lua baseline the REPL is running under and which spec features are currently enabled without digging through options.
+- The CLI debugger entry point (`!debug`) emits a `[compatibility] Debugger session running under …` line before attaching the remote debugger bridge so logs capture the Lua profile that governed the session. This mirrors the `[compatibility]` warnings produced by manifest processing and keeps debugger transcripts self-describing once bitwise/floor-division gating is toggled per profile.
+- `RemoteDebuggerService.AttachFromDirectory` now pushes a summary message through its `infoSink` so hosts (tutorials, Unity samples, CLI helpers) automatically log the compatibility profile applied to manifest-driven mods.
+- The VS Code debug adapter surfaces the same message inside the debug console during `Initialize`, giving attach sessions an immediate reminder of the active Lua version/feature toggles.
+
 ## Feature Matrix
 
 | Feature                    | Lua 5.2        | Lua 5.3 | Lua 5.4 | Lua 5.5 / Latest | Reference                                                                                               |

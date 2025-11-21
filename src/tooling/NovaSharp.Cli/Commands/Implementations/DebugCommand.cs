@@ -1,6 +1,7 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
+    using NovaSharp.Interpreter.Compatibility;
     using RemoteDebugger;
 
     internal sealed class DebugCommand : ICommand
@@ -34,6 +35,14 @@ namespace NovaSharp.Cli.Commands.Implementations
         {
             if (_debugger == null)
             {
+                LuaCompatibilityProfile profile = context?.Script?.CompatibilityProfile;
+                if (profile != null)
+                {
+                    Console.WriteLine(
+                        $"[compatibility] Debugger session running under {profile.GetFeatureSummary()}"
+                    );
+                }
+
                 _debugger = DebuggerFactory();
                 _debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
                 string url = _debugger.HttpUrlStringLocalHost;

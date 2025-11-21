@@ -32,6 +32,9 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
+            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
+            ioTable = ModuleArgumentValidation.RequireTable(ioTable, nameof(ioTable));
+
             UserData.RegisterType<FileUserDataBase>(InteropAccessMode.Default, "file");
 
             Table meta = new(ioTable.OwnerScript);
@@ -63,6 +66,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string name = args[1].CastToString();
 
             if (name == "stdin")
@@ -85,6 +94,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static DynValue GetStandardFile(Script s, StandardFileType file)
         {
+            s = ModuleArgumentValidation.RequireScript(s, nameof(s));
             Table r = s.Registry;
 
             DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString());
@@ -93,6 +103,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static void SetStandardFile(Script s, StandardFileType file, Stream optionsStream)
         {
+            s = ModuleArgumentValidation.RequireScript(s, nameof(s));
             Table r = s.Registry;
 
             optionsStream = optionsStream ?? Script.GlobalOptions.Platform.GetStandardStream(file);
@@ -116,6 +127,10 @@ namespace NovaSharp.Interpreter.CoreLib
             StandardFileType file
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             Table r = executionContext.GetScript().Registry;
 
             DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
@@ -145,6 +160,7 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase fileHandle
         )
         {
+            script = ModuleArgumentValidation.RequireScript(script, nameof(script));
             Table r = script.Registry;
             r.Set(
                 "853BEAAF298648839E2C99D005E1DF94_" + file.ToString(),
@@ -154,6 +170,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         public static void SetDefaultFile(Script script, StandardFileType file, Stream stream)
         {
+            script = ModuleArgumentValidation.RequireScript(script, nameof(script));
             if (file == StandardFileType.StdIn)
             {
                 SetDefaultFile(script, file, StandardIoFileUserDataBase.CreateInputStream(stream));
@@ -170,6 +187,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             FileUserDataBase outp =
                 args.AsUserData<FileUserDataBase>(0, "close", true)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
@@ -182,6 +205,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             FileUserDataBase outp =
                 args.AsUserData<FileUserDataBase>(0, "close", true)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
@@ -195,6 +224,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdIn);
         }
 
@@ -204,6 +239,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdOut);
         }
 
@@ -213,6 +254,12 @@ namespace NovaSharp.Interpreter.CoreLib
             StandardFileType defaultFiles
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args.Count == 0 || args[0].IsNil())
             {
                 FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
@@ -256,6 +303,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string filename = args.AsType(0, "lines", DataType.String, false).String;
 
             try
@@ -294,6 +347,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "open")]
         public static DynValue Open(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string filename = args.AsType(0, "open", DataType.String, false).String;
             DynValue vmode = args.AsType(1, "open", DataType.String, true);
             DynValue vencoding = args.AsType(2, "open", DataType.String, true);
@@ -375,6 +434,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "type")]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type != DataType.UserData)
             {
                 return DynValue.Nil;
@@ -397,6 +462,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "read")]
         public static DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdIn);
             return file.Read(executionContext, args);
         }
@@ -407,6 +478,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdOut);
             return file.Write(executionContext, args);
         }
@@ -417,6 +494,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string tmpfilename = Script.GlobalOptions.Platform.GetTempFileName();
             FileUserDataBase file = Open(executionContext, tmpfilename, GetUtf8Encoding(), "w");
             return UserData.Create(file);

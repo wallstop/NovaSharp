@@ -41,9 +41,9 @@
    - ✅ (2025-11-20) Added `.editorconfig` rules that force PascalCase for every method (`methods_must_be_pascal`) and `_camelCase` for private fields, excluding only the `NovaSharp.Interpreter.LuaPort` namespace so the mirrored Lua sources remain untouched. IDE1006 now fires as an error outside the LuaPort folder, immediately surfacing snake_case regressions.
    - ✅ (2025-11-20) CI now runs `dotnet format src/NovaSharp.sln --verify-no-changes --severity error` inside the lint job, so pull requests fail automatically when the editorconfig naming rules are violated.
 1. **Audit automation**
-   - Replace `naming_audit.log` with a generated report produced by a small script (PowerShell or `dotnet format analyzers`) that runs as part of CI (or at least as a documented local check). The report should list non-compliant members and the suppression reason so we can track progress and keep the backlog visible inside PLAN.md.
-   - Gating option: extend `.github/workflows/tests.yml` with a `dotnet format --verify-no-changes / analyzers` step once the renames plus suppressions land, ensuring future contributions do not regress the agreed casing.
+   - ✅ (2025-11-22) Extended `tools/NamingAudit/naming_audit.py` with deterministic `--write-log`/`--verify-log` switches so the committed `naming_audit.log` always reflects the current analyzer output. The lint and dotnet-test workflows verify the log during every run, keeping the PLAN checkpoint honest without manual intervention.
 
 ## Next Steps
 
-- Add the naming rule(s) + CI audit, regenerate `naming_audit.log`, and update PLAN.md once enforcement is live so IDE1006 can be flipped to `error` outside of `LuaPort`.
+- Expand the audit report with per-identifier suppression metadata (why a member remains snake_case) so contributors know when a rename is safe vs. intentionally tied to Lua interop.
+- Track Lua-port divergence explicitly (list all files under `LuaPort/` + justification) and document the process for updating the allowlist whenever we add or remove mirrored files.

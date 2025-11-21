@@ -6,6 +6,7 @@ namespace NovaSharp.RemoteDebugger
     using System.Text;
     using Network;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
@@ -171,6 +172,14 @@ namespace NovaSharp.RemoteDebugger
             );
 
             string resolvedName = scriptName ?? GetDirectoryName(modDirectory) ?? "Script";
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            if (profile != null)
+            {
+                infoSink?.Invoke(
+                    $"Script '{resolvedName}' running under {profile.GetFeatureSummary()}."
+                );
+            }
+
             Attach(script, resolvedName, freeRunAfterAttach);
             return script;
         }

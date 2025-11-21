@@ -307,26 +307,102 @@ def audit_file(path: Path) -> list[NamingIssue]:
     return issues
 
 
-def audit() -> int:
+def audit() -> list[NamingIssue]:
     all_issues: list[NamingIssue] = []
     for cs_file in discover_cs_files():
         all_issues.extend(audit_file(cs_file))
+    return all_issues
 
-    if not all_issues:
-        print("All inspected files/types follow PascalCase expectations.")
-        return 0
 
-    print("Naming inconsistencies detected (per .editorconfig/C# style):\n")
-    for issue in all_issues:
-        print(f"- {issue.path}: {issue.message}")
-    print(f"\nTotal issues: {len(all_issues)}")
-    return 1
+def render_report(issues: list[NamingIssue]) -> str:
+    lines: list[str] = [
+        "# Naming Audit Report",
+        "",
+        "_Generated via tools/NamingAudit/naming_audit.py_",
+        "",
+    ]
+
+    if not issues:
+        lines.append("All inspected files/types follow PascalCase expectations.")
+    else:
+        lines.append("Naming inconsistencies detected (per .editorconfig/C# style):")
+        lines.append("")
+        for issue in issues:
+            lines.append(f"- {issue.path}: {issue.message}")
+        lines.append("")
+        lines.append(f"Total issues: {len(issues)}")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def resolve_repo_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return (ROOT / path).resolve()
+
+
+def write_log(path: Path, report: str) -> None:
+    resolved = resolve_repo_path(path)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    resolved.write_text(report, encoding="utf-8")
+
+
+def verify_log(path: Path, report: str) -> bool:
+    resolved = resolve_repo_path(path)
+    if not resolved.exists():
+        print(f"Naming audit log missing at {resolved}.")
+        return False
+
+    existing = resolved.read_text(encoding="utf-8")
+    if existing.strip() == report.strip():
+        return True
+
+    print(
+        f"Naming audit log at {resolved} is outdated. Run "
+        "`python tools/NamingAudit/naming_audit.py --write-log naming_audit.log` "
+        "and commit the refreshed file."
+    )
+    return False
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Audit naming conventions.")
-    parser.parse_args(argv)
-    return audit()
+    parser.add_argument(
+        "--write-log",
+        type=Path,
+        metavar="PATH",
+        help="Write the audit report to the specified path (relative to repo root).",
+    )
+    parser.add_argument(
+        "--verify-log",
+        type=Path,
+        metavar="PATH",
+        help="Verify that the audit report at PATH matches the current results.",
+    )
+    args = parser.parse_args(argv)
+
+    issues = audit()
+    report = render_report(issues)
+
+    exit_code = 0
+    if not issues:
+        print("All inspected files/types follow PascalCase expectations.")
+    else:
+        print("Naming inconsistencies detected (per .editorconfig/C# style):\n")
+        for issue in issues:
+            print(f"- {issue.path}: {issue.message}")
+        print(f"\nTotal issues: {len(issues)}")
+        exit_code = 1
+
+    if args.write_log:
+        write_log(args.write_log, report)
+
+    if args.verify_log:
+        if not verify_log(args.verify_log, report):
+            exit_code = 1
+
+    return exit_code
 
 
 if __name__ == "__main__":
