@@ -327,9 +327,7 @@ error_like(function () tonumber('111', 200) end,
            "^[^:]+:%d+: bad argument #2 to 'tonumber' %(base out of range%)",
            "function tonumber (bad base)")
 
-error_like(function () tonumber('17', 6) end,
-           "^[^:]+:%d+: bad argument #1 to 'tonumber' %(invalid character%)",
-           "function tonumber (bad base)")
+is(tonumber('17', 6), nil, "function tonumber (invalid numeral returns nil per Lua 5.4 §6.1)")
 
 is(tostring('text'), 'text', "function tostring")
 is(tostring(3.14), '3.14')

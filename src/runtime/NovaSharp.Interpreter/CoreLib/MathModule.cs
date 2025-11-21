@@ -5,6 +5,8 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -40,6 +42,78 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             DynValue rr = UserData.Create(new AnonWrapper<Random>(random));
             s.Registry.Set("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM", rr);
+        }
+
+        private static bool TryGetIntegerFromDouble(double number, out long value)
+        {
+            if (double.IsNaN(number) || double.IsInfinity(number))
+            {
+                value = 0;
+                return false;
+            }
+
+            if (number < long.MinValue || number > long.MaxValue)
+            {
+                value = 0;
+                return false;
+            }
+
+            double truncated = Math.Truncate(number);
+
+            if (truncated != number)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = (long)truncated;
+            return true;
+        }
+
+        private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
+        {
+            if (value.Type == DataType.Number)
+            {
+                return TryGetIntegerFromDouble(value.Number, out integer);
+            }
+
+            if (
+                value.Type == DataType.String
+                && double.TryParse(
+                    value.String,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double parsed
+                )
+            )
+            {
+                return TryGetIntegerFromDouble(parsed, out integer);
+            }
+
+            integer = 0;
+            return false;
+        }
+
+        private static long RequireIntegerArgument(
+            CallbackArguments args,
+            int index,
+            string funcName
+        )
+        {
+            DynValue value = args.AsType(index, funcName, DataType.Number, false);
+
+            if (!TryGetIntegerFromDouble(value.Number, out long integer))
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    index,
+                    funcName,
+                    "integer",
+                    value.Type.ToErrorTypeString(),
+                    false
+                );
+            }
+
+            return integer;
         }
 
         public static void NovaSharpInit(Table globalTable, Table ioTable)
@@ -112,6 +186,62 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             return DynValue.NewNumber(accum);
+        }
+
+        [NovaSharpModuleMethod(Name = "type")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            DynValue value = args.AsType(0, "type", DataType.Number, false);
+            return DynValue.NewString(
+                TryGetIntegerFromDouble(value.Number, out _) ? "integer" : "float"
+            );
+        }
+
+        [NovaSharpModuleMethod(Name = "tointeger")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue ToInteger(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            if (args.Count == 0)
+            {
+                throw ScriptRuntimeException.BadArgumentNoValue(0, "tointeger", DataType.Number);
+            }
+
+            DynValue value = args[0];
+
+            if (value.Type != DataType.Number && value.Type != DataType.String)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "tointeger",
+                    DataType.Number,
+                    value.Type,
+                    false
+                );
+            }
+
+            if (TryGetIntegerFromDynValue(value, out long integer))
+            {
+                return DynValue.NewNumber(integer);
+            }
+
+            return DynValue.Nil;
+        }
+
+        [NovaSharpModuleMethod(Name = "ult")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue Ult(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            long left = RequireIntegerArgument(args, 0, "ult");
+            long right = RequireIntegerArgument(args, 1, "ult");
+
+            ulong leftUnsigned = unchecked((ulong)left);
+            ulong rightUnsigned = unchecked((ulong)right);
+
+            return DynValue.NewBoolean(leftUnsigned < rightUnsigned);
         }
 
         [NovaSharpModuleMethod(Name = "abs")]

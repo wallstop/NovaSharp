@@ -313,51 +313,110 @@ namespace NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                //!COMPAT: tonumber supports only 2,8,10 or 16 as base
-                //UPDATE: added support for 3-9 base numbers
-                DynValue ee;
+                DynValue numeral =
+                    args[0].Type != DataType.Number
+                        ? args.AsType(0, "tonumber", DataType.String, false)
+                        : DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
 
-                if (args[0].Type != DataType.Number)
+                double baseValue = b.Number;
+                if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
                 {
-                    ee = args.AsType(0, "tonumber", DataType.String, false);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else
-                {
-                    ee = DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
-                }
-                ;
 
-                int bb = (int)b.Number;
-
-                uint uiv = 0;
-                if (bb == 2 || bb == 8 || bb == 10 || bb == 16)
+                if (Math.Truncate(baseValue) != baseValue)
                 {
-                    uiv = Convert.ToUInt32(ee.String.Trim(), bb);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else if (bb < 10 && bb > 2) // Support for 3, 4, 5, 6, 7 and 9 based numbers
-                {
-                    foreach (char digit in ee.String.Trim())
-                    {
-                        int value = digit - 48;
-                        if (value < 0 || value >= bb)
-                        {
-                            throw new ScriptRuntimeException(
-                                "bad argument #1 to 'tonumber' (invalid character)"
-                            );
-                        }
 
-                        uiv = (uint)(uiv * bb) + (uint)value;
-                    }
-                }
-                else
+                int bb = (int)baseValue;
+
+                if (bb < 2 || bb > 36)
                 {
                     throw new ScriptRuntimeException(
                         "bad argument #2 to 'tonumber' (base out of range)"
                     );
                 }
 
-                return DynValue.NewNumber(uiv);
+                if (TryParseIntegerInBase(numeral.String.Trim(), bb, out double parsedValue))
+                {
+                    return DynValue.NewNumber(parsedValue);
+                }
+
+                return DynValue.Nil;
             }
+        }
+
+        private static bool TryParseIntegerInBase(string text, int numberBase, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string trimmed = text.Trim();
+            int index = 0;
+            bool negative = false;
+
+            if (trimmed[index] == '+' || trimmed[index] == '-')
+            {
+                negative = trimmed[index] == '-';
+                index++;
+            }
+
+            if (index >= trimmed.Length)
+            {
+                return false;
+            }
+
+            double accumulator = 0;
+            for (; index < trimmed.Length; index++)
+            {
+                int digit = GetDigitValue(trimmed[index]);
+
+                if (digit < 0 || digit >= numberBase)
+                {
+                    return false;
+                }
+
+                accumulator = (accumulator * numberBase) + digit;
+            }
+
+            value = negative ? -accumulator : accumulator;
+            return true;
+        }
+
+        private static int GetDigitValue(char candidate)
+        {
+            if (candidate >= '0' && candidate <= '9')
+            {
+                return candidate - '0';
+            }
+
+            if (candidate >= 'A' && candidate <= 'Z')
+            {
+                return candidate - 'A' + 10;
+            }
+
+            if (candidate >= 'a' && candidate <= 'z')
+            {
+                return candidate - 'a' + 10;
+            }
+
+            return -1;
         }
 
         [NovaSharpModuleMethod(Name = "print")]
