@@ -131,6 +131,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue message = args.AsType(0, "error", DataType.String, false);
             DynValue level = args.AsType(1, "error", DataType.Number, true);
 
@@ -241,6 +247,8 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
                 if (args[^1].Type == DataType.Tuple)

@@ -29,6 +29,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return SetErrorHandlerStrategy("pcall", executionContext, args, null);
         }
 
@@ -39,6 +45,12 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue handlerBeforeUnwind
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             DynValue[] a = new DynValue[args.Count - 1];
 
@@ -138,10 +150,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return MakeReturnTuple(true, args);
         }
@@ -151,10 +164,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return MakeReturnTuple(false, args);
         }
@@ -165,6 +179,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             List<DynValue> a = new();
 
             for (int i = 0; i < args.Count; i++)

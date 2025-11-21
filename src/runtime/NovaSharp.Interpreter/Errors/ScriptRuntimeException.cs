@@ -68,6 +68,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers</exception>
         public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r = null)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -99,6 +104,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             string descriptor = value.Type switch
             {
                 DataType.Number => "float",
@@ -122,6 +132,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers or strings</exception>
         public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -150,6 +165,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException LenOnInvalidType(DynValue r)
         {
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to get length of a {0} value",
                 r.Type.ToLuaTypeString()
@@ -224,6 +244,11 @@ namespace NovaSharp.Interpreter.Errors
             bool allowNil
         )
         {
+            if (expected == null)
+            {
+                throw new ArgumentNullException(nameof(expected));
+            }
+
             return new ScriptRuntimeException(
                 "bad argument #{0} to '{1}' (userdata<{2}>{3} expected, got {4})",
                 argNum + 1,
@@ -389,6 +414,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException IndexType(DynValue obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to index a {0} value",
                 obj.Type.ToLuaTypeString()
