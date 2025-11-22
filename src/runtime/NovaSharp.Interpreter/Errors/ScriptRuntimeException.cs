@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Errors
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -530,6 +532,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(object obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException("cannot convert clr type {0}", obj.GetType());
         }
 
@@ -543,10 +550,9 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t)
         {
-            return new ScriptRuntimeException(
-                "cannot convert a {0} to a clr type",
-                t.ToString().ToLowerInvariant()
-            );
+            string luaType = t.ToLuaDebuggerString();
+
+            return new ScriptRuntimeException("cannot convert a {0} to a clr type", luaType);
         }
 
         /// <summary>
@@ -560,9 +566,16 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t, Type t2)
         {
+            if (t2 == null)
+            {
+                throw new ArgumentNullException(nameof(t2));
+            }
+
+            string luaType = t.ToLuaDebuggerString();
+
             return new ScriptRuntimeException(
                 "cannot convert a {0} to a clr type {1}",
-                t.ToString().ToLowerInvariant(),
+                luaType,
                 t2.FullName
             );
         }
@@ -578,9 +591,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException UserDataArgumentTypeMismatch(DataType t, Type clrType)
         {
+            if (clrType == null)
+            {
+                throw new ArgumentNullException(nameof(clrType));
+            }
+
             return new ScriptRuntimeException(
                 "cannot find a conversion from a NovaSharp {0} to a clr {1}",
-                t.ToString().ToLowerInvariant(),
+                t.ToLuaDebuggerString(),
                 clrType.FullName
             );
         }
@@ -635,9 +653,40 @@ namespace NovaSharp.Interpreter.Errors
                 ),
                 _ => new ScriptRuntimeException(
                     "cannot close coroutine in state {0}",
-                    state.ToString().ToLowerInvariant()
+                    GetCoroutineStateName(state)
                 ),
             };
+        }
+
+        private static readonly IReadOnlyDictionary<
+            CoroutineState,
+            string
+        > KnownCoroutineStateNames = new Dictionary<CoroutineState, string>()
+        {
+            { CoroutineState.Main, "main" },
+            { CoroutineState.NotStarted, "notstarted" },
+            { CoroutineState.Suspended, "suspended" },
+            { CoroutineState.ForceSuspended, "forcesuspended" },
+            { CoroutineState.Running, "running" },
+            { CoroutineState.Dead, "dead" },
+        };
+
+        private static readonly ConcurrentDictionary<
+            CoroutineState,
+            string
+        > CoroutineStateNameCache = new();
+
+        private static string GetCoroutineStateName(CoroutineState state)
+        {
+            if (KnownCoroutineStateNames.TryGetValue(state, out string known))
+            {
+                return known;
+            }
+
+            return CoroutineStateNameCache.GetOrAdd(
+                state,
+                static s => s.ToString().ToLowerInvariant()
+            );
         }
 
         /// <summary>

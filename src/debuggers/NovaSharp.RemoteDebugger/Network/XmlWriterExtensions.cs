@@ -1,5 +1,6 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System;
     using System.Xml;
 
     internal static class XmlWriterExtensions
@@ -89,7 +90,7 @@ namespace NovaSharp.RemoteDebugger.Network
             params object[] args
         )
         {
-            xw.WriteAttributeString(name, string.Format(format, args));
+            xw.WriteAttributeString(name, FormatString(format, args));
             return xw;
         }
 
@@ -100,7 +101,7 @@ namespace NovaSharp.RemoteDebugger.Network
             params object[] args
         )
         {
-            xw.WriteElementString(name, string.Format(format, args));
+            xw.WriteElementString(name, FormatString(format, args));
             return xw;
         }
 
@@ -112,15 +113,30 @@ namespace NovaSharp.RemoteDebugger.Network
         )
         {
             xw.WriteStartElement(name);
-            xw.WriteCData(string.Format(format, args));
+            xw.WriteCData(FormatString(format, args));
             xw.WriteEndElement();
             return xw;
         }
 
         public static XmlWriter Comment(this XmlWriter xw, string format, params object[] args)
         {
-            xw.WriteComment(string.Format(format, args));
+            xw.WriteComment(FormatString(format, args));
             return xw;
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

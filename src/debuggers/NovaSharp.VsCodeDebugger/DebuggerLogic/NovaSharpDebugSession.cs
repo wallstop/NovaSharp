@@ -554,7 +554,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void SendText(string msg, params object[] args)
         {
-            msg = string.Format(msg, args);
+            msg = FormatString(msg, args);
             // SendEvent(new OutputEvent("console", DateTime.Now.ToString("u") + ": " + msg + "\n"));
             SendEvent(new OutputEvent("console", msg + "\n"));
         }
@@ -569,6 +569,21 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendText("Debug session has been closed by the hosting process.");
             SendText("Bye.");
             SendEvent(new TerminatedEvent());
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

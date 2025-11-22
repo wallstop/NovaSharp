@@ -44,7 +44,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         }
 
         private readonly List<IOverloadableMemberDescriptor> _overloads = new();
-        private List<IOverloadableMemberDescriptor> _extOverloads = new();
+        private IReadOnlyList<IOverloadableMemberDescriptor> _extOverloads =
+            Array.Empty<IOverloadableMemberDescriptor>();
         private bool _unsorted = true;
         private OverloadCacheItem[] _cache = new OverloadCacheItem[CacheSize];
         private int _cacheHits;
@@ -103,7 +104,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="extMethods">The ext methods.</param>
         internal void SetExtensionMethodsSnapshot(
             int version,
-            List<IOverloadableMemberDescriptor> extMethods
+            IReadOnlyList<IOverloadableMemberDescriptor> extMethods
         )
         {
             _extOverloads = extMethods;

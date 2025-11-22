@@ -110,10 +110,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.RegisterExtensionType(typeof(CustomDescriptorHostExtensions));
             int updatedVersion = UserData.GetExtensionMethodsChangeVersion();
 
-            List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
-                nameof(CustomDescriptorHostExtensions.Decorate),
-                typeof(CustomDescriptorHost)
-            );
+            IReadOnlyList<IOverloadableMemberDescriptor> methods =
+                UserData.GetExtensionMethodsByNameAndType(
+                    nameof(CustomDescriptorHostExtensions.Decorate),
+                    typeof(CustomDescriptorHost)
+                );
 
             Assert.Multiple(() =>
             {

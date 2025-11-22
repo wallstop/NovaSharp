@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -38,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string MethodV(string fmt, params object[] args)
             {
-                return "varargs:" + string.Format(fmt, args);
+                return "varargs:" + FormatUnchecked(fmt, args);
             }
 
             public string MethodV(string fmt, int a, bool b)
@@ -229,6 +230,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             RunTestOverload("o:method1(5)", "3");
             RunTestOverload("o:method1(5, 5, 0)", "5");
             RunTestOverload("s:method1(true)", "s");
+        }
+
+        private static string FormatUnchecked(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Errors
         /// <param name="format">The format.</param>
         /// <param name="args">The arguments.</param>
         protected InterpreterException(string format, params object[] args)
-            : base(string.Format(CultureInfo.InvariantCulture, format, args)) { }
+            : base(FormatInvariant(format, args)) { }
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
         /// <summary>
@@ -120,6 +120,21 @@ namespace NovaSharp.Interpreter.Errors
 
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
             DecoratedMessage = $"{DecoratedMessage} [compatibility: {profile.DisplayName}]";
+        }
+
+        private static string FormatInvariant(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

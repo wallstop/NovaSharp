@@ -1,5 +1,7 @@
 namespace NovaSharp.RemoteDebugger
 {
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -28,6 +30,14 @@ namespace NovaSharp.RemoteDebugger
         private readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
         private bool _freeRunAfterAttach;
         private Regex _errorRegEx = new(@"\A.*\Z");
+        private static readonly IReadOnlyDictionary<WatchType, string> WatchElementNames =
+            new Dictionary<WatchType, string>()
+            {
+                { WatchType.CallStack, "callstack" },
+                { WatchType.Watches, "watches" },
+            };
+        private static readonly ConcurrentDictionary<WatchType, string> WatchElementNameCache =
+            new();
 
         public DebugServer(
             string appName,
@@ -167,7 +177,7 @@ namespace NovaSharp.RemoteDebugger
 
                 Send(xw =>
                 {
-                    using (xw.Element(watchType.ToString().ToLowerInvariant()))
+                    using (xw.Element(GetWatchElementName(watchType)))
                     {
                         foreach (WatchItem wi in items)
                         {
@@ -535,6 +545,19 @@ namespace NovaSharp.RemoteDebugger
         public DebuggerCaps GetDebuggerCaps()
         {
             return DebuggerCaps.CanDebugSourceCode;
+        }
+
+        private static string GetWatchElementName(WatchType watchType)
+        {
+            if (WatchElementNames.TryGetValue(watchType, out string known))
+            {
+                return known;
+            }
+
+            return WatchElementNameCache.GetOrAdd(
+                watchType,
+                static wt => wt.ToString().ToLowerInvariant()
+            );
         }
     }
 }

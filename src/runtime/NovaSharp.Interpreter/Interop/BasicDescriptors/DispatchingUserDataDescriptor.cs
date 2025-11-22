@@ -317,10 +317,8 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <exception cref="System.NotImplementedException"></exception>
         private DynValue TryIndexOnExtMethod(Script script, object obj, string indexName)
         {
-            List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
-                indexName,
-                Type
-            );
+            IReadOnlyList<IOverloadableMemberDescriptor> methods =
+                UserData.GetExtensionMethodsByNameAndType(indexName, Type);
 
             if (methods != null && methods.Count > 0)
             {

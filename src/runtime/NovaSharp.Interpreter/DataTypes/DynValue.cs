@@ -178,6 +178,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(StringBuilder sb)
         {
+            if (sb == null)
+            {
+                throw new ArgumentNullException(nameof(sb));
+            }
+
             return new DynValue() { _object = sb.ToString(), _type = DataType.String };
         }
 
@@ -186,11 +191,19 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(string format, params object[] args)
         {
-            return new DynValue()
+            if (format == null)
             {
-                _object = string.Format(format, args),
-                _type = DataType.String,
-            };
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            object[] formatArgs = args ?? Array.Empty<object>();
+
+            string formattedValue =
+                formatArgs.Length == 0
+                    ? format
+                    : string.Format(CultureInfo.InvariantCulture, format, formatArgs);
+
+            return new DynValue() { _object = formattedValue, _type = DataType.String };
         }
 
         /// <summary>
@@ -336,6 +349,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(params DynValue[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             if (values.Length == 0)
             {
                 return NewNil();
@@ -354,6 +372,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(params DynValue[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             if (!values.Any(v => v.Type == DataType.Tuple))
             {
                 return NewTuple(values);

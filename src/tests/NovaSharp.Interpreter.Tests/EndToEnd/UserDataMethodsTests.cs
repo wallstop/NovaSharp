@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return string.Format(s, args);
+                return FormatUnchecked(s, args);
             }
 
             public StringBuilder ConcatI(
@@ -309,7 +309,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return string.Format(s, args);
+                return FormatUnchecked(s, args);
             }
 
             public StringBuilder ConcatI(
@@ -1228,6 +1228,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 Assert.That(ex.Message.Contains("attempt to access instance member"), Is.True);
             }
+        }
+
+        private static string FormatUnchecked(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

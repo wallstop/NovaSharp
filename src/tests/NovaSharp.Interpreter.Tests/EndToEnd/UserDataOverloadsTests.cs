@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -44,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             public string MethodV(string fmt, params object[] args)
             {
-                return "varargs:" + string.Format(fmt, args);
+                return "varargs:" + FormatUnchecked(fmt, args);
             }
 
             public string MethodV(string fmt, int a, bool b)
@@ -291,6 +292,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         private int Method1(int a)
         {
             return 5 + a;
+        }
+
+        private static string FormatUnchecked(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
 
 #if !DOTNET_CORE

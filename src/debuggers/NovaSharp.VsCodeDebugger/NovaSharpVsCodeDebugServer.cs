@@ -356,8 +356,7 @@ namespace NovaSharp.VsCodeDebugger
 
             if (logger != null)
             {
-                string msg = string.Format(format, args);
-                logger(msg);
+                logger(FormatString(format, args));
             }
         }
 
@@ -372,6 +371,21 @@ namespace NovaSharp.VsCodeDebugger
                 Name = name,
             }.Start();
 #endif
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

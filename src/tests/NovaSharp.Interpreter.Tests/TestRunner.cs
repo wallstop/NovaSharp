@@ -160,7 +160,7 @@ namespace NovaSharp.Interpreter.Tests
                 new TestResult()
                 {
                     Type = TestResultType.Message,
-                    Message = string.Format(message, args),
+                    Message = FormatString(message, args),
                 }
             );
         }
@@ -266,6 +266,21 @@ namespace NovaSharp.Interpreter.Tests
             {
                 throw new SkipThisTestException();
             }
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }
