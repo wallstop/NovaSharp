@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -190,11 +189,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
-            FieldInfo scriptField = typeof(ReplInterpreter).GetField(
-                "_script",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            )!;
-            scriptField.SetValue(interpreter, null);
+            ReplInterpreter.TestHooks.SetScript(interpreter, null);
 
             Assert.Throws<NullReferenceException>(() => interpreter.Evaluate("return 5"));
             Assert.That(interpreter.HasPendingCommand, Is.False);

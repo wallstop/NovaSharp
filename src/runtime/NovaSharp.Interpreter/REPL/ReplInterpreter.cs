@@ -135,5 +135,13 @@ namespace NovaSharp.Interpreter.REPL
                 throw;
             }
         }
+
+        internal static class TestHooks
+        {
+            public static void SetScript(ReplInterpreter interpreter, Script script)
+            {
+                interpreter._script = script;
+            }
+        }
     }
 }

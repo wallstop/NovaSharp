@@ -165,10 +165,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     object instance = Activator.CreateInstance(
                         textAssetType,
-                        BindingFlags.Public | BindingFlags.Instance,
-                        binder: null,
-                        args: new object[] { script.Key, script.Value },
-                        culture: null
+                        script.Key,
+                        script.Value
                     );
 
                     array.SetValue(instance, index++);
@@ -284,8 +282,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 MethodInfo helper = typeof(UnityEngineReflectionHarness).GetMethod(
-                    nameof(BuildAssetArray),
-                    BindingFlags.Public | BindingFlags.Static
+                    nameof(BuildAssetArray)
                 );
                 il.Emit(OpCodes.Call, helper);
                 il.Emit(OpCodes.Ret);
