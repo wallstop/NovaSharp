@@ -3,6 +3,7 @@ namespace NovaSharp.Cli.Commands.Implementations
     using System;
     using System.IO;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
 
@@ -43,11 +44,13 @@ namespace NovaSharp.Cli.Commands.Implementations
 
                 if (!manifestApplied)
                 {
+                    LogCompatibilitySummary(resolvedPath, context.Script);
                     context.Script.DoFile(arguments);
                     return;
                 }
 
                 Script script = new(CoreModules.PresetComplete, options);
+                LogCompatibilitySummary(resolvedPath, script);
                 script.DoFile(resolvedPath);
             }
         }
@@ -67,6 +70,14 @@ namespace NovaSharp.Cli.Commands.Implementations
             {
                 return path;
             }
+        }
+
+        private static void LogCompatibilitySummary(string scriptPath, Script script)
+        {
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            Console.WriteLine(
+                $"[compatibility] Running '{scriptPath}' with {profile.GetFeatureSummary()}"
+            );
         }
     }
 }

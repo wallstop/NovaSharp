@@ -5,6 +5,7 @@ namespace NovaSharp.Cli
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modding;
@@ -30,7 +31,7 @@ namespace NovaSharp.Cli
                 return;
             }
 
-            Banner();
+            Banner(script);
 
             ReplInterpreter interpreter = new(script)
             {
@@ -90,10 +91,15 @@ namespace NovaSharp.Cli
             }
         }
 
-        private static void Banner()
+        private static void Banner(Script script)
         {
             Console.WriteLine(Script.GetBanner("Console"));
             Console.WriteLine();
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            Console.WriteLine($"[compatibility] Active profile: {profile.GetFeatureSummary()}");
+            Console.WriteLine(
+                "[compatibility] Use Script.Options.CompatibilityVersion or set luaCompatibility in mod.json to change it."
+            );
             Console.WriteLine(
                 "Type Lua code to execute it or type !help to see help on commands.\n"
             );
@@ -210,6 +216,9 @@ namespace NovaSharp.Cli
             );
 
             Script script = new(CoreModules.PresetComplete, options);
+            Console.WriteLine(
+                $"[compatibility] Running '{resolvedScriptPath}' with {script.CompatibilityProfile.GetFeatureSummary()}"
+            );
             script.DoFile(resolvedScriptPath);
             return true;
         }

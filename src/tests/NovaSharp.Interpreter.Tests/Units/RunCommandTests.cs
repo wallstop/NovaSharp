@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
@@ -80,6 +81,30 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ExecuteWithoutManifestLogsCompatibilitySummary()
+        {
+            RecordingScriptLoader loader = new();
+            Script script = new()
+            {
+                Options =
+                {
+                    ScriptLoader = loader,
+                    CompatibilityVersion = LuaCompatibilityVersion.Lua54,
+                },
+            };
+
+            RunCommand command = new();
+            ShellContext context = new(script);
+
+            command.Execute(context, "sample.lua");
+
+            Assert.That(
+                _writer.ToString(),
+                Does.Contain("[compatibility] Running").And.Contain("Lua 5.4")
+            );
+        }
+
+        [Test]
         public void ExecuteWithManifestRunsScriptInCompatibilityInstance()
         {
             string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
@@ -113,6 +138,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Assert.That(
                         _writer.ToString(),
                         Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                            .And.Contain("Lua 5.3")
+                            .And.Contain("[compatibility] Running")
                     );
                     Assert.That(script.Globals.Get("contextFlag").IsNil());
                 });

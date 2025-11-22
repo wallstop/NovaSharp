@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
@@ -23,6 +24,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "InterpreterLoop",
                 BindingFlags.NonPublic | BindingFlags.Static
             ) ?? throw new InvalidOperationException("InterpreterLoop method not found.");
+        private static readonly MethodInfo BannerMethod =
+            typeof(Program).GetMethod("Banner", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("Banner method not found.");
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -164,6 +168,48 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Assert.That(
                         writer.ToString(),
                         Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                    );
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
+        }
+
+        [Test]
+        public void CheckArgsRunScriptLogsCompatibilitySummary()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(scriptPath, "return 0");
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua52\"\n"
+                    + "}"
+            );
+
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            try
+            {
+                bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(handled, Is.True);
+                    Assert.That(
+                        writer.ToString(),
+                        Does.Contain("[compatibility] Running").And.Contain("Lua 5.2")
                     );
                 });
             }
@@ -351,6 +397,22 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(interpreter.EvaluateCalled, Is.True);
                 Assert.That(output, Does.Contain("broken"));
             });
+        }
+
+        [Test]
+        public void BannerPrintsCompatibilitySummary()
+        {
+            using StringWriter writer = new();
+            Console.SetOut(writer);
+
+            Script script = new(CoreModules.PresetDefault);
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+
+            BannerMethod.Invoke(null, new object[] { script });
+
+            string output = writer.ToString();
+
+            Assert.That(output, Does.Contain("[compatibility] Active profile: Lua 5.3"));
         }
 
         private static ShellContext NewShellContext()
