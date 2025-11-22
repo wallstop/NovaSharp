@@ -152,5 +152,117 @@ namespace NovaSharp.Interpreter.Platforms
 #endif
             }
         }
+
+        internal sealed class PlatformDetectorSnapshot
+        {
+            internal PlatformDetectorSnapshot(
+                bool isRunningOnMono,
+                bool isRunningOnClr4,
+                bool isRunningOnUnity,
+                bool isPortableFramework,
+                bool isUnityNative,
+                bool isUnityIl2Cpp,
+                bool? runningOnAotCache,
+                bool autoDetectionsDone
+            )
+            {
+                IsRunningOnMono = isRunningOnMono;
+                IsRunningOnClr4 = isRunningOnClr4;
+                IsRunningOnUnity = isRunningOnUnity;
+                IsPortableFramework = isPortableFramework;
+                IsUnityNative = isUnityNative;
+                IsUnityIl2Cpp = isUnityIl2Cpp;
+                RunningOnAotCache = runningOnAotCache;
+                AutoDetectionsDone = autoDetectionsDone;
+            }
+
+            internal bool IsRunningOnMono { get; }
+            internal bool IsRunningOnClr4 { get; }
+            internal bool IsRunningOnUnity { get; }
+            internal bool IsPortableFramework { get; }
+            internal bool IsUnityNative { get; }
+            internal bool IsUnityIl2Cpp { get; }
+            internal bool? RunningOnAotCache { get; }
+            internal bool AutoDetectionsDone { get; }
+        }
+
+        internal static class TestHooks
+        {
+            public static PlatformDetectorSnapshot CaptureState()
+            {
+                return new PlatformDetectorSnapshot(
+                    IsRunningOnMono,
+                    IsRunningOnClr4,
+                    IsRunningOnUnity,
+                    IsPortableFramework,
+                    IsUnityNative,
+                    IsUnityIl2Cpp,
+                    RunningOnAotCache,
+                    AutoDetectionsDone
+                );
+            }
+
+            public static void RestoreState(PlatformDetectorSnapshot snapshot)
+            {
+                IsRunningOnMono = snapshot.IsRunningOnMono;
+                IsRunningOnClr4 = snapshot.IsRunningOnClr4;
+                IsRunningOnUnity = snapshot.IsRunningOnUnity;
+                IsPortableFramework = snapshot.IsPortableFramework;
+                IsUnityNative = snapshot.IsUnityNative;
+                IsUnityIl2Cpp = snapshot.IsUnityIl2Cpp;
+                RunningOnAotCache = snapshot.RunningOnAotCache;
+                AutoDetectionsDone = snapshot.AutoDetectionsDone;
+            }
+
+            public static void SetFlags(
+                bool? isRunningOnMono = null,
+                bool? isRunningOnClr4 = null,
+                bool? isRunningOnUnity = null,
+                bool? isPortableFramework = null,
+                bool? isUnityNative = null,
+                bool? isUnityIl2Cpp = null
+            )
+            {
+                if (isRunningOnMono.HasValue)
+                {
+                    IsRunningOnMono = isRunningOnMono.Value;
+                }
+
+                if (isRunningOnClr4.HasValue)
+                {
+                    IsRunningOnClr4 = isRunningOnClr4.Value;
+                }
+
+                if (isRunningOnUnity.HasValue)
+                {
+                    IsRunningOnUnity = isRunningOnUnity.Value;
+                }
+
+                if (isPortableFramework.HasValue)
+                {
+                    IsPortableFramework = isPortableFramework.Value;
+                }
+
+                if (isUnityNative.HasValue)
+                {
+                    IsUnityNative = isUnityNative.Value;
+                }
+
+                if (isUnityIl2Cpp.HasValue)
+                {
+                    IsUnityIl2Cpp = isUnityIl2Cpp.Value;
+                }
+            }
+
+            public static void SetRunningOnAot(bool? value)
+            {
+                RunningOnAotCache = value;
+            }
+
+            public static void SetAutoDetectionsDone(bool value)
+            {
+                AutoDetectionsDone = value;
+            }
+        }
     }
 }

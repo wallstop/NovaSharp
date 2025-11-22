@@ -147,5 +147,18 @@ namespace NovaSharp.Interpreter.Diagnostics
                 }
             }
         }
+
+        internal static class TestHooks
+        {
+            public static void ResetGlobalStopwatches()
+            {
+                lock (GlobalSyncRoot)
+                {
+                    GlobalStopwatches = new IPerformanceStopwatch[
+                        (int)PerformanceCounter.LastValue
+                    ];
+                }
+            }
+        }
     }
 }

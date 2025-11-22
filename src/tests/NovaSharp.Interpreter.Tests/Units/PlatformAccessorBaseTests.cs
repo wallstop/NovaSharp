@@ -1,9 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
@@ -314,31 +312,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class PlatformFlagScope : IDisposable
         {
-            private static readonly Dictionary<string, PropertyInfo> Properties = new()
-            {
-                { "Unity", GetProperty("IsRunningOnUnity") },
-                { "UnityNative", GetProperty("IsUnityNative") },
-                { "Mono", GetProperty("IsRunningOnMono") },
-                { "Portable", GetProperty("IsPortableFramework") },
-                { "Clr4", GetProperty("IsRunningOnClr4") },
-            };
-
-            private readonly Dictionary<string, object> _originalValues = new();
-            private readonly bool? _originalAot;
-            private readonly bool _originalAutoDetectionsDone;
+            private readonly PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;
 
             private PlatformFlagScope()
             {
-                foreach ((string key, PropertyInfo property) in Properties)
-                {
-                    _originalValues[key] = property.GetValue(null, null);
-                }
-
-                FieldInfo aotField = GetField("RunningOnAotCache");
-                _originalAot = (bool?)aotField.GetValue(null);
-
-                FieldInfo autoField = GetField("AutoDetectionsDone");
-                _originalAutoDetectionsDone = (bool)autoField.GetValue(null);
+                _snapshot = PlatformAutoDetector.TestHooks.CaptureState();
             }
 
             public static PlatformFlagScope Override(
@@ -351,61 +329,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 PlatformFlagScope scope = new();
-
-                scope.SetProperty(Properties["Unity"], unity);
-                scope.SetProperty(Properties["UnityNative"], unityNative);
-                scope.SetProperty(Properties["Mono"], mono);
-                scope.SetProperty(Properties["Portable"], portable);
-                scope.SetProperty(Properties["Clr4"], clr4);
-
-                FieldInfo aotField = GetField("RunningOnAotCache");
-                aotField.SetValue(null, aot ? (bool?)true : (bool?)false);
-
-                FieldInfo autoField = GetField("AutoDetectionsDone");
-                autoField.SetValue(null, true);
-
+                PlatformAutoDetector.TestHooks.SetFlags(
+                    isRunningOnUnity: unity,
+                    isUnityNative: unityNative,
+                    isRunningOnMono: mono,
+                    isPortableFramework: portable,
+                    isRunningOnClr4: clr4
+                );
+                PlatformAutoDetector.TestHooks.SetRunningOnAot(aot);
+                PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
                 return scope;
             }
 
             public void Dispose()
             {
-                foreach ((string key, object value) in _originalValues)
-                {
-                    SetProperty(Properties[key], value);
-                }
-
-                FieldInfo aotField = GetField("RunningOnAotCache");
-                aotField.SetValue(null, _originalAot);
-
-                FieldInfo autoField = GetField("AutoDetectionsDone");
-                autoField.SetValue(null, _originalAutoDetectionsDone);
-            }
-
-            private static PropertyInfo GetProperty(string name)
-            {
-                return typeof(PlatformAutoDetector).GetProperty(
-                    name,
-                    BindingFlags.Static | BindingFlags.Public
-                );
-            }
-
-            private static FieldInfo GetField(string name)
-            {
-                return typeof(PlatformAutoDetector).GetField(
-                    name,
-                    BindingFlags.Static | BindingFlags.NonPublic
-                );
-            }
-
-            private static MethodInfo GetSetter(PropertyInfo property)
-            {
-                return property.GetSetMethod(true);
-            }
-
-            private void SetProperty(PropertyInfo property, object value)
-            {
-                MethodInfo setter = GetSetter(property);
-                setter.Invoke(null, new[] { value });
+                PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
             }
         }
     }

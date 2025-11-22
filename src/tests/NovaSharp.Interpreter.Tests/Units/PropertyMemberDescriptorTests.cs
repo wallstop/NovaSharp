@@ -20,10 +20,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleReturnsDescriptorForPublicProperty()
         {
-            PropertyInfo property = GetProperty(
-                nameof(SampleProperties.StaticValue),
-                BindingFlags.Static | BindingFlags.Public
-            );
+            PropertyInfo property = SamplePropertiesMetadata.StaticValue;
 
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 property,
@@ -43,10 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleRespectsHiddenAttribute()
         {
-            PropertyInfo property = GetProperty(
-                nameof(SampleProperties.HiddenProperty),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            PropertyInfo property = SamplePropertiesMetadata.HiddenProperty;
 
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 property,
@@ -59,10 +53,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleHonorsAccessorVisibilityOverrides()
         {
-            PropertyInfo property = GetProperty(
-                nameof(SampleProperties.HiddenSetter),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            PropertyInfo property = SamplePropertiesMetadata.HiddenSetter;
 
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 property,
@@ -80,10 +71,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleAllowsNonPublicPropertyMarkedVisible()
         {
-            PropertyInfo property = GetProperty(
-                "PrivateButVisible",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            );
+            PropertyInfo property = SamplePropertiesMetadata.PrivateButVisible;
 
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 property,
@@ -102,24 +90,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void MemberAccessReflectsAvailableAccessors()
         {
             PropertyMemberDescriptor readWrite = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             PropertyMemberDescriptor readOnly = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(
-                    nameof(SampleProperties.GetterOnly),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.GetterOnly,
                 InteropAccessMode.Reflection
             );
             PropertyMemberDescriptor writeOnly = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(
-                    nameof(SampleProperties.SetterOnly),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.SetterOnly,
                 InteropAccessMode.Reflection
             );
 
@@ -137,10 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorThrowsWhenBothAccessorsMissing()
         {
-            PropertyInfo property = GetProperty(
-                nameof(SampleProperties.InstanceValue),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            PropertyInfo property = SamplePropertiesMetadata.InstanceValue;
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 new PropertyMemberDescriptor(property, InteropAccessMode.Reflection, null, null)
@@ -157,10 +133,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
                 PropertyMemberDescriptor descriptor = new(
-                    GetProperty(
-                        nameof(SampleProperties.InstanceValue),
-                        BindingFlags.Instance | BindingFlags.Public
-                    ),
+                    SamplePropertiesMetadata.InstanceValue,
                     InteropAccessMode.Preoptimized
                 );
 
@@ -176,10 +149,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueReturnsInstanceValueWithLazyOptimization()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.LazyOptimized
             );
             SampleProperties instance = new() { InstanceValue = 42 };
@@ -194,10 +164,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueThrowsWhenGetterMissing()
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(
-                    nameof(SampleProperties.SetterOnly),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.SetterOnly,
                 InteropAccessMode.Reflection
             );
 
@@ -212,10 +179,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueThrowsWhenInstanceMissing()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -230,10 +194,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueUpdatesInstancePropertyAndConvertsNumbers()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             SampleProperties instance = new();
@@ -247,10 +208,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsWhenSetterMissing()
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(
-                    nameof(SampleProperties.GetterOnly),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.GetterOnly,
                 InteropAccessMode.Reflection
             );
 
@@ -265,10 +223,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsOnTypeMismatch()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -283,10 +238,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueConvertsDoubleToPropertyType()
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
-                GetProperty(
-                    nameof(SampleProperties.ShortValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.ShortValue,
                 InteropAccessMode.Reflection
             );
 
@@ -300,10 +252,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueWrapsArgumentExceptionFromOptimizedSetter()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             OverrideOptimizedSetter(
@@ -322,10 +271,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueWrapsInvalidCastExceptionFromOptimizedSetter()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             OverrideOptimizedSetter(
@@ -344,10 +290,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsWhenInstanceMissing()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -363,10 +306,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleProperties.LazyStatic = 0;
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.LazyStatic),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.LazyStatic,
                 InteropAccessMode.LazyOptimized
             );
 
@@ -380,10 +320,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OptimizePrecompilesGetterAndSetter()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.LazyOptimized
             );
             SampleProperties instance = new() { InstanceValue = 12 };
@@ -399,10 +336,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PrepareForWiringPopulatesMetadataTable()
         {
             PropertyMemberDescriptor descriptor = new(
-                GetProperty(
-                    nameof(SampleProperties.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             Table metadata = new(_script);
@@ -422,21 +356,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        private static PropertyInfo GetProperty(string name, BindingFlags flags)
-        {
-            return typeof(SampleProperties).GetProperty(name, flags);
-        }
-
         private static void OverrideOptimizedSetter(
             PropertyMemberDescriptor descriptor,
             Action<object, object> setter
         )
         {
-            FieldInfo optimizedSetterField = typeof(PropertyMemberDescriptor).GetField(
-                "_optimizedSetter",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            );
-            optimizedSetterField.SetValue(descriptor, setter);
+            PropertyMemberDescriptor.TestHooks.SetOptimizedSetter(descriptor, setter);
         }
 
         private sealed class SampleProperties
@@ -472,6 +397,46 @@ namespace NovaSharp.Interpreter.Tests.Units
             private int PrivateButVisible { get; set; } = 6;
 
             private int _hiddenSetterBacking = 5;
+        }
+
+        internal static class SamplePropertiesMetadata
+        {
+            private const BindingFlags InstancePublic = BindingFlags.Instance | BindingFlags.Public;
+            private const BindingFlags StaticPublic = BindingFlags.Static | BindingFlags.Public;
+            private const BindingFlags InstanceNonPublic =
+                BindingFlags.Instance | BindingFlags.NonPublic;
+
+            internal static PropertyInfo StaticValue { get; } =
+                Get(nameof(SampleProperties.StaticValue), StaticPublic);
+
+            internal static PropertyInfo LazyStatic { get; } =
+                Get(nameof(SampleProperties.LazyStatic), StaticPublic);
+
+            internal static PropertyInfo InstanceValue { get; } =
+                Get(nameof(SampleProperties.InstanceValue), InstancePublic);
+
+            internal static PropertyInfo SetterOnly { get; } =
+                Get(nameof(SampleProperties.SetterOnly), InstancePublic);
+
+            internal static PropertyInfo GetterOnly { get; } =
+                Get(nameof(SampleProperties.GetterOnly), InstancePublic);
+
+            internal static PropertyInfo ShortValue { get; } =
+                Get(nameof(SampleProperties.ShortValue), InstancePublic);
+
+            internal static PropertyInfo HiddenProperty { get; } =
+                Get(nameof(SampleProperties.HiddenProperty), InstancePublic);
+
+            internal static PropertyInfo HiddenSetter { get; } =
+                Get(nameof(SampleProperties.HiddenSetter), InstancePublic);
+
+            internal static PropertyInfo PrivateButVisible { get; } =
+                Get("PrivateButVisible", InstanceNonPublic);
+
+            private static PropertyInfo Get(string name, BindingFlags flags)
+            {
+                return typeof(SampleProperties).GetProperty(name, flags)!;
+            }
         }
     }
 }

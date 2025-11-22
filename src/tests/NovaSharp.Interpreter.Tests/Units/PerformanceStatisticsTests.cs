@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Reflection;
     using NovaSharp.Interpreter.Diagnostics;
     using NovaSharp.Interpreter.Diagnostics.PerformanceCounters;
     using NovaSharp.Interpreter.Infrastructure;
@@ -16,14 +15,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ResetGlobalState()
         {
             PerformanceStatistics.GlobalClock = SystemHighResolutionClock.Instance;
-            FieldInfo globalField = typeof(PerformanceStatistics).GetField(
-                "GlobalStopwatches",
-                BindingFlags.NonPublic | BindingFlags.Static
-            );
-            globalField.SetValue(
-                null,
-                new IPerformanceStopwatch[(int)PerformanceCounter.LastValue]
-            );
+            PerformanceStatistics.TestHooks.ResetGlobalStopwatches();
         }
 
         [Test]

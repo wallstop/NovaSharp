@@ -50,40 +50,24 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class PlatformDetectorScope : IDisposable
         {
-            private static readonly string[] FlagPropertyNames =
-            {
-                "IsRunningOnUnity",
-                "IsUnityNative",
-                "IsRunningOnMono",
-                "IsPortableFramework",
-                "IsRunningOnClr4",
-                "IsUnityIl2Cpp",
-            };
-
-            private readonly Dictionary<PropertyInfo, object> _originalFlags = new();
-            private readonly bool? _originalAot;
-            private readonly bool _originalAutoDetectionsDone;
+            private readonly PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;
 
             private PlatformDetectorScope()
             {
-                foreach (string name in FlagPropertyNames)
-                {
-                    PropertyInfo property = GetProperty(name);
-                    _originalFlags[property] = property.GetValue(null, null)!;
-                }
-
-                _originalAot = (bool?)GetField("RunningOnAotCache").GetValue(null);
-                _originalAutoDetectionsDone = (bool)GetField("AutoDetectionsDone").GetValue(null);
+                _snapshot = PlatformAutoDetector.TestHooks.CaptureState();
             }
 
             public static PlatformDetectorScope ResetForDetection()
             {
                 PlatformDetectorScope scope = new();
-                foreach (PropertyInfo property in scope._originalFlags.Keys)
-                {
-                    property.SetValue(null, false);
-                }
-
+                PlatformAutoDetector.TestHooks.SetFlags(
+                    isRunningOnUnity: false,
+                    isUnityNative: false,
+                    isRunningOnMono: false,
+                    isPortableFramework: false,
+                    isRunningOnClr4: false,
+                    isUnityIl2Cpp: false
+                );
                 SetAotValue(null);
                 SetAutoDetectionsDone(false);
                 return scope;
@@ -92,46 +76,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static PlatformDetectorScope OverrideFlags(bool unity)
             {
                 PlatformDetectorScope scope = ResetForDetection();
-                GetProperty("IsRunningOnUnity").SetValue(null, unity);
+                PlatformAutoDetector.TestHooks.SetFlags(isRunningOnUnity: unity);
                 SetAutoDetectionsDone(true);
                 return scope;
             }
 
             public static void SetAotValue(bool? value)
             {
-                GetField("RunningOnAotCache").SetValue(null, value);
+                PlatformAutoDetector.TestHooks.SetRunningOnAot(value);
             }
 
             public void Dispose()
             {
-                foreach ((PropertyInfo property, object value) in _originalFlags)
-                {
-                    property.SetValue(null, value);
-                }
-
-                SetAotValue(_originalAot);
-                SetAutoDetectionsDone(_originalAutoDetectionsDone);
+                PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
             }
 
             private static void SetAutoDetectionsDone(bool value)
             {
-                GetField("AutoDetectionsDone").SetValue(null, value);
-            }
-
-            private static PropertyInfo GetProperty(string name)
-            {
-                return typeof(PlatformAutoDetector).GetProperty(
-                    name,
-                    BindingFlags.Public | BindingFlags.Static
-                )!;
-            }
-
-            private static FieldInfo GetField(string name)
-            {
-                return typeof(PlatformAutoDetector).GetField(
-                    name,
-                    BindingFlags.NonPublic | BindingFlags.Static
-                )!;
+                PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(value);
             }
         }
 

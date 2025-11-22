@@ -439,5 +439,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             );
             t.Set("type", DynValue.NewString(PropertyInfo.PropertyType.FullName));
         }
+
+        internal static class TestHooks
+        {
+            public static void SetOptimizedSetter(
+                PropertyMemberDescriptor descriptor,
+                Action<object, object> setter
+            )
+            {
+                descriptor._optimizedSetter = setter;
+            }
+        }
     }
 }
