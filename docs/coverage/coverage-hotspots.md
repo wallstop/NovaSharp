@@ -1,18 +1,21 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-21 16:39 UTC; the CLI “file in use” warning has not reappeared since the coverlet upgrade earlier in the week).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-22 01:17 UTC with the coverage gate in `enforce` mode; the run still fails because interpreter branch coverage tops out at **94.16 %** despite the new tests).
 
 ## Snapshot
 - Overall line coverage: **87.9 %**
-- NovaSharp.Interpreter line coverage: **96.52 %**
+- NovaSharp.Interpreter line coverage: **96.63 %**
+- NovaSharp.Interpreter branch coverage: **94.16 %** (fails the ≥95 % gate; see the prioritized items below)
 - NovaSharp.Cli line coverage: **83.14 %**
 - NovaSharp.Hardwire line coverage: **57.76 %**
 - NovaSharp.RemoteDebugger line coverage: **91.44 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; the VS command handlers and Tcp helpers remain the <85 % bottleneck)
 - NovaSharp.VsCodeDebugger line coverage: **2.1 %** (no automated smoke tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- (2025-11-21 16:39 UTC) Fresh coverage (`./scripts/coverage/coverage.ps1 -SkipBuild`, **2 672** Release tests) puts NovaSharp.Interpreter at **96.52 % line / 93.96 % branch / 98.49 % method** and overall repository line coverage at **87.9 %**. Branch coverage is still shy of the ≥95 % enforcement gate, so CI remains in monitor mode until the debugger/coroutine tests land. `Execution.VM.Processor` holds the line goal (**95.4 %** per `Summary.txt`), but the watch/refresh pause paths still keep the class’s branch total under 95 %.
-- `Execution.VM.Processor` – **95.4 % line** (per `Summary.txt`; branch remains below the 95 % goal because the pause-during-refresh and coroutine-guard paths still lack regression tests).
+- (2025-11-22 01:17 UTC) Fresh coverage (`./scripts/coverage/coverage.ps1 -SkipBuild`, **2 689** Release tests, gate = `enforce`) records NovaSharp.Interpreter at **96.63 % line / 94.16 % branch / 98.49 % method**. The run still fails the ≥95 % branch target, but we clawed back another 0.15 pp after tightening the compatibility helpers and utf8 suite.
+- `Execution.VM.Processor` – **95.7 % line / 93.5 % branch** (per `Summary.txt`). Pause requests that arrive mid-refresh, queued debugger actions that drain after a pause, and the forced coroutine resume/guard rails remain untested; those gaps account for the final ≈0.8 pp of branch coverage.
+- Compatibility helpers – `LuaCompatibilityProfile` now sits at **98.8 % line / 92.8 % branch** and `LuaCompatibilityProfileExtensions` at **100 % line / branch** after adding feature-summary and reflection-backed display-name tests. `ModuleArgumentValidation` is fully covered (**100 % line / branch / method**) thanks to the new guard-focused unit suite, so the remaining compatibility debt is limited to the `LuaCompatibilityProfile` default branch (still uncovered because the `Latest` alias feeds the Lua 5.5 profile).
+- `Utf8Module` – **87.2 % line / 71.8 % branch** (up from **85.3 % / 67.9 %**). The new tests cover the Lua 5.3 defaulted `j` parameter, the empty-range/void return, and the malformed-iterator diagnostics, but we still need fixtures for the remaining offset/len error branches to push this module above ≥90 % / 85 %.
 - (2025-11-21 16:29 UTC) `LuaIntegerHelper` now reports **100 % line / branch coverage** thanks to the new `LuaIntegerHelperTests` (non-finite/overflow numeric guards, numeric-string parsing, and the negative/overflowing shift cases). The helper drops off the red list; the remaining debt is isolated to Processor, LuaIntegerHelper had been the lowest performer.
 - (2025-11-22 21:05 UTC) Refactored `ProcessorInstructionLoop` so the `YieldSpecialTrap` branch is handled once per iteration instead of being duplicated across every opcode. The next coverage sweep should show `Execution.VM.Processor` meeting the ≥95 % branch threshold without having to synthesize a yield for each arithmetic opcode; reran the debugger/coroutine suites via `dotnet test … --filter "FullyQualifiedName~ProcessorDebuggerTests|FullyQualifiedName~Coroutine"` to confirm behaviour.
 - (2025-11-20 21:08 UTC) `ProcessorDebuggerTests.RefreshDebuggerHandlesEmptyWatchList` and `RefreshActionProcessesNextQueuedDebuggerCommand` now cover the debugger “Refresh” command branch and the empty-watch update path, shaving off part of the remaining `Execution.VM.Processor` branch gap. Next target: pause requests that arrive mid-refresh and the coroutine resume/pause guard rails.
@@ -187,7 +190,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-21 (16:39 UTC)_
+_Last updated: 2025-11-22 (01:17 UTC)_
 
 
 

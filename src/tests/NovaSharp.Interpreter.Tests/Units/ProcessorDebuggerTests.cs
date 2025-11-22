@@ -1115,6 +1115,40 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void PauseRequestDuringRefreshStillProcessesQueuedAction()
+        {
+            Script script = new();
+            script.LoadString("return 21");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new() { PauseAfterNextUpdate = true };
+            debugger.EnqueueAction(DebuggerAction.ActionType.Refresh);
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(debugger.PauseRequested, Is.True);
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+            });
+        }
+
+        [Test]
         public void RefreshDebuggerEvaluatesWatchExpressions()
         {
             Script script = new();
@@ -1315,6 +1349,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public bool PauseRequested { get; set; }
             public bool SignalRuntimeExceptionResult { get; set; }
+            public bool PauseAfterNextUpdate { get; set; }
 
             public DebuggerCaps Caps { get; set; } =
                 DebuggerCaps.CanDebugSourceCode | DebuggerCaps.HasLineBasedBreakpoints;
@@ -1373,6 +1408,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 UpdateCallCount++;
                 LastWatchUpdates[watchType] = items.ToList();
+                if (PauseAfterNextUpdate)
+                {
+                    PauseAfterNextUpdate = false;
+                    PauseRequested = true;
+                }
             }
 
             public List<DynamicExpression> GetWatchItems()

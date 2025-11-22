@@ -234,7 +234,22 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(lua55, Is.SameAs(latest));
                 Assert.That(lua55.SupportsWarnFunction, Is.True);
                 Assert.That(lua55.SupportsBit32Library, Is.False);
+                Assert.That(lua55.DisplayName, Is.EqualTo("Lua 5.5"));
             });
+        }
+
+        [Test]
+        public void DisplayNameHandlesLatestAlias()
+        {
+            System.Reflection.MethodInfo getDisplayName = typeof(LuaCompatibilityProfile).GetMethod(
+                "GetDisplayName",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
+            );
+
+            string latestName = (string)
+                getDisplayName.Invoke(null, new object[] { LuaCompatibilityVersion.Latest });
+
+            Assert.That(latestName, Is.EqualTo("Lua Latest"));
         }
 
         [Test]
@@ -246,6 +261,38 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => LuaCompatibilityProfile.ForVersion(invalid),
                 Throws.TypeOf<ArgumentOutOfRangeException>()
             );
+        }
+
+        [Test]
+        public void GetFeatureSummaryIncludesAllFlags()
+        {
+            LuaCompatibilityProfile profile = LuaCompatibilityProfile.ForVersion(
+                LuaCompatibilityVersion.Lua54
+            );
+
+            string summary = profile.GetFeatureSummary();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(summary, Does.StartWith("Lua 5.4"));
+                Assert.That(summary, Does.Contain("bitwise on"));
+                Assert.That(summary, Does.Contain("bit32 off"));
+                Assert.That(summary, Does.Contain("utf8 on"));
+                Assert.That(summary, Does.Contain("table.move on"));
+                Assert.That(summary, Does.Contain("<const> on"));
+                Assert.That(summary, Does.Contain("<close> on"));
+                Assert.That(summary, Does.Contain("warn on"));
+            });
+        }
+
+        [Test]
+        public void GetFeatureSummaryThrowsWhenProfileIsNull()
+        {
+            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() =>
+                LuaCompatibilityProfileExtensions.GetFeatureSummary(null)
+            );
+
+            Assert.That(ex.ParamName, Is.EqualTo("profile"));
         }
     }
 }

@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -82,6 +83,37 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        [Description("Lua 5.3 manual §6.5: utf8.codepoint defaults j to i when omitted.")]
+        public void Utf8CodePointDefaultsEndToStartWhenRangeIsOmitted()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("word", DynValue.NewString("ABCDE"));
+
+            DynValue values = script.DoString(
+                @"
+                local results = { utf8.codepoint(word, 2) }
+                return #results, results[1]
+                "
+            );
+
+            Assert.That(values.Tuple[0].Number, Is.EqualTo(1));
+            Assert.That(values.Tuple[1].Number, Is.EqualTo(66));
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.codepoint returns no values when the range is empty."
+        )]
+        public void Utf8CodePointReturnsVoidWhenRangeHasNoCharacters()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString("return utf8.codepoint('abc', 5, 4)");
+
+            Assert.That(result.Type, Is.EqualTo(DataType.Void));
+        }
+
+        [Test]
         [Description("Lua 5.4 manual §6.5: utf8.charpattern is exposed verbatim.")]
         public void Utf8CharpatternMatchesLuaSpecification()
         {
@@ -111,6 +143,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(summary.String, Is.EqualTo("1:41,2:1F600,4:42"));
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.codes raises 'invalid UTF-8 code' for malformed sequences."
+        )]
+        public void Utf8CodesThrowsOnInvalidUtf8Sequences()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("invalid", DynValue.NewString("\uD83D"));
+
+            Assert.That(
+                () => script.DoString("for _ in utf8.codes(invalid) do end"),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.EqualTo("invalid UTF-8 code")
+            );
         }
 
         [Test]
