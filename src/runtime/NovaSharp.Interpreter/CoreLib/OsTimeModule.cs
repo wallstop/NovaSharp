@@ -55,6 +55,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime now = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
             DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
             if (t.IsNil())
@@ -71,6 +76,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue t2 = args.AsType(0, "difftime", DataType.Number, false);
             DynValue t1 = args.AsType(1, "difftime", DataType.Number, true);
 
@@ -85,6 +95,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "time")]
         public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime date = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             if (args.Count > 0)
@@ -142,6 +157,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "date")]
         public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             DynValue vformat = args.AsType(0, "date", DataType.String, true);
