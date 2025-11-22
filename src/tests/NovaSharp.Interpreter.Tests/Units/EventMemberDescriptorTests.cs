@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -554,15 +555,19 @@ end";
             {
                 HiddenEvent?.Invoke();
             }
+
+            internal static EventInfo GetHiddenEventMetadata()
+            {
+                return typeof(PrivateEventSource)
+                    .GetTypeInfo()
+                    .DeclaredEvents.Single(e => e.Name == nameof(HiddenEvent));
+            }
         }
 
         private static class PrivateEventSourceMetadata
         {
             internal static EventInfo HiddenEvent { get; } =
-                typeof(PrivateEventSource).GetEvent(
-                    "HiddenEvent",
-                    BindingFlags.Instance | BindingFlags.NonPublic
-                )!;
+                PrivateEventSource.GetHiddenEventMetadata();
         }
 
         private sealed class IncompatibleEventSource

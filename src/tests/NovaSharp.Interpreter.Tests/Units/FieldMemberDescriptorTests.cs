@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -369,50 +370,55 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int InstanceValue;
             public double DoubleValue;
             private int _privateValue;
+
+            internal static FieldInfo PrivateValueField { get; } =
+                GetFieldInfo(f => f._privateValue);
+
+            private static FieldInfo GetFieldInfo<TValue>(
+                Expression<Func<SampleFields, TValue>> accessor
+            )
+            {
+                return (FieldInfo)GetMember(accessor.Body);
+            }
+
+            private static MemberInfo GetMember(Expression expression)
+            {
+                if (expression is MemberExpression member)
+                {
+                    return member.Member;
+                }
+
+                if (
+                    expression is UnaryExpression unary
+                    && unary.NodeType == ExpressionType.Convert
+                    && unary.Operand is MemberExpression unaryMember
+                )
+                {
+                    return unaryMember.Member;
+                }
+
+                throw new InvalidOperationException("Expected member expression for field access.");
+            }
         }
 
         private static class SampleFieldsMetadata
         {
             internal static FieldInfo ConstValue { get; } =
-                GetPublicStatic(nameof(SampleFields.ConstValue));
+                typeof(SampleFields).GetField(nameof(SampleFields.ConstValue))!;
 
             internal static FieldInfo ReadonlyValue { get; } =
-                GetPublicStatic(nameof(SampleFields.ReadonlyValue));
+                typeof(SampleFields).GetField(nameof(SampleFields.ReadonlyValue))!;
 
             internal static FieldInfo StaticValue { get; } =
-                GetPublicStatic(nameof(SampleFields.StaticValue));
+                typeof(SampleFields).GetField(nameof(SampleFields.StaticValue))!;
 
             internal static FieldInfo InstanceValue { get; } =
-                GetPublicInstance(nameof(SampleFields.InstanceValue));
+                typeof(SampleFields).GetField(nameof(SampleFields.InstanceValue))!;
 
             internal static FieldInfo DoubleValue { get; } =
-                GetPublicInstance(nameof(SampleFields.DoubleValue));
+                typeof(SampleFields).GetField(nameof(SampleFields.DoubleValue))!;
 
-            internal static FieldInfo PrivateValue { get; } = GetPrivateInstance("_privateValue");
-
-            private static FieldInfo GetPublicStatic(string name)
-            {
-                return typeof(SampleFields).GetField(
-                    name,
-                    BindingFlags.Static | BindingFlags.Public
-                )!;
-            }
-
-            private static FieldInfo GetPublicInstance(string name)
-            {
-                return typeof(SampleFields).GetField(
-                    name,
-                    BindingFlags.Instance | BindingFlags.Public
-                )!;
-            }
-
-            private static FieldInfo GetPrivateInstance(string name)
-            {
-                return typeof(SampleFields).GetField(
-                    name,
-                    BindingFlags.Instance | BindingFlags.NonPublic
-                )!;
-            }
+            internal static FieldInfo PrivateValue { get; } = SampleFields.PrivateValueField;
         }
     }
 }

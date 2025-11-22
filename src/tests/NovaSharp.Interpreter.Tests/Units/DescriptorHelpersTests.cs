@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -309,41 +310,59 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal static class Metadata
             {
-                private const BindingFlags InstanceAll =
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
                 internal static FieldInfo PublicField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(PublicField),
-                        BindingFlags.Instance | BindingFlags.Public
-                    )!;
+                    typeof(MemberVisibilityFixtures).GetField(nameof(PublicField))!;
 
                 internal static FieldInfo InternalField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(InternalFieldName, InstanceAll)!;
+                    GetInstanceField(f => f.InternalField);
 
                 internal static FieldInfo ProtectedField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(ProtectedFieldName, InstanceAll)!;
+                    GetInstanceField(f => f.ProtectedField);
 
                 internal static FieldInfo ProtectedInternalField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(ProtectedInternalField),
-                        InstanceAll
-                    )!;
+                    GetInstanceField(f => f.ProtectedInternalField);
 
                 internal static MethodBase PrivateMethod { get; } =
-                    typeof(MemberVisibilityFixtures).GetMethod(PrivateMethodName, InstanceAll)!;
+                    GetInstanceMethod(f => f.PrivateMethod());
 
                 internal static MethodBase PublicMethod { get; } =
-                    typeof(MemberVisibilityFixtures).GetMethod(
-                        nameof(MemberVisibilityFixtures.PublicMethod),
-                        BindingFlags.Instance | BindingFlags.Public
-                    )!;
+                    typeof(MemberVisibilityFixtures).GetMethod(nameof(PublicMethod))!;
 
                 internal static MethodBase ProtectedInternalMethod { get; } =
-                    typeof(MemberVisibilityFixtures).GetMethod(
-                        nameof(MemberVisibilityFixtures.ProtectedInternalMethod),
-                        InstanceAll
-                    )!;
+                    GetInstanceMethod(f => f.ProtectedInternalMethod());
+
+                private static FieldInfo GetInstanceField<TValue>(
+                    Expression<Func<MemberVisibilityFixtures, TValue>> accessor
+                )
+                {
+                    return (FieldInfo)GetMemberExpression(accessor.Body).Member;
+                }
+
+                private static MethodBase GetInstanceMethod(
+                    Expression<Action<MemberVisibilityFixtures>> call
+                )
+                {
+                    return ((MethodCallExpression)call.Body).Method;
+                }
+
+                private static MemberExpression GetMemberExpression(Expression expression)
+                {
+                    if (expression is MemberExpression member)
+                    {
+                        return member;
+                    }
+
+                    if (
+                        expression is UnaryExpression unary
+                        && unary.NodeType == ExpressionType.Convert
+                        && unary.Operand is MemberExpression unaryMember
+                    )
+                    {
+                        return unaryMember;
+                    }
+
+                    throw new InvalidOperationException("Expected member expression.");
+                }
             }
         }
 
@@ -363,35 +382,46 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal static class Metadata
             {
-                private const BindingFlags InstanceAll =
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
                 internal static PropertyInfo GetterOnly { get; } =
-                    typeof(PropertyFixtures).GetProperty(
-                        nameof(PropertyFixtures.GetterOnly),
-                        BindingFlags.Instance | BindingFlags.Public
-                    )!;
+                    typeof(PropertyFixtures).GetProperty(nameof(PropertyFixtures.GetterOnly))!;
 
                 internal static PropertyInfo SetterOnly { get; } =
-                    typeof(PropertyFixtures).GetProperty(
-                        nameof(PropertyFixtures.SetterOnly),
-                        BindingFlags.Instance | BindingFlags.Public
-                    )!;
+                    typeof(PropertyFixtures).GetProperty(nameof(PropertyFixtures.SetterOnly))!;
 
                 internal static PropertyInfo InternalAccessors { get; } =
-                    typeof(PropertyFixtures).GetProperty(
-                        nameof(PropertyFixtures.InternalAccessors),
-                        InstanceAll
-                    )!;
+                    GetInstanceProperty(p => p.InternalAccessors);
 
                 internal static PropertyInfo ProtectedGetterOnly { get; } =
-                    typeof(PropertyFixtures).GetProperty(
-                        nameof(PropertyFixtures.ProtectedGetterOnly),
-                        InstanceAll
-                    )!;
+                    GetInstanceProperty(p => p.ProtectedGetterOnly);
 
                 internal static PropertyInfo PrivateBoth { get; } =
-                    typeof(PropertyFixtures).GetProperty(PrivatePropertyName, InstanceAll)!;
+                    GetInstanceProperty(p => p.PrivateBoth);
+
+                private static PropertyInfo GetInstanceProperty<TValue>(
+                    Expression<Func<PropertyFixtures, TValue>> accessor
+                )
+                {
+                    return (PropertyInfo)GetMemberExpression(accessor.Body).Member;
+                }
+
+                private static MemberExpression GetMemberExpression(Expression expression)
+                {
+                    if (expression is MemberExpression member)
+                    {
+                        return member;
+                    }
+
+                    if (
+                        expression is UnaryExpression unary
+                        && unary.NodeType == ExpressionType.Convert
+                        && unary.Operand is MemberExpression unaryMember
+                    )
+                    {
+                        return unaryMember;
+                    }
+
+                    throw new InvalidOperationException("Expected member expression.");
+                }
             }
         }
 

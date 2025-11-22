@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -397,46 +398,67 @@ namespace NovaSharp.Interpreter.Tests.Units
             private int PrivateButVisible { get; set; } = 6;
 
             private int _hiddenSetterBacking = 5;
+
+            internal static PropertyInfo PrivateButVisibleProperty { get; } =
+                GetPropertyInfo(p => p.PrivateButVisible);
+
+            private static PropertyInfo GetPropertyInfo<TValue>(
+                Expression<Func<SampleProperties, TValue>> accessor
+            )
+            {
+                return (PropertyInfo)GetMember(accessor.Body);
+            }
+
+            private static MemberInfo GetMember(Expression expression)
+            {
+                if (expression is MemberExpression member)
+                {
+                    return member.Member;
+                }
+
+                if (
+                    expression is UnaryExpression unary
+                    && unary.NodeType == ExpressionType.Convert
+                    && unary.Operand is MemberExpression unaryMember
+                )
+                {
+                    return unaryMember.Member;
+                }
+
+                throw new InvalidOperationException(
+                    "Expected member expression for property access."
+                );
+            }
         }
 
         internal static class SamplePropertiesMetadata
         {
-            private const BindingFlags InstancePublic = BindingFlags.Instance | BindingFlags.Public;
-            private const BindingFlags StaticPublic = BindingFlags.Static | BindingFlags.Public;
-            private const BindingFlags InstanceNonPublic =
-                BindingFlags.Instance | BindingFlags.NonPublic;
-
             internal static PropertyInfo StaticValue { get; } =
-                Get(nameof(SampleProperties.StaticValue), StaticPublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.StaticValue))!;
 
             internal static PropertyInfo LazyStatic { get; } =
-                Get(nameof(SampleProperties.LazyStatic), StaticPublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.LazyStatic))!;
 
             internal static PropertyInfo InstanceValue { get; } =
-                Get(nameof(SampleProperties.InstanceValue), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.InstanceValue))!;
 
             internal static PropertyInfo SetterOnly { get; } =
-                Get(nameof(SampleProperties.SetterOnly), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.SetterOnly))!;
 
             internal static PropertyInfo GetterOnly { get; } =
-                Get(nameof(SampleProperties.GetterOnly), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.GetterOnly))!;
 
             internal static PropertyInfo ShortValue { get; } =
-                Get(nameof(SampleProperties.ShortValue), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.ShortValue))!;
 
             internal static PropertyInfo HiddenProperty { get; } =
-                Get(nameof(SampleProperties.HiddenProperty), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.HiddenProperty))!;
 
             internal static PropertyInfo HiddenSetter { get; } =
-                Get(nameof(SampleProperties.HiddenSetter), InstancePublic);
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.HiddenSetter))!;
 
             internal static PropertyInfo PrivateButVisible { get; } =
-                Get("PrivateButVisible", InstanceNonPublic);
-
-            private static PropertyInfo Get(string name, BindingFlags flags)
-            {
-                return typeof(SampleProperties).GetProperty(name, flags)!;
-            }
+                SampleProperties.PrivateButVisibleProperty;
         }
     }
 }

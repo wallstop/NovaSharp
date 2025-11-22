@@ -3,6 +3,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using System.Linq;
+    using System.Linq.Expressions;
+    using System.Linq.Expressions;
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Runtime.CompilerServices;
@@ -513,6 +515,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             return left + right;
         }
+
+        internal static MethodInfo GetHiddenHelperMethod()
+        {
+            Expression<Action<MethodMemberDescriptorHost>> call = host => host.HiddenHelper();
+            return ((MethodCallExpression)call.Body).Method;
+        }
     }
 
     internal static class MethodMemberDescriptorTestExtensions
@@ -555,10 +563,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             )!;
 
         internal static MethodInfo HiddenHelper { get; } =
-            typeof(MethodMemberDescriptorHost).GetMethod(
-                "HiddenHelper",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
+            MethodMemberDescriptorHost.GetHiddenHelperMethod();
     }
 
     internal static class MethodMemberDescriptorArrayMetadata
