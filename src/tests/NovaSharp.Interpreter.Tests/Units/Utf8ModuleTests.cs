@@ -202,6 +202,69 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.IsNil(), Is.True);
         }
 
+        [Test]
+        [Description("Lua 5.3 manual §6.5: utf8.char rejects surrogate/out-of-range values.")]
+        public void Utf8CharRejectsOutOfRangeCodePoints()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.char(0x110000)")
+            );
+
+            Assert.That(ex.Message, Does.Contain("value out of range"));
+        }
+
+        [Test]
+        [Description("Lua 5.3 manual §6.5: utf8.codepoint errors on malformed UTF-8 input.")]
+        public void Utf8CodePointThrowsOnInvalidUtf8Sequences()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("invalid", DynValue.NewString("\uDC00"));
+
+            Assert.That(
+                () => script.DoString("return utf8.codepoint(invalid)"),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.EqualTo("invalid UTF-8 code")
+            );
+        }
+
+        [Test]
+        [Description("Lua 5.3 manual §6.5: utf8.offset returns nil when the range is exhausted.")]
+        public void Utf8OffsetReturnsNilWhenAdvancingPastEndOfString()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString("return utf8.offset('\U0001F600', 2)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset returns nil when stepping before the first rune."
+        )]
+        public void Utf8OffsetReturnsNilWhenMovingBeforeStart()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString("return utf8.offset('ab', -3)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset with n = 0 rejects out-of-range boundaries."
+        )]
+        public void Utf8OffsetZeroReturnsNilWhenBoundaryIsOutsideString()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString("return utf8.offset('abc', 0, 10)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
         private static Script CreateScript(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)

@@ -12,7 +12,7 @@ namespace NovaSharp.Cli
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
 
-    internal sealed class Program
+    internal sealed partial class Program
     {
         [STAThread]
         private static void Main(string[] args)

@@ -2,15 +2,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Numerics;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class Bit32ModuleTests
     {
+        private static readonly ScriptExecutionContext TestContext = new Script(
+            CoreModules.PresetDefault
+        ).CreateDynamicExecutionContext();
+
         [Test]
         public void ExtractDefaultsWidthToOneWhenThirdArgumentIsNil()
         {
@@ -19,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.Extract(null, args);
+            DynValue result = Bit32Module.Extract(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(1));
         }
@@ -38,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.Replace(null, args);
+            DynValue result = Bit32Module.Replace(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(0b_1010_0000));
         }
@@ -64,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
-                Bit32Module.Extract(null, args)
+                Bit32Module.Extract(TestContext, args)
             )!;
 
             Assert.That(ex.Message, Does.Contain(messageFragment));
@@ -83,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.Band(null, args);
+            DynValue result = Bit32Module.Band(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(0));
         }
@@ -97,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.BitTest(null, args);
+            DynValue result = Bit32Module.BitTest(TestContext, args);
 
             Assert.That(result.Boolean, Is.EqualTo(expected));
         }
@@ -107,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             CallbackArguments args = new(new[] { DynValue.NewNumber(0b_1111) }, false);
 
-            DynValue result = Bit32Module.Bnot(null, args);
+            DynValue result = Bit32Module.Bnot(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(~0b_1111u));
         }
@@ -120,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.Bxor(null, args);
+            DynValue result = Bit32Module.Bxor(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(0b_1111));
         }
@@ -138,7 +144,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.RightShift(null, args);
+            DynValue result = Bit32Module.RightShift(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
@@ -156,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.LeftShift(null, args);
+            DynValue result = Bit32Module.LeftShift(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
@@ -174,7 +180,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 false
             );
 
-            DynValue result = Bit32Module.ArithmeticShift(null, args);
+            DynValue result = Bit32Module.ArithmeticShift(TestContext, args);
 
             Assert.That(result.Number, Is.EqualTo(expected));
         }
@@ -189,7 +195,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             uint expected = BitOperations.RotateLeft(value, offset);
-            DynValue result = Bit32Module.LeftRotate(null, args);
+            DynValue result = Bit32Module.LeftRotate(TestContext, args);
 
             Assert.That(Convert.ToUInt32(result.Number), Is.EqualTo(expected));
         }
@@ -204,7 +210,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             uint expected = BitOperations.RotateRight(value, offset);
-            DynValue result = Bit32Module.RightRotate(null, args);
+            DynValue result = Bit32Module.RightRotate(TestContext, args);
 
             Assert.That(Convert.ToUInt32(result.Number), Is.EqualTo(expected));
         }

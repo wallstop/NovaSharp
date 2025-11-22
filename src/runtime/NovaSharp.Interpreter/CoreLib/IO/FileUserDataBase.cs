@@ -163,6 +163,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     DynValue.NewNumber(-1)
                 );
             }
+            catch (Exception ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
         }
 
         public DynValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -204,6 +212,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 );
             }
             catch (ObjectDisposedException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (Exception ex)
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,

@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Compatibility
             };
         }
 
-        private static string GetDisplayName(LuaCompatibilityVersion version)
+        internal static string GetDisplayName(LuaCompatibilityVersion version)
         {
             return version switch
             {

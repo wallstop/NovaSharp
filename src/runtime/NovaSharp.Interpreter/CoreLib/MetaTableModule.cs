@@ -27,6 +27,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue table = args.AsType(0, "setmetatable", DataType.Table);
             DynValue metatable = args.AsType(1, "setmetatable", DataType.Table, true);
 
@@ -51,6 +57,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue obj = args[0];
             Table meta = null;
 
@@ -87,6 +99,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue table = args.AsType(0, "rawget", DataType.Table);
             DynValue index = args[1];
 
@@ -104,6 +122,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue table = args.AsType(0, "rawset", DataType.Table);
             DynValue index = args[1];
 
@@ -121,6 +145,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v1 = args[0];
             DynValue v2 = args[1];
 
@@ -136,6 +166,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type != DataType.String && args[0].Type != DataType.Table)
             {
                 throw ScriptRuntimeException.BadArgument(

@@ -241,13 +241,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DisplayNameHandlesLatestAlias()
         {
-            System.Reflection.MethodInfo getDisplayName = typeof(LuaCompatibilityProfile).GetMethod(
-                "GetDisplayName",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
+            string latestName = LuaCompatibilityProfile.GetDisplayName(
+                LuaCompatibilityVersion.Latest
             );
-
-            string latestName = (string)
-                getDisplayName.Invoke(null, new object[] { LuaCompatibilityVersion.Latest });
 
             Assert.That(latestName, Is.EqualTo("Lua Latest"));
         }

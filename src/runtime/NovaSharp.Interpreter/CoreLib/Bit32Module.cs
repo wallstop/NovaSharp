@@ -120,6 +120,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "extract", DataType.Number);
@@ -143,6 +147,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "replace", DataType.Number);
@@ -198,6 +206,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "arshift", DataType.Number);
@@ -225,6 +237,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "rshift", DataType.Number);
@@ -252,6 +268,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "lshift", DataType.Number);
@@ -276,6 +296,10 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "band")]
         public static DynValue Band(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(Bitwise("band", args, (x, y) => x & y));
@@ -287,6 +311,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewBoolean(0 != Bitwise("btest", args, (x, y) => x & y));
@@ -295,6 +323,10 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "bor")]
         public static DynValue Bor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(Bitwise("bor", args, (x, y) => x | y));
@@ -303,6 +335,10 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "bnot")]
         public static DynValue Bnot(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "bnot", DataType.Number);
@@ -313,6 +349,10 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "bxor")]
         public static DynValue Bxor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(Bitwise("bxor", args, (x, y) => x ^ y));
@@ -324,6 +364,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "lrotate", DataType.Number);
@@ -351,6 +395,10 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue vV = args.AsType(0, "rrotate", DataType.Number);

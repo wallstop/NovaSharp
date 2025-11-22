@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
-    using System.Reflection;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
@@ -19,14 +18,6 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private TextWriter _originalOut = null!;
         private TextReader _originalIn = null!;
-        private static readonly MethodInfo InterpreterLoopMethod =
-            typeof(Program).GetMethod(
-                "InterpreterLoop",
-                BindingFlags.NonPublic | BindingFlags.Static
-            ) ?? throw new InvalidOperationException("InterpreterLoop method not found.");
-        private static readonly MethodInfo BannerMethod =
-            typeof(Program).GetMethod("Banner", BindingFlags.NonPublic | BindingFlags.Static)
-            ?? throw new InvalidOperationException("Banner method not found.");
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -408,7 +399,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new(CoreModules.PresetDefault);
             script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
-            BannerMethod.Invoke(null, new object[] { script });
+            Program.ShowBannerForTests(script);
 
             string output = writer.ToString();
 
@@ -443,7 +434,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ShellContext shellContext
         )
         {
-            InterpreterLoopMethod.Invoke(null, new object[] { interpreter, shellContext });
+            Program.RunInterpreterLoopForTests(interpreter, shellContext);
         }
 
         private sealed class StubReplInterpreter : ReplInterpreter
