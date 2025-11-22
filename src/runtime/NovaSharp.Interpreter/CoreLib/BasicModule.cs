@@ -311,6 +311,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");

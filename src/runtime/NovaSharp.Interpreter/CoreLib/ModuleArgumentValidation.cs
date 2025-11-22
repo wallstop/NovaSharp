@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -10,8 +11,9 @@ namespace NovaSharp.Interpreter.CoreLib
     /// </summary>
     internal static class ModuleArgumentValidation
     {
+        [return: NotNull]
         public static ScriptExecutionContext RequireExecutionContext(
-            ScriptExecutionContext context,
+            [NotNull] ScriptExecutionContext context,
             string parameterName
         )
         {
@@ -23,8 +25,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return context;
         }
 
+        [return: NotNull]
         public static CallbackArguments RequireArguments(
-            CallbackArguments args,
+            [NotNull] CallbackArguments args,
             string parameterName
         )
         {
@@ -36,7 +39,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return args;
         }
 
-        public static Table RequireTable(Table table, string parameterName)
+        [return: NotNull]
+        public static Table RequireTable([NotNull] Table table, string parameterName)
         {
             if (table == null)
             {
@@ -46,7 +50,8 @@ namespace NovaSharp.Interpreter.CoreLib
             return table;
         }
 
-        public static Script RequireScript(Script script, string parameterName)
+        [return: NotNull]
+        public static Script RequireScript([NotNull] Script script, string parameterName)
         {
             if (script == null)
             {

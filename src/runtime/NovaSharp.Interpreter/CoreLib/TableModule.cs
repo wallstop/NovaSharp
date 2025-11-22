@@ -139,7 +139,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
                     if (a.Type == DataType.String && b.Type == DataType.String)
                     {
-                        return a.String.CompareTo(b.String);
+                        return string.Compare(a.String, b.String, StringComparison.Ordinal);
                     }
 
                     throw ScriptRuntimeException.CompareInvalidType(a, b);
