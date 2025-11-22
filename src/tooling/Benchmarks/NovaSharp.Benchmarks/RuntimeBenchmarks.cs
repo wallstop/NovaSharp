@@ -6,7 +6,7 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.Modules;
 
     [MemoryDiagnoser]
-    public class RuntimeBenchmarks
+    internal class RuntimeBenchmarks
     {
         private Script _script = null!;
         private DynValue _compiledEntry = DynValue.Nil;
@@ -42,7 +42,7 @@ namespace NovaSharp.Benchmarks
 
             if (
                 Scenario == RuntimeScenario.UserDataInterop
-                && !UserData.IsTypeRegistered(typeof(BenchmarkHost))
+                && !UserData.IsTypeRegistered<BenchmarkHost>()
             )
             {
                 UserData.RegisterType<BenchmarkHost>();
@@ -79,7 +79,12 @@ namespace NovaSharp.Benchmarks
     {
         private double _store;
 
-        public double Accumulate(double left, double right) => (left * 1.25) + (right * 0.75);
+        public double Accumulate(double left, double right)
+        {
+            double result = (left * 1.25) + (right * 0.75);
+            _store = result;
+            return result;
+        }
 
         public void Store(double value) => _store = value;
 

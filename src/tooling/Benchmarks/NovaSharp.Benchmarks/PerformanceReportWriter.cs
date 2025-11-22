@@ -48,7 +48,10 @@ namespace NovaSharp.Benchmarks
             );
 
             Summary firstSummary = summaryList[0];
-            string timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
+            string timestamp = DateTimeOffset.Now.ToString(
+                "yyyy-MM-dd HH:mm:ss zzz",
+                CultureInfo.InvariantCulture
+            );
             string latestBlock = BuildLatestBlock(
                 suiteName,
                 timestamp,
@@ -234,6 +237,9 @@ namespace NovaSharp.Benchmarks
             return normalized.Substring(headerIndex, nextHeaderIndex - headerIndex).Trim();
         }
 
+        private static void AppendLineInvariant(StringBuilder builder, FormattableString value) =>
+            builder.AppendLine(FormattableString.Invariant(value));
+
         private static string BuildLatestBlock(
             string suiteName,
             string timestamp,
@@ -248,26 +254,26 @@ namespace NovaSharp.Benchmarks
 
             StringBuilder builder = new();
 
-            builder.AppendLine($"### NovaSharp Latest (captured {timestamp})");
+            AppendLineInvariant(builder, $"### NovaSharp Latest (captured {timestamp})");
             builder.AppendLine();
             builder.AppendLine("**Environment**");
-            builder.AppendLine($"- OS: {friendlyOsDescription}");
+            AppendLineInvariant(builder, $"- OS: {friendlyOsDescription}");
 
             if (!string.IsNullOrWhiteSpace(cpuInfo.Value.ProcessorName))
             {
-                builder.AppendLine($"- CPU: {cpuInfo.Value.ProcessorName}");
+                AppendLineInvariant(builder, $"- CPU: {cpuInfo.Value.ProcessorName}");
             }
 
-            builder.AppendLine($"- Logical cores: {Environment.ProcessorCount}");
-            builder.AppendLine($"- Runtime: {env.RuntimeVersion}");
+            AppendLineInvariant(builder, $"- Logical cores: {Environment.ProcessorCount}");
+            AppendLineInvariant(builder, $"- Runtime: {env.RuntimeVersion}");
 
             double totalMemory = GetTotalSystemMemoryInMegabytes();
             if (totalMemory > 0)
             {
-                builder.AppendLine($"- Approx. RAM: {totalMemory:N0} MB");
+                AppendLineInvariant(builder, $"- Approx. RAM: {totalMemory:N0} MB");
             }
 
-            builder.AppendLine($"- Suite: {suiteName}");
+            AppendLineInvariant(builder, $"- Suite: {suiteName}");
             builder.AppendLine();
 
             if (comparisons.Count > 0)
@@ -316,7 +322,7 @@ namespace NovaSharp.Benchmarks
                 AccumulationLogger logger = new();
                 MarkdownExporter.GitHub.ExportToLog(summary, logger);
 
-                builder.AppendLine($"#### {summary.Title}");
+                AppendLineInvariant(builder, $"#### {summary.Title}");
                 builder.AppendLine();
                 builder.AppendLine(logger.GetLog());
                 builder.AppendLine();
@@ -533,12 +539,16 @@ namespace NovaSharp.Benchmarks
             return sectionBuilder.ToString().TrimEnd();
         }
 
-        private static string NormalizeLineEndings(string value) => value.Replace("\r\n", "\n");
+        private static string NormalizeLineEndings(string value) =>
+            value.Replace("\r\n", "\n", StringComparison.Ordinal);
 
         private static string NormalizeForWrite(string value)
         {
             string normalized = NormalizeLineEndings(value).TrimEnd('\n');
-            return normalized.Replace("\n", Environment.NewLine) + Environment.NewLine;
+            return (
+                normalized.Replace("\n", Environment.NewLine, StringComparison.Ordinal)
+                + Environment.NewLine
+            );
         }
 
         private static string ExtractBaseline(string existingSection)
@@ -602,7 +612,7 @@ namespace NovaSharp.Benchmarks
                     continue;
                 }
 
-                if (!trimmed.StartsWith("|", StringComparison.Ordinal))
+                if (!trimmed.StartsWith('|'))
                 {
                     continue;
                 }

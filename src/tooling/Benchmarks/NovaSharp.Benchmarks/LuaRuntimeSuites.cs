@@ -2,7 +2,7 @@ namespace NovaSharp.Benchmarks
 {
     using System;
 
-    public enum RuntimeScenario
+    internal enum RuntimeScenario
     {
         [Obsolete("Use a specific RuntimeScenario.", false)]
         Unknown = 0,

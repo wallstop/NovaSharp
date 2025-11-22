@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -268,13 +269,13 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 isEscapeSequence = false;
 
-                if (standardPatterns.ContainsKey(c))
+                if (standardPatterns.TryGetValue(c, out string pattern))
                 {
-                    sb.Append(d.ToString(standardPatterns[c]));
+                    sb.Append(d.ToString(pattern, CultureInfo.InvariantCulture));
                 }
                 else if (c == 'e')
                 {
-                    string s = d.ToString("%d");
+                    string s = d.ToString("%d", CultureInfo.InvariantCulture);
                     if (s.Length < 2)
                     {
                         s = " " + s;
@@ -296,7 +297,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
                 else if (c == 'j')
                 {
-                    sb.Append(d.DayOfYear.ToString("000"));
+                    sb.Append(d.DayOfYear.ToString("000", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'u')
                 {

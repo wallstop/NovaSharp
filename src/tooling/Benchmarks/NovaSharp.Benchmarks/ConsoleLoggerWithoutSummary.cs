@@ -59,14 +59,14 @@ namespace NovaSharp.Benchmarks
                 return false;
             }
 
-            if (trimmed.StartsWith("|", StringComparison.Ordinal))
+            if (trimmed.StartsWith('|'))
             {
                 return true;
             }
 
             if (
                 trimmed.StartsWith("Method", StringComparison.OrdinalIgnoreCase)
-                && trimmed.Contains("|", StringComparison.Ordinal)
+                && trimmed.Contains('|', StringComparison.Ordinal)
             )
             {
                 return true;
