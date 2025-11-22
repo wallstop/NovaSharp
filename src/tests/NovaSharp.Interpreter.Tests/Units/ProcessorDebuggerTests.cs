@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
@@ -753,19 +752,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
             Coroutine coroutine = coroutineValue.Coroutine;
 
-            FieldInfo processorField = typeof(Coroutine).GetField(
-                "_processor",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            )!;
-            Processor coroutineProcessor = (Processor)processorField.GetValue(coroutine)!;
-
+            Processor coroutineProcessor = coroutine.GetProcessorForTests();
             Processor parentProcessor = script.GetMainProcessorForTests();
-
-            FieldInfo stackField = typeof(Processor).GetField(
-                "_coroutinesStack",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            )!;
-            List<Processor> parentStack = (List<Processor>)stackField.GetValue(parentProcessor)!;
+            List<Processor> parentStack = parentProcessor.GetCoroutineStackForTests();
             List<Processor> originalStack = parentStack.ToList();
 
             try
@@ -773,13 +762,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 parentStack.Clear();
                 parentStack.Add(coroutineProcessor);
 
-                MethodInfo refreshThreadsMethod = typeof(Processor).GetMethod(
-                    "RefreshDebuggerThreads",
-                    BindingFlags.NonPublic | BindingFlags.Instance
-                )!;
-                List<WatchItem> threads =
-                    (List<WatchItem>)
-                        refreshThreadsMethod.Invoke(coroutineProcessor, new object[] { null });
+                List<WatchItem> threads = coroutineProcessor.RefreshDebuggerThreadsForTests();
 
                 Assert.Multiple(() =>
                 {

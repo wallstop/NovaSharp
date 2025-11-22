@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
 
     internal sealed partial class Processor
     {
@@ -96,6 +97,11 @@ namespace NovaSharp.Interpreter.Execution.VM
         internal DynValue[] StackTopToArrayReverseForTests(int items, bool pop)
         {
             return StackTopToArrayReverse(items, pop);
+        }
+
+        internal List<WatchItem> RefreshDebuggerThreadsForTests()
+        {
+            return RefreshDebuggerThreads(null);
         }
 
         internal int PopExecStackAndCheckVStackForTests(int expectedGuard)

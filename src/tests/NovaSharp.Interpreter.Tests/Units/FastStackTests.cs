@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
-    using System.Reflection;
     using NovaSharp.Interpreter.DataStructs;
     using NUnit.Framework;
 
@@ -237,10 +236,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
             });
 
-            // exercise private Zero via reflection to ensure storage clearing path
-            typeof(FastStack<int>)
-                .GetMethod("Zero", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(stack, new object[] { 0 });
+            FastStack<int>.TestHooks.ZeroSlot(stack, 0);
         }
     }
 }

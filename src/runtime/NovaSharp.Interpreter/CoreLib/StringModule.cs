@@ -197,6 +197,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return s.Length - i;
         }
 
+        internal static class TestHooks
+        {
+            public static int? AdjustIndex(string s, DynValue vi, int defaultValue)
+            {
+                return StringModule.AdjustIndex(s, vi, defaultValue);
+            }
+        }
+
         [NovaSharpModuleMethod(Name = "len")]
         public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {

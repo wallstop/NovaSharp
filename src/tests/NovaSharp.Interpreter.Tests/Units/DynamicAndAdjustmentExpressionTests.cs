@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -23,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynamicExprExpression expression = new(inner, context);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = ExpressionTestHelpers.InvokeEval(expression, executionContext);
+            DynValue result = expression.Eval(executionContext);
 
             Assert.Multiple(() =>
             {
@@ -45,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(
-                () => ExpressionTestHelpers.InvokeCompile(expression, new ByteCode(script)),
+                () => expression.Compile(new ByteCode(script)),
                 Throws.InvalidOperationException
             );
         }
@@ -63,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             AdjustmentExpression expression = new(context, new StubExpression(context, tuple));
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = ExpressionTestHelpers.InvokeEval(expression, executionContext);
+            DynValue result = expression.Eval(executionContext);
 
             Assert.That(result.Number, Is.EqualTo(5));
         }
@@ -77,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             AdjustmentExpression expression = new(context, inner);
             ByteCode byteCode = new(script);
 
-            ExpressionTestHelpers.InvokeCompile(expression, byteCode);
+            expression.Compile(byteCode);
 
             Assert.Multiple(() =>
             {
@@ -122,63 +121,6 @@ namespace NovaSharp.Interpreter.Tests.Units
         public override SymbolRef FindDynamic(ScriptExecutionContext context)
         {
             return _dynamic;
-        }
-    }
-
-    internal static class ExpressionTestHelpers
-    {
-        public static DynValue InvokeEval(Expression expression, ScriptExecutionContext context)
-        {
-            MethodInfo method = expression
-                .GetType()
-                .GetMethod(
-                    nameof(Expression.Eval),
-                    BindingFlags.Instance
-                        | BindingFlags.Public
-                        | BindingFlags.NonPublic
-                        | BindingFlags.DeclaredOnly
-                );
-
-            if (method == null)
-            {
-                throw new InvalidOperationException("Eval override not found on expression.");
-            }
-
-            try
-            {
-                return (DynValue)method.Invoke(expression, new object[] { context });
-            }
-            catch (TargetInvocationException ex)
-            {
-                throw ex.InnerException ?? ex;
-            }
-        }
-
-        public static void InvokeCompile(Expression expression, ByteCode byteCode)
-        {
-            MethodInfo method = expression
-                .GetType()
-                .GetMethod(
-                    nameof(Expression.Compile),
-                    BindingFlags.Instance
-                        | BindingFlags.Public
-                        | BindingFlags.NonPublic
-                        | BindingFlags.DeclaredOnly
-                );
-
-            if (method == null)
-            {
-                throw new InvalidOperationException("Compile override not found on expression.");
-            }
-
-            try
-            {
-                method.Invoke(expression, new object[] { byteCode });
-            }
-            catch (TargetInvocationException ex)
-            {
-                throw ex.InnerException ?? ex;
-            }
         }
     }
 }
