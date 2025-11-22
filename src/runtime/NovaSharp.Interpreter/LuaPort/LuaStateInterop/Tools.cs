@@ -1059,4 +1059,3 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         #endregion
     }
 }
-

@@ -28,7 +28,7 @@ FILE_ALLOWLIST = {
 }
 FIELD_ALLOWLIST: dict[Path, set[str]] = {
     # Lua-facing DTOs keep lowercase fields so script fixtures can reference the
-    # original MoonSharp surface without additional indirection.
+    # legacy Lua-port surface without additional indirection.
     Path(
         "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/CollectionsBaseGenRegisteredTests.cs"
     ): {"value"},

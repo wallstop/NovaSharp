@@ -317,4 +317,3 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         }
     }
 }
-
