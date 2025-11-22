@@ -359,14 +359,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             string mode = vmode.IsNil() ? "r" : vmode.String;
 
-            string invalidChars = mode.Replace("+", "")
-                .Replace("r", "")
-                .Replace("a", "")
-                .Replace("w", "")
-                .Replace("b", "")
-                .Replace("t", "");
-
-            if (invalidChars.Length > 0)
+            if (ContainsInvalidModeCharacters(mode))
             {
                 throw ScriptRuntimeException.BadArgument(1, "open", "invalid mode");
             }
@@ -421,6 +414,11 @@ namespace NovaSharp.Interpreter.CoreLib
 
         public static string IoExceptionToLuaMessage(Exception ex, string filename)
         {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
             if (ex is FileNotFoundException)
             {
                 return $"{filename}: No such file or directory";
@@ -513,6 +511,21 @@ namespace NovaSharp.Interpreter.CoreLib
         )
         {
             return new FileUserData(executionContext.GetScript(), filename, encoding, mode);
+        }
+
+        private static bool ContainsInvalidModeCharacters(string mode)
+        {
+            const string Allowed = "rawbt+";
+
+            foreach (char candidate in mode)
+            {
+                if (Allowed.IndexOf(candidate) < 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

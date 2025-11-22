@@ -496,10 +496,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "warn")]
         public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            if (executionContext == null)
-            {
-                throw new ArgumentNullException(nameof(executionContext));
-            }
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             StringBuilder sb = new();
 

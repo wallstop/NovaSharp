@@ -67,6 +67,11 @@ namespace NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public Table GetMetatable(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             return _processor.GetMetatable(value);
         }
 
@@ -78,6 +83,16 @@ namespace NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public DynValue GetMetamethod(DynValue value, string metamethod)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (metamethod == null)
+            {
+                throw new ArgumentNullException(nameof(metamethod));
+            }
+
             return _processor.GetMetamethod(value, metamethod);
         }
 
@@ -104,6 +119,21 @@ namespace NovaSharp.Interpreter.Execution
         /// </summary>
         public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
+            if (op1 == null)
+            {
+                throw new ArgumentNullException(nameof(op1));
+            }
+
+            if (op2 == null)
+            {
+                throw new ArgumentNullException(nameof(op2));
+            }
+
+            if (eventName == null)
+            {
+                throw new ArgumentNullException(nameof(eventName));
+            }
+
             return _processor.GetBinaryMetamethod(op1, op2, eventName);
         }
 
@@ -158,6 +188,16 @@ namespace NovaSharp.Interpreter.Execution
             Func<LuaState, int> callback
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
             LuaState l = new(this, args, functionName);
             int retvals = callback(l);
             return l.GetReturnValue(retvals);
@@ -172,6 +212,11 @@ namespace NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, params DynValue[] args)
         {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
             if (func.Type == DataType.Function)
             {
                 return GetScript().Call(func, args);
@@ -292,6 +337,11 @@ namespace NovaSharp.Interpreter.Execution
             ScriptRuntimeException exception
         )
         {
+            if (exception == null)
+            {
+                throw new ArgumentNullException(nameof(exception));
+            }
+
             if (messageHandler != null)
             {
                 exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
