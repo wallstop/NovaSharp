@@ -342,6 +342,18 @@ namespace NovaSharp.Interpreter.DataTypes
             return _processor.CloseCoroutine();
         }
 
+        internal Processor GetProcessorForTests()
+        {
+            if (_processor == null)
+            {
+                throw new InvalidOperationException(
+                    "Cannot retrieve a processor from CLR callback coroutines."
+                );
+            }
+
+            return _processor;
+        }
+
         internal void ForceStateForTests(CoroutineState state)
         {
             if (_processor == null)

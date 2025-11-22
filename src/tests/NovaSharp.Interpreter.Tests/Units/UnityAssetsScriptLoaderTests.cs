@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Reflection;
     using System.Reflection.Emit;
     using NovaSharp.Interpreter.Loaders;
@@ -30,7 +31,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
-            Exception ex = Assert.Throws<Exception>(() => loader.LoadFile("missing.lua", null!));
+            FileNotFoundException ex = Assert.Throws<FileNotFoundException>(() =>
+                loader.LoadFile("missing.lua", null!)
+            );
             Assert.That(ex, Is.Not.Null);
             Assert.That(ex.Message, Does.Contain(UnityAssetsScriptLoader.DefaultPath));
         }

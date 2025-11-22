@@ -962,6 +962,11 @@ namespace NovaSharp.Interpreter
             return _mainProcessor;
         }
 
+        internal ByteCode GetByteCodeForTests()
+        {
+            return _byteCode;
+        }
+
         /// <summary>
         /// NovaSharp (like Lua itself) provides a registry, a predefined table that can be used by any CLR code to
         /// store whatever Lua values it needs to store.
