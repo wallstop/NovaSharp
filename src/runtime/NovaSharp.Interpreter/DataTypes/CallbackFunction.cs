@@ -42,6 +42,11 @@ namespace NovaSharp.Interpreter.DataTypes
             string name = null
         )
         {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
             ClrCallback = callBack;
             Name = name;
         }
@@ -59,6 +64,16 @@ namespace NovaSharp.Interpreter.DataTypes
             bool isMethodCall = false
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (isMethodCall)
             {
                 ColonOperatorBehaviour colon = executionContext
@@ -116,6 +131,16 @@ namespace NovaSharp.Interpreter.DataTypes
             InteropAccessMode accessMode = InteropAccessMode.Default
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (del == null)
+            {
+                throw new ArgumentNullException(nameof(del));
+            }
+
             if (accessMode == InteropAccessMode.Default)
             {
                 accessMode = DefaultAccessModeValue;
@@ -148,6 +173,16 @@ namespace NovaSharp.Interpreter.DataTypes
             InteropAccessMode accessMode = InteropAccessMode.Default
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
             if (accessMode == InteropAccessMode.Default)
             {
                 accessMode = DefaultAccessModeValue;
@@ -170,6 +205,11 @@ namespace NovaSharp.Interpreter.DataTypes
             bool requirePublicVisibility
         )
         {
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
             System.Reflection.ParameterInfo[] pi = mi.GetParameters();
 
             return (

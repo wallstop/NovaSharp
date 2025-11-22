@@ -35,7 +35,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (meta == null)
             {
-                throw new ArgumentException("baseAddress");
+                throw new ArgumentException("Invalid base address for dump.", nameof(baseAddress));
             }
 
             bw.Write(DumpChunkMagic);

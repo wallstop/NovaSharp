@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
     internal class ScopeBlockStatement : Statement
     {
-        private readonly Statement _block;
+        private readonly CompositeStatement _block;
         private readonly RuntimeScopeBlock _stackFrame;
 
         private readonly SourceRef _do;

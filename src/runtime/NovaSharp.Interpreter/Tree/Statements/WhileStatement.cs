@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
     internal class WhileStatement : Statement
     {
         private readonly Expression _condition;
-        private readonly Statement _block;
+        private readonly CompositeStatement _block;
         private readonly RuntimeScopeBlock _stackFrame;
 
         private readonly SourceRef _start;

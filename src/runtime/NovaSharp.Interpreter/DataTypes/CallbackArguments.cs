@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.Errors;
@@ -123,7 +124,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (skip >= _count)
             {
-                return new DynValue[0];
+                return Array.Empty<DynValue>();
             }
 
             DynValue[] vals = new DynValue[_count - skip];
@@ -218,6 +219,11 @@ namespace NovaSharp.Interpreter.DataTypes
             string funcName
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
             if (
                 (this[argNum].Type == DataType.Table)
                 && (this[argNum].Table.MetaTable != null)

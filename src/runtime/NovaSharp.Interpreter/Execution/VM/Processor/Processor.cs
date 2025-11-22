@@ -2,7 +2,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
+    using System.Globalization;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataStructs;
@@ -187,7 +187,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 #if ENABLE_DOTNET || NETFX_CORE
             return 1;
 #else
-            return Thread.CurrentThread.ManagedThreadId;
+            return Environment.CurrentManagedThreadId;
 #endif
         }
 
@@ -202,6 +202,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             )
             {
                 string msg = string.Format(
+                    CultureInfo.InvariantCulture,
                     "Cannot enter the same NovaSharp processor from two different threads : {0} and {1}",
                     _owningThreadId,
                     threadId
