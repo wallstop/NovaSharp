@@ -3,9 +3,11 @@ namespace NovaSharp.Benchmarks
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Runtime.InteropServices;
+    using System.Security;
     using System.Text;
     using System.Text.RegularExpressions;
     using BenchmarkDotNet.Environments;
@@ -39,8 +41,9 @@ namespace NovaSharp.Benchmarks
             string documentContent = File.ReadAllText(documentPath);
             string existingSection = ExtractOsSection(documentContent, osSectionName);
             string baselineBlock = ExtractBaseline(existingSection);
-            IReadOnlyDictionary<BenchmarkKey, BaselineMetrics> baselineMetrics =
-                ParseBaselineMetrics(baselineBlock);
+            Dictionary<BenchmarkKey, BaselineMetrics> baselineMetrics = ParseBaselineMetrics(
+                baselineBlock
+            );
 
             IReadOnlyList<ComparisonRow> comparisons = BuildComparisonRows(
                 summaryList,
@@ -174,9 +177,17 @@ namespace NovaSharp.Benchmarks
                     return description.ToString();
                 }
             }
-            catch
+            catch (SecurityException)
             {
-                // If registry access fails, fall back to the version-based heuristic below.
+                // fall back to the version-based heuristic below
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // fall back to the version-based heuristic below
+            }
+            catch (IOException)
+            {
+                // fall back to the version-based heuristic below
             }
 
             Version fallbackVersion = Environment.OSVersion.Version;
@@ -583,7 +594,7 @@ namespace NovaSharp.Benchmarks
             return baseline.Trim();
         }
 
-        private static IReadOnlyDictionary<BenchmarkKey, BaselineMetrics> ParseBaselineMetrics(
+        private static Dictionary<BenchmarkKey, BaselineMetrics> ParseBaselineMetrics(
             string baselineBlock
         )
         {
@@ -724,7 +735,7 @@ namespace NovaSharp.Benchmarks
 
         private static string BuildParameterSignature(
             string[] header,
-            IReadOnlyList<string> cells,
+            List<string> cells,
             int methodIndex,
             int meanIndex
         )
@@ -1069,7 +1080,11 @@ namespace NovaSharp.Benchmarks
                     return info.TotalAvailableMemoryBytes / (1024d * 1024d);
                 }
             }
-            catch
+            catch (InvalidOperationException)
+            {
+                // ignore – best-effort metric
+            }
+            catch (PlatformNotSupportedException)
             {
                 // ignore – best-effort metric
             }

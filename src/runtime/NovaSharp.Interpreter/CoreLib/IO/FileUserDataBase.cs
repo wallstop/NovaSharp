@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
@@ -72,9 +73,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
                         if (Eof())
                         {
-                            v = opt.StartsWith("*a") ? DynValue.NewString("") : DynValue.Nil;
+                            v = opt.StartsWith("*a", StringComparison.Ordinal)
+                                ? DynValue.NewString(string.Empty)
+                                : DynValue.Nil;
                         }
-                        else if (opt.StartsWith("*n"))
+                        else if (opt.StartsWith("*n", StringComparison.Ordinal))
                         {
                             double? d = ReadNumber();
 
@@ -87,18 +90,18 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                                 v = DynValue.Nil;
                             }
                         }
-                        else if (opt.StartsWith("*a"))
+                        else if (opt.StartsWith("*a", StringComparison.Ordinal))
                         {
                             string str = ReadToEnd();
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*l"))
+                        else if (opt.StartsWith("*l", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
                             str = str.TrimEnd('\n', '\r');
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*L"))
+                        else if (opt.StartsWith("*L", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
 
@@ -126,7 +129,6 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 for (int i = 0; i < args.Count; i++)
                 {
-                    //string str = args.AsStringUsingMeta(executionContext, i, "file:write");
                     string str = args.AsType(i, "write", DataType.String, false).String;
                     Write(str);
                 }
@@ -137,7 +139,23 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (IOException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (ObjectDisposedException ex)
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
@@ -169,7 +187,23 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (IOException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (ObjectDisposedException ex)
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,

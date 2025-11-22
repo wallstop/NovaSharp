@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -28,6 +29,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args.AsType(0, "execute", DataType.String, true);
 
             if (v.IsNil())
@@ -46,9 +53,12 @@ namespace NovaSharp.Interpreter.CoreLib
                         DynValue.NewNumber(exitCode)
                     );
                 }
-                catch (Exception)
+                catch (PlatformNotSupportedException)
                 {
-                    // +++ bad to swallow..
+                    return DynValue.Nil;
+                }
+                catch (InvalidOperationException)
+                {
                     return DynValue.Nil;
                 }
             }
@@ -57,6 +67,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "exit")]
         public static DynValue Exit(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vExitCode = args.AsType(0, "exit", DataType.Number, true);
             int exitCode = 0;
 
@@ -76,6 +92,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue varName = args.AsType(0, "getenv", DataType.String, false);
 
             string val = Script.GlobalOptions.Platform.GetEnvironmentVariable(varName.String);
@@ -96,6 +118,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string fileName = args.AsType(0, "remove", DataType.String, false).String;
 
             try
@@ -114,7 +142,15 @@ namespace NovaSharp.Interpreter.CoreLib
                     );
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (UnauthorizedAccessException ex)
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
@@ -130,6 +166,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             string fileNameOld = args.AsType(0, "rename", DataType.String, false).String;
             string fileNameNew = args.AsType(1, "rename", DataType.String, false).String;
 
@@ -147,7 +189,15 @@ namespace NovaSharp.Interpreter.CoreLib
                 Script.GlobalOptions.Platform.MoveFile(fileNameOld, fileNameNew);
                 return DynValue.True;
             }
-            catch (Exception ex)
+            catch (IOException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(ex.Message),
+                    DynValue.NewNumber(-1)
+                );
+            }
+            catch (UnauthorizedAccessException ex)
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
@@ -163,6 +213,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return DynValue.NewString("n/a");
         }
 
@@ -172,6 +227,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return DynValue.NewString(Script.GlobalOptions.Platform.GetTempFileName());
         }
     }

@@ -25,6 +25,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue s = args.AsType(0, "unpack", DataType.Table, false);
             DynValue vi = args.AsType(1, "unpack", DataType.Number, true);
             DynValue vj = args.AsType(2, "unpack", DataType.Number, true);
@@ -48,6 +54,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             Table t = new(executionContext.GetScript());
             DynValue v = DynValue.NewTable(t);
 
@@ -64,6 +76,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "sort")]
         public static DynValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "sort", DataType.Table, false);
             DynValue lt = args[1];
 
@@ -172,6 +190,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
             DynValue vpos = args[1];
             DynValue vvalue = args[2];
@@ -226,6 +250,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
             DynValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
             DynValue ret = DynValue.Nil;
@@ -270,6 +300,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "concat", DataType.Table, false);
             DynValue vsep = args.AsType(1, "concat", DataType.String, true);
             DynValue vstart = args.AsType(2, "concat", DataType.Number, true);
@@ -326,6 +362,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "move")]
         public static DynValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             const string func = "move";
 
             Table source = args.AsType(0, func, DataType.Table, false).Table;

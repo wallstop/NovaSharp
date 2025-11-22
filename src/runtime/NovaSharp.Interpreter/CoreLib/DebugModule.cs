@@ -87,7 +87,11 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
+                {
+                    script.Options.DebugPrint($"{ex.Message}");
+                }
+                catch (ArgumentException ex)
                 {
                     script.Options.DebugPrint($"{ex.Message}");
                 }
