@@ -271,10 +271,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleRejectsPrivateEvents()
         {
-            EventInfo hiddenEvent = typeof(PrivateEventSource).GetEvent(
-                "HiddenEvent",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            );
+            EventInfo hiddenEvent = PrivateEventSourceMetadata.HiddenEvent;
 
             EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
                 hiddenEvent,
@@ -557,6 +554,15 @@ end";
             {
                 HiddenEvent?.Invoke();
             }
+        }
+
+        private static class PrivateEventSourceMetadata
+        {
+            internal static EventInfo HiddenEvent { get; } =
+                typeof(PrivateEventSource).GetEvent(
+                    "HiddenEvent",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!;
         }
 
         private sealed class IncompatibleEventSource
