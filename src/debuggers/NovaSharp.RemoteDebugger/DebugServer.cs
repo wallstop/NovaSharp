@@ -370,7 +370,8 @@ namespace NovaSharp.RemoteDebugger
 
             if (xdoc.DocumentElement.Name == "Command")
             {
-                string cmd = xdoc.DocumentElement.GetAttribute("cmd").ToLowerInvariant();
+                string cmdAttribute = xdoc.DocumentElement.GetAttribute("cmd");
+                string cmd = InvariantString.ToLowerInvariantIfNeeded(cmdAttribute);
                 string arg = xdoc.DocumentElement.GetAttribute("arg");
 
                 switch (cmd)
@@ -556,7 +557,7 @@ namespace NovaSharp.RemoteDebugger
 
             return WatchElementNameCache.GetOrAdd(
                 watchType,
-                static wt => wt.ToString().ToLowerInvariant()
+                static wt => InvariantString.ToLowerInvariantIfNeeded(wt.ToString())
             );
         }
     }

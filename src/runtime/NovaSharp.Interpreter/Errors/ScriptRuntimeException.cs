@@ -32,14 +32,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="ex">The ex.</param>
         public ScriptRuntimeException(Exception ex)
-            : base(ex) { }
+            : base(EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
         /// </summary>
         /// <param name="ex">The ex.</param>
         public ScriptRuntimeException(ScriptRuntimeException ex)
-            : base(ex, ex.DecoratedMessage)
+            : base(EnsureScriptRuntimeException(ex, out string decoratedMessage), decoratedMessage)
         {
             DecoratedMessage = Message;
             DoNotDecorateMessage = true;
@@ -187,6 +187,16 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
             {
                 return new ScriptRuntimeException(
@@ -658,10 +668,7 @@ namespace NovaSharp.Interpreter.Errors
             };
         }
 
-        private static readonly IReadOnlyDictionary<
-            CoroutineState,
-            string
-        > KnownCoroutineStateNames = new Dictionary<CoroutineState, string>()
+        private static readonly Dictionary<CoroutineState, string> KnownCoroutineStateNames = new()
         {
             { CoroutineState.Main, "main" },
             { CoroutineState.NotStarted, "notstarted" },
@@ -685,7 +692,7 @@ namespace NovaSharp.Interpreter.Errors
 
             return CoroutineStateNameCache.GetOrAdd(
                 state,
-                static s => s.ToString().ToLowerInvariant()
+                static s => InvariantString.ToLowerInvariantIfNeeded(s.ToString())
             );
         }
 
@@ -748,6 +755,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <param name="desc">The member descriptor.</param>
         public static ScriptRuntimeException AccessInstanceMemberOnStatics(IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0} from a static userdata",
                 desc.Name
@@ -766,6 +778,16 @@ namespace NovaSharp.Interpreter.Errors
             IMemberDescriptor desc
         )
         {
+            if (typeDescr == null)
+            {
+                throw new ArgumentNullException(nameof(typeDescr));
+            }
+
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0}.{1} from a static userdata",
                 typeDescr.Name,
@@ -783,6 +805,30 @@ namespace NovaSharp.Interpreter.Errors
             {
                 throw new ScriptRuntimeException(this);
             }
+        }
+
+        private static Exception EnsureException(Exception ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            return ex;
+        }
+
+        private static ScriptRuntimeException EnsureScriptRuntimeException(
+            ScriptRuntimeException ex,
+            out string decoratedMessage
+        )
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            decoratedMessage = ex.DecoratedMessage;
+            return ex;
         }
     }
 }

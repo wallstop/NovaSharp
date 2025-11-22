@@ -30,14 +30,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="ex">The ex.</param>
         protected InterpreterException(Exception ex, string message)
-            : base(message, ex) { }
+            : base(message, EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
         /// </summary>
         /// <param name="ex">The ex.</param>
         protected InterpreterException(Exception ex)
-            : base(ex.Message, ex) { }
+            : base(GetExceptionMessage(ex), EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
@@ -135,6 +135,21 @@ namespace NovaSharp.Interpreter.Errors
             }
 
             return string.Format(CultureInfo.InvariantCulture, format, args);
+        }
+
+        private static Exception EnsureException(Exception ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            return ex;
+        }
+
+        private static string GetExceptionMessage(Exception ex)
+        {
+            return EnsureException(ex).Message ?? string.Empty;
         }
     }
 }

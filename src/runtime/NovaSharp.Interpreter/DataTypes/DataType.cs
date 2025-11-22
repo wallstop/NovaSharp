@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -173,7 +174,10 @@ namespace NovaSharp.Interpreter.DataTypes
                 return known;
             }
 
-            return UnknownTypeCache.GetOrAdd(type, t => t.ToString().ToLowerInvariant());
+            return UnknownTypeCache.GetOrAdd(
+                type,
+                static t => InvariantString.ToLowerInvariantIfNeeded(t.ToString())
+            );
         }
 
         /// <summary>

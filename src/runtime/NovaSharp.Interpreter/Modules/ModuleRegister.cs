@@ -431,7 +431,7 @@ namespace NovaSharp.Interpreter.Modules
                     AddCandidate(normalizedLowerFirst);
                 }
 
-                AddCandidate(memberName.ToLowerInvariant());
+                AddCandidate(InvariantString.ToLowerInvariantIfNeeded(memberName));
             }
 
             if (!string.IsNullOrEmpty(explicitName) && explicitName != memberName)
