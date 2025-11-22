@@ -33,9 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteLazyOptimizedInstanceActionUsesCompiledDelegate()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.SetName)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -54,10 +52,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteLazyOptimizedStaticFunctionReturnsDynValue()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.Sum),
-                BindingFlags.Public | BindingFlags.Static
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -76,9 +71,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteReflectionModeInvokesMethodInfo()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.Multiply)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Multiply;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -97,9 +90,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteReflectionModeInvokesVoidMethodThroughActionBranch()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.SetName)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -118,9 +109,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteArrayConstructorCreatesExpectedArray()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
-                new[] { typeof(int), typeof(int) }
-            );
+            ConstructorInfo ctor =
+                MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             Assert.That(ctor, Is.Not.Null);
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
@@ -148,10 +138,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             MethodMemberDescriptorHost host = new();
             host.SetName("Nova");
 
-            MethodInfo extension = typeof(MethodMemberDescriptorTestExtensions).GetMethod(
-                nameof(MethodMemberDescriptorTestExtensions.Decorate),
-                BindingFlags.Public | BindingFlags.Static
-            );
+            MethodInfo extension = MethodMemberDescriptorTestExtensionsMetadata.Decorate;
             MethodMemberDescriptor descriptor = new(extension, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -167,9 +154,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ExecuteOutParametersReturnTuple()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.TryDouble)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -193,10 +178,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 UserData.DefaultAccessMode = InteropAccessMode.Reflection;
-                MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                    nameof(MethodMemberDescriptorHost.Sum),
-                    BindingFlags.Public | BindingFlags.Static
-                );
+                MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
                 MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Default);
 
@@ -211,9 +193,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorWithByRefParametersEnforcesReflectionAccessMode()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.TryDouble)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
 
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
@@ -227,10 +207,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
-                MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                    nameof(MethodMemberDescriptorHost.Sum),
-                    BindingFlags.Public | BindingFlags.Static
-                );
+                MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
                 MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
@@ -245,10 +222,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorThrowsWhenHideMembersAccessModeRequested()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.Sum),
-                BindingFlags.Public | BindingFlags.Static
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
             IPlatformAccessor original = Script.GlobalOptions.Platform;
             try
@@ -268,10 +242,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleHonorsVisibility()
         {
-            MethodInfo hidden = typeof(MethodMemberDescriptorHost).GetMethod(
-                "HiddenHelper",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            );
+            MethodInfo hidden = MethodMemberDescriptorHostMetadata.HiddenHelper;
             Assert.That(hidden, Is.Not.Null);
 
             MethodMemberDescriptor invisible = MethodMemberDescriptor.TryCreateIfVisible(
@@ -295,9 +266,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckMethodIsCompatibleRejectsOpenGenericDefinitions()
         {
-            MethodInfo method = typeof(GenericMethodHost)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .Single(m => m.Name == nameof(GenericMethodHost.Identity));
+            MethodInfo method = GenericMethodHostMetadata.GenericIdentity;
 
             Assert.Multiple(() =>
             {
@@ -395,13 +364,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OptimizeThrowsWhenParametersContainByRefArguments()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.TryDouble)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
-            typeof(MethodMemberDescriptor)
-                .GetProperty("AccessMode", BindingFlags.Instance | BindingFlags.Public)
-                ?.SetValue(descriptor, InteropAccessMode.Preoptimized);
+            MethodMemberDescriptor.TestHooks.ForceAccessMode(
+                descriptor,
+                InteropAccessMode.Preoptimized
+            );
 
             Assert.That(
                 () => ((IOptimizableDescriptor)descriptor).Optimize(),
@@ -468,9 +436,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PrepareForWiringPopulatesDescriptorMetadata()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.SetName)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -497,9 +463,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PrepareForWiringArrayConstructorIncludesArrayMetadata()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
-                new[] { typeof(int), typeof(int) }
-            );
+            ConstructorInfo ctor =
+                MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -564,6 +529,56 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             return value;
         }
+    }
+
+    internal static class MethodMemberDescriptorHostMetadata
+    {
+        internal static MethodInfo SetName { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.SetName)
+            )!;
+
+        internal static MethodInfo Multiply { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Multiply)
+            )!;
+
+        internal static MethodInfo TryDouble { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.TryDouble)
+            )!;
+
+        internal static MethodInfo Sum { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Sum),
+                new[] { typeof(int), typeof(int) }
+            )!;
+
+        internal static MethodInfo HiddenHelper { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                "HiddenHelper",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!;
+    }
+
+    internal static class MethodMemberDescriptorArrayMetadata
+    {
+        internal static ConstructorInfo Int32TwoDimensionalConstructor { get; } =
+            typeof(int[,]).GetConstructor(new[] { typeof(int), typeof(int) })!;
+    }
+
+    internal static class MethodMemberDescriptorTestExtensionsMetadata
+    {
+        internal static MethodInfo Decorate { get; } =
+            typeof(MethodMemberDescriptorTestExtensions).GetMethod(
+                nameof(MethodMemberDescriptorTestExtensions.Decorate)
+            )!;
+    }
+
+    internal static class GenericMethodHostMetadata
+    {
+        internal static MethodInfo GenericIdentity { get; } =
+            typeof(GenericMethodHost).GetMethod(nameof(GenericMethodHost.Identity))!;
     }
 
     internal sealed class AotStubPlatformAccessor : IPlatformAccessor

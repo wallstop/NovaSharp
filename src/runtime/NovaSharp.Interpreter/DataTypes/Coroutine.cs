@@ -166,6 +166,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public DynValue Resume(params DynValue[] args)
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             this.CheckScriptOwnership(args);
 
             if (Type == CoroutineType.Coroutine)
@@ -188,6 +193,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context, params DynValue[] args)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             this.CheckScriptOwnership(context);
             this.CheckScriptOwnership(args);
 
@@ -215,7 +230,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public DynValue Resume()
         {
-            return Resume(new DynValue[0]);
+            return Resume(Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -225,7 +240,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context)
         {
-            return Resume(context, new DynValue[0]);
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            return Resume(context, Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -237,6 +257,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
         public DynValue Resume(params object[] args)
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (Type != CoroutineType.Coroutine)
             {
                 throw new InvalidOperationException(
@@ -262,6 +287,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context, params object[] args)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)

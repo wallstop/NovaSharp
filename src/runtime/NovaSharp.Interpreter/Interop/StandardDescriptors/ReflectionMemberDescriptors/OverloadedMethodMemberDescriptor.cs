@@ -628,5 +628,30 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 }
             }
         }
+
+        internal static class TestHooks
+        {
+            public static int CalcScoreForOverload(
+                OverloadedMethodMemberDescriptor descriptor,
+                ScriptExecutionContext context,
+                CallbackArguments args,
+                IOverloadableMemberDescriptor method,
+                bool isExtensionMethod
+            )
+            {
+                return descriptor.CalcScoreForOverload(context, args, method, isExtensionMethod);
+            }
+
+            public static void SetCacheSize(OverloadedMethodMemberDescriptor descriptor, int size)
+            {
+                if (size < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(size));
+                }
+
+                descriptor._cache = new OverloadCacheItem[size];
+                descriptor._cacheHits = 0;
+            }
+        }
     }
 }
