@@ -18,6 +18,8 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
 
 ### Tooling Surfacing
 
+- The NovaSharp CLI banner prints `[compatibility] Active profile: …` before the REPL prompt so every session immediately documents the active Lua baseline and how to change it (`Script.Options.CompatibilityVersion` or `luaCompatibility` in `mod.json`).
+- Launching a script via `NovaSharp <file.lua>` or the `!run <file>` command now logs `[compatibility] Running '<file>' with …` regardless of whether a manifest applied custom options. This keeps one-off script executions and manifest-driven runs equally transparent.
 - The NovaSharp CLI `!help` output now prints `Active compatibility profile: …` along with the key feature toggles (bitwise operators, `bit32`, `utf8`, `table.move`, `<const>`, `<close>`, `warn`). This gives script authors an immediate reminder of which Lua baseline the REPL is running under and which spec features are currently enabled without digging through options.
 - The CLI debugger entry point (`!debug`) emits a `[compatibility] Debugger session running under …` line before attaching the remote debugger bridge so logs capture the Lua profile that governed the session. This mirrors the `[compatibility]` warnings produced by manifest processing and keeps debugger transcripts self-describing once bitwise/floor-division gating is toggled per profile.
 - `RemoteDebuggerService.AttachFromDirectory` now pushes a summary message through its `infoSink` so hosts (tutorials, Unity samples, CLI helpers) automatically log the compatibility profile applied to manifest-driven mods.

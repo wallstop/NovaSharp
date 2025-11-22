@@ -1220,6 +1220,41 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void HardRefreshRequestsBreakpointRefresh()
+        {
+            Script script = new();
+            script.LoadString("return 18");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            StubDebugger debugger = new() { PauseRequested = true };
+            debugger.EnqueueAction(DebuggerAction.ActionType.HardRefresh);
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.Unknown,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 7);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    processor.GetDebuggerActionForTests(),
+                    Is.EqualTo(DebuggerAction.ActionType.Run)
+                );
+                Assert.That(debugger.RefreshBreakpointsCallCount, Is.GreaterThanOrEqualTo(1));
+            });
+        }
+
+        [Test]
         public void RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause()
         {
             Script script = new();
