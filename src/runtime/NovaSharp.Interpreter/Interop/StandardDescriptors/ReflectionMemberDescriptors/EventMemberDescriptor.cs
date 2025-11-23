@@ -257,6 +257,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return UserData.Create(new EventFacade(this, obj));
         }
 
+        /// <summary>
+        /// Wires the supplied Lua closure into the CLR event (called by <see cref="EventFacade"/>).
+        /// </summary>
         internal DynValue AddCallback(
             object o,
             ScriptExecutionContext context,
@@ -281,6 +284,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Removes the specified Lua closure from the CLR event invocation list.
+        /// </summary>
         internal DynValue RemoveCallback(
             object o,
             ScriptExecutionContext context,

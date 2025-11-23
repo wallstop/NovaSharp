@@ -60,6 +60,9 @@ namespace NovaSharp.Interpreter.Interop
             }
         }
 
+        /// <summary>
+        /// Determines whether the supplied type derives from <see cref="Delegate"/>.
+        /// </summary>
         public static bool IsDelegateType(this Type t)
         {
             return Framework.Do.IsAssignableFrom(typeof(Delegate), t);

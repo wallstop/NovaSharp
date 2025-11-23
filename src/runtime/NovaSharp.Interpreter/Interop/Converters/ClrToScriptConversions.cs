@@ -9,6 +9,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.PredefinedUserData;
 
+    /// <summary>
+    /// Converts CLR objects into NovaSharp <see cref="DynValue"/> instances.
+    /// </summary>
     internal static class ClrToScriptConversions
     {
         /// <summary>

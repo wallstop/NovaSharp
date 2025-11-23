@@ -18,10 +18,19 @@ namespace NovaSharp.Interpreter.Interop.Attributes
             MaxVersion = maxVersion;
         }
 
+        /// <summary>
+        /// Gets the minimum Lua compatibility version that exposes the annotated member.
+        /// </summary>
         public LuaCompatibilityVersion MinVersion { get; }
 
+        /// <summary>
+        /// Gets the maximum Lua compatibility version that exposes the annotated member.
+        /// </summary>
         public LuaCompatibilityVersion MaxVersion { get; }
 
+        /// <summary>
+        /// Determines whether the annotated member should be surfaced for the specified version.
+        /// </summary>
         internal bool IsSupported(LuaCompatibilityVersion version)
         {
             LuaCompatibilityVersion normalizedVersion = Normalize(version);

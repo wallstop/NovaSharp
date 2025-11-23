@@ -8,8 +8,16 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using NovaSharp.Interpreter.DataTypes;
     using SDK;
 
+    /// <summary>
+    /// Helpers that expand <see cref="DynValue"/> instances into VS Code variable payloads.
+    /// </summary>
     internal static class VariableInspector
     {
+        /// <summary>
+        /// Adds debugger-friendly entries describing the supplied value.
+        /// </summary>
+        /// <param name="v">Lua value to inspect.</param>
+        /// <param name="variables">Collection receiving formatted entries.</param>
         internal static void InspectVariable(DynValue v, List<Variable> variables)
         {
             variables.Add(new Variable("(value)", v.ToPrintString()));

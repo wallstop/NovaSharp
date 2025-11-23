@@ -9,6 +9,9 @@ namespace NovaSharp.Interpreter.Execution.VM
         "CA1069:Enums values should not be duplicated",
         Justification = "Opcode numeric values are serialized; Nop must remain 0 for backward compatibility."
     )]
+    /// <summary>
+    /// Defines the NovaSharp VM instruction set. Values must remain stable because they are persisted in chunk dumps.
+    /// </summary>
     internal enum OpCode
     {
         [Obsolete("Use a specific OpCode.", false)]

@@ -46,9 +46,19 @@ namespace NovaSharp.Interpreter.Interop
     /// </summary>
     public struct ReflectionSpecialName : IEquatable<ReflectionSpecialName>
     {
+        /// <summary>
+        /// Gets the category of special name discovered via reflection.
+        /// </summary>
         public ReflectionSpecialNameType Type { get; private set; }
+
+        /// <summary>
+        /// Gets the optional argument associated with the special name (property name, operator token, etc.).
+        /// </summary>
         public string Argument { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance with the specified type/argument.
+        /// </summary>
         public ReflectionSpecialName(ReflectionSpecialNameType type, string argument = null)
             : this()
         {
@@ -56,6 +66,9 @@ namespace NovaSharp.Interpreter.Interop
             Argument = argument;
         }
 
+        /// <summary>
+        /// Parses a CLR special-name string (e.g., <c>op_Addition</c> or <c>get_Item</c>).
+        /// </summary>
         public ReflectionSpecialName(string name)
             : this()
         {
@@ -194,17 +207,20 @@ namespace NovaSharp.Interpreter.Interop
             }
         }
 
+        /// <inheritdoc />
         public bool Equals(ReflectionSpecialName other)
         {
             return Type == other.Type
                 && string.Equals(Argument, other.Argument, StringComparison.Ordinal);
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return obj is ReflectionSpecialName name && Equals(name);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -218,11 +234,17 @@ namespace NovaSharp.Interpreter.Interop
             }
         }
 
+        /// <summary>
+        /// Equality operator for comparing two special names.
+        /// </summary>
         public static bool operator ==(ReflectionSpecialName left, ReflectionSpecialName right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Inequality operator for comparing two special names.
+        /// </summary>
         public static bool operator !=(ReflectionSpecialName left, ReflectionSpecialName right)
         {
             return !left.Equals(right);

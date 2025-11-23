@@ -253,6 +253,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Serializes the descriptor and its members into a Lua table so tooling can inspect wiring info.
+        /// </summary>
         public void PrepareForWiring(Table t)
         {
             if (t == null)

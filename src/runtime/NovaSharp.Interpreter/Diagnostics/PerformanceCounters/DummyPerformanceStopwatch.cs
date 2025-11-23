@@ -2,6 +2,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
 {
     using System;
 
+    /// <summary>
+    /// No-op stopwatch used when performance counters are disabled.
+    /// </summary>
     internal class DummyPerformanceStopwatch : IPerformanceStopwatch, IDisposable
     {
         public static DummyPerformanceStopwatch Instance = new();
@@ -19,16 +22,19 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             };
         }
 
+        /// <inheritdoc/>
         public IDisposable Start()
         {
             return this;
         }
 
+        /// <inheritdoc/>
         public PerformanceResult GetResult()
         {
             return _result;
         }
 
+        /// <inheritdoc/>
         public void Dispose() { }
     }
 }

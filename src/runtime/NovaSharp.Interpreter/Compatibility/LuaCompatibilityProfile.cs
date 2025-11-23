@@ -137,6 +137,12 @@ namespace NovaSharp.Interpreter.Compatibility
             };
         }
 
+        /// <summary>
+        /// Returns the human-readable label for the supplied compatibility version. Internal so both
+        /// runtime and tooling can keep their banners/tests in sync without duplicating formatting.
+        /// </summary>
+        /// <param name="version">The compatibility version to convert.</param>
+        /// <returns>A friendly display name such as <c>Lua 5.3</c>.</returns>
         internal static string GetDisplayName(LuaCompatibilityVersion version)
         {
             return version switch

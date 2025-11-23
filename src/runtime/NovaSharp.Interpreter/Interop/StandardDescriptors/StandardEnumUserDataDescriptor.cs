@@ -360,6 +360,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             return CreateValueUnsigned(r);
         }
 
+        /// <summary>
+        /// Implements bitwise OR for flags enums, returning a new enum value.
+        /// </summary>
         internal DynValue CallbackOr(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
@@ -372,6 +375,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Implements bitwise AND for flags enums, returning a new enum value.
+        /// </summary>
         internal DynValue CallbackAnd(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
@@ -384,6 +390,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Implements bitwise XOR for flags enums, returning a new enum value.
+        /// </summary>
         internal DynValue CallbackXor(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
@@ -396,6 +405,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Implements bitwise NOT for flags enums, returning a new enum value.
+        /// </summary>
         internal DynValue CallbackBwNot(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
@@ -408,6 +420,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Checks whether the first enum contains all bits set in the second argument.
+        /// </summary>
         internal DynValue CallbackHasAll(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
@@ -430,6 +445,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Checks whether the first enum contains any bits set in the second argument.
+        /// </summary>
         internal DynValue CallbackHasAny(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)

@@ -9,11 +9,19 @@ namespace NovaSharp.Interpreter.Execution.VM
     using IO;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <content>
+    /// Provides chunk dump/undump helpers for persisting bytecode.
+    /// </content>
     internal sealed partial class Processor
     {
         private const ulong DumpChunkMagic = 0x1A0D234E4F4F4D1D;
         private const int DumpChunkVersion = 0x150;
 
+        /// <summary>
+        /// Determines whether the provided stream contains a NovaSharp chunk header.
+        /// </summary>
+        /// <param name="stream">Stream to inspect (position is restored).</param>
+        /// <returns><c>true</c> if the header matches; otherwise, <c>false</c>.</returns>
         internal static bool IsDumpStream(Stream stream)
         {
             if (stream.Length >= 8)
@@ -26,6 +34,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             return false;
         }
 
+        /// <summary>
+        /// Writes the bytecode for the current chunk to the provided stream.
+        /// </summary>
+        /// <param name="stream">Destination stream.</param>
+        /// <param name="baseAddress">Instruction pointer to start dumping from.</param>
+        /// <param name="hasUpvalues">Whether the function being dumped captures upvalues.</param>
+        /// <returns>The instruction pointer immediately after the dumped chunk.</returns>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="baseAddress"/> does not point to a Meta instruction.</exception>
         internal int Dump(Stream stream, int baseAddress, bool hasUpvalues)
         {
             using BinDumpBinaryWriter bw = new(stream, Encoding.UTF8);
@@ -98,6 +114,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return meta.NumVal + baseAddress + 1;
         }
 
+        /// <summary>
+        /// Adds the specified symbol to the serialization map when not already present.
+        /// </summary>
         private static void AddSymbolToMap(Dictionary<SymbolRef, int> symbolMap, SymbolRef s)
         {
             if (!symbolMap.ContainsKey(s))
@@ -106,6 +125,15 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Reads a chunk from the provided stream and appends it to the processor's bytecode buffer.
+        /// </summary>
+        /// <param name="stream">Source stream.</param>
+        /// <param name="sourceId">Identifier for the source, used in <see cref="SourceRef"/>.</param>
+        /// <param name="envTable">Environment table used to recreate table literals.</param>
+        /// <param name="hasUpvalues">Outputs whether the chunk declares upvalues.</param>
+        /// <returns>The base address where the chunk was inserted.</returns>
+        /// <exception cref="ArgumentException">Thrown when the header is invalid or the version mismatches.</exception>
         internal int Undump(Stream stream, int sourceId, Table envTable, out bool hasUpvalues)
         {
             int baseAddress = _rootChunk.Code.Count;

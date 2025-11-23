@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
 
+    /// <summary>
+    /// Converts NovaSharp values back into CLR types, including overload scoring helpers.
+    /// </summary>
     internal static class ScriptToClrConversions
     {
         internal const int WeightMaxValue = 100;

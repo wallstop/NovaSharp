@@ -113,6 +113,9 @@ namespace NovaSharp.Interpreter.Platforms
             AutoDetectionsDone = true;
         }
 
+        /// <summary>
+        /// Returns the default platform accessor for the current runtime.
+        /// </summary>
         internal static IPlatformAccessor GetDefaultPlatform()
         {
             AutoDetectPlatformFlags();
@@ -133,6 +136,9 @@ namespace NovaSharp.Interpreter.Platforms
 #endif
         }
 
+        /// <summary>
+        /// Returns the default script loader for the current runtime.
+        /// </summary>
         internal static IScriptLoader GetDefaultScriptLoader()
         {
             AutoDetectPlatformFlags();
@@ -153,6 +159,9 @@ namespace NovaSharp.Interpreter.Platforms
             }
         }
 
+        /// <summary>
+        /// Captures the platform detection state so tests can restore it later.
+        /// </summary>
         internal sealed class PlatformDetectorSnapshot
         {
             internal PlatformDetectorSnapshot(
@@ -188,6 +197,9 @@ namespace NovaSharp.Interpreter.Platforms
 
         internal static class TestHooks
         {
+            /// <summary>
+            /// Takes a snapshot of the current detector state.
+            /// </summary>
             public static PlatformDetectorSnapshot CaptureState()
             {
                 return new PlatformDetectorSnapshot(
@@ -202,6 +214,9 @@ namespace NovaSharp.Interpreter.Platforms
                 );
             }
 
+            /// <summary>
+            /// Restores the detector to a previously captured state.
+            /// </summary>
             public static void RestoreState(PlatformDetectorSnapshot snapshot)
             {
                 IsRunningOnMono = snapshot.IsRunningOnMono;
@@ -214,6 +229,9 @@ namespace NovaSharp.Interpreter.Platforms
                 AutoDetectionsDone = snapshot.AutoDetectionsDone;
             }
 
+            /// <summary>
+            /// Overrides individual detection flags for test scenarios.
+            /// </summary>
             public static void SetFlags(
                 bool? isRunningOnMono = null,
                 bool? isRunningOnClr4 = null,
@@ -254,11 +272,17 @@ namespace NovaSharp.Interpreter.Platforms
                 }
             }
 
+            /// <summary>
+            /// Overrides the cached AOT detection result.
+            /// </summary>
             public static void SetRunningOnAot(bool? value)
             {
                 RunningOnAotCache = value;
             }
 
+            /// <summary>
+            /// Overrides whether auto-detection has already run.
+            /// </summary>
             public static void SetAutoDetectionsDone(bool value)
             {
                 AutoDetectionsDone = value;

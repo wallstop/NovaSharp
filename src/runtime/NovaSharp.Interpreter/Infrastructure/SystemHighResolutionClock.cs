@@ -3,6 +3,9 @@ namespace NovaSharp.Interpreter.Infrastructure
     using System;
     using System.Diagnostics;
 
+    /// <summary>
+    /// Default implementation backed by <see cref="Stopwatch"/> for production use.
+    /// </summary>
     internal sealed class SystemHighResolutionClock : IHighResolutionClock
     {
         internal static readonly SystemHighResolutionClock Instance = new();
@@ -10,13 +13,16 @@ namespace NovaSharp.Interpreter.Infrastructure
 
         private SystemHighResolutionClock() { }
 
+        /// <inheritdoc />
         public double TimestampFrequency => _frequencyHz;
 
+        /// <inheritdoc />
         public long GetTimestamp()
         {
             return Stopwatch.GetTimestamp();
         }
 
+        /// <inheritdoc />
         public long GetElapsedMilliseconds(long startTimestamp, long? endTimestamp = null)
         {
             long stop = endTimestamp ?? GetTimestamp();

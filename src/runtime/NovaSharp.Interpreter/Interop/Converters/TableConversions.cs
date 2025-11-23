@@ -5,6 +5,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// Converts between Lua tables and CLR collection types.
+    /// </summary>
     internal static class TableConversions
     {
         /// <summary>

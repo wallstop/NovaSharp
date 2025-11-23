@@ -721,6 +721,9 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Initializes the hidden array iteration keys used by `next`/`ipairs` while inserting complex values (tables/functions).
+        /// </summary>
         internal void InitNextArrayKeys(DynValue val, bool lastPosition)
         {
             if (val.Type == DataType.Tuple && lastPosition)

@@ -57,6 +57,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// Internal hook that exposes the compiled getter so interpreter tests (via InternalsVisibleTo)
         /// can assert optimization behavior without reflection.
         /// </summary>
+        /// <summary>
+        /// Gets the compiled getter delegate produced by <see cref="OptimizeGetter"/> when available.
+        /// </summary>
         internal Func<object, object> OptimizedGetter => _optimizedGetter;
 
         /// <summary>
@@ -157,6 +160,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
+        /// <summary>
+        /// Compiles a fast getter delegate so repeated field access avoids reflection.
+        /// </summary>
         internal void OptimizeGetter()
         {
             if (IsConst)
@@ -277,6 +283,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Ensures getters are optimized when the access mode requires it.
+        /// </summary>
         public virtual void Optimize()
         {
             if (_optimizedGetter == null)

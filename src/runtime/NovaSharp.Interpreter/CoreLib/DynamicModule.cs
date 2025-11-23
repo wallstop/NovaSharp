@@ -1,6 +1,3 @@
-// Disable warnings about XML documentation
-#pragma warning disable 1591
-
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System.Diagnostics.CodeAnalysis;
@@ -11,15 +8,16 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
 
-    /// <summary>
-    /// Class implementing dynamic expression evaluations at runtime (a NovaSharp addition).
-    /// </summary>
     [SuppressMessage(
         "Design",
         "CA1052:Static holder types should be static or not inheritable",
         Justification = "Module types participate in generic registration requiring instance types."
     )]
     [NovaSharpModule(Namespace = "dynamic")]
+    /// <summary>
+    /// Implements NovaSharp's `dynamic` module, enabling scripts to compile and execute Lua code
+    /// strings at runtime (similar to <c>load</c> but optimized for short expressions).
+    /// </summary>
     public class DynamicModule
     {
         private class DynamicExpressionWrapper
@@ -27,11 +25,29 @@ namespace NovaSharp.Interpreter.CoreLib
             public DynamicExpression Expression;
         }
 
+        /// <summary>
+        /// Registers the dynamic expression userdata wrapper so prepared expressions can be cached
+        /// and executed later.
+        /// </summary>
+        /// <param name="globalTable">Global table passed by the module bootstrapper.</param>
+        /// <param name="stringTable">Shared string table (unused, but part of the module signature).</param>
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
             UserData.RegisterType<DynamicExpressionWrapper>(InteropAccessMode.HideMembers);
         }
 
+        /// <summary>
+        /// Compiles and executes a Lua expression provided as a string, or executes a previously
+        /// prepared dynamic expression userdata.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Callback arguments containing either a string chunk or a prepared expression userdata.
+        /// </param>
+        /// <returns>The evaluated result as a <see cref="DynValue"/>.</returns>
+        /// <exception cref="ScriptRuntimeException">
+        /// Thrown when the input cannot be parsed or is not a prepared expression userdata.
+        /// </exception>
         [NovaSharpModuleMethod(Name = "eval")]
         public static DynValue Eval(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -74,6 +90,18 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Compiles a Lua expression string and returns a userdata wrapper that can be evaluated
+        /// multiple times without recompilation via <c>dynamic.eval</c>.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the Lua expression string to compile.</param>
+        /// <returns>
+        /// A userdata encapsulating the compiled <see cref="DynamicExpression"/> for later execution.
+        /// </returns>
+        /// <exception cref="ScriptRuntimeException">
+        /// Thrown when the supplied expression fails to parse.
+        /// </exception>
         [NovaSharpModuleMethod(Name = "prepare")]
         public static DynValue Prepare(
             ScriptExecutionContext executionContext,

@@ -651,6 +651,9 @@ namespace NovaSharp.Interpreter.Errors
             }
         }
 
+        /// <summary>
+        /// Creates the standard Lua error raised when closing a coroutine in an invalid state (§3.10).
+        /// </summary>
         public static ScriptRuntimeException CannotCloseCoroutine(CoroutineState state)
         {
             return state switch

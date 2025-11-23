@@ -21,6 +21,9 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleConstant(Name = "charpattern")]
         public const string CharPattern = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
 
+        /// <summary>
+        /// Implements Lua `utf8.len`, returning the number of UTF-8 codepoints in a slice or the position of the first error.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "len")]
         public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -34,6 +37,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return result;
         }
 
+        /// <summary>
+        /// Implements Lua `utf8.codepoint`, returning the code points within the requested range (§6.5).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "codepoint")]
         public static DynValue CodePoint(
             ScriptExecutionContext executionContext,
@@ -81,6 +87,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(numbers.ToArray());
         }
 
+        /// <summary>
+        /// Implements Lua `utf8.char`, building a UTF-8 string from the provided scalar values (§6.5).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "char")]
         public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -107,6 +116,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(builder.ToString());
         }
 
+        /// <summary>
+        /// Implements Lua `utf8.codes`, returning the iterator triple for traversing code points (§6.5).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "codes")]
         public static DynValue Codes(
             ScriptExecutionContext executionContext,
@@ -122,6 +134,9 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Implements Lua `utf8.offset`, locating the byte offset of the nth code point relative to a position (§6.5).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "offset")]
         public static DynValue Offset(
             ScriptExecutionContext executionContext,

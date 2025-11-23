@@ -43,8 +43,14 @@ namespace NovaSharp.Interpreter.Interop
         /// </value>
         public UserDataMemberType MemberType { get; }
 
+        /// <summary>
+        /// Allows the descriptor to cache expensive reflection state before repeated use.
+        /// </summary>
         public void Optimize();
 
+        /// <summary>
+        /// Gets a value indicating whether the member is static (does not require an instance).
+        /// </summary>
         public bool IsStatic { get; }
     }
 }

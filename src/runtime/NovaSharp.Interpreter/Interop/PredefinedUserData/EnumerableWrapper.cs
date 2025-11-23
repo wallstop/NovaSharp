@@ -21,6 +21,9 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
             _enumerator = enumerator;
         }
 
+        /// <summary>
+        /// Resets the wrapped enumerator so subsequent iterations restart from the beginning.
+        /// </summary>
         public void Reset()
         {
             if (_hasTurnOnce)
@@ -31,6 +34,9 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
             _hasTurnOnce = true;
         }
 
+        /// <summary>
+        /// Advances the enumerator and returns the next script-friendly value.
+        /// </summary>
         private DynValue GetNext(DynValue prev)
         {
             if (prev.IsNil())
@@ -51,6 +57,9 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Callback that exposes the enumerator as a Lua iterator triple.
+        /// </summary>
         private DynValue LuaIteratorCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -60,17 +69,26 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
             return _prev;
         }
 
+        /// <summary>
+        /// Wraps the provided <see cref="IEnumerator"/> so Lua code can iterate over it.
+        /// </summary>
         internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
         {
             EnumerableWrapper ei = new(script, enumerator);
             return DynValue.NewTuple(UserData.Create(ei), DynValue.Nil, DynValue.Nil);
         }
 
+        /// <summary>
+        /// Exposes the values of a Lua table as a CLR-style iterator triple.
+        /// </summary>
         internal static DynValue ConvertTable(Table table)
         {
             return ConvertIterator(table.OwnerScript, table.Values.GetEnumerator());
         }
 
+        /// <summary>
+        /// Implements member access on the iterator wrapper (e.g., Current/MoveNext/Reset).
+        /// </summary>
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
         {
             if (index.Type == DataType.String)
@@ -101,11 +119,17 @@ namespace NovaSharp.Interpreter.Interop.PredefinedUserData
             return null;
         }
 
+        /// <summary>
+        /// Iterator wrapper is read-only; assignments are ignored.
+        /// </summary>
         public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing)
         {
             return false;
         }
 
+        /// <summary>
+        /// Provides metamethods required to drive the iterator from Lua (<c>__call</c>).
+        /// </summary>
         public DynValue MetaIndex(Script script, string metaname)
         {
             if (metaname == "__call")

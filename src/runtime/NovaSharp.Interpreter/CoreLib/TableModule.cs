@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Text;
@@ -19,6 +16,9 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "table")]
     public class TableModule
     {
+        /// <summary>
+        /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -51,6 +51,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(v);
         }
 
+        /// <summary>
+        /// Implements Lua `table.pack`, wrapping arbitrary arguments into a table with field `n` (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -73,6 +76,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
+        /// <summary>
+        /// Implements Lua `table.sort`, sorting the array portion with an optional comparator (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "sort")]
         public static DynValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -184,6 +190,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return 0;
         }
 
+        /// <summary>
+        /// Implements Lua `table.insert`, inserting a value at the specified position (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "insert")]
         public static DynValue Insert(
             ScriptExecutionContext executionContext,
@@ -244,6 +253,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return vlist;
         }
 
+        /// <summary>
+        /// Implements Lua `table.remove`, removing and returning a value at the given position (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "remove")]
         public static DynValue Remove(
             ScriptExecutionContext executionContext,
@@ -294,6 +306,9 @@ namespace NovaSharp.Interpreter.CoreLib
         //Given a list where all elements are strings or numbers, returns the string list[i]..sep..list[i+1] (...) sep..list[j].
         //The default value for sep is the empty string, the default for i is 1, and the default for j is #list. If i is greater
         //than j, returns the empty string.
+        /// <summary>
+        /// Implements Lua `table.concat`, concatenating array elements with an optional separator (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "concat")]
         public static DynValue Concat(
             ScriptExecutionContext executionContext,
@@ -358,6 +373,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(sb.ToString());
         }
 
+        /// <summary>
+        /// Implements Lua 5.3 `table.move`, copying values between tables with overlap handling (§6.6).
+        /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         [NovaSharpModuleMethod(Name = "move")]
         public static DynValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -440,6 +458,9 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class TableModuleGlobals
     {
+        /// <summary>
+        /// Global alias for `table.unpack` to maintain Lua 5.1 compatibility.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -449,6 +470,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return TableModule.Unpack(executionContext, args);
         }
 
+        /// <summary>
+        /// Global alias for `table.pack` to maintain Lua 5.1 compatibility.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {

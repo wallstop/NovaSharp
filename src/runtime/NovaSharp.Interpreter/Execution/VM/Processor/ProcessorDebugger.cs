@@ -11,8 +11,16 @@ namespace NovaSharp.Interpreter.Execution.VM
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.
     // Same reason for the "sealed" declaration.
+    /// <content>
+    /// Hosts debugger integration helpers (breakpoints, stepping, watch updates).
+    /// </content>
     internal sealed partial class Processor
     {
+        /// <summary>
+        /// Finds the first meta-instruction starting at <paramref name="baseAddress"/>, skipping leading NOPs.
+        /// </summary>
+        /// <param name="baseAddress">Reference to the base instruction pointer; updated to the meta instruction.</param>
+        /// <returns>The meta instruction or <c>null</c> when none is present.</returns>
         internal Instruction FindMeta(ref int baseAddress)
         {
             Instruction meta = _rootChunk.Code[baseAddress];
@@ -32,6 +40,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             return meta;
         }
 
+        /// <summary>
+        /// Attaches the specified debugger and propagates capability flags.
+        /// </summary>
+        /// <param name="debugger">Debugger implementation.</param>
         internal void AttachDebugger(IDebugger debugger)
         {
             _debug.DebuggerAttached = debugger;
@@ -40,12 +52,18 @@ namespace NovaSharp.Interpreter.Execution.VM
             debugger.SetDebugService(new DebugService(_script, this));
         }
 
+        /// <summary>
+        /// Test-only helper that attaches a debugger without talking to the debug service.
+        /// </summary>
         internal void AttachDebuggerForTests(IDebugger debugger, bool lineBasedBreakpoints)
         {
             _debug.DebuggerAttached = debugger;
             _debug.LineBasedBreakPoints = lineBasedBreakpoints;
         }
 
+        /// <summary>
+        /// Sets the debugger action state for unit tests.
+        /// </summary>
         internal void ConfigureDebuggerActionForTests(
             DebuggerAction.ActionType action,
             int actionTarget,
@@ -59,42 +77,66 @@ namespace NovaSharp.Interpreter.Execution.VM
             _debug.LastHlRef = lastHighlight;
         }
 
+        /// <summary>
+        /// Gets the pending debugger action (test helper).
+        /// </summary>
         internal DebuggerAction.ActionType GetDebuggerActionForTests()
         {
             return _debug.DebuggerCurrentAction;
         }
 
+        /// <summary>
+        /// Gets the instruction pointer targeted by the current debugger action.
+        /// </summary>
         internal int GetDebuggerActionTargetForTests()
         {
             return _debug.DebuggerCurrentActionTarget;
         }
 
+        /// <summary>
+        /// Gets the last highlighted source reference (test helper).
+        /// </summary>
         internal SourceRef GetLastHighlightForTests()
         {
             return _debug.LastHlRef;
         }
 
+        /// <summary>
+        /// Exposes <see cref="ListenDebugger"/> for unit tests.
+        /// </summary>
         internal void ListenDebuggerForTests(Instruction instr, int instructionPtr)
         {
             ListenDebugger(instr, instructionPtr);
         }
 
+        /// <summary>
+        /// Returns the current set of breakpoints (test helper).
+        /// </summary>
         internal IReadOnlyList<SourceRef> GetBreakpointsForTests()
         {
             return _debug.BreakPoints.ToArray();
         }
 
+        /// <summary>
+        /// Clears all tracked breakpoints (test helper).
+        /// </summary>
         internal void ClearBreakpointsForTests()
         {
             _debug.BreakPoints.Clear();
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the debugger is active.
+        /// </summary>
         internal bool DebuggerEnabled
         {
             get { return _debug.DebuggerEnabled; }
             set { _debug.DebuggerEnabled = value; }
         }
 
+        /// <summary>
+        /// Core stepping/breakpoint evaluation loop; blocks until the debugger releases execution.
+        /// </summary>
         private void ListenDebugger(Instruction instr, int instructionPtr)
         {
             bool isOnDifferentRef = false;
@@ -237,12 +279,18 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Resets the breakpoints for the source specified by the debugger action.
+        /// </summary>
         private void ResetBreakpoints(DebuggerAction action)
         {
             SourceCode src = _script.GetSourceCode(action.SourceId);
             ResetBreakpoints(src, new HashSet<int>(action.Lines));
         }
 
+        /// <summary>
+        /// Applies a new set of breakpoints to the provided source and returns the effective line set.
+        /// </summary>
         internal static HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
             HashSet<int> result = new();
@@ -265,6 +313,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return result;
         }
 
+        /// <summary>
+        /// Toggles or sets a breakpoint at the location specified by the debugger action.
+        /// </summary>
         private bool ToggleBreakPoint(DebuggerAction action, bool? state)
         {
             SourceCode src = _script.GetSourceCode(action.SourceId);
@@ -363,6 +414,11 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Sends the latest call stack, locals, and watch data to the debugger.
+        /// </summary>
+        /// <param name="hard">When true, refreshes breakpoints as well.</param>
+        /// <param name="instructionPtr">Current instruction pointer.</param>
         private void RefreshDebugger(bool hard, int instructionPtr)
         {
             SourceRef sref = GetCurrentSourceRef(instructionPtr);
@@ -387,6 +443,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Builds the watch items representing the coroutine stack.
+        /// </summary>
         private List<WatchItem> RefreshDebuggerThreads(ScriptExecutionContext context)
         {
             List<Processor> coroutinesStack =
@@ -403,6 +462,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 .ToList();
         }
 
+        /// <summary>
+        /// Builds the watch items representing the top portion of the value stack.
+        /// </summary>
         private List<WatchItem> RefreshValueStack()
         {
             List<WatchItem> lwi = new();
@@ -414,6 +476,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return lwi;
         }
 
+        /// <summary>
+        /// Evaluates user-defined watch expressions.
+        /// </summary>
         private static List<WatchItem> RefreshDebuggerWatches(
             ScriptExecutionContext context,
             List<DynamicExpression> watchList
@@ -422,6 +487,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return watchList.Select(w => RefreshDebuggerWatch(context, w)).ToList();
         }
 
+        /// <summary>
+        /// Produces watch items for the locals visible in the top stack frame.
+        /// </summary>
         private List<WatchItem> RefreshDebuggerLocals(ScriptExecutionContext context)
         {
             List<WatchItem> locals = new();
@@ -448,6 +516,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return locals;
         }
 
+        /// <summary>
+        /// Evaluates a single dynamic expression, capturing errors in the returned watch item.
+        /// </summary>
         private static WatchItem RefreshDebuggerWatch(
             ScriptExecutionContext context,
             DynamicExpression dynExpr
@@ -477,6 +548,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Builds the call stack representation consumed by debugger front-ends.
+        /// </summary>
         internal List<WatchItem> GetDebuggerCallStack(SourceRef startingRef)
         {
             List<WatchItem> wis = new();

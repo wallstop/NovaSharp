@@ -4,8 +4,14 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <content>
+    /// Provides shared helpers for tuple adjustment, metamethod invocation, and stack inspection.
+    /// </content>
     internal sealed partial class Processor
     {
+        /// <summary>
+        /// Normalizes a list of return values so trailing tuples are expanded per Lua rules.
+        /// </summary>
         private static DynValue[] InternalAdjustTuple(IList<DynValue> values)
         {
             if (values == null || values.Count == 0)
@@ -50,6 +56,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Pushes a unary metamethod on the stack and schedules its execution.
+        /// </summary>
         private int InternalInvokeUnaryMetaMethod(
             DynValue op1,
             string eventName,
@@ -89,6 +98,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Pushes a binary metamethod on the stack and schedules its execution.
+        /// </summary>
         private int InternalInvokeBinaryMetaMethod(
             DynValue l,
             DynValue r,
@@ -117,6 +129,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Copies or pops the top <paramref name="items"/> entries from the value stack.
+        /// </summary>
         private DynValue[] StackTopToArray(int items, bool pop)
         {
             DynValue[] values = new DynValue[items];
@@ -139,6 +154,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return values;
         }
 
+        /// <summary>
+        /// Copies or pops the top <paramref name="items"/> entries from the value stack in reverse order.
+        /// </summary>
         private DynValue[] StackTopToArrayReverse(int items, bool pop)
         {
             DynValue[] values = new DynValue[items];

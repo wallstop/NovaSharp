@@ -1,6 +1,3 @@
-// Disable warnings about XML documentation
-#pragma warning disable 1591
-
 namespace NovaSharp.Interpreter.CoreLib
 {
     using NovaSharp.Interpreter.DataTypes;
@@ -10,7 +7,8 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing metatable related Lua functions (xxxmetatable and rawxxx).
+    /// Implements Lua metatable helpers (`setmetatable`, `getmetatable`, and the raw* primitives)
+    /// per Lua 5.4 §6.5.
     /// </summary>
     [NovaSharpModule]
     public class MetaTableModule
@@ -21,6 +19,13 @@ namespace NovaSharp.Interpreter.CoreLib
         // types from Lua, only from C.) If metatable is nil, removes the metatable of the given table.
         // If the original metatable has a "__metatable" field, raises an error ("cannot change a protected metatable").
         // This function returns table.
+        /// <summary>
+        /// Implements Lua `setmetatable`, updating a table's metatable or removing it when passed
+        /// <c>nil</c>. Respects the `__metatable` protection flag (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the table and new metatable.</param>
+        /// <returns>The original table.</returns>
         [NovaSharpModuleMethod(Name = "setmetatable")]
         public static DynValue SetMetatable(
             ScriptExecutionContext executionContext,
@@ -51,6 +56,13 @@ namespace NovaSharp.Interpreter.CoreLib
         // -------------------------------------------------------------------------------------------------------------------
         // If object does not have a metatable, returns nil. Otherwise, if the object's metatable
         // has a "__metatable" field, returns the associated value. Otherwise, returns the metatable of the given object.
+        /// <summary>
+        /// Implements Lua `getmetatable`, returning the metatable or the protected `__metatable`
+        /// marker when present (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the object to inspect.</param>
+        /// <returns>The metatable, `__metatable` value, or <c>nil</c>.</returns>
         [NovaSharpModuleMethod(Name = "getmetatable")]
         public static DynValue GetMetatable(
             ScriptExecutionContext executionContext,
@@ -93,6 +105,12 @@ namespace NovaSharp.Interpreter.CoreLib
         // rawget (table, index)
         // -------------------------------------------------------------------------------------------------------------------
         // Gets the real value of table[index], without invoking any metamethod. table must be a table; index may be any value.
+        /// <summary>
+        /// Implements Lua `rawget`, bypassing metamethods to retrieve a table entry (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments specifying the table and key.</param>
+        /// <returns>The raw value stored at the key.</returns>
         [NovaSharpModuleMethod(Name = "rawget")]
         public static DynValue RawGet(
             ScriptExecutionContext executionContext,
@@ -116,6 +134,12 @@ namespace NovaSharp.Interpreter.CoreLib
         // Sets the real value of table[index] to value, without invoking any metamethod. table must be a table,
         // index any value different from nil and NaN, and value any Lua value.
         // This function returns table.
+        /// <summary>
+        /// Implements Lua `rawset`, writing to a table without invoking metamethods (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the table, key, and value.</param>
+        /// <returns>The original table.</returns>
         [NovaSharpModuleMethod(Name = "rawset")]
         public static DynValue RawSet(
             ScriptExecutionContext executionContext,
@@ -139,6 +163,12 @@ namespace NovaSharp.Interpreter.CoreLib
         // rawequal (v1, v2)
         // -------------------------------------------------------------------------------------------------------------------
         // Checks whether v1 is equal to v2, without invoking any metamethod. Returns a boolean.
+        /// <summary>
+        /// Implements Lua `rawequal`, comparing two values without metamethod dispatch (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the two values.</param>
+        /// <returns>Boolean result.</returns>
         [NovaSharpModuleMethod(Name = "rawequal")]
         public static DynValue RawEqual(
             ScriptExecutionContext executionContext,
@@ -160,6 +190,13 @@ namespace NovaSharp.Interpreter.CoreLib
         //rawlen (v)
         // -------------------------------------------------------------------------------------------------------------------
         //Returns the length of the object v, which must be a table or a string, without invoking any metamethod. Returns an integer number.
+        /// <summary>
+        /// Implements Lua `rawlen`, returning the raw length of a string or table without
+        /// metamethods (§6.5).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the target string/table.</param>
+        /// <returns>Length as a number.</returns>
         [NovaSharpModuleMethod(Name = "rawlen")]
         public static DynValue RawLen(
             ScriptExecutionContext executionContext,

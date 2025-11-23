@@ -10,6 +10,9 @@ namespace NovaSharp.Interpreter.Execution
     {
         private const int IntegerBitCount = 64;
 
+        /// <summary>
+        /// Attempts to coerce a double into a Lua integer (verifying range and fractional part).
+        /// </summary>
         public static bool TryGetInteger(double number, out long value)
         {
             if (double.IsNaN(number) || double.IsInfinity(number))
@@ -35,6 +38,9 @@ namespace NovaSharp.Interpreter.Execution
             return true;
         }
 
+        /// <summary>
+        /// Attempts to coerce a DynValue into a Lua integer (accepting numeric strings per Lua semantics).
+        /// </summary>
         public static bool TryGetInteger(DynValue value, out long integer)
         {
             DynValue scalar = value.ToScalar();
@@ -62,6 +68,9 @@ namespace NovaSharp.Interpreter.Execution
             return false;
         }
 
+        /// <summary>
+        /// Performs a Lua-style left shift, clamping large shifts to zero.
+        /// </summary>
         public static long ShiftLeft(long value, long shift)
         {
             if (shift < 0)
@@ -77,6 +86,9 @@ namespace NovaSharp.Interpreter.Execution
             return value << (int)shift;
         }
 
+        /// <summary>
+        /// Performs a Lua-style arithmetic right shift, clamping large shifts to sign.
+        /// </summary>
         public static long ShiftRight(long value, long shift)
         {
             if (shift < 0)

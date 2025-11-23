@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
@@ -49,6 +46,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Epoch + ts;
         }
 
+        /// <summary>
+        /// Implements Lua `os.clock`, returning CPU time in seconds since the script started (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Unused arguments.</param>
+        /// <returns>Elapsed CPU time represented as seconds.</returns>
         [NovaSharpModuleMethod(Name = "clock")]
         public static DynValue Clock(
             ScriptExecutionContext executionContext,
@@ -70,6 +73,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return t;
         }
 
+        /// <summary>
+        /// Implements Lua `os.difftime`, subtracting two time values (t2 - t1) in seconds (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the timestamps.</param>
+        /// <returns>Difference in seconds.</returns>
         [NovaSharpModuleMethod(Name = "difftime")]
         public static DynValue DiffTime(
             ScriptExecutionContext executionContext,
@@ -92,6 +101,13 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(t2.Number - t1.Number);
         }
 
+        /// <summary>
+        /// Implements Lua `os.time`, returning the current time as Unix seconds or building one from
+        /// a table description (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Optional date table argument.</param>
+        /// <returns>Unix timestamp as a number.</returns>
         [NovaSharpModuleMethod(Name = "time")]
         public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -154,6 +170,16 @@ namespace NovaSharp.Interpreter.CoreLib
             return null;
         }
 
+        /// <summary>
+        /// Implements Lua `os.date`, formatting the current time (or a supplied timestamp) according
+        /// to the requested format string (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Format string (defaults to <c>%c</c>) and optional Unix timestamp. Supports the special
+        /// `*t` structure return and `!` UTC prefix.
+        /// </param>
+        /// <returns>Formatted string or table describing the broken-down date.</returns>
         [NovaSharpModuleMethod(Name = "date")]
         public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {

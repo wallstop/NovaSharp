@@ -148,6 +148,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(rets);
         }
 
+        /// <summary>
+        /// Continuation invoked after a protected call completes successfully; it prepends
+        /// <c>true</c> to the callee's return values to match Lua's <c>pcall</c>/<c>xpcall</c>
+        /// contract.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments representing the protected call's return values.</param>
+        /// <returns>Tuple with <c>true</c> followed by the original return values.</returns>
         public static DynValue PcallContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -162,6 +170,13 @@ namespace NovaSharp.Interpreter.CoreLib
             return MakeReturnTuple(true, args);
         }
 
+        /// <summary>
+        /// Continuation invoked when a protected call fails; it prepends <c>false</c> and the error
+        /// object to mimic Lua's <c>pcall</c>/<c>xpcall</c> failure contract.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the error object/message.</param>
+        /// <returns>Tuple beginning with <c>false</c> followed by the error payload.</returns>
         public static DynValue PcallOnError(
             ScriptExecutionContext executionContext,
             CallbackArguments args

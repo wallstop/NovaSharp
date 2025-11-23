@@ -37,6 +37,9 @@ namespace NovaSharp.Interpreter.DataStructs
             return _map.GetValueOrDefault(key);
         }
 
+        /// <summary>
+        /// Attempts to retrieve the node associated with the specified key without throwing when the key is missing.
+        /// </summary>
         public bool TryGetValue(TKey key, out LinkedListNode<TValue> value)
         {
             if (_map == null)

@@ -150,6 +150,9 @@ namespace NovaSharp.Interpreter.Diagnostics
 
         internal static class TestHooks
         {
+            /// <summary>
+            /// Clears the global stopwatch cache so tests can assert cold-start behaviour.
+            /// </summary>
             public static void ResetGlobalStopwatches()
             {
                 lock (GlobalSyncRoot)

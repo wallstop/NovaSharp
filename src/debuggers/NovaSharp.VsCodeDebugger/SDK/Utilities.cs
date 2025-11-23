@@ -32,6 +32,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
 
+    /// <summary>
+    /// Shared helpers used by the VS Code adapter.
+    /// </summary>
     internal sealed class Utilities
     {
         private static readonly Regex Variable = new(@"\{(\w+)\}");
@@ -41,6 +44,14 @@ namespace NovaSharp.VsCodeDebugger.SDK
          * Returns null on failure.
          */
 
+        /// <summary>
+        /// Replaces <c>{var}</c> tokens inside the format string with properties pulled from <paramref name="variables"/>.
+        /// </summary>
+        /// <param name="format">Template string containing <c>{name}</c> placeholders.</param>
+        /// <param name="variables">Object exposing the replacement properties.</param>
+        /// <param name="underscoredOnly">
+        /// When true, only variables prefixed with <c>_</c> are expanded (mirrors the VS Code sample adapter).
+        /// </param>
         public static string ExpandVariables(
             string format,
             object variables,
@@ -75,6 +86,12 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /**
          * converts the given absPath into a path that is relative to the given dirPath.
          */
+        /// <summary>
+        /// Computes a path relative to <paramref name="dirPath"/> when the absolute path shares the prefix.
+        /// </summary>
+        /// <param name="dirPath">Base directory.</param>
+        /// <param name="absPath">Absolute path to convert.</param>
+        /// <returns>Relative path if <paramref name="absPath"/> is under <paramref name="dirPath"/>, otherwise the original path.</returns>
         public static string MakeRelativePath(string dirPath, string absPath)
         {
             if (!dirPath.EndsWith("/", StringComparison.Ordinal))

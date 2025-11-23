@@ -7,8 +7,16 @@ namespace NovaSharp.Interpreter.Execution.VM
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.
     // Same reason for the "sealed" declaration.
+    /// <content>
+    /// Contains coroutine creation, scheduling, and teardown logic.
+    /// </content>
     internal sealed partial class Processor
     {
+        /// <summary>
+        /// Creates a new coroutine bound to the specified closure.
+        /// </summary>
+        /// <param name="closure">Closure to execute when the coroutine starts.</param>
+        /// <returns>A coroutine handle.</returns>
         public DynValue CreateCoroutine(Closure closure)
         {
             // create a processor instance
@@ -21,6 +29,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return DynValue.NewCoroutine(new Coroutine(p));
         }
 
+        /// <summary>
+        /// Reuses an existing processor instance to create a coroutine without re-allocating stacks.
+        /// </summary>
         public DynValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
             // Clear the used parts of the stacks to prep for reuse
@@ -37,12 +48,25 @@ namespace NovaSharp.Interpreter.Execution.VM
             return DynValue.NewCoroutine(new Coroutine(p));
         }
 
+        /// <summary>
+        /// Gets the current coroutine state.
+        /// </summary>
         public CoroutineState State
         {
             get { return _state; }
         }
+
+        /// <summary>
+        /// Gets or sets the <see cref="Coroutine"/> wrapper associated with this processor.
+        /// </summary>
         public Coroutine AssociatedCoroutine { get; set; }
 
+        /// <summary>
+        /// Resumes execution, optionally passing arguments to the coroutine entry point or yield continuation.
+        /// </summary>
+        /// <param name="args">Arguments supplied to <c>coroutine.resume</c>.</param>
+        /// <returns>Return values or yield results.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when resuming invalid states.</exception>
         public DynValue ResumeCoroutine(DynValue[] args)
         {
             EnterProcessor();
@@ -127,6 +151,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Forces the coroutine to close, unwinding pending blocks and returning Lua-compatible status tuples.
+        /// </summary>
         public DynValue CloseCoroutine()
         {
             EnterProcessor();
@@ -187,6 +214,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Builds the result tuple returned by <see cref="CloseCoroutine"/> based on the last error.
+        /// </summary>
         private DynValue BuildCloseResultFromLastError()
         {
             if (_lastCloseError != null && !_lastCloseError.IsNil())

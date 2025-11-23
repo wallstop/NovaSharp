@@ -36,9 +36,19 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Serialization.Json;
 
+    /// <summary>
+    /// Base type for every Debug Adapter Protocol payload (requests, responses, events).
+    /// </summary>
     public class ProtocolMessage
     {
+        /// <summary>
+        /// Running sequence assigned to the payload.
+        /// </summary>
         public int Sequenceuence;
+
+        /// <summary>
+        /// Message category (request/response/event).
+        /// </summary>
         public string Type { get; private set; }
 
         public ProtocolMessage(string typ)
@@ -53,6 +63,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Represents an inbound request from VS Code.
+    /// </summary>
     public class Request : ProtocolMessage
     {
         public string Command;
@@ -70,17 +83,42 @@ namespace NovaSharp.VsCodeDebugger.SDK
      * subclasses of ResponseBody are serialized as the Body of a response.
      * Don't change their instance variables since that will break the debug protocol.
      */
+    /// <summary>
+    /// Marker base class for strongly-typed response bodies.
+    /// </summary>
     public class ResponseBody
     {
         // empty
     }
 
+    /// <summary>
+    /// Outbound response payload.
+    /// </summary>
     public class Response : ProtocolMessage
     {
+        /// <summary>
+        /// Indicates whether the request succeeded.
+        /// </summary>
         public bool Success { get; private set; }
+
+        /// <summary>
+        /// Optional human-readable error message.
+        /// </summary>
         public string Message { get; private set; }
+
+        /// <summary>
+        /// Sequence number of the originating request.
+        /// </summary>
         public int RequestSequenceuence { get; private set; }
+
+        /// <summary>
+        /// Command being answered.
+        /// </summary>
         public string Command { get; private set; }
+
+        /// <summary>
+        /// Strongly typed body returned to VS Code.
+        /// </summary>
         public ResponseBody Body { get; private set; }
 
         public Response(Table req)
@@ -91,12 +129,18 @@ namespace NovaSharp.VsCodeDebugger.SDK
             Command = req.Get("Command").ToObject<string>();
         }
 
+        /// <summary>
+        /// Marks the response successful and assigns the body.
+        /// </summary>
         public void SetBody(ResponseBody bdy)
         {
             Success = true;
             Body = bdy;
         }
 
+        /// <summary>
+        /// Marks the response failed and adds error context.
+        /// </summary>
         public void SetErrorBody(string msg, ResponseBody bdy = null)
         {
             Success = false;
@@ -105,6 +149,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Outbound event notification.
+    /// </summary>
     public class Event : ProtocolMessage
     {
         public readonly string @event;
@@ -118,9 +165,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
-    /*
-     * The ProtocolServer can be used to implement a server that uses the VSCode debug protocol.
-     */
+    /// <summary>
+    /// Implements the VS Code debug protocol framing and dispatch pipeline.
+    /// </summary>
     public abstract class ProtocolServer
     {
         public bool Trace;
@@ -148,6 +195,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
             _rawData = new ByteBuffer();
         }
 
+        /// <summary>
+        /// Continuously reads framed messages from <paramref name="inputStream"/> and dispatches them until <see cref="Stop"/> is called.
+        /// </summary>
         public void ProcessLoop(Stream inputStream, Stream outputStream)
         {
             _outputStream = outputStream;
@@ -173,11 +223,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
             }
         }
 
+        /// <summary>
+        /// Requests termination of the processing loop.
+        /// </summary>
         public void Stop()
         {
             _stopRequested = true;
         }
 
+        /// <summary>
+        /// Sends an event payload to VS Code.
+        /// </summary>
         public void SendEvent(Event e)
         {
             SendMessage(e);
@@ -301,6 +357,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     //--------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// Simple grow-only buffer used to accumulate framed protocol data.
+    /// </summary>
     internal sealed class ByteBuffer
     {
         private byte[] _buffer;
@@ -310,16 +369,25 @@ namespace NovaSharp.VsCodeDebugger.SDK
             _buffer = new byte[0];
         }
 
+        /// <summary>
+        /// Gets the current number of bytes stored in the buffer.
+        /// </summary>
         public int Length
         {
             get { return _buffer.Length; }
         }
 
+        /// <summary>
+        /// Interprets the buffer contents as a string using the specified encoding.
+        /// </summary>
         public string GetString(Encoding enc)
         {
             return enc.GetString(_buffer);
         }
 
+        /// <summary>
+        /// Appends <paramref name="length"/> bytes from <paramref name="b"/> to the buffer.
+        /// </summary>
         public void Append(byte[] b, int length)
         {
             byte[] newBuffer = new byte[_buffer.Length + length];
@@ -328,6 +396,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
             _buffer = newBuffer;
         }
 
+        /// <summary>
+        /// Removes and returns the first <paramref name="n"/> bytes from the buffer.
+        /// </summary>
         public byte[] RemoveFirst(int n)
         {
             byte[] b = new byte[n];

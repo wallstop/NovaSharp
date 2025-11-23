@@ -6,6 +6,9 @@ namespace NovaSharp.Interpreter.Execution.VM
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
+    /// <content>
+    /// Implements symbol resolution and scope-management helpers.
+    /// </content>
     internal sealed partial class Processor
     {
         private void ClearBlockData(Instruction i)
@@ -72,6 +75,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Evaluates the value represented by the specified symbol reference (locals, upvalues, globals, _ENV).
+        /// </summary>
         public DynValue GetGenericSymbol(SymbolRef symref)
         {
             switch (symref.SymbolType)
@@ -116,6 +122,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             dynValue.Table.Set(name, value ?? DynValue.Nil);
         }
 
+        /// <summary>
+        /// Assigns the specified value to a symbol, honoring locals, upvalues, and globals.
+        /// </summary>
         public void AssignGenericSymbol(SymbolRef symref, DynValue value)
         {
             switch (symref.SymbolType)
@@ -173,6 +182,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return stackframe;
         }
 
+        /// <summary>
+        /// Resolves a symbol reference by name, searching locals, closures, and finally the global environment.
+        /// </summary>
         public SymbolRef FindSymbolByName(string name)
         {
             if (_executionStack.Count > 0)

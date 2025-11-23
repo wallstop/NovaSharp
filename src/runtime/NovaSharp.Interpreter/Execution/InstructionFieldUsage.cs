@@ -4,6 +4,9 @@ namespace NovaSharp.Interpreter.Execution
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution.VM;
 
+    /// <summary>
+    /// Describes which fields of a bytecode instruction carry meaningful data for debugging/serialization.
+    /// </summary>
     [Flags]
     internal enum InstructionFieldUsage
     {
@@ -18,8 +21,14 @@ namespace NovaSharp.Interpreter.Execution
         NumValAsCodeAddress = (1 << 6) | NumVal,
     }
 
+    /// <summary>
+    /// Helpers for classifying opcodes based on their field usage patterns.
+    /// </summary>
     internal static class InstructionFieldUsageExtensions
     {
+        /// <summary>
+        /// Returns the <see cref="InstructionFieldUsage"/> flags describing which instruction fields are relevant for the opcode.
+        /// </summary>
         internal static InstructionFieldUsage GetFieldUsage(this OpCode op)
         {
             switch (op)

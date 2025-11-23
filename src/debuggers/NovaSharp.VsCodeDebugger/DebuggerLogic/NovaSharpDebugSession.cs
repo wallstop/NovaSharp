@@ -15,6 +15,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using NovaSharp.Interpreter.Errors;
     using SDK;
 
+    /// <summary>
+    /// Full-featured VS Code debug adapter session that proxies runtime state via <see cref="AsyncDebugger"/>.
+    /// </summary>
     internal sealed class NovaSharpDebugSession : DebugSession, IAsyncDebuggerClient
     {
         private readonly AsyncDebugger _debug;
@@ -25,6 +28,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         private const int ScopeLocals = 65536;
         private const int ScopeSelf = 65537;
 
+        /// <summary>
+        /// Initializes a new VS Code session bound to the specified debugger instance.
+        /// </summary>
         internal NovaSharpDebugSession(NovaSharpVsCodeDebugServer server, AsyncDebugger debugger)
             : base(true, false)
         {
@@ -32,6 +38,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             _debug = debugger;
         }
 
+        /// <summary>
+        /// Sends handshake messages, reports platform information, and binds this session to the async debugger.
+        /// </summary>
         public override void Initialize(Response response, Table args)
         {
 #if DOTNET_CORE
@@ -93,11 +102,17 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             _debug.Client = this;
         }
 
+        /// <summary>
+        /// Acknowledges attach requests (session is already wired by the server).
+        /// </summary>
         public override void Attach(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Resumes script execution when VS Code issues a Continue request.
+        /// </summary>
         public override void Continue(Response response, Table Arguments)
         {
             _debug.QueueAction(
@@ -109,6 +124,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Detaches the session from the async debugger without tearing down the server.
+        /// </summary>
         public override void Disconnect(Response response, Table Arguments)
         {
             _debug.Client = null;
@@ -130,6 +148,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             return s;
         }
 
+        /// <summary>
+        /// Handles watch/hover/repl evaluations issued by VS Code.
+        /// </summary>
         public override void Evaluate(Response response, Table args)
         {
             string expression = GetString(args, "expression");
@@ -283,11 +304,17 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <summary>
+        /// Launch is a no-op because scripts are already running; VS Code expects an acknowledgement.
+        /// </summary>
         public override void Launch(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Performs a step-over action in response to a Next request.
+        /// </summary>
         public override void Next(Response response, Table Arguments)
         {
             _debug.QueueAction(
@@ -304,6 +331,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             return new StoppedEvent(0, reason, text);
         }
 
+        /// <summary>
+        /// Requests a pause so the runtime stops on the next statement.
+        /// </summary>
         public override void Pause(Response response, Table Arguments)
         {
             _debug.PauseRequested = true;
@@ -311,6 +341,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendText("Pause pending -- will pause at first script statement.");
         }
 
+        /// <summary>
+        /// Returns the logical scopes (locals/self) for the paused stack frame.
+        /// </summary>
         public override void Scopes(Response response, Table Arguments)
         {
             List<Scope> scopes = new();
@@ -321,6 +354,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response, new ScopesResponseBody(scopes));
         }
 
+        /// <summary>
+        /// Applies breakpoints for the specified source file.
+        /// </summary>
         public override void SetBreakpoints(Response response, Table args)
         {
             string path = null;
@@ -378,6 +414,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Converts the runtime call stack into VS Code stack frames.
+        /// </summary>
         public override void StackTrace(Response response, Table args)
         {
             int maxLevels = GetInt(args, "levels", 10);
@@ -456,6 +495,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <summary>
+        /// Steps into the next function call.
+        /// </summary>
         public override void StepIn(Response response, Table Arguments)
         {
             _debug.QueueAction(
@@ -467,6 +509,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Steps out of the current function.
+        /// </summary>
         public override void StepOut(Response response, Table Arguments)
         {
             _debug.QueueAction(
@@ -478,12 +523,18 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Reports the logical thread list (single main thread today).
+        /// </summary>
         public override void Threads(Response response, Table Arguments)
         {
             List<Thread> threads = new() { new Thread(0, "Main Thread") };
             SendResponse(response, new ThreadsResponseBody(threads));
         }
 
+        /// <summary>
+        /// Returns locals/self/expanded variable content for the identifiers requested by VS Code.
+        /// </summary>
         public override void Variables(Response response, Table Arguments)
         {
             int index = GetInt(Arguments, "variablesReference", -1);
@@ -516,11 +567,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response, new VariablesResponseBody(variables));
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.SendStopEvent()
         {
             SendEvent(CreateStoppedEvent("step"));
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.OnWatchesUpdated(WatchType watchType)
         {
             if (watchType == WatchType.CallStack)
@@ -529,6 +582,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.OnSourceCodeChanged(int sourceId)
         {
             if (_debug.IsSourceOverride(sourceId))
@@ -545,6 +599,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <inheritdoc cref="IAsyncDebuggerClient.OnExecutionEnded" />
         public void OnExecutionEnded()
         {
             if (_notifyExecutionEnd)
@@ -560,11 +615,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendEvent(new OutputEvent("console", msg + "\n"));
         }
 
+        /// <inheritdoc />
         public void OnException(ScriptRuntimeException ex)
         {
             SendText("runtime error : {0}", ex.DecoratedMessage);
         }
 
+        /// <inheritdoc />
         public void Unbind()
         {
             SendText("Debug session has been closed by the hosting process.");

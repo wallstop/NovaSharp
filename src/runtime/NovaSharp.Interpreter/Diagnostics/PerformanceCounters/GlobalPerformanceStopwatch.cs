@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
     /// This class is not *really* IDisposable.. it's just used to have a RAII like pattern.
     /// You are free to reuse this instance after calling Dispose.
     /// </summary>
+    /// <summary>
+    /// Stopwatch that aggregates timings across scripts for a given performance counter.
+    /// </summary>
     internal sealed class GlobalPerformanceStopwatch : IPerformanceStopwatch
     {
         private sealed class Scope : IDisposable
@@ -32,6 +35,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
         private int _count;
         private long _elapsedMilliseconds;
 
+        /// <summary>
+        /// Initializes a stopwatch bound to the specified performance counter.
+        /// </summary>
         public GlobalPerformanceStopwatch(
             PerformanceCounter perfcounter,
             IHighResolutionClock clock = null
@@ -47,11 +53,13 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             _count += 1;
         }
 
+        /// <inheritdoc/>
         public IDisposable Start()
         {
             return new Scope(this);
         }
 
+        /// <inheritdoc/>
         public PerformanceResult GetResult()
         {
             return new PerformanceResult()

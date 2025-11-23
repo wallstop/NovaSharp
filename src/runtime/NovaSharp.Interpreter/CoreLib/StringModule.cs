@@ -16,13 +16,18 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing string Lua functions
+    /// Implements Lua's `string` library (§6.4), providing formatting, pattern matching, and utility helpers.
     /// </summary>
     [NovaSharpModule(Namespace = "string")]
     public class StringModule
     {
         public const string Base64DumpHeader = "NovaSharp_dump_b64::";
 
+        /// <summary>
+        /// Registers the `string` metatable so literal strings inherit the library functions.
+        /// </summary>
+        /// <param name="globalTable">Global table provided by the module host.</param>
+        /// <param name="stringTable">Library table containing the exported functions.</param>
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
@@ -32,6 +37,12 @@ namespace NovaSharp.Interpreter.CoreLib
             globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
         }
 
+        /// <summary>
+        /// Implements Lua `string.dump`, returning a base64-encoded binary chunk for a function (§6.4.2).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments supplying the function to dump.</param>
+        /// <returns>Serialized chunk as a string.</returns>
         [NovaSharpModuleMethod(Name = "dump")]
         public static DynValue Dump(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -60,6 +71,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua `string.char`, converting numeric code-points into a string (§6.4.1).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Numeric or numeric-string arguments.</param>
+        /// <returns>Concatenated characters.</returns>
         [NovaSharpModuleMethod(Name = "char")]
         public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -100,6 +117,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(sb.ToString());
         }
 
+        /// <summary>
+        /// Implements Lua `string.byte`, returning byte values for a string slice (§6.4.1).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">String plus optional start/end indices.</param>
+        /// <returns>Tuple of byte values.</returns>
         [NovaSharpModuleMethod(Name = "byte")]
         public static DynValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -115,6 +138,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return PerformByteLike(vs, vi, vj, i => NormalizeByte(i));
         }
 
+        /// <summary>
+        /// NovaSharp extension mirroring `string.byte` but returning the raw Unicode code points.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">String plus optional range.</param>
+        /// <returns>Tuple of code points.</returns>
         [NovaSharpModuleMethod(Name = "unicode")]
         public static DynValue Unicode(
             ScriptExecutionContext executionContext,
@@ -176,6 +205,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return normalized;
         }
 
+        /// <summary>
+        /// Normalizes Lua substring indices (1-based/negative) into zero-based offsets.
+        /// </summary>
         private static int? AdjustIndex(string s, DynValue vi, int defval)
         {
             if (vi.IsNil())
@@ -198,14 +230,23 @@ namespace NovaSharp.Interpreter.CoreLib
             return s.Length - i;
         }
 
+        /// <summary>
+        /// Internal helpers exposed to tests so Lua index normalization can be validated without duplicating logic.
+        /// </summary>
         internal static class TestHooks
         {
+            /// <summary>
+            /// Mirrors <see cref="AdjustIndex"/> for unit tests.
+            /// </summary>
             public static int? AdjustIndex(string s, DynValue vi, int defaultValue)
             {
                 return StringModule.AdjustIndex(s, vi, defaultValue);
             }
         }
 
+        /// <summary>
+        /// Implements Lua `string.len`, returning the number of bytes in the string (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "len")]
         public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -218,6 +259,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(vs.String.Length);
         }
 
+        /// <summary>
+        /// Implements Lua `string.match`, returning captures for the first pattern match (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "match")]
         public static DynValue Match(
             ScriptExecutionContext executionContext,
@@ -232,6 +276,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.EmulateClassicCall(args, "match", KopiLuaStringLib.str_match);
         }
 
+        /// <summary>
+        /// Implements Lua `string.gmatch`, returning an iterator over pattern matches (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "gmatch")]
         public static DynValue GMatch(
             ScriptExecutionContext executionContext,
@@ -246,6 +293,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.EmulateClassicCall(args, "gmatch", KopiLuaStringLib.str_gmatch);
         }
 
+        /// <summary>
+        /// Implements Lua `string.gsub`, performing pattern substitution (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "gsub")]
         public static DynValue GSub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -257,6 +307,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.EmulateClassicCall(args, "gsub", KopiLuaStringLib.str_gsub);
         }
 
+        /// <summary>
+        /// Implements Lua `string.find`, locating the first pattern occurrence (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "find")]
         public static DynValue Find(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -268,6 +321,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.EmulateClassicCall(args, "find", KopiLuaStringLib.str_find);
         }
 
+        /// <summary>
+        /// Implements Lua `string.lower`, converting characters to lower-case (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "lower")]
         public static DynValue Lower(
             ScriptExecutionContext executionContext,
@@ -283,6 +339,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
 
+        /// <summary>
+        /// Implements Lua `string.upper`, converting characters to upper-case (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "upper")]
         public static DynValue Upper(
             ScriptExecutionContext executionContext,
@@ -298,6 +357,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
 
+        /// <summary>
+        /// Implements Lua `string.rep`, repeating a string N times with an optional separator (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "rep")]
         public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -333,6 +395,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(result.ToString());
         }
 
+        /// <summary>
+        /// Implements Lua `string.format`, producing formatted strings (printf-style) (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "format")]
         public static DynValue Format(
             ScriptExecutionContext executionContext,
@@ -347,6 +412,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.EmulateClassicCall(args, "format", KopiLuaStringLib.str_format);
         }
 
+        /// <summary>
+        /// Implements Lua `string.reverse`, reversing byte order (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "reverse")]
         public static DynValue Reverse(
             ScriptExecutionContext executionContext,
@@ -371,6 +439,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(new String(elements));
         }
 
+        /// <summary>
+        /// Implements Lua `string.sub`, returning a substring defined by Lua indices (§6.4.1).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "sub")]
         public static DynValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -389,6 +460,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(s);
         }
 
+        /// <summary>
+        /// NovaSharp helper: returns whether a string begins with the provided prefix (ordinal comparison).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "startswith")]
         public static DynValue StartsWith(
             ScriptExecutionContext executionContext,
@@ -413,6 +487,9 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// NovaSharp helper: returns whether a string ends with the provided suffix (ordinal comparison).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "endswith")]
         public static DynValue EndsWith(
             ScriptExecutionContext executionContext,
@@ -437,6 +514,9 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// NovaSharp helper: returns whether a string contains the provided substring (ordinal comparison).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "contains")]
         public static DynValue Contains(
             ScriptExecutionContext executionContext,

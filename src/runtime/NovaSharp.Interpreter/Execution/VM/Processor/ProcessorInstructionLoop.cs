@@ -12,6 +12,9 @@ namespace NovaSharp.Interpreter.Execution.VM
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.PredefinedUserData;
 
+    /// <content>
+    /// Hosts the VM instruction loop and per-opcode execution helpers.
+    /// </content>
     internal sealed partial class Processor
     {
         private const int YieldSpecialTrap = -99;
@@ -441,6 +444,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             return _valueStack.Pop();
         }
 
+        /// <summary>
+        /// Invokes the provided message handler to decorate an error before the stack unwinds.
+        /// </summary>
+        /// <param name="messageHandler">Function handling the error.</param>
+        /// <param name="decoratedMessage">Existing decorated message (if any).</param>
+        /// <param name="sourceRef">Source reference associated with the error.</param>
+        /// <returns>The new decorated message.</returns>
         internal string PerformMessageDecorationBeforeUnwind(
             DynValue messageHandler,
             string decoratedMessage,

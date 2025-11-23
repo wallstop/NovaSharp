@@ -5,12 +5,26 @@ namespace NovaSharp.Interpreter.DataTypes
     using System.Globalization;
     using System.IO;
 
+    /// <summary>
+    /// Flags describing how a symbol reference should behave (constness, to-be-closed variables, etc.).
+    /// </summary>
     [Flags]
     public enum SymbolRefAttributes
     {
+        /// <summary>
+        /// Default behaviour (mutable, not to-be-closed).
+        /// </summary>
         [Obsolete("Prefer specifying explicit SymbolRefAttributes flags.", false)]
         None = 0,
+
+        /// <summary>
+        /// Symbol represents a Lua &lt;const&gt; local.
+        /// </summary>
         Const = 1 << 0,
+
+        /// <summary>
+        /// Symbol must be closed when leaving scope (`<close>`).
+        /// </summary>
         ToBeClosed = 1 << 1,
     }
 
@@ -55,13 +69,22 @@ namespace NovaSharp.Interpreter.DataTypes
             get { return NameValue; }
         }
 
+        /// <summary>
+        /// Gets the full attribute set applied to the symbol.
+        /// </summary>
         public SymbolRefAttributes Attributes
         {
             get { return SymbolAttributes; }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the symbol is immutable.
+        /// </summary>
         public bool IsConst => (SymbolAttributes & SymbolRefAttributes.Const) != 0;
 
+        /// <summary>
+        /// Gets a value indicating whether the symbol participates in the to-be-closed cleanup flow.
+        /// </summary>
         public bool IsToBeClosed => (SymbolAttributes & SymbolRefAttributes.ToBeClosed) != 0;
 
         /// <summary>
@@ -189,6 +212,9 @@ namespace NovaSharp.Interpreter.DataTypes
             return that;
         }
 
+        /// <summary>
+        /// Serializes the environment reference index into the binary writer.
+        /// </summary>
         internal void WriteBinaryEnv(BinaryWriter bw, Dictionary<SymbolRef, int> symbolMap)
         {
             if (EnvironmentRef != null)
@@ -201,6 +227,9 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Reads the environment reference index from the binary stream and resolves it against the symbol array.
+        /// </summary>
         internal void ReadBinaryEnv(BinaryReader br, SymbolRef[] symbolRefs)
         {
             int idx = br.ReadInt32();

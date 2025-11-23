@@ -39,16 +39,21 @@ namespace NovaSharp.Interpreter.DataTypes
             get { return NilNode; }
         }
 
+        /// <summary>
+        /// Determines whether two table pairs contain the same key and value.
+        /// </summary>
         public bool Equals(TablePair other)
         {
             return Equals(_key, other._key) && Equals(_value, other._value);
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             return obj is TablePair pair && Equals(pair);
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             unchecked
@@ -60,11 +65,17 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Equality operator; delegates to <see cref="Equals(TablePair)"/>.
+        /// </summary>
         public static bool operator ==(TablePair left, TablePair right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
         public static bool operator !=(TablePair left, TablePair right)
         {
             return !left.Equals(right);

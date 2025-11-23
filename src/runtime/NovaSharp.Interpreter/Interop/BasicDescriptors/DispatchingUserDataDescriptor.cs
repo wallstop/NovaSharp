@@ -500,6 +500,9 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
+        /// <summary>
+        /// Propagates optimization hints to all nested member descriptors (meta + regular) so they can cache reflection state.
+        /// </summary>
         public virtual void Optimize()
         {
             foreach (

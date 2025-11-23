@@ -5,8 +5,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.Converters;
 
+    /// <summary>
+    /// Base class for hardwired member descriptors emitted by generators (reflection-free).
+    /// </summary>
     public abstract class HardwiredMemberDescriptor : IMemberDescriptor
     {
+        /// <summary>
+        /// Gets the CLR type of the member being exposed to Lua.
+        /// </summary>
         public Type MemberType { get; private set; }
 
         protected HardwiredMemberDescriptor(
@@ -22,12 +28,24 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             MemberType = memberType;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the member is static.
+        /// </summary>
         public bool IsStatic { get; private set; }
 
+        /// <summary>
+        /// Gets the Lua-visible name of the member.
+        /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Gets the supported access flags for the member.
+        /// </summary>
         public MemberDescriptorAccess MemberAccess { get; private set; }
 
+        /// <summary>
+        /// Reads the member value, enforcing access rules, and converts it to a <see cref="DynValue"/>.
+        /// </summary>
         public DynValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
@@ -35,6 +53,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
+        /// <summary>
+        /// Writes the member value after converting from a <see cref="DynValue"/>.
+        /// </summary>
         public void SetValue(Script script, object obj, DynValue value)
         {
             if (value == null)
@@ -52,6 +73,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             SetValueImpl(script, obj, v);
         }
 
+        /// <summary>
+        /// Override to supply the actual getter implementation for the descriptor.
+        /// </summary>
         protected virtual object GetValueImpl(Script script, object obj)
         {
             throw new InvalidOperationException(
@@ -59,6 +83,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             );
         }
 
+        /// <summary>
+        /// Override to supply the actual setter implementation for the descriptor.
+        /// </summary>
         protected virtual void SetValueImpl(Script script, object obj, object value)
         {
             throw new InvalidOperationException(

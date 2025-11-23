@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.Compatibility;
@@ -15,7 +12,8 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing math Lua functions
+    /// Implements Lua standard math library (§6.7) including trigonometric helpers, random number
+    /// generation, and integer utilities. This module backs the global `math` table.
     /// </summary>
     [SuppressMessage(
         "Design",
@@ -74,6 +72,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return integer;
         }
 
+        /// <summary>
+        /// Initializes the math module by seeding the per-script random generator and ensuring the
+        /// host-provided globals are valid.
+        /// </summary>
+        /// <param name="globalTable">Script global table.</param>
+        /// <param name="ioTable">Unused placeholder required by the module bootstrapper.</param>
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
@@ -154,6 +158,13 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(accum);
         }
 
+        /// <summary>
+        /// Implements Lua 5.3+ `math.type`, returning `"integer"` or `"float"` depending on the
+        /// numeric representation (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the numeric value to inspect.</param>
+        /// <returns>`"integer"` or `"float"` as a string.</returns>
         [NovaSharpModuleMethod(Name = "type")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -169,6 +180,13 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Implements Lua 5.3+ `math.tointeger`, coercing a numeric/string argument to an integer or
+        /// returning <c>nil</c> when the conversion is not lossless (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 supplies the value to convert.</param>
+        /// <returns>The converted integer or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "tointeger")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public static DynValue ToInteger(
@@ -207,6 +225,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements Lua 5.3+ `math.ult`, performing an unsigned less-than comparison (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments specifying the two integers to compare.</param>
+        /// <returns><see cref="DynValue.True"/> when the first argument is &lt; the second.</returns>
         [NovaSharpModuleMethod(Name = "ult")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public static DynValue Ult(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -224,6 +248,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewBoolean(leftUnsigned < rightUnsigned);
         }
 
+        /// <summary>
+        /// Implements Lua `math.abs`, returning the absolute value of the provided number (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 supplies the number to process.</param>
+        /// <returns>Absolute value as a number.</returns>
         [NovaSharpModuleMethod(Name = "abs")]
         public static DynValue Abs(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -234,6 +264,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "abs", d => Math.Abs(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.acos`, returning the arccosine of the given number (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the operand.</param>
+        /// <returns>Arccosine result in radians.</returns>
         [NovaSharpModuleMethod(Name = "acos")]
         public static DynValue Acos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -244,6 +280,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "acos", d => Math.Acos(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.asin`, returning the arcsine of the given number (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the operand.</param>
+        /// <returns>Arcsine result in radians.</returns>
         [NovaSharpModuleMethod(Name = "asin")]
         public static DynValue Asin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -254,6 +296,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "asin", d => Math.Asin(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.atan` (single-argument form), returning arctangent in radians (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the operand.</param>
+        /// <returns>Arctangent result.</returns>
         [NovaSharpModuleMethod(Name = "atan")]
         public static DynValue Atan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -264,6 +312,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "atan", d => Math.Atan(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.atan(y, x)` two-argument variant for quadrant-aware arctangent (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing <c>y</c> and <c>x</c>.</param>
+        /// <returns>Arctangent result in radians.</returns>
         [NovaSharpModuleMethod(Name = "atan2")]
         public static DynValue Atan2(
             ScriptExecutionContext executionContext,
@@ -277,6 +331,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec2(args, "atan2", (d1, d2) => Math.Atan2(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.ceil`, rounding a number toward positive infinity (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments with the number to round.</param>
+        /// <returns>The rounded value.</returns>
         [NovaSharpModuleMethod(Name = "ceil")]
         public static DynValue Ceil(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -287,6 +347,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "ceil", d => Math.Ceiling(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.cos`, returning cosine of the given angle in radians (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the angle.</param>
+        /// <returns>Cosine of the supplied angle.</returns>
         [NovaSharpModuleMethod(Name = "cos")]
         public static DynValue Cos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -297,6 +363,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "cos", d => Math.Cos(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.cosh`, returning the hyperbolic cosine (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments supplying the operand.</param>
+        /// <returns>Hyperbolic cosine value.</returns>
         [NovaSharpModuleMethod(Name = "cosh")]
         public static DynValue Cosh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -307,6 +379,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "cosh", d => Math.Cosh(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.deg`, converting radians to degrees (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the angle in radians.</param>
+        /// <returns>Angle in degrees.</returns>
         [NovaSharpModuleMethod(Name = "deg")]
         public static DynValue Deg(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -317,6 +395,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "deg", d => d * 180.0 / Math.PI);
         }
 
+        /// <summary>
+        /// Implements Lua `math.exp`, returning e raised to the given power (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the exponent.</param>
+        /// <returns>Result of <c>e^x</c>.</returns>
         [NovaSharpModuleMethod(Name = "exp")]
         public static DynValue Exp(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -327,6 +411,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "exp", d => Math.Exp(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.floor`, rounding a number toward negative/pluss? (downwards) (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments with the value to round.</param>
+        /// <returns>The rounded value.</returns>
         [NovaSharpModuleMethod(Name = "floor")]
         public static DynValue Floor(
             ScriptExecutionContext executionContext,
@@ -340,6 +430,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "floor", d => Math.Floor(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.fmod`, returning the remainder of division with sign matching the dividend (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments supplying dividend and divisor.</param>
+        /// <returns>Remainder value.</returns>
         [NovaSharpModuleMethod(Name = "fmod")]
         public static DynValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -350,6 +446,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec2(args, "fmod", (d1, d2) => Math.IEEERemainder(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.frexp`, decomposing a number into mantissa/exponent components (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the number to decompose.</param>
+        /// <returns>Tuple {m, e} as defined by Lua.</returns>
         [NovaSharpModuleMethod(Name = "frexp")]
         public static DynValue Frexp(
             ScriptExecutionContext executionContext,
@@ -420,6 +522,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(DynValue.NewNumber(m), DynValue.NewNumber(e));
         }
 
+        /// <summary>
+        /// Implements Lua `math.ldexp`, building a number from mantissa and exponent (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing mantissa and exponent.</param>
+        /// <returns>Result of <c>mantissa * 2^exp</c>.</returns>
         [NovaSharpModuleMethod(Name = "ldexp")]
         public static DynValue Ldexp(
             ScriptExecutionContext executionContext,
@@ -433,6 +541,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec2(args, "ldexp", (d1, d2) => d1 * Math.Pow(2, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.log`, returning the logarithm of a number with an optional base (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the value (and optional base).</param>
+        /// <returns>The logarithm result.</returns>
         [NovaSharpModuleMethod(Name = "log")]
         public static DynValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -443,6 +557,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec2N(args, "log", Math.E, (d1, d2) => Math.Log(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.max`, returning the largest argument (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Numeric arguments to compare.</param>
+        /// <returns>Maximum value.</returns>
         [NovaSharpModuleMethod(Name = "max")]
         public static DynValue Max(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -453,6 +573,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Execaccum(args, "max", (d1, d2) => Math.Max(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.min`, returning the smallest argument (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Numeric arguments to compare.</param>
+        /// <returns>Minimum value.</returns>
         [NovaSharpModuleMethod(Name = "min")]
         public static DynValue Min(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -463,6 +589,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Execaccum(args, "min", (d1, d2) => Math.Min(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.modf`, splitting a number into integer and fractional parts (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments with the value to split.</param>
+        /// <returns>Tuple {integerPart, fractionalPart}.</returns>
         [NovaSharpModuleMethod(Name = "modf")]
         public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -480,6 +612,12 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Implements Lua `math.pow` / exponentiation operator fallback, returning x^y (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments for base and exponent.</param>
+        /// <returns>Exponentiation result.</returns>
         [NovaSharpModuleMethod(Name = "pow")]
         public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -490,6 +628,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec2(args, "pow", (d1, d2) => Math.Pow(d1, d2));
         }
 
+        /// <summary>
+        /// Implements Lua `math.rad`, converting degrees to radians (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the degree value.</param>
+        /// <returns>Angle in radians.</returns>
         [NovaSharpModuleMethod(Name = "rad")]
         public static DynValue Rad(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -500,6 +644,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "rad", d => d * Math.PI / 180.0);
         }
 
+        /// <summary>
+        /// Implements Lua `math.random`, returning a pseudo-random number using the per-script RNG (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Optional bounds: zero args produces [0,1), one arg produces [1, m], two args produce [m, n].
+        /// </param>
+        /// <returns>The generated random number.</returns>
         [NovaSharpModuleMethod(Name = "random")]
         public static DynValue Random(
             ScriptExecutionContext executionContext,
@@ -538,6 +690,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(d);
         }
 
+        /// <summary>
+        /// Implements Lua `math.randomseed`, reinitializing the pseudo-random generator (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the integer seed.</param>
+        /// <returns><see cref="DynValue.Nil"/> per Lua semantics.</returns>
         [NovaSharpModuleMethod(Name = "randomseed")]
         public static DynValue RandomSeed(
             ScriptExecutionContext executionContext,
@@ -555,6 +713,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements Lua `math.sin`, returning sine of the provided angle in radians (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the angle.</param>
+        /// <returns>Sine value.</returns>
         [NovaSharpModuleMethod(Name = "sin")]
         public static DynValue Sin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -565,6 +729,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "sin", d => Math.Sin(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.sinh`, returning the hyperbolic sine (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the operand.</param>
+        /// <returns>Hyperbolic sine value.</returns>
         [NovaSharpModuleMethod(Name = "sinh")]
         public static DynValue Sinh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -575,6 +745,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "sinh", d => Math.Sinh(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.sqrt`, returning the square root (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the operand.</param>
+        /// <returns>Square root value.</returns>
         [NovaSharpModuleMethod(Name = "sqrt")]
         public static DynValue Sqrt(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -585,6 +761,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "sqrt", d => Math.Sqrt(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.tan`, returning tangent of the provided angle (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments with the angle.</param>
+        /// <returns>Tangent result.</returns>
         [NovaSharpModuleMethod(Name = "tan")]
         public static DynValue Tan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -595,6 +777,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return Exec1(args, "tan", d => Math.Tan(d));
         }
 
+        /// <summary>
+        /// Implements Lua `math.tanh`, returning the hyperbolic tangent (§6.7).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the operand.</param>
+        /// <returns>Hyperbolic tangent value.</returns>
         [NovaSharpModuleMethod(Name = "tanh")]
         public static DynValue Tanh(ScriptExecutionContext executionContext, CallbackArguments args)
         {

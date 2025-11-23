@@ -2,8 +2,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <content>
+    /// Provides script-facing helpers for metatable and script access.
+    /// </content>
     internal sealed partial class Processor
     {
+        /// <summary>
+        /// Gets the metatable associated with the specified value, honoring type metatables when needed.
+        /// </summary>
         internal Table GetMetatable(DynValue value)
         {
             if (value.Type == DataType.Table)
@@ -20,6 +26,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Resolves the metamethod invoked for a binary operation between <paramref name="op1"/> and <paramref name="op2"/>.
+        /// </summary>
         internal DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
             Table op1MetaTable = GetMetatable(op1);
@@ -73,6 +82,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return null;
         }
 
+        /// <summary>
+        /// Resolves the metamethod for the given value, probing userdata descriptors first.
+        /// </summary>
         internal DynValue GetMetamethod(DynValue value, string metamethod)
         {
             if (value.Type == DataType.UserData)
@@ -91,6 +103,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return GetMetamethodRaw(value, metamethod);
         }
 
+        /// <summary>
+        /// Resolves the metamethod from the metatable only (no userdata descriptor lookup).
+        /// </summary>
         internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
         {
             Table metatable = GetMetatable(value);
@@ -110,6 +125,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             return metameth;
         }
 
+        /// <summary>
+        /// Gets the owning script for this processor.
+        /// </summary>
         internal Script GetScript()
         {
             return _script;

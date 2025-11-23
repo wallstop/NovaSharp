@@ -154,6 +154,10 @@ namespace NovaSharp.Interpreter.Execution
             return _processor.AssociatedCoroutine;
         }
 
+        /// <summary>
+        /// Determines whether the current CLR callback is allowed to yield back into Lua (Lua 5.4 §3.3.4 coroutines).
+        /// </summary>
+        /// <returns><c>true</c> when the call originated from a resumable coroutine and the VM is prepared to yield.</returns>
         internal bool IsYieldable()
         {
             if (_processor == null || IsDynamicExecution)

@@ -5,8 +5,14 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
+    /// <summary>
+    /// Provides helpers for mapping Lua strings onto common CLR string-like types.
+    /// </summary>
     internal static class StringConversions
     {
+        /// <summary>
+        /// Identifies the CLR target shape for a string conversion.
+        /// </summary>
         internal enum StringSubtype
         {
             [Obsolete("Use a specific StringSubtype.", false)]
@@ -16,6 +22,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             Char = 3,
         }
 
+        /// <summary>
+        /// Determines which string subtype best matches the requested <paramref name="desiredType"/>.
+        /// </summary>
         internal static StringSubtype GetStringSubtype(Type desiredType)
         {
             if (desiredType == typeof(string))
@@ -36,6 +45,9 @@ namespace NovaSharp.Interpreter.Interop.Converters
             }
         }
 
+        /// <summary>
+        /// Converts the supplied string into the requested CLR shape.
+        /// </summary>
         internal static object ConvertString(
             StringSubtype stringSubType,
             string str,

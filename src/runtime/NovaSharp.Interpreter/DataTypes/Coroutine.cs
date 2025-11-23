@@ -68,6 +68,9 @@ namespace NovaSharp.Interpreter.DataTypes
             OwnerScript = proc.GetScript();
         }
 
+        /// <summary>
+        /// Marks a CLR callback coroutine as completed so future resumes throw meaningful errors.
+        /// </summary>
         internal void MarkClrCallbackAsDead()
         {
             if (Type != CoroutineType.ClrCallback)
@@ -78,6 +81,9 @@ namespace NovaSharp.Interpreter.DataTypes
             Type = CoroutineType.ClrCallbackDead;
         }
 
+        /// <summary>
+        /// Reuses this coroutine's processor for a new closure, returning the recycled coroutine result.
+        /// </summary>
         internal DynValue Recycle(Processor mainProcessor, Closure closure)
         {
             Type = CoroutineType.Recycled;
@@ -367,6 +373,10 @@ namespace NovaSharp.Interpreter.DataTypes
             set { _processor.AutoYieldCounter = value; }
         }
 
+        /// <summary>
+        /// Closes the coroutine by running the underlying processor's cleanup logic (Lua 5.4 close semantics).
+        /// CLR callback coroutines no-op and return true to mirror Lua's behaviour for already-finished threads.
+        /// </summary>
         public DynValue Close()
         {
             if (Type != CoroutineType.Coroutine)
@@ -377,6 +387,10 @@ namespace NovaSharp.Interpreter.DataTypes
             return _processor.CloseCoroutine();
         }
 
+        /// <summary>
+        /// Exposes the backing processor for unit tests that need to inspect VM state.
+        /// Throws when invoked on CLR callback coroutines.
+        /// </summary>
         internal Processor GetProcessorForTests()
         {
             if (_processor == null)
@@ -389,6 +403,9 @@ namespace NovaSharp.Interpreter.DataTypes
             return _processor;
         }
 
+        /// <summary>
+        /// Forcibly overrides the coroutine state (test-only helper).
+        /// </summary>
         internal void ForceStateForTests(CoroutineState state)
         {
             if (_processor == null)

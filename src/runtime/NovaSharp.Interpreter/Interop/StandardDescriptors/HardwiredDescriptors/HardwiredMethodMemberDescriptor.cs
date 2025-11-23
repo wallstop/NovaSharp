@@ -6,8 +6,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
 
+    /// <summary>
+    /// Hardwired descriptor that dispatches to a generated method body without reflection.
+    /// </summary>
     public abstract class HardwiredMethodMemberDescriptor : FunctionMemberDescriptorBase
     {
+        /// <inheritdoc />
         public override DynValue Execute(
             Script script,
             object obj,
@@ -24,6 +28,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             return DynValue.FromObject(script, retv);
         }
 
+        /// <summary>
+        /// Computes the number of arguments actually supplied (ignoring default-value placeholders).
+        /// </summary>
         private int CalcArgsCount(object[] pars)
         {
             int count = pars.Length;
@@ -39,6 +46,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
             return count;
         }
 
+        /// <summary>
+        /// Invokes the underlying method represented by this descriptor.
+        /// </summary>
         protected abstract object Invoke(Script script, object obj, object[] pars, int argscount);
     }
 }
