@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using DataTypes;
@@ -44,7 +45,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 debugger
                     .Updates[WatchType.CallStack]
                     .Any(snapshot =>
-                        snapshot.Any(item => item.Name != null && item.Name.Contains("target"))
+                        snapshot.Any(item =>
+                            item.Name != null && ContainsOrdinal(item.Name, "target")
+                        )
                     ),
                 Is.True,
                 "Target frame not found in call stack updates"
@@ -157,6 +160,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             public void RefreshBreakpoints(IEnumerable<SourceRef> refs) { }
+        }
+
+        private static bool ContainsOrdinal(string text, string value)
+        {
+            return text != null && text.Contains(value, StringComparison.Ordinal);
         }
     }
 }

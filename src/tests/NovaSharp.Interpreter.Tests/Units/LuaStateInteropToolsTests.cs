@@ -442,7 +442,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.EqualTo("Value:%q:42"));
-                Assert.That(result.Contains("%q"), Is.True);
+                Assert.That(ContainsOrdinal(result, "%q"), Is.True);
             });
         }
 
@@ -520,6 +520,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             return Convert.ChangeType(rawValue, type, CultureInfo.InvariantCulture);
+        }
+
+        private static bool ContainsOrdinal(string text, string value)
+        {
+            return text != null && text.Contains(value, StringComparison.Ordinal);
         }
     }
 }

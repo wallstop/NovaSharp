@@ -1226,7 +1226,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
             catch (Exception ex)
             {
-                Assert.That(ex.Message.Contains("attempt to access instance member"), Is.True);
+                Assert.That(
+                    ex.Message != null
+                        && ex.Message.Contains(
+                            "attempt to access instance member",
+                            StringComparison.Ordinal
+                        ),
+                    Is.True
+                );
             }
         }
 
