@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private class IfBlock
         {
             public Expression Condition;
-            public Statement Body;
+            public CompositeStatement Body;
             public RuntimeScopeBlock StackFrame;
             public SourceRef Source;
         }

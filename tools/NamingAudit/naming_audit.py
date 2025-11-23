@@ -13,11 +13,14 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
+PROPS_PATH = ROOT / "Directory.Build.props"
 EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs", "legacy"}
 FILE_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
@@ -119,6 +122,7 @@ PRIVATE_FIELD_PATTERN = re.compile(
     r"^\s*private\s+(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
     r"[A-Za-z0-9_<>,\[\].?]+\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
 )
+NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z0-9_.]+)")
 
 
 def discover_cs_files() -> list[Path]:
@@ -158,12 +162,15 @@ class NamingIssue:
     message: str
 
 
-def audit_file(path: Path) -> list[NamingIssue]:
+def audit_file(
+    path: Path, enforce_namespace_prefix: str | None = None
+) -> tuple[list[NamingIssue], list[str]]:
     issues: list[NamingIssue] = []
+    namespaces: list[str] = []
     rel_path = path.relative_to(ROOT)
 
     if rel_path in FILE_ALLOWLIST:
-        return issues
+        return issues, namespaces
 
     stem = path.stem
     if not (stem.startswith("_") or is_pascal_case(stem)):
@@ -181,6 +188,25 @@ def audit_file(path: Path) -> list[NamingIssue]:
     try:
         with path.open("r", encoding="utf-8-sig") as handle:
             for line_number, line in enumerate(handle, start=1):
+                namespace_match = NAMESPACE_PATTERN.match(line)
+                if namespace_match:
+                    namespace_name = namespace_match.group(1).strip()
+                    if namespace_name:
+                        namespaces.append(namespace_name)
+                        if enforce_namespace_prefix and not namespace_name.startswith(
+                            enforce_namespace_prefix
+                        ):
+                            issues.append(
+                                NamingIssue(
+                                    rel_path,
+                                    "namespace",
+                                    namespace_name,
+                                    f"Namespace '{namespace_name}' should start with "
+                                    f"'{enforce_namespace_prefix}' (line {line_number}).",
+                                )
+                            )
+                    continue
+
                 type_match = TYPE_PATTERN.match(line)
                 if type_match:
                     type_name = normalized_type_name(type_match.group(2))
@@ -304,17 +330,24 @@ def audit_file(path: Path) -> list[NamingIssue]:
             )
         )
 
-    return issues
+    return issues, namespaces
 
 
-def audit() -> list[NamingIssue]:
+def audit(
+    enforce_namespace_prefix: str | None = None,
+) -> tuple[list[NamingIssue], list[str]]:
     all_issues: list[NamingIssue] = []
+    namespaces: list[str] = []
     for cs_file in discover_cs_files():
-        all_issues.extend(audit_file(cs_file))
-    return all_issues
+        file_issues, file_namespaces = audit_file(cs_file, enforce_namespace_prefix)
+        all_issues.extend(file_issues)
+        namespaces.extend(file_namespaces)
+    return all_issues, namespaces
 
 
-def render_report(issues: list[NamingIssue]) -> str:
+def render_report(
+    issues: list[NamingIssue], namespace_summary_lines: list[str] | None = None
+) -> str:
     lines: list[str] = [
         "# Naming Audit Report",
         "",
@@ -332,8 +365,74 @@ def render_report(issues: list[NamingIssue]) -> str:
         lines.append("")
         lines.append(f"Total issues: {len(issues)}")
 
-    lines.append("")
+    if namespace_summary_lines:
+        lines.append("")
+        lines.extend(namespace_summary_lines)
+
     return "\n".join(lines)
+
+
+def load_namespace_prefixes_from_props() -> list[str]:
+    if not PROPS_PATH.exists():
+        return []
+
+    try:
+        tree = ET.parse(PROPS_PATH)
+    except (ET.ParseError, OSError):
+        return []
+
+    root = tree.getroot()
+    if root is None:
+        return []
+
+    property_order = ["TargetNamespacePrefix", "LegacyNamespacePrefix"]
+    prefixes: list[str] = []
+    property_values: dict[str, str] = {}
+
+    for element in root.iter():
+        tag = element.tag.split("}", 1)[-1] if "}" in element.tag else element.tag
+        if tag in property_order and element.text:
+            property_values[tag] = element.text.strip()
+
+    for prop in property_order:
+        value = property_values.get(prop, "")
+        if value and value not in prefixes:
+            prefixes.append(value)
+
+    return prefixes
+
+
+def build_namespace_summary(
+    namespaces: Iterable[str], prefixes: list[str]
+) -> list[str]:
+    prefix_list = prefixes or []
+    namespace_list = list(namespaces)
+    if not namespace_list or not prefix_list:
+        return []
+
+    total = len(namespace_list)
+    stats: dict[str, int] = {prefix: 0 for prefix in prefix_list}
+    other = 0
+
+    for namespace in namespace_list:
+        matched = False
+        for prefix in prefix_list:
+            if namespace.startswith(prefix):
+                stats[prefix] += 1
+                matched = True
+                break
+        if not matched:
+            other += 1
+
+    summary_lines = ["## Namespace Prefix Summary", ""]
+    for prefix in prefix_list:
+        count = stats[prefix]
+        percentage = (count / total) * 100 if total else 0
+        summary_lines.append(f"- {prefix}: {count} ({percentage:.2f}% of {total})")
+    percentage_other = (other / total) * 100 if total else 0
+    summary_lines.append(f"- <other>: {other} ({percentage_other:.2f}% of {total})")
+    summary_lines.append(f"- <total>: {total}")
+    return summary_lines
 
 
 def resolve_repo_path(path: Path) -> Path:
@@ -380,10 +479,37 @@ def main(argv: list[str]) -> int:
         metavar="PATH",
         help="Verify that the audit report at PATH matches the current results.",
     )
+    parser.add_argument(
+        "--namespace-prefix",
+        action="append",
+        default=[],
+        dest="namespace_prefixes",
+        metavar="PREFIX",
+        help=(
+            "Track namespace declarations that start with PREFIX. Specify multiple "
+            "times to compare targets (e.g., --namespace-prefix WallstopStudios.NovaSharp "
+            "--namespace-prefix NovaSharp)."
+        ),
+    )
+    parser.add_argument(
+        "--enforce-namespace-prefix",
+        metavar="PREFIX",
+        help=(
+            "Emit audit findings when namespace declarations do not start with PREFIX. "
+            "Use together with --namespace-prefix for migration tracking."
+        ),
+    )
     args = parser.parse_args(argv)
 
-    issues = audit()
-    report = render_report(issues)
+    namespace_prefixes = (
+        args.namespace_prefixes
+        if args.namespace_prefixes
+        else load_namespace_prefixes_from_props()
+    )
+
+    issues, namespaces = audit(args.enforce_namespace_prefix)
+    namespace_summary_lines = build_namespace_summary(namespaces, namespace_prefixes)
+    report = render_report(issues, namespace_summary_lines if namespace_summary_lines else None)
 
     exit_code = 0
     if not issues:
@@ -394,6 +520,11 @@ def main(argv: list[str]) -> int:
             print(f"- {issue.path}: {issue.message}")
         print(f"\nTotal issues: {len(issues)}")
         exit_code = 1
+
+    if namespace_summary_lines:
+        if issues:
+            print("")
+        print("\n".join(namespace_summary_lines))
 
     if args.write_log:
         write_log(args.write_log, report)

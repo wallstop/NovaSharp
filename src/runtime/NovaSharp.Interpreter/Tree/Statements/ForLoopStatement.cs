@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
     {
         //for' NAME '=' exp ',' exp (',' exp)? 'do' block 'end'
         private readonly RuntimeScopeBlock _stackFrame;
-        private readonly Statement _innerBlock;
+        private readonly CompositeStatement _innerBlock;
         private readonly SymbolRef _varName;
 
         private readonly Expression _start;

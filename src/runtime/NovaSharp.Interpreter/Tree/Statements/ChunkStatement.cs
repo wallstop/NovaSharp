@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
     internal class ChunkStatement : Statement, IClosureBuilder
     {
-        private readonly Statement _block;
+        private readonly CompositeStatement _block;
         private readonly RuntimeScopeFrame _stackFrame;
         private readonly SymbolRef _env;
         private readonly SymbolRef _varArgs;

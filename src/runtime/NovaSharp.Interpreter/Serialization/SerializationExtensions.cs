@@ -41,6 +41,11 @@ namespace NovaSharp.Interpreter.Serialization
 
         public static string Serialize(this Table table, bool prefixReturn = false, int tabs = 0)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             if (table.OwnerScript != null)
             {
                 throw new ScriptRuntimeException("Table is not a prime table.");
@@ -130,13 +135,18 @@ namespace NovaSharp.Interpreter.Serialization
 
         public static string SerializeValue(this DynValue dynValue, int tabs = 0)
         {
+            if (dynValue == null)
+            {
+                throw new ArgumentNullException(nameof(dynValue));
+            }
+
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
             {
                 return "nil";
             }
             else if (dynValue.Type == DataType.Tuple)
             {
-                return (dynValue.Tuple.Any() ? SerializeValue(dynValue.Tuple[0], tabs) : "nil");
+                return dynValue.Tuple.Length > 0 ? SerializeValue(dynValue.Tuple[0], tabs) : "nil";
             }
             else if (dynValue.Type == DataType.Number)
             {

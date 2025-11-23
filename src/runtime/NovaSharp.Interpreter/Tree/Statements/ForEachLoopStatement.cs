@@ -15,8 +15,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private readonly RuntimeScopeBlock _stackFrame;
         private readonly SymbolRef[] _names;
         private readonly IVariable[] _nameExps;
-        private readonly Expression _rValues;
-        private readonly Statement _block;
+        private readonly ExprListExpression _rValues;
+        private readonly CompositeStatement _block;
 
         private readonly SourceRef _refFor;
 

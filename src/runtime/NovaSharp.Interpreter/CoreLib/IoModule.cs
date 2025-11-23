@@ -293,7 +293,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return UserData.Create(inp);
         }
 
-        private static Encoding GetUtf8Encoding()
+        private static UTF8Encoding GetUtf8Encoding()
         {
             return new UTF8Encoding(false);
         }
@@ -501,7 +501,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return UserData.Create(file);
         }
 
-        private static FileUserDataBase Open(
+        private static FileUserData Open(
             ScriptExecutionContext executionContext,
             string filename,
             Encoding encoding,

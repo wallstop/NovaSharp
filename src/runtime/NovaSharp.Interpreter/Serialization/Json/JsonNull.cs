@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Serialization.Json
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.Attributes;
 
@@ -16,6 +17,11 @@ namespace NovaSharp.Interpreter.Serialization.Json
         [NovaSharpHidden]
         public static bool IsJsonNull(DynValue v)
         {
+            if (v == null)
+            {
+                throw new ArgumentNullException(nameof(v));
+            }
+
             return v.Type == DataType.UserData
                 && v.UserData.Descriptor != null
                 && v.UserData.Descriptor.Type == typeof(JsonNull);

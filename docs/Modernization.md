@@ -19,6 +19,7 @@ NovaSharp now targets `netstandard2.1` for all runtime components and `net8.0` f
 - Recreate Unity onboarding instructions that reference the consolidated `netstandard2.1` packages.
 - Audit any external documentation or samples that still describe the portable40/net35 build chain.
 - Validate remote debugger assets on modern browsers now that the Flash-era implementation has been removed.
+- Execute the Wallstop Studios namespace/package rebrand described in `docs/modernization/namespace-rebrand-plan.md` (analyzers → runtime rename → tooling/debugger rename → packaging → comms).
 
 ## Modernization Tooling
 

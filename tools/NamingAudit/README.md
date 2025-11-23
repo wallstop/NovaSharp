@@ -41,3 +41,23 @@ python3 tools/NamingAudit/naming_audit.py --verify-log naming_audit.log
 
 Run the `--write-log` command whenever you adjust naming allowlists or rename
 members so the log remains in sync with the enforced rules.
+
+## Tracking namespace rebrand progress
+
+To compare namespace declarations that still use the legacy `NovaSharp.*`
+prefix versus the new `WallstopStudios.NovaSharp.*` target, pass the prefixes
+you care about via `--namespace-prefix`:
+
+```bash
+python3 tools/NamingAudit/naming_audit.py \
+    --namespace-prefix WallstopStudios.NovaSharp \
+    --namespace-prefix NovaSharp
+```
+
+The script prints a “Namespace Prefix Summary” block (and includes it in the
+generated log) showing how many declarations match each prefix and how many are
+still uncategorized. When no prefixes are provided, the script reads
+`TargetNamespacePrefix` and `LegacyNamespacePrefix` from `Directory.Build.props`
+so CI/log generation automatically reflect the repo-wide settings. Add
+`--enforce-namespace-prefix WallstopStudios.NovaSharp` to turn this into a
+failing audit once we are ready to block legacy prefixes.

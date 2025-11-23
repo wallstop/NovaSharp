@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         internal int Dump(Stream stream, int baseAddress, bool hasUpvalues)
         {
-            using BinaryWriter bw = new BinDumpBinaryWriter(stream, Encoding.UTF8);
+            using BinDumpBinaryWriter bw = new(stream, Encoding.UTF8);
             Dictionary<SymbolRef, int> symbolMap = new();
 
             Instruction meta = FindMeta(ref baseAddress);
@@ -111,7 +111,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             int baseAddress = _rootChunk.Code.Count;
             SourceRef sourceRef = new(sourceId, 0, 0, 0, 0, false);
 
-            using BinaryReader br = new BinDumpBinaryReader(stream, Encoding.UTF8);
+            using BinDumpBinaryReader br = new(stream, Encoding.UTF8);
             ulong headerMark = br.ReadUInt64();
 
             if (headerMark != DumpChunkMagic)

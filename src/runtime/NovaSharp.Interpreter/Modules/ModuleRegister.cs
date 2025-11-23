@@ -26,6 +26,11 @@ namespace NovaSharp.Interpreter.Modules
         /// <returns></returns>
         public static Table RegisterCoreModules(this Table table, CoreModules modules)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             modules = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
             LuaCompatibilityProfile profile = GetCompatibilityProfile(table.OwnerScript);
 
@@ -144,6 +149,11 @@ namespace NovaSharp.Interpreter.Modules
         /// <returns></returns>
         public static Table RegisterConstants(this Table table)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             Script ownerScript = table.OwnerScript;
             DynValue novaSharpTable = DynValue.NewTable(ownerScript);
             Table m = novaSharpTable.Table;
@@ -178,6 +188,16 @@ namespace NovaSharp.Interpreter.Modules
         /// <exception cref="System.ArgumentException">If the module contains some incompatibility</exception>
         public static Table RegisterModuleType(this Table gtable, Type t)
         {
+            if (gtable == null)
+            {
+                throw new ArgumentNullException(nameof(gtable));
+            }
+
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             Table table = CreateModuleNamespace(gtable, t);
             Script ownerScript = table.OwnerScript;
             LuaCompatibilityVersion scriptVersion =
@@ -394,6 +414,11 @@ namespace NovaSharp.Interpreter.Modules
         /// <exception cref="System.ArgumentException">If the module contains some incompatibility</exception>
         public static Table RegisterModuleType<T>(this Table table)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             return RegisterModuleType(table, typeof(T));
         }
 
