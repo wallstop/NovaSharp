@@ -1,0 +1,1370 @@
+# Documentation Audit Report
+
+_Generated via tools/DocumentationAudit/documentation_audit.py_
+
+Found 1158 undocumented public/internal type declarations.
+
+- src/debuggers/NovaSharp.VsCodeDebugger/DebuggerLogic/NovaSharpDebugSession.cs
+  - line 18: missing XML docs for `class NovaSharpDebugSession`
+  - line 35: missing XML docs for `Initialize()`
+  - line 96: missing XML docs for `Attach()`
+  - line 101: missing XML docs for `Continue()`
+  - line 112: missing XML docs for `Disconnect()`
+  - line 133: missing XML docs for `Evaluate()`
+  - line 286: missing XML docs for `Launch()`
+  - line 291: missing XML docs for `Next()`
+  - line 307: missing XML docs for `Pause()`
+  - line 314: missing XML docs for `Scopes()`
+  - line 324: missing XML docs for `SetBreakpoints()`
+  - line 381: missing XML docs for `StackTrace()`
+  - line 459: missing XML docs for `StepIn()`
+  - line 470: missing XML docs for `StepOut()`
+  - line 481: missing XML docs for `Threads()`
+  - line 487: missing XML docs for `Variables()`
+  - line 548: missing XML docs for `OnExecutionEnded()`
+  - line 563: missing XML docs for `OnException()`
+  - line 568: missing XML docs for `Unbind()`
+- src/debuggers/NovaSharp.VsCodeDebugger/DebuggerLogic/VariableInspector.cs
+  - line 11: missing XML docs for `class VariableInspector`
+  - line 13: missing XML docs for `InspectVariable()`
+- src/debuggers/NovaSharp.VsCodeDebugger/NovaSharpVsCodeDebugServer.cs
+  - line 402: missing XML docs for `class NovaSharpVsCodeDebugServer`
+  - line 413: missing XML docs for `AttachToScript()`
+  - line 419: missing XML docs for `GetAttachedDebuggersByIdAndName()`
+  - line 443: missing XML docs for `Logger`
+  - line 446: missing XML docs for `GetDebugger()`
+  - line 451: missing XML docs for `Dispose()`
+  - line 453: missing XML docs for `Start()`
+- src/debuggers/NovaSharp.VsCodeDebugger/SDK/DebugSession.cs
+  - line 39: missing XML docs for `class Message`
+  - line 41: missing XML docs for `Id`
+  - line 42: missing XML docs for `Format`
+  - line 43: missing XML docs for `Variables`
+  - line 44: missing XML docs for `ShowUser`
+  - line 45: missing XML docs for `SendTelemetry`
+  - line 63: missing XML docs for `class StackFrame`
+  - line 65: missing XML docs for `Id`
+  - line 66: missing XML docs for `Source`
+  - line 67: missing XML docs for `Line`
+  - line 68: missing XML docs for `Column`
+  - line 69: missing XML docs for `Name`
+  - line 71: missing XML docs for `EndLine`
+  - line 72: missing XML docs for `EndColumn`
+  - line 94: missing XML docs for `class Scope`
+  - line 96: missing XML docs for `Name`
+  - line 97: missing XML docs for `VariablesReference`
+  - line 98: missing XML docs for `Expensive`
+  - line 108: missing XML docs for `class Variable`
+  - line 110: missing XML docs for `Name`
+  - line 111: missing XML docs for `Value`
+  - line 112: missing XML docs for `VariablesReference`
+  - line 122: missing XML docs for `class Thread`
+  - line 124: missing XML docs for `Id`
+  - line 125: missing XML docs for `Name`
+  - line 141: missing XML docs for `class Source`
+  - line 143: missing XML docs for `Name`
+  - line 144: missing XML docs for `Path`
+  - line 145: missing XML docs for `SourceReference`
+  - line 162: missing XML docs for `class Breakpoint`
+  - line 164: missing XML docs for `Verified`
+  - line 165: missing XML docs for `Line`
+  - line 176: missing XML docs for `class InitializedEvent`
+  - line 182: missing XML docs for `class StoppedEvent`
+  - line 196: missing XML docs for `class ExitedEvent`
+  - line 202: missing XML docs for `class TerminatedEvent`
+  - line 208: missing XML docs for `class ThreadEvent`
+  - line 214: missing XML docs for `class OutputEvent`
+  - line 222: missing XML docs for `class Capabilities`
+  - line 224: missing XML docs for `SupportsConfigurationDoneRequest`
+  - line 225: missing XML docs for `SupportsFunctionBreakpoints`
+  - line 226: missing XML docs for `SupportsConditionalBreakpoints`
+  - line 227: missing XML docs for `SupportsEvaluateForHovers`
+  - line 228: missing XML docs for `ExceptionBreakpointFilters`
+  - line 232: missing XML docs for `class ErrorResponseBody`
+  - line 234: missing XML docs for `Error`
+  - line 242: missing XML docs for `class StackTraceResponseBody`
+  - line 244: missing XML docs for `StackFrames`
+  - line 259: missing XML docs for `class ScopesResponseBody`
+  - line 261: missing XML docs for `Scopes`
+  - line 276: missing XML docs for `class VariablesResponseBody`
+  - line 278: missing XML docs for `Variables`
+  - line 293: missing XML docs for `class ThreadsResponseBody`
+  - line 295: missing XML docs for `Threads`
+  - line 310: missing XML docs for `class EvaluateResponseBody`
+  - line 312: missing XML docs for `Result`
+  - line 313: missing XML docs for `Type`
+  - line 314: missing XML docs for `VariablesReference`
+  - line 323: missing XML docs for `class SetBreakpointsResponseBody`
+  - line 325: missing XML docs for `Breakpoints`
+  - line 342: missing XML docs for `class DebugSession`
+  - line 355: missing XML docs for `SendResponse()`
+  - line 364: missing XML docs for `SendErrorResponse()`
+  - line 515: missing XML docs for `Initialize()`
+  - line 517: missing XML docs for `Launch()`
+  - line 519: missing XML docs for `Attach()`
+  - line 521: missing XML docs for `Disconnect()`
+  - line 523: missing XML docs for `SetFunctionBreakpoints()`
+  - line 525: missing XML docs for `SetExceptionBreakpoints()`
+  - line 527: missing XML docs for `SetBreakpoints()`
+  - line 529: missing XML docs for `Continue()`
+  - line 531: missing XML docs for `Next()`
+  - line 533: missing XML docs for `StepIn()`
+  - line 535: missing XML docs for `StepOut()`
+  - line 537: missing XML docs for `Pause()`
+  - line 539: missing XML docs for `StackTrace()`
+  - line 541: missing XML docs for `Scopes()`
+  - line 543: missing XML docs for `Variables()`
+  - line 545: missing XML docs for `Source()`
+  - line 550: missing XML docs for `Threads()`
+  - line 552: missing XML docs for `Evaluate()`
+- src/debuggers/NovaSharp.VsCodeDebugger/SDK/Protocol.cs
+  - line 39: missing XML docs for `class ProtocolMessage`
+  - line 42: missing XML docs for `Type`
+  - line 56: missing XML docs for `class Request`
+  - line 73: missing XML docs for `class ResponseBody`
+  - line 78: missing XML docs for `class Response`
+  - line 80: missing XML docs for `Success`
+  - line 81: missing XML docs for `Message`
+  - line 82: missing XML docs for `RequestSequenceuence`
+  - line 83: missing XML docs for `Command`
+  - line 84: missing XML docs for `Body`
+  - line 94: missing XML docs for `SetBody()`
+  - line 100: missing XML docs for `SetErrorBody()`
+  - line 108: missing XML docs for `class Event`
+  - line 124: missing XML docs for `class ProtocolServer`
+  - line 151: missing XML docs for `ProcessLoop()`
+  - line 176: missing XML docs for `Stop()`
+  - line 181: missing XML docs for `SendEvent()`
+  - line 304: missing XML docs for `class ByteBuffer`
+  - line 318: missing XML docs for `GetString()`
+  - line 323: missing XML docs for `Append()`
+  - line 331: missing XML docs for `RemoveFirst()`
+- src/debuggers/NovaSharp.VsCodeDebugger/SDK/Utilities.cs
+  - line 35: missing XML docs for `class Utilities`
+  - line 44: missing XML docs for `ExpandVariables()`
+  - line 78: missing XML docs for `MakeRelativePath()`
+- src/runtime/NovaSharp.Interpreter/CodeAnalysis/AstNode.cs
+  - line 3: missing XML docs for `class AstNode`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Framework.cs
+  - line 6: missing XML docs for `class Framework`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/Base/FrameworkBase.cs
+  - line 6: missing XML docs for `class FrameworkBase`
+  - line 8: missing XML docs for `StringContainsChar()`
+  - line 10: missing XML docs for `IsValueType()`
+  - line 12: missing XML docs for `GetAssembly()`
+  - line 14: missing XML docs for `GetBaseType()`
+  - line 16: missing XML docs for `IsGenericType()`
+  - line 18: missing XML docs for `IsGenericTypeDefinition()`
+  - line 20: missing XML docs for `IsEnum()`
+  - line 22: missing XML docs for `IsNestedPublic()`
+  - line 24: missing XML docs for `IsAbstract()`
+  - line 26: missing XML docs for `IsInterface()`
+  - line 28: missing XML docs for `GetCustomAttributes()`
+  - line 30: missing XML docs for `GetCustomAttributes()`
+  - line 32: missing XML docs for `GetInterfaces()`
+  - line 34: missing XML docs for `IsInstanceOfType()`
+  - line 36: missing XML docs for `GetAddMethod()`
+  - line 38: missing XML docs for `GetRemoveMethod()`
+  - line 40: missing XML docs for `GetGetMethod()`
+  - line 42: missing XML docs for `GetSetMethod()`
+  - line 44: missing XML docs for `GetInterface()`
+  - line 46: missing XML docs for `GetProperties()`
+  - line 48: missing XML docs for `GetProperty()`
+  - line 50: missing XML docs for `GetNestedTypes()`
+  - line 52: missing XML docs for `GetEvents()`
+  - line 54: missing XML docs for `GetConstructors()`
+  - line 56: missing XML docs for `GetAssemblyTypes()`
+  - line 58: missing XML docs for `GetMethods()`
+  - line 60: missing XML docs for `GetFields()`
+  - line 62: missing XML docs for `GetMethod()`
+  - line 64: missing XML docs for `GetGenericArguments()`
+  - line 66: missing XML docs for `IsAssignableFrom()`
+  - line 68: missing XML docs for `IsDbNull()`
+  - line 70: missing XML docs for `GetMethod()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/Base/FrameworkClrBase.cs
+  - line 8: missing XML docs for `class FrameworkClrBase`
+  - line 19: missing XML docs for `GetAddMethod()`
+  - line 24: missing XML docs for `GetConstructors()`
+  - line 29: missing XML docs for `GetEvents()`
+  - line 34: missing XML docs for `GetFields()`
+  - line 39: missing XML docs for `GetGenericArguments()`
+  - line 44: missing XML docs for `GetGetMethod()`
+  - line 49: missing XML docs for `GetInterfaces()`
+  - line 54: missing XML docs for `GetMethod()`
+  - line 59: missing XML docs for `GetMethods()`
+  - line 64: missing XML docs for `GetNestedTypes()`
+  - line 69: missing XML docs for `GetProperties()`
+  - line 74: missing XML docs for `GetProperty()`
+  - line 79: missing XML docs for `GetRemoveMethod()`
+  - line 84: missing XML docs for `GetSetMethod()`
+  - line 89: missing XML docs for `IsAssignableFrom()`
+  - line 94: missing XML docs for `IsInstanceOfType()`
+  - line 99: missing XML docs for `GetMethod()`
+  - line 104: missing XML docs for `GetAssemblyTypes()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/Base/FrameworkReflectionBase.cs
+  - line 8: missing XML docs for `class FrameworkReflectionBase`
+  - line 10: missing XML docs for `GetTypeInfoFromType()`
+  - line 12: missing XML docs for `GetAssembly()`
+  - line 17: missing XML docs for `GetBaseType()`
+  - line 22: missing XML docs for `IsValueType()`
+  - line 27: missing XML docs for `IsInterface()`
+  - line 32: missing XML docs for `IsNestedPublic()`
+  - line 37: missing XML docs for `IsAbstract()`
+  - line 42: missing XML docs for `IsEnum()`
+  - line 47: missing XML docs for `IsGenericTypeDefinition()`
+  - line 52: missing XML docs for `IsGenericType()`
+  - line 57: missing XML docs for `GetCustomAttributes()`
+  - line 65: missing XML docs for `GetCustomAttributes()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/FrameworkCLR.cs
+  - line 14: missing XML docs for `GetTypeInfoFromType()`
+  - line 19: missing XML docs for `IsDbNull()`
+  - line 24: missing XML docs for `StringContainsChar()`
+  - line 29: missing XML docs for `GetInterface()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/FrameworkCore.cs
+  - line 9: missing XML docs for `class FrameworkCurrent`
+  - line 11: missing XML docs for `GetInterface()`
+  - line 16: missing XML docs for `GetTypeInfoFromType()`
+  - line 21: missing XML docs for `IsDbNull()`
+  - line 27: missing XML docs for `StringContainsChar()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/FrameworkPCL.cs
+  - line 13: missing XML docs for `GetTypeInfoFromType()`
+  - line 18: missing XML docs for `IsDbNull()`
+  - line 23: missing XML docs for `StringContainsChar()`
+  - line 28: missing XML docs for `GetInterface()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Frameworks/FrameworkWin8.cs
+  - line 14: missing XML docs for `GetTypeInfoFromType()`
+  - line 24: missing XML docs for `GetAddMethod()`
+  - line 29: missing XML docs for `GetConstructors()`
+  - line 34: missing XML docs for `GetEvents()`
+  - line 39: missing XML docs for `GetFields()`
+  - line 44: missing XML docs for `GetGenericArguments()`
+  - line 49: missing XML docs for `GetGetMethod()`
+  - line 54: missing XML docs for `GetInterface()`
+  - line 59: missing XML docs for `GetInterfaces()`
+  - line 64: missing XML docs for `GetMethod()`
+  - line 69: missing XML docs for `GetMethods()`
+  - line 74: missing XML docs for `GetNestedTypes()`
+  - line 81: missing XML docs for `GetProperties()`
+  - line 86: missing XML docs for `GetProperty()`
+  - line 91: missing XML docs for `GetRemoveMethod()`
+  - line 96: missing XML docs for `GetSetMethod()`
+  - line 101: missing XML docs for `IsAssignableFrom()`
+  - line 106: missing XML docs for `IsDbNull()`
+  - line 111: missing XML docs for `IsInstanceOfType()`
+  - line 119: missing XML docs for `StringContainsChar()`
+  - line 124: missing XML docs for `GetMethod()`
+  - line 129: missing XML docs for `GetAssemblyTypes()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/LuaCompatibilityProfile.cs
+  - line 140: missing XML docs for `GetDisplayName()`
+- src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs
+  - line 9: missing XML docs for `class Stopwatch`
+  - line 14: missing XML docs for `Start()`
+  - line 19: missing XML docs for `Stop()`
+  - line 24: missing XML docs for `StartNew()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/DynamicModule.cs
+  - line 30: missing XML docs for `NovaSharpInit()`
+  - line 36: missing XML docs for `Eval()`
+  - line 78: missing XML docs for `Prepare()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/ErrorHandlingModule.cs
+  - line 151: missing XML docs for `PcallContinuation()`
+  - line 165: missing XML docs for `PcallOnError()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/JsonModule.cs
+  - line 17: missing XML docs for `class JsonModule`
+  - line 20: missing XML docs for `Parse()`
+  - line 44: missing XML docs for `Serialize()`
+  - line 68: missing XML docs for `IsNull()`
+  - line 84: missing XML docs for `Null()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/LoadModule.cs
+  - line 24: missing XML docs for `NovaSharpInit()`
+  - line 67: missing XML docs for `Load()`
+  - line 83: missing XML docs for `LoadSafe()`
+  - line 97: missing XML docs for `LoadImpl()`
+  - line 171: missing XML docs for `LoadFile()`
+  - line 190: missing XML docs for `LoadFileSafe()`
+  - line 235: missing XML docs for `GetSyntaxErrorMessage()`
+  - line 268: missing XML docs for `DoFile()`
+  - line 316: missing XML docs for `__require_clr_impl()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/MathModule.cs
+  - line 77: missing XML docs for `NovaSharpInit()`
+  - line 159: missing XML docs for `Type()`
+  - line 174: missing XML docs for `ToInteger()`
+  - line 212: missing XML docs for `Ult()`
+  - line 228: missing XML docs for `Abs()`
+  - line 238: missing XML docs for `Acos()`
+  - line 248: missing XML docs for `Asin()`
+  - line 258: missing XML docs for `Atan()`
+  - line 268: missing XML docs for `Atan2()`
+  - line 281: missing XML docs for `Ceil()`
+  - line 291: missing XML docs for `Cos()`
+  - line 301: missing XML docs for `Cosh()`
+  - line 311: missing XML docs for `Deg()`
+  - line 321: missing XML docs for `Exp()`
+  - line 331: missing XML docs for `Floor()`
+  - line 344: missing XML docs for `Fmod()`
+  - line 354: missing XML docs for `Frexp()`
+  - line 424: missing XML docs for `Ldexp()`
+  - line 437: missing XML docs for `Log()`
+  - line 447: missing XML docs for `Max()`
+  - line 457: missing XML docs for `Min()`
+  - line 467: missing XML docs for `Modf()`
+  - line 484: missing XML docs for `Pow()`
+  - line 494: missing XML docs for `Rad()`
+  - line 504: missing XML docs for `Random()`
+  - line 542: missing XML docs for `RandomSeed()`
+  - line 559: missing XML docs for `Sin()`
+  - line 569: missing XML docs for `Sinh()`
+  - line 579: missing XML docs for `Sqrt()`
+  - line 589: missing XML docs for `Tan()`
+  - line 599: missing XML docs for `Tanh()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/MetaTableModule.cs
+  - line 25: missing XML docs for `SetMetatable()`
+  - line 55: missing XML docs for `GetMetatable()`
+  - line 97: missing XML docs for `RawGet()`
+  - line 120: missing XML docs for `RawSet()`
+  - line 143: missing XML docs for `RawEqual()`
+  - line 164: missing XML docs for `RawLen()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/ModuleArgumentValidation.cs
+  - line 15: missing XML docs for `RequireExecutionContext()`
+  - line 29: missing XML docs for `RequireArguments()`
+  - line 43: missing XML docs for `RequireTable()`
+  - line 54: missing XML docs for `RequireScript()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/OsSystemModule.cs
+  - line 27: missing XML docs for `Execute()`
+  - line 68: missing XML docs for `Exit()`
+  - line 90: missing XML docs for `GetEnv()`
+  - line 116: missing XML docs for `Remove()`
+  - line 164: missing XML docs for `Rename()`
+  - line 211: missing XML docs for `SetLocale()`
+  - line 225: missing XML docs for `TmpName()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/OsTimeModule.cs
+  - line 53: missing XML docs for `Clock()`
+  - line 74: missing XML docs for `DiffTime()`
+  - line 96: missing XML docs for `Time()`
+  - line 158: missing XML docs for `Date()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/StringLib/StringRange.cs
+  - line 8: missing XML docs for `class StringRange`
+  - line 10: missing XML docs for `Start`
+  - line 11: missing XML docs for `End`
+  - line 25: missing XML docs for `FromLuaRange()`
+  - line 37: missing XML docs for `ApplyToString()`
+  - line 60: missing XML docs for `Length()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/StringModule.cs
+  - line 26: missing XML docs for `NovaSharpInit()`
+  - line 36: missing XML docs for `Dump()`
+  - line 64: missing XML docs for `Char()`
+  - line 104: missing XML docs for `Byte()`
+  - line 119: missing XML docs for `Unicode()`
+  - line 201: missing XML docs for `class TestHooks`
+  - line 203: missing XML docs for `AdjustIndex()`
+  - line 210: missing XML docs for `Len()`
+  - line 222: missing XML docs for `Match()`
+  - line 236: missing XML docs for `GMatch()`
+  - line 250: missing XML docs for `GSub()`
+  - line 261: missing XML docs for `Find()`
+  - line 272: missing XML docs for `Lower()`
+  - line 287: missing XML docs for `Upper()`
+  - line 302: missing XML docs for `Rep()`
+  - line 337: missing XML docs for `Format()`
+  - line 351: missing XML docs for `Reverse()`
+  - line 375: missing XML docs for `Sub()`
+  - line 393: missing XML docs for `StartsWith()`
+  - line 417: missing XML docs for `EndsWith()`
+  - line 441: missing XML docs for `Contains()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
+  - line 25: missing XML docs for `Ipairs()`
+  - line 55: missing XML docs for `Pairs()`
+  - line 88: missing XML docs for `Next()`
+  - line 113: missing XML docs for `NextArray()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/TableModule.cs
+  - line 23: missing XML docs for `Unpack()`
+  - line 55: missing XML docs for `Pack()`
+  - line 77: missing XML docs for `Sort()`
+  - line 188: missing XML docs for `Insert()`
+  - line 248: missing XML docs for `Remove()`
+  - line 298: missing XML docs for `Concat()`
+  - line 363: missing XML docs for `Move()`
+  - line 444: missing XML docs for `Unpack()`
+  - line 453: missing XML docs for `Pack()`
+- src/runtime/NovaSharp.Interpreter/CoreLib/Utf8Module.cs
+  - line 25: missing XML docs for `Len()`
+  - line 38: missing XML docs for `CodePoint()`
+  - line 85: missing XML docs for `Char()`
+  - line 111: missing XML docs for `Codes()`
+  - line 126: missing XML docs for `Offset()`
+- src/runtime/NovaSharp.Interpreter/DataStructs/FastStack.cs
+  - line 28: missing XML docs for `Push()`
+  - line 34: missing XML docs for `Expand()`
+  - line 44: missing XML docs for `Peek()`
+  - line 50: missing XML docs for `Set()`
+  - line 55: missing XML docs for `CropAtCount()`
+  - line 60: missing XML docs for `RemoveLast()`
+  - line 85: missing XML docs for `Pop()`
+  - line 93: missing XML docs for `Clear()`
+  - line 99: missing XML docs for `ClearUsed()`
+  - line 105: missing XML docs for `class TestHooks`
+  - line 108: missing XML docs for `ZeroSlot()`
+- src/runtime/NovaSharp.Interpreter/DataStructs/FastStackDynamic.cs
+  - line 6: missing XML docs for `class FastStack`
+  - line 22: missing XML docs for `Set()`
+  - line 27: missing XML docs for `Push()`
+  - line 33: missing XML docs for `Expand()`
+  - line 41: missing XML docs for `Zero()`
+  - line 46: missing XML docs for `Peek()`
+  - line 52: missing XML docs for `TryPeek()`
+  - line 57: missing XML docs for `TryPeek()`
+  - line 69: missing XML docs for `CropAtCount()`
+  - line 74: missing XML docs for `RemoveLast()`
+  - line 86: missing XML docs for `Pop()`
+  - line 93: missing XML docs for `TryPop()`
+- src/runtime/NovaSharp.Interpreter/DataStructs/LinkedListIndex.cs
+  - line 40: missing XML docs for `TryGetValue()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/Coroutine.cs
+  - line 71: missing XML docs for `MarkClrCallbackAsDead()`
+  - line 81: missing XML docs for `Recycle()`
+  - line 370: missing XML docs for `Close()`
+  - line 380: missing XML docs for `GetProcessorForTests()`
+  - line 392: missing XML docs for `ForceStateForTests()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/IScriptPrivateResource.cs
+  - line 19: missing XML docs for `class ScriptPrivateResourceExtension`
+  - line 21: missing XML docs for `CheckScriptOwnership()`
+  - line 32: missing XML docs for `CheckScriptOwnership()`
+  - line 48: missing XML docs for `CheckScriptOwnership()`
+  - line 58: missing XML docs for `CheckScriptOwnership()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/SymbolRef.cs
+  - line 9: missing XML docs for `enum SymbolRefAttributes`
+  - line 63: missing XML docs for `IsConst`
+  - line 65: missing XML docs for `IsToBeClosed`
+  - line 192: missing XML docs for `WriteBinaryEnv()`
+  - line 204: missing XML docs for `ReadBinaryEnv()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/Table.cs
+  - line 724: missing XML docs for `InitNextArrayKeys()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/TablePair.cs
+  - line 42: missing XML docs for `Equals()`
+  - line 47: missing XML docs for `Equals()`
+  - line 52: missing XML docs for `GetHashCode()`
+- src/runtime/NovaSharp.Interpreter/Debugging/SourceCode.cs
+  - line 28: missing XML docs for `Lines`
+  - line 40: missing XML docs for `Refs`
+- src/runtime/NovaSharp.Interpreter/Debugging/SourceRef.cs
+  - line 56: missing XML docs for `GetClrLocation()`
+  - line 106: missing XML docs for `GetLocationDistance()`
+- src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/DummyPerformanceStopwatch.cs
+  - line 5: missing XML docs for `class DummyPerformanceStopwatch`
+  - line 22: missing XML docs for `Start()`
+  - line 27: missing XML docs for `GetResult()`
+  - line 32: missing XML docs for `Dispose()`
+- src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/GlobalPerformanceStopwatch.cs
+  - line 23: missing XML docs for `Dispose()`
+  - line 50: missing XML docs for `Start()`
+  - line 55: missing XML docs for `GetResult()`
+- src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/IPerformanceStopwatch.cs
+  - line 5: missing XML docs for `interface IPerformanceStopwatch`
+  - line 7: missing XML docs for `Start()`
+  - line 8: missing XML docs for `GetResult()`
+- src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/PerformanceStopwatch.cs
+  - line 28: missing XML docs for `Start()`
+  - line 41: missing XML docs for `Dispose()`
+  - line 53: missing XML docs for `GetResult()`
+- src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceStatistics.cs
+  - line 25: missing XML docs for `GlobalClock`
+  - line 151: missing XML docs for `class TestHooks`
+  - line 153: missing XML docs for `ResetGlobalStopwatches()`
+- src/runtime/NovaSharp.Interpreter/Errors/DynamicExpressionException.cs
+  - line 11: missing XML docs for `class DynamicExpressionException`
+- src/runtime/NovaSharp.Interpreter/Errors/InternalErrorException.cs
+  - line 12: missing XML docs for `class InternalErrorException`
+- src/runtime/NovaSharp.Interpreter/Errors/InterpreterException.cs
+  - line 18: missing XML docs for `class InterpreterException`
+  - line 80: missing XML docs for `DecorateMessage()`
+  - line 110: missing XML docs for `AppendCompatibilityContext()`
+- src/runtime/NovaSharp.Interpreter/Errors/ScriptRuntimeException.cs
+  - line 20: missing XML docs for `class ScriptRuntimeException`
+  - line 476: missing XML docs for `CloseMetamethodExpected()`
+  - line 654: missing XML docs for `CannotCloseCoroutine()`
+- src/runtime/NovaSharp.Interpreter/Errors/SyntaxErrorException.cs
+  - line 17: missing XML docs for `class SyntaxErrorException`
+  - line 20: missing XML docs for `Token`
+  - line 77: missing XML docs for `DecorateMessage()`
+- src/runtime/NovaSharp.Interpreter/Execution/InstructionFieldUsage.cs
+  - line 8: missing XML docs for `enum InstructionFieldUsage`
+  - line 21: missing XML docs for `class InstructionFieldUsageExtensions`
+  - line 23: missing XML docs for `GetFieldUsage()`
+- src/runtime/NovaSharp.Interpreter/Execution/LuaIntegerHelper.cs
+  - line 13: missing XML docs for `TryGetInteger()`
+  - line 38: missing XML docs for `TryGetInteger()`
+  - line 65: missing XML docs for `ShiftLeft()`
+  - line 80: missing XML docs for `ShiftRight()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/BuildTimeScope.cs
+  - line 9: missing XML docs for `class BuildTimeScope`
+  - line 14: missing XML docs for `PushFunction()`
+  - line 20: missing XML docs for `PushBlock()`
+  - line 25: missing XML docs for `PopBlock()`
+  - line 30: missing XML docs for `PopFunction()`
+  - line 41: missing XML docs for `Find()`
+  - line 68: missing XML docs for `CreateGlobalReference()`
+  - line 79: missing XML docs for `ForceEnvUpValue()`
+  - line 107: missing XML docs for `DefineLocal()`
+  - line 112: missing XML docs for `TryDefineLocal()`
+  - line 117: missing XML docs for `CurrentFunctionHasVarArgs()`
+  - line 122: missing XML docs for `DefineLabel()`
+  - line 127: missing XML docs for `RegisterGoto()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/BuildTimeScopeBlock.cs
+  - line 10: missing XML docs for `class BuildTimeScopeBlock`
+  - line 12: missing XML docs for `Parent`
+  - line 13: missing XML docs for `ChildNodes`
+  - line 15: missing XML docs for `ScopeBlock`
+  - line 21: missing XML docs for `Rename()`
+  - line 35: missing XML docs for `AddChild()`
+  - line 42: missing XML docs for `Find()`
+  - line 47: missing XML docs for `Define()`
+  - line 62: missing XML docs for `ResolveLRefs()`
+  - line 119: missing XML docs for `DefineLabel()`
+  - line 143: missing XML docs for `RegisterGoto()`
+  - line 156: missing XML docs for `ResolveGotos()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/BuildTimeScopeFrame.cs
+  - line 7: missing XML docs for `class BuildTimeScopeFrame`
+  - line 13: missing XML docs for `HasVarArgs`
+  - line 21: missing XML docs for `PushBlock()`
+  - line 26: missing XML docs for `PopBlock()`
+  - line 42: missing XML docs for `GetRuntimeFrameData()`
+  - line 54: missing XML docs for `Find()`
+  - line 69: missing XML docs for `DefineLocal()`
+  - line 74: missing XML docs for `TryDefineLocal()`
+  - line 84: missing XML docs for `ResolveLRefs()`
+  - line 91: missing XML docs for `AllocVar()`
+  - line 98: missing XML docs for `GetPosForNextVar()`
+  - line 103: missing XML docs for `DefineLabel()`
+  - line 108: missing XML docs for `RegisterGoto()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/IClosureBuilder.cs
+  - line 5: missing XML docs for `interface IClosureBuilder`
+  - line 7: missing XML docs for `CreateUpvalue()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/LoopTracker.cs
+  - line 6: missing XML docs for `interface ILoop`
+  - line 8: missing XML docs for `CompileBreak()`
+  - line 9: missing XML docs for `IsBoundary()`
+  - line 12: missing XML docs for `class LoopTracker`
+  - line 14: missing XML docs for `Loops`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/RuntimeScopeBlock.cs
+  - line 6: missing XML docs for `class RuntimeScopeBlock`
+  - line 8: missing XML docs for `From`
+  - line 9: missing XML docs for `To`
+  - line 10: missing XML docs for `ToInclusive`
+  - line 11: missing XML docs for `ToBeClosed`
+  - line 13: missing XML docs for `ToString()`
+- src/runtime/NovaSharp.Interpreter/Execution/Scopes/RuntimeScopeFrame.cs
+  - line 6: missing XML docs for `class RuntimeScopeFrame`
+  - line 8: missing XML docs for `DebugSymbols`
+  - line 13: missing XML docs for `ToFirstBlock`
+  - line 20: missing XML docs for `ToString()`
+- src/runtime/NovaSharp.Interpreter/Execution/ScriptExecutionContext.cs
+  - line 157: missing XML docs for `IsYieldable()`
+- src/runtime/NovaSharp.Interpreter/Execution/ScriptLoadingContext.cs
+  - line 8: missing XML docs for `class ScriptLoadingContext`
+  - line 10: missing XML docs for `Script`
+  - line 11: missing XML docs for `Scope`
+  - line 12: missing XML docs for `Source`
+  - line 13: missing XML docs for `Anonymous`
+  - line 14: missing XML docs for `IsDynamicExpression`
+  - line 15: missing XML docs for `Lexer`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/ByteCode.cs
+  - line 16: missing XML docs for `class ByteCode`
+  - line 18: missing XML docs for `Code`
+  - line 19: missing XML docs for `Script`
+  - line 30: missing XML docs for `EnterSource()`
+  - line 45: missing XML docs for `Dispose()`
+  - line 51: missing XML docs for `PushSourceRef()`
+  - line 57: missing XML docs for `PopSourceRef()`
+  - line 64: missing XML docs for `Dump()`
+  - line 87: missing XML docs for `GetJumpPointForNextInstruction()`
+  - line 92: missing XML docs for `GetJumpPointForLastInstruction()`
+  - line 97: missing XML docs for `GetLastInstruction()`
+  - line 108: missing XML docs for `EmitNop()`
+  - line 115: missing XML docs for `EmitInvalid()`
+  - line 122: missing XML docs for `EmitPop()`
+  - line 129: missing XML docs for `EmitCall()`
+  - line 141: missing XML docs for `EmitThisCall()`
+  - line 153: missing XML docs for `EmitLiteral()`
+  - line 160: missing XML docs for `EmitJump()`
+  - line 172: missing XML docs for `EmitMkTuple()`
+  - line 179: missing XML docs for `EmitOperator()`
+  - line 199: missing XML docs for `EmitDebug()`
+  - line 210: missing XML docs for `EmitEnter()`
+  - line 223: missing XML docs for `EmitLeave()`
+  - line 236: missing XML docs for `EmitExit()`
+  - line 249: missing XML docs for `EmitClean()`
+  - line 283: missing XML docs for `EmitClosure()`
+  - line 295: missing XML docs for `EmitArgs()`
+  - line 302: missing XML docs for `EmitRet()`
+  - line 309: missing XML docs for `EmitToNum()`
+  - line 316: missing XML docs for `EmitIncr()`
+  - line 323: missing XML docs for `EmitNewTable()`
+  - line 334: missing XML docs for `EmitIterPrep()`
+  - line 341: missing XML docs for `EmitExpTuple()`
+  - line 352: missing XML docs for `EmitIterUpd()`
+  - line 359: missing XML docs for `EmitMeta()`
+  - line 376: missing XML docs for `EmitBeginFn()`
+  - line 389: missing XML docs for `EmitScalar()`
+  - line 394: missing XML docs for `EmitLoad()`
+  - line 423: missing XML docs for `EmitStore()`
+  - line 467: missing XML docs for `EmitTblInitN()`
+  - line 474: missing XML docs for `EmitTblInitI()`
+  - line 485: missing XML docs for `EmitIndex()`
+  - line 510: missing XML docs for `EmitIndexSet()`
+  - line 543: missing XML docs for `EmitCopy()`
+  - line 550: missing XML docs for `EmitSwap()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/CallStackItem.cs
+  - line 8: missing XML docs for `class CallStackItem`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/CallStackItemFlags.cs
+  - line 6: missing XML docs for `enum CallStackItemFlags`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/ExecutionState.cs
+  - line 6: missing XML docs for `class ExecutionState`
+  - line 8: missing XML docs for `ValueStack`
+  - line 9: missing XML docs for `ExecutionStack`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Instruction.cs
+  - line 11: missing XML docs for `class Instruction`
+  - line 27: missing XML docs for `ToString()`
+  - line 96: missing XML docs for `WriteBinary()`
+  - line 170: missing XML docs for `ReadBinary()`
+  - line 291: missing XML docs for `GetSymbolReferences()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/OpCode.cs
+  - line 12: missing XML docs for `enum OpCode`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/OpCodeMetadataType.cs
+  - line 5: missing XML docs for `enum OpCodeMetadataType`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/DebugContext.cs
+  - line 6: missing XML docs for `class Processor`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
+  - line 11: missing XML docs for `class Processor`
+  - line 75: missing XML docs for `Call()`
+  - line 223: missing XML docs for `GetCoroutineSuspendedLocation()`
+  - line 228: missing XML docs for `ForceStateForTests()`
+  - line 233: missing XML docs for `PushCallStackFrameForTests()`
+  - line 243: missing XML docs for `ClearCallStackForTests()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorBinaryDump.cs
+  - line 12: missing XML docs for `class Processor`
+  - line 17: missing XML docs for `IsDumpStream()`
+  - line 29: missing XML docs for `Dump()`
+  - line 109: missing XML docs for `Undump()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorCoroutines.cs
+  - line 10: missing XML docs for `class Processor`
+  - line 12: missing XML docs for `CreateCoroutine()`
+  - line 24: missing XML docs for `RecycleCoroutine()`
+  - line 44: missing XML docs for `AssociatedCoroutine`
+  - line 46: missing XML docs for `ResumeCoroutine()`
+  - line 130: missing XML docs for `CloseCoroutine()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorDebugger.cs
+  - line 14: missing XML docs for `class Processor`
+  - line 16: missing XML docs for `FindMeta()`
+  - line 35: missing XML docs for `AttachDebugger()`
+  - line 43: missing XML docs for `AttachDebuggerForTests()`
+  - line 49: missing XML docs for `ConfigureDebuggerActionForTests()`
+  - line 62: missing XML docs for `GetDebuggerActionForTests()`
+  - line 67: missing XML docs for `GetDebuggerActionTargetForTests()`
+  - line 72: missing XML docs for `GetLastHighlightForTests()`
+  - line 77: missing XML docs for `ListenDebuggerForTests()`
+  - line 82: missing XML docs for `GetBreakpointsForTests()`
+  - line 87: missing XML docs for `ClearBreakpointsForTests()`
+  - line 246: missing XML docs for `ResetBreakpoints()`
+  - line 480: missing XML docs for `GetDebuggerCallStack()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorErrors.cs
+  - line 6: missing XML docs for `class Processor`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorExecutionContext.cs
+  - line 5: missing XML docs for `class Processor`
+  - line 7: missing XML docs for `GetMetatable()`
+  - line 23: missing XML docs for `GetBinaryMetamethod()`
+  - line 76: missing XML docs for `GetMetamethod()`
+  - line 94: missing XML docs for `GetMetamethodRaw()`
+  - line 113: missing XML docs for `GetScript()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
+  - line 15: missing XML docs for `class Processor`
+  - line 444: missing XML docs for `PerformMessageDecorationBeforeUnwind()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorScope.cs
+  - line 9: missing XML docs for `class Processor`
+  - line 75: missing XML docs for `GetGenericSymbol()`
+  - line 119: missing XML docs for `AssignGenericSymbol()`
+  - line 176: missing XML docs for `FindSymbolByName()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorTestHooks.cs
+  - line 9: missing XML docs for `class Processor`
+  - line 16: missing XML docs for `GetValueStackForTests()`
+  - line 21: missing XML docs for `GetExecutionStackForTests()`
+  - line 26: missing XML docs for `GetCoroutineStackForTests()`
+  - line 31: missing XML docs for `ReplaceCoroutineStackForTests()`
+  - line 41: missing XML docs for `SetThreadOwnershipStateForTests()`
+  - line 47: missing XML docs for `EnterProcessorForTests()`
+  - line 52: missing XML docs for `LeaveProcessorForTests()`
+  - line 57: missing XML docs for `CreateChildProcessorForTests()`
+  - line 67: missing XML docs for `CreateRecycledProcessorForTests()`
+  - line 85: missing XML docs for `SwapCanYieldForTests()`
+  - line 92: missing XML docs for `StackTopToArrayForTests()`
+  - line 97: missing XML docs for `StackTopToArrayReverseForTests()`
+  - line 102: missing XML docs for `RefreshDebuggerThreadsForTests()`
+  - line 107: missing XML docs for `PopExecStackAndCheckVStackForTests()`
+  - line 112: missing XML docs for `ExecIncrForTests()`
+  - line 117: missing XML docs for `ExecCNotForTests()`
+  - line 122: missing XML docs for `ExecBeginFnForTests()`
+  - line 127: missing XML docs for `CloseSymbolsSubsetForTests()`
+  - line 136: missing XML docs for `ClearBlockDataForTests()`
+  - line 141: missing XML docs for `GetGlobalSymbolForTests()`
+  - line 146: missing XML docs for `SetGlobalSymbolForTests()`
+  - line 151: missing XML docs for `InternalAdjustTupleForTests()`
+  - line 156: missing XML docs for `ExecIterPrepForTests()`
+  - line 161: missing XML docs for `ExecRetForTests()`
+  - line 166: missing XML docs for `ExecBitNotForTests()`
+  - line 171: missing XML docs for `ExecBitAndForTests()`
+  - line 176: missing XML docs for `ExecTblInitIForTests()`
+  - line 181: missing XML docs for `ExecTblInitNForTests()`
+  - line 186: missing XML docs for `ExecIndexSetForTests()`
+  - line 191: missing XML docs for `ExecIndexForTests()`
+- src/runtime/NovaSharp.Interpreter/Execution/VM/Processor/ProcessorUtilityFunctions.cs
+  - line 7: missing XML docs for `class Processor`
+- src/runtime/NovaSharp.Interpreter/Infrastructure/IHighResolutionClock.cs
+  - line 8: missing XML docs for `GetTimestamp()`
+  - line 10: missing XML docs for `TimestampFrequency`
+  - line 12: missing XML docs for `GetElapsedMilliseconds()`
+- src/runtime/NovaSharp.Interpreter/Infrastructure/ITimeProvider.cs
+  - line 10: missing XML docs for `GetUtcNow()`
+- src/runtime/NovaSharp.Interpreter/Infrastructure/SystemHighResolutionClock.cs
+  - line 6: missing XML docs for `class SystemHighResolutionClock`
+  - line 13: missing XML docs for `TimestampFrequency`
+  - line 15: missing XML docs for `GetTimestamp()`
+  - line 20: missing XML docs for `GetElapsedMilliseconds()`
+- src/runtime/NovaSharp.Interpreter/Infrastructure/SystemTimeProvider.cs
+  - line 5: missing XML docs for `class SystemTimeProvider`
+  - line 11: missing XML docs for `GetUtcNow()`
+- src/runtime/NovaSharp.Interpreter/Interop/Attributes/LuaCompatibilityAttribute.cs
+  - line 21: missing XML docs for `MinVersion`
+  - line 23: missing XML docs for `MaxVersion`
+  - line 25: missing XML docs for `IsSupported()`
+- src/runtime/NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
+  - line 503: missing XML docs for `Optimize()`
+- src/runtime/NovaSharp.Interpreter/Interop/Converters/ClrToScriptConversions.cs
+  - line 12: missing XML docs for `class ClrToScriptConversions`
+- src/runtime/NovaSharp.Interpreter/Interop/Converters/ScriptToClrConversions.cs
+  - line 10: missing XML docs for `class ScriptToClrConversions`
+- src/runtime/NovaSharp.Interpreter/Interop/Converters/StringConversions.cs
+  - line 8: missing XML docs for `class StringConversions`
+  - line 10: missing XML docs for `enum StringSubtype`
+  - line 19: missing XML docs for `GetStringSubtype()`
+  - line 39: missing XML docs for `ConvertString()`
+- src/runtime/NovaSharp.Interpreter/Interop/Converters/TableConversions.cs
+  - line 8: missing XML docs for `class TableConversions`
+- src/runtime/NovaSharp.Interpreter/Interop/DescriptorHelpers.cs
+  - line 63: missing XML docs for `IsDelegateType()`
+- src/runtime/NovaSharp.Interpreter/Interop/IUserDataMemberDescriptor.cs
+  - line 46: missing XML docs for `Optimize()`
+  - line 48: missing XML docs for `IsStatic`
+- src/runtime/NovaSharp.Interpreter/Interop/PredefinedUserData/EnumerableWrapper.cs
+  - line 24: missing XML docs for `Reset()`
+  - line 63: missing XML docs for `ConvertIterator()`
+  - line 69: missing XML docs for `ConvertTable()`
+  - line 74: missing XML docs for `Index()`
+  - line 104: missing XML docs for `SetIndex()`
+  - line 109: missing XML docs for `MetaIndex()`
+- src/runtime/NovaSharp.Interpreter/Interop/ReflectionSpecialNames.cs
+  - line 49: missing XML docs for `Type`
+  - line 50: missing XML docs for `Argument`
+  - line 197: missing XML docs for `Equals()`
+  - line 203: missing XML docs for `Equals()`
+  - line 208: missing XML docs for `GetHashCode()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/EventFacade.cs
+  - line 10: missing XML docs for `class EventFacade`
+  - line 44: missing XML docs for `Index()`
+  - line 61: missing XML docs for `SetIndex()`
+  - line 66: missing XML docs for `MetaIndex()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/HardwiredDescriptors/DefaultValue.cs
+  - line 3: missing XML docs for `class DefaultValue`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/HardwiredDescriptors/HardwiredMemberDescriptor.cs
+  - line 8: missing XML docs for `class HardwiredMemberDescriptor`
+  - line 10: missing XML docs for `MemberType`
+  - line 25: missing XML docs for `IsStatic`
+  - line 27: missing XML docs for `Name`
+  - line 29: missing XML docs for `MemberAccess`
+  - line 31: missing XML docs for `GetValue()`
+  - line 38: missing XML docs for `SetValue()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/HardwiredDescriptors/HardwiredMethodMemberDescriptor.cs
+  - line 9: missing XML docs for `class HardwiredMethodMemberDescriptor`
+  - line 11: missing XML docs for `Execute()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/HardwiredDescriptors/HardwiredUserDataDescriptor.cs
+  - line 7: missing XML docs for `class HardwiredUserDataDescriptor`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/ReflectionMemberDescriptors/EventMemberDescriptor.cs
+  - line 260: missing XML docs for `AddCallback()`
+  - line 284: missing XML docs for `RemoveCallback()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/ReflectionMemberDescriptors/FieldMemberDescriptor.cs
+  - line 160: missing XML docs for `OptimizeGetter()`
+  - line 280: missing XML docs for `Optimize()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/ReflectionMemberDescriptors/MethodMemberDescriptor.cs
+  - line 443: missing XML docs for `class TestHooks`
+  - line 445: missing XML docs for `ForceAccessMode()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/ReflectionMemberDescriptors/OverloadedMethodMemberDescriptor.cs
+  - line 32: missing XML docs for `Compare()`
+  - line 555: missing XML docs for `Optimize()`
+  - line 659: missing XML docs for `class TestHooks`
+  - line 661: missing XML docs for `CalcScoreForOverload()`
+  - line 677: missing XML docs for `SetCacheSize()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/ReflectionMemberDescriptors/PropertyMemberDescriptor.cs
+  - line 220: missing XML docs for `OptimizeGetter()`
+  - line 268: missing XML docs for `OptimizeSetter()`
+  - line 458: missing XML docs for `class TestHooks`
+  - line 460: missing XML docs for `SetOptimizedSetter()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/StandardEnumUserDataDescriptor.cs
+  - line 363: missing XML docs for `CallbackOr()`
+  - line 375: missing XML docs for `CallbackAnd()`
+  - line 387: missing XML docs for `CallbackXor()`
+  - line 399: missing XML docs for `CallbackBwNot()`
+  - line 411: missing XML docs for `CallbackHasAll()`
+  - line 433: missing XML docs for `CallbackHasAny()`
+- src/runtime/NovaSharp.Interpreter/Interop/StandardDescriptors/StandardUserDataDescriptor.cs
+  - line 256: missing XML docs for `PrepareForWiring()`
+- src/runtime/NovaSharp.Interpreter/Interop/UserDataMemberType.cs
+  - line 6: missing XML docs for `enum UserDataMemberType`
+- src/runtime/NovaSharp.Interpreter/InvariantString.cs
+  - line 5: missing XML docs for `class InvariantString`
+  - line 7: missing XML docs for `ToLowerInvariantIfNeeded()`
+  - line 12: missing XML docs for `ToUpperInvariantIfNeeded()`
+- src/runtime/NovaSharp.Interpreter/IO/BinDumpBinaryReader.cs
+  - line 20: missing XML docs for `ReadInt32()`
+  - line 38: missing XML docs for `ReadUInt32()`
+  - line 56: missing XML docs for `ReadString()`
+- src/runtime/NovaSharp.Interpreter/IO/BinDumpBinaryWriter.cs
+  - line 20: missing XML docs for `Write()`
+  - line 45: missing XML docs for `Write()`
+  - line 70: missing XML docs for `Write()`
+- src/runtime/NovaSharp.Interpreter/IO/UndisposableStream.cs
+  - line 26: missing XML docs for `Close()`
+  - line 44: missing XML docs for `Flush()`
+  - line 60: missing XML docs for `Read()`
+  - line 65: missing XML docs for `Seek()`
+  - line 70: missing XML docs for `SetLength()`
+  - line 75: missing XML docs for `Write()`
+  - line 81: missing XML docs for `BeginRead()`
+  - line 92: missing XML docs for `BeginWrite()`
+  - line 103: missing XML docs for `EndWrite()`
+  - line 108: missing XML docs for `EndRead()`
+  - line 119: missing XML docs for `Equals()`
+  - line 124: missing XML docs for `GetHashCode()`
+  - line 129: missing XML docs for `ReadByte()`
+  - line 140: missing XML docs for `ToString()`
+  - line 145: missing XML docs for `WriteByte()`
+- src/runtime/NovaSharp.Interpreter/Loaders/InvalidScriptLoader.cs
+  - line 21: missing XML docs for `LoadFile()`
+  - line 26: missing XML docs for `ResolveFileName()`
+  - line 31: missing XML docs for `ResolveModuleName()`
+- src/runtime/NovaSharp.Interpreter/Modding/IModFileSystem.cs
+  - line 11: missing XML docs for `FileExists()`
+  - line 13: missing XML docs for `DirectoryExists()`
+  - line 15: missing XML docs for `OpenRead()`
+  - line 17: missing XML docs for `GetFullPath()`
+  - line 19: missing XML docs for `GetDirectoryName()`
+- src/runtime/NovaSharp.Interpreter/Modding/ModManifest.cs
+  - line 233: missing XML docs for `Name`
+  - line 236: missing XML docs for `Version`
+  - line 239: missing XML docs for `LuaCompatibility`
+- src/runtime/NovaSharp.Interpreter/Modding/ModManifestCompatibility.cs
+  - line 16: missing XML docs for `TryApplyFromScriptPath()`
+  - line 42: missing XML docs for `TryApplyFromDirectory()`
+- src/runtime/NovaSharp.Interpreter/Modding/PhysicalModFileSystem.cs
+  - line 5: missing XML docs for `class PhysicalModFileSystem`
+  - line 11: missing XML docs for `FileExists()`
+  - line 16: missing XML docs for `DirectoryExists()`
+  - line 21: missing XML docs for `OpenRead()`
+  - line 26: missing XML docs for `GetFullPath()`
+  - line 31: missing XML docs for `GetDirectoryName()`
+- src/runtime/NovaSharp.Interpreter/Modules/CoreModules.cs
+  - line 128: missing XML docs for `class CoreModulesExtensionMethods`
+  - line 130: missing XML docs for `Has()`
+- src/runtime/NovaSharp.Interpreter/Platforms/PlatformAutoDetector.cs
+  - line 116: missing XML docs for `GetDefaultPlatform()`
+  - line 136: missing XML docs for `GetDefaultScriptLoader()`
+  - line 156: missing XML docs for `class PlatformDetectorSnapshot`
+  - line 179: missing XML docs for `IsRunningOnMono`
+  - line 180: missing XML docs for `IsRunningOnClr4`
+  - line 181: missing XML docs for `IsRunningOnUnity`
+  - line 182: missing XML docs for `IsPortableFramework`
+  - line 183: missing XML docs for `IsUnityNative`
+  - line 184: missing XML docs for `IsUnityIl2Cpp`
+  - line 185: missing XML docs for `RunningOnAotCache`
+  - line 186: missing XML docs for `AutoDetectionsDone`
+  - line 189: missing XML docs for `class TestHooks`
+  - line 191: missing XML docs for `CaptureState()`
+  - line 205: missing XML docs for `RestoreState()`
+  - line 217: missing XML docs for `SetFlags()`
+  - line 257: missing XML docs for `SetRunningOnAot()`
+  - line 262: missing XML docs for `SetAutoDetectionsDone()`
+- src/runtime/NovaSharp.Interpreter/Platforms/StandardPlatformAccessor.cs
+  - line 17: missing XML docs for `DefaultPrint()`
+  - line 22: missing XML docs for `FilterSupportedCoreModules()`
+  - line 27: missing XML docs for `GetEnvironmentVariable()`
+  - line 32: missing XML docs for `GetPlatformNamePrefix()`
+  - line 37: missing XML docs for `GetStandardStream()`
+  - line 42: missing XML docs for `OpenFile()`
+  - line 52: missing XML docs for `GetTempFileName()`
+  - line 57: missing XML docs for `ExecuteCommand()`
+  - line 62: missing XML docs for `ExitFast()`
+  - line 67: missing XML docs for `DeleteFile()`
+  - line 72: missing XML docs for `FileExists()`
+  - line 77: missing XML docs for `MoveFile()`
+- src/runtime/NovaSharp.Interpreter/REPL/ReplInterpreter.cs
+  - line 144: missing XML docs for `class TestHooks`
+  - line 146: missing XML docs for `SetScript()`
+- src/runtime/NovaSharp.Interpreter/Script.cs
+  - line 158: missing XML docs for `StartTimeUtc`
+  - line 1011: missing XML docs for `GetMainProcessorForTests()`
+  - line 1016: missing XML docs for `GetByteCodeForTests()`
+- src/runtime/NovaSharp.Interpreter/Serialization/Json/JsonNull.cs
+  - line 12: missing XML docs for `IsNull()`
+  - line 18: missing XML docs for `IsJsonNull()`
+  - line 31: missing XML docs for `Create()`
+- src/runtime/NovaSharp.Interpreter/Serialization/ObjectValueConverter.cs
+  - line 10: missing XML docs for `class ObjectValueConverter`
+  - line 12: missing XML docs for `SerializeObjectToDynValue()`
+- src/runtime/NovaSharp.Interpreter/Serialization/SerializationExtensions.cs
+  - line 42: missing XML docs for `Serialize()`
+  - line 136: missing XML docs for `SerializeValue()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expression.cs
+  - line 10: missing XML docs for `class Expression`
+  - line 15: missing XML docs for `GetFriendlyDebugName()`
+  - line 20: missing XML docs for `Eval()`
+  - line 22: missing XML docs for `FindDynamic()`
+  - line 27: missing XML docs for `ExprListAfterFirstExpr()`
+  - line 45: missing XML docs for `ExprList()`
+  - line 64: missing XML docs for `Expr()`
+  - line 69: missing XML docs for `SubExpr()`
+  - line 140: missing XML docs for `SimpleExp()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/AdjustmentExpression.cs
+  - line 7: missing XML docs for `class AdjustmentExpression`
+  - line 17: missing XML docs for `Compile()`
+  - line 23: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/BinaryOperatorExpression.cs
+  - line 16: missing XML docs for `enum Operator`
+  - line 79: missing XML docs for `SetOperatorForTests()`
+  - line 84: missing XML docs for `RemoveFirstExpressionForTests()`
+  - line 98: missing XML docs for `BeginOperatorChain()`
+  - line 103: missing XML docs for `AddExpressionToChain()`
+  - line 110: missing XML docs for `AddOperatorToChain()`
+  - line 117: missing XML docs for `CommitOperatorChain()`
+  - line 122: missing XML docs for `CreatePowerExpression()`
+  - line 441: missing XML docs for `Compile()`
+  - line 474: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/DynamicExprExpression.cs
+  - line 8: missing XML docs for `class DynamicExprExpression`
+  - line 19: missing XML docs for `Eval()`
+  - line 24: missing XML docs for `Compile()`
+  - line 29: missing XML docs for `FindDynamic()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/ExprListExpression.cs
+  - line 8: missing XML docs for `class ExprListExpression`
+  - line 18: missing XML docs for `GetExpressions()`
+  - line 23: missing XML docs for `Compile()`
+  - line 36: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/FunctionCallExpression.cs
+  - line 10: missing XML docs for `class FunctionCallExpression`
+  - line 17: missing XML docs for `SourceRef`
+  - line 87: missing XML docs for `Compile()`
+  - line 116: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/FunctionDefinitionExpression.cs
+  - line 15: missing XML docs for `class FunctionDefinitionExpression`
+  - line 206: missing XML docs for `CreateUpvalue()`
+  - line 226: missing XML docs for `Eval()`
+  - line 233: missing XML docs for `CompileBody()`
+  - line 279: missing XML docs for `Compile()`
+  - line 296: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/IndexExpression.cs
+  - line 9: missing XML docs for `class IndexExpression`
+  - line 33: missing XML docs for `Compile()`
+  - line 52: missing XML docs for `CompileAssignment()`
+  - line 71: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/LiteralExpression.cs
+  - line 8: missing XML docs for `class LiteralExpression`
+  - line 58: missing XML docs for `Compile()`
+  - line 63: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/SymbolRefExpression.cs
+  - line 8: missing XML docs for `class SymbolRefExpression`
+  - line 58: missing XML docs for `Compile()`
+  - line 63: missing XML docs for `CompileAssignment()`
+  - line 68: missing XML docs for `Eval()`
+  - line 73: missing XML docs for `FindDynamic()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/TableConstructor.cs
+  - line 9: missing XML docs for `class TableConstructor`
+  - line 100: missing XML docs for `Compile()`
+  - line 118: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/Expressions/UnaryOperatorExpression.cs
+  - line 9: missing XML docs for `class UnaryOperatorExpression`
+  - line 25: missing XML docs for `Compile()`
+  - line 48: missing XML docs for `Eval()`
+- src/runtime/NovaSharp.Interpreter/Tree/FastInterface/LoaderFast.cs
+  - line 12: missing XML docs for `class LoaderFast`
+  - line 14: missing XML docs for `LoadDynamicExpr()`
+  - line 53: missing XML docs for `LoadChunk()`
+  - line 98: missing XML docs for `LoadFunction()`
+- src/runtime/NovaSharp.Interpreter/Tree/IVariable.cs
+  - line 5: missing XML docs for `interface IVariable`
+  - line 7: missing XML docs for `CompileAssignment()`
+- src/runtime/NovaSharp.Interpreter/Tree/Lexer/Lexer.cs
+  - line 6: missing XML docs for `class Lexer`
+  - line 63: missing XML docs for `Next()`
+  - line 68: missing XML docs for `PeekNext()`
+- src/runtime/NovaSharp.Interpreter/Tree/Lexer/LexerUtils.cs
+  - line 9: missing XML docs for `class LexerUtils`
+  - line 11: missing XML docs for `ParseNumber()`
+  - line 29: missing XML docs for `ParseHexInteger()`
+  - line 57: missing XML docs for `ReadHexProgressive()`
+  - line 81: missing XML docs for `ParseHexFloat()`
+  - line 134: missing XML docs for `HexDigit2Value()`
+  - line 154: missing XML docs for `CharIsDigit()`
+  - line 159: missing XML docs for `CharIsHexDigit()`
+  - line 176: missing XML docs for `AdjustLuaLongString()`
+  - line 190: missing XML docs for `UnescapeLuaString()`
+- src/runtime/NovaSharp.Interpreter/Tree/Lexer/Token.cs
+  - line 5: missing XML docs for `class Token`
+  - line 16: missing XML docs for `Text`
+  - line 40: missing XML docs for `ToString()`
+  - line 55: missing XML docs for `GetReservedTokenType()`
+  - line 108: missing XML docs for `GetNumberValue()`
+  - line 130: missing XML docs for `IsEndOfBlock()`
+  - line 145: missing XML docs for `IsUnaryOperator()`
+  - line 153: missing XML docs for `IsBinaryOperator()`
+  - line 184: missing XML docs for `GetSourceRef()`
+  - line 189: missing XML docs for `GetSourceRef()`
+  - line 201: missing XML docs for `GetSourceRefUpTo()`
+- src/runtime/NovaSharp.Interpreter/Tree/Lexer/TokenType.cs
+  - line 5: missing XML docs for `enum TokenType`
+- src/runtime/NovaSharp.Interpreter/Tree/Loop.cs
+  - line 10: missing XML docs for `class Loop`
+  - line 15: missing XML docs for `CompileBreak()`
+  - line 21: missing XML docs for `IsBoundary()`
+  - line 27: missing XML docs for `class LoopBoundary`
+  - line 29: missing XML docs for `CompileBreak()`
+  - line 34: missing XML docs for `IsBoundary()`
+- src/runtime/NovaSharp.Interpreter/Tree/NodeBase.cs
+  - line 8: missing XML docs for `class NodeBase`
+  - line 10: missing XML docs for `Script`
+  - line 18: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statement.cs
+  - line 8: missing XML docs for `class Statement`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/AssignmentStatement.cs
+  - line 14: missing XML docs for `class AssignmentStatement`
+  - line 102: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/BreakStatement.cs
+  - line 10: missing XML docs for `class BreakStatement`
+  - line 21: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/ChunkStatement.cs
+  - line 10: missing XML docs for `class ChunkStatement`
+  - line 38: missing XML docs for `Compile()`
+  - line 56: missing XML docs for `CreateUpvalue()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/CompositeStatement.cs
+  - line 7: missing XML docs for `class CompositeStatement`
+  - line 38: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/EmptyStatement.cs
+  - line 6: missing XML docs for `class EmptyStatement`
+  - line 11: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/ForEachLoopStatement.cs
+  - line 13: missing XML docs for `class ForEachLoopStatement`
+  - line 69: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/ForLoopStatement.cs
+  - line 11: missing XML docs for `class ForLoopStatement`
+  - line 61: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/FunctionCallStatement.cs
+  - line 8: missing XML docs for `class FunctionCallStatement`
+  - line 22: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/FunctionDefinitionStatement.cs
+  - line 10: missing XML docs for `class FunctionDefinitionStatement`
+  - line 101: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/GotoStatement.cs
+  - line 10: missing XML docs for `class GotoStatement`
+  - line 12: missing XML docs for `SourceRef`
+  - line 13: missing XML docs for `GotoToken`
+  - line 14: missing XML docs for `Label`
+  - line 16: missing XML docs for `DefinedVarsCount`
+  - line 17: missing XML docs for `LastDefinedVarName`
+  - line 37: missing XML docs for `Compile()`
+  - line 50: missing XML docs for `SetDefinedVars()`
+  - line 56: missing XML docs for `SetAddress()`
+  - line 66: missing XML docs for `SetDeclaringBlock()`
+  - line 74: missing XML docs for `GetDeclaringBlock()`
+  - line 79: missing XML docs for `SetExitScopes()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/IfStatement.cs
+  - line 10: missing XML docs for `class IfStatement`
+  - line 79: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/LabelStatement.cs
+  - line 9: missing XML docs for `class LabelStatement`
+  - line 11: missing XML docs for `Label`
+  - line 12: missing XML docs for `Address`
+  - line 13: missing XML docs for `SourceRef`
+  - line 14: missing XML docs for `NameToken`
+  - line 16: missing XML docs for `DefinedVarsCount`
+  - line 17: missing XML docs for `LastDefinedVarName`
+  - line 36: missing XML docs for `SetDefinedVars()`
+  - line 42: missing XML docs for `RegisterGoto()`
+  - line 52: missing XML docs for `Compile()`
+  - line 64: missing XML docs for `SetScope()`
+  - line 69: missing XML docs for `SetDeclaringBlock()`
+  - line 74: missing XML docs for `BuildExitScopes()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/RepeatStatement.cs
+  - line 9: missing XML docs for `class RepeatStatement`
+  - line 38: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/ReturnStatement.cs
+  - line 8: missing XML docs for `class ReturnStatement`
+  - line 43: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/ScopeBlockStatement.cs
+  - line 8: missing XML docs for `class ScopeBlockStatement`
+  - line 33: missing XML docs for `Compile()`
+- src/runtime/NovaSharp.Interpreter/Tree/Statements/WhileStatement.cs
+  - line 9: missing XML docs for `class WhileStatement`
+  - line 41: missing XML docs for `Compile()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/ConsoleLoggerWithoutSummary.cs
+  - line 6: missing XML docs for `class ConsoleLoggerWithoutSummary`
+  - line 15: missing XML docs for `Id`
+  - line 17: missing XML docs for `Priority`
+  - line 19: missing XML docs for `Write()`
+  - line 29: missing XML docs for `WriteLine()`
+  - line 34: missing XML docs for `WriteLine()`
+  - line 44: missing XML docs for `Flush()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/DefaultConfigFactory.cs
+  - line 22: missing XML docs for `class DefaultConfigFactory`
+  - line 29: missing XML docs for `Create()`
+  - line 89: missing XML docs for `GetColumnProviders()`
+  - line 91: missing XML docs for `GetLoggers()`
+  - line 93: missing XML docs for `GetExporters()`
+  - line 95: missing XML docs for `GetDiagnosers()`
+  - line 97: missing XML docs for `GetAnalysers()`
+  - line 99: missing XML docs for `GetValidators()`
+  - line 101: missing XML docs for `GetHardwareCounters()`
+  - line 104: missing XML docs for `GetJobs()`
+  - line 106: missing XML docs for `GetLogicalGroupRules()`
+  - line 109: missing XML docs for `GetFilters()`
+  - line 111: missing XML docs for `GetEventProcessors()`
+  - line 113: missing XML docs for `GetColumnHidingRules()`
+  - line 116: missing XML docs for `SummaryStyle`
+  - line 118: missing XML docs for `UnionRule`
+  - line 120: missing XML docs for `BuildTimeout`
+  - line 122: missing XML docs for `ArtifactsPath`
+  - line 124: missing XML docs for `CultureInfo`
+  - line 126: missing XML docs for `Options`
+  - line 128: missing XML docs for `WakeLock`
+  - line 130: missing XML docs for `ConfigAnalysisConclusion`
+  - line 133: missing XML docs for `Orderer`
+  - line 135: missing XML docs for `CategoryDiscoverer`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/LuaRuntimeSuites.cs
+  - line 5: missing XML docs for `enum RuntimeScenario`
+  - line 15: missing XML docs for `class LuaRuntimeSuites`
+  - line 22: missing XML docs for `GetScript()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/LuaScriptCorpus.cs
+  - line 6: missing XML docs for `enum ScriptComplexity`
+  - line 16: missing XML docs for `class LuaScriptCorpus`
+  - line 33: missing XML docs for `GetCompilationScript()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/PerformanceReportWriter.cs
+  - line 23: missing XML docs for `class PerformanceReportWriter`
+  - line 25: missing XML docs for `Write()`
+  - line 1124: missing XML docs for `MeanDeltaNanoseconds`
+  - line 1126: missing XML docs for `AllocatedDeltaBytes`
+  - line 1128: missing XML docs for `MeanDeltaPercent`
+  - line 1133: missing XML docs for `AllocatedDeltaPercent`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/Program.cs
+  - line 6: missing XML docs for `class Program`
+  - line 8: missing XML docs for `Main()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/RuntimeBenchmarks.cs
+  - line 9: missing XML docs for `class RuntimeBenchmarks`
+  - line 22: missing XML docs for `Scenario`
+  - line 25: missing XML docs for `Setup()`
+  - line 55: missing XML docs for `ExecuteScenario()`
+  - line 78: missing XML docs for `class BenchmarkHost`
+  - line 82: missing XML docs for `Accumulate()`
+  - line 89: missing XML docs for `Store()`
+  - line 91: missing XML docs for `GetStored()`
+  - line 93: missing XML docs for `Reset()`
+- src/tooling/Benchmarks/NovaSharp.Benchmarks/ScriptLoadingBenchmarks.cs
+  - line 9: missing XML docs for `class ScriptLoadingBenchmarks`
+  - line 21: missing XML docs for `Complexity`
+  - line 24: missing XML docs for `Setup()`
+  - line 36: missing XML docs for `CompileAndExecute()`
+  - line 43: missing XML docs for `CompileOnly()`
+  - line 50: missing XML docs for `ExecutePrecompiled()`
+- src/tooling/NovaSharp.Cli/Commands/CommandManager.cs
+  - line 9: missing XML docs for `class CommandManager`
+  - line 13: missing XML docs for `Initialize()`
+  - line 29: missing XML docs for `Execute()`
+  - line 73: missing XML docs for `GetCommands()`
+  - line 85: missing XML docs for `Find()`
+- src/tooling/NovaSharp.Cli/Commands/ICommand.cs
+  - line 5: missing XML docs for `interface ICommand`
+  - line 7: missing XML docs for `Name`
+  - line 8: missing XML docs for `DisplayShortHelp()`
+  - line 9: missing XML docs for `DisplayLongHelp()`
+  - line 10: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/CompileCommand.cs
+  - line 9: missing XML docs for `class CompileCommand`
+  - line 16: missing XML docs for `DisplayShortHelp()`
+  - line 21: missing XML docs for `DisplayLongHelp()`
+  - line 28: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/DebugCommand.cs
+  - line 7: missing XML docs for `class DebugCommand`
+  - line 9: missing XML docs for `DebuggerFactory`
+  - line 12: missing XML docs for `BrowserLauncher`
+  - line 22: missing XML docs for `DisplayShortHelp()`
+  - line 27: missing XML docs for `DisplayLongHelp()`
+  - line 34: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/ExitCommand.cs
+  - line 5: missing XML docs for `class ExitCommand`
+  - line 12: missing XML docs for `DisplayShortHelp()`
+  - line 17: missing XML docs for `DisplayLongHelp()`
+  - line 22: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/HardWireCommand.cs
+  - line 12: missing XML docs for `class HardWireCommand`
+  - line 16: missing XML docs for `ErrorCount`
+  - line 17: missing XML docs for `WarningCount`
+  - line 19: missing XML docs for `LogError()`
+  - line 25: missing XML docs for `LogWarning()`
+  - line 31: missing XML docs for `LogMinor()`
+  - line 42: missing XML docs for `DisplayShortHelp()`
+  - line 49: missing XML docs for `DisplayLongHelp()`
+  - line 57: missing XML docs for `Execute()`
+  - line 155: missing XML docs for `Generate()`
+  - line 202: missing XML docs for `DumpLoader`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/HelpCommand.cs
+  - line 7: missing XML docs for `class HelpCommand`
+  - line 14: missing XML docs for `DisplayShortHelp()`
+  - line 21: missing XML docs for `DisplayLongHelp()`
+  - line 26: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/RegisterCommand.cs
+  - line 7: missing XML docs for `class RegisterCommand`
+  - line 14: missing XML docs for `DisplayShortHelp()`
+  - line 21: missing XML docs for `DisplayLongHelp()`
+  - line 28: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/RemoteDebuggerBridge.cs
+  - line 6: missing XML docs for `interface IRemoteDebuggerBridge`
+  - line 8: missing XML docs for `Attach()`
+  - line 10: missing XML docs for `HttpUrlStringLocalHost`
+  - line 13: missing XML docs for `class RemoteDebuggerServiceBridge`
+  - line 25: missing XML docs for `Attach()`
+- src/tooling/NovaSharp.Cli/Commands/Implementations/RunCommand.cs
+  - line 10: missing XML docs for `class RunCommand`
+  - line 17: missing XML docs for `DisplayShortHelp()`
+  - line 22: missing XML docs for `DisplayLongHelp()`
+  - line 27: missing XML docs for `Execute()`
+- src/tooling/NovaSharp.Cli/Program.cs
+  - line 15: missing XML docs for `class Program`
+  - line 109: missing XML docs for `CheckArgs()`
+- src/tooling/NovaSharp.Cli/ProgramTestHooks.cs
+  - line 11: missing XML docs for `RunInterpreterLoopForTests()`
+  - line 19: missing XML docs for `ShowBannerForTests()`
+- src/tooling/NovaSharp.Cli/ShellContext.cs
+  - line 6: missing XML docs for `class ShellContext`
+  - line 10: missing XML docs for `Script`
+  - line 17: missing XML docs for `ExitCode`
+  - line 24: missing XML docs for `RequestExit()`
+- src/tooling/NovaSharp.Comparison/BenchmarkConfig.cs
+  - line 8: missing XML docs for `class BenchmarkConfig`
+  - line 15: missing XML docs for `Create()`
+- src/tooling/NovaSharp.Comparison/BenchmarkScripts.cs
+  - line 3: missing XML docs for `class BenchmarkScripts`
+  - line 5: missing XML docs for `GetScript()`
+- src/tooling/NovaSharp.Comparison/LuaPerformanceBenchmarks.cs
+  - line 20: missing XML docs for `class LuaPerformanceBenchmarks`
+  - line 34: missing XML docs for `Scenario`
+  - line 37: missing XML docs for `Setup()`
+  - line 51: missing XML docs for `Cleanup()`
+  - line 54: missing XML docs for `NovaSharpCompile()`
+  - line 61: missing XML docs for `NovaSharpExecute()`
+  - line 64: missing XML docs for `NLuaCompile()`
+  - line 76: missing XML docs for `NLuaExecute()`
+  - line 91: missing XML docs for `Dispose()`
+- src/tooling/NovaSharp.Comparison/Program.cs
+  - line 10: missing XML docs for `class Program`
+  - line 12: missing XML docs for `Main()`
+- src/tooling/NovaSharp.Comparison/ScriptScenario.cs
+  - line 5: missing XML docs for `enum ScriptScenario`
+- src/tooling/NovaSharp.Hardwire/Generators/ArrayMemberDescriptorGenerator.cs
+  - line 10: missing XML docs for `class ArrayMemberDescriptorGenerator`
+  - line 20: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/Base/AssignableMemberDescriptorGeneratorBase.cs
+  - line 9: missing XML docs for `class AssignableMemberDescriptorGeneratorBase`
+  - line 11: missing XML docs for `ManagedType`
+  - line 20: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/DynValueMemberDescriptorGenerator.cs
+  - line 9: missing XML docs for `class DynValueMemberDescriptorGenerator`
+  - line 19: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/FieldMemberDescriptorGenerator.cs
+  - line 6: missing XML docs for `class FieldMemberDescriptorGenerator`
+- src/tooling/NovaSharp.Hardwire/Generators/MethodMemberDescriptorGenerator.cs
+  - line 15: missing XML docs for `class MethodMemberDescriptorGenerator`
+  - line 35: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/NullGenerator.cs
+  - line 7: missing XML docs for `class NullGenerator`
+  - line 19: missing XML docs for `ManagedType`
+  - line 21: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/OverloadedMethodMemberDescriptorGenerator.cs
+  - line 9: missing XML docs for `class OverloadedMethodMemberDescriptorGenerator`
+  - line 19: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/PropertyMemberDescriptorGenerator.cs
+  - line 6: missing XML docs for `class PropertyMemberDescriptorGenerator`
+- src/tooling/NovaSharp.Hardwire/Generators/StandardUserDataDescriptorGenerator.cs
+  - line 8: missing XML docs for `class StandardUserDataDescriptorGenerator`
+  - line 18: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/Generators/ValueTypeDefaultCtorMemberDescriptorGenerator.cs
+  - line 7: missing XML docs for `class ValueTypeDefaultCtorMemberDescriptorGenerator`
+  - line 17: missing XML docs for `Generate()`
+- src/tooling/NovaSharp.Hardwire/HardwireCodeGenerationContext.cs
+  - line 30: missing XML docs for `TargetLanguage`
+  - line 32: missing XML docs for `AllowInternals`
+  - line 183: missing XML docs for `GetStackTrace()`
+  - line 286: missing XML docs for `IsVisibilityAccepted()`
+- src/tooling/NovaSharp.Hardwire/HardwireGenerator.cs
+  - line 9: missing XML docs for `class HardwireGenerator`
+  - line 32: missing XML docs for `BuildCodeModel()`
+  - line 37: missing XML docs for `GenerateSourceCode()`
+- src/tooling/NovaSharp.Hardwire/HardwireGeneratorRegistry.cs
+  - line 6: missing XML docs for `class HardwireGeneratorRegistry`
+  - line 10: missing XML docs for `Register()`
+  - line 15: missing XML docs for `GetGenerator()`
+  - line 27: missing XML docs for `RegisterPredefined()`
+  - line 32: missing XML docs for `DiscoverFromAssembly()`
+- src/tooling/NovaSharp.Hardwire/ICodeGenerationLogger.cs
+  - line 3: missing XML docs for `interface ICodeGenerationLogger`
+  - line 5: missing XML docs for `LogError()`
+  - line 6: missing XML docs for `LogWarning()`
+  - line 7: missing XML docs for `LogMinor()`
+- src/tooling/NovaSharp.Hardwire/Languages/CSharpHardwireCodeGenerationLanguage.cs
+  - line 7: missing XML docs for `class CSharpHardwireCodeGenerationLanguage`
+  - line 26: missing XML docs for `UnaryPlus()`
+  - line 31: missing XML docs for `UnaryNegation()`
+  - line 36: missing XML docs for `UnaryLogicalNot()`
+  - line 41: missing XML docs for `UnaryOneComplement()`
+  - line 46: missing XML docs for `BinaryXor()`
+  - line 51: missing XML docs for `UnaryIncrement()`
+  - line 56: missing XML docs for `UnaryDecrement()`
+  - line 61: missing XML docs for `GetInitialComment()`
+  - line 66: missing XML docs for `CreateMultidimensionalArray()`
+- src/tooling/NovaSharp.Hardwire/Languages/HardwireCodeGenerationLanguage.cs
+  - line 6: missing XML docs for `class HardwireCodeGenerationLanguage`
+  - line 18: missing XML docs for `Name`
+  - line 20: missing XML docs for `CodeDomProvider`
+  - line 22: missing XML docs for `UnaryPlus()`
+  - line 23: missing XML docs for `UnaryIncrement()`
+  - line 24: missing XML docs for `UnaryDecrement()`
+  - line 25: missing XML docs for `UnaryNegation()`
+  - line 26: missing XML docs for `UnaryLogicalNot()`
+  - line 27: missing XML docs for `UnaryOneComplement()`
+  - line 28: missing XML docs for `BinaryXor()`
+  - line 29: missing XML docs for `CreateMultidimensionalArray()`
+  - line 34: missing XML docs for `GetInitialComment()`
+- src/tooling/NovaSharp.Hardwire/Languages/VbHardwireCodeGenerationLanguage.cs
+  - line 6: missing XML docs for `class VbHardwireCodeGenerationLanguage`
+  - line 25: missing XML docs for `UnaryPlus()`
+  - line 30: missing XML docs for `UnaryNegation()`
+  - line 35: missing XML docs for `UnaryLogicalNot()`
+  - line 40: missing XML docs for `UnaryOneComplement()`
+  - line 45: missing XML docs for `BinaryXor()`
+  - line 50: missing XML docs for `UnaryIncrement()`
+  - line 55: missing XML docs for `UnaryDecrement()`
+  - line 60: missing XML docs for `GetInitialComment()`
+  - line 69: missing XML docs for `CreateMultidimensionalArray()`
+- src/tooling/NovaSharp.Hardwire/Utils/GeneratorUtilities.cs
+  - line 3: missing XML docs for `class GeneratorUtilities`
+- src/tooling/NovaSharp.Hardwire/Utils/HardwireParameterDescriptor.cs
+  - line 9: missing XML docs for `class HardwireParameterDescriptor`
+  - line 11: missing XML docs for `Expression`
+  - line 12: missing XML docs for `ParamType`
+  - line 13: missing XML docs for `HasDefaultValue`
+  - line 14: missing XML docs for `IsOut`
+  - line 15: missing XML docs for `IsRef`
+  - line 16: missing XML docs for `TempVarName`
+  - line 55: missing XML docs for `LoadDescriptorsFromTable()`
+  - line 67: missing XML docs for `SetTempVar()`

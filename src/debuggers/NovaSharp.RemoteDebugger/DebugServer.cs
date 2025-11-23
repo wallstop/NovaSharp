@@ -14,6 +14,10 @@ namespace NovaSharp.RemoteDebugger
     using NovaSharp.Interpreter.Execution;
     using Threading;
 
+    /// <summary>
+    /// Implements the TCP-based remote debugger endpoint used by the Flash/HTML clients to
+    /// inspect scripts, manage breakpoints, and stream watch values.
+    /// </summary>
     public class DebugServer : IDebugger, IDisposable
     {
         private readonly List<DynamicExpression> _watches = new();
@@ -65,6 +69,10 @@ namespace NovaSharp.RemoteDebugger
             get { return _server.PortNumber; }
         }
 
+        /// <summary>
+        /// Returns a short textual description of the server state reported on the jump page.
+        /// </summary>
+        /// <returns><c>"Busy"</c>, <c>"Waiting debugger"</c>, or <c>"Unknown"</c> depending on the server state.</returns>
         public string GetState()
         {
             if (_hostBusySent)
@@ -81,11 +89,19 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
+        /// <summary>
+        /// Gets the number of currently connected remote debugger clients.
+        /// </summary>
+        /// <returns>Active connection count.</returns>
         public int ConnectedClients()
         {
             return _server.GetConnectedClients();
         }
 
+        /// <summary>
+        /// Pushes a source file (and all of its lines) to the attached debugger UI.
+        /// </summary>
+        /// <param name="sourceCode">Source code descriptor obtained from the script runtime.</param>
         public void SetSourceCode(SourceCode sourceCode)
         {
             Send(xw =>
@@ -158,6 +174,11 @@ namespace NovaSharp.RemoteDebugger
             SendOption("error_rx", _errorRegEx.ToString());
         }
 
+        /// <summary>
+        /// Sends updated watch data for the requested watch type when the values have changed.
+        /// </summary>
+        /// <param name="watchType">The watch channel being updated (call stack or watches).</param>
+        /// <param name="items">Resolved watch values.</param>
         public void Update(WatchType watchType, IEnumerable<WatchItem> items)
         {
             if (watchType != WatchType.CallStack && watchType != WatchType.Watches)
@@ -220,6 +241,10 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
+        /// <summary>
+        /// Placeholder for legacy bytecode streaming support. Retained for protocol compatibility.
+        /// </summary>
+        /// <param name="byteCode">Interpreter bytecode lines.</param>
         public void SetByteCode(string[] byteCode)
         {
             // Skip sending bytecode updates for now.
@@ -233,11 +258,21 @@ namespace NovaSharp.RemoteDebugger
             //	});
         }
 
+        /// <summary>
+        /// Enqueues a debugger action received from the client.
+        /// </summary>
+        /// <param name="action">Action requested by the remote UI.</param>
         public void QueueAction(DebuggerAction action)
         {
             _queuedActions.Enqueue(action);
         }
 
+        /// <summary>
+        /// Blocks until the next debugger action should be executed by the runtime.
+        /// </summary>
+        /// <param name="ip">Instruction pointer associated with the pause.</param>
+        /// <param name="sourceref">Source location for the paused instruction.</param>
+        /// <returns>The next action to execute.</returns>
         public DebuggerAction GetAction(int ip, SourceRef sourceref)
         {
             try
@@ -496,21 +531,36 @@ namespace NovaSharp.RemoteDebugger
             });
         }
 
+        /// <summary>
+        /// Gets the watch expressions currently tracked by the debugger.
+        /// </summary>
+        /// <returns>The list of dynamic expressions representing watch slots.</returns>
         public List<DynamicExpression> GetWatchItems()
         {
             return _watches;
         }
 
+        /// <summary>
+        /// Indicates whether a pause has been requested by the remote debugger or due to an error.
+        /// </summary>
+        /// <returns><c>true</c> when the runtime should pause execution.</returns>
         public bool IsPauseRequested()
         {
             return _requestPause;
         }
 
+        /// <summary>
+        /// Notifies connected clients that script execution has finished.
+        /// </summary>
         public void SignalExecutionEnded()
         {
             Send(xw => xw.Element("execution-completed", ""));
         }
 
+        /// <summary>
+        /// Sends the full breakpoint list to the remote debugger.
+        /// </summary>
+        /// <param name="refs">Breakpoints to publish.</param>
         public void RefreshBreakpoints(IEnumerable<SourceRef> refs)
         {
             Send(xw =>
@@ -525,6 +575,11 @@ namespace NovaSharp.RemoteDebugger
             });
         }
 
+        /// <summary>
+        /// Broadcasts details about a runtime exception and optionally requests a pause.
+        /// </summary>
+        /// <param name="ex">Exception thrown by the running script.</param>
+        /// <returns><c>true</c> if the debugger should pause execution after logging the error.</returns>
         public bool SignalRuntimeException(ScriptRuntimeException ex)
         {
             SendMessage($"Error: {ex.DecoratedMessage}");
@@ -532,13 +587,24 @@ namespace NovaSharp.RemoteDebugger
             return IsPauseRequested();
         }
 
+        /// <summary>
+        /// Releases the underlying TCP server.
+        /// </summary>
         public void Dispose()
         {
             _server.Dispose();
         }
 
+        /// <summary>
+        /// Part of the <see cref="IDebugger"/> contract. The remote debugger does not require the service instance.
+        /// </summary>
+        /// <param name="debugService">Debug service provided by the runtime.</param>
         public void SetDebugService(DebugService debugService) { }
 
+        /// <summary>
+        /// Reports the debugger capabilities supported by the remote debugger endpoint.
+        /// </summary>
+        /// <returns>The remote debugger capability flag set.</returns>
         public DebuggerCaps GetDebuggerCaps()
         {
             return DebuggerCaps.CanDebugSourceCode;

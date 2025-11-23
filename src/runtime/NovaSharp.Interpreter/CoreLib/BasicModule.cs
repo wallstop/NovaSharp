@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
@@ -28,10 +25,16 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class BasicModule
     {
-        //type (v)
-        //----------------------------------------------------------------------------------------------------------------
-        //Returns the type of its only argument, coded as a string. The possible results of this function are "nil"
-        //(a string, not the value nil), "number", "string", "boolean", "table", "function", "thread", and "userdata".
+        /// <summary>
+        /// Implements Lua's <c>type</c> function (§6.1), returning the textual Lua type name for the first argument.
+        /// </summary>
+        /// <param name="executionContext">
+        /// Execution context supplied by the runtime (unused but required by the module contract).
+        /// </param>
+        /// <param name="args">Arguments passed to <c>type</c>; the first entry is inspected.</param>
+        /// <returns>
+        /// A string <see cref="DynValue"/> representing the Lua type name (e.g., <c>"nil"</c>, <c>"table"</c>, <c>"function"</c>).
+        /// </returns>
         [NovaSharpModuleMethod(Name = "type")]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -49,10 +52,15 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(v.Type.ToLuaTypeString());
         }
 
-        //assert (v [, message])
-        //----------------------------------------------------------------------------------------------------------------
-        //Issues an error when the value of its argument v is false (i.e., nil or false);
-        //otherwise, returns all its arguments. message is an error message; when absent, it defaults to "assertion failed!"
+        /// <summary>
+        /// Implements Lua's <c>assert</c> helper (§6.1) by throwing when the first argument is falsy.
+        /// </summary>
+        /// <param name="executionContext">Execution context used for diagnostics.</param>
+        /// <param name="args">
+        /// Arguments passed to <c>assert</c>; index <c>0</c> is the test value and index <c>1</c> is the optional error message.
+        /// </param>
+        /// <returns>The original argument tuple when the assertion succeeds.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when the assertion fails.</exception>
         [NovaSharpModuleMethod(Name = "assert")]
         public static DynValue Assert(
             ScriptExecutionContext executionContext,
@@ -87,9 +95,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTupleNested(args.GetArray());
         }
 
-        // collectgarbage  ([opt [, arg]])
-        // ----------------------------------------------------------------------------------------------------------------
-        // This function is mostly a stub towards the CLR GC. If mode is nil, "collect" or "restart", a GC is forced.
+        /// <summary>
+        /// Implements Lua's <c>collectgarbage</c> helper (§6.1) by forwarding the supported modes to the CLR GC.
+        /// </summary>
+        /// <param name="executionContext">Execution context supplied by the runtime.</param>
+        /// <param name="args">Arguments describing the requested mode (nil/<c>"collect"</c>/<c>"restart"</c> trigger a GC).</param>
+        /// <returns><see cref="DynValue.Nil"/> to match Lua's API surface.</returns>
         [NovaSharpModuleMethod(Name = "collectgarbage")]
         public static DynValue CollectGarbage(
             ScriptExecutionContext executionContext,
@@ -117,14 +128,16 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
-        // error (message [, level])
-        // ----------------------------------------------------------------------------------------------------------------
-        // Terminates the last protected function called and returns message as the error message. Function error never returns.
-        // Usually, error adds some information about the error position at the beginning of the message.
-        // The level argument specifies how to get the error position.
-        // With level 1 (the default), the error position is where the error function was called.
-        // Level 2 points the error to where the function that called error was called; and so on.
-        // Passing a level 0 avoids the addition of error position information to the message.
+        /// <summary>
+        /// Implements Lua's <c>error</c> function (§6.1), raising a <see cref="ScriptRuntimeException"/> with the optional
+        /// stack-level adjustment requested by the caller.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to resolve coroutines and call frames for decoration.</param>
+        /// <param name="args">
+        /// Argument zero contains the error message; argument one optionally supplies the stack level used during decoration.
+        /// </param>
+        /// <returns>This method never returns because it always throws.</returns>
+        /// <exception cref="ScriptRuntimeException">Always thrown to surface the Lua-visible error.</exception>
         [NovaSharpModuleMethod(Name = "error")]
         public static DynValue Error(
             ScriptExecutionContext executionContext,
@@ -167,13 +180,12 @@ namespace NovaSharp.Interpreter.CoreLib
             throw e;
         }
 
-        // tostring (v)
-        // ----------------------------------------------------------------------------------------------------------------
-        // Receives a value of any type and converts it to a string in a reasonable format. (For complete control of how
-        // numbers are converted, use string.format.)
-        //
-        // If the metatable of v has a "__tostring" field, then tostring calls the corresponding value with v as argument,
-        // and uses the result of the call as its result.
+        /// <summary>
+        /// Implements Lua's <c>tostring</c> helper (§6.1) by formatting values or invoking the <c>__tostring</c> metamethod.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to resolve metamethod tail calls.</param>
+        /// <param name="args">Arguments passed to <c>tostring</c>; the first value is converted to a Lua string.</param>
+        /// <returns>A string representation of the supplied value.</returns>
         [NovaSharpModuleMethod(Name = "tostring")]
         public static DynValue ToString(
             ScriptExecutionContext executionContext,
@@ -211,6 +223,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return tail;
         }
 
+        /// <summary>
+        /// Continuation that validates the result of a <c>__tostring</c> metamethod before returning it to Lua.
+        /// </summary>
+        /// <param name="executionContext">Execution context driving the metamethod invocation.</param>
+        /// <param name="args">Arguments flowing out of the metamethod call.</param>
+        /// <returns>The validated string result.</returns>
         internal static DynValue ToStringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -236,11 +254,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return b;
         }
 
-        // select (index, ...)
-        // -----------------------------------------------------------------------------
-        // If index is a number, returns all arguments after argument number index; a negative number indexes from
-        // the end (-1 is the last argument). Otherwise, index must be the string "#", and select returns the total
-        // number of extra arguments it received.
+        /// <summary>
+        /// Implements Lua's <c>select</c> helper (§6.1), returning either the argument count or a slice of the varargs.
+        /// </summary>
+        /// <param name="executionContext">Execution context supplied by the runtime.</param>
+        /// <param name="args">
+        /// Arguments passed to <c>select</c>; index zero is the selector (<c>"#"</c> or a numeric offset), followed by the tuple.
+        /// </param>
+        /// <returns>A tuple containing the requested slice or a number describing the argument count.</returns>
         [NovaSharpModuleMethod(Name = "select")]
         public static DynValue Select(
             ScriptExecutionContext executionContext,
@@ -295,16 +316,16 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTupleNested(values.ToArray());
         }
 
-        // tonumber (e [, base])
-        // ----------------------------------------------------------------------------------------------------------------
-        // When called with no base, tonumber tries to convert its argument to a number. If the argument is already
-        // a number or a string convertible to a number (see §3.4.2), then tonumber returns this number; otherwise,
-        // it returns nil.
-        //
-        // When called with base, then e should be a string to be interpreted as an integer numeral in that base.
-        // The base may be any integer between 2 and 36, inclusive. In bases above 10, the letter 'A' (in either
-        // upper or lower case) represents 10, 'B' represents 11, and so forth, with 'Z' representing 35. If the
-        // string e is not a valid numeral in the given base, the function returns nil.
+        /// <summary>
+        /// Implements Lua's <c>tonumber</c> helper (§6.1), converting values to doubles with optional radix parsing.
+        /// </summary>
+        /// <param name="executionContext">Execution context used for diagnostics.</param>
+        /// <param name="args">
+        /// Arguments describing the value to convert (index zero) and the optional numeric base (index one, 2-36).
+        /// </param>
+        /// <returns>
+        /// A numeric <see cref="DynValue"/> when conversion succeeds; otherwise <see cref="DynValue.Nil"/>.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "tonumber")]
         public static DynValue ToNumber(
             ScriptExecutionContext executionContext,
@@ -458,6 +479,13 @@ namespace NovaSharp.Interpreter.CoreLib
             return -1;
         }
 
+        /// <summary>
+        /// Implements Lua's <c>print</c> function (§6.1) by formatting the arguments with tabs and forwarding them to
+        /// the host-provided debug sink.
+        /// </summary>
+        /// <param name="executionContext">Current execution context, used to resolve the script's debug printer.</param>
+        /// <param name="args">Arguments to format and print.</param>
+        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
         [NovaSharpModuleMethod(Name = "print")]
         public static DynValue Print(
             ScriptExecutionContext executionContext,
@@ -492,6 +520,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements Lua 5.4's <c>warn</c> helper by routing formatted arguments to <c>_WARN</c> or the debug printer.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to access the host script and debug sink.</param>
+        /// <param name="args">Arguments to format before invoking <c>_WARN</c> or printing.</param>
+        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "warn")]
         public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)

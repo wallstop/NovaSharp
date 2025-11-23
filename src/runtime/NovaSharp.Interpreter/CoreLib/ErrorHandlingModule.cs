@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
@@ -23,6 +20,12 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class ErrorHandlingModule
     {
+        /// <summary>
+        /// Implements Lua's <c>pcall</c>, wrapping a function invocation in protected mode.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function to call and the rest flow into it.</param>
+        /// <returns>A tuple beginning with <c>true</c>/<c>false</c> followed by the function results or error message.</returns>
         [NovaSharpModuleMethod(Name = "pcall")]
         public static DynValue Pcall(
             ScriptExecutionContext executionContext,
@@ -173,6 +176,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return MakeReturnTuple(false, args);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>xpcall</c>, invoking a function with a custom error handler when failures occur.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function and index 1 is the error handler.</param>
+        /// <returns>A tuple matching <c>pcall</c>'s result contract.</returns>
         [NovaSharpModuleMethod(Name = "xpcall")]
         public static DynValue Xpcall(
             ScriptExecutionContext executionContext,

@@ -8,6 +8,10 @@ namespace NovaSharp.RemoteDebugger
     /// </summary>
     public interface IBrowserLauncher
     {
+        /// <summary>
+        /// Opens the provided debugger UI URL using the host environment.
+        /// </summary>
+        /// <param name="url">Destination to launch.</param>
         public void Launch(Uri url);
     }
 
@@ -20,6 +24,10 @@ namespace NovaSharp.RemoteDebugger
 
         private ProcessBrowserLauncher() { }
 
+        /// <summary>
+        /// Launches the system-configured browser for the specified debugger URL.
+        /// </summary>
+        /// <param name="url">Destination to open.</param>
         public void Launch(Uri url)
         {
             if (url == null)

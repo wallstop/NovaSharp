@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
@@ -31,6 +28,12 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "io")]
     public class IoModule
     {
+        /// <summary>
+        /// Initializes Lua's <c>io</c> module (§6.8) by registering the file userdata, wiring the
+        /// module metatable, and binding the host standard streams.
+        /// </summary>
+        /// <param name="globalTable">The global table that will expose the <c>io</c> helpers.</param>
+        /// <param name="ioTable">The table representing the <c>io</c> namespace.</param>
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
@@ -146,6 +149,12 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Stores the provided file handle as the default stream for the specified standard slot.
+        /// </summary>
+        /// <param name="executionContext">Execution context providing the owning script.</param>
+        /// <param name="file">Which default stream (stdin/stdout/stderr) to update.</param>
+        /// <param name="fileHandle">Userdata that becomes the new default handle.</param>
         private static void SetDefaultFile(
             ScriptExecutionContext executionContext,
             StandardFileType file,
@@ -155,6 +164,12 @@ namespace NovaSharp.Interpreter.CoreLib
             SetDefaultFile(executionContext.GetScript(), file, fileHandle);
         }
 
+        /// <summary>
+        /// Writes the provided userdata into the registry entry that tracks the active default stream.
+        /// </summary>
+        /// <param name="script">Script whose registry should be updated.</param>
+        /// <param name="file">Target default stream slot.</param>
+        /// <param name="fileHandle">Userdata representing the new default stream.</param>
         internal static void SetDefaultFile(
             Script script,
             StandardFileType file,
@@ -169,6 +184,13 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Replaces one of the default <c>io</c> streams with a host <see cref="Stream"/>, wrapping it
+        /// in a Lua-accessible <see cref="FileUserDataBase"/>.
+        /// </summary>
+        /// <param name="script">Script whose default stream should be overridden.</param>
+        /// <param name="file">The standard stream slot to update.</param>
+        /// <param name="stream">Host stream exposed to Lua.</param>
         public static void SetDefaultFile(Script script, StandardFileType file, Stream stream)
         {
             script = ModuleArgumentValidation.RequireScript(script, nameof(script));
@@ -182,6 +204,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.close</c> (§6.8) by closing the provided handle or the default stdout stream.
+        /// </summary>
+        /// <param name="executionContext">Runtime context supplying the current script.</param>
+        /// <param name="args">Optional userdata argument naming the file to close.</param>
+        /// <returns><c>true</c> on success or <c>(nil, message, code)</c> for recoverable IO errors.</returns>
         [NovaSharpModuleMethod(Name = "close")]
         public static DynValue Close(
             ScriptExecutionContext executionContext,
@@ -200,6 +228,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return outp.Close(executionContext, args);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.flush</c> by flushing the default stdout stream or a supplied handle.
+        /// </summary>
+        /// <param name="executionContext">Runtime context for the current script.</param>
+        /// <param name="args">Optional userdata identifying which file to flush.</param>
+        /// <returns>Lua boolean true when the flush succeeds.</returns>
         [NovaSharpModuleMethod(Name = "flush")]
         public static DynValue Flush(
             ScriptExecutionContext executionContext,
@@ -219,6 +253,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.True;
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.input</c>, returning the current default stdin or rebinding it.
+        /// </summary>
+        /// <param name="executionContext">Runtime context supplying registry access.</param>
+        /// <param name="args">Optional filename or userdata specifying the new default input handle.</param>
+        /// <returns>The active stdin handle.</returns>
         [NovaSharpModuleMethod(Name = "input")]
         public static DynValue Input(
             ScriptExecutionContext executionContext,
@@ -234,6 +274,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdIn);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.output</c>, returning the current default stdout or rebinding it.
+        /// </summary>
+        /// <param name="executionContext">Runtime context supplying registry access.</param>
+        /// <param name="args">Optional filename or userdata specifying the new default output handle.</param>
+        /// <returns>The active stdout handle.</returns>
         [NovaSharpModuleMethod(Name = "output")]
         public static DynValue Output(
             ScriptExecutionContext executionContext,
@@ -298,6 +344,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return new UTF8Encoding(false);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.lines</c> iterator (§6.8) by streaming a host file line-by-line.
+        /// </summary>
+        /// <param name="executionContext">Runtime context owning the script and platform accessor.</param>
+        /// <param name="args">Argument zero is the path to read.</param>
+        /// <returns>A tuple of strings terminated by <c>nil</c>, mirroring Lua semantics.</returns>
         [NovaSharpModuleMethod(Name = "lines")]
         public static DynValue Lines(
             ScriptExecutionContext executionContext,
@@ -345,6 +397,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.open</c>, returning a userdata that wraps the requested file/mode/encoding.
+        /// </summary>
+        /// <param name="executionContext">Runtime context supplying the platform accessor.</param>
+        /// <param name="args">Filename, mode, and encoding arguments from Lua.</param>
+        /// <returns>The opened file userdata or <c>(nil, message)</c> on recoverable failure.</returns>
         [NovaSharpModuleMethod(Name = "open")]
         public static DynValue Open(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -410,6 +468,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Converts a host exception into a Lua-facing IO error string that mirrors the reference interpreter.
+        /// </summary>
+        /// <param name="ex">Exception raised during IO.</param>
+        /// <param name="filename">Filename involved in the operation.</param>
+        /// <returns>A normalized message suitable for tuples returned by <c>io</c> APIs.</returns>
         public static string IoExceptionToLuaMessage(Exception ex, string filename)
         {
             if (ex == null)
@@ -427,6 +491,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.type</c>, classifying userdata handles as <c>"file"</c>, <c>"closed file"</c>, or <c>nil</c>.
+        /// </summary>
+        /// <param name="executionContext">Runtime context used for validation.</param>
+        /// <param name="args">Arguments supplied from Lua (the value to classify).</param>
+        /// <returns>A string dynvalue or <c>nil</c> when the value is not a file userdata.</returns>
         [NovaSharpModuleMethod(Name = "type")]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -455,6 +525,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.read</c>, delegating to the default stdin handle.
+        /// </summary>
+        /// <param name="executionContext">Runtime context used to locate stdin.</param>
+        /// <param name="args">Format specifiers or byte counts passed from Lua.</param>
+        /// <returns>The values produced by <see cref="FileUserDataBase.Read(ScriptExecutionContext, CallbackArguments)"/>.</returns>
         [NovaSharpModuleMethod(Name = "read")]
         public static DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -468,6 +544,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return file.Read(executionContext, args);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.write</c>, delegating to the default stdout handle.
+        /// </summary>
+        /// <param name="executionContext">Runtime context used to locate stdout.</param>
+        /// <param name="args">Values to write.</param>
+        /// <returns>The stdout userdata for chaining.</returns>
         [NovaSharpModuleMethod(Name = "write")]
         public static DynValue Write(
             ScriptExecutionContext executionContext,
@@ -484,6 +566,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return file.Write(executionContext, args);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>io.tmpfile</c> by creating an anonymous writable file owned by the host platform.
+        /// </summary>
+        /// <param name="executionContext">Runtime context providing platform access.</param>
+        /// <param name="args">Unused arguments; present for signature compatibility.</param>
+        /// <returns>The userdata representing the temporary file.</returns>
         [NovaSharpModuleMethod(Name = "tmpfile")]
         public static DynValue TmpFile(
             ScriptExecutionContext executionContext,

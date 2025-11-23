@@ -2,29 +2,73 @@ namespace NovaSharp.RemoteDebugger.Network
 {
     using System.Text;
 
+    /// <summary>
+    /// Represents a resource served by the debugger HTTP host, including static binaries,
+    /// textual payloads, or callbacks that generate responses on demand.
+    /// </summary>
     public class HttpResource
     {
+        /// <summary>
+        /// Gets the MIME-oriented classification of the resource.
+        /// </summary>
         public HttpResourceType Type { get; private set; }
+
+        /// <summary>
+        /// Gets the raw payload bytes for static resources.
+        /// </summary>
         public byte[] Data { get; private set; }
+
+        /// <summary>
+        /// Gets the callback executed to build a dynamic response when <see cref="Type"/> is
+        /// <see cref="HttpResourceType.Callback"/>.
+        /// </summary>
         public Func<Dictionary<string, string>, HttpResource> Callback { get; private set; }
 
         private HttpResource() { }
 
+        /// <summary>
+        /// Creates a binary resource from the provided byte array.
+        /// </summary>
+        /// <param name="type">Resource classification used to pick the response MIME type.</param>
+        /// <param name="data">Payload bytes written directly to the HTTP response stream.</param>
+        /// <returns>A new <see cref="HttpResource"/> that always returns <paramref name="data"/>.</returns>
         public static HttpResource CreateBinary(HttpResourceType type, byte[] data)
         {
             return new HttpResource() { Type = type, Data = data };
         }
 
+        /// <summary>
+        /// Creates a binary resource by decoding a Base64 string.
+        /// </summary>
+        /// <param name="type">Resource classification used to pick the response MIME type.</param>
+        /// <param name="base64data">Base64 encoded payload.</param>
+        /// <returns>A <see cref="HttpResource"/> representing the decoded bytes.</returns>
         public static HttpResource CreateBinary(HttpResourceType type, string base64data)
         {
             return new HttpResource() { Type = type, Data = Convert.FromBase64String(base64data) };
         }
 
+        /// <summary>
+        /// Creates a UTF-8 encoded textual resource.
+        /// </summary>
+        /// <param name="type">Resource classification used to pick the response MIME type.</param>
+        /// <param name="data">Plain-text payload that will be UTF-8 encoded.</param>
+        /// <returns>A <see cref="HttpResource"/> that emits the specified string.</returns>
         public static HttpResource CreateText(HttpResourceType type, string data)
         {
             return new HttpResource() { Type = type, Data = Encoding.UTF8.GetBytes(data) };
         }
 
+        /// <summary>
+        /// Creates a callback-backed resource that can compute its response per request.
+        /// </summary>
+        /// <param name="callback">
+        /// Delegate invoked with the query-string dictionary and expected to return the final resource.
+        /// </param>
+        /// <returns>
+        /// A <see cref="HttpResource"/> wrapper that executes <paramref name="callback"/> each time
+        /// the endpoint is requested.
+        /// </returns>
         public static HttpResource CreateCallback(
             Func<Dictionary<string, string>, HttpResource> callback
         )
@@ -32,6 +76,13 @@ namespace NovaSharp.RemoteDebugger.Network
             return new HttpResource() { Type = HttpResourceType.Callback, Callback = callback };
         }
 
+        /// <summary>
+        /// Gets the HTTP <c>Content-Type</c> header value associated with <see cref="Type"/>.
+        /// </summary>
+        /// <returns>The MIME type string representing the current resource classification.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when a callback type is queried for a content type.
+        /// </exception>
         public string GetContentTypeString()
         {
             switch (Type)

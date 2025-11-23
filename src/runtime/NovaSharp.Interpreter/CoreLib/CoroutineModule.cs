@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
@@ -12,7 +9,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing coroutine Lua functions
+    /// Implements Lua's coroutine library (§11.3) for creating, scheduling, and querying coroutines.
     /// </summary>
     [SuppressMessage(
         "Design",
@@ -22,6 +19,12 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "coroutine")]
     public class CoroutineModule
     {
+        /// <summary>
+        /// Implements <c>coroutine.create</c>, producing a new coroutine that wraps the supplied function.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function to wrap.</param>
+        /// <returns>A thread <see cref="DynValue"/> representing the created coroutine.</returns>
         [NovaSharpModuleMethod(Name = "create")]
         public static DynValue Create(
             ScriptExecutionContext executionContext,
@@ -42,6 +45,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return executionContext.GetScript().CreateCoroutine(args[0]);
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.wrap</c>, returning a function that resumes a coroutine and propagates errors as exceptions.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function to wrap.</param>
+        /// <returns>A CLR callback that resumes the wrapped coroutine.</returns>
         [NovaSharpModuleMethod(Name = "wrap")]
         public static DynValue Wrap(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -62,6 +71,12 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.resume</c>, resuming a coroutine and returning Lua-style status + values.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (handle plus optional resume parameters).</param>
+        /// <returns>A tuple beginning with <c>true</c>/<c>false</c> followed by yielded results or an error message.</returns>
         [NovaSharpModuleMethod(Name = "resume")]
         public static DynValue Resume(
             ScriptExecutionContext executionContext,
@@ -112,6 +127,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements Lua 5.4's <c>coroutine.close</c>, closing the supplied coroutine.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (handle to close).</param>
+        /// <returns>The close result tuple provided by the coroutine.</returns>
         [NovaSharpModuleMethod(Name = "close")]
         public static DynValue Close(
             ScriptExecutionContext executionContext,
@@ -128,6 +149,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return handle.Coroutine.Close();
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.yield</c>, propagating a yield request with the supplied arguments.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments passed to the resuming caller.</param>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "yield")]
         public static DynValue Yield(
             ScriptExecutionContext executionContext,
@@ -143,6 +170,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewYieldReq(args.GetArray());
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.running</c>, returning the currently running coroutine and whether it is the main thread.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Ignored but validated per Lua semantics.</param>
+        /// <returns>A tuple of the running coroutine and a boolean indicating main status.</returns>
         [NovaSharpModuleMethod(Name = "running")]
         public static DynValue Running(
             ScriptExecutionContext executionContext,
@@ -162,6 +195,12 @@ namespace NovaSharp.Interpreter.CoreLib
             );
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.status</c>, reporting the textual state of the supplied coroutine.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (handle whose state is queried).</param>
+        /// <returns>A string <see cref="DynValue"/> (running, normal, suspended, or dead).</returns>
         [NovaSharpModuleMethod(Name = "status")]
         public static DynValue Status(
             ScriptExecutionContext executionContext,
@@ -196,6 +235,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements <c>coroutine.isyieldable</c>, returning true when the current execution context can yield.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Ignored but validated per Lua semantics.</param>
+        /// <returns><c>true</c> when yielding is allowed; otherwise <c>false</c>.</returns>
         [NovaSharpModuleMethod(Name = "isyieldable")]
         public static DynValue IsYieldable(
             ScriptExecutionContext executionContext,

@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Text;
@@ -26,6 +23,12 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "debug")]
     public class DebugModule
     {
+        /// <summary>
+        /// Implements Lua's interactive <c>debug.debug</c> helper by launching the REPL and allowing the host to inspect state.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Unused but validated per Lua semantics.</param>
+        /// <returns><see cref="DynValue.Nil"/> after the user exits the REPL.</returns>
         [NovaSharpModuleMethod(Name = "debug")]
         public static DynValue Debug(
             ScriptExecutionContext executionContext,
@@ -100,6 +103,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getuservalue</c>, returning the user value associated with userdata or nil otherwise.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (userdata whose user value should be returned).</param>
+        /// <returns>The stored user value or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "getuservalue")]
         public static DynValue GetUserValue(
             ScriptExecutionContext executionContext,
@@ -122,6 +131,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return v.UserData.UserValue ?? DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements <c>debug.setuservalue</c>, assigning a new table to the supplied userdata's user value slot.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (userdata and optional table).</param>
+        /// <returns>The table that was assigned.</returns>
         [NovaSharpModuleMethod(Name = "setuservalue")]
         public static DynValue SetUserValue(
             ScriptExecutionContext executionContext,
@@ -140,6 +155,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return v.UserData.UserValue = t;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getregistry</c>, returning the script registry table.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Unused but validated per Lua semantics.</param>
+        /// <returns>The registry table.</returns>
         [NovaSharpModuleMethod(Name = "getregistry")]
         public static DynValue GetRegistry(
             ScriptExecutionContext executionContext,
@@ -155,6 +176,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTable(executionContext.GetScript().Registry);
         }
 
+        /// <summary>
+        /// Implements <c>debug.getmetatable</c>, returning the metatable for the supplied value.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value whose metatable is requested).</param>
+        /// <returns>The metatable or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "getmetatable")]
         public static DynValue GetMetatable(
             ScriptExecutionContext executionContext,
@@ -184,6 +211,12 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements <c>debug.setmetatable</c>, assigning a new metatable to a type or table.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value and optional metatable).</param>
+        /// <returns>The original value after mutation.</returns>
         [NovaSharpModuleMethod(Name = "setmetatable")]
         public static DynValue SetMetatable(
             ScriptExecutionContext executionContext,
@@ -220,6 +253,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getupvalue</c>, returning the name and value of the specified closure upvalue.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (Lua closure and upvalue index).</param>
+        /// <returns>A tuple containing the upvalue name and value, or nil when unavailable.</returns>
         [NovaSharpModuleMethod(Name = "getupvalue")]
         public static DynValue GetUpValue(
             ScriptExecutionContext executionContext,
@@ -251,6 +290,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(DynValue.NewString(closure.Symbols[index]), closure[index]);
         }
 
+        /// <summary>
+        /// Implements <c>debug.upvalueid</c>, returning an identifier for the specified upvalue reference.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure and upvalue index).</param>
+        /// <returns>An identifier suitable for comparison or nil.</returns>
         [NovaSharpModuleMethod(Name = "upvalueid")]
         public static DynValue UpValueId(
             ScriptExecutionContext executionContext,
@@ -282,6 +327,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(closure[index].ReferenceId);
         }
 
+        /// <summary>
+        /// Implements <c>debug.setupvalue</c>, assigning a new value to the specified closure upvalue.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure, index, new value).</param>
+        /// <returns>The upvalue name or nil if the index is invalid.</returns>
         [NovaSharpModuleMethod(Name = "setupvalue")]
         public static DynValue SetUpValue(
             ScriptExecutionContext executionContext,
@@ -315,6 +366,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(closure.Symbols[index]);
         }
 
+        /// <summary>
+        /// Implements <c>debug.upvaluejoin</c>, making two closures share the same upvalue reference.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure A/index, closure B/index).</param>
+        /// <returns><see cref="DynValue.Void"/> after the join completes.</returns>
         [NovaSharpModuleMethod(Name = "upvaluejoin")]
         public static DynValue UpValueJoin(
             ScriptExecutionContext executionContext,
@@ -350,6 +407,12 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Void;
         }
 
+        /// <summary>
+        /// Implements <c>debug.traceback</c>, formatting a stack trace for the current or supplied coroutine.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (optional thread, message, and level).</param>
+        /// <returns>A string containing the formatted traceback or the original message value.</returns>
         [NovaSharpModuleMethod(Name = "traceback")]
         public static DynValue Traceback(
             ScriptExecutionContext executionContext,

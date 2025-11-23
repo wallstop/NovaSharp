@@ -1,5 +1,8 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    /// <summary>
+    /// Flags that control how the remote debugger TCP server accepts and manages connections.
+    /// </summary>
     [Flags]
     public enum Utf8TcpServerOptions
     {

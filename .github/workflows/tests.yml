@@ -25,6 +25,15 @@ jobs:
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+      - name: Generate documentation audit log
+        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
+      - name: Verify documentation audit log
+        run: |
+          if ! git diff --quiet -- documentation_audit.log; then
+            echo "::error file=documentation_audit.log::documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log' and commit the result."
+            git --no-pager diff -- documentation_audit.log
+            exit 1
+          fi
       - name: Enforce script/doc README coverage
         run: ./scripts/ci/ensure-readme-updates.sh
         shell: bash
@@ -71,6 +80,15 @@ jobs:
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+      - name: Generate documentation audit log
+        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
+      - name: Verify documentation audit log
+        run: |
+          if ! git diff --quiet -- documentation_audit.log; then
+            echo "::error file=documentation_audit.log::documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log' and commit the result."
+            git --no-pager diff -- documentation_audit.log
+            exit 1
+          fi
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5

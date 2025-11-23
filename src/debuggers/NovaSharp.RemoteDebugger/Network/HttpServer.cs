@@ -53,8 +53,18 @@ namespace NovaSharp.RemoteDebugger.Network
             _server.OnClientDisconnected += OnClientDisconnected;
         }
 
+        /// <summary>
+        /// Optional callback invoked to validate HTTP basic-auth credentials.
+        /// </summary>
+        /// <remarks>
+        /// The first parameter is the provided username and the second parameter is the password.
+        /// Return <c>true</c> to allow the request to proceed; <c>false</c> returns a 401 response.
+        /// </remarks>
         public Func<string, string, bool> Authenticator { get; set; }
 
+        /// <summary>
+        /// Starts listening for HTTP requests on the configured TCP port.
+        /// </summary>
         public void Start()
         {
             _server.Start();
@@ -314,6 +324,9 @@ namespace NovaSharp.RemoteDebugger.Network
             _resources.Add(path, resource);
         }
 
+        /// <summary>
+        /// Releases the underlying TCP server and disconnects any connected clients.
+        /// </summary>
         public void Dispose()
         {
             _server.Dispose();

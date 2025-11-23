@@ -179,3 +179,4 @@ artifacts/
 
 docs/coverage/latest/
 !docs/coverage/README.md
+!documentation_audit.log

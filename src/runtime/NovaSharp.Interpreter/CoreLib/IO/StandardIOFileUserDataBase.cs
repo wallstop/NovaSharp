@@ -13,6 +13,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return ("cannot close standard file");
         }
 
+        /// <summary>
+        /// Wraps a standard input stream in a non-closeable Lua userdata instance.
+        /// </summary>
+        /// <param name="stream">Underlying stream provided by the platform.</param>
+        /// <returns>A new userdata wrapper.</returns>
         public static StandardIoFileUserDataBase CreateInputStream(Stream stream)
         {
             StandardIoFileUserDataBase f = new();
@@ -20,6 +25,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return f;
         }
 
+        /// <summary>
+        /// Wraps a standard output stream in a non-closeable Lua userdata instance.
+        /// </summary>
+        /// <param name="stream">Underlying stream provided by the platform.</param>
+        /// <returns>A new userdata wrapper.</returns>
         public static StandardIoFileUserDataBase CreateOutputStream(Stream stream)
         {
             StandardIoFileUserDataBase f = new();

@@ -4,6 +4,10 @@ namespace NovaSharp.RemoteDebugger
     using System.Text;
     using Network;
 
+    /// <summary>
+    /// Serves the remote debugger HTML, SWF, and JavaScript assets over HTTP so the client UI
+    /// can connect to a running script instance.
+    /// </summary>
     public class DebugWebHost : HttpServer
     {
         public DebugWebHost(int port, Utf8TcpServerOptions options)
@@ -49,6 +53,10 @@ namespace NovaSharp.RemoteDebugger
             return data;
         }
 
+        /// <summary>
+        /// Retrieves the HTML template used for the debugger selection jump page.
+        /// </summary>
+        /// <returns>UTF-8 decoded HTML string for <c>JumpPage.html</c>.</returns>
         public string GetJumpPageText()
         {
             byte[] data = GetResourceData("JumpPage.html");

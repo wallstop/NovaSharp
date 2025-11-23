@@ -11,6 +11,10 @@ namespace NovaSharp.RemoteDebugger
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// Coordinates debugger servers for attached scripts and, optionally, an HTTP host that serves
+    /// the debugger UI and jump page.
+    /// </summary>
     public class RemoteDebuggerService : IDisposable
     {
         private readonly RemoteDebuggerOptions _options;
@@ -71,6 +75,14 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
+        /// <summary>
+        /// Attaches a running script to the remote debugger service and starts listening for UI connections.
+        /// </summary>
+        /// <param name="s">Script instance to debug.</param>
+        /// <param name="scriptName">Display name shown inside debugger UIs.</param>
+        /// <param name="freeRunAfterAttach">
+        /// When <c>true</c>, the script automatically resumes execution after the debugger acknowledges the attach.
+        /// </param>
         public void Attach(Script s, string scriptName, bool freeRunAfterAttach = false)
         {
             lock (_lock)
@@ -184,6 +196,10 @@ namespace NovaSharp.RemoteDebugger
             return script;
         }
 
+        /// <summary>
+        /// Builds the HTML table rows rendered by the jump page so users can pick a script to debug.
+        /// </summary>
+        /// <returns>HTML fragment listing each attached debugger server.</returns>
         public string GetJumpHtmlFragment()
         {
             StringBuilder sb = new();
@@ -203,6 +219,9 @@ namespace NovaSharp.RemoteDebugger
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Stops the HTTP server (if any) and disposes all running debugger servers.
+        /// </summary>
         public void Dispose()
         {
             _httpServer?.Dispose();

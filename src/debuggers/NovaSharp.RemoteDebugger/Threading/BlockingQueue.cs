@@ -1,11 +1,19 @@
 namespace NovaSharp.RemoteDebugger.Threading
 {
-    // Taken from http://element533.blogspot.it/2010/01/stoppable-blocking-queue-for-net.html
+    /// <summary>
+    /// Thread-safe queue that blocks dequeuers until items arrive and supports cooperative shutdown.
+    /// </summary>
+    /// <typeparam name="T">Item type.</typeparam>
     public class BlockingQueue<T>
     {
         private readonly Queue<T> _queue = new();
         private bool _stopped;
 
+        /// <summary>
+        /// Adds an item to the queue unless it has already been stopped.
+        /// </summary>
+        /// <param name="item">Item to enqueue.</param>
+        /// <returns><c>true</c> when the item was queued; <c>false</c> if the queue is stopping.</returns>
         public bool Enqueue(T item)
         {
             if (_stopped)
@@ -26,6 +34,12 @@ namespace NovaSharp.RemoteDebugger.Threading
             return true;
         }
 
+        /// <summary>
+        /// Removes the next available item, blocking until one arrives or the queue is stopped.
+        /// </summary>
+        /// <returns>
+        /// The dequeued item, or the default value of <typeparamref name="T"/> when the queue stops.
+        /// </returns>
         public T Dequeue()
         {
             if (_stopped)
@@ -52,6 +66,9 @@ namespace NovaSharp.RemoteDebugger.Threading
             }
         }
 
+        /// <summary>
+        /// Signals the queue to stop, unblocking any waiting producers/consumers.
+        /// </summary>
         public void Stop()
         {
             if (_stopped)

@@ -3,17 +3,25 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using System;
     using System.Text;
 
+    /// <summary>
+    /// Simple single-byte encoding used by Lua file IO to preserve raw byte values without conversion.
+    /// </summary>
     internal class BinaryEncoding : Encoding
     {
+        /// <summary>
+        /// Creates a new instance of the binary encoding.
+        /// </summary>
         public BinaryEncoding()
             : base() { }
 
+        /// <inheritdoc />
         public override int GetByteCount(char[] chars, int index, int count)
         {
             ValidateBufferRange(chars, nameof(chars), index, count);
             return count;
         }
 
+        /// <inheritdoc />
         public override int GetBytes(
             char[] chars,
             int charIndex,
@@ -33,12 +41,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return charCount;
         }
 
+        /// <inheritdoc />
         public override int GetCharCount(byte[] bytes, int index, int count)
         {
             ValidateBufferRange(bytes, nameof(bytes), index, count);
             return count;
         }
 
+        /// <inheritdoc />
         public override int GetChars(
             byte[] bytes,
             int byteIndex,
@@ -58,6 +68,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return byteCount;
         }
 
+        /// <inheritdoc />
         public override int GetMaxByteCount(int charCount)
         {
             if (charCount < 0)
@@ -68,6 +79,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return charCount;
         }
 
+        /// <inheritdoc />
         public override int GetMaxCharCount(int byteCount)
         {
             if (byteCount < 0)

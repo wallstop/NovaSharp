@@ -4,6 +4,10 @@ namespace NovaSharp.RemoteDebugger.Network
     using System.Net.Sockets;
     using System.Text;
 
+    /// <summary>
+    /// Represents a single TCP client connected to the remote debugger server using UTF-8 packets
+    /// terminated by <see cref="Utf8TcpServer.PacketSeparator"/>.
+    /// </summary>
     public class Utf8TcpPeer
     {
         private readonly Socket _socket;
@@ -11,9 +15,19 @@ namespace NovaSharp.RemoteDebugger.Network
         private int _prevSize = 0;
         private readonly byte[] _recvBuffer;
 
+        /// <summary>
+        /// Gets the unique identifier assigned to this peer connection.
+        /// </summary>
         public string Id { get; private set; }
 
+        /// <summary>
+        /// Raised when the client disconnects or the server closes the socket.
+        /// </summary>
         public event EventHandler<Utf8TcpPeerEventArgs> OnConnectionClosed;
+
+        /// <summary>
+        /// Raised when a complete packet (terminated by the configured separator) is received.
+        /// </summary>
         public event EventHandler<Utf8TcpPeerEventArgs> OnDataReceived;
 
         internal Utf8TcpPeer(Utf8TcpServer server, Socket socket)
@@ -24,6 +38,9 @@ namespace NovaSharp.RemoteDebugger.Network
             Id = Guid.NewGuid().ToString();
         }
 
+        /// <summary>
+        /// Begins asynchronously reading packets from the connected socket.
+        /// </summary>
         internal void Start()
         {
             _socket.BeginReceive(
@@ -118,27 +135,47 @@ namespace NovaSharp.RemoteDebugger.Network
             }
         }
 
+        /// <summary>
+        /// Sends a message, ensuring the server appends the packet terminator.
+        /// </summary>
+        /// <param name="message">The textual payload to transmit.</param>
         public void Send(string message)
         {
             SendTerminated(_server.CompleteMessage(message));
         }
 
+        /// <summary>
+        /// Sends a formatted message with the server-provided terminator appended.
+        /// </summary>
+        /// <param name="message">Composite format string.</param>
+        /// <param name="args">Arguments used to format <paramref name="message"/>.</param>
         public void Send(string message, params object[] args)
         {
             SendTerminated(_server.CompleteMessage(FormatString(message, args)));
         }
 
+        /// <summary>
+        /// Sends a message that already contains the packet terminator.
+        /// </summary>
+        /// <param name="message">The fully formatted payload to transmit.</param>
         public void SendTerminated(string message)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(message);
             SendBinary(bytes);
         }
 
+        /// <summary>
+        /// Closes the underlying socket and triggers <see cref="OnConnectionClosed"/>.
+        /// </summary>
         public void Disconnect()
         {
             _socket.Close();
         }
 
+        /// <summary>
+        /// Sends raw binary data to the peer.
+        /// </summary>
+        /// <param name="bytes">Payload to transmit.</param>
         public void SendBinary(byte[] bytes)
         {
             try
