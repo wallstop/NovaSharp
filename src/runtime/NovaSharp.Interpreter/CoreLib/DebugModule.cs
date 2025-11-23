@@ -425,7 +425,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     wi.Location != null
                         ? wi.Location.FormatLocation(executionContext.GetScript())
                         : "[clr]";
-                sb.AppendFormat("\t{0}: in {1}\n", loc, name);
+                sb.Append('\t').Append(loc).Append(": in ").Append(name).Append('\n');
             }
 
             return DynValue.NewString(sb);

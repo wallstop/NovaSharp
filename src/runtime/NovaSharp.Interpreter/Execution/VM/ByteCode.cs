@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using Debugging;
@@ -68,11 +69,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 if (Code[i].OpCode == OpCode.Debug)
                 {
-                    sb.AppendFormat("    {0}\n", Code[i]);
+                    sb.Append("    ").Append(Code[i]).Append('\n');
                 }
                 else
                 {
-                    sb.AppendFormat("{0:X8}  {1}\n", i, Code[i]);
+                    sb.Append(i.ToString("X8", CultureInfo.InvariantCulture))
+                        .Append("  ")
+                        .Append(Code[i])
+                        .Append('\n');
                 }
             }
 

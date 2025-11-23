@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
 
     [Flags]
@@ -149,14 +150,17 @@ namespace NovaSharp.Interpreter.DataTypes
             {
                 return "(default _ENV)";
             }
-            else if (SymbolType == SymbolRefType.Global)
+
+            if (SymbolType == SymbolRefType.Global)
             {
-                return string.Format("{2} : {0} / {1}", SymbolType, EnvironmentRef, NameValue);
+                return FormattableString.Invariant(
+                    $"{NameValue} : {SymbolType} / {EnvironmentRef}"
+                );
             }
-            else
-            {
-                return string.Format("{2} : {0}[{1}]", SymbolType, IndexValue, NameValue);
-            }
+
+            return FormattableString.Invariant(
+                $"{NameValue} : {SymbolType}[{IndexValue.ToString(CultureInfo.InvariantCulture)}]"
+            );
         }
 
         /// <summary>

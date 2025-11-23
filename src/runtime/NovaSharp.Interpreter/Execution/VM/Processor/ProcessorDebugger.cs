@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using Debugging;
     using NovaSharp.Interpreter.DataTypes;
@@ -395,7 +396,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                 .Select(c => new WatchItem()
                 {
                     Address = c.AssociatedCoroutine.ReferenceId,
-                    Name = "coroutine #" + c.AssociatedCoroutine.ReferenceId.ToString(),
+                    Name = FormattableString.Invariant(
+                        $"coroutine #{c.AssociatedCoroutine.ReferenceId}"
+                    ),
                 })
                 .ToList();
         }

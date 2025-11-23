@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib.StringLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -279,7 +280,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "lower", DataType.String, false);
-            return DynValue.NewString(argS.String.ToLower());
+            return DynValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
 
         [NovaSharpModuleMethod(Name = "upper")]
@@ -294,7 +295,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "upper", DataType.String, false);
-            return DynValue.NewString(argS.String.ToUpper());
+            return DynValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
 
         [NovaSharpModuleMethod(Name = "rep")]

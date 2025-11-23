@@ -576,7 +576,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Nil:
                     return "nil";
                 case DataType.Boolean:
-                    return Boolean.ToString().ToLower();
+                    return Boolean ? "true" : "false";
                 case DataType.Number:
                     return Number.ToString(CultureInfo.InvariantCulture);
                 case DataType.String:
@@ -584,7 +584,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Function:
                     return $"(Function {Function.EntryPointByteCodeLocation:X8})";
                 case DataType.ClrFunction:
-                    return string.Format("(Function CLR)", Function);
+                    return "(Function CLR)";
                 case DataType.Table:
                     return "(Table)";
                 case DataType.Tuple:
@@ -630,7 +630,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     _hashCode = baseValue ^ Number.GetHashCode();
                     break;
                 case DataType.String:
-                    _hashCode = baseValue ^ String.GetHashCode();
+                    _hashCode = baseValue ^ StringComparer.Ordinal.GetHashCode(String);
                     break;
                 case DataType.Function:
                     _hashCode = baseValue ^ Function.GetHashCode();
@@ -745,7 +745,7 @@ namespace NovaSharp.Interpreter.DataTypes
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString();
+                return rv.Number.ToString(CultureInfo.InvariantCulture);
             }
             else if (rv.Type == DataType.String)
             {

@@ -176,7 +176,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             bool isDst = false;
 
-            if (format.StartsWith("!"))
+            if (!string.IsNullOrEmpty(format) && format[0] == '!')
             {
                 format = format.Substring(1);
             }

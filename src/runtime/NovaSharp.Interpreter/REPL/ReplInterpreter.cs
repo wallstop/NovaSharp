@@ -67,9 +67,14 @@ namespace NovaSharp.Interpreter.REPL
         /// <returns>This method returns the result of the computation, or null if more input is needed for a computation.</returns>
         public virtual DynValue Evaluate(string input)
         {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
             bool isFirstLine = !HasPendingCommand;
 
-            bool forced = (input == "");
+            bool forced = input.Length == 0;
 
             _currentCommand += input;
 
@@ -84,17 +89,17 @@ namespace NovaSharp.Interpreter.REPL
             {
                 DynValue result = null;
 
-                if (isFirstLine && HandleClassicExprsSyntax && _currentCommand.StartsWith("="))
+                if (isFirstLine && HandleClassicExprsSyntax && _currentCommand[0] == '=')
                 {
                     _currentCommand = "return " + _currentCommand.Substring(1);
                 }
 
-                if (isFirstLine && HandleDynamicExprs && _currentCommand.StartsWith("?"))
+                if (isFirstLine && HandleDynamicExprs && _currentCommand[0] == '?')
                 {
                     string code = _currentCommand.Substring(1).Trim();
                     if (code.Length == 0)
                     {
-                        _currentCommand = "";
+                        _currentCommand = string.Empty;
                         return DynValue.Void;
                     }
 
@@ -107,14 +112,14 @@ namespace NovaSharp.Interpreter.REPL
                     result = _script.Call(v);
                 }
 
-                _currentCommand = "";
+                _currentCommand = string.Empty;
                 return result;
             }
             catch (SyntaxErrorException ex)
             {
                 if (forced || !ex.IsPrematureStreamTermination)
                 {
-                    _currentCommand = "";
+                    _currentCommand = string.Empty;
                     ex.Rethrow();
                     throw;
                 }
@@ -125,13 +130,13 @@ namespace NovaSharp.Interpreter.REPL
             }
             catch (ScriptRuntimeException sre)
             {
-                _currentCommand = "";
+                _currentCommand = string.Empty;
                 sre.Rethrow();
                 throw;
             }
             catch (Exception)
             {
-                _currentCommand = "";
+                _currentCommand = string.Empty;
                 throw;
             }
         }

@@ -99,21 +99,21 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileAccess ParseFileAccess(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalizedMode = NormalizeMode(mode);
 
-            if (mode == "r")
+            if (normalizedMode == "r")
             {
                 return FileAccess.Read;
             }
-            else if (mode == "r+")
+            else if (normalizedMode == "r+")
             {
                 return FileAccess.ReadWrite;
             }
-            else if (mode == "w")
+            else if (normalizedMode == "w")
             {
                 return FileAccess.Write;
             }
-            else if (mode == "w+")
+            else if (normalizedMode == "w+")
             {
                 return FileAccess.ReadWrite;
             }
@@ -130,21 +130,21 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileMode ParseFileMode(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalizedMode = NormalizeMode(mode);
 
-            if (mode == "r")
+            if (normalizedMode == "r")
             {
                 return FileMode.Open;
             }
-            else if (mode == "r+")
+            else if (normalizedMode == "r+")
             {
                 return FileMode.OpenOrCreate;
             }
-            else if (mode == "w")
+            else if (normalizedMode == "w")
             {
                 return FileMode.Create;
             }
-            else if (mode == "w+")
+            else if (normalizedMode == "w+")
             {
                 return FileMode.Truncate;
             }
@@ -210,7 +210,7 @@ namespace NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException("type");
+                    throw new ArgumentException("Unknown standard file type.", nameof(type));
             }
         }
 
@@ -315,6 +315,35 @@ namespace NovaSharp.Interpreter.Platforms
         public override string GetPlatformNamePrefix()
         {
             return "std";
+        }
+
+        private static string NormalizeMode(string mode)
+        {
+            if (mode == null)
+            {
+                throw new ArgumentNullException(nameof(mode));
+            }
+
+            if (
+                mode.IndexOf("b", StringComparison.Ordinal) < 0
+                && mode.IndexOf("B", StringComparison.Ordinal) < 0
+            )
+            {
+                return mode;
+            }
+
+            char[] buffer = new char[mode.Length];
+            int bufferIndex = 0;
+
+            foreach (char c in mode)
+            {
+                if (c != 'b' && c != 'B')
+                {
+                    buffer[bufferIndex++] = c;
+                }
+            }
+
+            return new string(buffer, 0, bufferIndex);
         }
     }
 #endif
