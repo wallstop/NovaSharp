@@ -3,10 +3,10 @@ namespace NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    //using System.Linq;
+    using System.Linq;
     using System.Text;
-    using NovaSharp.Interpreter.Errors;
-    using NovaSharp.Interpreter.Execution;
+    using Errors;
+    using Execution;
 
     /// <summary>
     /// A class representing a value in a Lua/NovaSharp script.
@@ -496,7 +496,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public string ToPrintString()
         {
-            if (_object != null && _object is RefIdObject refid)
+            if (_object is RefIdObject refId)
             {
                 string typeString = Type.ToLuaTypeString();
 
@@ -509,7 +509,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     }
                 }
 
-                return refid.FormatTypeString(typeString);
+                return refId.FormatTypeString(typeString);
             }
 
             switch (Type)
@@ -517,7 +517,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.String:
                     return String;
                 case DataType.Tuple:
-                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()).ToArray());
+                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()));
                 case DataType.TailCallRequest:
                     return "(TailCallRequest -- INTERNAL!)";
                 case DataType.YieldRequest:
@@ -532,7 +532,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public string ToDebugPrintString()
         {
-            if (_object != null && _object is RefIdObject refid)
+            if (_object is RefIdObject refid)
             {
                 string typeString = Type.ToLuaTypeString();
 
@@ -551,7 +551,7 @@ namespace NovaSharp.Interpreter.DataTypes
             switch (Type)
             {
                 case DataType.Tuple:
-                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()).ToArray());
+                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()));
                 case DataType.TailCallRequest:
                     return "(TailCallRequest)";
                 case DataType.YieldRequest:
@@ -588,11 +588,9 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Table:
                     return "(Table)";
                 case DataType.Tuple:
-                    return string.Join(", ", Tuple.Select(t => t.ToString()).ToArray());
+                    return string.Join(", ", Tuple.Select(t => t.ToString()));
                 case DataType.TailCallRequest:
-                    return "Tail:("
-                        + string.Join(", ", Tuple.Select(t => t.ToString()).ToArray())
-                        + ")";
+                    return "Tail:(" + string.Join(", ", Tuple.Select(t => t.ToString())) + ")";
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
@@ -1085,7 +1083,7 @@ namespace NovaSharp.Interpreter.DataTypes
             }
 
             object o = v.UserData.Object;
-            if (o != null && o is T o1)
+            if (o is T o1)
             {
                 return o1;
             }
