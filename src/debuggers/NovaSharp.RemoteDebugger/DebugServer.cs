@@ -86,8 +86,6 @@ namespace NovaSharp.RemoteDebugger
             return _server.GetConnectedClients();
         }
 
-        #region Writes
-
         public void SetSourceCode(SourceCode sourceCode)
         {
             Send(xw =>
@@ -234,8 +232,6 @@ namespace NovaSharp.RemoteDebugger
             //		}
             //	});
         }
-
-        #endregion
 
         public void QueueAction(DebuggerAction action)
         {

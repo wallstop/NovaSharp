@@ -762,9 +762,6 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
-        #region MetaMethodsDispatching
-
-
         private static int PerformComparison(object obj, object p1, object p2)
         {
             IComparable comp = (IComparable)obj;
@@ -911,9 +908,6 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
             return DispatchMetaOnMethod(script, obj, "op_True");
         }
-
-        #endregion
-
 
         /// <summary>
         /// Determines whether the specified object is compatible with the specified type.

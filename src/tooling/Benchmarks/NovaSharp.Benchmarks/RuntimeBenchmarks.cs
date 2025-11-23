@@ -6,7 +6,7 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.Modules;
 
     [MemoryDiagnoser]
-    internal class RuntimeBenchmarks
+    public class RuntimeBenchmarks
     {
         private Script _script = null!;
         private DynValue _compiledEntry = DynValue.Nil;
@@ -75,7 +75,7 @@ namespace NovaSharp.Benchmarks
         }
     }
 
-    internal sealed class BenchmarkHost
+    public sealed class BenchmarkHost
     {
         private double _store;
 

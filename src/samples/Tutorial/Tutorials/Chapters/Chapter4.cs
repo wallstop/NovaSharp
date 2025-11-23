@@ -10,8 +10,6 @@ namespace Tutorials.Chapters
     [Tutorial]
     static class Chapter04
     {
-        #region TableTest1
-
         private static List<int> GetNumberList()
         {
             List<int> lst = new List<int>();
@@ -46,11 +44,6 @@ namespace Tutorials.Chapters
 
             return res.Number;
         }
-
-        #endregion
-
-
-        #region TableTest2
 
         private static Table GetNumberTable(Script script)
         {
@@ -87,11 +80,6 @@ namespace Tutorials.Chapters
             return res.Number;
         }
 
-        #endregion
-
-
-        #region TableTestReverse
-
         [Tutorial]
         public static double TableTestReverse()
         {
@@ -109,11 +97,6 @@ namespace Tutorials.Chapters
             return res.Number;
         }
 
-        #endregion
-
-
-        #region TableTestReverseSafer
-
         [Tutorial]
         public static double TableTestReverseSafer()
         {
@@ -130,11 +113,6 @@ namespace Tutorials.Chapters
 
             return res.Number;
         }
-
-        #endregion
-
-
-        #region TableTestReverseWithTable
 
         static double Sum(Table t)
         {
@@ -159,7 +137,5 @@ namespace Tutorials.Chapters
 
             return res.Number;
         }
-
-        #endregion
     }
 }

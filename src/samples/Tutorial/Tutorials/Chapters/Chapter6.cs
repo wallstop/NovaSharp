@@ -11,8 +11,6 @@ namespace Tutorials.Chapters
     [Tutorial]
     static class Chapter06
     {
-        #region UserData classes
-
         [NovaSharpUserData]
         class MyClass
         {
@@ -176,9 +174,6 @@ namespace Tutorials.Chapters
                 ).GetEnumerator();
             }
         }
-
-        #endregion
-
 
         [Tutorial]
         public static double CallMyClass1()

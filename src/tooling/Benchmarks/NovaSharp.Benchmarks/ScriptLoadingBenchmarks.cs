@@ -6,7 +6,7 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.Modules;
 
     [MemoryDiagnoser]
-    internal class ScriptLoadingBenchmarks
+    public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;
         private Script _precompiledScript = null!;

@@ -3,7 +3,7 @@ namespace NovaSharp.Benchmarks
     using System;
     using System.Text;
 
-    internal enum ScriptComplexity
+    public enum ScriptComplexity
     {
         [Obsolete("Use a specific ScriptComplexity.", false)]
         Unknown = 0,

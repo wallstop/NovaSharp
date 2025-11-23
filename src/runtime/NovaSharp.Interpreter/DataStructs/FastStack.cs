@@ -116,8 +116,6 @@ namespace NovaSharp.Interpreter.DataStructs
             get { return _headIdx; }
         }
 
-        #region IList<T> Impl.
-
         int IList<T>.IndexOf(T item)
         {
             throw new NotImplementedException();
@@ -183,8 +181,6 @@ namespace NovaSharp.Interpreter.DataStructs
         {
             throw new NotImplementedException();
         }
-
-        #endregion
     }
 }
 

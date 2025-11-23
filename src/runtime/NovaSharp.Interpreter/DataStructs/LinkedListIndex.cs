@@ -34,12 +34,18 @@ namespace NovaSharp.Interpreter.DataStructs
                 return null;
             }
 
-            if (_map.TryGetValue(key, out LinkedListNode<TValue> node))
+            return _map.GetValueOrDefault(key);
+        }
+
+        public bool TryGetValue(TKey key, out LinkedListNode<TValue> value)
+        {
+            if (_map == null)
             {
-                return node;
+                value = default;
+                return false;
             }
 
-            return null;
+            return _map.TryGetValue(key, out value);
         }
 
         /// <summary>

@@ -518,19 +518,15 @@ namespace NovaSharp.Benchmarks
             sectionBuilder.AppendLine(header);
             sectionBuilder.AppendLine();
 
-            if (string.IsNullOrWhiteSpace(baselineBlock))
+            if (string.IsNullOrWhiteSpace(latestBlock))
             {
-                sectionBuilder.AppendLine("_No MoonSharp baseline recorded yet._");
+                sectionBuilder.AppendLine("_No NovaSharp benchmarks recorded yet._");
             }
             else
             {
-                sectionBuilder.AppendLine(baselineBlock.Trim());
+                sectionBuilder.AppendLine(latestBlock.Trim());
             }
 
-            sectionBuilder.AppendLine();
-            sectionBuilder.AppendLine("---");
-            sectionBuilder.AppendLine();
-            sectionBuilder.AppendLine(latestBlock.Trim());
             sectionBuilder.AppendLine();
             sectionBuilder.AppendLine("To refresh this section, run:");
             sectionBuilder.AppendLine();
@@ -546,6 +542,18 @@ namespace NovaSharp.Benchmarks
             sectionBuilder.AppendLine(
                 "Then replace everything under `### NovaSharp Latest` with the new results."
             );
+            sectionBuilder.AppendLine();
+            sectionBuilder.AppendLine("---");
+            sectionBuilder.AppendLine();
+
+            if (string.IsNullOrWhiteSpace(baselineBlock))
+            {
+                sectionBuilder.AppendLine("_No MoonSharp baseline recorded yet._");
+            }
+            else
+            {
+                sectionBuilder.AppendLine(baselineBlock.Trim());
+            }
 
             return sectionBuilder.ToString().TrimEnd();
         }

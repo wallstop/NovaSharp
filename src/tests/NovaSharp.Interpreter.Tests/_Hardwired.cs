@@ -106,7 +106,6 @@ namespace MyNamespace
 			NovaSharp.Interpreter.UserData.RegisterType(new TYPE_0fd7f1a4f76344ef81e0c9e5081fa739());
 		}
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.RegCollMethods
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.RegCollMethods
 		private sealed class TYPE_71dd5d8c103e4d768ae1c67d2e10dd85 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -277,9 +276,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem
 		private sealed class TYPE_9a70b110dfd644339862781b0912b66e : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -392,9 +389,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
 		// Descriptor of System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
 		private sealed class TYPE_690908c2f3234d4eb890ade67497dac8 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -1428,9 +1423,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Int32[]
 		// Descriptor of System.Int32[]
 		private sealed class TYPE_c142762d43fa4da88b624f4c928cd065 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -2208,9 +2201,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		// Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		private sealed class TYPE_8f6f2e3c154e4ac8a127ef998b64b06b : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -3244,9 +3235,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollMethods
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollMethods
 		private sealed class TYPE_c8d44043712740c180e31cf9a5ec5893 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -3417,9 +3406,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollItem
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollItem
 		private sealed class TYPE_9ccc3059bc124dbea894c97ceed6e510 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -3532,9 +3519,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Array
 		// Descriptor of System.Array
 		private sealed class TYPE_cad5306f62694a019a0d2753e1d2fca3 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -4893,9 +4878,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		// Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests+RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		private sealed class TYPE_728312c1affe4e99a286edc5d9020c48 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -5929,9 +5912,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollMethods
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollMethods
 		private sealed class TYPE_50fe3e19ee7b4d34b2d94c2ec09ad8d4 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -6102,9 +6083,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollItem
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollItem
 		private sealed class TYPE_da3e72ee164847a58fb8b3fa12421a15 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -6217,9 +6196,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		// Descriptor of System.Collections.Generic.List`1[[NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests+RegCollItem, NovaSharp.Interpreter.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 		private sealed class TYPE_22f0c3c36b3147bfb30a605ca30fde1c : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -7253,9 +7230,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Int32[,]
 		// Descriptor of System.Int32[,]
 		private sealed class TYPE_1f6c21b9d2ba407f8815e4195628d3ab : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8056,9 +8031,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.MetatableTests+MyObject
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.MetatableTests+MyObject
 		private sealed class TYPE_201806dd10b345358abc1e2a7fea60d2 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8165,9 +8138,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.ProxyObjectsTests+Proxy
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.ProxyObjectsTests+Proxy
 		private sealed class TYPE_96070a3ffc144574bd59a74250e84abd : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8258,9 +8229,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique+Transform
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique+Transform
 		private sealed class TYPE_71451dacd00543d1b4b5d91d5b9f4bc9 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8372,9 +8341,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique+Vector3
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique+Vector3
 		private sealed class TYPE_1a704d11703e4b01bbe25a3a6e3d7437 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8528,9 +8495,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataEventsTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataEventsTests+SomeClass
 		private sealed class TYPE_52f7e7443c124d23a81e55f9e22be191 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8721,9 +8686,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.EventArgs
 		// Descriptor of System.EventArgs
 		private sealed class TYPE_7569b35816794806aa24df61d472ad96 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -8829,9 +8792,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests+EnumOverloadsTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests+EnumOverloadsTestClass
 		private sealed class TYPE_8df48697e4b4488fac40be824e5775c2 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -9021,9 +8982,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+SomeType+SomeNestedType
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+SomeType+SomeNestedType
 		private sealed class TYPE_fdd5466522954a8ead748408a2a3e02e : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -9130,9 +9089,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+SomeType
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+SomeType
 		private sealed class TYPE_480c8e43dcda4daeb4f7736380f9d3db : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -9275,9 +9232,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+VSomeType+SomeNestedType
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+VSomeType+SomeNestedType
 		private sealed class TYPE_d8f481563a93412d905a66a0f4640f91 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -9384,9 +9339,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+VSomeType
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests+VSomeType
 		private sealed class TYPE_159cf7f2538e48f0aa152cdabc23042e : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -9495,9 +9448,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests+SomeClass
 		private sealed class TYPE_edfd942631734cc1951924896cb28111 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10024,9 +9975,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataOverloadsTests+OverloadsTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataOverloadsTests+OverloadsTestClass
 		private sealed class TYPE_42c7f3d0acb341bca981275e2ecf79c9 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10339,9 +10288,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+SomeClass
 		private sealed class TYPE_835b52631f614895b7b48ef29d9dfe1b : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10661,9 +10608,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+SomeOtherClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+SomeOtherClass
 		private sealed class TYPE_d4bc7b8842184932b3fa631f414a2cc7 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10786,9 +10731,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+Interface1
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+Interface1
 		private sealed class TYPE_dc0291b3e19a4bb1b9944defdb5d6a77 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10814,9 +10757,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+Interface2
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests+Interface2
 		private sealed class TYPE_8b14e5a0f85c42219e8c5b4b7ff618ca : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -10842,9 +10783,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ArithmOperatorsTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ArithmOperatorsTestClass
 		private sealed class TYPE_b7f437771da443599c33303bb0a7c864 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -11501,9 +11440,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ClassWithCount
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ClassWithCount
 		private sealed class TYPE_6a6a78e9064a45ba8885f2df3a5b58f4 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -11625,9 +11562,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ClassWithLength
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests+ClassWithLength
 		private sealed class TYPE_5111a7ecd6544644a489165b35869822 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -11749,9 +11684,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataIndexerTests+IndexerTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataIndexerTests+IndexerTestClass
 		private sealed class TYPE_837265dc0f5143f38128bce0768e5a33 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -11939,9 +11872,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests+SomeClass
 		private sealed class TYPE_111440b2f057418ea38cba2c19403629 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -12130,9 +12061,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ArithmOperatorsTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ArithmOperatorsTestClass
 		private sealed class TYPE_79f4cd059fcf483495a03356bb8cce46 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -12789,9 +12718,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ClassWithCount
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ClassWithCount
 		private sealed class TYPE_acc8a8b40d184cdf88cb69e719d37cbb : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -12913,9 +12840,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ClassWithLength
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests+ClassWithLength
 		private sealed class TYPE_849992c03f5a412f92b34315fa1849e8 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13037,9 +12962,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataIndexerTests+IndexerTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataIndexerTests+IndexerTestClass
 		private sealed class TYPE_9a705002c22f4c57aaea7b4dfd2de660 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13206,9 +13129,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+SomeClass
 		private sealed class TYPE_2d2fe58092f042eaac7ff3c4874a6eaa : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13511,9 +13432,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+SomeOtherClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+SomeOtherClass
 		private sealed class TYPE_357faad2de2b4026a781cdc01ee447d3 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13636,9 +13555,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+Interface1
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+Interface1
 		private sealed class TYPE_cfa246c16d8e45c28af66bfe941f2759 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13664,9 +13581,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+Interface2
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests+Interface2
 		private sealed class TYPE_fb4a26496fb54e9c9a36dfcdbc2bd9a1 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -13692,9 +13607,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
 		// Descriptor of System.Collections.Generic.Dictionary`2[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
 		private sealed class TYPE_9302398a948a4cc883b9dff9976a4e80 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -14190,9 +14103,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataOverloadsTests+OverloadsTestClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataOverloadsTests+OverloadsTestClass
 		private sealed class TYPE_3f7a152fa8b348c996f851343aa9b2ad : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -14489,9 +14400,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests+SomeClass
 		private sealed class TYPE_a7e62b0e3ff84281b50f51f8d5504a63 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -14695,9 +14604,7 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 
-		#region Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests+SomeClass
 		// Descriptor of NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests+SomeClass
 		private sealed class TYPE_0fd7f1a4f76344ef81e0c9e5081fa739 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredUserDataDescriptor
 		{
@@ -15208,7 +15115,6 @@ namespace MyNamespace
 				}
 			}
 		}
-		#endregion
 	}
 }
 
