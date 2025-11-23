@@ -125,8 +125,14 @@ namespace NovaSharp.Interpreter.Modules
         PresetComplete = PresetDefault | Debug,
     }
 
+    /// <summary>
+    /// Extension helpers for interrogating <see cref="CoreModules"/> flag values.
+    /// </summary>
     internal static class CoreModulesExtensionMethods
     {
+        /// <summary>
+        /// Returns <c>true</c> when <paramref name="val"/> contains every bit set in <paramref name="flag"/>.
+        /// </summary>
         public static bool Has(this CoreModules val, CoreModules flag)
         {
             return (val & flag) == flag;

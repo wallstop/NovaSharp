@@ -9,12 +9,13 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-    /// <summary>
-    /// Base type of all exceptions thrown in NovaSharp
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Base type for every exception surfaced by the NovaSharp interpreter, providing call-stack metadata
+    /// and helpers to decorate messages with script locations and compatibility context.
+    /// </summary>
     public class InterpreterException : Exception
     {
         public InterpreterException() { }
@@ -73,11 +74,21 @@ namespace NovaSharp.Interpreter.Errors
         public string DecoratedMessage { get; internal set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the message should not be decorated
+        /// Gets or sets a value indicating whether the message should skip decoration.
         /// </summary>
+        /// <remarks>
+        /// When <c>true</c>, <see cref="DecorateMessage(Script, SourceRef, int)"/> leaves
+        /// <see cref="DecoratedMessage"/> untouched so callers can preserve custom formatting.
+        /// </remarks>
         public bool DoNotDecorateMessage { get; set; }
 
-        internal void DecorateMessage(Script script, SourceRef sref, int ip = -1)
+        /// <summary>
+        /// Formats <see cref="DecoratedMessage"/> with the best available script context.
+        /// </summary>
+        /// <param name="script">Script owning the currently executing chunk, used to format source references.</param>
+        /// <param name="sref">Source location associated with the failure; if <c>null</c>, the bytecode IP is used.</param>
+        /// <param name="ip">Instruction pointer recorded during execution; used only when <paramref name="sref"/> is <c>null</c>.</param>
+        public void DecorateMessage(Script script, SourceRef sref, int ip = -1)
         {
             if (string.IsNullOrEmpty(DecoratedMessage))
             {
@@ -102,11 +113,15 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Rethrows this instance if
+        /// Rethrows this instance according to the configured <see cref="Script.GlobalOptions"/> policy.
         /// </summary>
-        /// <returns></returns>
         public virtual void Rethrow() { }
 
+        /// <summary>
+        /// Appends the active <see cref="LuaCompatibilityProfile"/> to <see cref="DecoratedMessage"/> so host logs
+        /// record which Lua baseline caused the failure.
+        /// </summary>
+        /// <param name="script">Script owning the error; supplies the compatibility profile metadata.</param>
         internal void AppendCompatibilityContext(Script script)
         {
             if (

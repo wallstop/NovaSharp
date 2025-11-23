@@ -440,8 +440,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Provides helpers used exclusively by tests to exercise internal optimization paths.
+        /// </summary>
         internal static class TestHooks
         {
+            /// <summary>
+            /// Overrides <see cref="AccessMode"/> so tests can verify eager/lazy optimization behavior.
+            /// </summary>
             public static void ForceAccessMode(
                 MethodMemberDescriptor descriptor,
                 InteropAccessMode accessMode

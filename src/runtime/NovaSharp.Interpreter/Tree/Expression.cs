@@ -7,23 +7,39 @@ namespace NovaSharp.Interpreter.Tree
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Base type for every AST expression node parsed from Lua source.
+    /// Provides helper factories for recursive-descent parsing and evaluation hooks used by the VM.
+    /// </summary>
     internal abstract class Expression : NodeBase
     {
         public Expression(ScriptLoadingContext lcontext)
             : base(lcontext) { }
 
+        /// <summary>
+        /// Returns a human-friendly node name used by debuggers when rendering the expression tree.
+        /// </summary>
         public virtual string GetFriendlyDebugName()
         {
             return null;
         }
 
+        /// <summary>
+        /// Evaluates the expression within the supplied execution context and produces a Lua value.
+        /// </summary>
         public abstract DynValue Eval(ScriptExecutionContext context);
 
+        /// <summary>
+        /// Resolves the symbol reference for dynamic expressions that defer lookup until runtime.
+        /// </summary>
         public virtual SymbolRef FindDynamic(ScriptExecutionContext context)
         {
             return null;
         }
 
+        /// <summary>
+        /// Parses the remainder of a comma-separated expression list once the first expression is already known.
+        /// </summary>
         internal static List<Expression> ExprListAfterFirstExpr(
             ScriptLoadingContext lcontext,
             Expression expr1
@@ -42,6 +58,9 @@ namespace NovaSharp.Interpreter.Tree
             return exps;
         }
 
+        /// <summary>
+        /// Parses a comma-separated list of expressions.
+        /// </summary>
         internal static List<Expression> ExprList(ScriptLoadingContext lcontext)
         {
             List<Expression> exps = new();
@@ -61,11 +80,17 @@ namespace NovaSharp.Interpreter.Tree
             return exps;
         }
 
+        /// <summary>
+        /// Parses a complete expression honoring precedence rules.
+        /// </summary>
         internal static Expression Expr(ScriptLoadingContext lcontext)
         {
             return SubExpr(lcontext, true);
         }
 
+        /// <summary>
+        /// Parses a sub-expression, optionally treating binary operators as part of the primary expression.
+        /// </summary>
         internal static Expression SubExpr(ScriptLoadingContext lcontext, bool isPrimary)
         {
             Expression e = null;
@@ -137,6 +162,9 @@ namespace NovaSharp.Interpreter.Tree
             return e;
         }
 
+        /// <summary>
+        /// Parses literals, table constructors, anonymous functions, or primary expressions (identifier, parenthesized expressions).
+        /// </summary>
         internal static Expression SimpleExp(ScriptLoadingContext lcontext)
         {
             Token t = lcontext.Lexer.Current;
@@ -168,10 +196,8 @@ namespace NovaSharp.Interpreter.Tree
         }
 
         /// <summary>
-        /// Primaries the exp.
+        /// Parses a primary expression (prefix expression plus chained field/index/function calls).
         /// </summary>
-        /// <param name="lcontext">The lcontext.</param>
-        /// <returns></returns>
         internal static Expression PrimaryExp(ScriptLoadingContext lcontext)
         {
             Expression e = PrefixExp(lcontext);

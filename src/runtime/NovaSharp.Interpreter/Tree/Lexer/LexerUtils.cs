@@ -6,8 +6,17 @@ namespace NovaSharp.Interpreter.Tree.Lexer
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Errors;
 
+    /// <summary>
+    /// Helper routines shared by the lexer and token helpers for parsing Lua literals.
+    /// </summary>
     internal static class LexerUtils
     {
+        /// <summary>
+        /// Parses a decimal number token using invariant-culture rules.
+        /// </summary>
+        /// <param name="t">Token describing the literal text.</param>
+        /// <returns>The parsed floating-point value.</returns>
+        /// <exception cref="SyntaxErrorException">Thrown when the literal is malformed.</exception>
         public static double ParseNumber(Token t)
         {
             string txt = t.Text;
@@ -26,6 +35,15 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return res;
         }
 
+        /// <summary>
+        /// Parses a hexadecimal integer literal (prefixed with <c>0x</c> or <c>0X</c>).
+        /// </summary>
+        /// <param name="t">Token describing the literal text.</param>
+        /// <returns>The parsed integer represented as <see cref="double" /> for DynValue storage.</returns>
+        /// <exception cref="SyntaxErrorException">Thrown when the literal is malformed.</exception>
+        /// <exception cref="InternalErrorException">
+        /// Thrown when the literal does not start with the expected prefix.
+        /// </exception>
         public static double ParseHexInteger(Token t)
         {
             string txt = t.Text;
@@ -54,6 +72,16 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return (double)res;
         }
 
+        /// <summary>
+        /// Iterates over the hexadecimal digits at the start of <paramref name="s" />, updating the
+        /// supplied accumulator and returning the remaining substring.
+        /// </summary>
+        /// <param name="s">Text starting at the first potential digit.</param>
+        /// <param name="d">
+        /// Accumulator that receives the parsed value; multiplied by 16 for each processed digit.
+        /// </param>
+        /// <param name="digits">Outputs how many digits were consumed.</param>
+        /// <returns>The substring that begins after the consumed digits.</returns>
         public static string ReadHexProgressive(string s, ref double d, out int digits)
         {
             digits = 0;
@@ -78,6 +106,15 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return string.Empty;
         }
 
+        /// <summary>
+        /// Parses Lua's <c>0x...</c> hexadecimal floating-point literals (including <c>p</c> exponents).
+        /// </summary>
+        /// <param name="t">Token describing the literal text.</param>
+        /// <returns>The parsed floating point value.</returns>
+        /// <exception cref="SyntaxErrorException">Thrown when formatting rules are violated.</exception>
+        /// <exception cref="InternalErrorException">
+        /// Thrown when the literal does not start with a hexadecimal prefix.
+        /// </exception>
         public static double ParseHexFloat(Token t)
         {
             string s = t.Text;
@@ -131,6 +168,12 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Converts a single hexadecimal digit into its integer value.
+        /// </summary>
+        /// <param name="c">Digit to convert.</param>
+        /// <returns>Integer value in the range 0-15.</returns>
+        /// <exception cref="InternalErrorException">Thrown when the character is not hexadecimal.</exception>
         public static int HexDigit2Value(char c)
         {
             if (c >= '0' && c <= '9')
@@ -151,11 +194,21 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Determines whether the supplied character is a decimal digit.
+        /// </summary>
+        /// <param name="c">Character to test.</param>
+        /// <returns><c>true</c> when the character is between <c>0</c> and <c>9</c>.</returns>
         public static bool CharIsDigit(char c)
         {
             return c >= '0' && c <= '9';
         }
 
+        /// <summary>
+        /// Determines whether the supplied character is hexadecimal (0-9, a-f, A-F).
+        /// </summary>
+        /// <param name="c">Character to test.</param>
+        /// <returns><c>true</c> when the character is hexadecimal.</returns>
         public static bool CharIsHexDigit(char c)
         {
             return CharIsDigit(c)
@@ -173,6 +226,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 || c == 'F';
         }
 
+        /// <summary>
+        /// Removes the optional first newline from Lua long strings to match Section 3.1 lexical rules.
+        /// </summary>
+        /// <param name="str">String literal payload.</param>
+        /// <returns>The normalized string.</returns>
         public static string AdjustLuaLongString(string str)
         {
             if (str.StartsWith("\r\n", StringComparison.Ordinal))
@@ -187,6 +245,16 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return str;
         }
 
+        /// <summary>
+        /// Expands Lua escape sequences inside short strings, including hexadecimal, decimal, and
+        /// <c>\u{...}</c> escapes plus the <c>\z</c> whitespace trimming directive.
+        /// </summary>
+        /// <param name="token">Token describing the string (used for diagnostics).</param>
+        /// <param name="str">Raw string literal text.</param>
+        /// <returns>The decoded string.</returns>
+        /// <exception cref="SyntaxErrorException">
+        /// Thrown when an escape sequence is invalid or incomplete.
+        /// </exception>
         public static string UnescapeLuaString(Token token, string str)
         {
             if (!Framework.Do.StringContainsChar(str, '\\'))

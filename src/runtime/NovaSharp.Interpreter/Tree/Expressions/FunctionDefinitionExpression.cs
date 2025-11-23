@@ -12,6 +12,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Tree.Lexer;
     using Statements;
 
+    /// <summary>
+    /// Represents a parsed Lua function literal (including lambdas) and knows how to emit its body.
+    /// </summary>
+    /// <remarks>
+    /// The expression captures lexical scope information (parameters, varargs, upvalues, and the
+    /// enclosing environment) so compilation can recreate closures with the same behaviour Lua
+    /// expects when evaluating <c>function</c> statements.
+    /// </remarks>
     internal class FunctionDefinitionExpression : Expression, IClosureBuilder
     {
         private readonly SymbolRef[] _paramNames;
@@ -203,6 +211,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return ret;
         }
 
+        /// <summary>
+        /// Creates or reuses a closure entry for the supplied symbol and returns an upvalue reference.
+        /// </summary>
+        /// <param name="scope">Scope that owns the symbol being captured.</param>
+        /// <param name="symbol">Symbol that must remain accessible inside the compiled function.</param>
+        /// <returns>An upvalue pointing to the captured symbol.</returns>
         public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
         {
             for (int i = 0; i < _closure.Count; i++)
@@ -223,6 +237,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return SymbolRef.Upvalue(symbol.NameValue, _closure.Count - 1);
         }
 
+        /// <summary>
+        /// Dynamic expressions cannot introduce new functions, so evaluation always fails.
+        /// </summary>
+        /// <param name="context">Execution context requesting the function value.</param>
+        /// <returns>Nothing; this method always throws.</returns>
+        /// <exception cref="DynamicExpressionException">Always thrown to signal invalid usage.</exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             throw new DynamicExpressionException(
@@ -230,6 +250,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             );
         }
 
+        /// <summary>
+        /// Emits the bytecode for the function body and returns the instruction pointer of the entry.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
+        /// <param name="friendlyName">
+        /// Optional descriptive name used for debugger metadata; falls back to the source location.
+        /// </param>
+        /// <returns>The instruction pointer pointing at the first opcode of the function body.</returns>
         public int CompileBody(ByteCode bc, string friendlyName)
         {
             string funcName = friendlyName ?? ("<" + _begin.FormatLocation(bc.Script, true) + ">");
@@ -276,6 +304,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return entryPoint;
         }
 
+        /// <summary>
+        /// Emits the closure wrapper for this function and allows the caller to insert extra opcodes.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
+        /// <param name="afterDecl">
+        /// Callback that emits additional instructions immediately after the closure declaration and
+        /// returns how many opcodes it injected so jump offsets can be adjusted.
+        /// </param>
+        /// <param name="friendlyName">Optional name reported in debugger metadata.</param>
+        /// <returns>The instruction pointer pointing at the start of the compiled function body.</returns>
         public int Compile(ByteCode bc, Func<int> afterDecl, string friendlyName)
         {
             using (bc.EnterSource(_begin))
@@ -293,6 +331,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return CompileBody(bc, friendlyName);
         }
 
+        /// <summary>
+        /// Compiles the function definition and leaves the resulting closure on the stack.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
         public override void Compile(ByteCode bc)
         {
             Compile(bc, () => 0, null);

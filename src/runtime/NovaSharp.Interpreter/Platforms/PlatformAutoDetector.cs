@@ -11,8 +11,14 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
+        /// <summary>
+        /// Caches the result of the JIT detection probe so repeated calls avoid recompiling expressions.
+        /// </summary>
         private static bool? RunningOnAotCache;
 
+        /// <summary>
+        /// Tracks whether the expensive detection logic already populated the platform flags.
+        /// </summary>
         private static bool AutoDetectionsDone;
 
         /// <summary>
@@ -185,16 +191,34 @@ namespace NovaSharp.Interpreter.Platforms
                 AutoDetectionsDone = autoDetectionsDone;
             }
 
+            /// <summary>Gets the captured Mono detection flag.</summary>
             internal bool IsRunningOnMono { get; }
+
+            /// <summary>Gets the captured CLR4 detection flag.</summary>
             internal bool IsRunningOnClr4 { get; }
+
+            /// <summary>Gets the captured Unity detection flag.</summary>
             internal bool IsRunningOnUnity { get; }
+
+            /// <summary>Gets the captured portable-framework detection flag.</summary>
             internal bool IsPortableFramework { get; }
+
+            /// <summary>Gets the captured Unity-native detection flag.</summary>
             internal bool IsUnityNative { get; }
+
+            /// <summary>Gets the captured IL2CPP detection flag.</summary>
             internal bool IsUnityIl2Cpp { get; }
+
+            /// <summary>Gets the cached AOT probe result included in the snapshot.</summary>
             internal bool? RunningOnAotCache { get; }
+
+            /// <summary>Gets a value indicating whether auto-detection had already run.</summary>
             internal bool AutoDetectionsDone { get; }
         }
 
+        /// <summary>
+        /// Provides test-only hooks for capturing/restoring detector state.
+        /// </summary>
         internal static class TestHooks
         {
             /// <summary>

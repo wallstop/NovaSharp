@@ -5,16 +5,22 @@ namespace NovaSharp.Interpreter.Serialization.Json
     using NovaSharp.Interpreter.Interop.Attributes;
 
     /// <summary>
-    /// UserData representing a null value in a table converted from Json
+    /// UserData representing a null value in a table converted from JSON.
     /// </summary>
     public sealed class JsonNull
     {
+        /// <summary>
+        /// Returns <c>true</c> so consumers can treat <see cref="JsonNull"/> instances like Lua <c>nil</c>.
+        /// </summary>
         public static bool IsNull()
         {
             return true;
         }
 
         [NovaSharpHidden]
+        /// <summary>
+        /// Detects whether the supplied value wraps the <see cref="JsonNull"/> userdata sentinel.
+        /// </summary>
         public static bool IsJsonNull(DynValue v)
         {
             if (v == null)
@@ -28,6 +34,9 @@ namespace NovaSharp.Interpreter.Serialization.Json
         }
 
         [NovaSharpHidden]
+        /// <summary>
+        /// Creates a userdata instance representing JSON null.
+        /// </summary>
         public static DynValue Create()
         {
             return UserData.CreateStatic<JsonNull>();

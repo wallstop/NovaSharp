@@ -3,12 +3,12 @@ namespace NovaSharp.Interpreter.Errors
     using System;
     using System.Globalization;
 
-    /// <summary>
-    /// Exception thrown when an inconsistent state is reached in the interpreter
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Exception thrown when NovaSharp reaches an inconsistent interpreter state (bug guard rail).
+    /// </summary>
     public class InternalErrorException : InterpreterException
     {
         private const string DefaultMessage = "Internal error";

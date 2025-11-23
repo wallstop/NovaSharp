@@ -141,8 +141,14 @@ namespace NovaSharp.Interpreter.REPL
             }
         }
 
+        /// <summary>
+        /// Test-only helpers for overriding the backing script.
+        /// </summary>
         internal static class TestHooks
         {
+            /// <summary>
+            /// Overrides the interpreter's <see cref="Script"/> so tests can inject custom instances.
+            /// </summary>
             public static void SetScript(ReplInterpreter interpreter, Script script)
             {
                 interpreter._script = script;

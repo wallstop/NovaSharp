@@ -14,31 +14,37 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         public class StandardPlatformAccessor : PlatformAccessorBase
         {
+            /// <inheritdoc/>
             public override void DefaultPrint(string content)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override CoreModules FilterSupportedCoreModules(CoreModules module)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetEnvironmentVariable(string envvarname)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetPlatformNamePrefix()
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override Stream GetStandardStream(StandardFileType type)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override Stream OpenFile(
                 Script script,
                 string filename,
@@ -49,31 +55,37 @@ namespace NovaSharp.Interpreter.Platforms
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetTempFileName()
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override int ExecuteCommand(string cmdline)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void ExitFast(int exitCode)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void DeleteFile(string file)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override bool FileExists(string file)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void MoveFile(string src, string dst)
             {
                 throw new NotImplementedException();

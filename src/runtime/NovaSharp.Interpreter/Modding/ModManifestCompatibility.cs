@@ -13,6 +13,16 @@ namespace NovaSharp.Interpreter.Modding
     /// </summary>
     public static class ModManifestCompatibility
     {
+        /// <summary>
+        /// Attempts to apply compatibility metadata by locating a <c>mod.json</c> beside the specified script.
+        /// </summary>
+        /// <param name="scriptPath">Script file path that may live under a mod directory.</param>
+        /// <param name="options">Script options to configure when a manifest is present.</param>
+        /// <param name="hostCompatibility">Optional host profile used to emit "newer than host" warnings.</param>
+        /// <param name="infoSink">Optional callback that receives informational messages (e.g., active profile).</param>
+        /// <param name="warningSink">Optional callback that receives warning messages (e.g., parse failures).</param>
+        /// <param name="fileSystem">Optional filesystem abstraction (defaults to the physical implementation).</param>
+        /// <returns><c>true</c> when a manifest was found and applied.</returns>
         public static bool TryApplyFromScriptPath(
             string scriptPath,
             ScriptOptions options,
@@ -39,6 +49,16 @@ namespace NovaSharp.Interpreter.Modding
             );
         }
 
+        /// <summary>
+        /// Attempts to apply compatibility metadata by reading <c>mod.json</c> under the supplied directory.
+        /// </summary>
+        /// <param name="directory">Directory that potentially contains a manifest.</param>
+        /// <param name="options">Script options to configure when a manifest is present.</param>
+        /// <param name="hostCompatibility">Optional host profile used to emit "newer than host" warnings.</param>
+        /// <param name="infoSink">Optional callback for informational messages.</param>
+        /// <param name="warningSink">Optional callback for warnings/errors.</param>
+        /// <param name="fileSystem">Optional filesystem abstraction (defaults to the physical implementation).</param>
+        /// <returns><c>true</c> when a manifest was found and applied.</returns>
         public static bool TryApplyFromDirectory(
             string directory,
             ScriptOptions options,
@@ -99,6 +119,9 @@ namespace NovaSharp.Interpreter.Modding
             }
         }
 
+        /// <summary>
+        /// Resolves the directory that should be checked for <c>mod.json</c> based on a script path (or directory).
+        /// </summary>
         private static string ResolveDirectory(IModFileSystem fileSystem, string scriptPath)
         {
             string fullPath;

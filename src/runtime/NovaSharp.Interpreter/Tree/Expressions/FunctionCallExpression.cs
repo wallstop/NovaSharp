@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua function invocation, including method-call sugar (colon syntax).
+    /// </summary>
     internal class FunctionCallExpression : Expression
     {
         private readonly List<Expression> _arguments;
@@ -14,8 +17,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         private readonly string _name;
         private readonly string _debugErr;
 
+        /// <summary>
+        /// Gets the source range that spans the invocation site.
+        /// </summary>
         internal SourceRef SourceRef { get; private set; }
 
+        /// <summary>
+        /// Initializes a new function-call node using the supplied callee/arguments.
+        /// </summary>
         public FunctionCallExpression(
             ScriptLoadingContext lcontext,
             Expression function,
@@ -84,6 +93,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <inheritdoc/>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             _function.Compile(bc);
@@ -113,6 +123,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <inheritdoc/>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             throw new DynamicExpressionException("Dynamic Expressions cannot call functions.");

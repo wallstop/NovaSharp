@@ -3,6 +3,14 @@ namespace NovaSharp.Interpreter.Tree.Lexer
     using System.Text;
     using NovaSharp.Interpreter.Errors;
 
+    /// <summary>
+    /// Incrementally tokenizes Lua source text for the parser.
+    /// </summary>
+    /// <remarks>
+    /// The lexer supports comment skipping, shebang handling, and Unicode-aware source tracking so
+    /// downstream AST nodes can generate precise
+    /// <see cref="NovaSharp.Interpreter.Debugging.SourceRef" /> locations.
+    /// </remarks>
     internal class Lexer
     {
         private Token _current;
@@ -29,6 +37,9 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             _autoSkipComments = autoSkipComments;
         }
 
+        /// <summary>
+        /// Gets the token the parser is currently positioned on, lexing on demand when necessary.
+        /// </summary>
         public Token Current
         {
             get
@@ -60,11 +71,18 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Advances the lexer to the next token, honoring the auto-skip comment flag.
+        /// </summary>
         public void Next()
         {
             _current = FetchNewToken();
         }
 
+        /// <summary>
+        /// Returns the next token in the stream without consuming it.
+        /// </summary>
+        /// <returns>The lookahead token.</returns>
         public Token PeekNext()
         {
             int snapshot = _cursor;

@@ -25,6 +25,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         private string[] _lines = Array.Empty<string>();
 
+        /// <summary>
+        /// Gets the cached lines (including the synthetic header) for quick snippet extraction.
+        /// </summary>
         public IReadOnlyList<string> Lines => _lines;
 
         /// <summary>
@@ -37,6 +40,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public int SourceId { get; private set; }
 
+        /// <summary>
+        /// Gets the list of source references produced while parsing this chunk.
+        /// </summary>
         internal List<SourceRef> Refs { get; private set; }
 
         internal SourceCode(string name, string code, int sourceId, Script ownerScript)

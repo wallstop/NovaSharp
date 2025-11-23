@@ -2,12 +2,12 @@ namespace NovaSharp.Interpreter.Errors
 {
     using System;
 
-    /// <summary>
-    /// Exception thrown when a dynamic expression is invalid
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Exception thrown when NovaSharp detects invalid dynamic expression syntax or unsupported constructs.
+    /// </summary>
     public class DynamicExpressionException : ScriptRuntimeException
     {
         /// <summary>

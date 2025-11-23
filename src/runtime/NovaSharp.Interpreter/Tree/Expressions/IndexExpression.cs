@@ -6,6 +6,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents <c>table[key]</c> or <c>table.name</c> expressions and knows how to compile them.
+    /// </summary>
+    /// <remarks>
+    /// The node also implements <see cref="IVariable" /> so the same AST can emit setters when the
+    /// expression appears on the left-hand side of an assignment.
+    /// </remarks>
     internal class IndexExpression : Expression, IVariable
     {
         private readonly Expression _baseExp;
@@ -30,6 +37,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _name = name;
         }
 
+        /// <summary>
+        /// Emits bytecode that loads the base table and pushes the requested field value.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the emitted opcodes.</param>
         public override void Compile(ByteCode bc)
         {
             _baseExp.Compile(bc);
@@ -49,6 +60,12 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <summary>
+        /// Emits bytecode for assigning into the indexed value found by this expression.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the emitted opcodes.</param>
+        /// <param name="stackofs">Stack offset where the value being assigned resides.</param>
+        /// <param name="tupleidx">Tuple index when the assignment consumes a multi-return value.</param>
         public void CompileAssignment(ByteCode bc, int stackofs, int tupleidx)
         {
             _baseExp.Compile(bc);
@@ -68,6 +85,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <summary>
+        /// Evaluates the index at runtime and returns the referenced value from the table.
+        /// </summary>
+        /// <param name="context">Execution context providing the table and index values.</param>
+        /// <returns>The resolved value or <see cref="DynValue.Nil" /> when the entry is missing.</returns>
+        /// <exception cref="DynamicExpressionException">
+        /// Thrown when the base expression does not evaluate to a table or the key is invalid.
+        /// </exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             DynValue b = _baseExp.Eval(context).ToScalar();

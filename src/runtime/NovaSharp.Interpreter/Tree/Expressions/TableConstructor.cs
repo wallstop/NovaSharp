@@ -6,6 +6,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents Lua table constructors (<c>{ ... }</c>) with positional, named, and map fields.
+    /// </summary>
     internal class TableConstructor : Expression
     {
         private readonly bool _shared;
@@ -97,6 +100,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _positionalValues.Add(e);
         }
 
+        /// <summary>
+        /// Emits bytecode that allocates the table and populates every recorded field.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the emitted instructions.</param>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             bc.EmitNewTable(_shared);
@@ -115,6 +122,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <summary>
+        /// Evaluates the constructor at runtime; only shared (prime) tables can be built dynamically.
+        /// </summary>
+        /// <param name="context">Execution context used to evaluate keys and values.</param>
+        /// <returns>The constructed table literal.</returns>
+        /// <exception cref="DynamicExpressionException">
+        /// Thrown when a dynamic expression attempts to allocate a non-shared table.
+        /// </exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             if (!_shared)

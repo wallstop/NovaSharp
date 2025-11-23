@@ -8,14 +8,17 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-    /// <summary>
-    /// Exception for all parsing/lexing errors.
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Exception for parser and lexer errors surfaced while compiling Lua chunks.
+    /// </summary>
     public class SyntaxErrorException : InterpreterException
     {
+        /// <summary>
+        /// Gets the lexer token that triggered the syntax failure (not serialized to keep payloads small).
+        /// </summary>
         [field: NonSerialized]
         internal Token Token { get; private set; }
 
@@ -33,9 +36,11 @@ namespace NovaSharp.Interpreter.Errors
 #endif
 
         /// <summary>
-        /// Gets or sets a value indicating whether this exception was caused by premature stream termination (that is, unexpected EOF).
-        /// This can be used in REPL interfaces to tell between unrecoverable errors and those which can be recovered by extra input.
+        /// Gets or sets a value indicating whether the parser stopped because the input stream terminated early (unexpected EOF).
         /// </summary>
+        /// <remarks>
+        /// REPL hosts can use this flag to differentiate between recoverable errors (supply more text) and fatal ones.
+        /// </remarks>
         public bool IsPrematureStreamTermination { get; set; }
 
         internal SyntaxErrorException(Token t, string format, params object[] args)
@@ -74,6 +79,10 @@ namespace NovaSharp.Interpreter.Errors
             DecoratedMessage = Message;
         }
 
+        /// <summary>
+        /// Decorates the error message using the token that caused the syntax failure, if any.
+        /// </summary>
+        /// <param name="script">Script owning the current chunk, required for formatting source references.</param>
         internal void DecorateMessage(Script script)
         {
             if (Token != null)
@@ -83,9 +92,8 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Rethrows this instance if
+        /// Rethrows this instance when <see cref="Script.GlobalOptions.RethrowExceptionNested"/> requests nested propagation.
         /// </summary>
-        /// <returns></returns>
         public override void Rethrow()
         {
             if (Script.GlobalOptions.RethrowExceptionNested)

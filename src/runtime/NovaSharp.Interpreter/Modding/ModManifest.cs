@@ -230,12 +230,21 @@ namespace NovaSharp.Interpreter.Modding
         private sealed class ManifestModel
         {
             [JsonPropertyName("name")]
+            /// <summary>
+            /// Gets or sets the optional mod name parsed directly from JSON.
+            /// </summary>
             public string Name { get; set; }
 
             [JsonPropertyName("version")]
+            /// <summary>
+            /// Gets or sets the optional mod version parsed directly from JSON.
+            /// </summary>
             public string Version { get; set; }
 
             [JsonPropertyName("luaCompatibility")]
+            /// <summary>
+            /// Gets or sets the raw compatibility string (e.g., "Lua54", "5.4", "latest").
+            /// </summary>
             public string LuaCompatibility { get; set; }
         }
     }

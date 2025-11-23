@@ -22,6 +22,13 @@ namespace NovaSharp.Interpreter.Diagnostics
         private readonly IHighResolutionClock _clock;
         private readonly object _syncRoot = new();
 
+        /// <summary>
+        /// Gets or sets the high-resolution clock shared by every global stopwatch instance.
+        /// </summary>
+        /// <remarks>
+        /// Tests replace this clock with a deterministic fake so global performance counters can be asserted
+        /// without depending on wall-clock time. Production code should leave it at the default.
+        /// </remarks>
         internal static IHighResolutionClock GlobalClock { get; set; } =
             SystemHighResolutionClock.Instance;
 
@@ -148,6 +155,9 @@ namespace NovaSharp.Interpreter.Diagnostics
             }
         }
 
+        /// <summary>
+        /// Provides helpers that allow tests to interrogate and reset the global stopwatch cache.
+        /// </summary>
         internal static class TestHooks
         {
             /// <summary>

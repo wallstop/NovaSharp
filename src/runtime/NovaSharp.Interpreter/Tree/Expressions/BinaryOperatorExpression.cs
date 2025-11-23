@@ -8,11 +8,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
-    ///
+    /// Represents any binary operator expression (arithmetic, logical, bitwise, concatenation).
+    /// Handles operator precedence/associativity and emits/evaluates Lua semantics.
     /// </summary>
     internal class BinaryOperatorExpression : Expression
     {
         [Flags]
+        /// <summary>
+        /// Flags describing every supported binary operator.
+        /// </summary>
         internal enum Operator
         {
             NotAnOperator = 0,
@@ -76,11 +80,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         private const Operator LogicalAndOperator = Operator.And;
         private const Operator LogicalOrOperator = Operator.Or;
 
+        /// <summary>
+        /// Overrides the stored operator (test-only) so edge cases can be exercised.
+        /// </summary>
         internal void SetOperatorForTests(Operator op)
         {
             _operator = op;
         }
 
+        /// <summary>
+        /// Clears the head expression in the chain to simulate malformed reductions (test-only).
+        /// </summary>
         internal static void RemoveFirstExpressionForTests(object chain)
         {
             if (chain == null)
@@ -95,11 +105,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <summary>
+        /// Starts a new operator chain used while parsing binary expressions.
+        /// </summary>
         public static object BeginOperatorChain()
         {
             return new LinkedList();
         }
 
+        /// <summary>
+        /// Appends the next expression to the operator chain.
+        /// </summary>
         public static void AddExpressionToChain(object chain, Expression exp)
         {
             LinkedList list = (LinkedList)chain;
@@ -107,6 +123,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             AddNode(list, node);
         }
 
+        /// <summary>
+        /// Appends the next operator token to the operator chain.
+        /// </summary>
         public static void AddOperatorToChain(object chain, Token op)
         {
             LinkedList list = (LinkedList)chain;
@@ -114,11 +133,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             AddNode(list, node);
         }
 
+        /// <summary>
+        /// Builds the final expression tree given a populated operator chain.
+        /// </summary>
         public static Expression CommitOperatorChain(object chain, ScriptLoadingContext lcontext)
         {
             return CreateSubTree((LinkedList)chain, lcontext);
         }
 
+        /// <summary>
+        /// Helper that creates a power-expression node (right-associative) given two operands.
+        /// </summary>
         public static Expression CreatePowerExpression(
             Expression op1,
             Expression op2,
@@ -438,6 +463,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <inheritdoc />
         public override void Compile(ByteCode bc)
         {
             _exp1.Compile(bc);
@@ -471,6 +497,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <inheritdoc />
         public override DynValue Eval(ScriptExecutionContext context)
         {
             DynValue v1 = _exp1.Eval(context).ToScalar();

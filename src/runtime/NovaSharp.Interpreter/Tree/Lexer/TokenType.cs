@@ -2,6 +2,9 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
 
+    /// <summary>
+    /// Identifies every token kind recognized by the NovaSharp lexer.
+    /// </summary>
     internal enum TokenType
     {
         [Obsolete("Use a specific TokenType.", false)]

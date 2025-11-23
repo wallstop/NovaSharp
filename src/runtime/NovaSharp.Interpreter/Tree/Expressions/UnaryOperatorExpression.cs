@@ -6,6 +6,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents Lua unary expressions such as <c>not</c>, length, arithmetic negation, and bit-not.
+    /// </summary>
     internal class UnaryOperatorExpression : Expression
     {
         private readonly Expression _exp;
@@ -22,6 +25,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _exp = subExpression;
         }
 
+        /// <summary>
+        /// Emits the opcode that performs the requested unary operation at runtime.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the emitted operator.</param>
         public override void Compile(ByteCode bc)
         {
             _exp.Compile(bc);
@@ -45,6 +52,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
+        /// <summary>
+        /// Evaluates the unary operator inside a dynamic expression.
+        /// </summary>
+        /// <param name="context">Execution context used to evaluate the operand.</param>
+        /// <returns>The result of the unary operation.</returns>
+        /// <exception cref="DynamicExpressionException">
+        /// Thrown when the operand type is incompatible with the requested operator.
+        /// </exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             DynValue v = _exp.Eval(context).ToScalar();

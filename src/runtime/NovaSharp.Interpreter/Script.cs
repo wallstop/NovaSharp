@@ -155,6 +155,9 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public ITimeProvider TimeProvider => _timeProvider;
 
+        /// <summary>
+        /// Gets the UTC timestamp captured from <see cref="TimeProvider"/> when the script was constructed.
+        /// </summary>
         internal DateTime StartTimeUtc => _startTimeUtc;
 
         /// <summary>
@@ -1008,11 +1011,17 @@ namespace NovaSharp.Interpreter
             return new ScriptExecutionContext(_mainProcessor, func, null, isDynamic: true);
         }
 
+        /// <summary>
+        /// Exposes the main processor for unit tests that need to inspect VM state.
+        /// </summary>
         internal Processor GetMainProcessorForTests()
         {
             return _mainProcessor;
         }
 
+        /// <summary>
+        /// Exposes the compiled bytecode for unit tests that need to inspect emitted instructions.
+        /// </summary>
         internal ByteCode GetByteCodeForTests()
         {
             return _byteCode;

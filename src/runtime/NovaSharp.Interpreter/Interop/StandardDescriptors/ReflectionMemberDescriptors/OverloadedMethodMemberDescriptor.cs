@@ -22,6 +22,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Comparer class for IOverloadableMemberDescriptor
         /// </summary>
+        /// <summary>
+        /// Comparer that sorts overload descriptors deterministically by their discriminant.
+        /// </summary>
         private sealed class OverloadableMemberDescriptorComparer
             : IComparer<IOverloadableMemberDescriptor>
         {
@@ -29,6 +32,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             private OverloadableMemberDescriptorComparer() { }
 
+            /// <summary>
+            /// Orders overloadable descriptors by their <see cref="IOverloadableMemberDescriptor.SortDiscriminant"/>.
+            /// </summary>
             public int Compare(IOverloadableMemberDescriptor x, IOverloadableMemberDescriptor y)
             {
                 if (ReferenceEquals(x, y))
@@ -552,6 +558,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return (context, args) => PerformOverloadedCall(script, obj, context, args);
         }
 
+        /// <summary>
+        /// Optimizes each contained overload, allowing reflection-heavy descriptors to compile delegates up front.
+        /// </summary>
         public void Optimize()
         {
             foreach (IOverloadableMemberDescriptor overload in _overloads)
@@ -656,8 +665,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Helpers surfaced for tests so they can inspect cache behavior and scoring.
+        /// </summary>
         internal static class TestHooks
         {
+            /// <summary>
+            /// Calls the private overload-scoring routine using the supplied descriptor/method.
+            /// </summary>
             public static int CalcScoreForOverload(
                 OverloadedMethodMemberDescriptor descriptor,
                 ScriptExecutionContext context,
@@ -674,6 +689,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 );
             }
 
+            /// <summary>
+            /// Resizes the internal overload cache so tests can simulate cache thrash scenarios.
+            /// </summary>
             public static void SetCacheSize(OverloadedMethodMemberDescriptor descriptor, int size)
             {
                 if (size < 0)

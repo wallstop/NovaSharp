@@ -2,18 +2,34 @@ namespace NovaSharp.Interpreter
 {
     using System;
 
+    /// <summary>
+    /// Provides helper methods that convert strings using invariant culture only when casing changes are required.
+    /// </summary>
     public static class InvariantString
     {
+        /// <summary>
+        /// Converts <paramref name="value"/> to lower invariant, avoiding allocations when the string is already lowercase.
+        /// </summary>
+        /// <param name="value">Input string to normalize.</param>
+        /// <returns>The normalized string (possibly the original instance).</returns>
         public static string ToLowerInvariantIfNeeded(string value)
         {
             return ConvertIfNeeded(value, lowerCase: true);
         }
 
+        /// <summary>
+        /// Converts <paramref name="value"/> to upper invariant, avoiding allocations when the string is already uppercase.
+        /// </summary>
+        /// <param name="value">Input string to normalize.</param>
+        /// <returns>The normalized string (possibly the original instance).</returns>
         public static string ToUpperInvariantIfNeeded(string value)
         {
             return ConvertIfNeeded(value, lowerCase: false);
         }
 
+        /// <summary>
+        /// Converts the provided string to the requested casing if any character differs; otherwise returns the original reference.
+        /// </summary>
         private static string ConvertIfNeeded(string value, bool lowerCase)
         {
             if (value == null)

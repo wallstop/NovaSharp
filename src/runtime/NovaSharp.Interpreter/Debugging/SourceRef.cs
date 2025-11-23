@@ -53,6 +53,11 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public bool CannotBreakpoint { get; private set; }
 
+        /// <summary>
+        /// Creates a sentinel <see cref="SourceRef" /> that represents a CLR frame where no Lua code
+        /// is available (useful for debugger call stacks).
+        /// </summary>
+        /// <returns>A <see cref="SourceRef" /> flagged as a CLR location.</returns>
         internal static SourceRef GetClrLocation()
         {
             return new SourceRef(0, 0, 0, 0, 0, false) { IsClrLocation = true };
@@ -103,6 +108,16 @@ namespace NovaSharp.Interpreter.Debugging
             );
         }
 
+        /// <summary>
+        /// Computes a heuristic distance between this span and the supplied source location.
+        /// </summary>
+        /// <param name="sourceIdx">Source identifier to compare.</param>
+        /// <param name="line">Line number being probed.</param>
+        /// <param name="col">Column being probed.</param>
+        /// <returns>
+        /// <c>0</c> when the location is inside this span; otherwise a positive value where smaller
+        /// numbers mean “closer.” Returns <see cref="int.MaxValue" /> for different sources.
+        /// </returns>
         internal int GetLocationDistance(int sourceIdx, int line, int col)
         {
             const int PerLineFactor = 1600; // we avoid computing real lines length and approximate with heuristics..

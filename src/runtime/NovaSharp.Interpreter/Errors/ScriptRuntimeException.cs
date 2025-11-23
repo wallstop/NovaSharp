@@ -10,13 +10,13 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-    /// <summary>
-    /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods
-    /// generating more "standard" Lua errors.
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Exception for all runtime errors. In addition to constructors, it offers a lot of static helpers
+    /// that mirror canonical Lua error text.
+    /// </summary>
     public class ScriptRuntimeException : InterpreterException
     {
         public ScriptRuntimeException() { }
@@ -473,6 +473,12 @@ namespace NovaSharp.Interpreter.Errors
             return new ScriptRuntimeException("loop in call");
         }
 
+        /// <summary>
+        /// Creates the Lua 5.4 "__close" error raised when a variable marked with &lt;close&gt; resolves to a value
+        /// without a callable <c>__close</c> metamethod (§3.3.8).
+        /// </summary>
+        /// <param name="value">Value associated with the <c>__close</c> lookup.</param>
+        /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
         {
             string typeName = value?.Type.ToLuaTypeString() ?? DataType.Nil.ToLuaTypeString();
@@ -799,9 +805,8 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Rethrows this instance if
+        /// Rethrows this instance when <see cref="Script.GlobalOptions.RethrowExceptionNested"/> requests nested propagation.
         /// </summary>
-        /// <returns></returns>
         public override void Rethrow()
         {
             if (Script.GlobalOptions.RethrowExceptionNested)

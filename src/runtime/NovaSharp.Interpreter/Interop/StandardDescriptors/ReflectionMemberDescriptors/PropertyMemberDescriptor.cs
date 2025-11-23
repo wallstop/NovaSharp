@@ -217,6 +217,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
+        /// <summary>
+        /// Builds (and caches) a delegate for the backing getter when the current access mode allows precompilation.
+        /// </summary>
         internal void OptimizeGetter()
         {
             using (
@@ -265,6 +268,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Builds (and caches) a delegate for the backing setter when writable and precompilation is allowed.
+        /// </summary>
         internal void OptimizeSetter()
         {
             using (
@@ -455,8 +461,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             t.Set("type", DynValue.NewString(PropertyInfo.PropertyType.FullName));
         }
 
+        /// <summary>
+        /// Helpers exposed for tests to override caching state.
+        /// </summary>
         internal static class TestHooks
         {
+            /// <summary>
+            /// Injects a fake optimized setter so tests can simulate compiled delegates.
+            /// </summary>
             public static void SetOptimizedSetter(
                 PropertyMemberDescriptor descriptor,
                 Action<object, object> setter

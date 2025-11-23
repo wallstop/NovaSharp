@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Serialization
     using NovaSharp.Interpreter.Errors;
 
     /// <summary>
-    ///
+    /// Provides helpers that serialize Lua tables/values into Lua source-friendly string representations.
     /// </summary>
     public static class SerializationExtensions
     {
@@ -39,6 +39,13 @@ namespace NovaSharp.Interpreter.Serialization
             "while",
         };
 
+        /// <summary>
+        /// Serializes a prime (ownerless) table into Lua syntax.
+        /// </summary>
+        /// <param name="table">Table to serialize (must not be owned by a script).</param>
+        /// <param name="prefixReturn">True to emit a leading <c>return</c> statement.</param>
+        /// <param name="tabs">Indentation depth used when emitting nested tables.</param>
+        /// <returns>A string containing Lua code that recreates the table.</returns>
         public static string Serialize(this Table table, bool prefixReturn = false, int tabs = 0)
         {
             if (table == null)
@@ -133,6 +140,12 @@ namespace NovaSharp.Interpreter.Serialization
             return true;
         }
 
+        /// <summary>
+        /// Serializes a primitive value (or prime table) into Lua syntax.
+        /// </summary>
+        /// <param name="dynValue">Value to serialize.</param>
+        /// <param name="tabs">Indentation depth used when emitting nested tables.</param>
+        /// <returns>Lua string representing the supplied value.</returns>
         public static string SerializeValue(this DynValue dynValue, int tabs = 0)
         {
             if (dynValue == null)
