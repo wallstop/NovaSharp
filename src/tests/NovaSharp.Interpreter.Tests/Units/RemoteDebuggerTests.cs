@@ -42,15 +42,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IList<string> messages = client.ReadUntil(
                 payloads =>
-                    payloads.Any(m => m.Contains("<welcome"))
-                    && payloads.Any(m => m.Contains("source-code")),
+                    payloads.Any(m => ContainsOrdinal(m, "<welcome"))
+                    && payloads.Any(m => ContainsOrdinal(m, "source-code")),
                 DefaultTimeout
             );
 
             Assert.Multiple(() =>
             {
-                Assert.That(messages.Any(m => m.Contains("<welcome")), Is.True);
-                Assert.That(messages.Any(m => m.Contains("<source-code")), Is.True);
+                Assert.That(messages.Any(m => ContainsOrdinal(m, "<welcome")), Is.True);
+                Assert.That(messages.Any(m => ContainsOrdinal(m, "<source-code")), Is.True);
             });
         }
 
@@ -175,7 +175,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
 
             IList<string> messages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("Error setting watch")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Error setting watch")),
                 DefaultTimeout
             );
             Assert.That(messages.Last(), Does.Contain("function(()"));
@@ -207,7 +207,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             client.SendCommand("<Command cmd=\"error_rx\" arg=\"timeout\" />");
             IList<string> messages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("<error_rx")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "<error_rx")),
                 DefaultTimeout
             );
             Assert.That(messages.Last(), Does.Contain("timeout"));
@@ -241,20 +241,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"value\" />");
 
             IList<string> busyMessages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("Host busy")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host busy")),
                 DefaultTimeout
             );
-            Assert.That(busyMessages.Any(m => m.Contains("Host busy")), Is.True);
+            Assert.That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy")), Is.True);
             Assert.That(server.GetState(), Is.EqualTo("Busy"));
 
             DebuggerAction refresh = server.GetAction(0, sourceRef);
             Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
 
             IList<string> readyMessages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("Host ready")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host ready")),
                 DefaultTimeout
             );
-            Assert.That(readyMessages.Any(m => m.Contains("Host ready")), Is.True);
+            Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready")), Is.True);
             Assert.That(server.GetState(), Is.EqualTo("Unknown"));
         }
 
@@ -284,7 +284,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(actionTask.Wait(DefaultTimeout), Is.True, "GetAction never completed.");
 
             IList<string> messages = client.ReadAll(TimeSpan.FromMilliseconds(150));
-            Assert.That(messages.Any(m => m.Contains("Host busy")), Is.False);
+            Assert.That(messages.Any(m => ContainsOrdinal(m, "Host busy")), Is.False);
 
             Assert.Multiple(() =>
             {
@@ -337,11 +337,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             server.Update(WatchType.CallStack, frames);
             IList<string> callStackMessages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("<callstack")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "<callstack")),
                 DefaultTimeout
             );
 
-            string payload = callStackMessages.First(m => m.Contains("<callstack"));
+            string payload = callStackMessages.First(m => ContainsOrdinal(m, "<callstack"));
             Assert.Multiple(() =>
             {
                 Assert.That(payload, Does.Contain("&lt;chunk-root&gt;"));
@@ -379,7 +379,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             };
 
             server.Update(WatchType.Watches, watches);
-            client.ReadUntil(payloads => payloads.Any(m => m.Contains("<watches")), DefaultTimeout);
+            client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "<watches")),
+                DefaultTimeout
+            );
 
             server.Update(WatchType.Watches, watches);
             client.Drain(TimeSpan.FromMilliseconds(50));
@@ -391,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             server.Update(WatchType.Watches, watches);
             IList<string> refreshed = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("<watches")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "<watches")),
                 DefaultTimeout
             );
             Assert.That(refreshed.Last(), Does.Contain("value"));
@@ -535,7 +538,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             client.SendCommand("<policy-file-request/>");
             IList<string> policy = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("cross-domain-policy")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "cross-domain-policy")),
                 DefaultTimeout
             );
 
@@ -586,7 +589,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             server.SignalExecutionEnded();
             IList<string> payloads = client.ReadUntil(
-                msgs => msgs.Any(m => m.Contains("execution-completed")),
+                msgs => msgs.Any(m => ContainsOrdinal(m, "execution-completed")),
                 DefaultTimeout
             );
             Assert.That(payloads.Last(), Does.Contain("execution-completed"));
@@ -612,7 +615,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             server.RefreshBreakpoints(new[] { breakpoint });
 
             IList<string> payloads = client.ReadUntil(
-                msgs => msgs.Any(m => m.Contains("<breakpoints")),
+                msgs => msgs.Any(m => ContainsOrdinal(m, "<breakpoints")),
                 DefaultTimeout
             );
 
@@ -637,17 +640,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             client.SendCommand("<policy-file-request/>");
             client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("cross-domain-policy")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "cross-domain-policy")),
                 DefaultTimeout
             );
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             IList<string> messages = client.ReadUntil(
-                payloads => payloads.Any(m => m.Contains("<welcome")),
+                payloads => payloads.Any(m => ContainsOrdinal(m, "<welcome")),
                 DefaultTimeout
             );
 
-            Assert.That(messages.Any(m => m.Contains("<welcome")), Is.True);
+            Assert.That(messages.Any(m => ContainsOrdinal(m, "<welcome")), Is.True);
         }
 
         private static DebugServer CreateServer(
@@ -685,6 +688,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
             listener.Stop();
             return port;
+        }
+
+        private static bool ContainsOrdinal(string source, string value)
+        {
+            return source != null && source.Contains(value, StringComparison.Ordinal);
         }
 
         private sealed class RemoteDebuggerTestClient : IDisposable

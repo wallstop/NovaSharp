@@ -1,5 +1,6 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System;
     using System.Reflection;
     using System.Text;
 
@@ -63,7 +64,9 @@ namespace NovaSharp.RemoteDebugger.Network
         {
             lock (_lock)
             {
-                string msg = e.Message.Replace("\n", "").Replace("\r", "");
+                string msg = e
+                    .Message.Replace("\n", string.Empty, StringComparison.Ordinal)
+                    .Replace("\r", string.Empty, StringComparison.Ordinal);
 
                 if (!_httpData.TryGetValue(e.Peer.Id, out List<string> httpdata))
                 {
@@ -124,7 +127,9 @@ namespace NovaSharp.RemoteDebugger.Network
             {
                 if (Authenticator != null)
                 {
-                    string authstr = httpdata.FirstOrDefault(s => s.StartsWith("Authorization:"));
+                    string authstr = httpdata.FirstOrDefault(s =>
+                        s.StartsWith("Authorization:", StringComparison.Ordinal)
+                    );
                     bool authorized = false;
 
                     if (authstr != null)
@@ -225,7 +230,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
             string uri = parts[1];
 
-            if (!uri.Contains('?'))
+            if (!uri.Contains('?', StringComparison.Ordinal))
             {
                 return GetResourceFromUri(uri, null);
             }

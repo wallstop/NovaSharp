@@ -192,9 +192,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 string normalizedMode = string.IsNullOrEmpty(mode) ? "r" : mode;
-                bool truncate = normalizedMode.Contains("w");
-                bool append = normalizedMode.Contains("a");
-                bool read = normalizedMode.Contains("r") || normalizedMode.Contains("+");
+                bool truncate = normalizedMode.Contains('w', StringComparison.Ordinal);
+                bool append = normalizedMode.Contains('a', StringComparison.Ordinal);
+                bool read =
+                    normalizedMode.Contains('r', StringComparison.Ordinal)
+                    || normalizedMode.Contains('+', StringComparison.Ordinal);
                 bool write = normalizedMode.Any(c => c is 'w' or 'a' or '+');
 
                 if (write)

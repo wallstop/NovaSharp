@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Serialization.Json
 {
+    using System;
+    using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -22,6 +24,11 @@ namespace NovaSharp.Interpreter.Serialization.Json
         /// <returns></returns>
         public static string TableToJson(this Table table)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             StringBuilder sb = new();
             TableToJson(sb, table);
             return sb.ToString();
@@ -34,11 +41,16 @@ namespace NovaSharp.Interpreter.Serialization.Json
         /// <param name="table">The table.</param>
         private static void TableToJson(StringBuilder sb, Table table)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             bool first = true;
 
             if (table.Length == 0)
             {
-                sb.Append("{");
+                sb.Append('{');
                 foreach (TablePair pair in table.Pairs)
                 {
                     if (pair.Key.Type == DataType.String && IsValueJsonCompatible(pair.Value))
@@ -55,11 +67,11 @@ namespace NovaSharp.Interpreter.Serialization.Json
                         first = false;
                     }
                 }
-                sb.Append("}");
+                sb.Append('}');
             }
             else
             {
-                sb.Append("[");
+                sb.Append('[');
                 for (int i = 1; i <= table.Length; i++)
                 {
                     DynValue value = table.Get(i);
@@ -75,7 +87,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
                         first = false;
                     }
                 }
-                sb.Append("]");
+                sb.Append(']');
             }
         }
 
@@ -100,10 +112,10 @@ namespace NovaSharp.Interpreter.Serialization.Json
                     sb.Append(value.Boolean ? "true" : "false");
                     break;
                 case DataType.Number:
-                    sb.Append(value.Number.ToString("r"));
+                    sb.Append(value.Number.ToString("r", CultureInfo.InvariantCulture));
                     break;
                 case DataType.String:
-                    sb.Append(EscapeString(value.String ?? ""));
+                    sb.Append(EscapeString(value.String));
                     break;
                 case DataType.Table:
                     TableToJson(sb, value.Table);
@@ -117,16 +129,17 @@ namespace NovaSharp.Interpreter.Serialization.Json
             }
         }
 
-        private static string EscapeString(string s)
+        private static string EscapeString(string input)
         {
-            s = s.Replace(@"\", @"\\");
-            s = s.Replace(@"/", @"\/");
-            s = s.Replace("\"", "\\\"");
-            s = s.Replace("\f", @"\f");
-            s = s.Replace("\b", @"\b");
-            s = s.Replace("\n", @"\n");
-            s = s.Replace("\r", @"\r");
-            s = s.Replace("\t", @"\t");
+            string s = input ?? string.Empty;
+            s = ReplaceOrdinal(s, @"\", @"\\");
+            s = ReplaceOrdinal(s, @"/", @"\/");
+            s = ReplaceOrdinal(s, "\"", "\\\"");
+            s = ReplaceOrdinal(s, "\f", @"\f");
+            s = ReplaceOrdinal(s, "\b", @"\b");
+            s = ReplaceOrdinal(s, "\n", @"\n");
+            s = ReplaceOrdinal(s, "\r", @"\r");
+            s = ReplaceOrdinal(s, "\t", @"\t");
             return "\"" + s + "\"";
         }
 
@@ -296,6 +309,11 @@ namespace NovaSharp.Interpreter.Serialization.Json
                 numberValue = -numberValue;
             }
             return DynValue.NewNumber(numberValue).AsReadOnly();
+        }
+
+        private static string ReplaceOrdinal(string text, string oldValue, string newValue)
+        {
+            return text.Replace(oldValue, newValue, StringComparison.Ordinal);
         }
     }
 }

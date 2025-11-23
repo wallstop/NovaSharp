@@ -213,7 +213,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Assert.That(info, Has.Count.GreaterThanOrEqualTo(2));
                     Assert.That(info[0], Does.Contain("Lua 5.2"));
                     Assert.That(
-                        info.Any(message => message.Contains("running under")),
+                        info.Any(message => ContainsOrdinal(message, "running under")),
                         Is.True,
                         "Expected compatibility summary message."
                     );
@@ -340,6 +340,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             return count;
+        }
+
+        private static bool ContainsOrdinal(string source, string value)
+        {
+            return source != null && source.Contains(value, StringComparison.Ordinal);
         }
 
         private static string CreateTempDirectory()

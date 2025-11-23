@@ -53,6 +53,7 @@ namespace NovaSharp.Interpreter.LuaPort
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
+    using System;
     using LuaPort.LuaStateInterop;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -1211,7 +1212,7 @@ namespace NovaSharp.Interpreter.LuaPort
 
         private static string PatchPattern(string charPtr)
         {
-            return charPtr.Replace("\0", "%z");
+            return charPtr.Replace("\0", "%z", StringComparison.Ordinal);
         }
     }
 }
