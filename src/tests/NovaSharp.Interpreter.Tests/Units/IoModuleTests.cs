@@ -389,7 +389,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CloseClosesExplicitFileHandle()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -421,7 +421,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CloseWithoutParameterUsesCurrentOutput()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -454,7 +454,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void FlushReturnsTrueForCurrentOutput()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -486,7 +486,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
             File.WriteAllText(path, "data");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -520,7 +520,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
             File.WriteAllText(path, "alpha\nbeta\ngamma\n");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -570,13 +570,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OpenReturnsErrorTupleForUnknownEncoding()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string escapedPath = EscapePath(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+            );
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
                 $@"
-                local file, message = io.open('{path}', 'w', 'does-not-exist')
+                local file, message = io.open('{escapedPath}', 'w', 'does-not-exist')
                 return file, message
                 "
             );
@@ -592,7 +593,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenSupportsExplicitEncoding()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -620,14 +621,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OpenRejectsEncodingWhenBinaryModeSpecified()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string escapedPath = EscapePath(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+            );
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
                 $@"
                 local ok, res1, res2 = pcall(function()
-                    return io.open('{path}', 'wb', 'utf-8')
+                    return io.open('{escapedPath}', 'wb', 'utf-8')
                 end)
                 return ok, res1, res2
                 "
@@ -668,7 +670,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenFileInvokesPlatformAccessorAndStillWritesToDisk()
         {
             string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             RecordingPlatformAccessor accessor = new(Script.GlobalOptions.Platform);
             using (new PlatformScope(accessor))
@@ -726,7 +728,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 File.WriteAllText(path, content);
-                string escapedPath = path.Replace("\\", "\\\\");
+                string escapedPath = EscapePath(path);
                 Script script = CreateScript();
 
                 return script.DoString(
@@ -756,7 +758,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             return script;
         }
 
-        private static string EscapePath(string path) => path.Replace("\\", "\\\\");
+        private static string EscapePath(string path) =>
+            path.Replace("\\", "\\\\", StringComparison.Ordinal);
 
         private sealed class SampleUserData { }
 
@@ -787,7 +790,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _inner = inner;
             }
 
-            internal IReadOnlyList<(string FileName, string Mode)> OpenCalls => _openCalls;
+            internal List<(string FileName, string Mode)> OpenCalls => _openCalls;
 
             internal string GetCapturedFileContent(string file)
             {
@@ -839,7 +842,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     return null;
                 }
 
-                if (!string.IsNullOrEmpty(mode) && (mode.Contains('w') || mode.Contains('a')))
+                if (!string.IsNullOrEmpty(mode) && ContainsWriteOrAppendMode(mode))
                 {
                     CapturedFile captured = new(encoding ?? Encoding.UTF8);
                     _captures[filename] = captured;
@@ -882,6 +885,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int ExecuteCommand(string cmdline)
             {
                 return _inner.ExecuteCommand(cmdline);
+            }
+
+            private static bool ContainsWriteOrAppendMode(string mode)
+            {
+                ReadOnlySpan<char> span = mode.AsSpan();
+                return span.IndexOf('w') >= 0 || span.IndexOf('a') >= 0;
             }
 
             private sealed class CapturedFile

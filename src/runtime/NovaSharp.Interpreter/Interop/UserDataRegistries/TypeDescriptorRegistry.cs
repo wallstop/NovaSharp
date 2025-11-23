@@ -108,9 +108,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             lock (SLock)
             {
-                if (STypeRegistry.ContainsKey(t))
+                if (STypeRegistry.TryGetValue(t, out IUserDataDescriptor descriptor))
                 {
-                    PerformRegistration(t, null, STypeRegistry[t]);
+                    PerformRegistration(t, null, descriptor);
                 }
             }
         }
@@ -306,9 +306,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 IUserDataDescriptor typeDescriptor = null;
 
                 // if the type has been explicitly registered, return its descriptor as it's complete
-                if (STypeRegistry.ContainsKey(type))
+                if (STypeRegistry.TryGetValue(type, out IUserDataDescriptor descriptorForType))
                 {
-                    return STypeRegistry[type];
+                    return descriptorForType;
                 }
 
                 if (RegistrationPolicy.AllowTypeAutoRegistration(type))

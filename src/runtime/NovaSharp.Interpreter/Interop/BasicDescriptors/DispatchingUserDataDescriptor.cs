@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
@@ -197,47 +198,39 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             IMemberDescriptor desc
         )
         {
-            if (desc is IOverloadableMemberDescriptor odesc)
+            if (desc is IOverloadableMemberDescriptor overloadable)
             {
-                if (members.ContainsKey(name))
+                if (members.TryGetValue(name, out IMemberDescriptor existing))
                 {
-                    if (members[name] is OverloadedMethodMemberDescriptor overloads)
+                    if (existing is OverloadedMethodMemberDescriptor overloads)
                     {
-                        overloads.AddOverload(odesc);
+                        overloads.AddOverload(overloadable);
+                        return;
                     }
-                    else
-                    {
-                        throw new ArgumentException(
-                            string.Format(
-                                "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
-                                name,
-                                Type.FullName
-                            )
-                        );
-                    }
+
+                    ThrowMemberConflict(name);
                 }
-                else
-                {
-                    members.Add(name, new OverloadedMethodMemberDescriptor(name, Type, odesc));
-                }
+
+                members.Add(name, new OverloadedMethodMemberDescriptor(name, Type, overloadable));
+                return;
             }
-            else
+
+            if (!members.TryAdd(name, desc))
             {
-                if (members.ContainsKey(name))
-                {
-                    throw new ArgumentException(
-                        string.Format(
-                            "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
-                            name,
-                            Type.FullName
-                        )
-                    );
-                }
-                else
-                {
-                    members.Add(name, desc);
-                }
+                ThrowMemberConflict(name);
             }
+        }
+
+        private void ThrowMemberConflict(string name)
+        {
+            throw new ArgumentException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
+                    name,
+                    Type.FullName
+                )
+            );
         }
 
         /// <summary>
@@ -255,6 +248,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             bool isDirectIndexing
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
@@ -317,6 +320,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <exception cref="System.NotImplementedException"></exception>
         private DynValue TryIndexOnExtMethod(Script script, object obj, string indexName)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (indexName == null)
+            {
+                throw new ArgumentNullException(nameof(indexName));
+            }
+
             IReadOnlyList<IOverloadableMemberDescriptor> methods =
                 UserData.GetExtensionMethodsByNameAndType(indexName, Type);
 
@@ -363,6 +376,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         protected virtual DynValue TryIndex(Script script, object obj, string indexName)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             if (_members.TryGetValue(indexName, out IMemberDescriptor desc))
             {
                 return desc.GetValue(script, obj);
@@ -388,6 +406,21 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             bool isDirectIndexing
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
@@ -439,6 +472,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             DynValue value
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             IMemberDescriptor descr = _members.GetOrDefault(indexName);
 
             if (descr != null)
@@ -581,6 +624,21 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             DynValue value
         )
         {
+            if (mdesc == null)
+            {
+                throw new ArgumentNullException(nameof(mdesc));
+            }
+
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
             IList<DynValue> values;
 
             if (index.Type == DataType.Tuple)
@@ -649,6 +707,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public virtual DynValue MetaIndex(Script script, object obj, string metaname)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (metaname == null)
+            {
+                throw new ArgumentNullException(nameof(metaname));
+            }
+
             IMemberDescriptor desc = _metaMembers.GetOrDefault(metaname);
 
             if (desc != null)

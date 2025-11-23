@@ -49,6 +49,38 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ParseFileAccessNormalizesWhitespaceAndCase()
+        {
+            FileAccess access = DotNetCorePlatformAccessor.ParseFileAccess(" R+B ");
+            Assert.That(access, Is.EqualTo(FileAccess.ReadWrite));
+        }
+
+        [Test]
+        public void ParseFileModeNormalizesWhitespaceAndCase()
+        {
+            FileMode mode = DotNetCorePlatformAccessor.ParseFileMode(" W + B ");
+            Assert.That(mode, Is.EqualTo(FileMode.Truncate));
+        }
+
+        [Test]
+        public void ParseFileAccessThrowsWhenModeIsNull()
+        {
+            Assert.That(
+                () => DotNetCorePlatformAccessor.ParseFileAccess(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mode")
+            );
+        }
+
+        [Test]
+        public void ParseFileModeThrowsWhenModeIsNull()
+        {
+            Assert.That(
+                () => DotNetCorePlatformAccessor.ParseFileMode(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mode")
+            );
+        }
+
+        [Test]
         public void OpenFileRespectsModeAndAccess()
         {
             string path = Path.GetTempFileName();

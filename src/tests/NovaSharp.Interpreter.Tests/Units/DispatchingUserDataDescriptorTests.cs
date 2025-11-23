@@ -508,6 +508,69 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IndexThrowsWhenScriptIsNull()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            Assert.That(
+                () =>
+                    descriptor.Index(
+                        script: null!,
+                        obj: new DescriptorHost(),
+                        index: DynValue.NewString("Value"),
+                        isDirectIndexing: true
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
+        public void IndexThrowsWhenIndexIsNull()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            Assert.That(
+                () =>
+                    descriptor.Index(
+                        script: _script,
+                        obj: new DescriptorHost(),
+                        index: null!,
+                        isDirectIndexing: true
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("index")
+            );
+        }
+
+        [Test]
+        public void SetIndexThrowsWhenValueIsNull()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            Assert.That(
+                () =>
+                    descriptor.SetIndex(
+                        script: _script,
+                        obj: new DescriptorHost(),
+                        index: DynValue.NewString("Value"),
+                        value: null!,
+                        isDirectIndexing: true
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            );
+        }
+
+        [Test]
+        public void MetaIndexThrowsWhenMetanameIsNull()
+        {
+            DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+
+            Assert.That(
+                () => descriptor.MetaIndex(_script, new DescriptorHost(), null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("metaname")
+            );
+        }
+
+        [Test]
         public void OptimizeDelegatesToMembersAndMetaMembers()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();

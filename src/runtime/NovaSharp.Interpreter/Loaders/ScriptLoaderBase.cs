@@ -38,6 +38,11 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         protected virtual string ResolveModuleName(string modname, IEnumerable<string> paths)
         {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
             if (paths == null)
             {
                 return null;
@@ -47,7 +52,7 @@ namespace NovaSharp.Interpreter.Loaders
 
             foreach (string path in paths)
             {
-                string file = path.Replace("?", modname);
+                string file = path.Replace("?", modname, StringComparison.Ordinal);
 
                 if (ScriptFileExists(file))
                 {
@@ -69,6 +74,16 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         public virtual string ResolveModuleName(string modname, Table globalContext)
         {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
+            if (globalContext == null)
+            {
+                throw new ArgumentNullException(nameof(globalContext));
+            }
+
             if (!IgnoreLuaPathGlobal)
             {
                 DynValue s = globalContext.RawGet("LUA_PATH");
@@ -93,6 +108,11 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> UnpackStringPaths(string str)
         {
+            if (str == null)
+            {
+                throw new ArgumentNullException(nameof(str));
+            }
+
             return str.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
                 .Where(s => !string.IsNullOrEmpty(s))
@@ -104,32 +124,19 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
-            IReadOnlyList<string> modulePaths = null;
-
-            if (modulePaths == null)
+            string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
+            if (!string.IsNullOrEmpty(env))
             {
-                string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    modulePaths = UnpackStringPaths(env);
-                }
-
-                if (modulePaths == null)
-                {
-                    env = Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH");
-                    if (!string.IsNullOrEmpty(env))
-                    {
-                        modulePaths = UnpackStringPaths(env);
-                    }
-                }
-
-                if (modulePaths == null)
-                {
-                    modulePaths = UnpackStringPaths("?;?.lua");
-                }
+                return UnpackStringPaths(env);
             }
 
-            return modulePaths;
+            env = Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH");
+            if (!string.IsNullOrEmpty(env))
+            {
+                return UnpackStringPaths(env);
+            }
+
+            return UnpackStringPaths("?;?.lua");
         }
 
         /// <summary>

@@ -123,13 +123,13 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                 _localLabels = new Dictionary<string, LabelStatement>();
             }
 
-            if (_localLabels.ContainsKey(label.Label))
+            if (_localLabels.TryGetValue(label.Label, out LabelStatement existing))
             {
                 throw new SyntaxErrorException(
                     label.NameToken,
                     "label '{0}' already defined on line {1}",
                     label.Label,
-                    _localLabels[label.Label].SourceRef.FromLine
+                    existing.SourceRef.FromLine
                 );
             }
             else

@@ -515,17 +515,34 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static bool ContainsInvalidModeCharacters(string mode)
         {
-            const string Allowed = "rawbt+";
+            if (string.IsNullOrEmpty(mode))
+            {
+                return true;
+            }
 
             foreach (char candidate in mode)
             {
-                if (Allowed.IndexOf(candidate) < 0)
+                if (!IsAllowedModeCharacter(candidate))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsAllowedModeCharacter(char candidate)
+        {
+            return candidate switch
+            {
+                'r' => true,
+                'a' => true,
+                'w' => true,
+                'b' => true,
+                't' => true,
+                '+' => true,
+                _ => false,
+            };
         }
     }
 }
