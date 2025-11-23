@@ -2,6 +2,9 @@ namespace NovaSharp.Benchmarks
 {
     using System;
 
+    /// <summary>
+    /// High-level scenarios exercised by the NovaSharp runtime benchmarks.
+    /// </summary>
     public enum RuntimeScenario
     {
         [Obsolete("Use a specific RuntimeScenario.", false)]
@@ -12,6 +15,9 @@ namespace NovaSharp.Benchmarks
         UserDataInterop = 4,
     }
 
+    /// <summary>
+    /// Provides ready-to-run Lua scripts that stress specific interpreter behaviors.
+    /// </summary>
     internal static class LuaRuntimeSuites
     {
         public const int LoopIterations = 2_000;
@@ -19,6 +25,11 @@ namespace NovaSharp.Benchmarks
         public const int CoroutineSteps = 64;
         public const int UserDataIterations = 256;
 
+        /// <summary>
+        /// Returns the Lua script associated with the requested <paramref name="scenario"/>.
+        /// </summary>
+        /// <param name="scenario">Scenario enumerating the runtime behavior to benchmark.</param>
+        /// <returns>Lua script text suitable for <c>Script.DoString</c>.</returns>
         public static string GetScript(RuntimeScenario scenario) =>
             scenario switch
             {

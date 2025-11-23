@@ -6,18 +6,24 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// CLI command that compiles a Lua file into a NovaSharp binary chunk.
+    /// </summary>
     internal sealed class CompileCommand : ICommand
     {
+        /// <inheritdoc />
         public string Name
         {
             get { return "compile"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine("compile <filename> - Compiles the file in a binary format");
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             Console.WriteLine(
@@ -25,6 +31,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string p)
         {
             string targetFileName = p + "-compiled";

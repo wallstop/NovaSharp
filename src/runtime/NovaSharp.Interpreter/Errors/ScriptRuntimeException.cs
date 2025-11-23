@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Errors
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Globalization;
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -19,25 +20,37 @@ namespace NovaSharp.Interpreter.Errors
     /// </summary>
     public class ScriptRuntimeException : InterpreterException
     {
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> without a message; primarily used by serializers/reflection.
+        /// </summary>
         public ScriptRuntimeException() { }
 
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> using the provided <paramref name="message"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the runtime failure.</param>
         public ScriptRuntimeException(string message)
             : base(message) { }
 
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> wrapping an underlying CLR <paramref name="innerException"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the runtime failure.</param>
+        /// <param name="innerException">CLR exception captured while executing script code.</param>
         public ScriptRuntimeException(string message, Exception innerException)
             : base(message, innerException) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> that mirrors the supplied interpreter/CLR exception.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">Exception raised by the interpreter or a CLR callback.</param>
         public ScriptRuntimeException(Exception ex)
             : base(EnsureException(ex)) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> by cloning another runtime exception instance, preserving decoration.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">Existing runtime exception whose decorated message should be preserved.</param>
         public ScriptRuntimeException(ScriptRuntimeException ex)
             : base(EnsureScriptRuntimeException(ex, out string decoratedMessage), decoratedMessage)
         {
@@ -46,9 +59,11 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> using a composite message built from <paramref name="format"/>
+        /// and <paramref name="args"/> with invariant culture semantics.
         /// </summary>
-        /// <param name="message">The message that describes the error.</param>
+        /// <param name="format">Composite format string interpreted with <see cref="CultureInfo.InvariantCulture"/>.</param>
+        /// <param name="args">Arguments applied to the composite format string.</param>
         public ScriptRuntimeException(string format, params object[] args)
             : base(format, args) { }
 
@@ -56,6 +71,8 @@ namespace NovaSharp.Interpreter.Errors
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptRuntimeException" /> class with serialized data.
         /// </summary>
+        /// <param name="info">Serialized data describing the exception.</param>
+        /// <param name="context">Streaming context describing the serialization target/source.</param>
         protected ScriptRuntimeException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
 #endif
@@ -735,7 +752,7 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="type">The lua non-function data type.</param>
         /// <param name="debugText">The debug text to aid location (appears as "near 'xxx'").</param>
-        /// <returns></returns>
+        /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException AttemptToCallNonFunc(
             DataType type,
             string debugText = null

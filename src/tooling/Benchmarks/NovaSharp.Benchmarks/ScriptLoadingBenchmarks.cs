@@ -5,6 +5,9 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// Benchmarks covering script compilation and execution throughput at multiple complexity levels.
+    /// </summary>
     [MemoryDiagnoser]
     public class ScriptLoadingBenchmarks
     {
@@ -12,6 +15,9 @@ namespace NovaSharp.Benchmarks
         private Script _precompiledScript = null!;
         private DynValue _precompiledFunction = DynValue.Nil;
 
+        /// <summary>
+        /// Script complexity used for the current benchmark iteration.
+        /// </summary>
         [Params(
             ScriptComplexity.Tiny,
             ScriptComplexity.Small,
@@ -21,6 +27,9 @@ namespace NovaSharp.Benchmarks
         public ScriptComplexity Complexity { get; set; }
 
         [GlobalSetup]
+        /// <summary>
+        /// Prepares the script source and precompiled artifacts before the benchmarks execute.
+        /// </summary>
         public void Setup()
         {
             _scriptSource = LuaScriptCorpus.GetCompilationScript(Complexity);
@@ -32,6 +41,9 @@ namespace NovaSharp.Benchmarks
             );
         }
 
+        /// <summary>
+        /// Compiles and immediately executes the script, exercising end-to-end loading.
+        /// </summary>
         [Benchmark(Description = "Compile + Execute")]
         public DynValue CompileAndExecute()
         {
@@ -39,6 +51,9 @@ namespace NovaSharp.Benchmarks
             return script.DoString(_scriptSource, null, $"compile_execute_{Complexity}");
         }
 
+        /// <summary>
+        /// Measures script compilation without executing the resulting chunk.
+        /// </summary>
         [Benchmark(Description = "Compile Only")]
         public DynValue CompileOnly()
         {
@@ -46,6 +61,9 @@ namespace NovaSharp.Benchmarks
             return script.LoadString(_scriptSource, null, $"compile_{Complexity}");
         }
 
+        /// <summary>
+        /// Executes the precompiled chunk, isolating runtime overhead.
+        /// </summary>
         [Benchmark(Description = "Execute Precompiled")]
         public DynValue ExecutePrecompiled() => _precompiledScript.Call(_precompiledFunction);
     }

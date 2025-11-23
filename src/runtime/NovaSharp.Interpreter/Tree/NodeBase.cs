@@ -5,18 +5,40 @@ namespace NovaSharp.Interpreter.Tree
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Base type for every AST node emitted by the NovaSharp parser; exposes shared helpers for token validation and code generation.
+    /// </summary>
     internal abstract class NodeBase
     {
+        /// <summary>
+        /// Script currently being compiled; used for source decoration and diagnostics.
+        /// </summary>
         public Script Script { get; private set; }
+
+        /// <summary>
+        /// Provides access to the lexer/reader that built this node.
+        /// </summary>
         protected ScriptLoadingContext LoadingContext { get; private set; }
 
+        /// <summary>
+        /// Initializes a new node and captures the owning script/loading context.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the script and lexer.</param>
         public NodeBase(ScriptLoadingContext lcontext)
         {
             Script = lcontext.Script;
+            LoadingContext = lcontext;
         }
 
+        /// <summary>
+        /// Emits bytecode for this AST node.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the compiled instructions.</param>
         public abstract void Compile(ByteCode bc);
 
+        /// <summary>
+        /// Throws a syntax error indicating that <paramref name="t"/> does not match the expected token type.
+        /// </summary>
         protected static Token UnexpectedTokenType(Token t)
         {
             throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
@@ -25,6 +47,12 @@ namespace NovaSharp.Interpreter.Tree
             };
         }
 
+        /// <summary>
+        /// Ensures the current token matches <paramref name="tokenType"/> and advances the lexer.
+        /// </summary>
+        /// <param name="lcontext">Source parser context.</param>
+        /// <param name="tokenType">Expected token type.</param>
+        /// <returns>The consumed token.</returns>
         protected static Token CheckTokenType(ScriptLoadingContext lcontext, TokenType tokenType)
         {
             Token t = lcontext.Lexer.Current;
@@ -38,6 +66,13 @@ namespace NovaSharp.Interpreter.Tree
             return t;
         }
 
+        /// <summary>
+        /// Ensures the current token matches one of the supplied types and advances the lexer.
+        /// </summary>
+        /// <param name="lcontext">Source parser context.</param>
+        /// <param name="tokenType1">First permissible token type.</param>
+        /// <param name="tokenType2">Second permissible token type.</param>
+        /// <returns>The consumed token.</returns>
         protected static Token CheckTokenType(
             ScriptLoadingContext lcontext,
             TokenType tokenType1,
@@ -55,6 +90,14 @@ namespace NovaSharp.Interpreter.Tree
             return t;
         }
 
+        /// <summary>
+        /// Ensures the current token matches one of the supplied types and advances the lexer.
+        /// </summary>
+        /// <param name="lcontext">Source parser context.</param>
+        /// <param name="tokenType1">First permissible token type.</param>
+        /// <param name="tokenType2">Second permissible token type.</param>
+        /// <param name="tokenType3">Third permissible token type.</param>
+        /// <returns>The consumed token.</returns>
         protected static Token CheckTokenType(
             ScriptLoadingContext lcontext,
             TokenType tokenType1,
@@ -73,6 +116,11 @@ namespace NovaSharp.Interpreter.Tree
             return t;
         }
 
+        /// <summary>
+        /// Verifies that the current token matches <paramref name="tokenType"/> without consuming it.
+        /// </summary>
+        /// <param name="lcontext">Source parser context.</param>
+        /// <param name="tokenType">Token type that must be present.</param>
         protected static void CheckTokenTypeNotNext(
             ScriptLoadingContext lcontext,
             TokenType tokenType
@@ -85,6 +133,14 @@ namespace NovaSharp.Interpreter.Tree
             }
         }
 
+        /// <summary>
+        /// Validates that the next token closes a previously opened symbol and surfaces a helpful error if it does not.
+        /// </summary>
+        /// <param name="lcontext">Source parser context.</param>
+        /// <param name="originalToken">Original opening token (used for diagnostics).</param>
+        /// <param name="expectedTokenType">Expected closing token type.</param>
+        /// <param name="expectedTokenText">Text that should be shown for the expected token.</param>
+        /// <returns>The consumed closing token.</returns>
         protected static Token CheckMatch(
             ScriptLoadingContext lcontext,
             Token originalToken,

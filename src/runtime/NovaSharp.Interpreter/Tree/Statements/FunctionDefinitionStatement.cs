@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua function declaration (global/local, dotted, or method-call syntax).
+    /// </summary>
     internal class FunctionDefinitionStatement : Statement
     {
         private readonly SymbolRef _funcSymbol;
@@ -20,6 +23,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private readonly List<string> _tableAccessors;
         private readonly FunctionDefinitionExpression _funcDef;
 
+        /// <summary>
+        /// Parses a function definition, tracking whether it is local, table-qualified, or method syntax.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="local">Indicates whether the declaration started with <c>local</c>.</param>
+        /// <param name="localToken">Token referencing the <c>local</c> keyword for diagnostics.</param>
         public FunctionDefinitionStatement(
             ScriptLoadingContext lcontext,
             bool local,
@@ -98,6 +107,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_sourceRef);
         }
 
+        /// <summary>
+        /// Emits the function definition, wiring the generated closure to the appropriate symbol/table slot.
+        /// </summary>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             using (bc.EnterSource(_sourceRef))

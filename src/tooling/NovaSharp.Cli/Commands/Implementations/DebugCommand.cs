@@ -4,26 +4,38 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter.Compatibility;
     using RemoteDebugger;
 
+    /// <summary>
+    /// CLI command that attaches the NovaSharp remote debugger to the current REPL script.
+    /// </summary>
     internal sealed class DebugCommand : ICommand
     {
+        /// <summary>
+        /// Factory used to create debugger bridge instances; overridden in tests.
+        /// </summary>
         internal static Func<IRemoteDebuggerBridge> DebuggerFactory { get; set; } =
             () => new RemoteDebuggerServiceBridge();
 
+        /// <summary>
+        /// Browser launcher invoked after the debugger is attached; overridable for tests/hosts.
+        /// </summary>
         internal static IBrowserLauncher BrowserLauncher { get; set; } =
             ProcessBrowserLauncher.Instance;
 
         private IRemoteDebuggerBridge _debugger;
 
+        /// <inheritdoc />
         public string Name
         {
             get { return "debug"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine("debug - Starts the interactive debugger");
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             Console.WriteLine(
@@ -31,6 +43,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string arguments)
         {
             if (_debugger == null)

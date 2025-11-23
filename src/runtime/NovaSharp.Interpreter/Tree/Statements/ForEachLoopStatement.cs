@@ -10,6 +10,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua generic for loop (`for name in explist do ... end`).
+    /// </summary>
     internal class ForEachLoopStatement : Statement
     {
         private readonly RuntimeScopeBlock _stackFrame;
@@ -22,6 +25,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly SourceRef _refEnd;
 
+        /// <summary>
+        /// Parses a generic for loop, capturing iterator names, expressions, and the loop body.
+        /// </summary>
         public ForEachLoopStatement(
             ScriptLoadingContext lcontext,
             Token firstNameToken,
@@ -66,6 +72,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_refEnd);
         }
 
+        /// <summary>
+        /// Compiles the `for ... in ...` construct per Lua §3.3.5, including iterator preparation, per-iteration assignment, and loop exit patching.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             //for var_1, ···, var_n in explist do block end

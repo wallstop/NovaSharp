@@ -6,6 +6,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua <c>repeat ... until</c> statement.
+    /// </summary>
     internal class RepeatStatement : Statement
     {
         private readonly Expression _condition;
@@ -16,6 +19,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly SourceRef _until;
 
+        /// <summary>
+        /// Parses the loop body and terminating condition for a <c>repeat ... until</c> block.
+        /// </summary>
         public RepeatStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -35,6 +41,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_until);
         }
 
+        /// <summary>
+        /// Compiles the repeat loop with post-condition semantics (body executes before evaluating the condition).
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             Loop l = new() { Scope = _stackFrame };

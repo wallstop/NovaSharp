@@ -11,12 +11,20 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Tree.Lexer;
     using Script = NovaSharp.Interpreter.Script;
 
+    /// <summary>
+    /// Represents a Lua assignment statement (`local` declarations and multi-value assignments).
+    /// </summary>
     internal class AssignmentStatement : Statement
     {
         private readonly List<IVariable> _lValues = new();
         private readonly List<Expression> _rValues;
         private readonly SourceRef _ref;
 
+        /// <summary>
+        /// Initializes a new assignment statement for a `local` declaration (with optional `<const>`/`<close>` attributes).
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="startToken">Token that began the declaration, used for diagnostics.</param>
         public AssignmentStatement(ScriptLoadingContext lcontext, Token startToken)
             : base(lcontext)
         {
@@ -60,6 +68,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_ref);
         }
 
+        /// <summary>
+        /// Initializes a new assignment statement targeting arbitrary l-values (e.g., table fields or globals).
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="firstExpression">First left-hand-side expression.</param>
+        /// <param name="first">Token marking the start of the statement, used for diagnostics.</param>
         public AssignmentStatement(
             ScriptLoadingContext lcontext,
             Expression firstExpression,
@@ -99,6 +113,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
             return v;
         }
 
+        /// <summary>
+        /// Compiles the assignment by emitting bytecode that evaluates right-hand expressions, assigns them to l-values, and cleans up the stack.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the compiled instructions.</param>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             using (bc.EnterSource(_ref))

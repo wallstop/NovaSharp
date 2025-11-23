@@ -4,13 +4,18 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// CLI command that registers CLR types for userdata exposure or lists the registered types.
+    /// </summary>
     internal class RegisterCommand : ICommand
     {
+        /// <inheritdoc />
         public string Name
         {
             get { return "register"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine(
@@ -18,6 +23,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             Console.WriteLine(
@@ -25,6 +31,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string argument)
         {
             if (argument.Length > 0)

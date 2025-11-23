@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Root statement for a compiled chunk; wraps the top-level block in an implicit function so locals/env behave per Lua rules.
+    /// </summary>
     internal class ChunkStatement : Statement, IClosureBuilder
     {
         private readonly CompositeStatement _block;
@@ -14,6 +17,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private readonly SymbolRef _env;
         private readonly SymbolRef _varArgs;
 
+        /// <summary>
+        /// Parses the entire chunk, ensuring the file terminates at EOF and setting up the implicit `_ENV` and `...` locals.
+        /// </summary>
         public ChunkStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -35,6 +41,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             _stackFrame = lcontext.Scope.PopFunction();
         }
 
+        /// <summary>
+        /// Emits the implicit chunk function and compiles the contained block.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             Instruction meta = bc.EmitMeta("<chunk-root>", OpCodeMetadataType.ChunkEntrypoint);
@@ -53,6 +62,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
         }
 
+        /// <summary>
+        /// Chunk statements do not create additional upvalues; returns <c>null</c> so callers fall back to default resolution.
+        /// </summary>
         public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
         {
             return null;

@@ -5,6 +5,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a <c>do ... end</c> scope block.
+    /// </summary>
     internal class ScopeBlockStatement : Statement
     {
         private readonly CompositeStatement _block;
@@ -14,6 +17,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly SourceRef _end;
 
+        /// <summary>
+        /// Parses the block enclosed by a <c>do ... end</c> pair and captures its scope.
+        /// </summary>
         public ScopeBlockStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -30,6 +36,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_end);
         }
 
+        /// <summary>
+        /// Emits the scoped block, ensuring the runtime stack frame is entered and exited.
+        /// </summary>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             using (bc.EnterSource(_do))

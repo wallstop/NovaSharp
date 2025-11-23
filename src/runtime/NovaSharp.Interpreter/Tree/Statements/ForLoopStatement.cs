@@ -8,6 +8,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a numeric Lua <c>for</c> loop.
+    /// </summary>
     internal class ForLoopStatement : Statement
     {
         //for' NAME '=' exp ',' exp (',' exp)? 'do' block 'end'
@@ -25,6 +28,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly SourceRef _refEnd;
 
+        /// <summary>
+        /// Parses the numeric <c>for</c> loop, capturing the range expressions and loop body.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="nameToken">Token containing the loop variable name.</param>
+        /// <param name="forToken">Token for the `for` keyword (used for diagnostics).</param>
         public ForLoopStatement(ScriptLoadingContext lcontext, Token nameToken, Token forToken)
             : base(lcontext)
         {
@@ -58,6 +67,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_refEnd);
         }
 
+        /// <summary>
+        /// Compiles the numeric loop following Lua §3.3.5: evaluates bounds/step, emits the iteration prologue, body, and increment logic.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             bc.PushSourceRef(_refFor);

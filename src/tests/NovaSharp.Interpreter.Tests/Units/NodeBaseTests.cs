@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptLoadingContext context = CreateContext("return 1");
             TestNode node = new(context);
 
-            Assert.That(node.GetLoadingContextViaHelper(), Is.Null);
+            Assert.That(node.GetLoadingContextViaHelper(), Is.SameAs(context));
         }
 
         [Test]

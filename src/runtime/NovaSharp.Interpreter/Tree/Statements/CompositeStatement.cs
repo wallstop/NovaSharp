@@ -4,10 +4,16 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a sequence of statements (block) delimited by Lua keywords such as <c>do ... end</c>.
+    /// </summary>
     internal class CompositeStatement : Statement
     {
         private readonly List<Statement> _statements = new();
 
+        /// <summary>
+        /// Parses statements until an end-of-block token is encountered, respecting Lua's "return must be last" rule.
+        /// </summary>
         public CompositeStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -35,6 +41,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
         }
 
+        /// <summary>
+        /// Compiles each contained statement in order.
+        /// </summary>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             if (_statements != null)

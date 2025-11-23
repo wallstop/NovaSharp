@@ -22,15 +22,32 @@ namespace NovaSharp.Interpreter.Errors
         [field: NonSerialized]
         internal Token Token { get; private set; }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> with no message; primarily used by serializers/reflection.
+        /// </summary>
         public SyntaxErrorException() { }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> using the provided <paramref name="message"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the parser/lexer error.</param>
         public SyntaxErrorException(string message)
             : base(message) { }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> wrapping the supplied CLR <paramref name="innerException"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the parser/lexer error.</param>
+        /// <param name="innerException">CLR exception encountered while tokenizing or parsing.</param>
         public SyntaxErrorException(string message, Exception innerException)
             : base(message, innerException) { }
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> from serialized data.
+        /// </summary>
+        /// <param name="info">Serialized data describing the exception.</param>
+        /// <param name="context">Streaming context describing the serialization target/source.</param>
         protected SyntaxErrorException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
 #endif
@@ -43,18 +60,36 @@ namespace NovaSharp.Interpreter.Errors
         /// </remarks>
         public bool IsPrematureStreamTermination { get; set; }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> associated with the specified lexer token, formatting the message with invariant culture.
+        /// </summary>
+        /// <param name="t">Token that triggered the error.</param>
+        /// <param name="format">Composite format string describing the failure.</param>
+        /// <param name="args">Arguments applied to <paramref name="format"/>.</param>
         internal SyntaxErrorException(Token t, string format, params object[] args)
             : base(format, args)
         {
             Token = t;
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> associated with the specified lexer token.
+        /// </summary>
+        /// <param name="t">Token that triggered the error.</param>
+        /// <param name="message">Human-readable detail describing the parser/lexer error.</param>
         internal SyntaxErrorException(Token t, string message)
             : base(message)
         {
             Token = t;
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> decorated with a source reference produced from <paramref name="sref"/>.
+        /// </summary>
+        /// <param name="script">Script owning the current chunk, used to format source locations.</param>
+        /// <param name="sref">Source reference highlighting the failure.</param>
+        /// <param name="format">Composite format string describing the failure.</param>
+        /// <param name="args">Arguments applied to <paramref name="format"/>.</param>
         internal SyntaxErrorException(
             Script script,
             SourceRef sref,
@@ -66,12 +101,22 @@ namespace NovaSharp.Interpreter.Errors
             DecorateMessage(script, sref);
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> decorated with a source reference produced from <paramref name="sref"/>.
+        /// </summary>
+        /// <param name="script">Script owning the current chunk, used to format source locations.</param>
+        /// <param name="sref">Source reference highlighting the failure.</param>
+        /// <param name="message">Human-readable detail describing the parser/lexer error.</param>
         internal SyntaxErrorException(Script script, SourceRef sref, string message)
             : base(message)
         {
             DecorateMessage(script, sref);
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="SyntaxErrorException"/> that clones another syntax error, preserving token metadata.
+        /// </summary>
+        /// <param name="syntaxErrorException">Existing syntax error to clone.</param>
         private SyntaxErrorException(SyntaxErrorException syntaxErrorException)
             : base(syntaxErrorException, syntaxErrorException.DecoratedMessage)
         {

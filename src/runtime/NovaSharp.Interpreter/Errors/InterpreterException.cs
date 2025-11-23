@@ -18,33 +18,48 @@ namespace NovaSharp.Interpreter.Errors
     /// </summary>
     public class InterpreterException : Exception
     {
+        /// <summary>
+        /// Initializes a new <see cref="InterpreterException"/> with no message or inner exception; hosts typically
+        /// populate details later through <see cref="DecoratedMessage"/>.
+        /// </summary>
         public InterpreterException() { }
 
+        /// <summary>
+        /// Initializes a new <see cref="InterpreterException"/> using the provided <paramref name="message"/> as the base error text.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the interpreter failure.</param>
         public InterpreterException(string message)
             : base(message) { }
 
+        /// <summary>
+        /// Initializes a new <see cref="InterpreterException"/> that wraps an underlying CLR <paramref name="innerException"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the interpreter failure.</param>
+        /// <param name="innerException">Original CLR exception captured while executing the script.</param>
         public InterpreterException(string message, Exception innerException)
             : base(message, innerException) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="InterpreterException"/> class.
+        /// Initializes a new <see cref="InterpreterException"/> that wraps the supplied CLR exception and overrides the message.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">CLR exception raised by the interpreter or host integration layer.</param>
+        /// <param name="message">Human-readable message that should replace the wrapped exception text.</param>
         protected InterpreterException(Exception ex, string message)
             : base(message, EnsureException(ex)) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="InterpreterException"/> class.
+        /// Initializes a new <see cref="InterpreterException"/> that forwards the original CLR exception message to the script host.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">CLR exception raised by the interpreter or host integration layer.</param>
         protected InterpreterException(Exception ex)
             : base(GetExceptionMessage(ex), EnsureException(ex)) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="InterpreterException"/> class.
+        /// Initializes a new <see cref="InterpreterException"/> using an invariant composite message built
+        /// from <paramref name="format"/> and <paramref name="args"/>.
         /// </summary>
-        /// <param name="format">The format.</param>
-        /// <param name="args">The arguments.</param>
+        /// <param name="format">Composite format string interpreted with <see cref="CultureInfo.InvariantCulture"/>.</param>
+        /// <param name="args">Arguments applied to <paramref name="format"/>.</param>
         protected InterpreterException(string format, params object[] args)
             : base(FormatInvariant(format, args)) { }
 

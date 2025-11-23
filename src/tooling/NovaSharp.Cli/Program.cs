@@ -12,6 +12,9 @@ namespace NovaSharp.Cli
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
 
+    /// <summary>
+    /// Entry point for the NovaSharp CLI REPL and command processor.
+    /// </summary>
     internal sealed partial class Program
     {
         [STAThread]
@@ -106,6 +109,12 @@ namespace NovaSharp.Cli
             Console.WriteLine("Welcome.\n");
         }
 
+        /// <summary>
+        /// Parses command-line arguments and executes any requested non-interactive actions.
+        /// </summary>
+        /// <param name="args">Raw command-line arguments.</param>
+        /// <param name="shellContext">Shell context used for executing command-line commands.</param>
+        /// <returns><c>true</c> when the application should exit after processing the arguments.</returns>
         internal static bool CheckArgs(string[] args, ShellContext shellContext)
         {
             if (args.Length == 0)

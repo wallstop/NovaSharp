@@ -5,11 +5,24 @@ namespace NovaSharp.Interpreter.Tree
     using NovaSharp.Interpreter.Tree.Lexer;
     using Statements;
 
+    /// <summary>
+    /// Base class for every Lua statement node; handles dispatching to specific statement implementations.
+    /// </summary>
     internal abstract class Statement : NodeBase
     {
+        /// <summary>
+        /// Initializes a statement with the supplied parser context.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the current lexer/token stream.</param>
         public Statement(ScriptLoadingContext lcontext)
             : base(lcontext) { }
 
+        /// <summary>
+        /// Parses the next statement, returning the appropriate concrete node and flagging whether Lua requires it to be the final statement in the block.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="forceLast">Set to <c>true</c> when the returned statement must be the last in the current block (Lua `return`).</param>
+        /// <returns>The parsed statement node.</returns>
         protected static Statement CreateStatement(
             ScriptLoadingContext lcontext,
             out bool forceLast
@@ -73,6 +86,11 @@ namespace NovaSharp.Interpreter.Tree
             }
         }
 
+        /// <summary>
+        /// Parses the `for` family of statements and returns either a numeric `for` or `for-in` node.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <returns>The parsed `for` statement node.</returns>
         private static Statement DispatchForLoopStatement(ScriptLoadingContext lcontext)
         {
             //	for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end |

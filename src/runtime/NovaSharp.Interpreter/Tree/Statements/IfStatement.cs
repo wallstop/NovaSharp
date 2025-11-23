@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua <c>if</c>/<c>elseif</c>/<c>else</c> block.
+    /// </summary>
     internal class IfStatement : Statement
     {
         private class IfBlock
@@ -21,6 +24,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
         private readonly IfBlock _else;
         private readonly SourceRef _end;
 
+        /// <summary>
+        /// Parses the conditional chain (zero or more <c>elseif</c> blocks plus an optional <c>else</c> block).
+        /// </summary>
         public IfStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -76,6 +82,9 @@ namespace NovaSharp.Interpreter.Tree.Statements
             return ifblock;
         }
 
+        /// <summary>
+        /// Emits the conditional control flow, patching all jump addresses once the block layout is known.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             List<Instruction> endJumps = new();

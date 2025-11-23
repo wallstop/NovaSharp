@@ -9,36 +9,54 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// CLI command that guides users through generating hardwired userdata descriptors from a Lua dump.
+    /// </summary>
     internal sealed class HardWireCommand : ICommand
     {
+        /// <summary>
+        /// Logger implementation that funnels hardwire generation messages to the console.
+        /// </summary>
         private class ConsoleLogger : ICodeGenerationLogger
         {
+            /// <summary>
+            /// Gets the number of errors emitted during generation.
+            /// </summary>
             public int ErrorCount { get; private set; }
+
+            /// <summary>
+            /// Gets the number of warnings emitted during generation.
+            /// </summary>
             public int WarningCount { get; private set; }
 
+            /// <inheritdoc />
             public void LogError(string message)
             {
                 Console.WriteLine("[EE] - " + message);
                 ErrorCount++;
             }
 
+            /// <inheritdoc />
             public void LogWarning(string message)
             {
                 Console.WriteLine("[ww] - " + message);
                 WarningCount++;
             }
 
+            /// <inheritdoc />
             public void LogMinor(string message)
             {
                 Console.WriteLine("[ii] - " + message);
             }
         }
 
+        /// <inheritdoc />
         public string Name
         {
             get { return "hardwire"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine(
@@ -46,6 +64,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             Console.WriteLine(
@@ -54,6 +73,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             Console.WriteLine();
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string argument)
         {
             Console.WriteLine("At any question, type #quit to abort.");
@@ -152,6 +172,15 @@ namespace NovaSharp.Cli.Commands.Implementations
             return true;
         }
 
+        /// <summary>
+        /// Generates hardwire descriptors by loading the provided Lua dump and emitting source code.
+        /// </summary>
+        /// <param name="language">Target language (`cs` or `vb`).</param>
+        /// <param name="luafile">Path to the Lua dump table.</param>
+        /// <param name="destfile">Destination path for the generated source code.</param>
+        /// <param name="allowInternals">Whether internals should be exposed via the descriptors.</param>
+        /// <param name="classname">Name of the generated class.</param>
+        /// <param name="namespacename">Namespace that will contain the generated class.</param>
         public static void Generate(
             string language,
             string luafile,
@@ -199,6 +228,9 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <summary>
+        /// Loader function used to read hardwire dump tables; overridable for tests.
+        /// </summary>
         internal static Func<string, Table> DumpLoader { get; set; } = LoadDumpTable;
 
         private static Table LoadDumpTable(string path)

@@ -20,8 +20,16 @@ namespace NovaSharp.Benchmarks
 
 #nullable enable
 
+    /// <summary>
+    /// Generates and updates the Markdown performance report under <c>docs/Performance.md</c>.
+    /// </summary>
     internal static class PerformanceReportWriter
     {
+        /// <summary>
+        /// Rewrites the OS-specific section of the performance report with the latest benchmark comparison.
+        /// </summary>
+        /// <param name="suiteName">Friendly name of the benchmark suite (e.g., Interpreter, CLI).</param>
+        /// <param name="summaries">BenchmarkDotNet summaries produced by the current run.</param>
         public static void Write(string suiteName, IEnumerable<Summary> summaries)
         {
             if (summaries == null)
@@ -1111,6 +1119,16 @@ namespace NovaSharp.Benchmarks
             double AllocatedBytes
         );
 
+        /// <summary>
+        /// Represents the comparison between NovaSharp's current benchmark results and the stored baseline.
+        /// </summary>
+        /// <param name="SummaryName">Benchmark summary (suite) name.</param>
+        /// <param name="Method">Benchmark method name.</param>
+        /// <param name="ParameterDisplay">Parameter display string rendered by BenchmarkDotNet.</param>
+        /// <param name="NovaMeanNanoseconds">Current mean runtime (ns).</param>
+        /// <param name="BaselineMeanNanoseconds">Baseline mean runtime (ns).</param>
+        /// <param name="NovaAllocatedBytes">Current allocated bytes.</param>
+        /// <param name="BaselineAllocatedBytes">Baseline allocated bytes.</param>
         private sealed record ComparisonRow(
             string SummaryName,
             string Method,
@@ -1121,15 +1139,27 @@ namespace NovaSharp.Benchmarks
             double BaselineAllocatedBytes
         )
         {
+            /// <summary>
+            /// Delta between the current and baseline mean runtime (ns).
+            /// </summary>
             public double MeanDeltaNanoseconds => NovaMeanNanoseconds - BaselineMeanNanoseconds;
 
+            /// <summary>
+            /// Delta between the current and baseline allocation totals (bytes).
+            /// </summary>
             public double AllocatedDeltaBytes => NovaAllocatedBytes - BaselineAllocatedBytes;
 
+            /// <summary>
+            /// Percentage delta between the current and baseline mean runtime.
+            /// </summary>
             public double MeanDeltaPercent =>
                 BaselineMeanNanoseconds > 0
                     ? (MeanDeltaNanoseconds / BaselineMeanNanoseconds) * 100d
                     : double.NaN;
 
+            /// <summary>
+            /// Percentage delta between the current and baseline allocation totals.
+            /// </summary>
             public double AllocatedDeltaPercent =>
                 BaselineAllocatedBytes > 0
                     ? (AllocatedDeltaBytes / BaselineAllocatedBytes) * 100d

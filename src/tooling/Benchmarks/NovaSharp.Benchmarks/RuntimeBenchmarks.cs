@@ -5,6 +5,9 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// BenchmarkDotNet suite that executes representative NovaSharp runtime scenarios.
+    /// </summary>
     [MemoryDiagnoser]
     public class RuntimeBenchmarks
     {
@@ -13,6 +16,9 @@ namespace NovaSharp.Benchmarks
         private Func<double> _scenarioRunner;
         private BenchmarkHost _host = new();
 
+        /// <summary>
+        /// Scenario that will be executed for the next benchmark iteration.
+        /// </summary>
         [Params(
             RuntimeScenario.NumericLoops,
             RuntimeScenario.TableMutation,
@@ -22,6 +28,9 @@ namespace NovaSharp.Benchmarks
         public RuntimeScenario Scenario { get; set; }
 
         [GlobalSetup]
+        /// <summary>
+        /// Compiles the scenario script and prepares the helpers before the benchmark run.
+        /// </summary>
         public void Setup()
         {
             _script = new Script(CoreModules.PresetComplete);
@@ -51,6 +60,9 @@ namespace NovaSharp.Benchmarks
             _host = new BenchmarkHost();
         }
 
+        /// <summary>
+        /// Executes the selected scenario and returns its numeric result.
+        /// </summary>
         [Benchmark(Description = "Scenario Execution")]
         public double ExecuteScenario() => _scenarioRunner!();
 
@@ -75,10 +87,19 @@ namespace NovaSharp.Benchmarks
         }
     }
 
+    /// <summary>
+    /// Host object exposed to Lua scripts for the userdata interop scenario.
+    /// </summary>
     public sealed class BenchmarkHost
     {
         private double _store;
 
+        /// <summary>
+        /// Sums the provided operands and caches the intermediate result.
+        /// </summary>
+        /// <param name="left">Left operand.</param>
+        /// <param name="right">Right operand.</param>
+        /// <returns>Computed value used inside the scenario.</returns>
         public double Accumulate(double left, double right)
         {
             double result = (left * 1.25) + (right * 0.75);
@@ -86,10 +107,19 @@ namespace NovaSharp.Benchmarks
             return result;
         }
 
+        /// <summary>
+        /// Persists the supplied value in the backing store.
+        /// </summary>
         public void Store(double value) => _store = value;
 
+        /// <summary>
+        /// Returns the most recently stored value.
+        /// </summary>
         public double GetStored() => _store;
 
+        /// <summary>
+        /// Resets the backing store to zero.
+        /// </summary>
         public void Reset() => _store = 0;
     }
 }

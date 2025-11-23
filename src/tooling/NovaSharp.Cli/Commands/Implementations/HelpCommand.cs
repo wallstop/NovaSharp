@@ -4,13 +4,18 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Cli;
     using NovaSharp.Interpreter.Compatibility;
 
+    /// <summary>
+    /// CLI command that lists available commands or shows detailed help for a specific command.
+    /// </summary>
     internal class HelpCommand : ICommand
     {
+        /// <inheritdoc />
         public string Name
         {
             get { return "help"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine(
@@ -18,11 +23,13 @@ namespace NovaSharp.Cli.Commands.Implementations
             );
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             DisplayShortHelp();
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string arguments)
         {
             string command = arguments ?? string.Empty;

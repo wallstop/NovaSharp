@@ -8,6 +8,9 @@ namespace NovaSharp.Cli
     /// </summary>
     internal sealed partial class Program
     {
+        /// <summary>
+        /// Invokes the private interpreter loop so tests can step through REPL behavior.
+        /// </summary>
         internal static void RunInterpreterLoopForTests(
             ReplInterpreter interpreter,
             ShellContext shellContext
@@ -16,6 +19,9 @@ namespace NovaSharp.Cli
             InterpreterLoop(interpreter, shellContext);
         }
 
+        /// <summary>
+        /// Invokes the banner writer so tests can capture its output.
+        /// </summary>
         internal static void ShowBannerForTests(Script script)
         {
             Banner(script);

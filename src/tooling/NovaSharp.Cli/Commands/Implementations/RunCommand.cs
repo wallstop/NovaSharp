@@ -7,23 +7,30 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// CLI command that runs a Lua file from disk, applying mod manifests when present.
+    /// </summary>
     internal sealed class RunCommand : ICommand
     {
+        /// <inheritdoc />
         public string Name
         {
             get { return "run"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
             Console.WriteLine("run <filename> - Executes the specified Lua script");
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
             Console.WriteLine("run <filename> - Executes the specified Lua script.");
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string arguments)
         {
             if (arguments.Length == 0)
