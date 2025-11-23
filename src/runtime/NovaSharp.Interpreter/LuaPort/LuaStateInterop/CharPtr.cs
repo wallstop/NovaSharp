@@ -96,40 +96,44 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public CharPtr(string str)
         {
-            chars = (str + '\0').ToCharArray();
+            string validated = EnsureArgument(str, nameof(str));
+            chars = (validated + '\0').ToCharArray();
             index = 0;
         }
 
         public CharPtr(CharPtr ptr)
         {
-            chars = ptr.chars;
-            index = ptr.index;
+            CharPtr validatedPtr = EnsureArgument(ptr, nameof(ptr));
+            chars = validatedPtr.chars;
+            index = validatedPtr.index;
         }
 
         public CharPtr(CharPtr ptr, int index)
         {
-            chars = ptr.chars;
+            CharPtr validatedPtr = EnsureArgument(ptr, nameof(ptr));
+            chars = validatedPtr.chars;
             this.index = index;
         }
 
         public CharPtr(char[] chars)
         {
-            this.chars = chars;
+            this.chars = EnsureArgument(chars, nameof(chars));
             index = 0;
         }
 
         public CharPtr(char[] chars, int index)
         {
-            this.chars = chars;
+            this.chars = EnsureArgument(chars, nameof(chars));
             this.index = index;
         }
 
         public CharPtr(byte[] bytes)
         {
-            chars = new char[bytes.Length];
-            for (int i = 0; i < bytes.Length; i++)
+            byte[] validatedBytes = EnsureArgument(bytes, nameof(bytes));
+            chars = new char[validatedBytes.Length];
+            for (int i = 0; i < validatedBytes.Length; i++)
             {
-                chars[i] = (char)bytes[i];
+                chars[i] = (char)validatedBytes[i];
             }
 
             index = 0;
@@ -143,22 +147,26 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public static CharPtr operator +(CharPtr ptr, int offset)
         {
-            return new CharPtr(ptr.chars, ptr.index + offset);
+            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
+            return new CharPtr(validated.chars, validated.index + offset);
         }
 
         public static CharPtr operator -(CharPtr ptr, int offset)
         {
-            return new CharPtr(ptr.chars, ptr.index - offset);
+            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
+            return new CharPtr(validated.chars, validated.index - offset);
         }
 
         public static CharPtr operator +(CharPtr ptr, uint offset)
         {
-            return new CharPtr(ptr.chars, ptr.index + (int)offset);
+            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
+            return new CharPtr(validated.chars, validated.index + (int)offset);
         }
 
         public static CharPtr operator -(CharPtr ptr, uint offset)
         {
-            return new CharPtr(ptr.chars, ptr.index - (int)offset);
+            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
+            return new CharPtr(validated.chars, validated.index - (int)offset);
         }
 
         public void Inc()
@@ -193,26 +201,28 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public static bool operator ==(CharPtr ptr, char ch)
         {
-            return ptr[0] == ch;
+            return EnsureArgument(ptr, nameof(ptr))[0] == ch;
         }
 
         public static bool operator ==(char ch, CharPtr ptr)
         {
-            return ptr[0] == ch;
+            return EnsureArgument(ptr, nameof(ptr))[0] == ch;
         }
 
         public static bool operator !=(CharPtr ptr, char ch)
         {
-            return ptr[0] != ch;
+            return EnsureArgument(ptr, nameof(ptr))[0] != ch;
         }
 
         public static bool operator !=(char ch, CharPtr ptr)
         {
-            return ptr[0] != ch;
+            return EnsureArgument(ptr, nameof(ptr))[0] != ch;
         }
 
         public static CharPtr operator +(CharPtr ptr1, CharPtr ptr2)
         {
+            EnsureArgument(ptr1, nameof(ptr1));
+            EnsureArgument(ptr2, nameof(ptr2));
             string result = "";
             for (int i = 0; ptr1[i] != '\0'; i++)
             {
@@ -229,49 +239,52 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public static int operator -(CharPtr ptr1, CharPtr ptr2)
         {
-            Debug.Assert(ptr1.chars == ptr2.chars);
-            return ptr1.index - ptr2.index;
+            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
+            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
+            Debug.Assert(left.chars == right.chars);
+            return left.index - right.index;
         }
 
         public static bool operator <(CharPtr ptr1, CharPtr ptr2)
         {
-            Debug.Assert(ptr1.chars == ptr2.chars);
-            return ptr1.index < ptr2.index;
+            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
+            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
+            Debug.Assert(left.chars == right.chars);
+            return left.index < right.index;
         }
 
         public static bool operator <=(CharPtr ptr1, CharPtr ptr2)
         {
-            Debug.Assert(ptr1.chars == ptr2.chars);
-            return ptr1.index <= ptr2.index;
+            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
+            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
+            Debug.Assert(left.chars == right.chars);
+            return left.index <= right.index;
         }
 
         public static bool operator >(CharPtr ptr1, CharPtr ptr2)
         {
-            Debug.Assert(ptr1.chars == ptr2.chars);
-            return ptr1.index > ptr2.index;
+            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
+            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
+            Debug.Assert(left.chars == right.chars);
+            return left.index > right.index;
         }
 
         public static bool operator >=(CharPtr ptr1, CharPtr ptr2)
         {
-            Debug.Assert(ptr1.chars == ptr2.chars);
-            return ptr1.index >= ptr2.index;
+            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
+            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
+            Debug.Assert(left.chars == right.chars);
+            return left.index >= right.index;
         }
 
         public static bool operator ==(CharPtr ptr1, CharPtr ptr2)
         {
-            object o1 = ptr1 as CharPtr;
-            object o2 = ptr2 as CharPtr;
-            if ((o1 == null) && (o2 == null))
+            if (ReferenceEquals(ptr1, ptr2))
             {
                 return true;
             }
 
-            if (o1 == null)
-            {
-                return false;
-            }
-
-            if (o2 == null)
+            if (ptr1 is null || ptr2 is null)
             {
                 return false;
             }
@@ -314,6 +327,17 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             }
 
             return result.ToString();
+        }
+
+        private static T EnsureArgument<T>(T value, string paramName)
+            where T : class
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+
+            return value;
         }
     }
 }

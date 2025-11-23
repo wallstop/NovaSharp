@@ -15,6 +15,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static int Memcmp(CharPtr ptr1, CharPtr ptr2, int size)
         {
+            EnsurePointer(ptr1, nameof(ptr1));
+            EnsurePointer(ptr2, nameof(ptr2));
             for (int i = 0; i < size; i++)
             {
                 if (ptr1[i] != ptr2[i])
@@ -35,6 +37,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static CharPtr Memchr(CharPtr ptr, char c, uint count)
         {
+            EnsurePointer(ptr, nameof(ptr));
             for (uint i = 0; i < count; i++)
             {
                 if (ptr[i] == c)
@@ -48,6 +51,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static CharPtr Strpbrk(CharPtr str, CharPtr charset)
         {
+            EnsurePointer(str, nameof(str));
+            EnsurePointer(charset, nameof(charset));
             for (int i = 0; str[i] != '\0'; i++)
             {
                 for (int j = 0; charset[j] != '\0'; j++)
@@ -180,6 +185,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         // find c in str
         protected static CharPtr Strchr(CharPtr str, char c)
         {
+            EnsurePointer(str, nameof(str));
             for (int index = str.index; str.chars[index] != 0; index++)
             {
                 if (str.chars[index] == c)
@@ -193,6 +199,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static CharPtr Strcpy(CharPtr dst, CharPtr src)
         {
+            EnsurePointer(dst, nameof(dst));
+            EnsurePointer(src, nameof(src));
             int i;
             for (i = 0; src[i] != '\0'; i++)
             {
@@ -205,6 +213,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static CharPtr Strncpy(CharPtr dst, CharPtr src, int length)
         {
+            EnsurePointer(dst, nameof(dst));
+            EnsurePointer(src, nameof(src));
             int index = 0;
             while ((src[index] != '\0') && (index < length))
             {
@@ -221,6 +231,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static int Strlen(CharPtr str)
         {
+            EnsurePointer(str, nameof(str));
             int index = 0;
             while (str[index] != '\0')
             {
@@ -232,6 +243,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public static void Sprintf(CharPtr buffer, CharPtr str, params object[] argv)
         {
+            EnsurePointer(buffer, nameof(buffer));
+            EnsurePointer(str, nameof(str));
             string temp = Tools.Sprintf(str.ToString(), argv);
             Strcpy(buffer, temp);
         }

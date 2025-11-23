@@ -9,34 +9,28 @@ namespace NovaSharp.Interpreter.Interop.Converters
     /// </summary>
     internal static class NumericConversions
     {
-        static NumericConversions()
+        /// <summary>
+        /// Array of numeric types in order used for some conversions
+        /// </summary>
+        internal static readonly Type[] NumericTypesOrdered =
         {
-            NumericTypesOrdered = new Type[]
-            {
-                typeof(double),
-                typeof(decimal),
-                typeof(float),
-                typeof(long),
-                typeof(int),
-                typeof(short),
-                typeof(sbyte),
-                typeof(ulong),
-                typeof(uint),
-                typeof(ushort),
-                typeof(byte),
-            };
-            NumericTypes = new HashSet<Type>(NumericTypesOrdered);
-        }
+            typeof(double),
+            typeof(decimal),
+            typeof(float),
+            typeof(long),
+            typeof(int),
+            typeof(short),
+            typeof(sbyte),
+            typeof(ulong),
+            typeof(uint),
+            typeof(ushort),
+            typeof(byte),
+        };
 
         /// <summary>
         /// HashSet of numeric types
         /// </summary>
-        internal static readonly HashSet<Type> NumericTypes;
-
-        /// <summary>
-        /// Array of numeric types in order used for some conversions
-        /// </summary>
-        internal static readonly Type[] NumericTypesOrdered;
+        internal static readonly HashSet<Type> NumericTypes = new(NumericTypesOrdered);
 
         /// <summary>
         /// Converts a double to another type

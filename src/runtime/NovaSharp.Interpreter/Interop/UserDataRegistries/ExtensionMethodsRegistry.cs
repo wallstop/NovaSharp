@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                 foreach (MethodInfo mi in Framework.Do.GetMethods(type).Where(mi => mi.IsStatic))
                 {
-                    if (mi.GetCustomAttributes(typeof(ExtensionAttribute), false).Count() == 0)
+                    if (mi.GetCustomAttributes(typeof(ExtensionAttribute), false).Length == 0)
                     {
                         continue;
                     }

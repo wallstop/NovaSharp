@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// </summary>
         /// <param name="funcName">Name of the function.</param>
         public ObjectCallbackMemberDescriptor(string funcName)
-            : this(funcName, (o, c, a) => DynValue.Void, new ParameterDescriptor[0]) { }
+            : this(funcName, (o, c, a) => DynValue.Void, Array.Empty<ParameterDescriptor>()) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObjectCallbackMemberDescriptor"/> class.
@@ -38,7 +38,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             string funcName,
             Func<object, ScriptExecutionContext, CallbackArguments, object> callBack
         )
-            : this(funcName, callBack, new ParameterDescriptor[0]) { }
+            : this(funcName, callBack, Array.Empty<ParameterDescriptor>()) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObjectCallbackMemberDescriptor"/> class.

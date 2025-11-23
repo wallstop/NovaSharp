@@ -27,8 +27,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             : base(
                 name,
                 isSetter
-                    ? (Func<object, ScriptExecutionContext, CallbackArguments, object>)
-                        ArrayIndexerSet
+                    ? static (obj, ctx, args) => ArrayIndexerSet(obj, ctx, args)
                     : (Func<object, ScriptExecutionContext, CallbackArguments, object>)
                         ArrayIndexerGet,
                 indexerParams
@@ -46,8 +45,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             : base(
                 name,
                 isSetter
-                    ? (Func<object, ScriptExecutionContext, CallbackArguments, object>)
-                        ArrayIndexerSet
+                    ? static (obj, ctx, args) => ArrayIndexerSet(obj, ctx, args)
                     : (Func<object, ScriptExecutionContext, CallbackArguments, object>)
                         ArrayIndexerGet
             )
@@ -62,6 +60,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("name", DynValue.NewString(Name));
             t.Set("setter", DynValue.NewBoolean(_isSetter));
@@ -95,7 +98,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             return indices;
         }
 
-        private static object ArrayIndexerSet(
+        private static DynValue ArrayIndexerSet(
             object arrayObj,
             ScriptExecutionContext ctx,
             CallbackArguments args

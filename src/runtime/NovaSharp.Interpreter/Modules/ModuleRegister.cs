@@ -422,10 +422,7 @@ namespace NovaSharp.Interpreter.Modules
             return RegisterModuleType(table, typeof(T));
         }
 
-        private static IEnumerable<string> GetModuleNameVariants(
-            string explicitName,
-            string memberName
-        )
+        private static HashSet<string> GetModuleNameVariants(string explicitName, string memberName)
         {
             HashSet<string> names = new(StringComparer.Ordinal);
 

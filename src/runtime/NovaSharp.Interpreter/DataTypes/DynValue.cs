@@ -3,7 +3,7 @@ namespace NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Linq;
+    //using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -377,7 +377,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(values));
             }
 
-            if (!values.Any(v => v.Type == DataType.Tuple))
+            if (!Array.Exists(values, v => v.Type == DataType.Tuple))
             {
                 return NewTuple(values);
             }
@@ -834,6 +834,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
         public void Assign(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (ReadOnly)
             {
                 throw new ScriptRuntimeException("Assigning on r-value");
@@ -949,6 +954,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public object ToObject(Type desiredType)
         {
+            if (desiredType == null)
+            {
+                throw new ArgumentNullException(nameof(desiredType));
+            }
+
             //Contract.Requires(desiredType != null);
             return Interop.Converters.ScriptToClrConversions.DynValueToObjectOfType(
                 this,

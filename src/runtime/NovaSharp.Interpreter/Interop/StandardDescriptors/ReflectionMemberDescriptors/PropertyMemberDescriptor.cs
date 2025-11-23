@@ -148,6 +148,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             MethodInfo setter
         )
         {
+            if (pi == null)
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
+
             if (getter == null && setter == null)
             {
                 throw new ArgumentNullException("getter and setter cannot both be null");
@@ -330,6 +335,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="v">The value to set.</param>
         public void SetValue(Script script, object obj, DynValue v)
         {
+            if (v == null)
+            {
+                throw new ArgumentNullException(nameof(v));
+            }
+
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (_setter == null)
@@ -413,7 +423,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
         /// </summary>
-        void IOptimizableDescriptor.Optimize()
+        public virtual void Optimize()
         {
             OptimizeGetter();
             OptimizeSetter();
@@ -426,6 +436,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("visibility", DynValue.NewString(PropertyInfo.GetClrVisibility()));
             t.Set("name", DynValue.NewString(Name));

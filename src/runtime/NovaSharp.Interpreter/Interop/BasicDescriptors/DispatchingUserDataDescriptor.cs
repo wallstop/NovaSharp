@@ -75,6 +75,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="friendlyName">A friendly name for the type, or null.</param>
         protected DispatchingUserDataDescriptor(Type type, string friendlyName = null)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             Type = type;
             Name = type.FullName;
             FriendlyName = friendlyName ?? type.Name;
@@ -495,7 +500,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
-        void IOptimizableDescriptor.Optimize()
+        public virtual void Optimize()
         {
             foreach (
                 IOptimizableDescriptor m in _metaMembers.Values.OfType<IOptimizableDescriptor>()
@@ -760,7 +765,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         #region MetaMethodsDispatching
 
 
-        private int PerformComparison(object obj, object p1, object p2)
+        private static int PerformComparison(object obj, object p1, object p2)
         {
             IComparable comp = (IComparable)obj;
 
@@ -779,7 +784,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             throw new InternalErrorException("unexpected case");
         }
 
-        private DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
+        private static DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -794,7 +799,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue MultiDispatchLessThan(Script script, object obj)
+        private static DynValue MultiDispatchLessThan(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -831,7 +836,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue MultiDispatchEqual(Script script, object obj)
+        private static DynValue MultiDispatchEqual(Script script, object obj)
         {
             return DynValue.NewCallback(
                 (context, args) =>
@@ -839,7 +844,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             );
         }
 
-        private bool CheckEquality(object obj, object p1, object p2)
+        private static bool CheckEquality(object obj, object p1, object p2)
         {
             if (obj != null)
             {

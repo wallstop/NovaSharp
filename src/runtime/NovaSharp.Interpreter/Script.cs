@@ -339,6 +339,16 @@ namespace NovaSharp.Interpreter
         /// </exception>
         public void Dump(DynValue function, Stream stream)
         {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
             this.CheckScriptOwnership(function);
 
             if (function.Type != DataType.Function)
@@ -358,12 +368,14 @@ namespace NovaSharp.Interpreter
                 throw new ArgumentException("function arg has upvalues other than _ENV");
             }
 
-            UndisposableStream outStream = new(stream);
-            _mainProcessor.Dump(
-                outStream,
-                function.Function.EntryPointByteCodeLocation,
-                upvaluesType == Closure.UpvaluesType.Environment
-            );
+            using (UndisposableStream outStream = new(stream))
+            {
+                _mainProcessor.Dump(
+                    outStream,
+                    function.Function.EntryPointByteCodeLocation,
+                    upvaluesType == Closure.UpvaluesType.Environment
+                );
+            }
         }
 
         /// <summary>
@@ -555,7 +567,12 @@ namespace NovaSharp.Interpreter
                 }
                 else
                 {
-                    c = new Closure(this, address, new SymbolRef[0], new DynValue[0]);
+                    c = new Closure(
+                        this,
+                        address,
+                        Array.Empty<SymbolRef>(),
+                        Array.Empty<DynValue>()
+                    );
                 }
             }
             else
@@ -589,7 +606,7 @@ namespace NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function)
         {
-            return Call(function, new DynValue[0]);
+            return Call(function, Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -603,6 +620,16 @@ namespace NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, params DynValue[] args)
         {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(args);
 
@@ -651,6 +678,16 @@ namespace NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, params object[] args)
         {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)
@@ -694,6 +731,11 @@ namespace NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function or DataType.ClrFunction</exception>
         public DynValue CreateCoroutine(DynValue function)
         {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
             this.CheckScriptOwnership(function);
 
             if (function.Type == DataType.Function)
@@ -777,6 +819,11 @@ namespace NovaSharp.Interpreter
         /// <param name="debugger">The debugger object.</param>
         public void AttachDebugger(IDebugger debugger)
         {
+            if (debugger == null)
+            {
+                throw new ArgumentNullException(nameof(debugger));
+            }
+
             DebuggerEnabled = true;
             _debugger = debugger;
             _mainProcessor.AttachDebugger(debugger);
@@ -1003,9 +1050,9 @@ namespace NovaSharp.Interpreter
             return sb.ToString();
         }
 
-        Script IScriptPrivateResource.OwnerScript
-        {
-            get { return this; }
-        }
+        /// <summary>
+        /// Provides the owning script reference for <see cref="IScriptPrivateResource"/> consumers.
+        /// </summary>
+        public virtual Script OwnerScript => this;
     }
 }

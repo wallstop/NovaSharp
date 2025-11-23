@@ -55,6 +55,11 @@ namespace NovaSharp.Interpreter.REPL
         /// <returns></returns>
         public override string ResolveModuleName(string modname, Table globalContext)
         {
+            if (globalContext == null)
+            {
+                throw new ArgumentNullException(nameof(globalContext));
+            }
+
             DynValue s = globalContext.RawGet("LUA_PATH");
 
             if (s != null && s.Type == DataType.String)

@@ -7,6 +7,6 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
     public abstract class HardwiredUserDataDescriptor : DispatchingUserDataDescriptor
     {
         protected HardwiredUserDataDescriptor(Type t)
-            : base(t, "::hardwired::" + t.Name) { }
+            : base(t ?? throw new ArgumentNullException(nameof(t)), "::hardwired::" + t.Name) { }
     }
 }

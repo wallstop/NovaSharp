@@ -71,6 +71,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             InteropAccessMode accessMode
         )
         {
+            if (fi == null)
+            {
+                throw new ArgumentNullException(nameof(fi));
+            }
+
             if (fi.GetVisibilityFromAttributes() ?? fi.IsPublic)
             {
                 return new FieldMemberDescriptor(fi, accessMode);
@@ -86,6 +91,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="accessMode">The <see cref="InteropAccessMode" /> </param>
         public FieldMemberDescriptor(FieldInfo fi, InteropAccessMode accessMode)
         {
+            if (fi == null)
+            {
+                throw new ArgumentNullException(nameof(fi));
+            }
+
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
             {
                 accessMode = InteropAccessMode.Reflection;
@@ -193,6 +203,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="v">The value to set.</param>
         public void SetValue(Script script, object obj, DynValue v)
         {
+            if (v == null)
+            {
+                throw new ArgumentNullException(nameof(v));
+            }
+
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (IsReadonly || IsConst)
@@ -262,7 +277,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
-        void IOptimizableDescriptor.Optimize()
+        public virtual void Optimize()
         {
             if (_optimizedGetter == null)
             {
@@ -277,6 +292,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("visibility", DynValue.NewString(FieldInfo.GetClrVisibility()));
 

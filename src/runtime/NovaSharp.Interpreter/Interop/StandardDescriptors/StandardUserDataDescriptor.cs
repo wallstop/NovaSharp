@@ -255,6 +255,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             if (
                 AccessMode == InteropAccessMode.HideMembers
                 || Framework.Do.GetAssembly(Type) == Framework.Do.GetAssembly(GetType())
@@ -277,11 +282,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        private void Serialize(
+        private static void Serialize(
             Table t,
             IEnumerable<KeyValuePair<string, IMemberDescriptor>> members
         )
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             foreach (KeyValuePair<string, IMemberDescriptor> pair in members)
             {
                 if (pair.Value is IWireableDescriptor sd)

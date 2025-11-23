@@ -37,6 +37,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 
         public void SetValue(Script script, object obj, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
             object v = ScriptToClrConversions.DynValueToObjectOfType(
                 value,

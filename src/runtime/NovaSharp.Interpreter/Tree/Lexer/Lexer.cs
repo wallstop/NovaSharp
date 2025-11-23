@@ -143,7 +143,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return _cursor < _code.Length;
         }
 
-        private bool IsWhiteSpace(char c)
+        private static bool IsWhiteSpace(char c)
         {
             return char.IsWhiteSpace(c);
         }

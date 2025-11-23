@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tree.FastInterface
             ScriptLoadingContext lcontext = CreateLoadingContext(script, source);
             try
             {
-                Statement stat;
+                ChunkStatement stat;
 
                 using (
                     script.PerformanceStats.StartStopwatch(

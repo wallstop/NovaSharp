@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="o">The object.</param>
         /// <param name="data">The data.</param>
-        void IPropertyTableAssigner.AssignObjectUnchecked(object o, Table data)
+        public virtual void AssignObjectUnchecked(object o, Table data)
         {
             AssignObject((T)o, data);
         }
@@ -114,6 +114,16 @@ namespace NovaSharp.Interpreter.Interop
         /// </exception>
         public PropertyTableAssigner(Type type, params string[] expectedMissingProperties)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            if (expectedMissingProperties == null)
+            {
+                throw new ArgumentNullException(nameof(expectedMissingProperties));
+            }
+
             _type = type;
 
             if (Framework.Do.IsValueType(_type))
@@ -135,7 +145,7 @@ namespace NovaSharp.Interpreter.Interop
                 {
                     string name = attr.Name ?? pi.Name;
 
-                    if (_propertyMap.ContainsKey(name))
+                    if (!_propertyMap.TryAdd(name, pi))
                     {
                         throw new ArgumentException(
                             string.Format(
@@ -145,10 +155,6 @@ namespace NovaSharp.Interpreter.Interop
                                 name
                             )
                         );
-                    }
-                    else
-                    {
-                        _propertyMap.Add(name, pi);
                     }
                 }
             }
@@ -165,17 +171,20 @@ namespace NovaSharp.Interpreter.Interop
 
         private bool TryAssignProperty(object obj, string name, DynValue value)
         {
-            if (_propertyMap.ContainsKey(name))
+            if (_propertyMap.TryGetValue(name, out PropertyInfo pi))
             {
-                PropertyInfo pi = _propertyMap[name];
-
                 if (pi != null)
                 {
                     object o;
 
-                    if (value.Type == DataType.Table && _subAssigners.ContainsKey(pi.PropertyType))
+                    if (
+                        value.Type == DataType.Table
+                        && _subAssigners.TryGetValue(
+                            pi.PropertyType,
+                            out IPropertyTableAssigner subassigner
+                        )
+                    )
                     {
-                        IPropertyTableAssigner subassigner = _subAssigners[pi.PropertyType];
                         o = Activator.CreateInstance(pi.PropertyType);
                         subassigner.AssignObjectUnchecked(o, value.Table);
                     }
@@ -253,7 +262,12 @@ namespace NovaSharp.Interpreter.Interop
         {
             if (obj == null)
             {
-                throw new ArgumentNullException("Object is null");
+                throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
             }
 
             if (!Framework.Do.IsInstanceOfType(_type, obj))
@@ -315,7 +329,7 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="o">The object.</param>
         /// <param name="data">The data.</param>
-        void IPropertyTableAssigner.AssignObjectUnchecked(object obj, Table data)
+        public virtual void AssignObjectUnchecked(object obj, Table data)
         {
             AssignObject(obj, data);
         }

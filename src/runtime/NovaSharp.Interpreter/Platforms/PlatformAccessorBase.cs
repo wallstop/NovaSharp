@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Platforms
             return GetPlatformNamePrefix() + "." + suffix;
         }
 
-        private string GetUnityRuntimeName()
+        private static string GetUnityRuntimeName()
         {
 #if ENABLE_MONO
             return "mono";
@@ -92,7 +92,7 @@ namespace NovaSharp.Interpreter.Platforms
 #endif
         }
 
-        private string GetUnityPlatformName()
+        private static string GetUnityPlatformName()
         {
 #if UNITY_STANDALONE_OSX
             return "osx";

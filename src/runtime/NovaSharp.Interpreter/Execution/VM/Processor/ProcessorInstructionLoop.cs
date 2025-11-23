@@ -1020,7 +1020,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             if (numargs == 0)
             {
-                return new DynValue[0];
+                return Array.Empty<DynValue>();
             }
 
             DynValue lastParam = _valueStack.Peek(offsFromTop);
@@ -1747,7 +1747,8 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {
-                _valueStack.Push(DynValue.NewBoolean(l.String.CompareTo(r.String) < 0));
+                int comparison = string.Compare(l.String, r.String, StringComparison.Ordinal);
+                _valueStack.Push(DynValue.NewBoolean(comparison < 0));
             }
             else
             {
@@ -1778,7 +1779,8 @@ namespace NovaSharp.Interpreter.Execution.VM
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {
                 _valueStack.Push(DynValue.False);
-                _valueStack.Push(DynValue.NewBoolean(l.String.CompareTo(r.String) <= 0));
+                int comparison = string.Compare(l.String, r.String, StringComparison.Ordinal);
+                _valueStack.Push(DynValue.NewBoolean(comparison <= 0));
             }
             else
             {

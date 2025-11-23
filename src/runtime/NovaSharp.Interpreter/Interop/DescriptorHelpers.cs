@@ -70,6 +70,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this Type type)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
 #if NETFX_CORE
             var t = type.GetTypeInfo();
 #else
@@ -108,6 +113,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this FieldInfo info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             if (info.IsPublic)
             {
                 return "public";
@@ -141,6 +151,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this PropertyInfo info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             MethodInfo gm = Framework.Do.GetGetMethod(info);
             MethodInfo sm = Framework.Do.GetSetMethod(info);
 
@@ -166,6 +181,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this MethodBase info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             if (info.IsPublic)
             {
                 return "public";
@@ -201,6 +221,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static bool IsPropertyInfoPublic(this PropertyInfo pi)
         {
+            if (pi == null)
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
+
             MethodInfo getter = Framework.Do.GetGetMethod(pi);
             MethodInfo setter = Framework.Do.GetSetMethod(pi);
 
@@ -215,6 +240,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
             return mi.GetCustomAttributes(typeof(NovaSharpUserDataMetamethodAttribute), true)
                 .OfType<NovaSharpUserDataMetamethodAttribute>()
                 .Select(a => a.Name)
@@ -245,6 +275,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string GetConversionMethodName(this Type type)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             StringBuilder sb = new(type.Name);
 
             for (int i = 0; i < sb.Length; i++)
@@ -339,6 +374,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string Camelify(string name)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             StringBuilder sb = new(name.Length);
 
             bool first = true;

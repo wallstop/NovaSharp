@@ -91,7 +91,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             lcontext.Source.Refs.Add(_end);
         }
 
-        private Statement CreateLambdaBody(ScriptLoadingContext lcontext)
+        private static Statement CreateLambdaBody(ScriptLoadingContext lcontext)
         {
             Token start = lcontext.Lexer.Current;
             Expression e = Expr(lcontext);
@@ -181,7 +181,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return paramnames;
         }
 
-        private SymbolRef[] DefineArguments(List<string> paramnames, ScriptLoadingContext lcontext)
+        private static SymbolRef[] DefineArguments(
+            List<string> paramnames,
+            ScriptLoadingContext lcontext
+        )
         {
             HashSet<string> names = new();
 

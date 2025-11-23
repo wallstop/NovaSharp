@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
@@ -54,6 +55,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             InteropAccessMode accessMode = InteropAccessMode.Default
         )
         {
+            if (methodBase == null)
+            {
+                throw new ArgumentNullException(nameof(methodBase));
+            }
+
             CheckMethodIsCompatible(methodBase, true);
 
             IsConstructor = (methodBase is ConstructorInfo);
@@ -83,7 +89,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
                 for (int i = 0; i < rank; i++)
                 {
-                    parameters[i] = new ParameterDescriptor("idx" + i.ToString(), typeof(int));
+                    parameters[i] = new ParameterDescriptor(
+                        "idx" + i.ToString(CultureInfo.InvariantCulture),
+                        typeof(int)
+                    );
                 }
             }
             else
@@ -91,11 +100,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 parameters = reflectionParams.Select(pi => new ParameterDescriptor(pi)).ToArray();
             }
 
-            bool isExtensionMethod = (
+            bool isExtensionMethod =
                 methodBase.IsStatic
                 && parameters.Length > 0
-                && methodBase.GetCustomAttributes(typeof(ExtensionAttribute), false).Any()
-            );
+                && Attribute.IsDefined(methodBase, typeof(ExtensionAttribute), false);
 
             Initialize(methodBase.Name, isStatic, parameters, isExtensionMethod);
 
@@ -115,16 +123,20 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 throw new ArgumentException("Invalid accessMode");
             }
 
-            if (parameters.Any(p => p.Type.IsByRef))
+            for (int i = 0; i < parameters.Length; i++)
             {
-                accessMode = InteropAccessMode.Reflection;
+                if (parameters[i].Type.IsByRef)
+                {
+                    accessMode = InteropAccessMode.Reflection;
+                    break;
+                }
             }
 
             AccessMode = accessMode;
 
             if (AccessMode == InteropAccessMode.Preoptimized)
             {
-                ((IOptimizableDescriptor)this).Optimize();
+                Optimize();
             }
         }
 
@@ -145,6 +157,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             bool forceVisibility = false
         )
         {
+            if (methodBase == null)
+            {
+                throw new ArgumentNullException(nameof(methodBase));
+            }
+
             if (!CheckMethodIsCompatible(methodBase, false))
             {
                 return null;
@@ -174,6 +191,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </exception>
         public static bool CheckMethodIsCompatible(MethodBase methodBase, bool throwException)
         {
+            if (methodBase == null)
+            {
+                throw new ArgumentNullException(nameof(methodBase));
+            }
+
             if (methodBase.ContainsGenericParameters)
             {
                 if (throwException)
@@ -249,7 +271,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 && _optimizedAction == null
             )
             {
-                ((IOptimizableDescriptor)this).Optimize();
+                Optimize();
             }
 
             object[] pars = base.BuildArgumentList(
@@ -294,7 +316,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
         /// </summary>
         /// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
-        void IOptimizableDescriptor.Optimize()
+        public virtual void Optimize()
         {
             ParameterDescriptor[] parameters = GetParameterArray();
 
@@ -369,6 +391,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("name", DynValue.NewString(Name));
             t.Set("ctor", DynValue.NewBoolean(IsConstructor));

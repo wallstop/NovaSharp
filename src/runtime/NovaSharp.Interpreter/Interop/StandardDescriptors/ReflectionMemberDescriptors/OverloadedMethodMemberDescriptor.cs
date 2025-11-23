@@ -4,13 +4,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using NovaSharp.Interpreter.Compatibility;
-    using NovaSharp.Interpreter.DataTypes;
-    using NovaSharp.Interpreter.Errors;
-    using NovaSharp.Interpreter.Execution;
-    using NovaSharp.Interpreter.Interop.BasicDescriptors;
-    using NovaSharp.Interpreter.Interop.Converters;
+    using BasicDescriptors;
+    using Compatibility;
+    using Converters;
+    using DataTypes;
+    using Errors;
+    using Execution;
 
     /// <summary>
     /// Class providing easier marshalling of overloaded CLR functions
@@ -23,12 +22,35 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Comparer class for IOverloadableMemberDescriptor
         /// </summary>
-        private class OverloadableMemberDescriptorComparer
+        private sealed class OverloadableMemberDescriptorComparer
             : IComparer<IOverloadableMemberDescriptor>
         {
+            public static readonly OverloadableMemberDescriptorComparer Instance = new();
+
+            private OverloadableMemberDescriptorComparer() { }
+
             public int Compare(IOverloadableMemberDescriptor x, IOverloadableMemberDescriptor y)
             {
-                return x.SortDiscriminant.CompareTo(y.SortDiscriminant);
+                if (ReferenceEquals(x, y))
+                {
+                    return 0;
+                }
+
+                if (x == null)
+                {
+                    return -1;
+                }
+
+                if (y == null)
+                {
+                    return 1;
+                }
+
+                return string.Compare(
+                    x.SortDiscriminant,
+                    y.SortDiscriminant,
+                    StringComparison.Ordinal
+                );
             }
         }
 
@@ -36,11 +58,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
         private class OverloadCacheItem
         {
-            public bool HasObject;
-            public IOverloadableMemberDescriptor Method;
-            public List<DataType> ArgumentDataTypes;
-            public List<Type> ArgumentUserDataTypes;
-            public int HitIndexAtLastHit;
+            public bool hasObject;
+            public IOverloadableMemberDescriptor method;
+            public List<DataType> argumentDataTypes;
+            public List<Type> argumentUserDataTypes;
+            public int hitIndexAtLastHit;
         }
 
         private readonly List<IOverloadableMemberDescriptor> _overloads = new();
@@ -171,7 +193,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             if (_unsorted)
             {
-                _overloads.Sort(new OverloadableMemberDescriptorComparer());
+                _overloads.Sort(OverloadableMemberDescriptorComparer.Instance);
                 _unsorted = false;
             }
 
@@ -186,7 +208,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                             string.Format("[OVERLOAD] : CACHED! slot {0}, hits: {1}", i, _CacheHits)
                         );
 #endif
-                        return _cache[i].Method.Execute(script, obj, context, args);
+                        return _cache[i].method.Execute(script, obj, context, args);
                     }
                 }
             }
@@ -252,15 +274,15 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 {
                     found = new OverloadCacheItem()
                     {
-                        ArgumentDataTypes = new List<DataType>(),
-                        ArgumentUserDataTypes = new List<Type>(),
+                        argumentDataTypes = new List<DataType>(),
+                        argumentUserDataTypes = new List<Type>(),
                     };
                     _cache[i] = found;
                     break;
                 }
-                else if (_cache[i].HitIndexAtLastHit < lowestHits)
+                else if (_cache[i].hitIndexAtLastHit < lowestHits)
                 {
-                    lowestHits = _cache[i].HitIndexAtLastHit;
+                    lowestHits = _cache[i].hitIndexAtLastHit;
                     found = _cache[i];
                 }
             }
@@ -271,30 +293,30 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 _cache = new OverloadCacheItem[CacheSize];
                 found = new OverloadCacheItem()
                 {
-                    ArgumentDataTypes = new List<DataType>(),
-                    ArgumentUserDataTypes = new List<Type>(),
+                    argumentDataTypes = new List<DataType>(),
+                    argumentUserDataTypes = new List<Type>(),
                 };
                 _cache[0] = found;
                 _cacheHits = 0;
             }
 
-            found.Method = bestOverload;
-            found.HitIndexAtLastHit = ++_cacheHits;
-            found.ArgumentDataTypes.Clear();
-            found.ArgumentUserDataTypes.Clear();
-            found.HasObject = hasObject;
+            found.method = bestOverload;
+            found.hitIndexAtLastHit = ++_cacheHits;
+            found.argumentDataTypes.Clear();
+            found.argumentUserDataTypes.Clear();
+            found.hasObject = hasObject;
 
             for (int i = 0; i < args.Count; i++)
             {
-                found.ArgumentDataTypes.Add(args[i].Type);
+                found.argumentDataTypes.Add(args[i].Type);
 
                 if (args[i].Type == DataType.UserData)
                 {
-                    found.ArgumentUserDataTypes.Add(args[i].UserData.Descriptor.Type);
+                    found.argumentUserDataTypes.Add(args[i].UserData.Descriptor.Type);
                 }
                 else
                 {
-                    found.ArgumentUserDataTypes.Add(null);
+                    found.argumentUserDataTypes.Add(null);
                 }
             }
         }
@@ -305,19 +327,19 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             OverloadCacheItem overloadCacheItem
         )
         {
-            if (overloadCacheItem.HasObject && !hasObject)
+            if (overloadCacheItem.hasObject && !hasObject)
             {
                 return false;
             }
 
-            if (args.Count != overloadCacheItem.ArgumentDataTypes.Count)
+            if (args.Count != overloadCacheItem.argumentDataTypes.Count)
             {
                 return false;
             }
 
             for (int i = 0; i < args.Count; i++)
             {
-                if (args[i].Type != overloadCacheItem.ArgumentDataTypes[i])
+                if (args[i].Type != overloadCacheItem.argumentDataTypes[i])
                 {
                     return false;
                 }
@@ -326,19 +348,19 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 {
                     if (
                         args[i].UserData.Descriptor.Type
-                        != overloadCacheItem.ArgumentUserDataTypes[i]
+                        != overloadCacheItem.argumentUserDataTypes[i]
                     )
                     {
                         return false;
                     }
                 }
-                else if (overloadCacheItem.ArgumentUserDataTypes[i] != null)
+                else if (overloadCacheItem.argumentUserDataTypes[i] != null)
                 {
                     return false;
                 }
             }
 
-            overloadCacheItem.HitIndexAtLastHit = ++_cacheHits;
+            overloadCacheItem.hitIndexAtLastHit = ++_cacheHits;
             return true;
         }
 
@@ -350,7 +372,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="method">The method.</param>
         /// <param name="isExtMethod">if set to <c>true</c>, is an extension method.</param>
         /// <returns></returns>
-        private int CalcScoreForOverload(
+        private static int CalcScoreForOverload(
             ScriptExecutionContext context,
             CallbackArguments args,
             IOverloadableMemberDescriptor method,
@@ -387,9 +409,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
                 if (i == method.Parameters.Count - 1 && method.VarArgsArrayType != null)
                 {
-                    int varargCnt = 0;
+                    int varArgCount = 0;
                     DynValue firstArg = null;
-                    int scoreBeforeVargars = totalScore;
+                    int scoreBeforeVarArgs = totalScore;
 
                     // update score for varargs
                     while (true)
@@ -400,14 +422,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                             break;
                         }
 
-                        if (firstArg == null)
-                        {
-                            firstArg = arg;
-                        }
+                        firstArg ??= arg;
 
                         argsCnt += 1;
 
-                        varargCnt += 1;
+                        varArgCount += 1;
 
                         int score = CalcScoreForSingleArgument(
                             method.Parameters[i],
@@ -419,7 +438,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                     }
 
                     // check if exact-match
-                    if (varargCnt == 1)
+                    if (varArgCount == 1 && firstArg != null)
                     {
                         if (firstArg.Type == DataType.UserData && firstArg.UserData.Object != null)
                         {
@@ -430,14 +449,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                                 )
                             )
                             {
-                                totalScore = scoreBeforeVargars;
+                                totalScore = scoreBeforeVarArgs;
                                 continue;
                             }
                         }
                     }
 
                     // apply varargs penalty to score
-                    if (varargCnt == 0)
+                    if (varArgCount == 0)
                     {
                         totalScore = Math.Min(
                             totalScore,
@@ -533,11 +552,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return (context, args) => PerformOverloadedCall(script, obj, context, args);
         }
 
-        void IOptimizableDescriptor.Optimize()
+        public void Optimize()
         {
-            foreach (IOptimizableDescriptor d in _overloads.OfType<IOptimizableDescriptor>())
+            foreach (IOverloadableMemberDescriptor overload in _overloads)
             {
-                d.Optimize();
+                if (overload is IOptimizableDescriptor descriptor)
+                {
+                    descriptor.Optimize();
+                }
             }
         }
 
@@ -558,7 +580,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <exception cref="System.NotImplementedException"></exception>
         public bool IsStatic
         {
-            get { return _overloads.Any(o => o.IsStatic); }
+            get { return _overloads.Exists(o => o.IsStatic); }
         }
 
         /// <summary>
@@ -601,6 +623,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("name", DynValue.NewString(Name));
             t.Set("decltype", DynValue.NewString(DeclaringType.FullName));
@@ -639,7 +666,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 bool isExtensionMethod
             )
             {
-                return descriptor.CalcScoreForOverload(context, args, method, isExtensionMethod);
+                return OverloadedMethodMemberDescriptor.CalcScoreForOverload(
+                    context,
+                    args,
+                    method,
+                    isExtensionMethod
+                );
             }
 
             public static void SetCacheSize(OverloadedMethodMemberDescriptor descriptor, int size)

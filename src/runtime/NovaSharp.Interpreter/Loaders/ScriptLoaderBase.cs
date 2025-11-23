@@ -10,6 +10,8 @@ namespace NovaSharp.Interpreter.Loaders
     /// </summary>
     public abstract class ScriptLoaderBase : IScriptLoader
     {
+        private static readonly char[] ModulePathSeparators = new[] { ';' };
+
         /// <summary>
         /// Checks if a script file exists.
         /// </summary>
@@ -113,7 +115,7 @@ namespace NovaSharp.Interpreter.Loaders
                 throw new ArgumentNullException(nameof(str));
             }
 
-            return str.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            return str.Split(ModulePathSeparators, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Trim())
                 .Where(s => !string.IsNullOrEmpty(s))
                 .ToArray();

@@ -166,6 +166,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             out List<int> outParams
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             ParameterDescriptor[] parameters = _parameters;
 
             object[] pars = new object[parameters.Length];
@@ -301,6 +306,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             object retv
         )
         {
+            if (pars == null)
+            {
+                throw new ArgumentNullException(nameof(pars));
+            }
+
             if (outParams == null)
             {
                 return ClrToScriptConversions.ObjectToDynValue(script, retv);

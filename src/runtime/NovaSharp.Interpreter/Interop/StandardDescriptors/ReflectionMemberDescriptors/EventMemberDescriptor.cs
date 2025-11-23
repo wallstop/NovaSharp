@@ -62,6 +62,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             InteropAccessMode accessMode
         )
         {
+            if (ei == null)
+            {
+                throw new ArgumentNullException(nameof(ei));
+            }
+
             if (!CheckEventIsCompatible(ei, false))
             {
                 return null;
@@ -105,6 +110,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </exception>
         public static bool CheckEventIsCompatible(EventInfo ei, bool throwException)
         {
+            if (ei == null)
+            {
+                throw new ArgumentNullException(nameof(ei));
+            }
+
             if (Framework.Do.IsValueType(ei.DeclaringType))
             {
                 if (throwException)
@@ -279,16 +289,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         {
             lock (_lock)
             {
-                Closure closure = args.AsType(
-                    0,
-                    string.Format(
-                        "userdata<{0}>.{1}.remove",
-                        EventInfo.DeclaringType,
-                        EventInfo.Name
-                    ),
-                    DataType.Function,
-                    false
-                ).Function;
+                string removeLabel = FormattableString.Invariant(
+                    $"userdata<{EventInfo.DeclaringType}>.{EventInfo.Name}.remove"
+                );
+                Closure closure = args.AsType(0, removeLabel, DataType.Function, false).Function;
 
                 if (_callbacks.RemoveValue(o, closure))
                 {

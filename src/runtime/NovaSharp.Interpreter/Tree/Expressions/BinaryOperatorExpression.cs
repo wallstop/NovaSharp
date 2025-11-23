@@ -626,7 +626,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return (l.String.CompareTo(r.String) < 0);
+                        return string.Compare(l.String, r.String, StringComparison.Ordinal) < 0;
                     }
                     else
                     {
@@ -641,7 +641,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return (l.String.CompareTo(r.String) <= 0);
+                        return string.Compare(l.String, r.String, StringComparison.Ordinal) <= 0;
                     }
                     else
                     {

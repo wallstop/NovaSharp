@@ -37,9 +37,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 );
             }
 
+            ReadOnlySpan<char> digits = txt.AsSpan(2);
+
             if (
                 !ulong.TryParse(
-                    txt.Substring(2),
+                    digits,
                     NumberStyles.HexNumber,
                     CultureInfo.InvariantCulture,
                     out ulong res
@@ -177,7 +179,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             {
                 str = str.Substring(2);
             }
-            else if (str.StartsWith("\n", StringComparison.Ordinal))
+            else if (str.Length > 0 && str[0] == '\n')
             {
                 str = str.Substring(1);
             }

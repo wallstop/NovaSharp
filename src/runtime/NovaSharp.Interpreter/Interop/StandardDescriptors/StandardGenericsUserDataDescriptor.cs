@@ -23,6 +23,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="accessMode">The interop access mode this descriptor uses for members access</param>
         public StandardGenericsUserDataDescriptor(Type type, InteropAccessMode accessMode)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             if (accessMode == InteropAccessMode.NoReflectionAllowed)
             {
                 throw new ArgumentException(
@@ -62,6 +67,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <inheritdoc/>
         public string AsString(object obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return obj.ToString();
         }
 

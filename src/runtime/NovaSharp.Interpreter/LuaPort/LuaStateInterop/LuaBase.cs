@@ -38,6 +38,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static DynValue GetArgument(LuaState l, lua_Integer pos)
         {
+            EnsureState(l, nameof(l));
             return l.At(pos);
         }
 
@@ -48,6 +49,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             bool allowNil = false
         )
         {
+            EnsureState(l, nameof(l));
             return GetArgument(l, pos)
                 .CheckType(
                     l.FunctionName,
@@ -100,6 +102,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaPushInteger(LuaState l, lua_Integer val)
         {
+            EnsureState(l, nameof(l));
             l.Push(DynValue.NewNumber(val));
         }
 
@@ -121,17 +124,22 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaLAddValue(LuaLBuffer b)
         {
+            EnsureBuffer(b, nameof(b));
             b.StringBuilder.Append(b.LuaState.Pop().ToPrintString());
         }
 
         protected static void LuaLAddLString(LuaLBuffer b, CharPtr s, uint p)
         {
+            EnsureBuffer(b, nameof(b));
+            EnsurePointer(s, nameof(s));
             b.StringBuilder.Append(s.ToString((int)p));
         }
 
         protected static void LuaLAddString(LuaLBuffer b, string s)
         {
-            b.StringBuilder.Append(s.ToString());
+            EnsureBuffer(b, nameof(b));
+            EnsureStringNotNull(s, nameof(s));
+            b.StringBuilder.Append(s);
         }
 
         protected static lua_Integer LuaLOptInteger(LuaState l, lua_Integer pos, lua_Integer def)
@@ -174,6 +182,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static lua_Integer LuaGetTop(LuaState l)
         {
+            EnsureState(l, nameof(l));
             return l.Count;
         }
 
@@ -188,6 +197,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaLAddChar(LuaLBuffer b, char p)
         {
+            EnsureBuffer(b, nameof(b));
             b.StringBuilder.Append(p);
         }
 
@@ -195,16 +205,21 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaPushLiteral(LuaState l, string literalString)
         {
+            EnsureState(l, nameof(l));
+            EnsureStringNotNull(literalString, nameof(literalString));
             l.Push(DynValue.NewString(literalString));
         }
 
         protected static void LuaLPushResult(LuaLBuffer b)
         {
+            EnsureBuffer(b, nameof(b));
             LuaPushLiteral(b.LuaState, b.StringBuilder.ToString());
         }
 
         protected static void LuaPushLString(LuaState l, CharPtr s, uint len)
         {
+            EnsureState(l, nameof(l));
+            EnsurePointer(s, nameof(s));
             string ss = s.ToString((int)len);
             l.Push(DynValue.NewString(ss));
         }
@@ -221,6 +236,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaPushNil(LuaState l)
         {
+            EnsureState(l, nameof(l));
             l.Push(DynValue.Nil);
         }
 
@@ -235,17 +251,20 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static string LuaLTypeName(LuaState l, lua_Integer p)
         {
+            EnsureState(l, nameof(l));
             return l.At(p).Type.ToErrorTypeString();
         }
 
         protected static lua_Integer LuaIsString(LuaState l, lua_Integer p)
         {
+            EnsureState(l, nameof(l));
             DynValue v = l.At(p);
             return (v.Type == DataType.String || v.Type == DataType.Number) ? 1 : 0;
         }
 
         protected static void LuaPop(LuaState l, lua_Integer p)
         {
+            EnsureState(l, nameof(l));
             for (int i = 0; i < p; i++)
             {
                 l.Pop();
@@ -254,6 +273,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaGetTable(LuaState l, lua_Integer p)
         {
+            EnsureState(l, nameof(l));
             // DEBT: this should call metamethods, now it performs raw access
             DynValue key = l.Pop();
             DynValue table = l.At(p);
@@ -286,6 +306,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaLArgError(LuaState l, lua_Integer arg, string p)
         {
+            EnsureState(l, nameof(l));
             throw ScriptRuntimeException.BadArgument(arg - 1, l.FunctionName, p);
         }
 
@@ -297,6 +318,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static void LuaPushValue(LuaState l, lua_Integer arg)
         {
+            EnsureState(l, nameof(l));
             DynValue v = l.At(arg);
             l.Push(v);
         }
@@ -322,6 +344,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             lua_Integer nresults = LUA_MULTRET
         )
         {
+            EnsureState(l, nameof(l));
             DynValue[] args = l.GetTopArray(nargs);
 
             l.Discard(nargs);
@@ -352,6 +375,38 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     l.Push(DynValue.Nil);
                     copied++;
                 }
+            }
+        }
+
+        private static void EnsureState(LuaState state, string paramName)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+        }
+
+        private static void EnsureBuffer(LuaLBuffer buffer, string paramName)
+        {
+            if (buffer == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+        }
+
+        private static void EnsurePointer(CharPtr ptr, string paramName)
+        {
+            if (ptr == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+        }
+
+        private static void EnsureStringNotNull(string value, string paramName)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(paramName);
             }
         }
     }
