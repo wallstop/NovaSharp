@@ -389,6 +389,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetGlobalSymbolStoresValueAndTreatsNullAsNil()
+        {
+            Script script = new();
+            Processor processor = script.GetMainProcessorForTests();
+
+            DynValue env = DynValue.NewTable(script.Globals);
+
+            Processor.SetGlobalSymbolForTests(env, "answer", DynValue.NewNumber(42));
+            Assert.That(env.Table.Get("answer").Number, Is.EqualTo(42));
+
+            Processor.SetGlobalSymbolForTests(env, "cleared", null);
+            Assert.That(env.Table.Get("cleared").IsNil(), Is.True);
+        }
+
+        [Test]
         public void AssignGenericSymbolRejectsDefaultEnvSymbol()
         {
             Script script = new();
@@ -400,6 +415,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .TypeOf<ArgumentException>()
                     .With.Message.Contains("Can't AssignGenericSymbol on a DefaultEnv symbol")
             );
+        }
+
+        [Test]
+        public void AssignGenericSymbolUpdatesGlobalScope()
+        {
+            Script script = new();
+            Processor processor = script.GetMainProcessorForTests();
+
+            SymbolRef global = SymbolRef.Global("greeting", SymbolRef.DefaultEnv);
+            processor.AssignGenericSymbol(global, DynValue.NewString("hello"));
+
+            Assert.That(script.Globals.Get("greeting").String, Is.EqualTo("hello"));
         }
 
         [Test]

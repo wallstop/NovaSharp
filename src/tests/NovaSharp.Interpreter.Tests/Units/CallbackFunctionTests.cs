@@ -14,6 +14,46 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class CallbackFunctionTests
     {
         [Test]
+        public void ConstructorThrowsWhenCallbackIsNull()
+        {
+            Assert.That(
+                () => new CallbackFunction(null),
+                Throws
+                    .TypeOf<ArgumentNullException>()
+                    .With.Property("ParamName")
+                    .EqualTo("callBack")
+            );
+        }
+
+        [Test]
+        public void InvokeThrowsWhenExecutionContextIsNull()
+        {
+            CallbackFunction function = new((_, _) => DynValue.Nil);
+            List<DynValue> arguments = new() { DynValue.NewNumber(1) };
+
+            Assert.That(
+                () => function.Invoke(null, arguments),
+                Throws
+                    .TypeOf<ArgumentNullException>()
+                    .With.Property("ParamName")
+                    .EqualTo("executionContext")
+            );
+        }
+
+        [Test]
+        public void InvokeThrowsWhenArgumentsAreNull()
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackFunction function = new((_, _) => DynValue.Nil);
+
+            Assert.That(
+                () => function.Invoke(context, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
         public void InvokeTreatsColonAsRegularCallWhenConfigured()
         {
             Script script = new();
@@ -131,6 +171,46 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 CallbackFunction.DefaultAccessMode = original;
             }
+        }
+
+        [Test]
+        public void FromDelegateThrowsWhenScriptIsNull()
+        {
+            Assert.That(
+                () =>
+                    CallbackFunction.FromDelegate(null, new Func<int, int>(SampleUserData.AddOne)),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
+        public void FromDelegateThrowsWhenDelegateIsNull()
+        {
+            Script script = new();
+            Assert.That(
+                () => CallbackFunction.FromDelegate(script, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("del")
+            );
+        }
+
+        [Test]
+        public void FromMethodInfoThrowsWhenScriptIsNull()
+        {
+            MethodInfo method = SampleUserData.GetPublicCallbackMethod();
+            Assert.That(
+                () => CallbackFunction.FromMethodInfo(null, method),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
+        public void FromMethodInfoThrowsWhenMethodInfoIsNull()
+        {
+            Script script = new();
+            Assert.That(
+                () => CallbackFunction.FromMethodInfo(script, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("mi")
+            );
         }
 
         [Test]

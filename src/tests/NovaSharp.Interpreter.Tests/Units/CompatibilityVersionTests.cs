@@ -249,6 +249,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void DisplayNameFallsBackToEnumNameForUnknownVersion()
+        {
+            const LuaCompatibilityVersion unknown = (LuaCompatibilityVersion)12345;
+
+            string displayName = LuaCompatibilityProfile.GetDisplayName(unknown);
+
+            Assert.That(displayName, Is.EqualTo(unknown.ToString()));
+        }
+
+        [Test]
         public void ForVersionThrowsWhenVersionIsUnsupported()
         {
             const LuaCompatibilityVersion invalid = (LuaCompatibilityVersion)999;

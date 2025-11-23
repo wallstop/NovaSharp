@@ -58,6 +58,46 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.len accepts negative i/j indices (counting from the end) and clamps zero to 1."
+        )]
+        public void Utf8LenHandlesNegativeRangeIndices()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("word", DynValue.NewString("abcdef"));
+
+            DynValue result = script.DoString(
+                @"
+                local fromEnd = utf8.len(word, -3, -1)
+                local clamped = utf8.len(word, 0, 2)
+                return fromEnd, clamped
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].Number, Is.EqualTo(3));
+                Assert.That(result.Tuple[1].Number, Is.EqualTo(2));
+            });
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.4 manual §6.5: utf8.len reports high surrogates not followed by a low surrogate as invalid UTF-8."
+        )]
+        public void Utf8LenReturnsNilForBrokenHighSurrogatePairs()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("broken", DynValue.NewString("\uD83DA"));
+
+            DynValue tuple = script.DoString("return utf8.len(broken)");
+
+            Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+            Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+            Assert.That(tuple.Tuple[1].Number, Is.EqualTo(1));
+        }
+
+        [Test]
         [Description("Lua 5.3 manual §6.5: utf8.char builds strings from code points.")]
         public void Utf8CharBuildsStringsFromCodePoints()
         {
@@ -162,6 +202,68 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         [Test]
         [Description(
+            "Lua 5.3 manual §6.5: invoking utf8.codes with a nil control value starts iteration from the first rune."
+        )]
+        public void Utf8CodesIteratorAcceptsNilControlValue()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString(
+                @"
+                local iter, state = utf8.codes('ab')
+                local pos, cp = iter(state, nil)
+                return pos, cp
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].Number, Is.EqualTo(1));
+                Assert.That(result.Tuple[1].Number, Is.EqualTo(0x61));
+            });
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.codes returns nil when the control value already points past the end of the string."
+        )]
+        public void Utf8CodesIteratorReturnsNilWhenControlIsPastEnd()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString(
+                @"
+                local iter, state = utf8.codes('abc')
+                return iter(state, #state + 5)
+                "
+            );
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.codes raises 'invalid UTF-8 code' when the control value lands inside a surrogate pair."
+        )]
+        public void Utf8CodesIteratorThrowsWhenControlPointsInsideRune()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("emoji", DynValue.NewString("A😀B"));
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                        local iter, state = utf8.codes(emoji)
+                        iter(state, 3)
+                        "
+                    ),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.EqualTo("invalid UTF-8 code")
+            );
+        }
+
+        [Test]
+        [Description(
             "Lua 5.3 manual §6.5: utf8.offset navigates forward and backward across characters."
         )]
         public void Utf8OffsetNavigatesBoundaries()
@@ -203,6 +305,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset normalizes negative/zero boundaries to valid byte positions."
+        )]
+        public void Utf8OffsetNormalizesNegativeAndZeroBoundaries()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue offsets = script.DoString(
+                @"
+                local fromEnd = utf8.offset('abcd', 1, -1)
+                local clamped = utf8.offset('abcd', 1, 0)
+                return fromEnd, clamped
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(offsets.Tuple[0].Number, Is.EqualTo(4));
+                Assert.That(offsets.Tuple[1].Number, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
         [Description("Lua 5.3 manual §6.5: utf8.char rejects surrogate/out-of-range values.")]
         public void Utf8CharRejectsOutOfRangeCodePoints()
         {
@@ -210,6 +335,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return utf8.char(0x110000)")
+            );
+
+            Assert.That(ex.Message, Does.Contain("value out of range"));
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.char rejects surrogate code points even though they sit inside the BMP."
+        )]
+        public void Utf8CharRejectsSurrogateCodePoints()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.char(0xD800)")
             );
 
             Assert.That(ex.Message, Does.Contain("value out of range"));
@@ -261,6 +401,62 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
 
             DynValue result = script.DoString("return utf8.offset('abc', 0, 10)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset returns nil when scanning backwards across a leading low surrogate."
+        )]
+        public void Utf8OffsetNegativeReturnsNilForLeadingLowSurrogate()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("leadingLow", DynValue.NewString("\uDC00"));
+
+            DynValue result = script.DoString("return utf8.offset(leadingLow, -1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset returns nil when a low surrogate is preceded by an unrelated code unit."
+        )]
+        public void Utf8OffsetNegativeReturnsNilForStandaloneLowSurrogate()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("mixedLow", DynValue.NewString("A\uDC00"));
+
+            DynValue result = script.DoString("return utf8.offset(mixedLow, -1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset returns nil when walking backwards across a dangling high surrogate."
+        )]
+        public void Utf8OffsetNegativeReturnsNilForDanglingHighSurrogate()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("danglingHigh", DynValue.NewString("\uD83D"));
+
+            DynValue result = script.DoString("return utf8.offset(danglingHigh, -1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        [Description(
+            "Lua 5.3 manual §6.5: utf8.offset(i = 0) returns nil for empty strings because no rune contains the boundary."
+        )]
+        public void Utf8OffsetZeroReturnsNilForEmptyString()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            script.Globals.Set("empty", DynValue.NewString(string.Empty));
+
+            DynValue result = script.DoString("return utf8.offset(empty, 0)");
 
             Assert.That(result.IsNil(), Is.True);
         }
