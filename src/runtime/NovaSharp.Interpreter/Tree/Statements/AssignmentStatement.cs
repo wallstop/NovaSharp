@@ -85,7 +85,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_ref);
         }
 
-        private IVariable CheckVar(ScriptLoadingContext lcontext, Expression firstExpression)
+        private static IVariable CheckVar(ScriptLoadingContext lcontext, Expression firstExpression)
         {
             if (firstExpression is not IVariable v)
             {

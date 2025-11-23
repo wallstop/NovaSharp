@@ -1,15 +1,16 @@
 namespace NovaSharp.Interpreter.Execution.VM
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
 
     internal sealed partial class Processor
     {
-        private DynValue[] InternalAdjustTuple(IList<DynValue> values)
+        private static DynValue[] InternalAdjustTuple(IList<DynValue> values)
         {
             if (values == null || values.Count == 0)
             {
-                return new DynValue[0];
+                return Array.Empty<DynValue>();
             }
 
             if (values[^1].Type == DataType.Tuple)

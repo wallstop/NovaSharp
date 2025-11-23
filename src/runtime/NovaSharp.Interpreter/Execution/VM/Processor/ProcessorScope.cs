@@ -96,7 +96,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private DynValue GetGlobalSymbol(DynValue dynValue, string name)
+        private static DynValue GetGlobalSymbol(DynValue dynValue, string name)
         {
             if (dynValue.Type != DataType.Table)
             {
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return dynValue.Table.Get(name);
         }
 
-        private void SetGlobalSymbol(DynValue dynValue, string name, DynValue value)
+        private static void SetGlobalSymbol(DynValue dynValue, string name, DynValue value)
         {
             if (dynValue.Type != DataType.Table)
             {

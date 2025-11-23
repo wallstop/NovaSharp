@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_end);
         }
 
-        private IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
+        private static IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.If, TokenType.ElseIf);
 
@@ -60,7 +60,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             return ifblock;
         }
 
-        private IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
+        private static IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.Else);
 

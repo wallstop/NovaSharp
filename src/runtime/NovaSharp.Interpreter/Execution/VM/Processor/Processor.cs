@@ -182,7 +182,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private int GetThreadId()
+        private static int GetThreadId()
         {
 #if ENABLE_DOTNET || NETFX_CORE
             return 1;

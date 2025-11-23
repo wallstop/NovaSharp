@@ -243,7 +243,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             ResetBreakpoints(src, new HashSet<int>(action.Lines));
         }
 
-        internal HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
+        internal static HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
             HashSet<int> result = new();
 
@@ -414,7 +414,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return lwi;
         }
 
-        private List<WatchItem> RefreshDebuggerWatches(
+        private static List<WatchItem> RefreshDebuggerWatches(
             ScriptExecutionContext context,
             List<DynamicExpression> watchList
         )
@@ -448,7 +448,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return locals;
         }
 
-        private WatchItem RefreshDebuggerWatch(
+        private static WatchItem RefreshDebuggerWatch(
             ScriptExecutionContext context,
             DynamicExpression dynExpr
         )

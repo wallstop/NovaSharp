@@ -558,7 +558,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return result;
         }
 
-        private double EvalFloorDivision(DynValue v1, DynValue v2)
+        private static double EvalFloorDivision(DynValue v1, DynValue v2)
         {
             double? nd1 = v1.CastToNumber();
             double? nd2 = v2.CastToNumber();
@@ -615,7 +615,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
-        private bool EvalComparison(DynValue l, DynValue r, Operator op)
+        private static bool EvalComparison(DynValue l, DynValue r, Operator op)
         {
             switch (op)
             {

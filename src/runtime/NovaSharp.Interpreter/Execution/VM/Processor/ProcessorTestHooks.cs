@@ -138,17 +138,17 @@ namespace NovaSharp.Interpreter.Execution.VM
             ClearBlockData(instruction);
         }
 
-        internal DynValue GetGlobalSymbolForTests(DynValue env, string name)
+        internal static DynValue GetGlobalSymbolForTests(DynValue env, string name)
         {
             return GetGlobalSymbol(env, name);
         }
 
-        internal void SetGlobalSymbolForTests(DynValue env, string name, DynValue value)
+        internal static void SetGlobalSymbolForTests(DynValue env, string name, DynValue value)
         {
             SetGlobalSymbol(env, name, value);
         }
 
-        internal DynValue[] InternalAdjustTupleForTests(IList<DynValue> values)
+        internal static DynValue[] InternalAdjustTupleForTests(IList<DynValue> values)
         {
             return InternalAdjustTuple(values);
         }

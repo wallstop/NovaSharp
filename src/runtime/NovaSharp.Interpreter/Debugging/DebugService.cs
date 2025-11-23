@@ -45,7 +45,12 @@ namespace NovaSharp.Interpreter.Debugging
                 throw new ArgumentNullException(nameof(lines));
             }
 
-            return _processor.ResetBreakpoints(src, lines);
+            if (_processor == null)
+            {
+                throw new InvalidOperationException("DebugService is not bound to a processor.");
+            }
+
+            return Processor.ResetBreakpoints(src, lines);
         }
     }
 }

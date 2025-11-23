@@ -98,7 +98,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return meta.NumVal + baseAddress + 1;
         }
 
-        private void AddSymbolToMap(Dictionary<SymbolRef, int> symbolMap, SymbolRef s)
+        private static void AddSymbolToMap(Dictionary<SymbolRef, int> symbolMap, SymbolRef s)
         {
             if (!symbolMap.ContainsKey(s))
             {

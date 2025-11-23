@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
         }
 
-        private void RemoveBreakpointStop(Instruction instruction)
+        private static void RemoveBreakpointStop(Instruction instruction)
         {
             instruction.SourceCodeRef = null;
         }

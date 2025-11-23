@@ -379,7 +379,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Processor processor = script.GetMainProcessorForTests();
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
-                processor.SetGlobalSymbolForTests(
+                Processor.SetGlobalSymbolForTests(
                     DynValue.NewString("not-table"),
                     "value",
                     DynValue.NewNumber(1)
@@ -707,7 +707,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Processor processor = script.GetMainProcessorForTests();
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
-                processor.GetGlobalSymbolForTests(DynValue.NewNumber(1), "value")
+                Processor.GetGlobalSymbolForTests(DynValue.NewNumber(1), "value")
             );
             Assert.That(ex.Message, Does.Contain("_ENV is not a table"));
         }
@@ -717,7 +717,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            DynValue[] result = processor.InternalAdjustTupleForTests(null);
+            DynValue[] result = Processor.InternalAdjustTupleForTests(null);
             Assert.That(result, Is.Empty);
         }
 
@@ -733,7 +733,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue.NewTuple(DynValue.NewNumber(2), nested),
             };
 
-            DynValue[] result = processor.InternalAdjustTupleForTests(values);
+            DynValue[] result = Processor.InternalAdjustTupleForTests(values);
 
             Assert.That(result.Select(v => v.Number), Is.EqualTo(new[] { 1d, 2d, 3d }));
         }
