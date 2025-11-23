@@ -91,17 +91,17 @@ namespace NovaSharp.Interpreter.Interop
         {
             if ((int)scriptDataType >= _script2Clr.Length)
             {
-                throw new ArgumentException("scriptDataType");
+                throw new ArgumentException(
+                    "Script data type exceeds the registered converter range.",
+                    nameof(scriptDataType)
+                );
             }
 
             Dictionary<Type, Func<DynValue, object>> map = _script2Clr[(int)scriptDataType];
 
             if (converter == null)
             {
-                if (map.ContainsKey(clrDataType))
-                {
-                    map.Remove(clrDataType);
-                }
+                map.Remove(clrDataType);
             }
             else
             {
@@ -141,10 +141,7 @@ namespace NovaSharp.Interpreter.Interop
         {
             if (converter == null)
             {
-                if (_clr2Script.ContainsKey(clrDataType))
-                {
-                    _clr2Script.Remove(clrDataType);
-                }
+                _clr2Script.Remove(clrDataType);
             }
             else
             {

@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
@@ -138,6 +139,7 @@ namespace NovaSharp.Interpreter.Interop
                     {
                         throw new ArgumentException(
                             string.Format(
+                                CultureInfo.InvariantCulture,
                                 "Type {0} has two definitions for NovaSharp property {1}",
                                 _type.FullName,
                                 name
@@ -258,6 +260,7 @@ namespace NovaSharp.Interpreter.Interop
             {
                 throw new ArgumentException(
                     string.Format(
+                        CultureInfo.InvariantCulture,
                         "Invalid type of object : got '{0}', expected {1}",
                         obj.GetType().FullName,
                         _type.FullName

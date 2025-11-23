@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -182,7 +183,8 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            string chunkName = $"libfunc_{funcFriendlyName ?? _sources.Count.ToString()}";
+            string chunkName =
+                $"libfunc_{funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)}";
 
             SourceCode source = new(chunkName, code, _sources.Count, this);
 
@@ -244,7 +246,8 @@ namespace NovaSharp.Interpreter
                     return LoadStream(ms, globalTable, codeFriendlyName);
                 }
 
-                string chunkName = $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString()}";
+                string chunkName =
+                    $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
 
                 SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
@@ -288,7 +291,8 @@ namespace NovaSharp.Interpreter
                 }
                 else
                 {
-                    string chunkName = $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString()}";
+                    string chunkName =
+                        $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
 
                     SourceCode source = new(
                         codeFriendlyName ?? chunkName,
@@ -987,6 +991,7 @@ namespace NovaSharp.Interpreter
             StringBuilder sb = new();
             sb.AppendLine(
                 string.Format(
+                    CultureInfo.InvariantCulture,
                     "NovaSharp {0}{1} [{2}]",
                     subproduct,
                     VERSION,

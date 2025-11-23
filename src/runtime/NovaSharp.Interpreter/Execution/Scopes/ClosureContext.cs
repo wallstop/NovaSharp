@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Execution.Scopes
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
@@ -22,7 +23,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal ClosureContext()
         {
-            Symbols = new string[0];
+            Symbols = Array.Empty<string>();
         }
     }
 }

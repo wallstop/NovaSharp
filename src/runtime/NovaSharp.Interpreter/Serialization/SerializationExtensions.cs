@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Serialization
 {
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
@@ -138,7 +139,7 @@ namespace NovaSharp.Interpreter.Serialization
             }
             else if (dynValue.Type == DataType.Number)
             {
-                return dynValue.Number.ToString("r");
+                return dynValue.Number.ToString("r", CultureInfo.InvariantCulture);
             }
             else if (dynValue.Type == DataType.Boolean)
             {

@@ -4,6 +4,7 @@ namespace NovaSharp.VsCodeDebugger
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Net;
     using System.Net.Sockets;
@@ -261,7 +262,7 @@ namespace NovaSharp.VsCodeDebugger
                 serverSocket.Start();
 
                 SpawnThread(
-                    "VsCodeDebugServer_" + _port.ToString(),
+                    "VsCodeDebugServer_" + _port.ToString(CultureInfo.InvariantCulture),
                     () => ListenThread(serverSocket)
                 );
 
@@ -385,7 +386,7 @@ namespace NovaSharp.VsCodeDebugger
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

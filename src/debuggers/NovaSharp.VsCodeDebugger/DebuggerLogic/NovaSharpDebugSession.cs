@@ -4,6 +4,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -223,7 +224,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                     SendText(
                         "{0} : {1}{2}{3}",
-                        pair.Key.ToString().PadLeft(9),
+                        pair.Key.ToString(CultureInfo.InvariantCulture).PadLeft(9),
                         pair.Value,
                         isdef,
                         isthis
@@ -236,7 +237,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                 try
                 {
-                    int id = int.Parse(arg);
+                    int id = int.Parse(arg, CultureInfo.InvariantCulture);
                     _server.CurrentId = id;
 
                     if (cmd.StartsWith("switch"))
@@ -583,7 +584,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

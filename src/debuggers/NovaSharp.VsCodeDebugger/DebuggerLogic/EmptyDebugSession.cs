@@ -4,6 +4,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using SDK;
@@ -76,7 +77,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             foreach (KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName())
             {
                 string isdef = (pair.Key == currId) ? " (default)" : "";
-                SendText("{0} : {1}{2}", pair.Key.ToString().PadLeft(9), pair.Value, isdef);
+                SendText(
+                    "{0} : {1}{2}",
+                    pair.Key.ToString(CultureInfo.InvariantCulture).PadLeft(9),
+                    pair.Value,
+                    isdef
+                );
             }
             SendText("");
             SendText("Type the number of the script to debug, or '!' to refresh");
@@ -221,7 +227,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

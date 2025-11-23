@@ -3,6 +3,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using SDK;
@@ -13,7 +14,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         {
             variables.Add(new Variable("(value)", v.ToPrintString()));
             variables.Add(new Variable("(type)", v.Type.ToLuaDebuggerString()));
-            variables.Add(new Variable("(val #id)", v.ReferenceId.ToString()));
+            variables.Add(
+                new Variable("(val #id)", v.ReferenceId.ToString(CultureInfo.InvariantCulture))
+            );
 
             switch (v.Type)
             {
@@ -30,11 +33,17 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     variables.Add(
                         new Variable(
                             "(address)",
-                            v.Function.EntryPointByteCodeLocation.ToString("X8")
+                            v.Function.EntryPointByteCodeLocation.ToString(
+                                "X8",
+                                CultureInfo.InvariantCulture
+                            )
                         )
                     );
                     variables.Add(
-                        new Variable("(upvalues)", v.Function.GetUpvaluesCount().ToString())
+                        new Variable(
+                            "(upvalues)",
+                            v.Function.GetUpvaluesCount().ToString(CultureInfo.InvariantCulture)
+                        )
                     );
                     variables.Add(
                         new Variable("(upvalues type)", v.Function.GetUpvaluesType().ToString())
@@ -59,19 +68,29 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         variables.Add(new Variable("(table type)", "standard"));
                     }
 
-                    variables.Add(new Variable("(table #id)", v.Table.ReferenceId.ToString()));
+                    variables.Add(
+                        new Variable(
+                            "(table #id)",
+                            v.Table.ReferenceId.ToString(CultureInfo.InvariantCulture)
+                        )
+                    );
 
                     if (v.Table.MetaTable != null)
                     {
                         variables.Add(
                             new Variable(
                                 "(metatable #id)",
-                                v.Table.MetaTable.ReferenceId.ToString()
+                                v.Table.MetaTable.ReferenceId.ToString(CultureInfo.InvariantCulture)
                             )
                         );
                     }
 
-                    variables.Add(new Variable("(length)", v.Table.Length.ToString()));
+                    variables.Add(
+                        new Variable(
+                            "(length)",
+                            v.Table.Length.ToString(CultureInfo.InvariantCulture)
+                        )
+                    );
 
                     foreach (TablePair p in v.Table.Pairs)
                     {
@@ -110,7 +129,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     variables.Add(
                         new Variable(
                             "(auto-yield counter)",
-                            v.Coroutine.AutoYieldCounter.ToString()
+                            v.Coroutine.AutoYieldCounter.ToString(CultureInfo.InvariantCulture)
                         )
                     );
                     break;

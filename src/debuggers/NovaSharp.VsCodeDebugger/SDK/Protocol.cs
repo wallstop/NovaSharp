@@ -28,6 +28,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     SOFTWARE.
      *--------------------------------------------------------------------------------------------*/
     using System;
+    using System.Globalization;
     using System.Text;
     using System.IO;
     using System.Text.RegularExpressions;
@@ -212,7 +213,10 @@ namespace NovaSharp.VsCodeDebugger.SDK
                         Match m = ContentLengthMatcher.Match(s);
                         if (m.Success && m.Groups.Count == 2)
                         {
-                            _bodyLength = Convert.ToInt32(m.Groups[1].ToString());
+                            _bodyLength = Convert.ToInt32(
+                                m.Groups[1].ToString(),
+                                CultureInfo.InvariantCulture
+                            );
 
                             _rawData.RemoveFirst(idx + TwoCrLf.Length);
 

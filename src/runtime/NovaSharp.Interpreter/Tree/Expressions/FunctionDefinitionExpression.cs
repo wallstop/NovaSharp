@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
@@ -190,7 +191,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             {
                 if (!names.Add(paramnames[i]))
                 {
-                    paramnames[i] = paramnames[i] + "@" + i.ToString();
+                    paramnames[i] = paramnames[i] + "@" + i.ToString(CultureInfo.InvariantCulture);
                 }
 
                 ret[i] = lcontext.Scope.DefineLocal(paramnames[i]);

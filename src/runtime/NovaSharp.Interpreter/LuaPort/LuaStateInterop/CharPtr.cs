@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public CharPtr(IntPtr ptr)
         {
-            chars = new char[0];
+            chars = Array.Empty<char>();
             index = 0;
         }
 
