@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class StandardPlatformAccessorTests
+    internal sealed class StandardPlatformAccessorTests
     {
         [Test]
         public void ParseFileAccessHandlesModes()
@@ -145,7 +145,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             TextWriter original = Console.Out;
-            StringWriter capture = new StringWriter();
+            using StringWriter capture = new StringWriter();
 
             try
             {
