@@ -81,7 +81,7 @@ namespace NovaSharp.Interpreter.DataTypes
         internal DynValue Recycle(Processor mainProcessor, Closure closure)
         {
             Type = CoroutineType.Recycled;
-            return _processor.Coroutine_Recycle(mainProcessor, closure);
+            return _processor.RecycleCoroutine(mainProcessor, closure);
         }
 
         /// <summary>
@@ -166,11 +166,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public DynValue Resume(params DynValue[] args)
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             this.CheckScriptOwnership(args);
 
             if (Type == CoroutineType.Coroutine)
             {
-                return _processor.Coroutine_Resume(args);
+                return _processor.ResumeCoroutine(args);
             }
             else
             {
@@ -188,12 +193,22 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context, params DynValue[] args)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             this.CheckScriptOwnership(context);
             this.CheckScriptOwnership(args);
 
             if (Type == CoroutineType.Coroutine)
             {
-                return _processor.Coroutine_Resume(args);
+                return _processor.ResumeCoroutine(args);
             }
             else if (Type == CoroutineType.ClrCallback)
             {
@@ -215,7 +230,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public DynValue Resume()
         {
-            return Resume(new DynValue[0]);
+            return Resume(Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -225,7 +240,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context)
         {
-            return Resume(context, new DynValue[0]);
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            return Resume(context, Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -237,6 +257,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
         public DynValue Resume(params object[] args)
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (Type != CoroutineType.Coroutine)
             {
                 throw new InvalidOperationException(
@@ -262,6 +287,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public DynValue Resume(ScriptExecutionContext context, params object[] args)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue[] dargs = new DynValue[args.Length];
 
             for (int i = 0; i < dargs.Length; i++)
@@ -307,7 +342,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 entrySourceRef = _processor.GetCoroutineSuspendedLocation();
             }
 
-            List<WatchItem> stack = _processor.Debugger_GetCallStack(entrySourceRef);
+            List<WatchItem> stack = _processor.GetDebuggerCallStack(entrySourceRef);
             return stack.Skip(skip).ToArray();
         }
 
@@ -339,7 +374,19 @@ namespace NovaSharp.Interpreter.DataTypes
                 return DynValue.True;
             }
 
-            return _processor.Coroutine_Close();
+            return _processor.CloseCoroutine();
+        }
+
+        internal Processor GetProcessorForTests()
+        {
+            if (_processor == null)
+            {
+                throw new InvalidOperationException(
+                    "Cannot retrieve a processor from CLR callback coroutines."
+                );
+            }
+
+            return _processor;
         }
 
         internal void ForceStateForTests(CoroutineState state)

@@ -23,7 +23,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             _block = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.type != TokenType.Eof)
+            if (lcontext.Lexer.Current.Type != TokenType.Eof)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -37,18 +37,18 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
-            Instruction meta = bc.Emit_Meta("<chunk-root>", OpCodeMetadataType.ChunkEntrypoint);
+            Instruction meta = bc.EmitMeta("<chunk-root>", OpCodeMetadataType.ChunkEntrypoint);
             int metaip = bc.GetJumpPointForLastInstruction();
 
-            bc.Emit_BeginFn(_stackFrame);
-            bc.Emit_Args(_varArgs);
+            bc.EmitBeginFn(_stackFrame);
+            bc.EmitArgs(_varArgs);
 
-            bc.Emit_Load(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
-            bc.Emit_Store(_env, 0, 0);
-            bc.Emit_Pop();
+            bc.EmitLoad(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
+            bc.EmitStore(_env, 0, 0);
+            bc.EmitPop();
 
             _block.Compile(bc);
-            bc.Emit_Ret(0);
+            bc.EmitRet(0);
 
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
         }

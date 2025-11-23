@@ -6,6 +6,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Text;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib;
+    using NovaSharp.Interpreter.CoreLib.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.IO;
@@ -20,8 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenReturnsNilTupleWhenFileDoesNotExist()
         {
             Script script = CreateScript();
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string path = EscapePath(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt"));
 
             DynValue result = script.DoString($"return io.open('{path}', 'r')");
 
@@ -37,8 +38,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenThrowsForInvalidMode()
         {
             Script script = CreateScript();
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string path = EscapePath(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt"));
 
             Assert.That(
                 () => script.DoString($"return io.open('{path}', 'z')"),
@@ -51,16 +51,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = CreateScript();
             string temp = Path.GetTempFileName();
-            string path = temp.Replace("\\", "\\\\");
+            string path = EscapePath(temp);
 
             try
             {
                 DynValue tuple = script.DoString(
                     $@"
                 local f = io.open('{path}', 'w')
-                local openType = io.type(f)
+                local openType = io.Type(f)
                 f:close()
-                return openType, io.type(f)
+                return openType, io.Type(f)
                 "
                 );
 
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = CreateScript();
             string temp = Path.GetTempFileName();
             File.WriteAllText(temp, "first\nsecond\n");
-            string path = temp.Replace("\\", "\\\\");
+            string path = EscapePath(temp);
 
             try
             {
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = CreateScript();
             string temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string path = temp.Replace("\\", "\\\\");
+            string path = EscapePath(temp);
 
             try
             {
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TmpfileCreatesWritableFile()
+        public void TmpFileCreatesWritableFile()
         {
             Script script = CreateScript();
 
@@ -140,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 @"
                 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.type(f)
+                return io.Type(f)
                 "
             );
 
@@ -158,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 File.WriteAllText(path, "123e");
-                string escapedPath = path.Replace("\\", "\\\\");
+                string escapedPath = EscapePath(path);
                 Script script = CreateScript();
 
                 DynValue tuple = script.DoString(
@@ -199,6 +199,113 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(tuple.Tuple[0].Number, Is.EqualTo(4d));
                 Assert.That(tuple.Tuple[1].String, Is.EqualTo("\n"));
             });
+        }
+
+        [Test]
+        public void StdStreamsAreAccessibleViaProperties()
+        {
+            Script script = CreateScript();
+
+            DynValue tuple = script.DoString(
+                "return io.stdin ~= nil, io.stdout ~= nil, io.stderr ~= nil, io.unknown == nil"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].Boolean, Is.True);
+                Assert.That(tuple.Tuple[2].Boolean, Is.True);
+                Assert.That(tuple.Tuple[3].Boolean, Is.True);
+            });
+        }
+
+        [Test]
+        public void SetDefaultFileOverridesStdInStream()
+        {
+            Script script = CreateScript();
+            using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("override\n"));
+
+            IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
+
+            DynValue result = script.DoString("return io.read('*l')");
+
+            Assert.That(result.String, Is.EqualTo("override"));
+        }
+
+        [Test]
+        public void SetDefaultFileOverridesStdOutStream()
+        {
+            Script script = CreateScript();
+            using MemoryStream stream = new MemoryStream();
+
+            IoModule.SetDefaultFile(script, StandardFileType.StdOut, stream);
+
+            script.DoString("io.write('buffered'); io.flush()");
+
+            stream.Position = 0;
+            string content = Encoding.UTF8.GetString(stream.ToArray());
+            Assert.That(content, Is.EqualTo("buffered"));
+        }
+
+        [Test]
+        public void OpenSupportsBinaryEncodingParameter()
+        {
+            Script script = CreateScript();
+            string temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".bin");
+            File.WriteAllBytes(temp, new byte[] { 0x41, 0x42 });
+            string path = EscapePath(temp);
+
+            try
+            {
+                DynValue result = script.DoString(
+                    $@"
+                local f = assert(io.open('{path}', 'rb', 'binary'))
+                local data = f:read('*a')
+                f:close()
+                return data
+                "
+                );
+
+                Assert.That(result.String, Is.EqualTo("AB"));
+            }
+            finally
+            {
+                File.Delete(temp);
+            }
+        }
+
+        [Test]
+        public void OpenReturnsErrorWhenEncodingSpecifiedForBinaryMode()
+        {
+            Script script = CreateScript();
+            string temp = Path.GetTempFileName();
+            string path = EscapePath(temp);
+
+            try
+            {
+                DynValue result = script.DoString($"return io.open('{path}', 'rb', 'utf-8')");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                    Assert.That(result.Tuple[0].IsNil(), Is.True);
+                    Assert.That(result.Tuple[1].String, Does.Contain("Can't specify encodings"));
+                });
+            }
+            finally
+            {
+                File.Delete(temp);
+            }
+        }
+
+        [Test]
+        public void TypeReturnsNilForNonUserData()
+        {
+            Script script = CreateScript();
+
+            DynValue result = script.DoString("return io.Type(123)");
+
+            Assert.That(result.IsNil(), Is.True);
         }
 
         [TestCase("0x1p1\n", 2d, "\n")]
@@ -258,7 +365,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void TypeReturnsNilForNonUserDataArguments()
         {
             Script script = CreateScript();
-            DynValue tuple = script.DoString("return io.type(42), io.type({})");
+            DynValue tuple = script.DoString("return io.Type(42), io.Type({})");
 
             Assert.Multiple(() =>
             {
@@ -273,7 +380,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = CreateScript();
             script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
 
-            DynValue result = script.DoString("return io.type(sampleUserData)");
+            DynValue result = script.DoString("return io.Type(sampleUserData)");
 
             Assert.That(result.IsNil(), Is.True);
         }
@@ -282,7 +389,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CloseClosesExplicitFileHandle()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -291,7 +398,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local result = io.close(f)
-                    return result, io.type(f)
+                    return result, io.Type(f)
                     "
                 );
 
@@ -314,7 +421,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CloseWithoutParameterUsesCurrentOutput()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -324,7 +431,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     local f = assert(io.open('{escapedPath}', 'w'))
                     io.output(f)
                     local closed = io.close()
-                    return closed, io.type(f)
+                    return closed, io.Type(f)
                     "
                 );
 
@@ -347,7 +454,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void FlushReturnsTrueForCurrentOutput()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -379,7 +486,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
             File.WriteAllText(path, "data");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -389,7 +496,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     local f = assert(io.open('{escapedPath}', 'r'))
                     io.input(f)
                     local current = io.input()
-                    return io.type(current), io.type(f)
+                    return io.Type(current), io.Type(f)
                     "
                 );
 
@@ -413,7 +520,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
             File.WriteAllText(path, "alpha\nbeta\ngamma\n");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -463,13 +570,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OpenReturnsErrorTupleForUnknownEncoding()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string escapedPath = EscapePath(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+            );
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
                 $@"
-                local file, message = io.open('{path}', 'w', 'does-not-exist')
+                local file, message = io.open('{escapedPath}', 'w', 'does-not-exist')
                 return file, message
                 "
             );
@@ -485,7 +593,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenSupportsExplicitEncoding()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             try
             {
@@ -513,14 +621,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OpenRejectsEncodingWhenBinaryModeSpecified()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
-                .Replace("\\", "\\\\");
+            string escapedPath = EscapePath(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt")
+            );
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
                 $@"
                 local ok, res1, res2 = pcall(function()
-                    return io.open('{path}', 'wb', 'utf-8')
+                    return io.open('{escapedPath}', 'wb', 'utf-8')
                 end)
                 return ok, res1, res2
                 "
@@ -535,7 +644,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TmpfileCreatesWritableStream()
+        public void TmpFileCreatesWritableStream()
         {
             Script script = CreateScript();
             DynValue tuple = script.DoString(
@@ -543,9 +652,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 local f = io.tmpfile()
                 f:write('temp data')
                 f:seek('set')
-                local t_open = io.type(f)
+                local t_open = io.Type(f)
                 f:close()
-                local t_closed = io.type(f)
+                local t_closed = io.Type(f)
                 return t_open, t_closed
                 "
             );
@@ -561,7 +670,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenFileInvokesPlatformAccessorAndStillWritesToDisk()
         {
             string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
-            string escapedPath = path.Replace("\\", "\\\\");
+            string escapedPath = EscapePath(path);
 
             RecordingPlatformAccessor accessor = new(Script.GlobalOptions.Platform);
             using (new PlatformScope(accessor))
@@ -619,7 +728,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 File.WriteAllText(path, content);
-                string escapedPath = path.Replace("\\", "\\\\");
+                string escapedPath = EscapePath(path);
                 Script script = CreateScript();
 
                 return script.DoString(
@@ -648,6 +757,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.Options.DebugPrint = _ => { };
             return script;
         }
+
+        private static string EscapePath(string path) =>
+            path.Replace("\\", "\\\\", StringComparison.Ordinal);
 
         private sealed class SampleUserData { }
 
@@ -678,7 +790,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _inner = inner;
             }
 
-            internal IReadOnlyList<(string FileName, string Mode)> OpenCalls => _openCalls;
+            internal List<(string FileName, string Mode)> OpenCalls => _openCalls;
 
             internal string GetCapturedFileContent(string file)
             {
@@ -730,7 +842,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     return null;
                 }
 
-                if (!string.IsNullOrEmpty(mode) && (mode.Contains('w') || mode.Contains('a')))
+                if (!string.IsNullOrEmpty(mode) && ContainsWriteOrAppendMode(mode))
                 {
                     CapturedFile captured = new(encoding ?? Encoding.UTF8);
                     _captures[filename] = captured;
@@ -773,6 +885,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int ExecuteCommand(string cmdline)
             {
                 return _inner.ExecuteCommand(cmdline);
+            }
+
+            private static bool ContainsWriteOrAppendMode(string mode)
+            {
+                ReadOnlySpan<char> span = mode.AsSpan();
+                return span.IndexOf('w') >= 0 || span.IndexOf('a') >= 0;
             }
 
             private sealed class CapturedFile

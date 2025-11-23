@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -222,7 +223,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                     for (int i = 0; i < rank; i++)
                     {
                         getPars[i] = setPars[i] = new ParameterDescriptor(
-                            "idx" + i.ToString(),
+                            "idx" + i.ToString(CultureInfo.InvariantCulture),
                             typeof(int)
                         );
                     }

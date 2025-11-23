@@ -77,13 +77,13 @@ namespace NovaSharp.VsCodeDebugger.SDK
          */
         public static string MakeRelativePath(string dirPath, string absPath)
         {
-            if (!dirPath.EndsWith("/"))
+            if (!dirPath.EndsWith("/", StringComparison.Ordinal))
             {
                 dirPath += "/";
             }
-            if (absPath.StartsWith(dirPath))
+            if (absPath.StartsWith(dirPath, StringComparison.Ordinal))
             {
-                return absPath.Replace(dirPath, "");
+                return absPath.Replace(dirPath, string.Empty, StringComparison.Ordinal);
             }
             return absPath;
             /*

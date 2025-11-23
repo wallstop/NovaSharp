@@ -243,7 +243,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Comment(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement(str));
         }
 
@@ -254,7 +254,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Error(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("ERROR : " + str));
             _logger.LogError(str);
         }
@@ -266,7 +266,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Warning(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("WARNING : " + str));
             _logger.LogWarning(str);
         }
@@ -278,7 +278,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Minor(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("Minor : " + str));
             _logger.LogMinor(str);
         }
@@ -303,6 +303,21 @@ namespace NovaSharp.Hardwire
             }
 
             return false;
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
 
         private void GenerateKickstarter(string className)

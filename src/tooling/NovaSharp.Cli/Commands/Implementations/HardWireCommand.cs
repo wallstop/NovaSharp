@@ -13,19 +13,19 @@ namespace NovaSharp.Cli.Commands.Implementations
     {
         private class ConsoleLogger : ICodeGenerationLogger
         {
-            public int errors = 0;
-            public int warnings = 0;
+            public int ErrorCount { get; private set; }
+            public int WarningCount { get; private set; }
 
             public void LogError(string message)
             {
                 Console.WriteLine("[EE] - " + message);
-                ++errors;
+                ErrorCount++;
             }
 
             public void LogWarning(string message)
             {
                 Console.WriteLine("[ww] - " + message);
-                ++warnings;
+                WarningCount++;
             }
 
             public void LogMinor(string message)
@@ -192,7 +192,11 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             Console.WriteLine();
-            Console.WriteLine("done: {0} errors, {1} warnings.", logger.errors, logger.warnings);
+            Console.WriteLine(
+                "done: {0} errors, {1} warnings.",
+                logger.ErrorCount,
+                logger.WarningCount
+            );
         }
 
         internal static Func<string, Table> DumpLoader { get; set; } = LoadDumpTable;

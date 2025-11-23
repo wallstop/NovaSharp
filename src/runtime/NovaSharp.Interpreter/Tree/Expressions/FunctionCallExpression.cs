@@ -29,13 +29,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _debugErr = function.GetFriendlyDebugName();
             _function = function;
 
-            switch (lcontext.Lexer.Current.type)
+            switch (lcontext.Lexer.Current.Type)
             {
                 case TokenType.BrkOpenRound:
                     Token openBrk = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
                     Token t = lcontext.Lexer.Current;
-                    if (t.type == TokenType.BrkCloseRound)
+                    if (t.Type == TokenType.BrkCloseRound)
                     {
                         _arguments = new List<Expression>();
                         SourceRef = callToken.GetSourceRef(t);
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                         _arguments.Add(
                             new TableConstructor(
                                 lcontext,
-                                lcontext.Lexer.Current.type == TokenType.BrkOpenCurlyShared
+                                lcontext.Lexer.Current.Type == TokenType.BrkOpenCurlyShared
                             )
                         );
                         SourceRef = callToken.GetSourceRefUpTo(lcontext.Lexer.Current);
@@ -78,7 +78,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     )
                     {
                         IsPrematureStreamTermination = (
-                            lcontext.Lexer.Current.type == TokenType.Eof
+                            lcontext.Lexer.Current.Type == TokenType.Eof
                         ),
                     };
             }
@@ -92,9 +92,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (!string.IsNullOrEmpty(_name))
             {
-                bc.Emit_Copy(0);
-                bc.Emit_Index(DynValue.NewString(_name), true);
-                bc.Emit_Swap(0, 1);
+                bc.EmitCopy(0);
+                bc.EmitIndex(DynValue.NewString(_name), true);
+                bc.EmitSwap(0, 1);
                 ++argslen;
             }
 
@@ -105,11 +105,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (!string.IsNullOrEmpty(_name))
             {
-                bc.Emit_ThisCall(argslen, _debugErr);
+                bc.EmitThisCall(argslen, _debugErr);
             }
             else
             {
-                bc.Emit_Call(argslen, _debugErr);
+                bc.EmitCall(argslen, _debugErr);
             }
         }
 

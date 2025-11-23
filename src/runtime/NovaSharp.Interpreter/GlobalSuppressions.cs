@@ -70,21 +70,21 @@ using System.Diagnostics.CodeAnalysis;
     "CA1707:Identifiers should not contain underscores",
     Justification = "Matches original Lua constant names.",
     Scope = "type",
-    Target = "~T:NovaSharp.Interpreter.Interop.LuaStateInterop.LuaBase"
+    Target = "~T:NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase"
 )]
 [assembly: SuppressMessage(
     "Design",
     "CA1051:Do not declare visible instance fields",
     Justification = "Interop pointer semantics require field access.",
     Scope = "type",
-    Target = "~T:NovaSharp.Interpreter.Interop.LuaStateInterop.CharPtr"
+    Target = "~T:NovaSharp.Interpreter.LuaPort.LuaStateInterop.CharPtr"
 )]
 [assembly: SuppressMessage(
     "Usage",
     "CA2225:Operator overloads have named alternates",
     Justification = "Interop pointer type intentionally mirrors native Lua semantics.",
     Scope = "type",
-    Target = "~T:NovaSharp.Interpreter.Interop.LuaStateInterop.CharPtr"
+    Target = "~T:NovaSharp.Interpreter.LuaPort.LuaStateInterop.CharPtr"
 )]
 [assembly: SuppressMessage(
     "Design",
@@ -133,7 +133,7 @@ using System.Diagnostics.CodeAnalysis;
     "CA1052:Static holder types should be Static or NotInheritable",
     Justification = "Interop helper members mimic native Lua API surfaces.",
     Scope = "type",
-    Target = "~T:NovaSharp.Interpreter.Interop.LuaStateInterop.LuaBase"
+    Target = "~T:NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase"
 )]
 [assembly: SuppressMessage(
     "Naming",

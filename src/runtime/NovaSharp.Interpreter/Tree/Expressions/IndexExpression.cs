@@ -36,16 +36,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_name != null)
             {
-                bc.Emit_Index(DynValue.NewString(_name), true);
+                bc.EmitIndex(DynValue.NewString(_name), true);
             }
             else if (_indexExp is LiteralExpression lit)
             {
-                bc.Emit_Index(lit.Value);
+                bc.EmitIndex(lit.Value);
             }
             else
             {
                 _indexExp.Compile(bc);
-                bc.Emit_Index(isExpList: (_indexExp is ExprListExpression));
+                bc.EmitIndex(isExpList: (_indexExp is ExprListExpression));
             }
         }
 
@@ -55,16 +55,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_name != null)
             {
-                bc.Emit_IndexSet(stackofs, tupleidx, DynValue.NewString(_name), isNameIndex: true);
+                bc.EmitIndexSet(stackofs, tupleidx, DynValue.NewString(_name), isNameIndex: true);
             }
             else if (_indexExp is LiteralExpression lit)
             {
-                bc.Emit_IndexSet(stackofs, tupleidx, lit.Value);
+                bc.EmitIndexSet(stackofs, tupleidx, lit.Value);
             }
             else
             {
                 _indexExp.Compile(bc);
-                bc.Emit_IndexSet(stackofs, tupleidx, isExpList: (_indexExp is ExprListExpression));
+                bc.EmitIndexSet(stackofs, tupleidx, isExpList: (_indexExp is ExprListExpression));
             }
         }
 

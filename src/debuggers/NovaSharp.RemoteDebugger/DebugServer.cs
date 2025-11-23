@@ -1,5 +1,7 @@
 namespace NovaSharp.RemoteDebugger
 {
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -28,6 +30,14 @@ namespace NovaSharp.RemoteDebugger
         private readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
         private bool _freeRunAfterAttach;
         private Regex _errorRegEx = new(@"\A.*\Z");
+        private static readonly IReadOnlyDictionary<WatchType, string> WatchElementNames =
+            new Dictionary<WatchType, string>()
+            {
+                { WatchType.CallStack, "callstack" },
+                { WatchType.Watches, "watches" },
+            };
+        private static readonly ConcurrentDictionary<WatchType, string> WatchElementNameCache =
+            new();
 
         public DebugServer(
             string appName,
@@ -41,7 +51,7 @@ namespace NovaSharp.RemoteDebugger
 
             _server = new Utf8TcpServer(port, 1 << 20, '\0', options);
             _server.Start();
-            _server.OnDataReceived += _Server_DataReceived;
+            _server.OnDataReceived += OnServerDataReceived;
             _script = script;
             _freeRunAfterAttach = freeRunAfterAttach;
         }
@@ -167,7 +177,7 @@ namespace NovaSharp.RemoteDebugger
 
                 Send(xw =>
                 {
-                    using (xw.Element(watchType.ToString().ToLowerInvariant()))
+                    using (xw.Element(GetWatchElementName(watchType)))
                     {
                         foreach (WatchItem wi in items)
                         {
@@ -337,7 +347,7 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
-        private void _Server_DataReceived(object sender, Utf8TcpPeerEventArgs e)
+        private void OnServerDataReceived(object sender, Utf8TcpPeerEventArgs e)
         {
             XmlDocument xdoc = new();
             xdoc.LoadXml(e.Message);
@@ -360,7 +370,8 @@ namespace NovaSharp.RemoteDebugger
 
             if (xdoc.DocumentElement.Name == "Command")
             {
-                string cmd = xdoc.DocumentElement.GetAttribute("cmd").ToLowerInvariant();
+                string cmdAttribute = xdoc.DocumentElement.GetAttribute("cmd");
+                string cmd = InvariantString.ToLowerInvariantIfNeeded(cmdAttribute);
                 string arg = xdoc.DocumentElement.GetAttribute("arg");
 
                 switch (cmd)
@@ -535,6 +546,19 @@ namespace NovaSharp.RemoteDebugger
         public DebuggerCaps GetDebuggerCaps()
         {
             return DebuggerCaps.CanDebugSourceCode;
+        }
+
+        private static string GetWatchElementName(WatchType watchType)
+        {
+            if (WatchElementNames.TryGetValue(watchType, out string known))
+            {
+                return known;
+            }
+
+            return WatchElementNameCache.GetOrAdd(
+                watchType,
+                static wt => InvariantString.ToLowerInvariantIfNeeded(wt.ToString())
+            );
         }
     }
 }

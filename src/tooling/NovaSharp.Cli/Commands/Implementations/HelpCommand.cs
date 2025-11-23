@@ -2,6 +2,7 @@ namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using NovaSharp.Cli;
+    using NovaSharp.Interpreter.Compatibility;
 
     internal class HelpCommand : ICommand
     {
@@ -24,9 +25,10 @@ namespace NovaSharp.Cli.Commands.Implementations
 
         public void Execute(ShellContext context, string arguments)
         {
-            if (arguments.Length > 0)
+            string command = arguments ?? string.Empty;
+            if (command.Length > 0)
             {
-                ICommand cmd = CommandManager.Find(arguments);
+                ICommand cmd = CommandManager.Find(command);
                 if (cmd != null)
                 {
                     cmd.DisplayLongHelp();
@@ -51,7 +53,23 @@ namespace NovaSharp.Cli.Commands.Implementations
                 }
 
                 Console.WriteLine("");
+                WriteCompatibilitySummary(context);
+                Console.WriteLine("");
             }
+        }
+
+        private static void WriteCompatibilitySummary(ShellContext context)
+        {
+            if (context?.Script == null)
+            {
+                return;
+            }
+
+            LuaCompatibilityProfile profile = context.Script.CompatibilityProfile;
+            Console.WriteLine($"Active compatibility profile: {profile.GetFeatureSummary()}");
+            Console.WriteLine(
+                "Use Script.Options.CompatibilityVersion or set luaCompatibility in mod.json to change it."
+            );
         }
     }
 }

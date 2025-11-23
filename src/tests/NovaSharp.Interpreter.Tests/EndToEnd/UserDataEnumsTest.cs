@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumOverload1()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, MyFlags.Due))", "3");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, MyFlags.Due))", "3");
             RunTestOverload("o:MyMethod(MyEnum.Cinque)", "[Cinque]");
         }
 
@@ -113,26 +113,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumFlagsOr()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, MyFlags.Due))", "3");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, MyFlags.Due))", "3");
         }
 
         [Test]
         public void InteropEnumFlagsAnd()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsAnd(MyFlags.Uno, MyFlags.Cinque))", "1");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsAnd(MyFlags.Uno, MyFlags.Cinque))", "1");
         }
 
         [Test]
         public void InteropEnumFlagsXor()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsXor(MyFlags.Uno, MyFlags.Cinque))", "4");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsXor(MyFlags.Uno, MyFlags.Cinque))", "4");
         }
 
         [Test]
         public void InteropEnumFlagsNot()
         {
             RunTestOverload(
-                "o:MyMethod(MyFlags.flagsAnd(MyFlags.Cinque, MyFlags.flagsNot(MyFlags.Uno)))",
+                "o:MyMethod(MyFlags.FlagsAnd(MyFlags.Cinque, MyFlags.FlagsNot(MyFlags.Uno)))",
                 "4"
             );
         }
@@ -140,13 +140,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumFlagsOr2()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsOr(MyFlags.Uno, 2))", "3");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, 2))", "3");
         }
 
         [Test]
         public void InteropEnumFlagsOr3()
         {
-            RunTestOverload("o:MyMethod(MyFlags.flagsOr(1, MyFlags.Due))", "3");
+            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(1, MyFlags.Due))", "3");
         }
 
         [Test]

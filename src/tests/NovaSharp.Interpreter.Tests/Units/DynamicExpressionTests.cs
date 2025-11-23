@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using Execution;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NUnit.Framework;
 
     [TestFixture]
@@ -88,6 +90,77 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(first.GetHashCode(), Is.EqualTo(second.GetHashCode()));
                 Assert.That(first.Equals(third), Is.False);
             });
+        }
+
+        [Test]
+        public void EvaluateThrowsWhenContextBelongsToDifferentScript()
+        {
+            Script owner = new();
+            DynamicExpression expression = owner.CreateDynamicExpression("1");
+
+            Script other = new();
+            ScriptExecutionContext context = other.CreateDynamicExecutionContext();
+
+            Assert.That(
+                () => expression.Evaluate(context),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contain("resource owned by a script")
+            );
+        }
+
+        [Test]
+        public void FindSymbolThrowsWhenContextIsNull()
+        {
+            Script script = new();
+            DynamicExpression expression = script.CreateDynamicExpression("foo");
+
+            Assert.That(() => expression.FindSymbol(null), Throws.TypeOf<ArgumentNullException>());
+        }
+
+        [Test]
+        public void FindSymbolReturnsNullForConstantExpressions()
+        {
+            Script script = new();
+            DynamicExpression constant = script.CreateConstantDynamicExpression(
+                "constant",
+                DynValue.NewString("value")
+            );
+
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Assert.That(constant.FindSymbol(context), Is.Null);
+        }
+
+        [Test]
+        public void EvaluateUsesProvidedContextForNonConstantExpressions()
+        {
+            Script script = new();
+            script.Globals["value"] = DynValue.NewNumber(7);
+
+            DynamicExpression expression = script.CreateDynamicExpression("value + 1");
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            DynValue result = expression.Evaluate(context);
+
+            Assert.That(result.Number, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void EqualsReturnsFalseForNonDynamicExpressionInstances()
+        {
+            Script script = new();
+            DynamicExpression expression = script.CreateDynamicExpression("foo");
+
+            Assert.That(expression.Equals("foo"), Is.False);
+        }
+
+        [Test]
+        public void GetHashCodeDefaultsToZeroWhenExpressionCodeIsNull()
+        {
+            Script script = new();
+            DynamicExpression expression = new(script, null, DynValue.NewNumber(1));
+
+            Assert.That(expression.GetHashCode(), Is.EqualTo(0));
         }
     }
 }

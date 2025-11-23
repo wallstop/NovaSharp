@@ -192,9 +192,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 string normalizedMode = string.IsNullOrEmpty(mode) ? "r" : mode;
-                bool truncate = normalizedMode.Contains("w");
-                bool append = normalizedMode.Contains("a");
-                bool read = normalizedMode.Contains("r") || normalizedMode.Contains("+");
+                bool truncate = ModeContains(normalizedMode, 'w');
+                bool append = ModeContains(normalizedMode, 'a');
+                bool read = ModeContains(normalizedMode, 'r') || ModeContains(normalizedMode, '+');
                 bool write = normalizedMode.Any(c => c is 'w' or 'a' or '+');
 
                 if (write)
@@ -289,6 +289,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             public string GetStdErrText()
             {
                 return Encoding.UTF8.GetString(_stderr.ToArray());
+            }
+
+            private static bool ModeContains(string mode, char symbol)
+            {
+                if (string.IsNullOrEmpty(mode))
+                {
+                    return false;
+                }
+
+                return mode.IndexOf(symbol.ToString(), StringComparison.Ordinal) >= 0;
             }
 
             private sealed class TrackingStream : Stream

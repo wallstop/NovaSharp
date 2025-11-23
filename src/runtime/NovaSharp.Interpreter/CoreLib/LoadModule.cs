@@ -23,6 +23,9 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
+            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
+            ioTable = ModuleArgumentValidation.RequireTable(ioTable, nameof(ioTable));
+
             DynValue package = globalTable.Get("package");
 
             if (package.IsNil())
@@ -63,6 +66,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "load")]
         public static DynValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadImpl(executionContext, args, null);
         }
 
@@ -76,6 +85,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
@@ -85,6 +100,12 @@ namespace NovaSharp.Interpreter.CoreLib
             Table defaultEnv
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
                 Script s = executionContext.GetScript();
@@ -137,7 +158,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
@@ -152,6 +173,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadFileImpl(executionContext, args, null);
         }
 
@@ -165,6 +192,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadFileImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
@@ -174,6 +207,12 @@ namespace NovaSharp.Interpreter.CoreLib
             Table defaultEnv
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
                 Script s = executionContext.GetScript();
@@ -188,13 +227,28 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
 
+        internal static string GetSyntaxErrorMessage(SyntaxErrorException ex)
+        {
+            if (ex == null)
+            {
+                return string.Empty;
+            }
+
+            return ex.DecoratedMessage ?? ex.Message;
+        }
+
         private static Table GetSafeDefaultEnv(ScriptExecutionContext executionContext)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+
             Table env = executionContext.CurrentGlobalEnv;
 
             if (env == null)
@@ -216,6 +270,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
                 Script s = executionContext.GetScript();
@@ -258,6 +318,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             Script s = executionContext.GetScript();
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 

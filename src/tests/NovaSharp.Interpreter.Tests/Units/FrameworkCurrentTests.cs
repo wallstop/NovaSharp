@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Collections.Generic;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility.Frameworks;
     using NUnit.Framework;
@@ -9,47 +8,57 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class FrameworkCurrentTests
     {
-#if DOTNET_CORE
-        [Test]
-        public void GetInterfaceReturnsRequestedInterface()
+        private readonly FrameworkCurrent _framework = new();
+
+        private sealed class DisposableFixture : IDisposable
         {
-            FrameworkCurrent framework = new();
-            Type result = framework.GetInterface(typeof(List<int>), "IEnumerable`1");
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Name, Is.EqualTo("IEnumerable`1"));
+            public void Dispose() { }
         }
 
         [Test]
-        public void GetTypeInfoFromTypeReturnsTypeInfo()
+        public void IsDbNullReturnsTrueOnlyForDbNullInstances()
         {
-            FrameworkCurrent framework = new();
-            TypeInfo info = framework.GetTypeInfoFromType(typeof(string));
-            Assert.That(info, Is.Not.Null);
-            Assert.That(info.FullName, Is.EqualTo(typeof(string).FullName));
+            Assert.Multiple(() =>
+            {
+                Assert.That(_framework.IsDbNull(DBNull.Value), Is.True);
+                Assert.That(_framework.IsDbNull(null), Is.False);
+                Assert.That(_framework.IsDbNull(new object()), Is.False);
+            });
         }
 
         [Test]
-        public void IsDbNullDetectsDBNullInstances()
+        public void StringContainsCharHandlesNullAndMissingCharacters()
         {
-            FrameworkCurrent framework = new();
-            Assert.That(framework.IsDbNull(DBNull.Value), Is.True);
-            Assert.That(framework.IsDbNull(null), Is.False);
-            Assert.That(framework.IsDbNull("value"), Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(_framework.StringContainsChar("abc", 'b'), Is.True);
+                Assert.That(_framework.StringContainsChar("abc", 'z'), Is.False);
+                Assert.That(_framework.StringContainsChar(null, 'a'), Is.False);
+            });
         }
 
         [Test]
-        public void StringContainsCharUsesOrdinalSearch()
+        public void GetInterfaceUsesTypeInfoLookup()
         {
-            FrameworkCurrent framework = new();
-            Assert.That(framework.StringContainsChar("nova", 'o'), Is.True);
-            Assert.That(framework.StringContainsChar("nova", 'x'), Is.False);
+            const string interfaceName = "System.IDisposable";
+
+            Assert.That(
+                _framework.GetInterface(typeof(DisposableFixture), interfaceName),
+                Is.EqualTo(typeof(IDisposable))
+            );
+
+            Assert.That(
+                _framework.GetInterface(typeof(DisposableFixture), "System.ICloneable"),
+                Is.Null
+            );
         }
-#else
+
         [Test]
-        public void FrameworkTestsSkippedOnNonCoreRuntimes()
+        public void GetTypeInfoFromTypeReturnsTypeInfoInstance()
         {
-            Assert.Ignore("FrameworkCurrent is only compiled when DOTNET_CORE is defined.");
+            TypeInfo info = _framework.GetTypeInfoFromType(typeof(string));
+
+            Assert.That(info, Is.EqualTo(typeof(string).GetTypeInfo()));
         }
-#endif
     }
 }

@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentException("Special name cannot be null or empty.", nameof(name));
             }
 
-            if (name.Contains("."))
+            if (name.Contains('.', StringComparison.Ordinal))
             {
                 string[] split = name.Split('.');
                 name = split[^1];
@@ -172,22 +172,22 @@ namespace NovaSharp.Interpreter.Interop
                     return;
             }
 
-            if (name.StartsWith("get_"))
+            if (name.StartsWith("get_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.PropertyGetter;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("set_"))
+            else if (name.StartsWith("set_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.PropertySetter;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("add_"))
+            else if (name.StartsWith("add_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.AddEvent;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("remove_"))
+            else if (name.StartsWith("remove_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.RemoveEvent;
                 Argument = name.Substring(7);
@@ -211,7 +211,9 @@ namespace NovaSharp.Interpreter.Interop
             {
                 int hash = 17;
                 hash = (hash * 31) + Type.GetHashCode();
-                hash = (hash * 31) + (Argument != null ? Argument.GetHashCode() : 0);
+                hash =
+                    (hash * 31)
+                    + (Argument != null ? Argument.GetHashCode(StringComparison.Ordinal) : 0);
                 return hash;
             }
         }

@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
@@ -53,7 +54,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer should be at the '(' or at the '|'
             Token openRound = CheckTokenType(
                 lcontext,
-                isLambda ? TokenType.Lambda : TokenType.BrkOpenRound
+                isLambda ? TokenType.Pipe : TokenType.BrkOpenRound
             );
 
             List<string> paramnames = BuildParamList(lcontext, pushSelfParam, openRound, isLambda);
@@ -104,7 +105,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             Statement s = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.type != TokenType.End)
+            if (lcontext.Lexer.Current.Type != TokenType.End)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -112,7 +113,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     lcontext.Lexer.Current.Text
                 )
                 {
-                    IsPrematureStreamTermination = (lcontext.Lexer.Current.type == TokenType.Eof),
+                    IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
                 };
             }
 
@@ -129,7 +130,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bool isLambda
         )
         {
-            TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.BrkCloseRound;
+            TokenType closeToken = isLambda ? TokenType.Pipe : TokenType.BrkCloseRound;
 
             List<string> paramnames = new();
 
@@ -139,15 +140,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 paramnames.Add("self");
             }
 
-            while (lcontext.Lexer.Current.type != closeToken)
+            while (lcontext.Lexer.Current.Type != closeToken)
             {
                 Token t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Name)
+                if (t.Type == TokenType.Name)
                 {
                     paramnames.Add(t.Text);
                 }
-                else if (t.type == TokenType.VarArgs)
+                else if (t.Type == TokenType.VarArgs)
                 {
                     _hasVarArgs = true;
                     paramnames.Add(WellKnownSymbols.VARARGS);
@@ -161,7 +162,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Comma)
+                if (t.Type == TokenType.Comma)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -172,7 +173,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            if (lcontext.Lexer.Current.type == closeToken)
+            if (lcontext.Lexer.Current.Type == closeToken)
             {
                 lcontext.Lexer.Next();
             }
@@ -190,7 +191,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             {
                 if (!names.Add(paramnames[i]))
                 {
-                    paramnames[i] = paramnames[i] + "@" + i.ToString();
+                    paramnames[i] = paramnames[i] + "@" + i.ToString(CultureInfo.InvariantCulture);
                 }
 
                 ret[i] = lcontext.Scope.DefineLocal(paramnames[i]);
@@ -203,9 +204,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             for (int i = 0; i < _closure.Count; i++)
             {
-                if (_closure[i].i_Name == symbol.i_Name)
+                if (_closure[i].NameValue == symbol.NameValue)
                 {
-                    return SymbolRef.Upvalue(symbol.i_Name, i);
+                    return SymbolRef.Upvalue(symbol.NameValue, i);
                 }
             }
 
@@ -216,7 +217,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _closureInstruction.SymbolList = _closure.ToArray();
             }
 
-            return SymbolRef.Upvalue(symbol.i_Name, _closure.Count - 1);
+            return SymbolRef.Upvalue(symbol.NameValue, _closure.Count - 1);
         }
 
         public override DynValue Eval(ScriptExecutionContext context)
@@ -232,27 +233,27 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             bc.PushSourceRef(_begin);
 
-            Instruction i = bc.Emit_Jump(OpCode.Jump, -1);
+            Instruction i = bc.EmitJump(OpCode.Jump, -1);
 
-            Instruction meta = bc.Emit_Meta(funcName, OpCodeMetadataType.FunctionEntrypoint);
+            Instruction meta = bc.EmitMeta(funcName, OpCodeMetadataType.FunctionEntrypoint);
             int metaip = bc.GetJumpPointForLastInstruction();
 
-            bc.Emit_BeginFn(_stackFrame);
+            bc.EmitBeginFn(_stackFrame);
 
-            bc.LoopTracker.loops.Push(new LoopBoundary());
+            bc.LoopTracker.Loops.Push(new LoopBoundary());
 
             int entryPoint = bc.GetJumpPointForLastInstruction();
 
             if (_usesGlobalEnv)
             {
-                bc.Emit_Load(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
-                bc.Emit_Store(_env, 0, 0);
-                bc.Emit_Pop();
+                bc.EmitLoad(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
+                bc.EmitStore(_env, 0, 0);
+                bc.EmitPop();
             }
 
             if (_paramNames.Length > 0)
             {
-                bc.Emit_Args(_paramNames);
+                bc.EmitArgs(_paramNames);
             }
 
             _statement.Compile(bc);
@@ -260,9 +261,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bc.PopSourceRef();
             bc.PushSourceRef(_end);
 
-            bc.Emit_Ret(0);
+            bc.EmitRet(0);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             i.NumVal = bc.GetJumpPointForNextInstruction();
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
@@ -280,7 +281,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 //.Select((s, idx) => s.CloneLocalAndSetFrame(_ClosureFrames[idx]))
                 .ToArray();
 
-                _closureInstruction = bc.Emit_Closure(symbs, bc.GetJumpPointForNextInstruction());
+                _closureInstruction = bc.EmitClosure(symbs, bc.GetJumpPointForNextInstruction());
                 int ops = afterDecl();
 
                 _closureInstruction.NumVal += 2 + ops;

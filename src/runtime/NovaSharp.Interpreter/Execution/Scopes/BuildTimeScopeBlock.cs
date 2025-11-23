@@ -123,13 +123,13 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                 _localLabels = new Dictionary<string, LabelStatement>();
             }
 
-            if (_localLabels.ContainsKey(label.Label))
+            if (_localLabels.TryGetValue(label.Label, out LabelStatement existing))
             {
                 throw new SyntaxErrorException(
                     label.NameToken,
                     "label '{0}' already defined on line {1}",
                     label.Label,
-                    _localLabels[label.Label].SourceRef.FromLine
+                    existing.SourceRef.FromLine
                 );
             }
             else
@@ -173,7 +173,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                             gotostat.GotoToken,
                             "<goto {0}> at line {1} jumps into the scope of local '{2}'",
                             gotostat.Label,
-                            gotostat.GotoToken.fromLine,
+                            gotostat.GotoToken.FromLine,
                             label.LastDefinedVarName
                         );
                     }
@@ -188,7 +188,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                             gotostat.GotoToken,
                             "no visible label '{0}' for <goto> at line {1}",
                             gotostat.Label,
-                            gotostat.GotoToken.fromLine
+                            gotostat.GotoToken.FromLine
                         );
                     }
 

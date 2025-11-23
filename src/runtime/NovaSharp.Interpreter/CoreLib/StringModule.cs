@@ -6,12 +6,14 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.IO;
     using System.Text;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib.StringLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.LuaPort;
     using NovaSharp.Interpreter.Modules;
-    using StringLib;
 
     /// <summary>
     /// Class implementing string Lua functions
@@ -19,10 +21,12 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "string")]
     public class StringModule
     {
-        public const string BASE64_DUMP_HEADER = "NovaSharp_dump_b64::";
+        public const string Base64DumpHeader = "NovaSharp_dump_b64::";
 
         public static void NovaSharpInit(Table globalTable, Table stringTable)
         {
+            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
+            stringTable = ModuleArgumentValidation.RequireTable(stringTable, nameof(stringTable));
             Table stringMetatable = new(globalTable.OwnerScript);
             stringMetatable.Set("__index", DynValue.NewTable(stringTable));
             globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
@@ -31,6 +35,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "dump")]
         public static DynValue Dump(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue fn = args.AsType(0, "dump", DataType.Function, false);
 
             try
@@ -43,7 +52,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     bytes = ms.ToArray();
                 }
                 string base64 = Convert.ToBase64String(bytes);
-                return DynValue.NewString(BASE64_DUMP_HEADER + base64);
+                return DynValue.NewString(Base64DumpHeader + base64);
             }
             catch (Exception ex)
             {
@@ -54,6 +63,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "char")]
         public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             StringBuilder sb = new(args.Count);
 
             for (int i = 0; i < args.Count; i++)
@@ -89,6 +103,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "byte")]
         public static DynValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue vs = args.AsType(0, "byte", DataType.String, false);
             DynValue vi = args.AsType(1, "byte", DataType.Number, true);
             DynValue vj = args.AsType(2, "byte", DataType.Number, true);
@@ -102,6 +121,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue vs = args.AsType(0, "unicode", DataType.String, false);
             DynValue vi = args.AsType(1, "unicode", DataType.Number, true);
             DynValue vj = args.AsType(2, "unicode", DataType.Number, true);
@@ -174,9 +198,22 @@ namespace NovaSharp.Interpreter.CoreLib
             return s.Length - i;
         }
 
+        internal static class TestHooks
+        {
+            public static int? AdjustIndex(string s, DynValue vi, int defaultValue)
+            {
+                return StringModule.AdjustIndex(s, vi, defaultValue);
+            }
+        }
+
         [NovaSharpModuleMethod(Name = "len")]
         public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue vs = args.AsType(0, "len", DataType.String, false);
             return DynValue.NewNumber(vs.String.Length);
         }
@@ -187,27 +224,47 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return executionContext.EmulateClassicCall(args, "match", KopiLuaStringLib.str_match);
         }
 
         [NovaSharpModuleMethod(Name = "gmatch")]
-        public static DynValue Gmatch(
+        public static DynValue GMatch(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return executionContext.EmulateClassicCall(args, "gmatch", KopiLuaStringLib.str_gmatch);
         }
 
         [NovaSharpModuleMethod(Name = "gsub")]
-        public static DynValue Gsub(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static DynValue GSub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return executionContext.EmulateClassicCall(args, "gsub", KopiLuaStringLib.str_gsub);
         }
 
         [NovaSharpModuleMethod(Name = "find")]
         public static DynValue Find(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return executionContext.EmulateClassicCall(args, "find", KopiLuaStringLib.str_find);
         }
 
@@ -217,8 +274,13 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "lower", DataType.String, false);
-            return DynValue.NewString(argS.String.ToLower());
+            return DynValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
 
         [NovaSharpModuleMethod(Name = "upper")]
@@ -227,13 +289,23 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "upper", DataType.String, false);
-            return DynValue.NewString(argS.String.ToUpper());
+            return DynValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
 
         [NovaSharpModuleMethod(Name = "rep")]
         public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "rep", DataType.String, false);
             DynValue argN = args.AsType(1, "rep", DataType.Number, false);
             DynValue argSep = args.AsType(2, "rep", DataType.String, true);
@@ -267,6 +339,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             return executionContext.EmulateClassicCall(args, "format", KopiLuaStringLib.str_format);
         }
 
@@ -276,6 +353,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "reverse", DataType.String, false);
 
             if (String.IsNullOrEmpty(argS.String))
@@ -292,6 +374,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "sub")]
         public static DynValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "sub", DataType.String, false);
             DynValue argI = args.AsType(1, "sub", DataType.Number, true);
             DynValue argJ = args.AsType(2, "sub", DataType.Number, true);
@@ -308,6 +395,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
             DynValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
 
@@ -316,7 +408,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(argS1.String.StartsWith(argS2.String));
+            return DynValue.NewBoolean(
+                argS1.String.StartsWith(argS2.String, StringComparison.Ordinal)
+            );
         }
 
         [NovaSharpModuleMethod(Name = "endswith")]
@@ -325,6 +419,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
             DynValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
 
@@ -333,7 +432,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(argS1.String.EndsWith(argS2.String));
+            return DynValue.NewBoolean(
+                argS1.String.EndsWith(argS2.String, StringComparison.Ordinal)
+            );
         }
 
         [NovaSharpModuleMethod(Name = "contains")]
@@ -342,6 +443,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS1 = args.AsType(0, "contains", DataType.String, true);
             DynValue argS2 = args.AsType(1, "contains", DataType.String, true);
 
@@ -350,7 +456,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 return DynValue.False;
             }
 
-            return DynValue.NewBoolean(argS1.String.Contains(argS2.String));
+            return DynValue.NewBoolean(
+                argS1.String.Contains(argS2.String, StringComparison.Ordinal)
+            );
         }
     }
 }

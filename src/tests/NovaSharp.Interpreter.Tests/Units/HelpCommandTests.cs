@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NUnit.Framework;
 
     [TestFixture]
@@ -43,14 +44,20 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), string.Empty);
+            ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
+            command.Execute(context, string.Empty);
 
             string output = _writer.ToString();
+            string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
             Assert.Multiple(() =>
             {
                 Assert.That(output, Does.Contain("Commands:"));
                 Assert.That(output, Does.Contain("!help"));
                 Assert.That(output, Does.Contain("!run"));
+                Assert.That(
+                    output,
+                    Does.Contain($"Active compatibility profile: {expectedSummary}")
+                );
             });
         }
 
@@ -59,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), "run");
+            command.Execute(new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)), "run");
 
             Assert.That(
                 _writer.ToString(),
@@ -72,9 +79,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), "garbage");
+            command.Execute(
+                new ShellContext(CreateScript(LuaCompatibilityVersion.Lua52)),
+                "garbage"
+            );
 
             Assert.That(_writer.ToString(), Does.Contain("Command 'garbage' not found."));
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new() { CompatibilityVersion = version };
+
+            return new Script(options);
         }
     }
 }

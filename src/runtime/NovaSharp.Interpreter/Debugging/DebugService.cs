@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution.VM;
@@ -32,9 +33,24 @@ namespace NovaSharp.Interpreter.Debugging
         /// <param name="src">The source.</param>
         /// <param name="lines">The lines.</param>
         /// <returns>The lines for which breakpoints have been set</returns>
-        public HashSet<int> ResetBreakPoints(SourceCode src, HashSet<int> lines)
+        public HashSet<int> ResetBreakpoints(SourceCode src, HashSet<int> lines)
         {
-            return _processor.ResetBreakPoints(src, lines);
+            if (src == null)
+            {
+                throw new ArgumentNullException(nameof(src));
+            }
+
+            if (lines == null)
+            {
+                throw new ArgumentNullException(nameof(lines));
+            }
+
+            if (_processor == null)
+            {
+                throw new InvalidOperationException("DebugService is not bound to a processor.");
+            }
+
+            return Processor.ResetBreakpoints(src, lines);
         }
     }
 }

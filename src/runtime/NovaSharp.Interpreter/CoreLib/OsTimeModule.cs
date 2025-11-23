@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -54,6 +55,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime now = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
             DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
             if (t.IsNil())
@@ -65,11 +71,16 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "difftime")]
-        public static DynValue Difftime(
+        public static DynValue DiffTime(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue t2 = args.AsType(0, "difftime", DataType.Number, false);
             DynValue t1 = args.AsType(1, "difftime", DataType.Number, true);
 
@@ -84,6 +95,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "time")]
         public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime date = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             if (args.Count > 0)
@@ -141,6 +157,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "date")]
         public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             DynValue vformat = args.AsType(0, "date", DataType.String, true);
@@ -155,7 +176,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             bool isDst = false;
 
-            if (format.StartsWith("!"))
+            if (!string.IsNullOrEmpty(format) && format[0] == '!')
             {
                 format = format.Substring(1);
             }
@@ -268,13 +289,13 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 isEscapeSequence = false;
 
-                if (standardPatterns.ContainsKey(c))
+                if (standardPatterns.TryGetValue(c, out string pattern))
                 {
-                    sb.Append(d.ToString(standardPatterns[c]));
+                    sb.Append(d.ToString(pattern, CultureInfo.InvariantCulture));
                 }
                 else if (c == 'e')
                 {
-                    string s = d.ToString("%d");
+                    string s = d.ToString("%d", CultureInfo.InvariantCulture);
                     if (s.Length < 2)
                     {
                         s = " " + s;
@@ -296,7 +317,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
                 else if (c == 'j')
                 {
-                    sb.Append(d.DayOfYear.ToString("000"));
+                    sb.Append(d.DayOfYear.ToString("000", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'u')
                 {
@@ -345,9 +366,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return context?.OwnerScript?.TimeProvider ?? SystemTimeProvider.Instance;
         }
 
-        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context)
-        {
-            return context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
-        }
+        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context) =>
+            context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
     }
 }

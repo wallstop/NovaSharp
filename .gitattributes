@@ -3,6 +3,10 @@
 ###############################################################################
 * text=auto
 
+# POSIX shell scripts must keep LF endings so Git hooks run on Windows without bash errors.
+*.sh text eol=lf
+.githooks/* text eol=lf
+
 # Keep C# sources on CRLF to match .editorconfig and keep CSharpier happy on Linux agents.
 *.cs text eol=crlf
 

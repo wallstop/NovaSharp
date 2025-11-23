@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Execution.Scopes
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
@@ -16,13 +17,13 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)
         {
-            Symbols = symbols.Select(s => s.i_Name).ToArray();
+            Symbols = symbols.Select(s => s.NameValue).ToArray();
             AddRange(values);
         }
 
         internal ClosureContext()
         {
-            Symbols = new string[0];
+            Symbols = Array.Empty<string>();
         }
     }
 }

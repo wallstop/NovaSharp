@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetScriptToClrConversionThrowsWhenTypeExceedsConvertibleRange()
         {
             CustomConverterRegistry registry = new CustomConverterRegistry();
-            DataType invalidType = (DataType)((int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1);
+            DataType invalidType = (DataType)((int)LuaTypeExtensions.MaxConvertibleTypes + 1);
 
             Assert.Throws<ArgumentException>(() =>
                 registry.SetScriptToClrCustomConversion(
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetScriptToClrConversionReturnsNullOutsideRange()
         {
             CustomConverterRegistry registry = new CustomConverterRegistry();
-            DataType invalidType = (DataType)((int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1);
+            DataType invalidType = (DataType)((int)LuaTypeExtensions.MaxConvertibleTypes + 1);
 
             Func<DynValue, object> result = registry.GetScriptToClrCustomConversion(
                 invalidType,

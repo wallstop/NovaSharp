@@ -17,7 +17,10 @@ namespace NovaSharp.Interpreter.IO
             _stream = stream;
         }
 
-        protected override void Dispose(bool disposing) { }
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+        }
 
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
         public override void Close() { }

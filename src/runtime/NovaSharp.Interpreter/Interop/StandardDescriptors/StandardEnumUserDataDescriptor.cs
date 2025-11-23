@@ -91,12 +91,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 IsFlags = true;
 
-                AddEnumMethod("flagsAnd", DynValue.NewCallback(Callback_And));
-                AddEnumMethod("flagsOr", DynValue.NewCallback(Callback_Or));
-                AddEnumMethod("flagsXor", DynValue.NewCallback(Callback_Xor));
-                AddEnumMethod("flagsNot", DynValue.NewCallback(Callback_BwNot));
-                AddEnumMethod("hasAll", DynValue.NewCallback(Callback_HasAll));
-                AddEnumMethod("hasAny", DynValue.NewCallback(Callback_HasAny));
+                AddEnumMethod("flagsAnd", DynValue.NewCallback(CallbackAnd));
+                AddEnumMethod("flagsOr", DynValue.NewCallback(CallbackOr));
+                AddEnumMethod("flagsXor", DynValue.NewCallback(CallbackXor));
+                AddEnumMethod("flagsNot", DynValue.NewCallback(CallbackBwNot));
+                AddEnumMethod("hasAll", DynValue.NewCallback(CallbackHasAll));
+                AddEnumMethod("hasAny", DynValue.NewCallback(CallbackHasAny));
             }
         }
 
@@ -360,7 +360,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             return CreateValueUnsigned(r);
         }
 
-        internal DynValue Callback_Or(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackOr(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -372,7 +372,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        internal DynValue Callback_And(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackAnd(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -384,7 +384,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        internal DynValue Callback_Xor(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackXor(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -396,7 +396,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        internal DynValue Callback_BwNot(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackBwNot(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -408,7 +408,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        internal DynValue Callback_HasAll(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackHasAll(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -430,7 +430,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        internal DynValue Callback_HasAny(ScriptExecutionContext ctx, CallbackArguments args)
+        internal DynValue CallbackHasAny(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -481,7 +481,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         {
             if (metaname == "__concat" && IsFlags)
             {
-                return DynValue.NewCallback(Callback_Or);
+                return DynValue.NewCallback(CallbackOr);
             }
 
             return null;

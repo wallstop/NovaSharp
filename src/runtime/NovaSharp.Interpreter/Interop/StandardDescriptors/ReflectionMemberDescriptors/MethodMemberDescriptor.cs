@@ -412,5 +412,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 p.PrepareForWiring(pt.Table);
             }
         }
+
+        internal static class TestHooks
+        {
+            public static void ForceAccessMode(
+                MethodMemberDescriptor descriptor,
+                InteropAccessMode accessMode
+            )
+            {
+                descriptor.AccessMode = accessMode;
+            }
+        }
     }
 }

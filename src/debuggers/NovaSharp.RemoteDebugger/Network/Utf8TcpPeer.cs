@@ -1,5 +1,6 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System;
     using System.Net.Sockets;
     using System.Text;
 
@@ -124,7 +125,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
         public void Send(string message, params object[] args)
         {
-            SendTerminated(_server.CompleteMessage(string.Format(message, args)));
+            SendTerminated(_server.CompleteMessage(FormatString(message, args)));
         }
 
         public void SendTerminated(string message)
@@ -154,6 +155,21 @@ namespace NovaSharp.RemoteDebugger.Network
                 _server.Logger(ex.Message);
                 CloseConnection(ex.Message);
             }
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(format, args);
         }
     }
 }

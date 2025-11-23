@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             using (bc.EnterSource(_ref))
             {
-                if (bc.LoopTracker.loops.Count == 0)
+                if (bc.LoopTracker.Loops.Count == 0)
                 {
                     throw new SyntaxErrorException(
                         Script,
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                     );
                 }
 
-                ILoop loop = bc.LoopTracker.loops.Peek();
+                ILoop loop = bc.LoopTracker.Loops.Peek();
 
                 if (loop.IsBoundary())
                 {

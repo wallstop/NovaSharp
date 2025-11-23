@@ -102,6 +102,15 @@ namespace NovaSharp.Interpreter.DataStructs
             _headIdx = 0;
         }
 
+        internal static class TestHooks
+        {
+            // Internal hook so tests can exercise the private clearing path without reflection.
+            public static void ZeroSlot(FastStack<T> stack, int index)
+            {
+                stack.Zero(index);
+            }
+        }
+
         public int Count
         {
             get { return _headIdx; }

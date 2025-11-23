@@ -13,9 +13,9 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class DynValue
     {
-        private static int _sRefIdCounter;
+        private static int RefIdCounter;
 
-        private readonly int _refId = ++_sRefIdCounter;
+        private readonly int _refId = ++RefIdCounter;
         private int _hashCode = -1;
 
         private bool _readOnly;
@@ -178,6 +178,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(StringBuilder sb)
         {
+            if (sb == null)
+            {
+                throw new ArgumentNullException(nameof(sb));
+            }
+
             return new DynValue() { _object = sb.ToString(), _type = DataType.String };
         }
 
@@ -186,11 +191,19 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(string format, params object[] args)
         {
-            return new DynValue()
+            if (format == null)
             {
-                _object = string.Format(format, args),
-                _type = DataType.String,
-            };
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            object[] formatArgs = args ?? Array.Empty<object>();
+
+            string formattedValue =
+                formatArgs.Length == 0
+                    ? format
+                    : string.Format(CultureInfo.InvariantCulture, format, formatArgs);
+
+            return new DynValue() { _object = formattedValue, _type = DataType.String };
         }
 
         /// <summary>
@@ -336,6 +349,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(params DynValue[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             if (values.Length == 0)
             {
                 return NewNil();
@@ -354,6 +372,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(params DynValue[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             if (!values.Any(v => v.Type == DataType.Tuple))
             {
                 return NewTuple(values);
@@ -553,7 +576,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Nil:
                     return "nil";
                 case DataType.Boolean:
-                    return Boolean.ToString().ToLower();
+                    return Boolean ? "true" : "false";
                 case DataType.Number:
                     return Number.ToString(CultureInfo.InvariantCulture);
                 case DataType.String:
@@ -561,7 +584,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Function:
                     return $"(Function {Function.EntryPointByteCodeLocation:X8})";
                 case DataType.ClrFunction:
-                    return string.Format("(Function CLR)", Function);
+                    return "(Function CLR)";
                 case DataType.Table:
                     return "(Table)";
                 case DataType.Tuple:
@@ -607,7 +630,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     _hashCode = baseValue ^ Number.GetHashCode();
                     break;
                 case DataType.String:
-                    _hashCode = baseValue ^ String.GetHashCode();
+                    _hashCode = baseValue ^ StringComparer.Ordinal.GetHashCode(String);
                     break;
                 case DataType.Function:
                     _hashCode = baseValue ^ Function.GetHashCode();
@@ -722,7 +745,7 @@ namespace NovaSharp.Interpreter.DataTypes
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString();
+                return rv.Number.ToString(CultureInfo.InvariantCulture);
             }
             else if (rv.Type == DataType.String)
             {

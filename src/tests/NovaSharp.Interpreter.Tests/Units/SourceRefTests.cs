@@ -90,13 +90,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ToStringReflectsStepStopIndicator()
         {
             SourceRef stepStop = new(3, 0, 2, 4, 5, true);
+            SourceRef regular = new(3, 0, 2, 4, 5, false);
 
             string representation = stepStop.ToString();
+            string nonStepRepresentation = regular.ToString();
 
             Assert.Multiple(() =>
             {
                 Assert.That(representation, Does.Contain("[3]*"));
                 Assert.That(representation, Does.Contain("(4, 0) -> (5, 2)"));
+                Assert.That(nonStepRepresentation, Does.Contain("[3] "));
+                Assert.That(nonStepRepresentation, Does.Contain("(4, 0) -> (5, 2)"));
             });
         }
 
@@ -115,6 +119,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetLocationDistanceHandlesSingleLineOffsets()
+        {
+            SourceRef singleLine = new(9, 3, 5, 12, 12, false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(singleLine.GetLocationDistance(9, 12, 2), Is.EqualTo(1));
+                Assert.That(singleLine.GetLocationDistance(9, 12, 8), Is.EqualTo(3));
+            });
+        }
+
+        [Test]
         public void IncludesLocationHandlesSingleLineSourceRefs()
         {
             SourceRef singleLine = new(4, 0, 2, 5, 5, false);
@@ -127,6 +143,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IncludesLocationReturnsTrueForMiddleLines()
+        {
+            SourceRef multi = new(10, 1, 3, 4, 7, false);
+            Assert.That(multi.IncludesLocation(10, 6, 0), Is.True);
+        }
+
+        [Test]
         public void FormatLocationUsesPointFormattingWhenCharsMatch()
         {
             Script script = new();
@@ -136,6 +159,19 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Options.UseLuaErrorLocations = false;
             Assert.That(point.FormatLocation(script), Is.EqualTo("point:(4,2)"));
+        }
+
+        [Test]
+        public void FormatLocationThrowsWhenScriptIsNull()
+        {
+            SourceRef point = new(0, 0, 0, 0, 0, false);
+            Assert.That(() => point.FormatLocation(null), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void CopyConstructorThrowsWhenSourceIsNull()
+        {
+            Assert.That(() => new SourceRef(null, false), Throws.ArgumentNullException);
         }
     }
 }

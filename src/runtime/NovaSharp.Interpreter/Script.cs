@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -14,7 +15,6 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
-    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
@@ -33,18 +33,19 @@ namespace NovaSharp.Interpreter
         public const string VERSION = "2.0.0.0";
 
         /// <summary>
-        /// The Lua version being supported
+        /// The default Lua version targeted by NovaSharp.
         /// </summary>
-        public const string LuaVersion = "5.2";
+        public const string LuaVersion = "5.4";
 
         private readonly Processor _mainProcessor;
         private readonly ByteCode _byteCode;
         private readonly List<SourceCode> _sources = new();
         private readonly Table _globalTable;
         private IDebugger _debugger;
-        private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MAX_META_TYPES];
+        private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
+        private bool _bit32CompatibilityWarningEmitted;
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -139,6 +140,12 @@ namespace NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Gets the derived compatibility profile describing the selected Lua feature set.
+        /// </summary>
+        public LuaCompatibilityProfile CompatibilityProfile =>
+            LuaCompatibilityProfile.ForVersion(CompatibilityVersion);
+
+        /// <summary>
         /// Gets access to performance statistics.
         /// </summary>
         public PerformanceStatistics PerformanceStats { get; internal set; }
@@ -176,7 +183,8 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            string chunkName = $"libfunc_{funcFriendlyName ?? _sources.Count.ToString()}";
+            string chunkName =
+                $"libfunc_{funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)}";
 
             SourceCode source = new(chunkName, code, _sources.Count, this);
 
@@ -199,7 +207,7 @@ namespace NovaSharp.Interpreter
         {
             if (_debugger != null)
             {
-                _debugger.SetByteCode(_byteCode.code.Select(s => s.ToString()).ToArray());
+                _debugger.SetByteCode(_byteCode.Code.Select(s => s.ToString()).ToArray());
             }
         }
 
@@ -226,28 +234,32 @@ namespace NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            this.CheckScriptOwnership(globalTable);
-
-            if (code.StartsWith(StringModule.BASE64_DUMP_HEADER))
+            return ExecuteWithCompatibilityGuard(() =>
             {
-                code = code.Substring(StringModule.BASE64_DUMP_HEADER.Length);
-                byte[] data = Convert.FromBase64String(code);
-                using MemoryStream ms = new(data);
-                return LoadStream(ms, globalTable, codeFriendlyName);
-            }
+                this.CheckScriptOwnership(globalTable);
 
-            string chunkName = $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString()}";
+                if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
+                {
+                    code = code.Substring(StringModule.Base64DumpHeader.Length);
+                    byte[] data = Convert.FromBase64String(code);
+                    using MemoryStream ms = new(data);
+                    return LoadStream(ms, globalTable, codeFriendlyName);
+                }
 
-            SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
+                string chunkName =
+                    $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
 
-            _sources.Add(source);
+                SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
-            int address = LoaderFast.LoadChunk(this, source, _byteCode);
+                _sources.Add(source);
 
-            SignalSourceCodeChange(source);
-            SignalByteCodeChange();
+                int address = LoaderFast.LoadChunk(this, source, _byteCode);
 
-            return MakeClosure(address, globalTable ?? _globalTable);
+                SignalSourceCodeChange(source);
+                SignalByteCodeChange();
+
+                return MakeClosure(address, globalTable ?? _globalTable);
+            });
         }
 
         /// <summary>
@@ -265,48 +277,52 @@ namespace NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            this.CheckScriptOwnership(globalTable);
-
-            Stream codeStream = new UndisposableStream(stream);
-
-            if (!Processor.IsDumpStream(codeStream))
+            return ExecuteWithCompatibilityGuard(() =>
             {
-                using StreamReader sr = new(codeStream);
-                string scriptCode = sr.ReadToEnd();
-                return LoadString(scriptCode, globalTable, codeFriendlyName);
-            }
-            else
-            {
-                string chunkName = $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString()}";
+                this.CheckScriptOwnership(globalTable);
 
-                SourceCode source = new(
-                    codeFriendlyName ?? chunkName,
-                    $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
-                    _sources.Count,
-                    this
-                );
+                Stream codeStream = new UndisposableStream(stream);
 
-                _sources.Add(source);
-
-                int address = _mainProcessor.Undump(
-                    codeStream,
-                    _sources.Count - 1,
-                    globalTable ?? _globalTable,
-                    out bool hasUpvalues
-                );
-
-                SignalSourceCodeChange(source);
-                SignalByteCodeChange();
-
-                if (hasUpvalues)
+                if (!Processor.IsDumpStream(codeStream))
                 {
-                    return MakeClosure(address, globalTable ?? _globalTable);
+                    using StreamReader sr = new(codeStream);
+                    string scriptCode = sr.ReadToEnd();
+                    return LoadString(scriptCode, globalTable, codeFriendlyName);
                 }
                 else
                 {
-                    return MakeClosure(address);
+                    string chunkName =
+                        $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+
+                    SourceCode source = new(
+                        codeFriendlyName ?? chunkName,
+                        $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
+                        _sources.Count,
+                        this
+                    );
+
+                    _sources.Add(source);
+
+                    int address = _mainProcessor.Undump(
+                        codeStream,
+                        _sources.Count - 1,
+                        globalTable ?? _globalTable,
+                        out bool hasUpvalues
+                    );
+
+                    SignalSourceCodeChange(source);
+                    SignalByteCodeChange();
+
+                    if (hasUpvalues)
+                    {
+                        return MakeClosure(address, globalTable ?? _globalTable);
+                    }
+                    else
+                    {
+                        return MakeClosure(address);
+                    }
                 }
-            }
+            });
         }
 
         /// <summary>
@@ -496,6 +512,28 @@ namespace NovaSharp.Interpreter
         /// <param name="address">The address.</param>
         /// <param name="envTable">The env table to create a 0-upvalue</param>
         /// <returns></returns>
+        private T ExecuteWithCompatibilityGuard<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (InterpreterException ex)
+            {
+                ex.AppendCompatibilityContext(this);
+                throw;
+            }
+        }
+
+        private void ExecuteWithCompatibilityGuard(Action action)
+        {
+            ExecuteWithCompatibilityGuard(() =>
+            {
+                action();
+                return 0;
+            });
+        }
+
         private DynValue MakeClosure(int address, Table envTable = null)
         {
             this.CheckScriptOwnership(envTable);
@@ -526,10 +564,10 @@ namespace NovaSharp.Interpreter
                 {
                     new()
                     {
-                        i_Env = null,
-                        i_Index = 0,
-                        i_Name = WellKnownSymbols.ENV,
-                        i_Type = SymbolRefType.DefaultEnv,
+                        EnvironmentRef = null,
+                        IndexValue = 0,
+                        NameValue = WellKnownSymbols.ENV,
+                        SymbolType = SymbolRefType.DefaultEnv,
                     },
                 };
 
@@ -599,7 +637,7 @@ namespace NovaSharp.Interpreter
                 );
             }
 
-            return _mainProcessor.Call(function, args);
+            return ExecuteWithCompatibilityGuard(() => _mainProcessor.Call(function, args));
         }
 
         /// <summary>
@@ -660,7 +698,7 @@ namespace NovaSharp.Interpreter
 
             if (function.Type == DataType.Function)
             {
-                return _mainProcessor.Coroutine_Create(function.Function);
+                return _mainProcessor.CreateCoroutine(function.Function);
             }
             else if (function.Type == DataType.ClrFunction)
             {
@@ -784,6 +822,9 @@ namespace NovaSharp.Interpreter
             this.CheckScriptOwnership(globalContext);
 
             Table globals = globalContext ?? _globalTable;
+
+            WarnIfBit32CompatibilityDisabled(modname);
+
             string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
 
             if (filename == null)
@@ -793,6 +834,32 @@ namespace NovaSharp.Interpreter
 
             DynValue func = LoadFile(filename, globalContext, filename);
             return func;
+        }
+
+        private void WarnIfBit32CompatibilityDisabled(string moduleName)
+        {
+            if (
+                _bit32CompatibilityWarningEmitted
+                || !string.Equals(moduleName, "bit32", StringComparison.Ordinal)
+            )
+            {
+                return;
+            }
+
+            LuaCompatibilityProfile profile = CompatibilityProfile;
+
+            if (profile.SupportsBit32Library)
+            {
+                return;
+            }
+
+            string message =
+                $"[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: {profile.DisplayName}. Update Script.Options.CompatibilityVersion or ship a custom bit32 module.";
+
+            Action<string> sink = Options.DebugPrint ?? Script.GlobalOptions.Platform.DefaultPrint;
+            sink?.Invoke(message);
+
+            _bit32CompatibilityWarningEmitted = true;
         }
 
         /// <summary>
@@ -894,6 +961,16 @@ namespace NovaSharp.Interpreter
             return new ScriptExecutionContext(_mainProcessor, func, null, isDynamic: true);
         }
 
+        internal Processor GetMainProcessorForTests()
+        {
+            return _mainProcessor;
+        }
+
+        internal ByteCode GetByteCodeForTests()
+        {
+            return _byteCode;
+        }
+
         /// <summary>
         /// NovaSharp (like Lua itself) provides a registry, a predefined table that can be used by any CLR code to
         /// store whatever Lua values it needs to store.
@@ -914,6 +991,7 @@ namespace NovaSharp.Interpreter
             StringBuilder sb = new();
             sb.AppendLine(
                 string.Format(
+                    CultureInfo.InvariantCulture,
                     "NovaSharp {0}{1} [{2}]",
                     subproduct,
                     VERSION,

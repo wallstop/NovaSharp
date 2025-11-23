@@ -2,7 +2,7 @@ namespace NovaSharp.Comparison;
 
 using System;
 
-public enum ScriptScenario
+internal enum ScriptScenario
 {
     [Obsolete("Use a specific ScriptScenario.", false)]
     Unknown = 0,

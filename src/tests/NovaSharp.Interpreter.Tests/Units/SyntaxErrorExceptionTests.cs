@@ -147,6 +147,28 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void MessageOnlyConstructorStoresMessage()
+        {
+            SyntaxErrorException exception = new("parse error");
+
+            Assert.That(exception.Message, Is.EqualTo("parse error"));
+        }
+
+        [Test]
+        public void MessageAndInnerConstructorPreservesInnerException()
+        {
+            InvalidOperationException inner = new("inner");
+
+            SyntaxErrorException exception = new("outer", inner);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(exception.Message, Is.EqualTo("outer"));
+                Assert.That(exception.InnerException, Is.SameAs(inner));
+            });
+        }
+
         private static Script CreateScriptWithNamedSource(string chunkName)
         {
             return CreateScriptWithNamedSource(chunkName, out _);

@@ -1,15 +1,18 @@
 namespace NovaSharp.Cli
 {
     using System;
+    using System.IO;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
 
-    internal sealed class Program
+    internal sealed partial class Program
     {
         [STAThread]
         private static void Main(string[] args)
@@ -28,7 +31,7 @@ namespace NovaSharp.Cli
                 return;
             }
 
-            Banner();
+            Banner(script);
 
             ReplInterpreter interpreter = new(script)
             {
@@ -88,10 +91,15 @@ namespace NovaSharp.Cli
             }
         }
 
-        private static void Banner()
+        private static void Banner(Script script)
         {
             Console.WriteLine(Script.GetBanner("Console"));
             Console.WriteLine();
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            Console.WriteLine($"[compatibility] Active profile: {profile.GetFeatureSummary()}");
+            Console.WriteLine(
+                "[compatibility] Use Script.Options.CompatibilityVersion or set luaCompatibility in mod.json to change it."
+            );
             Console.WriteLine(
                 "Type Lua code to execute it or type !help to see help on commands.\n"
             );
@@ -105,10 +113,9 @@ namespace NovaSharp.Cli
                 return false;
             }
 
-            if (args.Length == 1 && args[0].Length > 0 && args[0][0] != '-')
+            if (TryRunScriptArgument(args))
             {
-                Script script = new();
-                script.DoFile(args[0]);
+                return true;
             }
 
             if (args[0] == "-H" || args[0] == "--help" || args[0] == "/?" || args[0] == "-?")
@@ -189,6 +196,48 @@ namespace NovaSharp.Cli
             }
 
             return true;
+        }
+
+        private static bool TryRunScriptArgument(string[] args)
+        {
+            if (args.Length != 1 || string.IsNullOrWhiteSpace(args[0]) || args[0][0] == '-')
+            {
+                return false;
+            }
+
+            string resolvedScriptPath = ResolveScriptPath(args[0]);
+            ScriptOptions options = new(Script.DefaultOptions);
+            ModManifestCompatibility.TryApplyFromScriptPath(
+                resolvedScriptPath,
+                options,
+                Script.GlobalOptions.CompatibilityVersion,
+                info => Console.WriteLine($"[compatibility] {info}"),
+                warning => Console.WriteLine($"[compatibility] {warning}")
+            );
+
+            Script script = new(CoreModules.PresetComplete, options);
+            Console.WriteLine(
+                $"[compatibility] Running '{resolvedScriptPath}' with {script.CompatibilityProfile.GetFeatureSummary()}"
+            );
+            script.DoFile(resolvedScriptPath);
+            return true;
+        }
+
+        private static string ResolveScriptPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (Exception)
+            {
+                return path;
+            }
         }
 
         private static void ShowCmdLineHelpBig()

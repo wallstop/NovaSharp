@@ -11,9 +11,9 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
-        private static bool? _isRunningOnAot;
+        private static bool? RunningOnAotCache;
 
-        private static bool _autoDetectionsDone;
+        private static bool AutoDetectionsDone;
 
         /// <summary>
         /// Gets a value indicating whether this instance is running on mono.
@@ -58,29 +58,29 @@ namespace NovaSharp.Interpreter.Platforms
                 return true;
 #else
 
-                if (!_isRunningOnAot.HasValue)
+                if (!RunningOnAotCache.HasValue)
                 {
                     try
                     {
                         Expression e = Expression.Constant(5, typeof(int));
                         Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
                         lambda.Compile();
-                        _isRunningOnAot = false;
+                        RunningOnAotCache = false;
                     }
                     catch (Exception)
                     {
-                        _isRunningOnAot = true;
+                        RunningOnAotCache = true;
                     }
                 }
 
-                return _isRunningOnAot.Value;
+                return RunningOnAotCache.Value;
 #endif
             }
         }
 
         private static void AutoDetectPlatformFlags()
         {
-            if (_autoDetectionsDone)
+            if (AutoDetectionsDone)
             {
                 return;
             }
@@ -102,7 +102,7 @@ namespace NovaSharp.Interpreter.Platforms
             IsRunningOnUnity = AppDomain
                 .CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.SafeGetTypes())
-                .Any(t => t.FullName.StartsWith("UnityEngine."));
+                .Any(t => t.FullName.StartsWith("UnityEngine.", StringComparison.Ordinal));
 #endif
 #endif
 
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Platforms
 
             IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
 
-            _autoDetectionsDone = true;
+            AutoDetectionsDone = true;
         }
 
         internal static IPlatformAccessor GetDefaultPlatform()
@@ -150,6 +150,118 @@ namespace NovaSharp.Interpreter.Platforms
 #else
                 return new FileSystemScriptLoader();
 #endif
+            }
+        }
+
+        internal sealed class PlatformDetectorSnapshot
+        {
+            internal PlatformDetectorSnapshot(
+                bool isRunningOnMono,
+                bool isRunningOnClr4,
+                bool isRunningOnUnity,
+                bool isPortableFramework,
+                bool isUnityNative,
+                bool isUnityIl2Cpp,
+                bool? runningOnAotCache,
+                bool autoDetectionsDone
+            )
+            {
+                IsRunningOnMono = isRunningOnMono;
+                IsRunningOnClr4 = isRunningOnClr4;
+                IsRunningOnUnity = isRunningOnUnity;
+                IsPortableFramework = isPortableFramework;
+                IsUnityNative = isUnityNative;
+                IsUnityIl2Cpp = isUnityIl2Cpp;
+                RunningOnAotCache = runningOnAotCache;
+                AutoDetectionsDone = autoDetectionsDone;
+            }
+
+            internal bool IsRunningOnMono { get; }
+            internal bool IsRunningOnClr4 { get; }
+            internal bool IsRunningOnUnity { get; }
+            internal bool IsPortableFramework { get; }
+            internal bool IsUnityNative { get; }
+            internal bool IsUnityIl2Cpp { get; }
+            internal bool? RunningOnAotCache { get; }
+            internal bool AutoDetectionsDone { get; }
+        }
+
+        internal static class TestHooks
+        {
+            public static PlatformDetectorSnapshot CaptureState()
+            {
+                return new PlatformDetectorSnapshot(
+                    IsRunningOnMono,
+                    IsRunningOnClr4,
+                    IsRunningOnUnity,
+                    IsPortableFramework,
+                    IsUnityNative,
+                    IsUnityIl2Cpp,
+                    RunningOnAotCache,
+                    AutoDetectionsDone
+                );
+            }
+
+            public static void RestoreState(PlatformDetectorSnapshot snapshot)
+            {
+                IsRunningOnMono = snapshot.IsRunningOnMono;
+                IsRunningOnClr4 = snapshot.IsRunningOnClr4;
+                IsRunningOnUnity = snapshot.IsRunningOnUnity;
+                IsPortableFramework = snapshot.IsPortableFramework;
+                IsUnityNative = snapshot.IsUnityNative;
+                IsUnityIl2Cpp = snapshot.IsUnityIl2Cpp;
+                RunningOnAotCache = snapshot.RunningOnAotCache;
+                AutoDetectionsDone = snapshot.AutoDetectionsDone;
+            }
+
+            public static void SetFlags(
+                bool? isRunningOnMono = null,
+                bool? isRunningOnClr4 = null,
+                bool? isRunningOnUnity = null,
+                bool? isPortableFramework = null,
+                bool? isUnityNative = null,
+                bool? isUnityIl2Cpp = null
+            )
+            {
+                if (isRunningOnMono.HasValue)
+                {
+                    IsRunningOnMono = isRunningOnMono.Value;
+                }
+
+                if (isRunningOnClr4.HasValue)
+                {
+                    IsRunningOnClr4 = isRunningOnClr4.Value;
+                }
+
+                if (isRunningOnUnity.HasValue)
+                {
+                    IsRunningOnUnity = isRunningOnUnity.Value;
+                }
+
+                if (isPortableFramework.HasValue)
+                {
+                    IsPortableFramework = isPortableFramework.Value;
+                }
+
+                if (isUnityNative.HasValue)
+                {
+                    IsUnityNative = isUnityNative.Value;
+                }
+
+                if (isUnityIl2Cpp.HasValue)
+                {
+                    IsUnityIl2Cpp = isUnityIl2Cpp.Value;
+                }
+            }
+
+            public static void SetRunningOnAot(bool? value)
+            {
+                RunningOnAotCache = value;
+            }
+
+            public static void SetAutoDetectionsDone(bool value)
+            {
+                AutoDetectionsDone = value;
             }
         }
     }

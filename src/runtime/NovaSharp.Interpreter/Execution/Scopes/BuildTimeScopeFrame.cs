@@ -90,9 +90,9 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal int AllocVar(SymbolRef var)
         {
-            var.i_Index = _scopeFrame.DebugSymbols.Count;
+            var.IndexValue = _scopeFrame.DebugSymbols.Count;
             _scopeFrame.DebugSymbols.Add(var);
-            return var.i_Index;
+            return var.IndexValue;
         }
 
         internal int GetPosForNextVar()

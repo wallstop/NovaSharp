@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             // eat away all superfluos ';'s
-            while (lcontext.Lexer.Current.type == TokenType.SemiColon)
+            while (lcontext.Lexer.Current.Type == TokenType.SemiColon)
             {
                 lcontext.Lexer.Next();
             }

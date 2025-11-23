@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
         False = 10,
         For = 11,
         Function = 12,
-        Lambda = 13,
+        Pipe = 13,
         Goto = 14,
         If = 15,
         In = 16,
@@ -68,5 +68,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
         Invalid = 60,
         BrkOpenCurlyShared = 61,
         OpDollar = 62,
+        OpBitNotOrXor = 63,
+        OpBitAnd = 64,
+        OpShiftLeft = 65,
+        OpShiftRight = 66,
+        OpFloorDiv = 67,
+        OpBitOr = 68,
     }
 }

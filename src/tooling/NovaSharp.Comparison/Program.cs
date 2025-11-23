@@ -2,6 +2,7 @@ namespace NovaSharp.Comparison
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
@@ -19,7 +20,13 @@ namespace NovaSharp.Comparison
             // Comparison benchmarks are run manually; print a reminder instead of
             // attempting to emit a shared performance report (NovaSharp.Benchmarks
             // owns that infrastructure).
-            Console.WriteLine("NovaSharp.Comparison completed {0} summaries.", summaries.Count());
+            int completedSummaries = summaries.Count();
+            string completionMessage = string.Format(
+                CultureInfo.InvariantCulture,
+                "NovaSharp.Comparison completed {0} summaries.",
+                completedSummaries
+            );
+            Console.WriteLine(completionMessage);
         }
     }
 }

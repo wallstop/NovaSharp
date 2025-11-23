@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.Errors;
@@ -40,6 +41,11 @@ namespace NovaSharp.Interpreter.DataTypes
         public Table(Script owner, params DynValue[] arrayValues)
             : this(owner)
         {
+            if (arrayValues == null)
+            {
+                throw new ArgumentNullException(nameof(arrayValues));
+            }
+
             for (int i = 0; i < arrayValues.Length; i++)
             {
                 Set(DynValue.NewNumber(i + 1), arrayValues[i]);
@@ -69,7 +75,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the integral key from a double.
         /// </summary>
-        private int GetIntegralKey(double d)
+        private static int GetIntegralKey(double d)
         {
             int v = ((int)d);
 
@@ -147,6 +153,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Append(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(
                 _arrayMap,
@@ -228,6 +239,11 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(_stringMap, key, DynValue.NewString(key), value, false, -1);
         }
@@ -239,6 +255,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(int key, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(_arrayMap, key, DynValue.NewNumber(key), value, true, -1);
         }
@@ -250,6 +271,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(DynValue key, DynValue value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (key.IsNilOrNan())
             {
                 if (key.IsNil())
@@ -297,6 +328,11 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (key is string s)
             {
                 Set(s, value);
@@ -322,6 +358,11 @@ namespace NovaSharp.Interpreter.DataTypes
             if (keys == null || keys.Length <= 0)
             {
                 throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
             }
 
             ResolveMultipleKeys(keys, out object key).Set(key, value);
@@ -421,6 +462,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(DynValue key)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (key.Type == DataType.String)
             {
                 return RawGet(key.String);
@@ -527,6 +573,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(DynValue key)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             if (key.Type == DataType.String)
             {
                 return Remove(key.String);
@@ -606,6 +657,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public TablePair? NextKey(DynValue v)
         {
+            if (v == null)
+            {
+                throw new ArgumentNullException(nameof(v));
+            }
+
             if (v.IsNil())
             {
                 LinkedListNode<TablePair> node = _values.First;
@@ -645,7 +701,7 @@ namespace NovaSharp.Interpreter.DataTypes
             return GetNextOf(_valueMap.Find(v));
         }
 
-        private TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
+        private static TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
         {
             while (true)
             {

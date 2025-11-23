@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     internal class BinaryOperatorExpression : Expression
     {
         [Flags]
-        private enum Operator
+        internal enum Operator
         {
             NotAnOperator = 0,
 
@@ -33,29 +33,39 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Div = 0x2000,
             Mod = 0x4000,
             Power = 0x8000,
+            FloorDiv = 0x10000,
+            BitAnd = 0x20000,
+            BitOr = 0x40000,
+            BitXor = 0x80000,
+            ShiftLeft = 0x100000,
+            ShiftRight = 0x200000,
         }
 
         private class Node
         {
-            public Expression expr;
-            public Operator op;
-            public Node prev;
-            public Node next;
+            public Expression Expression;
+            public Operator Operator;
+            public Node Previous;
+            public Node Next;
         }
 
         private class LinkedList
         {
-            public Node nodes;
-            public Node last;
-            public Operator operatorMask;
+            public Node Head;
+            public Node Tail;
+            public Operator OperatorMask;
         }
 
-        private const Operator POWER = Operator.Power;
-        private const Operator MUL_DIV_MOD = Operator.Mul | Operator.Div | Operator.Mod;
-        private const Operator ADD_SUB = Operator.Add | Operator.Sub;
-        private const Operator STRCAT = Operator.StrConcat;
+        private const Operator PowerOperator = Operator.Power;
+        private const Operator MultiplicationDivisionModuloOperators =
+            Operator.Mul | Operator.Div | Operator.Mod | Operator.FloorDiv;
+        private const Operator AdditionSubtractionOperators = Operator.Add | Operator.Sub;
+        private const Operator StringConcatenationOperator = Operator.StrConcat;
+        private const Operator ShiftOperators = Operator.ShiftLeft | Operator.ShiftRight;
+        private const Operator BitwiseOperatorMask =
+            Operator.BitAnd | Operator.BitOr | Operator.BitXor | ShiftOperators;
 
-        private const Operator COMPARES =
+        private const Operator ComparisonOperators =
             Operator.Less
             | Operator.Greater
             | Operator.GreaterOrEqual
@@ -63,8 +73,27 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             | Operator.Equal
             | Operator.NotEqual;
 
-        private const Operator LOGIC_AND = Operator.And;
-        private const Operator LOGIC_OR = Operator.Or;
+        private const Operator LogicalAndOperator = Operator.And;
+        private const Operator LogicalOrOperator = Operator.Or;
+
+        internal void SetOperatorForTests(Operator op)
+        {
+            _operator = op;
+        }
+
+        internal static void RemoveFirstExpressionForTests(object chain)
+        {
+            if (chain == null)
+            {
+                throw new ArgumentNullException(nameof(chain));
+            }
+
+            LinkedList list = (LinkedList)chain;
+            if (list.Head != null)
+            {
+                list.Head.Expression = null;
+            }
+        }
 
         public static object BeginOperatorChain()
         {
@@ -74,14 +103,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public static void AddExpressionToChain(object chain, Expression exp)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { expr = exp };
+            Node node = new() { Expression = exp };
             AddNode(list, node);
         }
 
         public static void AddOperatorToChain(object chain, Token op)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { op = ParseBinaryOperator(op) };
+            Node node = new() { Operator = ParseBinaryOperator(op) };
             AddNode(list, node);
         }
 
@@ -101,17 +130,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private static void AddNode(LinkedList list, Node node)
         {
-            list.operatorMask |= node.op;
+            list.OperatorMask |= node.Operator;
 
-            if (list.nodes == null)
+            if (list.Head == null)
             {
-                list.nodes = list.last = node;
+                list.Head = list.Tail = node;
             }
             else
             {
-                list.last.next = node;
-                node.prev = list.last;
-                list.last = node;
+                list.Tail.Next = node;
+                node.Previous = list.Tail;
+                list.Tail = node;
             }
         }
 
@@ -120,56 +149,80 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         /// </summary>
         private static Expression CreateSubTree(LinkedList list, ScriptLoadingContext lcontext)
         {
-            Operator opfound = list.operatorMask;
+            Operator opfound = list.OperatorMask;
 
-            Node nodes = list.nodes;
+            Node nodes = list.Head;
 
-            if ((opfound & POWER) != 0)
+            if ((opfound & PowerOperator) != 0)
             {
-                nodes = PrioritizeRightAssociative(nodes, lcontext, POWER);
+                nodes = PrioritizeRightAssociative(nodes, lcontext, PowerOperator);
             }
 
-            if ((opfound & MUL_DIV_MOD) != 0)
+            if ((opfound & MultiplicationDivisionModuloOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, MUL_DIV_MOD);
+                nodes = PrioritizeLeftAssociative(
+                    nodes,
+                    lcontext,
+                    MultiplicationDivisionModuloOperators
+                );
             }
 
-            if ((opfound & ADD_SUB) != 0)
+            if ((opfound & AdditionSubtractionOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, ADD_SUB);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, AdditionSubtractionOperators);
             }
 
-            if ((opfound & STRCAT) != 0)
+            if ((opfound & StringConcatenationOperator) != 0)
             {
-                nodes = PrioritizeRightAssociative(nodes, lcontext, STRCAT);
+                nodes = PrioritizeRightAssociative(nodes, lcontext, StringConcatenationOperator);
             }
 
-            if ((opfound & COMPARES) != 0)
+            if ((opfound & ShiftOperators) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, COMPARES);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, ShiftOperators);
             }
 
-            if ((opfound & LOGIC_AND) != 0)
+            if ((opfound & Operator.BitAnd) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_AND);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitAnd);
             }
 
-            if ((opfound & LOGIC_OR) != 0)
+            if ((opfound & Operator.BitXor) != 0)
             {
-                nodes = PrioritizeLeftAssociative(nodes, lcontext, LOGIC_OR);
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitXor);
             }
 
-            if (nodes.next != null || nodes.prev != null)
+            if ((opfound & Operator.BitOr) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, Operator.BitOr);
+            }
+
+            if ((opfound & ComparisonOperators) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, ComparisonOperators);
+            }
+
+            if ((opfound & LogicalAndOperator) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, LogicalAndOperator);
+            }
+
+            if ((opfound & LogicalOrOperator) != 0)
+            {
+                nodes = PrioritizeLeftAssociative(nodes, lcontext, LogicalOrOperator);
+            }
+
+            if (nodes.Next != null || nodes.Previous != null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 1");
             }
 
-            if (nodes.expr == null)
+            if (nodes.Expression == null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 2");
             }
 
-            return nodes.expr;
+            return nodes.Expression;
         }
 
         private static Node PrioritizeLeftAssociative(
@@ -178,30 +231,37 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Operator operatorsToFind
         )
         {
-            for (Node n = nodes; n != null; n = n.next)
+            for (Node n = nodes; n != null; n = n.Next)
             {
-                Operator o = n.op;
+                Operator o = n.Operator;
 
-                if ((o & operatorsToFind) != 0)
+                if ((o & operatorsToFind) == 0)
                 {
-                    n.op = Operator.NotAnOperator;
-                    n.expr = new BinaryOperatorExpression(n.prev.expr, n.next.expr, o, lcontext);
-                    n.prev = n.prev.prev;
-                    n.next = n.next.next;
+                    continue;
+                }
 
-                    if (n.next != null)
-                    {
-                        n.next.prev = n;
-                    }
+                n.Operator = Operator.NotAnOperator;
+                n.Expression = new BinaryOperatorExpression(
+                    n.Previous.Expression,
+                    n.Next.Expression,
+                    o,
+                    lcontext
+                );
+                n.Previous = n.Previous.Previous;
+                n.Next = n.Next.Next;
 
-                    if (n.prev != null)
-                    {
-                        n.prev.next = n;
-                    }
-                    else
-                    {
-                        nodes = n;
-                    }
+                if (n.Next != null)
+                {
+                    n.Next.Previous = n;
+                }
+
+                if (n.Previous != null)
+                {
+                    n.Previous.Next = n;
+                }
+                else
+                {
+                    nodes = n;
                 }
             }
 
@@ -215,32 +275,39 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
         {
             Node last;
-            for (last = nodes; last.next != null; last = last.next) { }
+            for (last = nodes; last.Next != null; last = last.Next) { }
 
-            for (Node n = last; n != null; n = n.prev)
+            for (Node n = last; n != null; n = n.Previous)
             {
-                Operator o = n.op;
+                Operator o = n.Operator;
 
-                if ((o & operatorsToFind) != 0)
+                if ((o & operatorsToFind) == 0)
                 {
-                    n.op = Operator.NotAnOperator;
-                    n.expr = new BinaryOperatorExpression(n.prev.expr, n.next.expr, o, lcontext);
-                    n.prev = n.prev.prev;
-                    n.next = n.next.next;
+                    continue;
+                }
 
-                    if (n.next != null)
-                    {
-                        n.next.prev = n;
-                    }
+                n.Operator = Operator.NotAnOperator;
+                n.Expression = new BinaryOperatorExpression(
+                    n.Previous.Expression,
+                    n.Next.Expression,
+                    o,
+                    lcontext
+                );
+                n.Previous = n.Previous.Previous;
+                n.Next = n.Next.Next;
 
-                    if (n.prev != null)
-                    {
-                        n.prev.next = n;
-                    }
-                    else
-                    {
-                        nodes = n;
-                    }
+                if (n.Next != null)
+                {
+                    n.Next.Previous = n;
+                }
+
+                if (n.Previous != null)
+                {
+                    n.Previous.Next = n;
+                }
+                else
+                {
+                    nodes = n;
                 }
             }
 
@@ -249,7 +316,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private static Operator ParseBinaryOperator(Token token)
         {
-            switch (token.type)
+            switch (token.Type)
             {
                 case TokenType.Or:
                     return Operator.Or;
@@ -277,10 +344,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     return Operator.Mul;
                 case TokenType.OpDiv:
                     return Operator.Div;
+                case TokenType.OpFloorDiv:
+                    return Operator.FloorDiv;
                 case TokenType.OpMod:
                     return Operator.Mod;
                 case TokenType.OpPwr:
                     return Operator.Power;
+                case TokenType.OpBitAnd:
+                    return Operator.BitAnd;
+                case TokenType.OpBitNotOrXor:
+                    return Operator.BitXor;
+                case TokenType.Pipe:
+                    return Operator.BitOr;
+                case TokenType.OpShiftLeft:
+                    return Operator.ShiftLeft;
+                case TokenType.OpShiftRight:
+                    return Operator.ShiftRight;
                 default:
                     throw new InternalErrorException(
                         "Unexpected binary operator '{0}'",
@@ -293,7 +372,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private readonly Expression _exp2;
 
-        private readonly Operator _operator;
+        private Operator _operator;
 
         private BinaryOperatorExpression(
             Expression exp1,
@@ -338,10 +417,22 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     return OpCode.Mul;
                 case Operator.Div:
                     return OpCode.Div;
+                case Operator.FloorDiv:
+                    return OpCode.FloorDiv;
                 case Operator.Mod:
                     return OpCode.Mod;
                 case Operator.Power:
                     return OpCode.Power;
+                case Operator.BitAnd:
+                    return OpCode.BitAnd;
+                case Operator.BitOr:
+                    return OpCode.BitOr;
+                case Operator.BitXor:
+                    return OpCode.BitXor;
+                case Operator.ShiftLeft:
+                    return OpCode.ShiftLeft;
+                case Operator.ShiftRight:
+                    return OpCode.ShiftRight;
                 default:
                     throw new InternalErrorException("Unsupported operator {0}", op);
             }
@@ -353,7 +444,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_operator == Operator.Or)
             {
-                Instruction i = bc.Emit_Jump(OpCode.JtOrPop, -1);
+                Instruction i = bc.EmitJump(OpCode.JtOrPop, -1);
                 _exp2.Compile(bc);
                 i.NumVal = bc.GetJumpPointForNextInstruction();
                 return;
@@ -361,7 +452,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_operator == Operator.And)
             {
-                Instruction i = bc.Emit_Jump(OpCode.JfOrPop, -1);
+                Instruction i = bc.EmitJump(OpCode.JfOrPop, -1);
                 _exp2.Compile(bc);
                 i.NumVal = bc.GetJumpPointForNextInstruction();
                 return;
@@ -372,11 +463,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _exp2.Compile(bc);
             }
 
-            bc.Emit_Operator(OperatorToOpCode(_operator));
+            bc.EmitOperator(OperatorToOpCode(_operator));
 
             if (ShouldInvertBoolean(_operator))
             {
-                bc.Emit_Operator(OpCode.Not);
+                bc.EmitOperator(OpCode.Not);
             }
         }
 
@@ -410,7 +501,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             DynValue v2 = _exp2.Eval(context).ToScalar();
 
-            if ((_operator & COMPARES) != 0)
+            if ((_operator & ComparisonOperators) != 0)
             {
                 return DynValue.NewBoolean(EvalComparison(v1, v2, _operator));
             }
@@ -428,10 +519,58 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 return DynValue.NewString(s1 + s2);
             }
+            else if ((_operator & BitwiseOperatorMask) != 0)
+            {
+                return DynValue.NewNumber(EvalBitwise(v1, v2));
+            }
+            else if (_operator == Operator.FloorDiv)
+            {
+                return DynValue.NewNumber(EvalFloorDivision(v1, v2));
+            }
             else
             {
                 return DynValue.NewNumber(EvalArithmetic(v1, v2));
             }
+        }
+
+        private double EvalBitwise(DynValue v1, DynValue v2)
+        {
+            if (
+                !LuaIntegerHelper.TryGetInteger(v1, out long left)
+                || !LuaIntegerHelper.TryGetInteger(v2, out long right)
+            )
+            {
+                throw new DynamicExpressionException(
+                    "Attempt to perform bitwise operation on non-integers."
+                );
+            }
+
+            long result = _operator switch
+            {
+                Operator.BitAnd => left & right,
+                Operator.BitOr => left | right,
+                Operator.BitXor => left ^ right,
+                Operator.ShiftLeft => LuaIntegerHelper.ShiftLeft(left, right),
+                Operator.ShiftRight => LuaIntegerHelper.ShiftRight(left, right),
+                _ => throw new DynamicExpressionException("Unsupported operator {0}", _operator),
+            };
+
+            return result;
+        }
+
+        private static double EvalFloorDivision(DynValue v1, DynValue v2)
+        {
+            double? nd1 = v1.CastToNumber();
+            double? nd2 = v2.CastToNumber();
+
+            if (nd1 == null || nd2 == null)
+            {
+                throw new DynamicExpressionException(
+                    "Attempt to perform arithmetic on non-numbers."
+                );
+            }
+
+            return Math.Floor(nd1.Value / nd2.Value);
         }
 
         private double EvalArithmetic(DynValue v1, DynValue v2)
@@ -476,7 +615,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
-        private bool EvalComparison(DynValue l, DynValue r, Operator op)
+        private static bool EvalComparison(DynValue l, DynValue r, Operator op)
         {
             switch (op)
             {

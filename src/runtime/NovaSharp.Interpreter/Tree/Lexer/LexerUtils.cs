@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
         public static double ParseHexInteger(Token t)
         {
             string txt = t.Text;
-            if ((txt.Length < 2) || (txt[0] != '0' && (char.ToUpper(txt[1]) != 'X')))
+            if ((txt.Length < 2) || (txt[0] != '0' && (char.ToUpperInvariant(txt[1]) != 'X')))
             {
                 throw new InternalErrorException(
                     "hex numbers must start with '0x' near '{0}'.",
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
             try
             {
-                if ((s.Length < 2) || (s[0] != '0' && (char.ToUpper(s[1]) != 'X')))
+                if ((s.Length < 2) || (s[0] != '0' && (char.ToUpperInvariant(s[1]) != 'X')))
                 {
                     throw new InternalErrorException(
                         "hex float must start with '0x' near '{0}'",
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
                 exp *= -4;
 
-                if (s.Length > 0 && char.ToUpper(s[0]) == 'P')
+                if (s.Length > 0 && char.ToUpperInvariant(s[0]) == 'P')
                 {
                     if (s.Length == 1)
                     {
@@ -173,11 +173,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 
         public static string AdjustLuaLongString(string str)
         {
-            if (str.StartsWith("\r\n"))
+            if (str.StartsWith("\r\n", StringComparison.Ordinal))
             {
                 str = str.Substring(2);
             }
-            else if (str.StartsWith("\n"))
+            else if (str.StartsWith("\n", StringComparison.Ordinal))
             {
                 str = str.Substring(1);
             }

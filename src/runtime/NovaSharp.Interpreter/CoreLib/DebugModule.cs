@@ -32,6 +32,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             Script script = executionContext.GetScript();
 
             if (script.Options.DebugInput == null)
@@ -81,7 +87,11 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
+                {
+                    script.Options.DebugPrint($"{ex.Message}");
+                }
+                catch (ArgumentException ex)
                 {
                     script.Options.DebugPrint($"{ex.Message}");
                 }
@@ -96,6 +106,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
 
             if (v.Type != DataType.UserData)
@@ -112,6 +128,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args.AsType(0, "setuservalue", DataType.UserData, false);
             DynValue t = args.AsType(1, "setuservalue", DataType.Table, true);
 
@@ -124,6 +146,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewTable(executionContext.GetScript().Registry);
         }
 
@@ -133,6 +161,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             Script s = executionContext.GetScript();
 
@@ -156,6 +190,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             DynValue t = args.AsType(1, "setmetatable", DataType.Table, true);
             Table m = (t.IsNil()) ? null : t.Table;
@@ -186,6 +226,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -211,6 +257,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -236,6 +288,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "setupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -263,6 +321,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue f1 = args.AsType(0, "upvaluejoin", DataType.Function, false);
             DynValue f2 = args.AsType(2, "upvaluejoin", DataType.Function, false);
             int n1 = args.AsInt(1, "upvaluejoin") - 1;
@@ -292,6 +356,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             StringBuilder sb = new();
 
             DynValue vmessage = args[0];
@@ -355,7 +425,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     wi.Location != null
                         ? wi.Location.FormatLocation(executionContext.GetScript())
                         : "[clr]";
-                sb.AppendFormat("\t{0}: in {1}\n", loc, name);
+                sb.Append('\t').Append(loc).Append(": in ").Append(name).Append('\n');
             }
 
             return DynValue.NewString(sb);

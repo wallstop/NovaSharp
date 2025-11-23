@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Compatibility.Frameworks
 
         public override bool StringContainsChar(string str, char chr)
         {
-            return str.IndexOf(chr) >= 0;
+            return str?.Contains(chr, StringComparison.Ordinal) ?? false;
         }
     }
 #endif

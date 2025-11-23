@@ -9,6 +9,8 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Globalization;
     using System.Text;
     using Debugging;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -57,6 +59,16 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue v = args[0];
             DynValue message = args[1];
 
@@ -79,7 +91,7 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------------------------------------------------------
         // This function is mostly a stub towards the CLR GC. If mode is nil, "collect" or "restart", a GC is forced.
         [NovaSharpModuleMethod(Name = "collectgarbage")]
-        public static DynValue Collectgarbage(
+        public static DynValue CollectGarbage(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -119,6 +131,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue message = args.AsType(0, "error", DataType.String, false);
             DynValue level = args.AsType(1, "error", DataType.Number, true);
 
@@ -157,11 +175,21 @@ namespace NovaSharp.Interpreter.CoreLib
         // If the metatable of v has a "__tostring" field, then tostring calls the corresponding value with v as argument,
         // and uses the result of the call as its result.
         [NovaSharpModuleMethod(Name = "tostring")]
-        public static DynValue Tostring(
+        public static DynValue ToString(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
@@ -176,18 +204,23 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             tail.TailCallData.Continuation = new CallbackFunction(
-                __tostring_continuation,
+                ToStringContinuation,
                 "__tostring"
             );
 
             return tail;
         }
 
-        private static DynValue __tostring_continuation(
+        internal static DynValue ToStringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue b = args[0].ToScalar();
 
             if (b.IsNil())
@@ -214,6 +247,8 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
                 if (args[^1].Type == DataType.Tuple)
@@ -271,11 +306,17 @@ namespace NovaSharp.Interpreter.CoreLib
         // upper or lower case) represents 10, 'B' represents 11, and so forth, with 'Z' representing 35. If the
         // string e is not a valid numeral in the given base, the function returns nil.
         [NovaSharpModuleMethod(Name = "tonumber")]
-        public static DynValue Tonumber(
+        public static DynValue ToNumber(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");
@@ -311,51 +352,110 @@ namespace NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                //!COMPAT: tonumber supports only 2,8,10 or 16 as base
-                //UPDATE: added support for 3-9 base numbers
-                DynValue ee;
+                DynValue numeral =
+                    args[0].Type != DataType.Number
+                        ? args.AsType(0, "tonumber", DataType.String, false)
+                        : DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
 
-                if (args[0].Type != DataType.Number)
+                double baseValue = b.Number;
+                if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
                 {
-                    ee = args.AsType(0, "tonumber", DataType.String, false);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else
-                {
-                    ee = DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
-                }
-                ;
 
-                int bb = (int)b.Number;
-
-                uint uiv = 0;
-                if (bb == 2 || bb == 8 || bb == 10 || bb == 16)
+                if (Math.Truncate(baseValue) != baseValue)
                 {
-                    uiv = Convert.ToUInt32(ee.String.Trim(), bb);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else if (bb < 10 && bb > 2) // Support for 3, 4, 5, 6, 7 and 9 based numbers
-                {
-                    foreach (char digit in ee.String.Trim())
-                    {
-                        int value = digit - 48;
-                        if (value < 0 || value >= bb)
-                        {
-                            throw new ScriptRuntimeException(
-                                "bad argument #1 to 'tonumber' (invalid character)"
-                            );
-                        }
 
-                        uiv = (uint)(uiv * bb) + (uint)value;
-                    }
-                }
-                else
+                int bb = (int)baseValue;
+
+                if (bb < 2 || bb > 36)
                 {
                     throw new ScriptRuntimeException(
                         "bad argument #2 to 'tonumber' (base out of range)"
                     );
                 }
 
-                return DynValue.NewNumber(uiv);
+                if (TryParseIntegerInBase(numeral.String.Trim(), bb, out double parsedValue))
+                {
+                    return DynValue.NewNumber(parsedValue);
+                }
+
+                return DynValue.Nil;
             }
+        }
+
+        private static bool TryParseIntegerInBase(string text, int numberBase, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            string trimmed = text.Trim();
+            int index = 0;
+            bool negative = false;
+
+            if (trimmed[index] == '+' || trimmed[index] == '-')
+            {
+                negative = trimmed[index] == '-';
+                index++;
+            }
+
+            if (index >= trimmed.Length)
+            {
+                return false;
+            }
+
+            double accumulator = 0;
+            for (; index < trimmed.Length; index++)
+            {
+                int digit = GetDigitValue(trimmed[index]);
+
+                if (digit < 0 || digit >= numberBase)
+                {
+                    return false;
+                }
+
+                accumulator = (accumulator * numberBase) + digit;
+            }
+
+            value = negative ? -accumulator : accumulator;
+            return true;
+        }
+
+        private static int GetDigitValue(char candidate)
+        {
+            if (candidate >= '0' && candidate <= '9')
+            {
+                return candidate - '0';
+            }
+
+            if (candidate >= 'A' && candidate <= 'Z')
+            {
+                return candidate - 'A' + 10;
+            }
+
+            if (candidate >= 'a' && candidate <= 'z')
+            {
+                return candidate - 'a' + 10;
+            }
+
+            return -1;
         }
 
         [NovaSharpModuleMethod(Name = "print")]
@@ -364,6 +464,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             StringBuilder sb = new();
 
             for (int i = 0; i < args.Count; i++)
@@ -382,6 +488,59 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             executionContext.GetScript().Options.DebugPrint(sb.ToString());
+
+            return DynValue.Nil;
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "warn")]
+        public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            StringBuilder sb = new();
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append('\t');
+                }
+
+                sb.Append(args.AsStringUsingMeta(executionContext, i, "warn"));
+            }
+
+            string payload = sb.ToString();
+            Script script = executionContext.GetScript();
+            DynValue warnHandler = script.Globals.RawGet("_WARN");
+
+            if (
+                warnHandler != null
+                && (
+                    warnHandler.Type == DataType.Function
+                    || warnHandler.Type == DataType.ClrFunction
+                )
+            )
+            {
+                script.Call(warnHandler, DynValue.NewString(payload));
+            }
+            else
+            {
+                Action<string> sink = script.Options.DebugPrint;
+
+                if (sink != null)
+                {
+                    sink(payload);
+                }
+                else
+                {
+                    Console.Error.WriteLine(payload);
+                }
+            }
 
             return DynValue.Nil;
         }

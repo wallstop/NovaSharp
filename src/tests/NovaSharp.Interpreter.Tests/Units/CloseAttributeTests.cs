@@ -206,5 +206,54 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(log.Length, Is.EqualTo(1));
             Assert.That(log.Get(1).String, Is.EqualTo("loop_1:nil"));
         }
+
+        [Test]
+        public void CloseMetamethodErrorsAreCapturedByPcallAndOtherClosersRun()
+        {
+            Script script = new();
+            DynValue result = script.DoString(
+                @"
+                local log = {}
+
+                local function newcloser(name, should_error)
+                    local token = {}
+                    setmetatable(token, {
+                        __close = function(_, err)
+                            table.insert(log, string.format('%s:%s', name, err or 'nil'))
+                            if should_error then
+                                error('close:' .. name, 0)
+                            end
+                        end
+                    })
+                    return token
+                end
+
+                local function run()
+                    local first <close> = newcloser('first', true)
+                    local second <close> = newcloser('second', false)
+                end
+
+                local ok, err = pcall(run)
+                return ok, err, log
+                "
+            );
+
+            Assert.That(result.Tuple.Length, Is.EqualTo(3));
+            Assert.That(result.Tuple[0].Boolean, Is.False);
+            Assert.That(result.Tuple[1].String, Does.Contain("close:first"));
+
+            Table log = result.Tuple[2].Table;
+            Assert.That(log.Length, Is.EqualTo(2));
+            Assert.That(
+                log.Get(1).String,
+                Is.EqualTo("second:nil"),
+                "later closers still execute before the failing one"
+            );
+            Assert.That(
+                log.Get(2).String,
+                Is.EqualTo("first:nil"),
+                "the raising closer still records the propagated error"
+            );
+        }
     }
 }

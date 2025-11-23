@@ -74,12 +74,12 @@ error_like(function () io.open('file.txt', 'baz') end,
            "function open (bad mode)")
 
 		   
-is(io.type("not a file"), nil, "function type")
+is(io.Type("not a file"), nil, "function type")
 f = io.open('file.txt')
-is(io.type(f), 'file')
+is(io.Type(f), 'file')
 like(tostring(f), '^file %(0?[Xx]?%x+%)$')
 io.close(f)
-is(io.type(f), 'closed file')
+is(io.Type(f), 'closed file')
 is(tostring(f), 'file (closed)')
 
 is(io.stdin, io.input(), "function input")
@@ -98,7 +98,7 @@ os.remove('output.new')
 
 r, f = pcall(io.popen, lua .. [[ -e "print 'standard output'"]])
 if r then
-    is(io.type(f), 'file', "popen (read)")
+    is(io.Type(f), 'file', "popen (read)")
     is(f:read(), "standard output")
     is(io.close(f), true)
 else
@@ -107,7 +107,7 @@ end
 
 r, f = pcall(io.popen, lua .. [[ -e "for line in io.lines() do print((line:gsub('e', 'a'))) end"]], 'w')
 if r then
-    is(io.type(f), 'file', "popen (write)")
+    is(io.Type(f), 'file', "popen (write)")
     f:write("# hello\n") -- not tested : hallo
     is(io.close(f), true)
 else
@@ -123,7 +123,7 @@ error_like(function () io.lines('file.no') end,
            "function lines(no filename)")
 
 f = io.tmpfile()
-is(io.type(f), 'file', "function tmpfile")
+is(io.Type(f), 'file', "function tmpfile")
 f:write("some text")
 f:close()
 
@@ -197,9 +197,9 @@ f = io.open('file.txt')
 for line in f:lines() do
     is(line, "file with text", "method lines")
 end
-is(io.type(f), 'file')
+is(io.Type(f), 'file')
 f:close()
-is(io.type(f), 'closed file')
+is(io.Type(f), 'closed file')
 
 f = io.open('file.txt')
 for two_char in f:lines(2) do
@@ -255,5 +255,6 @@ os.remove('file.out') --clean up
 -- vim: ft=lua expandtab shiftwidth=4:
 
 --]==]
+
 
 

@@ -12,180 +12,186 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class CompositeUserDataDescriptorTests
     {
         [Test]
-        public void NameTypeAndDescriptorsSurfaceOriginalValues()
+        public void IndexReturnsFirstNonNullValue()
         {
-            List<IUserDataDescriptor> inner = new();
-            CompositeUserDataDescriptor descriptor = new(inner, typeof(string));
+            DynValue expected = DynValue.NewString("hit");
+            StubDescriptor first = new(indexResult: null);
+            StubDescriptor second = new(indexResult: expected);
+            CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.Name, Is.EqualTo("^" + typeof(string).FullName));
-                Assert.That(descriptor.Type, Is.EqualTo(typeof(string)));
-                Assert.That(descriptor.Descriptors, Is.SameAs(inner));
-            });
-        }
-
-        [Test]
-        public void IndexReturnsFirstNonNullResult()
-        {
-            FakeDescriptor first = new() { IndexResult = null };
-            FakeDescriptor second = new() { IndexResult = DynValue.NewString("winner") };
-
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor> { first, second },
-                typeof(object)
+            DynValue value = descriptor.Index(
+                new Script(),
+                new object(),
+                DynValue.NewString("name"),
+                true
             );
 
-            DynValue result = descriptor.Index(null, new object(), DynValue.NewString("key"), true);
-
+            Assert.That(value, Is.SameAs(expected));
             Assert.Multiple(() =>
             {
                 Assert.That(first.IndexCallCount, Is.EqualTo(1));
                 Assert.That(second.IndexCallCount, Is.EqualTo(1));
-                Assert.That(result.String, Is.EqualTo("winner"));
             });
         }
 
         [Test]
-        public void IndexReturnsNullWhenAllDescriptorsFail()
+        public void IndexReturnsNullWhenDescriptorsReturnNull()
         {
-            FakeDescriptor first = new() { IndexResult = null };
-            FakeDescriptor second = new() { IndexResult = null };
-
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor> { first, second },
-                typeof(object)
+            CompositeUserDataDescriptor descriptor = CreateComposite(
+                new StubDescriptor(indexResult: null),
+                new StubDescriptor(indexResult: null)
             );
 
-            DynValue result = descriptor.Index(
-                null,
+            DynValue value = descriptor.Index(
+                new Script(),
                 new object(),
                 DynValue.NewString("missing"),
                 true
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.IndexCallCount, Is.EqualTo(1));
-                Assert.That(second.IndexCallCount, Is.EqualTo(1));
-                Assert.That(result, Is.Null);
-            });
+            Assert.That(value, Is.Null);
         }
 
         [Test]
-        public void SetIndexStopsOnFirstTrue()
+        public void SetIndexStopsAfterFirstHandler()
         {
-            FakeDescriptor first = new() { SetIndexResult = false };
-            FakeDescriptor second = new() { SetIndexResult = true };
-            FakeDescriptor third = new() { SetIndexResult = true };
-
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor> { first, second, third },
-                typeof(object)
-            );
+            StubDescriptor first = new(indexResult: null, setResult: true);
+            StubDescriptor second = new(indexResult: null, setResult: true);
+            CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
             bool handled = descriptor.SetIndex(
-                null,
+                new Script(),
                 new object(),
-                DynValue.NewString("key"),
-                DynValue.NewNumber(1),
+                DynValue.NewString("k"),
+                DynValue.True,
                 true
             );
 
+            Assert.That(handled, Is.True);
             Assert.Multiple(() =>
             {
-                Assert.That(first.SetIndexCallCount, Is.EqualTo(1));
-                Assert.That(second.SetIndexCallCount, Is.EqualTo(1));
-                Assert.That(third.SetIndexCallCount, Is.EqualTo(0));
-                Assert.That(handled, Is.True);
+                Assert.That(first.SetCallCount, Is.EqualTo(1));
+                Assert.That(second.SetCallCount, Is.EqualTo(0));
             });
         }
 
         [Test]
-        public void MetaIndexReturnsFirstNonNullResult()
+        public void SetIndexReturnsFalseWhenAllDescriptorsDecline()
         {
-            FakeDescriptor first = new() { MetaIndexResult = null };
-            FakeDescriptor second = new() { MetaIndexResult = DynValue.NewBoolean(true) };
-
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor> { first, second },
-                typeof(object)
+            CompositeUserDataDescriptor descriptor = CreateComposite(
+                new StubDescriptor(indexResult: null, setResult: false),
+                new StubDescriptor(indexResult: null, setResult: false)
             );
 
-            DynValue meta = descriptor.MetaIndex(null, new object(), "__pairs");
+            bool handled = descriptor.SetIndex(
+                new Script(),
+                new object(),
+                DynValue.NewString("k"),
+                DynValue.True,
+                true
+            );
 
+            Assert.That(handled, Is.False);
+        }
+
+        [Test]
+        public void MetaIndexReturnsFirstNonNullValue()
+        {
+            DynValue expected = DynValue.NewString("__call");
+            StubDescriptor first = new(indexResult: null, metaResult: null);
+            StubDescriptor second = new(indexResult: null, metaResult: expected);
+            CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
+
+            DynValue value = descriptor.MetaIndex(new Script(), new object(), "__call");
+
+            Assert.That(value, Is.SameAs(expected));
             Assert.Multiple(() =>
             {
-                Assert.That(first.MetaIndexCallCount, Is.EqualTo(1));
-                Assert.That(second.MetaIndexCallCount, Is.EqualTo(1));
-                Assert.That(meta.Boolean, Is.True);
+                Assert.That(first.MetaCallCount, Is.EqualTo(1));
+                Assert.That(second.MetaCallCount, Is.EqualTo(1));
             });
         }
 
         [Test]
-        public void AsStringMirrorsObjectToString()
+        public void DescriptorsPropertyIsMutable()
         {
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor>(),
-                typeof(object)
+            CompositeUserDataDescriptor descriptor = CreateComposite();
+            DynValue expected = DynValue.NewNumber(5);
+
+            descriptor.Descriptors.Add(new StubDescriptor(indexResult: expected));
+
+            DynValue value = descriptor.Index(
+                new Script(),
+                new object(),
+                DynValue.NewString("value"),
+                true
             );
 
-            string representation = descriptor.AsString(new CustomToString());
-
-            Assert.That(representation, Is.EqualTo("custom-to-string"));
+            Assert.That(value, Is.SameAs(expected));
         }
 
         [Test]
-        public void IsTypeCompatibleUsesFrameworkCheck()
+        public void AsStringUsesObjectToString()
         {
-            CompositeUserDataDescriptor descriptor = new(
-                new List<IUserDataDescriptor>(),
-                typeof(object)
-            );
+            CompositeUserDataDescriptor descriptor = CreateComposite();
+
+            string value = descriptor.AsString(42);
+            string nullValue = descriptor.AsString(null);
+
+            Assert.That(value, Is.EqualTo("42"));
+            Assert.That(nullValue, Is.Null);
+        }
+
+        [Test]
+        public void IsTypeCompatibleFollowsClrRules()
+        {
+            CompositeUserDataDescriptor descriptor = CreateComposite();
 
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsTypeCompatible(typeof(string), "value"), Is.True);
-                Assert.That(descriptor.IsTypeCompatible(typeof(string), 42), Is.False);
+                Assert.That(descriptor.IsTypeCompatible(typeof(string), 17), Is.False);
             });
         }
 
-        private sealed class CustomToString
+        private static CompositeUserDataDescriptor CreateComposite(
+            params StubDescriptor[] descriptors
+        )
         {
-            public override string ToString()
-            {
-                return "custom-to-string";
-            }
+            List<IUserDataDescriptor> list = new();
+            list.AddRange(descriptors);
+            return new CompositeUserDataDescriptor(list, typeof(object));
         }
 
-        private sealed class FakeDescriptor : IUserDataDescriptor
+        private sealed class StubDescriptor : IUserDataDescriptor
         {
-            public DynValue IndexResult { get; set; }
+            private readonly DynValue _indexResult;
+            private readonly bool _setResult;
+            private readonly DynValue _metaResult;
 
-            public bool SetIndexResult { get; set; }
-
-            public DynValue MetaIndexResult { get; set; }
+            public StubDescriptor(
+                DynValue indexResult,
+                bool setResult = false,
+                DynValue metaResult = null
+            )
+            {
+                _indexResult = indexResult;
+                _setResult = setResult;
+                _metaResult = metaResult;
+            }
 
             public int IndexCallCount { get; private set; }
+            public int SetCallCount { get; private set; }
+            public int MetaCallCount { get; private set; }
 
-            public int SetIndexCallCount { get; private set; }
+            public string Name => "stub";
 
-            public int MetaIndexCallCount { get; private set; }
-
-            public string Name
-            {
-                get { return "fake"; }
-            }
-
-            public Type Type
-            {
-                get { return typeof(object); }
-            }
+            public Type Type => typeof(object);
 
             public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
             {
                 IndexCallCount++;
-                return IndexResult;
+                return _indexResult;
             }
 
             public bool SetIndex(
@@ -196,8 +202,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool isDirectIndexing
             )
             {
-                SetIndexCallCount++;
-                return SetIndexResult;
+                SetCallCount++;
+                return _setResult;
             }
 
             public string AsString(object obj)
@@ -207,8 +213,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public DynValue MetaIndex(Script script, object obj, string metaname)
             {
-                MetaIndexCallCount++;
-                return MetaIndexResult;
+                MetaCallCount++;
+                return _metaResult;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

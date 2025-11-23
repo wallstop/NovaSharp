@@ -24,11 +24,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
             using (bc.EnterSource(_functionCallExpression.SourceRef))
             {
                 _functionCallExpression.Compile(bc);
-                RemoveBreakpointStop(bc.Emit_Pop());
+                RemoveBreakpointStop(bc.EmitPop());
             }
         }
 
-        private void RemoveBreakpointStop(Instruction instruction)
+        private static void RemoveBreakpointStop(Instruction instruction)
         {
             instruction.SourceCodeRef = null;
         }

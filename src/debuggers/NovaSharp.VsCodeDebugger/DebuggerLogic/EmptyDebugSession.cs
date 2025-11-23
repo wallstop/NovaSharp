@@ -4,6 +4,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using SDK;
@@ -47,19 +48,19 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 new Capabilities()
                 {
                     // This debug adapter does not need the configurationDoneRequest.
-                    supportsConfigurationDoneRequest = false,
+                    SupportsConfigurationDoneRequest = false,
 
                     // This debug adapter does not support function breakpoints.
-                    supportsFunctionBreakpoints = false,
+                    SupportsFunctionBreakpoints = false,
 
                     // This debug adapter doesn't support conditional breakpoints.
-                    supportsConditionalBreakpoints = false,
+                    SupportsConditionalBreakpoints = false,
 
                     // This debug adapter does not support a side effect free evaluate request for data hovers.
-                    supportsEvaluateForHovers = false,
+                    SupportsEvaluateForHovers = false,
 
                     // This debug adapter does not support exception breakpoint filters
-                    exceptionBreakpointFilters = Array.Empty<object>(),
+                    ExceptionBreakpointFilters = Array.Empty<object>(),
                 }
             );
 
@@ -76,7 +77,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             foreach (KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName())
             {
                 string isdef = (pair.Key == currId) ? " (default)" : "";
-                SendText("{0} : {1}{2}", pair.Key.ToString().PadLeft(9), pair.Value, isdef);
+                SendText(
+                    "{0} : {1}{2}",
+                    pair.Key.ToString(CultureInfo.InvariantCulture).PadLeft(9),
+                    pair.Value,
+                    isdef
+                );
             }
             SendText("");
             SendText("Type the number of the script to debug, or '!' to refresh");
@@ -199,7 +205,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void SendText(string msg, params object[] args)
         {
-            msg = string.Format(msg, args);
+            msg = FormatString(msg, args);
             SendEvent(new OutputEvent("console", msg + "\n"));
         }
 
@@ -207,6 +213,21 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         {
             SendText("Bye.");
             SendEvent(new TerminatedEvent());
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

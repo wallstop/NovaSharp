@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
     internal class RepeatStatement : Statement
     {
         private readonly Expression _condition;
-        private readonly Statement _block;
+        private readonly CompositeStatement _block;
         private readonly RuntimeScopeBlock _stackFrame;
 
         private readonly SourceRef _repeat;
@@ -37,30 +37,30 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         public override void Compile(ByteCode bc)
         {
-            Loop l = new() { scope = _stackFrame };
+            Loop l = new() { Scope = _stackFrame };
 
             bc.PushSourceRef(_repeat);
 
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             int start = bc.GetJumpPointForNextInstruction();
 
-            bc.Emit_Enter(_stackFrame);
+            bc.EmitEnter(_stackFrame);
             _block.Compile(bc);
 
             bc.PopSourceRef();
             bc.PushSourceRef(_until);
-            bc.Emit_Debug("..end");
+            bc.EmitDebug("..end");
 
             _condition.Compile(bc);
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Jump(OpCode.Jf, start);
+            bc.EmitLeave(_stackFrame);
+            bc.EmitJump(OpCode.Jf, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpoint;
             }

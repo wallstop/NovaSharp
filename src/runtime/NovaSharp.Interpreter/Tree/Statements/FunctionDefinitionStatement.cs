@@ -50,15 +50,15 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 _funcSymbol = lcontext.Scope.Find(firstName);
                 _friendlyName = firstName;
 
-                if (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
+                if (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
                 {
                     _tableAccessors = new List<string>();
 
-                    while (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
+                    while (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
                     {
                         Token separator = lcontext.Lexer.Current;
 
-                        if (separator.type != TokenType.Colon && separator.type != TokenType.Dot)
+                        if (separator.Type != TokenType.Colon && separator.Type != TokenType.Dot)
                         {
                             UnexpectedTokenType(separator);
                         }
@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                         _friendlyName += separator.Text + field.Text;
                         _sourceRef = funcKeyword.GetSourceRef(field);
 
-                        if (separator.type == TokenType.Colon)
+                        if (separator.Type == TokenType.Colon)
                         {
                             _methodName = field.Text;
                             _isMethodCallingConvention = true;
@@ -104,8 +104,8 @@ namespace NovaSharp.Interpreter.Tree.Statements
             {
                 if (_local)
                 {
-                    bc.Emit_Literal(DynValue.Nil);
-                    bc.Emit_Store(_funcSymbol, 0, 0);
+                    bc.EmitLiteral(DynValue.Nil);
+                    bc.EmitStore(_funcSymbol, 0, 0);
                     _funcDef.Compile(bc, () => SetFunction(bc, 2), _friendlyName);
                 }
                 else if (_methodName == null)
@@ -123,23 +123,23 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             int cnt = 0;
 
-            cnt += bc.Emit_Load(_funcSymbol);
+            cnt += bc.EmitLoad(_funcSymbol);
 
             foreach (string str in _tableAccessors)
             {
-                bc.Emit_Index(DynValue.NewString(str), true);
+                bc.EmitIndex(DynValue.NewString(str), true);
                 cnt += 1;
             }
 
-            bc.Emit_IndexSet(0, 0, DynValue.NewString(_methodName), true);
+            bc.EmitIndexSet(0, 0, DynValue.NewString(_methodName), true);
 
             return 1 + cnt;
         }
 
         private int SetFunction(Execution.VM.ByteCode bc, int numPop)
         {
-            int num = bc.Emit_Store(_funcSymbol, 0, 0);
-            bc.Emit_Pop(numPop);
+            int num = bc.EmitStore(_funcSymbol, 0, 0);
+            bc.EmitPop(numPop);
             return num + 1;
         }
     }

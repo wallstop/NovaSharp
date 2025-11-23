@@ -38,6 +38,12 @@ namespace NovaSharp.Interpreter.Errors
             }
 
             object[] safeArgs = args ?? Array.Empty<object>();
+
+            if (safeArgs.Length == 0)
+            {
+                return format;
+            }
+
             return string.Format(CultureInfo.InvariantCulture, format, safeArgs);
         }
     }

@@ -1,7 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NUnit.Framework;
 
     [TestFixture]

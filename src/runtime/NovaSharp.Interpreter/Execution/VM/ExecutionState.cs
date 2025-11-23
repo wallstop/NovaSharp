@@ -5,14 +5,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
     internal sealed class ExecutionState
     {
-        public FastStack<DynValue> valueStack = new(131072);
-        public FastStack<CallStackItem> executionStack = new(131072);
-        public int instructionPtr;
-        public CoroutineState state;
+        public FastStack<DynValue> ValueStack { get; } = new(131072);
+        public FastStack<CallStackItem> ExecutionStack { get; } = new(131072);
+        public int InstructionPtr;
+        public CoroutineState State;
 
         public ExecutionState()
         {
-            state = CoroutineState.NotStarted;
+            State = CoroutineState.NotStarted;
         }
     }
 }

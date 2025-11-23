@@ -105,10 +105,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(state.valueStack, Is.Not.Null);
-                Assert.That(state.executionStack, Is.Not.Null);
-                Assert.That(state.instructionPtr, Is.EqualTo(0));
-                Assert.That(state.state, Is.EqualTo(CoroutineState.NotStarted));
+                Assert.That(state.ValueStack, Is.Not.Null);
+                Assert.That(state.ExecutionStack, Is.Not.Null);
+                Assert.That(state.InstructionPtr, Is.EqualTo(0));
+                Assert.That(state.State, Is.EqualTo(CoroutineState.NotStarted));
             });
         }
     }

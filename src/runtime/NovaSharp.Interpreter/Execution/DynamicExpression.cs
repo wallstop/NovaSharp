@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Execution
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Expressions;
@@ -57,6 +58,11 @@ namespace NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public SymbolRef FindSymbol(ScriptExecutionContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             this.CheckScriptOwnership(context.GetScript());
 
             if (_exp != null)
@@ -94,7 +100,7 @@ namespace NovaSharp.Interpreter.Execution
         /// </returns>
         public override int GetHashCode()
         {
-            return ExpressionCode.GetHashCode();
+            return ExpressionCode != null ? StringComparer.Ordinal.GetHashCode(ExpressionCode) : 0;
         }
 
         /// <summary>

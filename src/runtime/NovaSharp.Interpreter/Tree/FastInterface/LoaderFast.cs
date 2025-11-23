@@ -77,10 +77,10 @@ namespace NovaSharp.Interpreter.Tree.FastInterface
                 )
                 using (bytecode.EnterSource(null))
                 {
-                    bytecode.Emit_Nop($"Begin chunk {source.Name}");
+                    bytecode.EmitNop($"Begin chunk {source.Name}");
                     beginIp = bytecode.GetJumpPointForLastInstruction();
                     stat.Compile(bytecode);
-                    bytecode.Emit_Nop($"End chunk {source.Name}");
+                    bytecode.EmitNop($"End chunk {source.Name}");
                 }
 
                 //Debug_DumpByteCode(bytecode, source.SourceID);
@@ -127,9 +127,9 @@ namespace NovaSharp.Interpreter.Tree.FastInterface
                     )
                 )
                 {
-                    bytecode.Emit_Nop($"Begin function {source.Name}");
+                    bytecode.EmitNop($"Begin function {source.Name}");
                     beginIp = fnx.CompileBody(bytecode, source.Name);
-                    bytecode.Emit_Nop($"End function {source.Name}");
+                    bytecode.EmitNop($"End function {source.Name}");
                 }
 
                 //Debug_DumpByteCode(bytecode, source.SourceID);

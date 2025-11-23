@@ -108,6 +108,33 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IndexReturnsNullWhenObjIsNotUserDataType()
+        {
+            AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
+            Script script = new();
+
+            DynValue value = descriptor.Index(
+                script,
+                new object(),
+                DynValue.NewString("key"),
+                true
+            );
+
+            Assert.That(value, Is.Null);
+        }
+
+        [Test]
+        public void MetaIndexReturnsNullWhenObjIsNotUserDataType()
+        {
+            AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
+            Script script = new();
+
+            DynValue value = descriptor.MetaIndex(script, new object(), "__call");
+
+            Assert.That(value, Is.Null);
+        }
+
+        [Test]
         public void IsTypeCompatibleUsesFrameworkSemantics()
         {
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");

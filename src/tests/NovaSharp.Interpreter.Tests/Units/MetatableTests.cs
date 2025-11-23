@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public class MetatableTests
     {
         [Test]
-        public void __IndexMetatableResolvesMissingKeys()
+        public void IndexMetatableResolvesMissingKeys()
         {
             Script script = new();
             Table table = new(script);

@@ -4,10 +4,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
@@ -20,8 +22,8 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         private readonly List<DynValue> _variables = new();
         private bool _notifyExecutionEnd = false;
 
-        private const int SCOPE_LOCALS = 65536;
-        private const int SCOPE_SELF = 65537;
+        private const int ScopeLocals = 65536;
+        private const int ScopeSelf = 65537;
 
         internal NovaSharpDebugSession(NovaSharpVsCodeDebugServer server, AsyncDebugger debugger)
             : base(true, false)
@@ -53,26 +55,35 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 _debug.Name
             );
 
-            SendText("Type '!help' in the Debug Console for available commands.");
+            SendText("Type '!help' in the Debug Console for available Commands.");
+
+            LuaCompatibilityProfile profile = _debug.Script?.CompatibilityProfile;
+            if (profile != null)
+            {
+                SendText(
+                    "[compatibility] Debugger session running under {0}",
+                    profile.GetFeatureSummary()
+                );
+            }
 
             SendResponse(
                 response,
                 new Capabilities()
                 {
                     // This debug adapter does not need the configurationDoneRequest.
-                    supportsConfigurationDoneRequest = false,
+                    SupportsConfigurationDoneRequest = false,
 
                     // This debug adapter does not support function breakpoints.
-                    supportsFunctionBreakpoints = false,
+                    SupportsFunctionBreakpoints = false,
 
                     // This debug adapter doesn't support conditional breakpoints.
-                    supportsConditionalBreakpoints = false,
+                    SupportsConditionalBreakpoints = false,
 
                     // This debug adapter does not support a side effect free evaluate request for data hovers.
-                    supportsEvaluateForHovers = false,
+                    SupportsEvaluateForHovers = false,
 
                     // This debug adapter does not support exception breakpoint filters
-                    exceptionBreakpointFilters = Array.Empty<object>(),
+                    ExceptionBreakpointFilters = Array.Empty<object>(),
                 }
             );
 
@@ -82,12 +93,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             _debug.Client = this;
         }
 
-        public override void Attach(Response response, Table arguments)
+        public override void Attach(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
-        public override void Continue(Response response, Table arguments)
+        public override void Continue(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -98,7 +109,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void Disconnect(Response response, Table arguments)
+        public override void Disconnect(Response response, Table Arguments)
         {
             _debug.Client = null;
             SendResponse(response);
@@ -213,7 +224,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                     SendText(
                         "{0} : {1}{2}{3}",
-                        pair.Key.ToString().PadLeft(9),
+                        pair.Key.ToString(CultureInfo.InvariantCulture).PadLeft(9),
                         pair.Value,
                         isdef,
                         isthis
@@ -226,7 +237,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
                 try
                 {
-                    int id = int.Parse(arg);
+                    int id = int.Parse(arg, CultureInfo.InvariantCulture);
                     _server.CurrentId = id;
 
                     if (cmd.StartsWith("switch"))
@@ -254,7 +265,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
             if (showHelp)
             {
-                SendText("Available commands : ");
+                SendText("Available Commands : ");
                 SendText("    !help - gets this help");
                 SendText("    !list - lists the other scripts which can be debugged");
                 SendText("    !select <id> - select another script for future sessions");
@@ -272,12 +283,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        public override void Launch(Response response, Table arguments)
+        public override void Launch(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
-        public override void Next(Response response, Table arguments)
+        public override void Next(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -293,19 +304,19 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             return new StoppedEvent(0, reason, text);
         }
 
-        public override void Pause(Response response, Table arguments)
+        public override void Pause(Response response, Table Arguments)
         {
             _debug.PauseRequested = true;
             SendResponse(response);
             SendText("Pause pending -- will pause at first script statement.");
         }
 
-        public override void Scopes(Response response, Table arguments)
+        public override void Scopes(Response response, Table Arguments)
         {
             List<Scope> scopes = new();
 
-            scopes.Add(new Scope("Locals", SCOPE_LOCALS));
-            scopes.Add(new Scope("Self", SCOPE_SELF));
+            scopes.Add(new Scope("Locals", ScopeLocals));
+            scopes.Add(new Scope("Self", ScopeSelf));
 
             SendResponse(response, new ScopesResponseBody(scopes));
         }
@@ -355,7 +366,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     .ToArray()
             );
 
-            HashSet<int> lin2 = _debug.DebugService.ResetBreakPoints(src, lin);
+            HashSet<int> lin2 = _debug.DebugService.ResetBreakpoints(src, lin);
 
             List<Breakpoint> breakpoints = new();
             foreach (int l in lin)
@@ -445,7 +456,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        public override void StepIn(Response response, Table arguments)
+        public override void StepIn(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -456,7 +467,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void StepOut(Response response, Table arguments)
+        public override void StepOut(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -467,24 +478,24 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void Threads(Response response, Table arguments)
+        public override void Threads(Response response, Table Arguments)
         {
             List<Thread> threads = new() { new Thread(0, "Main Thread") };
             SendResponse(response, new ThreadsResponseBody(threads));
         }
 
-        public override void Variables(Response response, Table arguments)
+        public override void Variables(Response response, Table Arguments)
         {
-            int index = GetInt(arguments, "variablesReference", -1);
+            int index = GetInt(Arguments, "variablesReference", -1);
 
             List<Variable> variables = new();
 
-            if (index == SCOPE_SELF)
+            if (index == ScopeSelf)
             {
                 DynValue v = _debug.Evaluate("self");
                 VariableInspector.InspectVariable(v, variables);
             }
-            else if (index == SCOPE_LOCALS)
+            else if (index == ScopeLocals)
             {
                 foreach (WatchItem w in _debug.GetWatches(WatchType.Locals))
                 {
@@ -544,7 +555,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void SendText(string msg, params object[] args)
         {
-            msg = string.Format(msg, args);
+            msg = FormatString(msg, args);
             // SendEvent(new OutputEvent("console", DateTime.Now.ToString("u") + ": " + msg + "\n"));
             SendEvent(new OutputEvent("console", msg + "\n"));
         }
@@ -559,6 +570,21 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendText("Debug session has been closed by the hosting process.");
             SendText("Bye.");
             SendEvent(new TerminatedEvent());
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
 
     /// <summary>
     /// Static functions to handle conversions of numeric types
@@ -128,7 +129,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return (double)d;
             }
 
-            return Convert.ToDouble(d);
+            return Convert.ToDouble(d, CultureInfo.InvariantCulture);
         }
     }
 }

@@ -12,23 +12,24 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal abstract class StreamFileUserDataBase : FileUserDataBase
     {
-        protected Stream _stream;
-        protected StreamReader _reader;
-        protected StreamWriter _writer;
-        protected bool _closed;
-        protected long _logicalPosition;
+        protected Stream StreamInstance;
+        protected StreamReader StreamReaderInstance;
+        protected StreamWriter StreamWriterInstance;
+        protected bool IsClosed;
+        protected long LogicalPosition;
 
         protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)
         {
-            _stream = stream;
-            _reader = reader;
-            _writer = writer;
-            _logicalPosition = _stream != null && _stream.CanSeek ? _stream.Position : 0;
+            StreamInstance = stream;
+            StreamReaderInstance = reader;
+            StreamWriterInstance = writer;
+            LogicalPosition =
+                StreamInstance != null && StreamInstance.CanSeek ? StreamInstance.Position : 0;
         }
 
         private void CheckFileIsNotClosed()
         {
-            if (_closed)
+            if (IsClosed)
             {
                 throw new ScriptRuntimeException("attempt to use a closed file");
             }
@@ -38,19 +39,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         {
             CheckFileIsNotClosed();
 
-            if (_reader != null)
+            if (StreamReaderInstance != null)
             {
-                if (_stream.CanSeek)
+                if (StreamInstance.CanSeek)
                 {
-                    if (!_reader.EndOfStream)
+                    if (!StreamReaderInstance.EndOfStream)
                     {
                         return false;
                     }
 
-                    return _logicalPosition >= _stream.Length;
+                    return LogicalPosition >= StreamInstance.Length;
                 }
 
-                return _reader.EndOfStream;
+                return StreamReaderInstance.EndOfStream;
             }
             else
             {
@@ -134,15 +135,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override string ReadBuffer(int p)
         {
             CheckFileIsNotClosed();
-            long positionBeforeRead = _stream.CanSeek ? _logicalPosition : 0;
+            long positionBeforeRead = StreamInstance.CanSeek ? LogicalPosition : 0;
             char[] buffer = new char[p];
-            int length = _reader.ReadBlock(buffer, 0, p);
-            if (_stream.CanSeek && _reader != null && length > 0)
+            int length = StreamReaderInstance.ReadBlock(buffer, 0, p);
+            if (StreamInstance.CanSeek && StreamReaderInstance != null && length > 0)
             {
-                Encoding encoding = _reader.CurrentEncoding;
+                Encoding encoding = StreamReaderInstance.CurrentEncoding;
                 long bytesRead = encoding.GetByteCount(buffer, 0, length);
                 long expectedPosition = positionBeforeRead + bytesRead;
-                _logicalPosition = expectedPosition;
+                LogicalPosition = expectedPosition;
                 ResetReaderBuffer(expectedPosition);
             }
 
@@ -152,38 +153,38 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override char Peek()
         {
             CheckFileIsNotClosed();
-            return (char)_reader.Peek();
+            return (char)StreamReaderInstance.Peek();
         }
 
         protected override void Write(string value)
         {
             CheckFileIsNotClosed();
-            _writer.Write(value);
+            StreamWriterInstance.Write(value);
         }
 
         protected override int PeekRaw()
         {
             CheckFileIsNotClosed();
-            return _reader?.Peek() ?? -1;
+            return StreamReaderInstance?.Peek() ?? -1;
         }
 
         protected override string Close()
         {
             CheckFileIsNotClosed();
 
-            if (_writer != null)
+            if (StreamWriterInstance != null)
             {
-                _writer.Dispose();
+                StreamWriterInstance.Dispose();
             }
 
-            if (_reader != null)
+            if (StreamReaderInstance != null)
             {
-                _reader.Dispose();
+                StreamReaderInstance.Dispose();
             }
 
-            _stream.Dispose();
+            StreamInstance.Dispose();
 
-            _closed = true;
+            IsClosed = true;
 
             return null;
         }
@@ -194,9 +195,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
             try
             {
-                if (_writer != null)
+                if (StreamWriterInstance != null)
                 {
-                    _writer.Flush();
+                    StreamWriterInstance.Flush();
                 }
             }
             catch (ScriptRuntimeException)
@@ -220,15 +221,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 {
                     if (whence == "set")
                     {
-                        _stream.Seek(offset, SeekOrigin.Begin);
+                        StreamInstance.Seek(offset, SeekOrigin.Begin);
                     }
                     else if (whence == "cur")
                     {
-                        _stream.Seek(offset, SeekOrigin.Current);
+                        StreamInstance.Seek(offset, SeekOrigin.Current);
                     }
                     else if (whence == "end")
                     {
-                        _stream.Seek(offset, SeekOrigin.End);
+                        StreamInstance.Seek(offset, SeekOrigin.End);
                     }
                     else
                     {
@@ -240,8 +241,8 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     }
                 }
 
-                long position = _stream.Position;
-                _logicalPosition = position;
+                long position = StreamInstance.Position;
+                LogicalPosition = position;
                 ResetReaderBuffer(position);
                 return position;
             }
@@ -260,9 +261,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             CheckFileIsNotClosed();
             try
             {
-                if (_writer != null)
+                if (StreamWriterInstance != null)
                 {
-                    _writer.AutoFlush = mode == "no" || mode == "line";
+                    StreamWriterInstance.AutoFlush = mode == "no" || mode == "line";
                 }
             }
             catch (ScriptRuntimeException)
@@ -279,41 +280,41 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
         protected override bool SupportsRewind
         {
-            get { return _stream != null && _stream.CanSeek; }
+            get { return StreamInstance != null && StreamInstance.CanSeek; }
         }
 
         protected override long GetCurrentPosition()
         {
-            return _logicalPosition;
+            return LogicalPosition;
         }
 
         protected override void ResetToPosition(long position)
         {
-            _logicalPosition = position;
+            LogicalPosition = position;
             ResetReaderBuffer(position);
         }
 
         protected internal override bool IsOpen()
         {
-            return !_closed;
+            return !IsClosed;
         }
 
         protected void ResetReaderBuffer(long targetPosition)
         {
-            if (_reader == null || !_stream.CanSeek)
+            if (StreamReaderInstance == null || !StreamInstance.CanSeek)
             {
                 return;
             }
 
-            long currentPosition = _stream.Position;
+            long currentPosition = StreamInstance.Position;
             if (currentPosition == targetPosition)
             {
                 return;
             }
 
-            _reader.DiscardBufferedData();
-            _stream.Seek(targetPosition, SeekOrigin.Begin);
-            _logicalPosition = targetPosition;
+            StreamReaderInstance.DiscardBufferedData();
+            StreamInstance.Seek(targetPosition, SeekOrigin.Begin);
+            LogicalPosition = targetPosition;
         }
     }
 }

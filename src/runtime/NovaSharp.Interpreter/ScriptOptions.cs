@@ -30,6 +30,7 @@ namespace NovaSharp.Interpreter
             DebugPrint = defaults.DebugPrint;
 
             UseLuaErrorLocations = defaults.UseLuaErrorLocations;
+            ColonOperatorClrCallbackBehaviour = defaults.ColonOperatorClrCallbackBehaviour;
             Stdin = defaults.Stdin;
             Stdout = defaults.Stdout;
             Stderr = defaults.Stderr;

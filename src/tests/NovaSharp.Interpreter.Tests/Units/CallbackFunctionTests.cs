@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -135,18 +136,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckCallbackSignatureHonoursVisibilityRequirement()
         {
-            System.Reflection.MethodInfo publicMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.ValidCallback)
-            )!;
-
-            System.Reflection.MethodInfo internalMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.PrivateCallback),
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
-            )!;
-
-            System.Reflection.MethodInfo badMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.BadSignature)
-            )!;
+            MethodInfo publicMethod = SampleUserData.GetPublicCallbackMethod();
+            MethodInfo internalMethod = SampleUserData.GetInternalCallbackMethod();
+            MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
 
             Assert.Multiple(() =>
             {
@@ -163,6 +155,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class SampleUserData
         {
+            private static readonly MethodInfo ValidCallbackMethodInfo = (
+                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)ValidCallback
+            ).Method;
+
+            private static readonly MethodInfo PrivateCallbackMethodInfo = (
+                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)PrivateCallback
+            ).Method;
+
+            private static readonly MethodInfo BadSignatureMethodInfo = (
+                (Func<ScriptExecutionContext, int, DynValue>)BadSignature
+            ).Method;
+
             public static int AddOne(int value) => value + 1;
 
             public static DynValue ValidCallback(
@@ -185,6 +189,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 return DynValue.NewNumber(value);
             }
+
+            public static MethodInfo GetPublicCallbackMethod() => ValidCallbackMethodInfo;
+
+            public static MethodInfo GetInternalCallbackMethod() => PrivateCallbackMethodInfo;
+
+            public static MethodInfo GetBadSignatureMethod() => BadSignatureMethodInfo;
         }
     }
 }

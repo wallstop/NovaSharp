@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Debugging
 {
+    using System.Globalization;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -59,6 +60,7 @@ namespace NovaSharp.Interpreter.Debugging
         public override string ToString()
         {
             return string.Format(
+                CultureInfo.InvariantCulture,
                 "{0}:{1}:{2}:{3}:{4}:{5}",
                 Address,
                 BasePtr,

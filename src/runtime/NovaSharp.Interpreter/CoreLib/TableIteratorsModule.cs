@@ -27,6 +27,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
             DynValue meta = executionContext.GetMetamethodTailCall(
@@ -36,7 +41,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
 
             return meta
-                ?? DynValue.NewTuple(DynValue.NewCallback(__next_i), table, DynValue.NewNumber(0));
+                ?? DynValue.NewTuple(DynValue.NewCallback(NextArray), table, DynValue.NewNumber(0));
         }
 
         // pairs (t)
@@ -52,6 +57,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
             DynValue meta = executionContext.GetMetamethodTailCall(
@@ -77,6 +87,11 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "next")]
         public static DynValue Next(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args.AsType(0, "next", DataType.Table);
             DynValue index = args[1];
 
@@ -95,11 +110,16 @@ namespace NovaSharp.Interpreter.CoreLib
         // __next_i (table [, index])
         // -------------------------------------------------------------------------------------------------------------------
         // Allows a program to traverse all fields of an array. index is an integer number
-        public static DynValue __next_i(
+        public static DynValue NextArray(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args.AsType(0, "!!next_i!!", DataType.Table);
             DynValue index = args.AsType(1, "!!next_i!!", DataType.Number);
 

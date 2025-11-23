@@ -234,7 +234,7 @@ namespace NovaSharp.Interpreter.Interop
             }
             catch (ReflectionTypeLoadException)
             {
-                return new Type[0];
+                return Array.Empty<Type>();
             }
         }
 

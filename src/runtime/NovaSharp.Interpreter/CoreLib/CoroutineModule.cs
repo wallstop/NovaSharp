@@ -28,6 +28,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
             {
                 args.AsType(0, "create", DataType.Function); // this throws
@@ -39,6 +45,12 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "wrap")]
         public static DynValue Wrap(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
             {
                 args.AsType(0, "wrap", DataType.Function); // this throws
@@ -56,6 +68,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue handle = args.AsType(0, "resume", DataType.Thread);
 
             try
@@ -100,6 +118,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue handle = args.AsType(0, "close", DataType.Thread);
             return handle.Coroutine.Close();
         }
@@ -110,6 +134,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewYieldReq(args.GetArray());
         }
 
@@ -119,6 +149,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             Coroutine c = executionContext.GetCallingCoroutine();
             return DynValue.NewTuple(
                 DynValue.NewCoroutine(c),
@@ -132,6 +168,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue handle = args.AsType(0, "status", DataType.Thread);
             Coroutine running = executionContext.GetCallingCoroutine();
             CoroutineState cs = handle.Coroutine.State;
@@ -160,6 +202,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewBoolean(executionContext.IsYieldable());
         }
     }

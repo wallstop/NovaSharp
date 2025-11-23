@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Errors
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -30,14 +32,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="ex">The ex.</param>
         public ScriptRuntimeException(Exception ex)
-            : base(ex) { }
+            : base(EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
         /// </summary>
         /// <param name="ex">The ex.</param>
         public ScriptRuntimeException(ScriptRuntimeException ex)
-            : base(ex, ex.DecoratedMessage)
+            : base(EnsureScriptRuntimeException(ex, out string decoratedMessage), decoratedMessage)
         {
             DecoratedMessage = Message;
             DoNotDecorateMessage = true;
@@ -68,6 +70,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers</exception>
         public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r = null)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -95,6 +102,29 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
+        /// Creates a ScriptRuntimeException specifying that a bitwise operation received a non-integer operand.
+        /// </summary>
+        public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            string descriptor = value.Type switch
+            {
+                DataType.Number => "float",
+                DataType.String => "string",
+                _ => value.Type.ToLuaTypeString(),
+            };
+
+            return new ScriptRuntimeException(
+                "attempt to perform bitwise operation on a {0} value",
+                descriptor
+            );
+        }
+
+        /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a concat operation was attempted on non-strings
         /// </summary>
@@ -104,6 +134,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers or strings</exception>
         public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -132,6 +167,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException LenOnInvalidType(DynValue r)
         {
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to get length of a {0} value",
                 r.Type.ToLuaTypeString()
@@ -147,6 +187,16 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
             {
                 return new ScriptRuntimeException(
@@ -206,6 +256,11 @@ namespace NovaSharp.Interpreter.Errors
             bool allowNil
         )
         {
+            if (expected == null)
+            {
+                throw new ArgumentNullException(nameof(expected));
+            }
+
             return new ScriptRuntimeException(
                 "bad argument #{0} to '{1}' (userdata<{2}>{3} expected, got {4})",
                 argNum + 1,
@@ -371,6 +426,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException IndexType(DynValue obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to index a {0} value",
                 obj.Type.ToLuaTypeString()
@@ -482,6 +542,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(object obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException("cannot convert clr type {0}", obj.GetType());
         }
 
@@ -495,10 +560,9 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t)
         {
-            return new ScriptRuntimeException(
-                "cannot convert a {0} to a clr type",
-                t.ToString().ToLowerInvariant()
-            );
+            string luaType = t.ToLuaDebuggerString();
+
+            return new ScriptRuntimeException("cannot convert a {0} to a clr type", luaType);
         }
 
         /// <summary>
@@ -512,9 +576,16 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t, Type t2)
         {
+            if (t2 == null)
+            {
+                throw new ArgumentNullException(nameof(t2));
+            }
+
+            string luaType = t.ToLuaDebuggerString();
+
             return new ScriptRuntimeException(
                 "cannot convert a {0} to a clr type {1}",
-                t.ToString().ToLowerInvariant(),
+                luaType,
                 t2.FullName
             );
         }
@@ -530,9 +601,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException UserDataArgumentTypeMismatch(DataType t, Type clrType)
         {
+            if (clrType == null)
+            {
+                throw new ArgumentNullException(nameof(clrType));
+            }
+
             return new ScriptRuntimeException(
                 "cannot find a conversion from a NovaSharp {0} to a clr {1}",
-                t.ToString().ToLowerInvariant(),
+                t.ToLuaDebuggerString(),
                 clrType.FullName
             );
         }
@@ -587,9 +663,37 @@ namespace NovaSharp.Interpreter.Errors
                 ),
                 _ => new ScriptRuntimeException(
                     "cannot close coroutine in state {0}",
-                    state.ToString().ToLowerInvariant()
+                    GetCoroutineStateName(state)
                 ),
             };
+        }
+
+        private static readonly Dictionary<CoroutineState, string> KnownCoroutineStateNames = new()
+        {
+            { CoroutineState.Main, "main" },
+            { CoroutineState.NotStarted, "notstarted" },
+            { CoroutineState.Suspended, "suspended" },
+            { CoroutineState.ForceSuspended, "forcesuspended" },
+            { CoroutineState.Running, "running" },
+            { CoroutineState.Dead, "dead" },
+        };
+
+        private static readonly ConcurrentDictionary<
+            CoroutineState,
+            string
+        > CoroutineStateNameCache = new();
+
+        private static string GetCoroutineStateName(CoroutineState state)
+        {
+            if (KnownCoroutineStateNames.TryGetValue(state, out string known))
+            {
+                return known;
+            }
+
+            return CoroutineStateNameCache.GetOrAdd(
+                state,
+                static s => InvariantString.ToLowerInvariantIfNeeded(s.ToString())
+            );
         }
 
         /// <summary>
@@ -651,6 +755,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <param name="desc">The member descriptor.</param>
         public static ScriptRuntimeException AccessInstanceMemberOnStatics(IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0} from a static userdata",
                 desc.Name
@@ -669,6 +778,16 @@ namespace NovaSharp.Interpreter.Errors
             IMemberDescriptor desc
         )
         {
+            if (typeDescr == null)
+            {
+                throw new ArgumentNullException(nameof(typeDescr));
+            }
+
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0}.{1} from a static userdata",
                 typeDescr.Name,
@@ -686,6 +805,30 @@ namespace NovaSharp.Interpreter.Errors
             {
                 throw new ScriptRuntimeException(this);
             }
+        }
+
+        private static Exception EnsureException(Exception ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            return ex;
+        }
+
+        private static ScriptRuntimeException EnsureScriptRuntimeException(
+            ScriptRuntimeException ex,
+            out string decoratedMessage
+        )
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            decoratedMessage = ex.DecoratedMessage;
+            return ex;
         }
     }
 }

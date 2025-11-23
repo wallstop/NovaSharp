@@ -20,15 +20,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer is at the '{', go on
             CheckTokenType(lcontext, TokenType.BrkOpenCurly, TokenType.BrkOpenCurlyShared);
 
-            while (lcontext.Lexer.Current.type != TokenType.BrkCloseCurly)
+            while (lcontext.Lexer.Current.Type != TokenType.BrkCloseCurly)
             {
-                switch (lcontext.Lexer.Current.type)
+                switch (lcontext.Lexer.Current.Type)
                 {
                     case TokenType.Name:
                         {
                             Token assign = lcontext.Lexer.PeekNext();
 
-                            if (assign.type == TokenType.OpAssignment)
+                            if (assign.Type == TokenType.OpAssignment)
                             {
                                 StructField(lcontext);
                             }
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 Token curr = lcontext.Lexer.Current;
 
-                if (curr.type == TokenType.Comma || curr.type == TokenType.SemiColon)
+                if (curr.Type == TokenType.Comma || curr.Type == TokenType.SemiColon)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -99,19 +99,19 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_NewTable(_shared);
+            bc.EmitNewTable(_shared);
 
             foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
                 kvp.Key.Compile(bc);
                 kvp.Value.Compile(bc);
-                bc.Emit_TblInitN();
+                bc.EmitTblInitN();
             }
 
             for (int i = 0; i < _positionalValues.Count; i++)
             {
                 _positionalValues[i].Compile(bc);
-                bc.Emit_TblInitI(i == _positionalValues.Count - 1);
+                bc.EmitTblInitI(i == _positionalValues.Count - 1);
             }
         }
 

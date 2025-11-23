@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public override void Compile(Execution.VM.ByteCode bc)
         {
             _expression.Compile(bc);
-            bc.Emit_Scalar();
+            bc.EmitScalar();
         }
 
         public override DynValue Eval(ScriptExecutionContext context)

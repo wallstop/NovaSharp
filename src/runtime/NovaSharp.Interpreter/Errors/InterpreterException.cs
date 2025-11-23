@@ -2,7 +2,9 @@ namespace NovaSharp.Interpreter.Errors
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using Debugging;
+    using NovaSharp.Interpreter.Compatibility;
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     using System.Runtime.Serialization;
 #endif
@@ -28,14 +30,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="ex">The ex.</param>
         protected InterpreterException(Exception ex, string message)
-            : base(message, ex) { }
+            : base(message, EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
         /// </summary>
         /// <param name="ex">The ex.</param>
         protected InterpreterException(Exception ex)
-            : base(ex.Message, ex) { }
+            : base(GetExceptionMessage(ex), EnsureException(ex)) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InterpreterException"/> class.
@@ -43,7 +45,7 @@ namespace NovaSharp.Interpreter.Errors
         /// <param name="format">The format.</param>
         /// <param name="args">The arguments.</param>
         protected InterpreterException(string format, params object[] args)
-            : base(string.Format(format, args)) { }
+            : base(FormatInvariant(format, args)) { }
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
         /// <summary>
@@ -82,11 +84,11 @@ namespace NovaSharp.Interpreter.Errors
                 if (DoNotDecorateMessage)
                 {
                     DecoratedMessage = Message;
-                    return;
                 }
                 else if (sref != null)
                 {
                     DecoratedMessage = string.Format(
+                        CultureInfo.InvariantCulture,
                         "{0}: {1}",
                         sref.FormatLocation(script),
                         Message
@@ -104,5 +106,50 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <returns></returns>
         public virtual void Rethrow() { }
+
+        internal void AppendCompatibilityContext(Script script)
+        {
+            if (
+                script == null
+                || string.IsNullOrEmpty(DecoratedMessage)
+                || DecoratedMessage.Contains("[compatibility:", StringComparison.Ordinal)
+            )
+            {
+                return;
+            }
+
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            DecoratedMessage = $"{DecoratedMessage} [compatibility: {profile.DisplayName}]";
+        }
+
+        private static string FormatInvariant(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
+        }
+
+        private static Exception EnsureException(Exception ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            return ex;
+        }
+
+        private static string GetExceptionMessage(Exception ex)
+        {
+            return EnsureException(ex).Message ?? string.Empty;
+        }
     }
 }

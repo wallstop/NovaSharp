@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.CoreLib
 {
 #pragma warning disable 1591
 
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
@@ -28,6 +29,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return SetErrorHandlerStrategy("pcall", executionContext, args, null);
         }
 
@@ -38,6 +45,12 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue handlerBeforeUnwind
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             DynValue[] a = new DynValue[args.Count - 1];
 
@@ -69,8 +82,8 @@ namespace NovaSharp.Interpreter.CoreLib
                             {
                                 Args = ret.TailCallData.Args,
                                 Function = ret.TailCallData.Function,
-                                Continuation = new CallbackFunction(pcall_continuation, funcName),
-                                ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                                Continuation = new CallbackFunction(PcallContinuation, funcName),
+                                ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                                 ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                             }
                         );
@@ -110,8 +123,8 @@ namespace NovaSharp.Interpreter.CoreLib
                     {
                         Args = a,
                         Function = v,
-                        Continuation = new CallbackFunction(pcall_continuation, funcName),
-                        ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                        Continuation = new CallbackFunction(PcallContinuation, funcName),
+                        ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                         ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                     }
                 );
@@ -132,19 +145,31 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(rets);
         }
 
-        public static DynValue pcall_continuation(
+        public static DynValue PcallContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return MakeReturnTuple(true, args);
         }
 
-        public static DynValue pcall_onerror(
+        public static DynValue PcallOnError(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return MakeReturnTuple(false, args);
         }
 
@@ -154,6 +179,12 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             List<DynValue> a = new();
 
             for (int i = 0; i < args.Count; i++)

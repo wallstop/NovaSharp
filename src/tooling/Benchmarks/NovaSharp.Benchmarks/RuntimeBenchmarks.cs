@@ -6,7 +6,7 @@ namespace NovaSharp.Benchmarks
     using NovaSharp.Interpreter.Modules;
 
     [MemoryDiagnoser]
-    public class RuntimeBenchmarks
+    internal class RuntimeBenchmarks
     {
         private Script _script = null!;
         private DynValue _compiledEntry = DynValue.Nil;
@@ -42,7 +42,7 @@ namespace NovaSharp.Benchmarks
 
             if (
                 Scenario == RuntimeScenario.UserDataInterop
-                && !UserData.IsTypeRegistered(typeof(BenchmarkHost))
+                && !UserData.IsTypeRegistered<BenchmarkHost>()
             )
             {
                 UserData.RegisterType<BenchmarkHost>();
@@ -57,7 +57,7 @@ namespace NovaSharp.Benchmarks
         private double RunTableScenario()
         {
             Table table = new(_script);
-            for (int i = 1; i <= LuaRuntimeSuites.TABLE_ENTRY_COUNT; i++)
+            for (int i = 1; i <= LuaRuntimeSuites.TableEntryCount; i++)
             {
                 table.Set(i, DynValue.NewNumber(i * 1.5));
             }
@@ -66,14 +66,12 @@ namespace NovaSharp.Benchmarks
         }
 
         private double RunCoroutineScenario() =>
-            _script.Call(_compiledEntry, LuaRuntimeSuites.COROUTINE_STEPS).Number;
+            _script.Call(_compiledEntry, LuaRuntimeSuites.CoroutineSteps).Number;
 
         private double RunUserDataScenario()
         {
             _host.Reset();
-            return _script
-                .Call(_compiledEntry, _host, LuaRuntimeSuites.USER_DATA_ITERATIONS)
-                .Number;
+            return _script.Call(_compiledEntry, _host, LuaRuntimeSuites.UserDataIterations).Number;
         }
     }
 
@@ -81,7 +79,12 @@ namespace NovaSharp.Benchmarks
     {
         private double _store;
 
-        public double Accumulate(double left, double right) => (left * 1.25) + (right * 0.75);
+        public double Accumulate(double left, double right)
+        {
+            double result = (left * 1.25) + (right * 0.75);
+            _store = result;
+            return result;
+        }
 
         public void Store(double value) => _store = value;
 

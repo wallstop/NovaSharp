@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.Tree
 
             forceLast = false;
 
-            switch (tkn.type)
+            switch (tkn.Type)
             {
                 case TokenType.DoubleColon:
                     return new LabelStatement(lcontext);
@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Tree
                 case TokenType.Local:
                     Token localToken = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
-                    if (lcontext.Lexer.Current.type == TokenType.Function)
+                    if (lcontext.Lexer.Current.Type == TokenType.Function)
                     {
                         return new FunctionDefinitionStatement(lcontext, true, localToken);
                     }
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tree
 
             Token name = CheckTokenType(lcontext, TokenType.Name);
 
-            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
+            if (lcontext.Lexer.Current.Type == TokenType.OpAssignment)
             {
                 return new ForLoopStatement(lcontext, name, forTkn);
             }

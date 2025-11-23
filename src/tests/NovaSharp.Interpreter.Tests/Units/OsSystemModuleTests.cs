@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetenvReturnsStoredValue()
+        public void GetEnvReturnsStoredValue()
         {
             _stub.Environment["HOME"] = "/tmp/home";
             Script script = CreateScript();
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetenvReturnsNilWhenMissing()
+        public void GetEnvReturnsNilWhenMissing()
         {
             Script script = CreateScript();
             DynValue value = script.DoString("return os.getenv('MISSING')");
@@ -203,7 +203,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void TmpnameReturnsPlatformTempFileName()
+        public void TmpNameReturnsPlatformTempFileName()
         {
             _stub.TempFileName = "stub-temp";
             Script script = CreateScript();
@@ -214,7 +214,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SetlocaleReturnsPlaceholderString()
+        public void SetLocaleReturnsPlaceholderString()
         {
             Script script = CreateScript();
 

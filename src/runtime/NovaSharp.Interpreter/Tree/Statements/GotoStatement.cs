@@ -40,11 +40,11 @@ namespace NovaSharp.Interpreter.Tree.Statements
             {
                 foreach (RuntimeScopeBlock scope in _exitScopes)
                 {
-                    bc.Emit_Exit(scope);
+                    bc.EmitExit(scope);
                 }
             }
 
-            _jump = bc.Emit_Jump(OpCode.Jump, _labelAddress);
+            _jump = bc.EmitJump(OpCode.Jump, _labelAddress);
         }
 
         internal void SetDefinedVars(int definedVarsCount, string lastDefinedVarsName)

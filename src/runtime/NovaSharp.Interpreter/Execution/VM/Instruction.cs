@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using Debugging;
@@ -42,16 +43,16 @@ namespace NovaSharp.Interpreter.Execution.VM
                 )
             )
             {
-                append += " " + NumVal.ToString("X8");
+                append += " " + NumVal.ToString("X8", CultureInfo.InvariantCulture);
             }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
             {
-                append += " " + NumVal.ToString();
+                append += " " + NumVal.ToString(CultureInfo.InvariantCulture);
             }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
             {
-                append += " " + NumVal2.ToString();
+                append += " " + NumVal2.ToString(CultureInfo.InvariantCulture);
             }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
@@ -77,7 +78,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             return append;
         }
 
-        private string PurifyFromNewLines(DynValue value)
+        private static string PurifyFromNewLines(DynValue value)
         {
             if (value == null)
             {
@@ -254,7 +255,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private void DumpValue(BinaryWriter wr, DynValue value)
+        private static void DumpValue(BinaryWriter wr, DynValue value)
         {
             if (value == null)
             {

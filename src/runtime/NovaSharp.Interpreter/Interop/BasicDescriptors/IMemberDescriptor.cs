@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
@@ -72,6 +73,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanRead(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanRead);
         }
 
@@ -82,6 +88,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanWrite(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanWrite);
         }
 
@@ -92,6 +103,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanExecute(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanExecute);
         }
 
@@ -108,6 +124,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             object obj
         )
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return DynValue.NewCallback((p1, p2) => desc.GetValue(script, obj));
         }
 
@@ -149,6 +170,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             object obj
         )
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             if (!desc.IsStatic && obj == null)
             {
                 throw ScriptRuntimeException.AccessInstanceMemberOnStatics(desc);

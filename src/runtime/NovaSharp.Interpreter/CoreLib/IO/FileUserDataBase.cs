@@ -3,7 +3,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
+    using System.Security;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -72,9 +74,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
                         if (Eof())
                         {
-                            v = opt.StartsWith("*a") ? DynValue.NewString("") : DynValue.Nil;
+                            v = opt.StartsWith("*a", StringComparison.Ordinal)
+                                ? DynValue.NewString(string.Empty)
+                                : DynValue.Nil;
                         }
-                        else if (opt.StartsWith("*n"))
+                        else if (opt.StartsWith("*n", StringComparison.Ordinal))
                         {
                             double? d = ReadNumber();
 
@@ -87,18 +91,18 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                                 v = DynValue.Nil;
                             }
                         }
-                        else if (opt.StartsWith("*a"))
+                        else if (opt.StartsWith("*a", StringComparison.Ordinal))
                         {
                             string str = ReadToEnd();
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*l"))
+                        else if (opt.StartsWith("*l", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
                             str = str.TrimEnd('\n', '\r');
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*L"))
+                        else if (opt.StartsWith("*L", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
 
@@ -126,7 +130,6 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 for (int i = 0; i < args.Count; i++)
                 {
-                    //string str = args.AsStringUsingMeta(executionContext, i, "file:write");
                     string str = args.AsType(i, "write", DataType.String, false).String;
                     Write(str);
                 }
@@ -137,13 +140,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
@@ -169,13 +168,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
@@ -450,7 +445,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return true;
         }
 
-        private static bool IsSignAllowed(
+        internal static bool IsSignAllowed(
             StringBuilder literal,
             bool isHex,
             bool exponentSeen,
@@ -495,7 +490,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool IsStandaloneSignOrDot(string numericText)
+        internal static bool IsStandaloneSignOrDot(string numericText)
         {
             if (numericText.Length != 1)
             {
@@ -506,7 +501,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return single == '+' || single == '-' || single == '.';
         }
 
-        private static bool IsValidHexPrefix(StringBuilder literal)
+        internal static bool IsValidHexPrefix(StringBuilder literal)
         {
             if (literal.Length == 0)
             {
@@ -530,7 +525,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool TryParseHexFloatLiteral(string literal, out double value)
+        internal static bool TryParseHexFloatLiteral(string literal, out double value)
         {
             value = 0;
 
@@ -646,6 +641,29 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         private static int TryGetHexDigitValue(char c)
         {
             return LexerUtils.HexDigit2Value(c);
+        }
+
+        private static DynValue CreateIoFailure(Exception exception)
+        {
+            return DynValue.NewTuple(
+                DynValue.Nil,
+                DynValue.NewString(exception.Message),
+                DynValue.NewNumber(-1)
+            );
+        }
+
+        private static bool IsRecoverableIoException(Exception exception)
+        {
+            return exception switch
+            {
+                IOException => true,
+                UnauthorizedAccessException => true,
+                ObjectDisposedException => true,
+                SecurityException => true,
+                NotSupportedException => true,
+                InvalidOperationException => true,
+                _ => false,
+            };
         }
 
         protected abstract bool Eof();

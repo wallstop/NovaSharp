@@ -221,11 +221,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     public class Capabilities : ResponseBody
     {
-        public bool supportsConfigurationDoneRequest { get; init; }
-        public bool supportsFunctionBreakpoints { get; init; }
-        public bool supportsConditionalBreakpoints { get; init; }
-        public bool supportsEvaluateForHovers { get; init; }
-        public IReadOnlyList<object> exceptionBreakpointFilters { get; init; } =
+        public bool SupportsConfigurationDoneRequest { get; init; }
+        public bool SupportsFunctionBreakpoints { get; init; }
+        public bool SupportsConditionalBreakpoints { get; init; }
+        public bool SupportsEvaluateForHovers { get; init; }
+        public IReadOnlyList<object> ExceptionBreakpointFilters { get; init; } =
             Array.Empty<object>();
     }
 

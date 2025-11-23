@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Modules
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
@@ -26,6 +27,7 @@ namespace NovaSharp.Interpreter.Modules
         public static Table RegisterCoreModules(this Table table, CoreModules modules)
         {
             modules = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
+            LuaCompatibilityProfile profile = GetCompatibilityProfile(table.OwnerScript);
 
             if (modules.Has(CoreModules.GlobalConsts))
             {
@@ -40,6 +42,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.Basic))
             {
                 RegisterModuleType<BasicModule>(table);
+
+                if (!profile.SupportsWarnFunction)
+                {
+                    RemoveGlobalFunction(table, "warn");
+                }
             }
 
             if (modules.Has(CoreModules.Metatables))
@@ -50,6 +57,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.StringLib))
             {
                 RegisterModuleType<StringModule>(table);
+
+                if (profile.SupportsUtf8Library)
+                {
+                    RegisterModuleType(table, typeof(Utf8Module));
+                }
             }
 
             if (modules.Has(CoreModules.LoadMethods))
@@ -60,6 +72,11 @@ namespace NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.Table))
             {
                 RegisterModuleType<TableModule>(table);
+
+                if (!profile.SupportsTableMove)
+                {
+                    RemoveTableFunction(table, "move");
+                }
             }
 
             if (modules.Has(CoreModules.Table))
@@ -82,7 +99,7 @@ namespace NovaSharp.Interpreter.Modules
                 RegisterModuleType<CoroutineModule>(table);
             }
 
-            if (modules.Has(CoreModules.Bit32))
+            if (modules.Has(CoreModules.Bit32) && profile.SupportsBit32Library)
             {
                 RegisterModuleType<Bit32Module>(table);
             }
@@ -127,15 +144,20 @@ namespace NovaSharp.Interpreter.Modules
         /// <returns></returns>
         public static Table RegisterConstants(this Table table)
         {
-            DynValue novaSharpTable = DynValue.NewTable(table.OwnerScript);
+            Script ownerScript = table.OwnerScript;
+            DynValue novaSharpTable = DynValue.NewTable(ownerScript);
             Table m = novaSharpTable.Table;
+            LuaCompatibilityProfile profile =
+                ownerScript != null
+                    ? ownerScript.CompatibilityProfile
+                    : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
 
             table.Set("_G", DynValue.NewTable(table));
             table.Set("_VERSION", DynValue.NewString($"NovaSharp {Script.VERSION}"));
             table.Set("_NovaSharp", novaSharpTable);
 
             m.Set("version", DynValue.NewString(Script.VERSION));
-            m.Set("luacompat", DynValue.NewString(Script.LuaVersion));
+            m.Set("luacompat", DynValue.NewString(profile.DisplayName));
             m.Set("platform", DynValue.NewString(Script.GlobalOptions.Platform.GetPlatformName()));
             m.Set("is_aot", DynValue.NewBoolean(Script.GlobalOptions.Platform.IsRunningOnAOT()));
             m.Set("is_unity", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnUnity));
@@ -157,6 +179,9 @@ namespace NovaSharp.Interpreter.Modules
         public static Table RegisterModuleType(this Table gtable, Type t)
         {
             Table table = CreateModuleNamespace(gtable, t);
+            Script ownerScript = table.OwnerScript;
+            LuaCompatibilityVersion scriptVersion =
+                ownerScript?.CompatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
 
             foreach (MethodInfo mi in Framework.Do.GetMethods(t).Where(mi => mi.IsStatic))
             {
@@ -169,6 +194,11 @@ namespace NovaSharp.Interpreter.Modules
                     NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                         mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
                             .First();
+
+                    if (!IsMemberCompatible(mi, scriptVersion))
+                    {
+                        continue;
+                    }
 
                     if (!CallbackFunction.CheckCallbackSignature(mi, true))
                     {
@@ -214,6 +244,11 @@ namespace NovaSharp.Interpreter.Modules
                     )
             )
             {
+                if (!IsMemberCompatible(fi, scriptVersion))
+                {
+                    continue;
+                }
+
                 NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                     fi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false).First();
                 RegisterScriptField(fi, null, table, t, attr.Name, fi.Name);
@@ -230,6 +265,11 @@ namespace NovaSharp.Interpreter.Modules
                     )
             )
             {
+                if (!IsMemberCompatible(fi, scriptVersion))
+                {
+                    continue;
+                }
+
                 NovaSharpModuleConstantAttribute attr = (NovaSharpModuleConstantAttribute)
                     fi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false).First();
                 string name = (!string.IsNullOrEmpty(attr.Name)) ? attr.Name : fi.Name;
@@ -391,7 +431,7 @@ namespace NovaSharp.Interpreter.Modules
                     AddCandidate(normalizedLowerFirst);
                 }
 
-                AddCandidate(memberName.ToLowerInvariant());
+                AddCandidate(InvariantString.ToLowerInvariantIfNeeded(memberName));
             }
 
             if (!string.IsNullOrEmpty(explicitName) && explicitName != memberName)
@@ -408,6 +448,47 @@ namespace NovaSharp.Interpreter.Modules
             }
 
             return names;
+        }
+
+        private static bool IsMemberCompatible(
+            MemberInfo member,
+            LuaCompatibilityVersion scriptVersion
+        )
+        {
+            LuaCompatibilityAttribute attr = member.GetCustomAttribute<LuaCompatibilityAttribute>();
+            return attr == null || attr.IsSupported(scriptVersion);
+        }
+
+        private static LuaCompatibilityProfile GetCompatibilityProfile(Script script)
+        {
+            return script != null
+                ? script.CompatibilityProfile
+                : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
+        }
+
+        private static void RemoveGlobalFunction(Table globals, string functionName)
+        {
+            if (globals == null || string.IsNullOrEmpty(functionName))
+            {
+                return;
+            }
+
+            globals.Set(functionName, DynValue.Nil);
+        }
+
+        private static void RemoveTableFunction(Table globals, string memberName)
+        {
+            if (globals == null || string.IsNullOrEmpty(memberName))
+            {
+                return;
+            }
+
+            DynValue tableNamespace = globals.RawGet("table");
+
+            if (tableNamespace != null && tableNamespace.Type == DataType.Table)
+            {
+                tableNamespace.Table.Set(memberName, DynValue.Nil);
+            }
         }
     }
 }

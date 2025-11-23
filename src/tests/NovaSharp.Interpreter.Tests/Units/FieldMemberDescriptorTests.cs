@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -19,10 +20,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleReturnsDescriptorForPublicField()
         {
-            FieldInfo fieldInfo = typeof(SampleFields).GetField(
-                nameof(SampleFields.StaticValue),
-                BindingFlags.Static | BindingFlags.Public
-            );
+            FieldInfo fieldInfo = SampleFieldsMetadata.StaticValue;
 
             FieldMemberDescriptor descriptor = FieldMemberDescriptor.TryCreateIfVisible(
                 fieldInfo,
@@ -40,10 +38,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void TryCreateIfVisibleRejectsNonPublicField()
         {
-            FieldInfo fieldInfo = typeof(SampleFields).GetField(
-                "_privateValue",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            );
+            FieldInfo fieldInfo = SampleFieldsMetadata.PrivateValue;
 
             FieldMemberDescriptor descriptor = FieldMemberDescriptor.TryCreateIfVisible(
                 fieldInfo,
@@ -57,24 +52,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void MemberAccessReflectsConstAndReadonlyState()
         {
             FieldMemberDescriptor constDescriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ConstValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ConstValue,
                 InteropAccessMode.Reflection
             );
             FieldMemberDescriptor readonlyDescriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ReadonlyValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ReadonlyValue,
                 InteropAccessMode.Reflection
             );
             FieldMemberDescriptor writableDescriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.StaticValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.Reflection
             );
 
@@ -99,10 +85,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueReturnsConstFieldWithoutAllocatingInstance()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ConstValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ConstValue,
                 InteropAccessMode.Reflection
             );
 
@@ -116,10 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void GetValueUsingPreoptimizedGetterReturnsStaticField()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.StaticValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.Preoptimized
             );
 
@@ -139,10 +119,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void LazyOptimizedGetterCompilesOnFirstAccess()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.StaticValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.LazyOptimized
             );
 
@@ -165,10 +142,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleFields instance = new() { InstanceValue = 42 };
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -187,10 +161,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleFields instance = new() { InstanceValue = 99 };
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Preoptimized
             );
 
@@ -207,10 +178,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PreoptimizedConstFieldDoesNotCompileGetter()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ConstValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ConstValue,
                 InteropAccessMode.Preoptimized
             );
 
@@ -232,10 +200,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
                 FieldMemberDescriptor descriptor = new(
-                    typeof(SampleFields).GetField(
-                        nameof(SampleFields.StaticValue),
-                        BindingFlags.Static | BindingFlags.Public
-                    ),
+                    SampleFieldsMetadata.StaticValue,
                     InteropAccessMode.Preoptimized
                 );
 
@@ -255,10 +220,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OptimizeInterfaceCompilesGetterOnDemand()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
             SampleFields instance = new() { InstanceValue = 64 };
@@ -281,17 +243,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueRejectsConstAndReadonlyFields()
         {
             FieldMemberDescriptor constDescriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ConstValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ConstValue,
                 InteropAccessMode.Reflection
             );
             FieldMemberDescriptor readonlyDescriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.ReadonlyValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.ReadonlyValue,
                 InteropAccessMode.Reflection
             );
 
@@ -317,10 +273,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleFields instance = new();
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -334,10 +287,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleFields instance = new();
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -351,10 +301,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsWhenInstanceIsMissing()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -370,10 +317,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SetValueThrowsWhenInstanceTypeDoesNotMatchField()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.InstanceValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
 
@@ -389,10 +333,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleFields instance = new();
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.DoubleValue),
-                    BindingFlags.Instance | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.DoubleValue,
                 InteropAccessMode.Reflection
             );
 
@@ -405,10 +346,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PrepareForWiringPopulatesMetadataTable()
         {
             FieldMemberDescriptor descriptor = new(
-                typeof(SampleFields).GetField(
-                    nameof(SampleFields.StaticValue),
-                    BindingFlags.Static | BindingFlags.Public
-                ),
+                SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.Reflection
             );
             Table table = new(_script);
@@ -432,6 +370,55 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int InstanceValue;
             public double DoubleValue;
             private int _privateValue;
+
+            internal static FieldInfo PrivateValueField { get; } =
+                GetFieldInfo(f => f._privateValue);
+
+            private static FieldInfo GetFieldInfo<TValue>(
+                Expression<Func<SampleFields, TValue>> accessor
+            )
+            {
+                return (FieldInfo)GetMember(accessor.Body);
+            }
+
+            private static MemberInfo GetMember(Expression expression)
+            {
+                if (expression is MemberExpression member)
+                {
+                    return member.Member;
+                }
+
+                if (
+                    expression is UnaryExpression unary
+                    && unary.NodeType == ExpressionType.Convert
+                    && unary.Operand is MemberExpression unaryMember
+                )
+                {
+                    return unaryMember.Member;
+                }
+
+                throw new InvalidOperationException("Expected member expression for field access.");
+            }
+        }
+
+        private static class SampleFieldsMetadata
+        {
+            internal static FieldInfo ConstValue { get; } =
+                typeof(SampleFields).GetField(nameof(SampleFields.ConstValue))!;
+
+            internal static FieldInfo ReadonlyValue { get; } =
+                typeof(SampleFields).GetField(nameof(SampleFields.ReadonlyValue))!;
+
+            internal static FieldInfo StaticValue { get; } =
+                typeof(SampleFields).GetField(nameof(SampleFields.StaticValue))!;
+
+            internal static FieldInfo InstanceValue { get; } =
+                typeof(SampleFields).GetField(nameof(SampleFields.InstanceValue))!;
+
+            internal static FieldInfo DoubleValue { get; } =
+                typeof(SampleFields).GetField(nameof(SampleFields.DoubleValue))!;
+
+            internal static FieldInfo PrivateValue { get; } = SampleFields.PrivateValueField;
         }
     }
 }

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Diagnostics
 {
     using System;
+    using System.Globalization;
 
     /// <summary>
     /// The result of a performance counter
@@ -40,9 +41,10 @@ namespace NovaSharp.Interpreter.Diagnostics
         public override string ToString()
         {
             return string.Format(
+                CultureInfo.InvariantCulture,
                 "{0}{1} : {2} times / {3} {4}",
                 Name,
-                Global ? "(g)" : "",
+                Global ? "(g)" : string.Empty,
                 Instances,
                 Counter,
                 PerformanceCounterTypeToString(Type)
@@ -63,7 +65,9 @@ namespace NovaSharp.Interpreter.Diagnostics
                     return "ms";
                 default:
                     throw new InvalidOperationException(
-                        "PerformanceCounterType has invalid value " + type.ToString()
+                        FormattableString.Invariant(
+                            $"PerformanceCounterType has invalid value {type}"
+                        )
                     );
             }
         }

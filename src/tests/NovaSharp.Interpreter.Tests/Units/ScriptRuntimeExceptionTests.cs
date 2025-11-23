@@ -170,6 +170,115 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ArithmeticOnNonNumberPrefersRightOperandWhenInvalid()
+        {
+            DynValue left = DynValue.NewNumber(5);
+            DynValue right = DynValue.NewTable(new Table(new Script()));
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ArithmeticOnNonNumber(
+                left,
+                right
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("attempt to perform arithmetic on a table value")
+            );
+        }
+
+        [Test]
+        public void ArithmeticOnNonNumberTreatsStringsAsInvalid()
+        {
+            DynValue left = DynValue.NewString("abc");
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ArithmeticOnNonNumber(
+                left,
+                null
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("attempt to perform arithmetic on a string value")
+            );
+        }
+
+        [Test]
+        public void ConcatOnNonStringRejectsRightOperand()
+        {
+            DynValue left = DynValue.NewNumber(1);
+            DynValue right = DynValue.NewBoolean(true);
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ConcatOnNonString(
+                left,
+                right
+            );
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to concatenate a boolean value"));
+        }
+
+        [Test]
+        public void ConcatOnNonStringRejectsLeftOperand()
+        {
+            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue right = DynValue.NewNumber(1);
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ConcatOnNonString(
+                left,
+                right
+            );
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to concatenate a table value"));
+        }
+
+        [Test]
+        public void BadArgumentUserDataIncludesAllowNilHint()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentUserData(
+                1,
+                "foo",
+                typeof(string),
+                new object(),
+                allowNil: true
+            );
+
+            Assert.That(exception.Message, Does.Contain("userdata<String>nil or "));
+        }
+
+        [Test]
+        public void BadArgumentNoNegativeNumbersFormatsMessage()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentNoNegativeNumbers(
+                3,
+                "bar"
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("bad argument #4 to 'bar' (not a non-negative number in proper range)")
+            );
+        }
+
+        [Test]
+        public void LoopInMetamethodHelpersReturnStockMessages()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    ScriptRuntimeException.LoopInIndex().Message,
+                    Is.EqualTo("loop in gettable")
+                );
+                Assert.That(
+                    ScriptRuntimeException.LoopInNewIndex().Message,
+                    Is.EqualTo("loop in settable")
+                );
+                Assert.That(
+                    ScriptRuntimeException.LoopInCall().Message,
+                    Is.EqualTo("loop in call")
+                );
+            });
+        }
+
+        [Test]
         public void AccessInstanceMemberOnStaticsFormatsMemberOnly()
         {
             IMemberDescriptor descriptor = new StubMemberDescriptor("Length", isStatic: false);

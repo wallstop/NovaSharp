@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.Serialization
 {
+    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
@@ -138,7 +140,7 @@ namespace NovaSharp.Interpreter.Serialization
             }
             else if (dynValue.Type == DataType.Number)
             {
-                return dynValue.Number.ToString("r");
+                return dynValue.Number.ToString("r", CultureInfo.InvariantCulture);
             }
             else if (dynValue.Type == DataType.Boolean)
             {
@@ -160,19 +162,25 @@ namespace NovaSharp.Interpreter.Serialization
             }
         }
 
-        private static string EscapeString(string s)
+        private static string EscapeString(string input)
         {
-            s = s.Replace(@"\", @"\\");
-            s = s.Replace("\n", @"\n");
-            s = s.Replace("\r", @"\r");
-            s = s.Replace("\t", @"\t");
-            s = s.Replace("\a", @"\a");
-            s = s.Replace("\f", @"\f");
-            s = s.Replace("\b", @"\b");
-            s = s.Replace("\v", @"\v");
-            s = s.Replace("\"", "\\\"");
-            s = s.Replace("\'", @"\'");
+            string s = input ?? string.Empty;
+            s = ReplaceOrdinal(s, @"\", @"\\");
+            s = ReplaceOrdinal(s, "\n", @"\n");
+            s = ReplaceOrdinal(s, "\r", @"\r");
+            s = ReplaceOrdinal(s, "\t", @"\t");
+            s = ReplaceOrdinal(s, "\a", @"\a");
+            s = ReplaceOrdinal(s, "\f", @"\f");
+            s = ReplaceOrdinal(s, "\b", @"\b");
+            s = ReplaceOrdinal(s, "\v", @"\v");
+            s = ReplaceOrdinal(s, "\"", "\\\"");
+            s = ReplaceOrdinal(s, "\'", @"\'");
             return "\"" + s + "\"";
+        }
+
+        private static string ReplaceOrdinal(string text, string oldValue, string newValue)
+        {
+            return text.Replace(oldValue, newValue, StringComparison.Ordinal);
         }
     }
 }

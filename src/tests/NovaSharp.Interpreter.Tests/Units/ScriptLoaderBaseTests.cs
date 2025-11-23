@@ -78,6 +78,41 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ResolveModuleNameThrowsWhenModuleNameIsNull()
+        {
+            Script script = new Script();
+            Table globals = script.Globals;
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleName(null!, globals),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("modname")
+            );
+        }
+
+        [Test]
+        public void ResolveModuleNameThrowsWhenGlobalsAreNull()
+        {
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleName("module", null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("globalContext")
+            );
+        }
+
+        [Test]
+        public void ResolveModuleNamePathsOverloadThrowsWhenModuleNameIsNull()
+        {
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleNameWithPaths(null!, Array.Empty<string>()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("modname")
+            );
+        }
+
+        [Test]
         public void UnpackStringPathsTrimsAndSkipsEmptySegments()
         {
             IReadOnlyList<string> paths = ScriptLoaderBase.UnpackStringPaths(
@@ -85,6 +120,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(paths, Is.EqualTo(new[] { "?", "lib/?.lua", "scripts/?" }));
+        }
+
+        [Test]
+        public void UnpackStringPathsThrowsWhenInputIsNull()
+        {
+            Assert.That(
+                () => ScriptLoaderBase.UnpackStringPaths(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("str")
+            );
         }
 
         [Test]
@@ -162,6 +206,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 throw new NotSupportedException();
             }
+
+            public string ResolveModuleNameWithPaths(string modname, IEnumerable<string> paths) =>
+                base.ResolveModuleName(modname, paths);
         }
 
         private sealed class LoaderPlatformStub : IPlatformAccessor

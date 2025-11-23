@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -42,8 +43,40 @@ namespace NovaSharp.Interpreter.CoreLib
             s.Registry.Set("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM", rr);
         }
 
+        private static bool TryGetIntegerFromDouble(double number, out long value) =>
+            LuaIntegerHelper.TryGetInteger(number, out value);
+
+        private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
+        {
+            return LuaIntegerHelper.TryGetInteger(value, out integer);
+        }
+
+        private static long RequireIntegerArgument(
+            CallbackArguments args,
+            int index,
+            string funcName
+        )
+        {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            DynValue value = args.AsType(index, funcName, DataType.Number, false);
+
+            if (!TryGetIntegerFromDouble(value.Number, out long integer))
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    index,
+                    funcName,
+                    "integer",
+                    value.Type.ToErrorTypeString(),
+                    false
+                );
+            }
+
+            return integer;
+        }
+
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
+            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
             SetRandom(globalTable.OwnerScript, new Random());
         }
 
@@ -53,6 +86,8 @@ namespace NovaSharp.Interpreter.CoreLib
             Func<double, double> func
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue arg = args.AsType(0, funcName, DataType.Number, false);
             return DynValue.NewNumber(func(arg.Number));
         }
@@ -63,6 +98,8 @@ namespace NovaSharp.Interpreter.CoreLib
             Func<double, double, double> func
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue arg = args.AsType(0, funcName, DataType.Number, false);
             DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
             return DynValue.NewNumber(func(arg.Number, arg2.Number));
@@ -75,6 +112,8 @@ namespace NovaSharp.Interpreter.CoreLib
             Func<double, double, double> func
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue arg = args.AsType(0, funcName, DataType.Number, false);
             DynValue arg2 = args.AsType(1, funcName, DataType.Number, true);
 
@@ -87,6 +126,7 @@ namespace NovaSharp.Interpreter.CoreLib
             Func<double, double, double> func
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             double accum = double.NaN;
 
             if (args.Count == 0)
@@ -114,27 +154,113 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(accum);
         }
 
+        [NovaSharpModuleMethod(Name = "type")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            DynValue value = args.AsType(0, "type", DataType.Number, false);
+            return DynValue.NewString(
+                TryGetIntegerFromDouble(value.Number, out _) ? "integer" : "float"
+            );
+        }
+
+        [NovaSharpModuleMethod(Name = "tointeger")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue ToInteger(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            if (args.Count == 0)
+            {
+                throw ScriptRuntimeException.BadArgumentNoValue(0, "tointeger", DataType.Number);
+            }
+
+            DynValue value = args[0];
+
+            if (value.Type != DataType.Number && value.Type != DataType.String)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "tointeger",
+                    DataType.Number,
+                    value.Type,
+                    false
+                );
+            }
+
+            if (TryGetIntegerFromDynValue(value, out long integer))
+            {
+                return DynValue.NewNumber(integer);
+            }
+
+            return DynValue.Nil;
+        }
+
+        [NovaSharpModuleMethod(Name = "ult")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public static DynValue Ult(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            long left = RequireIntegerArgument(args, 0, "ult");
+            long right = RequireIntegerArgument(args, 1, "ult");
+
+            ulong leftUnsigned = unchecked((ulong)left);
+            ulong rightUnsigned = unchecked((ulong)right);
+
+            return DynValue.NewBoolean(leftUnsigned < rightUnsigned);
+        }
+
         [NovaSharpModuleMethod(Name = "abs")]
         public static DynValue Abs(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "abs", d => Math.Abs(d));
         }
 
         [NovaSharpModuleMethod(Name = "acos")]
         public static DynValue Acos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "acos", d => Math.Acos(d));
         }
 
         [NovaSharpModuleMethod(Name = "asin")]
         public static DynValue Asin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "asin", d => Math.Asin(d));
         }
 
         [NovaSharpModuleMethod(Name = "atan")]
         public static DynValue Atan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "atan", d => Math.Atan(d));
         }
 
@@ -144,36 +270,60 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec2(args, "atan2", (d1, d2) => Math.Atan2(d1, d2));
         }
 
         [NovaSharpModuleMethod(Name = "ceil")]
         public static DynValue Ceil(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "ceil", d => Math.Ceiling(d));
         }
 
         [NovaSharpModuleMethod(Name = "cos")]
         public static DynValue Cos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "cos", d => Math.Cos(d));
         }
 
         [NovaSharpModuleMethod(Name = "cosh")]
         public static DynValue Cosh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "cosh", d => Math.Cosh(d));
         }
 
         [NovaSharpModuleMethod(Name = "deg")]
         public static DynValue Deg(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "deg", d => d * 180.0 / Math.PI);
         }
 
         [NovaSharpModuleMethod(Name = "exp")]
         public static DynValue Exp(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "exp", d => Math.Exp(d));
         }
 
@@ -183,12 +333,20 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "floor", d => Math.Floor(d));
         }
 
         [NovaSharpModuleMethod(Name = "fmod")]
         public static DynValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec2(args, "fmod", (d1, d2) => Math.IEEERemainder(d1, d2));
         }
 
@@ -198,6 +356,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             // http://stackoverflow.com/questions/389993/extracting-mantissa-and-exponent-from-double-in-c-sharp
 
             DynValue arg = args.AsType(0, "frexp", DataType.Number, false);
@@ -263,30 +426,51 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec2(args, "ldexp", (d1, d2) => d1 * Math.Pow(2, d2));
         }
 
         [NovaSharpModuleMethod(Name = "log")]
         public static DynValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec2N(args, "log", Math.E, (d1, d2) => Math.Log(d1, d2));
         }
 
         [NovaSharpModuleMethod(Name = "max")]
         public static DynValue Max(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Execaccum(args, "max", (d1, d2) => Math.Max(d1, d2));
         }
 
         [NovaSharpModuleMethod(Name = "min")]
         public static DynValue Min(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Execaccum(args, "min", (d1, d2) => Math.Min(d1, d2));
         }
 
         [NovaSharpModuleMethod(Name = "modf")]
         public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue arg = args.AsType(0, "modf", DataType.Number, false);
             double integerPart = Math.Truncate(arg.Number);
             double fractionalPart = arg.Number - integerPart;
@@ -299,12 +483,20 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "pow")]
         public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec2(args, "pow", (d1, d2) => Math.Pow(d1, d2));
         }
 
         [NovaSharpModuleMethod(Name = "rad")]
         public static DynValue Rad(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "rad", d => d * Math.PI / 180.0);
         }
 
@@ -314,6 +506,11 @@ namespace NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue m = args.AsType(0, "random", DataType.Number, true);
             DynValue n = args.AsType(1, "random", DataType.Number, true);
             Random r = GetRandom(executionContext.GetScript());
@@ -342,11 +539,16 @@ namespace NovaSharp.Interpreter.CoreLib
         }
 
         [NovaSharpModuleMethod(Name = "randomseed")]
-        public static DynValue Randomseed(
+        public static DynValue RandomSeed(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue arg = args.AsType(0, "randomseed", DataType.Number, false);
             Script script = executionContext.GetScript();
             SetRandom(script, new Random((int)arg.Number));
@@ -356,30 +558,50 @@ namespace NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "sin")]
         public static DynValue Sin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "sin", d => Math.Sin(d));
         }
 
         [NovaSharpModuleMethod(Name = "sinh")]
         public static DynValue Sinh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "sinh", d => Math.Sinh(d));
         }
 
         [NovaSharpModuleMethod(Name = "sqrt")]
         public static DynValue Sqrt(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "sqrt", d => Math.Sqrt(d));
         }
 
         [NovaSharpModuleMethod(Name = "tan")]
         public static DynValue Tan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "tan", d => Math.Tan(d));
         }
 
         [NovaSharpModuleMethod(Name = "tanh")]
         public static DynValue Tanh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             return Exec1(args, "tanh", d => Math.Tanh(d));
         }
     }
