@@ -5,8 +5,10 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Globalization;
     using System.IO;
     using System.Reflection;
+    using System.Security;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// A script loader which can load scripts from assets in Unity3D.
@@ -72,7 +74,7 @@ namespace NovaSharp.Interpreter.Loaders
                     _Resources.Add(name, text);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableLoaderInitializationException(ex))
             {
                 UnityEngine.Debug.LogErrorFormat("Error initializing UnityScriptLoader : {0}", ex);
             }
@@ -113,7 +115,7 @@ namespace NovaSharp.Interpreter.Loaders
                     _resources.Add(name, text);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableLoaderInitializationException(ex))
             {
                 string message = FormatLoaderInitializationError(ex);
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
@@ -210,6 +212,32 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).",
         private static string FormatLoaderInitializationError(Exception ex)
         {
             return string.Format(CultureInfo.InvariantCulture, LoaderInitializationErrorFormat, ex);
+        }
+
+        private static bool IsRecoverableLoaderInitializationException(Exception exception)
+        {
+            if (exception == null)
+            {
+                return false;
+            }
+
+            if (exception is ScriptRuntimeException)
+            {
+                return true;
+            }
+
+            return exception
+                is FileNotFoundException
+                    or DirectoryNotFoundException
+                    or UnauthorizedAccessException
+                    or IOException
+                    or SecurityException
+                    or InvalidOperationException
+                    or NotSupportedException
+                    or TypeLoadException
+                    or MissingMethodException
+                    or TargetInvocationException
+                    or ArgumentException;
         }
     }
 }

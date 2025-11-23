@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Security;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -139,37 +140,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (ObjectDisposedException ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (Exception ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
@@ -195,37 +168,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (ObjectDisposedException ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
-            }
-            catch (Exception ex)
-            {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
@@ -696,6 +641,29 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         private static int TryGetHexDigitValue(char c)
         {
             return LexerUtils.HexDigit2Value(c);
+        }
+
+        private static DynValue CreateIoFailure(Exception exception)
+        {
+            return DynValue.NewTuple(
+                DynValue.Nil,
+                DynValue.NewString(exception.Message),
+                DynValue.NewNumber(-1)
+            );
+        }
+
+        private static bool IsRecoverableIoException(Exception exception)
+        {
+            return exception switch
+            {
+                IOException => true,
+                UnauthorizedAccessException => true,
+                ObjectDisposedException => true,
+                SecurityException => true,
+                NotSupportedException => true,
+                InvalidOperationException => true,
+                _ => false,
+            };
         }
 
         protected abstract bool Eof();

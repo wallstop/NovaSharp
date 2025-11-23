@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
+    using System.Security;
     using System.Text;
     using IO;
     using NovaSharp.Interpreter.Compatibility;
@@ -403,12 +404,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 return UserData.Create(Open(executionContext, filename, e, mode));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableIoOpenException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(IoExceptionToLuaMessage(ex, filename))
-                );
+                return CreateIoOpenFailure(ex, filename);
             }
         }
 
@@ -543,6 +541,31 @@ namespace NovaSharp.Interpreter.CoreLib
                 '+' => true,
                 _ => false,
             };
+        }
+
+        private static DynValue CreateIoOpenFailure(Exception exception, string filename)
+        {
+            return DynValue.NewTuple(
+                DynValue.Nil,
+                DynValue.NewString(IoExceptionToLuaMessage(exception, filename))
+            );
+        }
+
+        private static bool IsRecoverableIoOpenException(Exception exception)
+        {
+            if (exception is null)
+            {
+                return false;
+            }
+
+            return exception
+                is IOException
+                    or UnauthorizedAccessException
+                    or SecurityException
+                    or NotSupportedException
+                    or InvalidOperationException
+                    or ArgumentException
+                    or ScriptRuntimeException;
         }
     }
 }
