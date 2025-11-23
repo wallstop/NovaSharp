@@ -238,7 +238,7 @@ namespace NovaSharp.Interpreter
             {
                 this.CheckScriptOwnership(globalTable);
 
-                if (code.StartsWith(StringModule.Base64DumpHeader))
+                if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
                 {
                     code = code.Substring(StringModule.Base64DumpHeader.Length);
                     byte[] data = Convert.FromBase64String(code);

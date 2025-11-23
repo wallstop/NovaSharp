@@ -102,7 +102,7 @@ namespace NovaSharp.Interpreter.Platforms
             IsRunningOnUnity = AppDomain
                 .CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.SafeGetTypes())
-                .Any(t => t.FullName.StartsWith("UnityEngine."));
+                .Any(t => t.FullName.StartsWith("UnityEngine.", StringComparison.Ordinal));
 #endif
 #endif
 

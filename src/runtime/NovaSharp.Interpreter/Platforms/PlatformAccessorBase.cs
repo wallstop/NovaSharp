@@ -30,8 +30,7 @@ namespace NovaSharp.Interpreter.Platforms
             {
                 if (PlatformAutoDetector.IsUnityNative)
                 {
-                    suffix =
-                        "unity." + GetUnityPlatformName().ToLower() + "." + GetUnityRuntimeName();
+                    suffix = "unity." + GetUnityPlatformName() + "." + GetUnityRuntimeName();
                 }
                 else
                 {
@@ -96,53 +95,53 @@ namespace NovaSharp.Interpreter.Platforms
         private string GetUnityPlatformName()
         {
 #if UNITY_STANDALONE_OSX
-            return "OSX";
+            return "osx";
 #elif UNITY_STANDALONE_WIN
-            return "WIN";
+            return "win";
 #elif UNITY_STANDALONE_LINUX
-            return "LINUX";
+            return "linux";
 #elif UNITY_STANDALONE
-            return "STANDALONE";
+            return "standalone";
 #elif UNITY_WII
-            return "WII";
+            return "wii";
 #elif UNITY_IOS
-            return "IOS";
+            return "ios";
 #elif UNITY_IPHONE
-            return "IPHONE";
+            return "iphone";
 #elif UNITY_ANDROID
-            return "ANDROID";
+            return "android";
 #elif UNITY_PS3
-            return "PS3";
+            return "ps3";
 #elif UNITY_PS4
-            return "PS4";
+            return "ps4";
 #elif UNITY_SAMSUNGTV
-            return "SAMSUNGTV";
+            return "samsungtv";
 #elif UNITY_XBOX360
-            return "XBOX360";
+            return "xbox360";
 #elif UNITY_XBOXONE
-            return "XBOXONE";
+            return "xboxone";
 #elif UNITY_TIZEN
-            return "TIZEN";
+            return "tizen";
 #elif UNITY_TVOS
-            return "TVOS";
+            return "tvos";
 #elif UNITY_WP_8_1
-            return "WP_8_1";
+            return "wp_8_1";
 #elif UNITY_WSA_10_0
-            return "WSA_10_0";
+            return "wsa_10_0";
 #elif UNITY_WSA_8_1
-            return "WSA_8_1";
+            return "wsa_8_1";
 #elif UNITY_WSA
-            return "WSA";
+            return "wsa";
 #elif UNITY_WINRT_10_0
-            return "WINRT_10_0";
+            return "winrt_10_0";
 #elif UNITY_WINRT_8_1
-            return "WINRT_8_1";
+            return "winrt_8_1";
 #elif UNITY_WINRT
-            return "WINRT";
+            return "winrt";
 #elif UNITY_WEBGL
-            return "WEBGL";
+            return "webgl";
 #else
-            return "UNKNOWNHW";
+            return "unknownhw";
 #endif
         }
 

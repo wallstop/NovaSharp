@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static bool Isxdigit(char c)
         {
-            return "0123456789ABCDEFabcdef".IndexOf(c) >= 0;
+            return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
         }
 
         protected static bool Isgraph(char c)
@@ -159,22 +159,22 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         protected static char Tolower(char c)
         {
-            return Char.ToLower(c);
+            return Char.ToLowerInvariant(c);
         }
 
         protected static char Toupper(char c)
         {
-            return Char.ToUpper(c);
+            return Char.ToUpperInvariant(c);
         }
 
         protected static char Tolower(int c)
         {
-            return Char.ToLower((char)c);
+            return Char.ToLowerInvariant((char)c);
         }
 
         protected static char Toupper(int c)
         {
-            return Char.ToUpper((char)c);
+            return Char.ToUpperInvariant((char)c);
         }
 
         // find c in str

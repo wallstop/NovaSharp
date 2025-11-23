@@ -467,7 +467,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 if (m.Groups[1] != null && m.Groups[1].Value.Length > 0)
                 {
                     string val = m.Groups[1].Value.Substring(0, m.Groups[1].Value.Length - 1);
-                    paramIx = Convert.ToInt32(val) - 1;
+                    paramIx = Convert.ToInt32(val, CultureInfo.InvariantCulture) - 1;
                 }
                 ;
                 #endregion
@@ -484,11 +484,11 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     string flags = m.Groups[2].Value;
 
-                    flagAlternate = (flags.IndexOf('#') >= 0);
-                    flagLeft2Right = (flags.IndexOf('-') >= 0);
-                    flagPositiveSign = (flags.IndexOf('+') >= 0);
-                    flagPositiveSpace = (flags.IndexOf(' ') >= 0);
-                    flagGroupThousands = (flags.IndexOf('\'') >= 0);
+                    flagAlternate = ContainsCharOrdinal(flags, '#');
+                    flagLeft2Right = ContainsCharOrdinal(flags, '-');
+                    flagPositiveSign = ContainsCharOrdinal(flags, '+');
+                    flagPositiveSpace = ContainsCharOrdinal(flags, ' ');
+                    flagGroupThousands = ContainsCharOrdinal(flags, '\'');
 
                     // positive + indicator overrides a
                     // positive space character
@@ -506,7 +506,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 fieldLength = int.MinValue;
                 if (m.Groups[3] != null && m.Groups[3].Value.Length > 0)
                 {
-                    fieldLength = Convert.ToInt32(m.Groups[3].Value);
+                    fieldLength = Convert.ToInt32(m.Groups[3].Value, CultureInfo.InvariantCulture);
                     flagZeroPadding = (m.Groups[3].Value[0] == '0');
                 }
                 #endregion
@@ -528,7 +528,10 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 fieldPrecision = int.MinValue;
                 if (m.Groups[4] != null && m.Groups[4].Value.Length > 0)
                 {
-                    fieldPrecision = Convert.ToInt32(m.Groups[4].Value);
+                    fieldPrecision = Convert.ToInt32(
+                        m.Groups[4].Value,
+                        CultureInfo.InvariantCulture
+                    );
                 }
 
                 #endregion
@@ -558,7 +561,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     fieldPrecision == int.MinValue
                     && formatSpecifier != 's'
                     && formatSpecifier != 'c'
-                    && Char.ToUpper(formatSpecifier) != 'X'
+                    && char.ToUpperInvariant(formatSpecifier) != 'X'
                     && formatSpecifier != 'o'
                 )
                 {
@@ -707,7 +710,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     case 'c': // character
                         if (IsNumericType(o))
                         {
-                            w = Convert.ToChar(o).ToString();
+                            w = Convert.ToChar(o, CultureInfo.InvariantCulture).ToString();
                         }
                         else if (o is char c)
                         {
@@ -875,6 +878,11 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         #endregion
 
         #region Private Methods
+        private static bool ContainsCharOrdinal(string text, char value)
+        {
+            return text.AsSpan().IndexOf(value) >= 0;
+        }
+
         #region FormatOCT
         private static string FormatOct(
             string nativeFormat,
@@ -891,7 +899,9 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 "{0"
                 + (
                     fieldLength != int.MinValue
-                        ? "," + (left2Right ? "-" : String.Empty) + fieldLength.ToString()
+                        ? ","
+                            + (left2Right ? "-" : String.Empty)
+                            + fieldLength.ToString(CultureInfo.InvariantCulture)
                         : String.Empty
                 )
                 + "}";
@@ -907,7 +917,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                         w = "0" + w;
                     }
 
-                    w = String.Format(lengthFormat, w);
+                    w = string.Format(CultureInfo.InvariantCulture, lengthFormat, w);
                 }
                 else
                 {
@@ -942,19 +952,25 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 "{0"
                 + (
                     fieldLength != int.MinValue
-                        ? "," + (left2Right ? "-" : String.Empty) + fieldLength.ToString()
+                        ? ","
+                            + (left2Right ? "-" : String.Empty)
+                            + fieldLength.ToString(CultureInfo.InvariantCulture)
                         : String.Empty
                 )
                 + "}";
             string numberFormat =
                 "{0:"
                 + nativeFormat
-                + (fieldPrecision != int.MinValue ? fieldPrecision.ToString() : String.Empty)
+                + (
+                    fieldPrecision != int.MinValue
+                        ? fieldPrecision.ToString(CultureInfo.InvariantCulture)
+                        : String.Empty
+                )
                 + "}";
 
             if (IsNumericType(value))
             {
-                w = String.Format(numberFormat, value);
+                w = string.Format(CultureInfo.InvariantCulture, numberFormat, value);
 
                 if (left2Right || padding == ' ')
                 {
@@ -963,7 +979,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                         w = (nativeFormat == "x" ? "0x" : "0X") + w;
                     }
 
-                    w = String.Format(lengthFormat, w);
+                    w = string.Format(CultureInfo.InvariantCulture, lengthFormat, w);
                 }
                 else
                 {
@@ -1000,14 +1016,20 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 "{0"
                 + (
                     fieldLength != int.MinValue
-                        ? "," + (left2Right ? "-" : String.Empty) + fieldLength.ToString()
+                        ? ","
+                            + (left2Right ? "-" : String.Empty)
+                            + fieldLength.ToString(CultureInfo.InvariantCulture)
                         : String.Empty
                 )
                 + "}";
             string numberFormat =
                 "{0:"
                 + nativeFormat
-                + (fieldPrecision != int.MinValue ? fieldPrecision.ToString() : "0")
+                + (
+                    fieldPrecision != int.MinValue
+                        ? fieldPrecision.ToString(CultureInfo.InvariantCulture)
+                        : "0"
+                )
                 + "}";
 
             if (IsNumericType(value))
@@ -1021,11 +1043,11 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                         w = (positiveSign ? "+" : (positiveSpace ? " " : String.Empty)) + w;
                     }
 
-                    w = String.Format(lengthFormat, w);
+                    w = string.Format(CultureInfo.InvariantCulture, lengthFormat, w);
                 }
                 else
                 {
-                    if (w.StartsWith("-"))
+                    if (w.Length > 0 && w[0] == '-')
                     {
                         w = w.Substring(1);
                     }

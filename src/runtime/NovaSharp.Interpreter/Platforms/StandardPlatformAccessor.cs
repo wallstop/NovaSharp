@@ -324,7 +324,7 @@ namespace NovaSharp.Interpreter.Platforms
                 throw new ArgumentNullException(nameof(mode));
             }
 
-            if (mode.IndexOf('b') < 0 && mode.IndexOf('B') < 0)
+            if (mode.AsSpan().IndexOf("b", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return mode;
             }
