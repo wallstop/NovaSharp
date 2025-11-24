@@ -20,10 +20,10 @@ namespace NovaSharp.Benchmarks
     /// </summary>
     internal static class LuaRuntimeSuites
     {
-        public const int LoopIterations = 2_000;
-        public const int TableEntryCount = 128;
-        public const int CoroutineSteps = 64;
-        public const int UserDataIterations = 256;
+        public const int loopIterations = 2_000;
+        public const int tableEntryCount = 128;
+        public const int coroutineSteps = 64;
+        public const int userDataIterations = 256;
 
         /// <summary>
         /// Returns the Lua script associated with the requested <paramref name="scenario"/>.
@@ -44,7 +44,7 @@ namespace NovaSharp.Benchmarks
             $@"
 return function ()
     local sum = 0.0
-    for i = 1, {LoopIterations} do
+    for i = 1, {loopIterations} do
         sum = sum + math.sin(i) * math.cos(i * 0.5)
         if (i % 7) == 0 then
             sum = sum / 2.0

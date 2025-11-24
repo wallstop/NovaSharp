@@ -3,7 +3,8 @@
 Naming audit helper.
 
 Scans C# source files under `src/` and reports file/type identifiers that do not
-follow the repository's PascalCase expectations (per .editorconfig / C# style).
+follow the repository's naming expectations (PascalCase for types/methods/properties,
+camelCase for public fields, per .editorconfig / C# style).
 The goal is to provide actionable guidance ahead of the full naming sweep that
 Milestone F calls out.
 """
@@ -110,7 +111,7 @@ METHOD_PATTERN = re.compile(
 )
 PROPERTY_PATTERN = re.compile(
     r"^\s*(public|protected|internal|private)\s+(?:static\s+|virtual\s+|override\s+|sealed\s+|unsafe\s+|new\s+)*"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*\{"
+    r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*(?:\{|=>)"
 )
 FIELD_PATTERN = re.compile(
     r"^\s*(public|protected|internal)\s+(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*"
@@ -135,6 +136,10 @@ def discover_cs_files() -> list[Path]:
 
 def is_pascal_case(name: str) -> bool:
     return bool(re.fullmatch(r"[A-Z][A-Za-z0-9]*", name))
+
+
+def is_camel_case(name: str) -> bool:
+    return bool(re.fullmatch(r"[a-z][A-Za-z0-9]*", name))
 
 
 def normalized_type_name(name: str) -> str:
@@ -277,13 +282,13 @@ def audit_file(
                         and field_name not in FIELD_NAME_ALLOWLIST
                         and not is_allowlisted(rel_path, field_name, FIELD_ALLOWLIST)
                     ):
-                        if not is_pascal_case(field_name):
+                        if not is_camel_case(field_name):
                             issues.append(
                                 NamingIssue(
                                     rel_path,
                                     "field",
                                     field_name,
-                                    f"Field '{field_name}' should be PascalCase "
+                                    f"Field '{field_name}' should be camelCase "
                                     f"(line {line_number}).",
                                 )
                             )
@@ -355,7 +360,9 @@ def render_report(
     ]
 
     if not issues:
-        lines.append("All inspected files/types follow PascalCase expectations.")
+        lines.append(
+            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties, camelCase for public fields)."
+        )
     else:
         lines.append("Naming inconsistencies detected (per .editorconfig/C# style):")
         lines.append("")
@@ -512,7 +519,9 @@ def main(argv: list[str]) -> int:
 
     exit_code = 0
     if not issues:
-        print("All inspected files/types follow PascalCase expectations.")
+        print(
+            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties, camelCase for public fields)."
+        )
     else:
         print("Naming inconsistencies detected (per .editorconfig/C# style):\n")
         for issue in issues:

@@ -30,10 +30,10 @@ namespace NovaSharp.Interpreter.Tests
     public class TestRunner
     {
         private readonly Action<TestResult> _loggerAction;
-        public int OkCount = 0;
-        public int FailCount = 0;
-        public int TotalCount = 0;
-        public int SkippedCount = 0;
+        public int okCount = 0;
+        public int failCount = 0;
+        public int totalCount = 0;
+        public int skippedCount = 0;
 
         public static bool IsRunning { get; private set; }
 
@@ -109,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests
 
                     if (skipList.Contains(mi.Name))
                     {
-                        ++SkippedCount;
+                        ++skippedCount;
                         TestResult trs = new()
                         {
                             TestName = mi.Name,
@@ -126,18 +126,18 @@ namespace NovaSharp.Interpreter.Tests
                     {
                         if (tr.Type == TestResultType.Fail)
                         {
-                            FailCount++;
+                            failCount++;
                         }
                         else if (tr.Type == TestResultType.Ok)
                         {
-                            OkCount++;
+                            okCount++;
                         }
                         else
                         {
-                            SkippedCount++;
+                            skippedCount++;
                         }
 
-                        TotalCount++;
+                        totalCount++;
                     }
 
                     yield return tr;
@@ -147,10 +147,10 @@ namespace NovaSharp.Interpreter.Tests
             ConsoleWriteLine("");
             ConsoleWriteLine(
                 "OK : {0}/{2}, Failed {1}/{2}, Skipped {3}/{2}",
-                OkCount,
-                FailCount,
-                TotalCount,
-                SkippedCount
+                okCount,
+                failCount,
+                totalCount,
+                skippedCount
             );
         }
 

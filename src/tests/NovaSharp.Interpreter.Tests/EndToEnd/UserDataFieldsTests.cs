@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public readonly int roIntProp = 123;
             public int? nIntProp;
             public object objProp;
-            public static string StaticProp;
+            public static string staticProp;
             private string _privateProp;
         }
 
@@ -310,22 +310,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             string script =
                 @"    
-				static.StaticProp = 'asdasd' .. static.StaticProp;";
+				static.staticProp = 'asdasd' .. static.staticProp;";
 
             Script s = new();
 
-            SomeClass.StaticProp = "qweqwe";
+            SomeClass.staticProp = "qweqwe";
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
 
-            Assert.That(SomeClass.StaticProp, Is.EqualTo("qweqwe"));
+            Assert.That(SomeClass.staticProp, Is.EqualTo("qweqwe"));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(SomeClass.StaticProp, Is.EqualTo("asdasdqweqwe"));
+            Assert.That(SomeClass.staticProp, Is.EqualTo("asdasdqweqwe"));
         }
 
         [Test]
