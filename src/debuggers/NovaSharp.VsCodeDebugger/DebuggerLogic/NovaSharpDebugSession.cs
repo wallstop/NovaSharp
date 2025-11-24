@@ -13,6 +13,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Utilities;
     using SDK;
 
     /// <summary>
@@ -185,19 +186,24 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void ExecuteRepl(string cmd)
         {
+            ReadOnlySpan<char> commandSpan = cmd.AsSpan().TrimWhitespace();
+            string commandText = commandSpan.Length == cmd.Length ? cmd : new string(commandSpan);
             bool showHelp = false;
-            cmd = cmd.Trim();
-            if (cmd == "help")
+
+            if (commandSpan.Equals("help".AsSpan(), StringComparison.Ordinal))
             {
                 showHelp = true;
             }
-            else if (cmd.StartsWith("geterror"))
+            else if (commandSpan.StartsWith("geterror".AsSpan(), StringComparison.Ordinal))
             {
                 SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
             }
-            else if (cmd.StartsWith("seterror"))
+            else if (commandSpan.StartsWith("seterror".AsSpan(), StringComparison.Ordinal))
             {
-                string regex = cmd.Substring("seterror".Length).Trim();
+                ReadOnlySpan<char> regexSpan = commandSpan
+                    .Slice("seterror".Length)
+                    .TrimWhitespace();
+                string regex = regexSpan.Length == 0 ? string.Empty : new string(regexSpan);
 
                 try
                 {
@@ -210,21 +216,26 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     SendText("Error setting regex: {0}", ex.Message);
                 }
             }
-            else if (cmd.StartsWith("execendnotify"))
+            else if (commandSpan.StartsWith("execendnotify".AsSpan(), StringComparison.Ordinal))
             {
-                string val = cmd.Substring("execendnotify".Length).Trim();
+                ReadOnlySpan<char> valueSpan = commandSpan
+                    .Slice("execendnotify".Length)
+                    .TrimWhitespace();
 
-                if (val == "off")
+                if (!valueSpan.IsEmpty)
                 {
-                    _notifyExecutionEnd = false;
-                }
-                else if (val == "on")
-                {
-                    _notifyExecutionEnd = true;
-                }
-                else if (val.Length > 0)
-                {
-                    SendText("Error : expected 'on' or 'off'");
+                    if (valueSpan.Equals("off".AsSpan(), StringComparison.Ordinal))
+                    {
+                        _notifyExecutionEnd = false;
+                    }
+                    else if (valueSpan.Equals("on".AsSpan(), StringComparison.Ordinal))
+                    {
+                        _notifyExecutionEnd = true;
+                    }
+                    else
+                    {
+                        SendText("Error : expected 'on' or 'off'");
+                    }
                 }
 
                 SendText(
@@ -232,7 +243,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     _notifyExecutionEnd ? "enabled" : "disabled"
                 );
             }
-            else if (cmd == "list")
+            else if (commandSpan.Equals("list".AsSpan(), StringComparison.Ordinal))
             {
                 int currId = _server.CurrentId ?? -1000;
 
@@ -240,8 +251,8 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName()
                 )
                 {
-                    string isthis = (pair.Key == _debug.Id) ? " (this)" : "";
-                    string isdef = (pair.Key == currId) ? " (default)" : "";
+                    string isthis = (pair.Key == _debug.Id) ? " (this)" : string.Empty;
+                    string isdef = (pair.Key == currId) ? " (default)" : string.Empty;
 
                     SendText(
                         "{0} : {1}{2}{3}",
@@ -252,16 +263,21 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     );
                 }
             }
-            else if (cmd.StartsWith("select") || cmd.StartsWith("switch"))
+            else if (
+                commandSpan.StartsWith("select".AsSpan(), StringComparison.Ordinal)
+                || commandSpan.StartsWith("switch".AsSpan(), StringComparison.Ordinal)
+            )
             {
-                string arg = cmd.Substring("switch".Length).Trim();
+                bool isSwitch = commandSpan.StartsWith("switch".AsSpan(), StringComparison.Ordinal);
+                ReadOnlySpan<char> idSpan = commandSpan.Slice("switch".Length).TrimWhitespace();
+                string idText = idSpan.Length == 0 ? string.Empty : new string(idSpan);
 
                 try
                 {
-                    int id = int.Parse(arg, CultureInfo.InvariantCulture);
+                    int id = int.Parse(idText, CultureInfo.InvariantCulture);
                     _server.CurrentId = id;
 
-                    if (cmd.StartsWith("switch"))
+                    if (isSwitch)
                     {
                         Unbind();
                     }
@@ -280,7 +296,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
             else
             {
-                SendText("Syntax error : {0}\n", cmd);
+                SendText("Syntax error : {0}\n", commandText);
                 showHelp = true;
             }
 

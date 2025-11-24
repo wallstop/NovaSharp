@@ -11,6 +11,7 @@ namespace NovaSharp.Cli
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Entry point for the NovaSharp CLI REPL and command processor.
@@ -239,13 +240,17 @@ namespace NovaSharp.Cli
                 return path;
             }
 
+            ReadOnlySpan<char> trimmed = path.AsSpan().TrimWhitespace();
+            string candidate = trimmed.Length == path.Length ? path : new string(trimmed);
+            candidate = candidate.NormalizeDirectorySeparators(Path.DirectorySeparatorChar);
+
             try
             {
-                return Path.GetFullPath(path);
+                return Path.GetFullPath(candidate);
             }
             catch (Exception)
             {
-                return path;
+                return candidate;
             }
         }
 

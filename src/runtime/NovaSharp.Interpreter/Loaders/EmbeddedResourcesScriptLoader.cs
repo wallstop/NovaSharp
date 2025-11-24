@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// A script loader loading scripts from an assembly resources
@@ -39,9 +40,27 @@ namespace NovaSharp.Interpreter.Loaders
 
         private string FileNameToResource(string file)
         {
-            file = file.Replace('/', '.');
-            file = file.Replace('\\', '.');
-            return _namespace + "." + file;
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            return string.Create(
+                _namespace.Length + 1 + file.Length,
+                (_namespace, file),
+                static (span, state) =>
+                {
+                    state._namespace.AsSpan().CopyTo(span);
+                    int separatorIndex = state._namespace.Length;
+                    span[separatorIndex] = '.';
+
+                    PathSpanExtensions.CopyReplacingDirectorySeparators(
+                        state.file.AsSpan(),
+                        span.Slice(separatorIndex + 1),
+                        '.'
+                    );
+                }
+            );
         }
 
         /// <summary>

@@ -12,6 +12,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Implements the <see cref="IDebugger"/> contract for the VS Code adapter, coordinating
@@ -368,20 +369,28 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <returns>The first matching source entry, or <c>null</c> when not found.</returns>
         public SourceCode FindSourceByName(string path)
         {
-            // we use case insensitive match - be damned if you have files which differ only by
-            // case in the same directory on Unix.
-            path = path.Replace('\\', '/').ToUpperInvariant();
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            string normalizedPath = path.NormalizeDirectorySeparators('/');
 
             foreach (KeyValuePair<int, string> kvp in _sourcesOverride)
             {
-                if (kvp.Value.Replace('\\', '/').ToUpperInvariant() == path)
+                string candidate = kvp.Value.NormalizeDirectorySeparators('/');
+                if (string.Equals(candidate, normalizedPath, StringComparison.OrdinalIgnoreCase))
                 {
                     return _sourcesMap[kvp.Key];
                 }
             }
 
             return _sourcesMap.Values.FirstOrDefault(s =>
-                s.Name.Replace('\\', '/').ToUpperInvariant() == path
+                string.Equals(
+                    s.Name.NormalizeDirectorySeparators('/'),
+                    normalizedPath,
+                    StringComparison.OrdinalIgnoreCase
+                )
             );
         }
 

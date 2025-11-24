@@ -2,8 +2,8 @@ namespace NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// A base implementation of IScriptLoader, offering resolution of module names.
@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Loaders
     public abstract class ScriptLoaderBase : IScriptLoader
     {
         private static readonly char[] ModulePathSeparators = new[] { ';' };
+        private static readonly IReadOnlyList<string> EmptyModulePaths = Array.Empty<string>();
 
         /// <summary>
         /// Checks if a script file exists.
@@ -50,11 +51,11 @@ namespace NovaSharp.Interpreter.Loaders
                 return null;
             }
 
-            modname = modname.Replace('.', '/');
+            string normalizedModule = NormalizeModuleName(modname);
 
             foreach (string path in paths)
             {
-                string file = path.Replace("?", modname, StringComparison.Ordinal);
+                string file = path.Replace("?", normalizedModule, StringComparison.Ordinal);
 
                 if (ScriptFileExists(file))
                 {
@@ -115,10 +116,32 @@ namespace NovaSharp.Interpreter.Loaders
                 throw new ArgumentNullException(nameof(str));
             }
 
-            return str.Split(ModulePathSeparators, StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToArray();
+            ReadOnlySpan<char> span = str.AsSpan();
+            List<string> segments = null;
+            int position = 0;
+
+            while (position <= span.Length)
+            {
+                ReadOnlySpan<char> remainder = span.Slice(position);
+                int separatorIndex = remainder.IndexOfAny(ModulePathSeparators);
+                int segmentLength = separatorIndex < 0 ? remainder.Length : separatorIndex;
+                ReadOnlySpan<char> segment = remainder.Slice(0, segmentLength).TrimWhitespace();
+
+                if (!segment.IsEmpty)
+                {
+                    segments ??= new List<string>();
+                    segments.Add(new string(segment));
+                }
+
+                if (separatorIndex < 0)
+                {
+                    break;
+                }
+
+                position += segmentLength + 1;
+            }
+
+            return segments?.ToArray() ?? EmptyModulePaths;
         }
 
         /// <summary>
@@ -127,18 +150,15 @@ namespace NovaSharp.Interpreter.Loaders
         public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
             string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
-            if (!string.IsNullOrEmpty(env))
-            {
-                return UnpackStringPaths(env);
-            }
+            IReadOnlyList<string> paths =
+                TryUnpackEnvironmentVariable(
+                    Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH")
+                )
+                ?? TryUnpackEnvironmentVariable(
+                    Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH")
+                );
 
-            env = Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH");
-            if (!string.IsNullOrEmpty(env))
-            {
-                return UnpackStringPaths(env);
-            }
-
-            return UnpackStringPaths("?;?.lua");
+            return paths ?? UnpackStringPaths("?;?.lua");
         }
 
         /// <summary>
@@ -149,7 +169,13 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         public virtual string ResolveFileName(string filename, Table globalContext)
         {
-            return filename;
+            if (filename == null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
+            ReadOnlySpan<char> trimmed = filename.AsSpan().TrimWhitespace();
+            return trimmed.Length == filename.Length ? filename : new string(trimmed);
         }
 
         /// <summary>
@@ -157,5 +183,37 @@ namespace NovaSharp.Interpreter.Loaders
         /// If true, the LUA_PATH global is NOT checked.
         /// </summary>
         public bool IgnoreLuaPathGlobal { get; set; }
+
+        private static string NormalizeModuleName(string modname)
+        {
+            if (modname.IndexOf('.', StringComparison.Ordinal) < 0)
+            {
+                return modname;
+            }
+
+            return string.Create(
+                modname.Length,
+                modname,
+                static (destination, source) =>
+                {
+                    for (int i = 0; i < destination.Length; i++)
+                    {
+                        char c = source[i];
+                        destination[i] = c == '.' ? '/' : c;
+                    }
+                }
+            );
+        }
+
+        private static IReadOnlyList<string> TryUnpackEnvironmentVariable(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            IReadOnlyList<string> paths = UnpackStringPaths(value);
+            return paths.Count > 0 ? paths : null;
+        }
     }
 }

@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.Utilities
     /// <summary>
     /// Common string/span helpers shared across runtime components to avoid repeated trimming/normalization logic.
     /// </summary>
-    internal static class StringSpanExtensions
+    public static class StringSpanExtensions
     {
         /// <summary>
         /// Trims leading and trailing whitespace from the provided span without allocating.

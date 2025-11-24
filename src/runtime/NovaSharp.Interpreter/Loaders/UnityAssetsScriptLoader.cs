@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Loaders
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// A script loader which can load scripts from assets in Unity3D.
@@ -126,17 +127,7 @@ namespace NovaSharp.Interpreter.Loaders
         }
 #endif
 
-        private static string GetFileName(string filename)
-        {
-            int b = Math.Max(filename.LastIndexOf('\\'), filename.LastIndexOf('/'));
-
-            if (b > 0)
-            {
-                filename = filename.Substring(b + 1);
-            }
-
-            return filename;
-        }
+        private static string GetFileName(string filename) => filename.SliceAfterLastSeparator();
 
         /// <summary>
         /// Opens a file for reading the script code.

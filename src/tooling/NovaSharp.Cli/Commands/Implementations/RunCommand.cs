@@ -6,6 +6,7 @@ namespace NovaSharp.Cli.Commands.Implementations
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// CLI command that runs a Lua file from disk, applying mod manifests when present.
@@ -69,13 +70,17 @@ namespace NovaSharp.Cli.Commands.Implementations
                 return path;
             }
 
+            ReadOnlySpan<char> trimmed = path.AsSpan().TrimWhitespace();
+            string candidate = trimmed.Length == path.Length ? path : new string(trimmed);
+            candidate = candidate.NormalizeDirectorySeparators(Path.DirectorySeparatorChar);
+
             try
             {
-                return Path.GetFullPath(path);
+                return Path.GetFullPath(candidate);
             }
             catch (Exception)
             {
-                return path;
+                return candidate;
             }
         }
 
