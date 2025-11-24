@@ -228,7 +228,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        private sealed class VisibilityTargets
+        public sealed class VisibilityTargets
         {
             [NovaSharpVisible(true)]
             public void VisibleMember() { }
@@ -261,10 +261,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public class PublicType { }
 
-        internal sealed class DescriptorHelpersTestsInternalTopLevel { }
+        internal sealed class DescriptorHelpersTestsInternalTopLevel
+        {
+            internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
+        }
 
         public class VisibilityFixtures
         {
+            private static readonly object PrivateNestedAnchor = new PrivateNested();
+
             public class PublicNested { }
 
             protected internal class ProtectedInternalNested { }
@@ -288,7 +293,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class MemberVisibilityFixtures
+        public class MemberVisibilityFixtures
         {
             public const string InternalFieldName = nameof(_internalField);
             public const string ProtectedFieldName = nameof(_protectedField);
@@ -368,7 +373,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class PropertyFixtures
+        public class PropertyFixtures
         {
             public const string PrivatePropertyName = nameof(PrivateBoth);
 
@@ -427,7 +432,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private sealed class MetaFixtures
+        public sealed class MetaFixtures
         {
             [NovaSharpUserDataMetamethod("__index")]
             [NovaSharpUserDataMetamethod("__len")]

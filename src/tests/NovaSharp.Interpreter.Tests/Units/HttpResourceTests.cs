@@ -41,5 +41,47 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _ = resource.ContentTypeString;
             });
         }
+
+        [Test]
+        public void CreateBinaryThrowsOnNullByteArray()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateBinary(HttpResourceType.Binary, (byte[])null)
+            );
+        }
+
+        [Test]
+        public void CreateBinaryThrowsOnNullBase64()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateBinary(HttpResourceType.Binary, (string)null)
+            );
+        }
+
+        [Test]
+        public void CreateTextThrowsOnNullString()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateText(HttpResourceType.Html, null)
+            );
+        }
+
+        [Test]
+        public void CreateBinaryWrapsPayloadAsReadOnlyMemory()
+        {
+            byte[] data = { 1, 2, 3 };
+            HttpResource resource = HttpResource.CreateBinary(HttpResourceType.Binary, data);
+
+            Assert.That(resource.Data.ToArray(), Is.EqualTo(data));
+        }
+
+        [Test]
+        public void CreateTextEncodesUtf8Payload()
+        {
+            HttpResource resource = HttpResource.CreateText(HttpResourceType.Html, "✓");
+            byte[] bytes = resource.Data.ToArray();
+
+            Assert.That(bytes, Is.EqualTo(new byte[] { 0xE2, 0x9C, 0x93 }));
+        }
     }
 }

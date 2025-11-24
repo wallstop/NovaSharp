@@ -546,7 +546,7 @@ end";
             public event Action ValueTypeEvent;
         }
 
-        private sealed class PrivateEventSource
+        public sealed class PrivateEventSource
         {
             private event Action HiddenEvent;
 
@@ -570,7 +570,7 @@ end";
                 PrivateEventSource.GetHiddenEventMetadata();
         }
 
-        private sealed class IncompatibleEventSource
+        public sealed class IncompatibleEventSource
         {
             public event Func<int> ReturnsValue;
 
@@ -581,9 +581,9 @@ end";
             public event TooManyArgumentsHandler TooManyArguments;
         }
 
-        private delegate void ByRefHandler(ref string value);
+        public delegate void ByRefHandler(ref string value);
 
-        private delegate void TooManyArgumentsHandler(
+        public delegate void TooManyArgumentsHandler(
             object a1,
             object a2,
             object a3,

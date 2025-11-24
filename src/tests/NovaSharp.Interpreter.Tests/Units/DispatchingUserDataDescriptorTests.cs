@@ -767,7 +767,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private sealed class AccessibleDispatchingUserDataDescriptor : DispatchingUserDataDescriptor
+        public sealed class AccessibleDispatchingUserDataDescriptor : DispatchingUserDataDescriptor
         {
             public AccessibleDispatchingUserDataDescriptor()
                 : base(typeof(DescriptorHost)) { }

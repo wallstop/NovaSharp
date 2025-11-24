@@ -226,7 +226,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        private sealed class DuplicateProperties
+        public sealed class DuplicateProperties
         {
             [NovaSharpProperty("alias")]
             public string First { get; set; }
@@ -244,7 +244,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int Count { get; set; }
         }
 
-        private sealed class AddressInfo
+        public sealed class AddressInfo
         {
             [NovaSharpProperty("street")]
             public string Street { get; set; }

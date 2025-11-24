@@ -111,6 +111,8 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
   before pushing debugger changes. Keep the analyzer configuration warning-free; suppressions should be avoided unless they are documented in `PLAN.md`.
 
-- Other projects still surface warnings but do not yet gate builds; as we zero remaining analyzer debt, treat-warnings-as-errors will expand solution-wide. Track the rollout status in `PLAN.md`.
-
 - `src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj` now also treats warnings as errors. Run `dotnet build src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj -c Release -nologo` before committing tooling changes, and keep analyzer suppressions documented.
+
+- `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests live inside `src/tests/NovaSharp.Interpreter.Tests`—notably `Units/RemoteDebuggerServiceTests.cs`, `Units/RemoteDebuggerTests.cs`, and `Units/DebugCommandTests.cs`—so `scripts/coverage/coverage.ps1` and `dotnet test` already execute them; add new coverage there when touching RemoteDebugger code.
+
+- Other projects still surface warnings but do not yet gate builds; as we zero remaining analyzer debt, treat-warnings-as-errors will expand solution-wide. Track the rollout status in `PLAN.md`.

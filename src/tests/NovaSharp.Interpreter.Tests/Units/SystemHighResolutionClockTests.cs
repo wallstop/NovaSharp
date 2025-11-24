@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class SystemHighResolutionClockTests
+    public sealed class SystemHighResolutionClockTests
     {
         [Test]
         public void TimestampFrequencyMatchesStopwatch()

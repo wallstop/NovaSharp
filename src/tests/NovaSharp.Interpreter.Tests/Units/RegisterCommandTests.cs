@@ -71,6 +71,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(_writer.ToString(), Does.Contain(typeof(SampleType).FullName));
         }
 
-        private sealed class SampleType { }
+        public sealed class SampleType { }
     }
 }

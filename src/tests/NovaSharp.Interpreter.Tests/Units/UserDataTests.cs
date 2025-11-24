@@ -523,7 +523,7 @@ internal sealed class CustomDescriptorHost
     }
 }
 
-internal sealed class HistoricalHost { }
+public sealed class HistoricalHost { }
 
 internal sealed class ProxyTarget
 {
@@ -555,19 +555,19 @@ internal static class CustomDescriptorHostExtensions
     }
 }
 
-internal sealed class RegistryHost { }
+public sealed class RegistryHost { }
 
 internal sealed class AutoPolicyHost { }
 
-internal class BaseHost { }
+public class BaseHost { }
 
 internal sealed class DerivedHost : BaseHost { }
 
-internal sealed class DerivedInterfaceHost : BaseHost, IMarker { }
+public sealed class DerivedInterfaceHost : BaseHost, IMarker { }
 
 internal interface IMarker { }
 
-internal sealed class InterfaceHost : IMarker { }
+public sealed class InterfaceHost : IMarker { }
 
 internal sealed class EqualityHost
 {
@@ -593,4 +593,4 @@ internal sealed class EqualityHost
 [global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
     AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
 )]
-internal sealed class AnnotatedHost { }
+public sealed class AnnotatedHost { }

@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class ConfigPropertyAssignerTests
     {
-        private sealed class MySubclass
+        public sealed class MySubclass
         {
             [NovaSharpProperty]
             public string MyString { get; set; }

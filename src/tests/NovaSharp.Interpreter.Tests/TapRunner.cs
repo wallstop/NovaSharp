@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests
     using NUnit.Framework;
 
 #if !EMBEDTEST
-    internal sealed class TestsScriptLoader : ScriptLoaderBase
+    public sealed class TestsScriptLoader : ScriptLoaderBase
     {
         public override bool ScriptFileExists(string name)
         {

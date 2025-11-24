@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class StandardPlatformAccessorTests
+    public sealed class StandardPlatformAccessorTests
     {
         [Test]
         public void ParseFileAccessHandlesModes()

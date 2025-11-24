@@ -456,7 +456,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 : base(name) { }
         }
 
-        internal sealed class DummyStaticUserData { }
+        internal sealed class DummyStaticUserData
+        {
+            internal static readonly DummyStaticUserData Instance = new();
+        }
 
         private sealed class DummyInstanceUserData { }
     }

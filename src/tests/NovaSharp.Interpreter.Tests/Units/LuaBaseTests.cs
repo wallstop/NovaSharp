@@ -452,7 +452,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             return new LuaState(context, callbackArguments, "LuaBaseTests");
         }
 
-        private sealed class LuaBaseProxy : LuaBase
+        public sealed class LuaBaseProxy : LuaBase
         {
             public static int TNone => LUA_TNONE;
             public static int TNil => LUA_TNIL;
@@ -653,6 +653,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private sealed class SampleUserData { }
+        public sealed class SampleUserData { }
     }
 }

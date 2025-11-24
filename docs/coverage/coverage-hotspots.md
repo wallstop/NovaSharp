@@ -1,18 +1,18 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-11-22 21:27 UTC after the CallbackFunction guard coverage landed; the Release run executed **2 753** tests but still failed the ≥95 % interpreter-branch gate because the suite peaks at **93.74 %** branch coverage).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-24 13:11 UTC; the Release run executed **2 779** tests and reports the interpreter at **96.03 % line / 92.96 % branch**, still shy of the ≥95 % branch gate).
 
 ## Snapshot
-- Overall line coverage: **88.17 %**
-- NovaSharp.Interpreter line coverage: **96.50 %**
-- NovaSharp.Interpreter branch coverage: **93.74 %** (fails the ≥95 % gate; see the prioritized items below)
-- NovaSharp.Cli line coverage: **83.14 %**
-- NovaSharp.Hardwire line coverage: **57.76 %**
-- NovaSharp.RemoteDebugger line coverage: **91.44 %** (DebugServer still holds **99.6 %** line / **84.9 %** branch; the VS command handlers and Tcp helpers remain the <85 % bottleneck)
-- NovaSharp.VsCodeDebugger line coverage: **2.1 %** (no automated smoke tests yet)
+- Overall line coverage: **86.68 %**
+- NovaSharp.Interpreter line coverage: **96.03 %**
+- NovaSharp.Interpreter branch coverage: **92.96 %** (fails the ≥95 % gate; see the prioritized items below)
+- NovaSharp.Cli line coverage: **83.40 %**
+- NovaSharp.Hardwire line coverage: **52.72 %**
+- NovaSharp.RemoteDebugger line coverage: **86.06 %** (branch coverage **76.54 %**; DebugServer remains high, but Tcp helpers and HTTP glue need attention)
+- NovaSharp.VsCodeDebugger line coverage: **1.84 %** (no automated smoke tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
-- (2025-11-22 21:27 UTC) Latest coverage (`./scripts/coverage/coverage.ps1 -SkipBuild`, **2 753** Release tests) reports NovaSharp.Interpreter at **96.50 % line / 93.74 % branch / 98.55 % method**. Compatibility helpers, `_ENV` accessors, and callback wrappers are fully covered, so the remaining interpreter branch delta is concentrated in the debugger/coroutine guard rails called out below.
+- (2025-11-24 13:11 UTC) Latest coverage (`./scripts/coverage/coverage.ps1`, **2 779** Release tests) reports NovaSharp.Interpreter at **96.03 % line / 92.96 % branch / 98.26 % method**. Compatibility helpers, `_ENV` accessors, and callback wrappers are fully covered, so the remaining interpreter branch delta is concentrated in the debugger/coroutine guard rails called out below.
 - `Execution.VM.Processor` – **98.2 % line / 96.2 % branch** (per `Summary.txt`). Pause requests that arrive mid-refresh, queued debugger actions that drain after a pause, and the forced coroutine resume/guard rails drove the earlier gap; the latest `ProcessorTests` additions finished the `_ENV` branches, so the outstanding work now focuses on the debugger/coroutine edge cases still below 95 % overall branch coverage.
 - Compatibility helpers – `LuaCompatibilityProfile` now reports **100 % line / 100 % branch / 100 % method** after `CompatibilityVersionTests.DisplayNameFallsBackToEnumNameForUnknownVersion` exercised the fallback `GetDisplayName` branch. `ModuleArgumentValidation` and `LuaCompatibilityProfileExtensions` were already at 100 %, so the compatibility red list is officially empty.
 - `Utf8Module` – **97.7 % line / 95.3 % branch** (was **87.2 % / 71.8 %**). `Utf8ModuleTests` now cover negative `i`/`j` normalization, surrogate rejection inside `utf8.char`, iterator control-edge cases (`nil` control, out-of-range control, mid-surrogate control), and the backward-offset guard rails for dangling/standalone surrogates plus empty-string `n = 0` probes. The module officially graduates from the red list; further interpreter branch gains must come from the debugger/diagnostics helpers still sitting below 95 %.
@@ -190,7 +190,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-22 (01:17 UTC)_
+_Last updated: 2025-11-24 (13:15 UTC)_
 
 
 

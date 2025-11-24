@@ -159,7 +159,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private sealed class GenericStub<T>
+        public sealed class GenericStub<T>
         {
             public override string ToString()
             {

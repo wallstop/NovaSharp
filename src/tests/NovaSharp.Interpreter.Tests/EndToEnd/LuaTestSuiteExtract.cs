@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     /// Selected tests extracted from Lua test suite
     /// </summary>
     [TestFixture]
-    internal sealed class LuaTestSuiteExtract
+    public sealed class LuaTestSuiteExtract
     {
         private void RunTest(string script)
         {

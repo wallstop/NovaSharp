@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class PerformanceStatisticsTests
+    public sealed class PerformanceStatisticsTests
     {
         private static readonly PerformanceCounter ExecutionCounter = PerformanceCounter.Execution;
 

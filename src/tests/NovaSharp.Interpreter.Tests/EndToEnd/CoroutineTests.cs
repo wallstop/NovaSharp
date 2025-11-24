@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class CoroutineTests
+    public sealed class CoroutineTests
     {
         [Test]
         public void CoroutineBasic()

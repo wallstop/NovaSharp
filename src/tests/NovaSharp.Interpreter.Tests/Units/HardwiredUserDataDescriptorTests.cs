@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        private sealed class SampleUserData
+        public sealed class SampleUserData
         {
             public int Value { get; set; }
         }

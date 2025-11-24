@@ -12,6 +12,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class SomeType
         {
+            private static readonly SomeNestedTypePrivate PrivateAnchor =
+                new SomeNestedTypePrivate();
+
             public enum SomeNestedEnum
             {
                 Asdasdasd,
@@ -66,6 +69,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     return "Ciao from SomeNestedTypePrivate";
                 }
             }
+
+            private static readonly SomeNestedTypePrivate PrivateAnchor =
+                new SomeNestedTypePrivate();
 
             private struct SomeNestedTypePrivate2
             {
