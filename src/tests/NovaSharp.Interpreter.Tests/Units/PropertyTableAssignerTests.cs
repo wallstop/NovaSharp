@@ -162,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             BasicSample target = new();
             PropertyTableAssigner<BasicSample> generic = new();
-            PropertyTableAssigner typeUnsafe = generic.GetTypeUnsafeAssigner();
+            PropertyTableAssigner typeUnsafe = generic.TypeUnsafeAssigner;
 
             typeUnsafe.AssignObject(target, data);
 

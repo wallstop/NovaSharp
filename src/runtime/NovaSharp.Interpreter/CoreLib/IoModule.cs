@@ -80,15 +80,15 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (name == "stdin")
             {
-                return GetStandardFile(executionContext.GetScript(), StandardFileType.StdIn);
+                return GetStandardFile(executionContext.Script, StandardFileType.StdIn);
             }
             else if (name == "stdout")
             {
-                return GetStandardFile(executionContext.GetScript(), StandardFileType.StdOut);
+                return GetStandardFile(executionContext.Script, StandardFileType.StdOut);
             }
             else if (name == "stderr")
             {
-                return GetStandardFile(executionContext.GetScript(), StandardFileType.StdErr);
+                return GetStandardFile(executionContext.Script, StandardFileType.StdErr);
             }
             else
             {
@@ -135,13 +135,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            Table r = executionContext.GetScript().Registry;
+            Table r = executionContext.Script.Registry;
 
             DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
 
             if (ff.IsNil())
             {
-                ff = GetStandardFile(executionContext.GetScript(), file);
+                ff = GetStandardFile(executionContext.Script, file);
             }
 
             return ff.CheckUserDataType<FileUserDataBase>(
@@ -161,7 +161,7 @@ namespace NovaSharp.Interpreter.CoreLib
             FileUserDataBase fileHandle
         )
         {
-            SetDefaultFile(executionContext.GetScript(), file, fileHandle);
+            SetDefaultFile(executionContext.Script, file, fileHandle);
         }
 
         /// <summary>
@@ -370,7 +370,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 using (
                     Stream stream = Script.GlobalOptions.Platform.OpenFile(
-                        executionContext.GetScript(),
+                        executionContext.Script,
                         filename,
                         null,
                         "r"
@@ -389,7 +389,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 readLines.Add(DynValue.Nil);
 
-                return DynValue.FromObject(executionContext.GetScript(), readLines.Select(s => s));
+                return DynValue.FromObject(executionContext.Script, readLines.Select(s => s));
             }
             catch (Exception ex)
             {
@@ -596,7 +596,7 @@ namespace NovaSharp.Interpreter.CoreLib
             string mode
         )
         {
-            return new FileUserData(executionContext.GetScript(), filename, encoding, mode);
+            return new FileUserData(executionContext.Script, filename, encoding, mode);
         }
 
         private static bool ContainsInvalidModeCharacters(string mode)

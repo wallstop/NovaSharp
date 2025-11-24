@@ -78,9 +78,9 @@ namespace NovaSharp.Interpreter.CoreLib
                 else
                 {
                     DynValue vs = args.AsType(0, "dynamic.eval", DataType.String, false);
-                    DynamicExpression expression = executionContext
-                        .GetScript()
-                        .CreateDynamicExpression(vs.String);
+                    DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
+                        vs.String
+                    );
                     return expression.Evaluate(executionContext);
                 }
             }
@@ -117,9 +117,9 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 DynValue vs = args.AsType(0, "dynamic.prepare", DataType.String, false);
-                DynamicExpression expression = executionContext
-                    .GetScript()
-                    .CreateDynamicExpression(vs.String);
+                DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
+                    vs.String
+                );
                 return UserData.Create(new DynamicExpressionWrapper() { Expression = expression });
             }
             catch (SyntaxErrorException ex)

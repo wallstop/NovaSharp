@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (obj.Type.CanHaveTypeMetatables())
             {
-                meta = executionContext.GetScript().GetTypeMetatable(obj.Type);
+                meta = executionContext.Script.GetTypeMetatable(obj.Type);
             }
 
             if (obj.Type == DataType.Table)

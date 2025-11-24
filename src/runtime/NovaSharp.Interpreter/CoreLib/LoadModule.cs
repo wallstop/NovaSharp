@@ -138,7 +138,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue ld = args[0];
                 string script = "";
 
@@ -146,7 +146,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     while (true)
                     {
-                        DynValue ret = executionContext.GetScript().Call(ld);
+                        DynValue ret = executionContext.Script.Call(ld);
                         if (ret.Type == DataType.String && ret.String.Length > 0)
                         {
                             script += ret.String;
@@ -265,7 +265,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
                 DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
 
@@ -345,7 +345,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue v = args.AsType(0, "dofile", DataType.String, false);
 
                 DynValue fn = s.LoadFile(v.String);
@@ -399,7 +399,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            Script s = executionContext.GetScript();
+            Script s = executionContext.Script;
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 
             DynValue fn = s.RequireModule(v.String);

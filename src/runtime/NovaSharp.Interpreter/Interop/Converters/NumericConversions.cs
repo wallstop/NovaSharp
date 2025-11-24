@@ -96,7 +96,15 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     return Convert.ToDecimal(d);
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+                when (ex is InvalidCastException
+                    || ex is OverflowException
+                    || ex is FormatException
+                    || ex is ArgumentException
+                )
+            {
+                // Swallow conversion failures so the original double value can be returned.
+            }
 
             return d;
         }

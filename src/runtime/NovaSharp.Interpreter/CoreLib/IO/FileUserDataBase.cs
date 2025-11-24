@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 readLines.Add(readValue);
             } while (readValue.IsNotNil());
 
-            return DynValue.FromObject(executionContext.GetScript(), readLines.Select(s => s));
+            return DynValue.FromObject(executionContext.Script, readLines.Select(s => s));
         }
 
         /// <summary>

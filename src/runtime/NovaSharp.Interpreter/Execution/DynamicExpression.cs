@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.Execution
         {
             context = context ?? OwnerScript.CreateDynamicExecutionContext();
 
-            this.CheckScriptOwnership(context.GetScript());
+            this.CheckScriptOwnership(context.Script);
 
             if (_constant != null)
             {
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(context));
             }
 
-            this.CheckScriptOwnership(context.GetScript());
+            this.CheckScriptOwnership(context.Script);
 
             if (_exp != null)
             {

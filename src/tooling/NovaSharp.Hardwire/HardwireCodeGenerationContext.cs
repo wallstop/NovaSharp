@@ -27,8 +27,14 @@ namespace NovaSharp.Hardwire
 
         private readonly Stack<string> _nestStack = new();
 
+        /// <summary>
+        /// Gets the target language emitting the hardwired sources.
+        /// </summary>
         public HardwireCodeGenerationLanguage TargetLanguage { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether internal members are allowed in the generated code.
+        /// </summary>
         public bool AllowInternals { get; internal set; }
 
         internal HardwireCodeGenerationContext(
@@ -180,6 +186,9 @@ namespace NovaSharp.Hardwire
             }
         }
 
+        /// <summary>
+        /// Returns the current dispatcher stack trace for logging purposes.
+        /// </summary>
         public string GetStackTrace()
         {
             return string.Join(" - ", _nestStack.ToArray());
@@ -283,6 +292,9 @@ namespace NovaSharp.Hardwire
             _logger.LogMinor(str);
         }
 
+        /// <summary>
+        /// Determines whether a member with the specified visibility may be hardwired.
+        /// </summary>
         public bool IsVisibilityAccepted(Table t)
         {
             DynValue dv = t.Get("visibility");

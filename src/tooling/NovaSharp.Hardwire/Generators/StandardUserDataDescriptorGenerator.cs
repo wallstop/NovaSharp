@@ -5,8 +5,12 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
+    /// <summary>
+    /// Generates hardwired descriptors for standard userdata types.
+    /// </summary>
     public class StandardUserDataDescriptorGenerator : IHardwireGenerator
     {
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -15,6 +19,10 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Builds a descriptor type for the userdata described in <paramref name="table"/>, wiring both members and metamembers.
+        /// </summary>
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generator,

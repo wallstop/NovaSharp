@@ -6,6 +6,9 @@ namespace NovaSharp.Hardwire
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Infrastructure;
 
+    /// <summary>
+    /// High-level orchestrator that converts Lua dump tables into hardwired source code files.
+    /// </summary>
     public class HardwireGenerator
     {
         private readonly HardwireCodeGenerationContext _context;
@@ -29,11 +32,17 @@ namespace NovaSharp.Hardwire
             );
         }
 
+        /// <summary>
+        /// Builds the CodeDOM model from the provided dump table.
+        /// </summary>
         public void BuildCodeModel(Table table)
         {
             _context.GenerateCode(table);
         }
 
+        /// <summary>
+        /// Generates source code from the current CodeDOM model.
+        /// </summary>
         public string GenerateSourceCode()
         {
             CodeDomProvider codeDomProvider = _language.CodeDomProvider;
@@ -48,6 +57,9 @@ namespace NovaSharp.Hardwire
             return sourceWriter.ToString();
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether internal members are eligible for generation.
+        /// </summary>
         public bool AllowInternals
         {
             get { return _context.AllowInternals; }

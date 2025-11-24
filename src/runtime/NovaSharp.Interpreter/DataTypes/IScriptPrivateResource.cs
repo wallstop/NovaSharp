@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (value != null)
             {
-                IScriptPrivateResource otherResource = value.GetAsPrivateResource();
+                IScriptPrivateResource otherResource = value.ScriptPrivateResource;
 
                 if (otherResource != null)
                 {

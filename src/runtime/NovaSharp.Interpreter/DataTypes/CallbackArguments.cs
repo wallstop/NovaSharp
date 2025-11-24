@@ -230,9 +230,10 @@ namespace NovaSharp.Interpreter.DataTypes
                 && (this[argNum].Table.MetaTable.RawGet("__tostring") != null)
             )
             {
-                DynValue v = executionContext
-                    .GetScript()
-                    .Call(this[argNum].Table.MetaTable.RawGet("__tostring"), this[argNum]);
+                DynValue v = executionContext.Script.Call(
+                    this[argNum].Table.MetaTable.RawGet("__tostring"),
+                    this[argNum]
+                );
 
                 if (v.Type != DataType.String)
                 {

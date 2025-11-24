@@ -138,21 +138,14 @@ namespace NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
-        /// Gets the script object associated with this request
+        /// Gets the script object associated with this request.
         /// </summary>
-        /// <returns></returns>
-        public Script GetScript()
-        {
-            return _processor.GetScript();
-        }
+        public Script Script => _processor.GetScript();
 
         /// <summary>
-        /// Gets the coroutine which is performing the call
+        /// Gets the coroutine currently performing the call.
         /// </summary>
-        public Coroutine GetCallingCoroutine()
-        {
-            return _processor.AssociatedCoroutine;
-        }
+        public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;
 
         /// <summary>
         /// Determines whether the current CLR callback is allowed to yield back into Lua (Lua 5.4 §3.3.4 coroutines).
@@ -223,7 +216,7 @@ namespace NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.Function)
             {
-                return GetScript().Call(func, args);
+                return Script.Call(func, args);
             }
             else if (func.Type == DataType.ClrFunction)
             {
@@ -368,7 +361,7 @@ namespace NovaSharp.Interpreter.Execution
         /// </value>
         public Script OwnerScript
         {
-            get { return GetScript(); }
+            get { return Script; }
         }
     }
 }

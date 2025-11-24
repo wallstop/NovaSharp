@@ -264,7 +264,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue number = DynValue.NewNumber(5);
 
-            Assert.That(number.GetAsPrivateResource(), Is.Null);
+            Assert.That(number.ScriptPrivateResource, Is.Null);
         }
 
         [Test]
@@ -679,7 +679,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table table = new(script);
             DynValue tableValue = DynValue.NewTable(table);
 
-            Assert.That(tableValue.GetAsPrivateResource(), Is.SameAs(table));
+            Assert.That(tableValue.ScriptPrivateResource, Is.SameAs(table));
         }
 
         private sealed class SampleUserData

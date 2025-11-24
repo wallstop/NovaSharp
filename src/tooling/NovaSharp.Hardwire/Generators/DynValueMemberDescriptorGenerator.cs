@@ -6,8 +6,12 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NovaSharp.Interpreter.Serialization;
 
+    /// <summary>
+    /// Generates descriptors for constant <see cref="DynValue"/> members.
+    /// </summary>
     public class DynValueMemberDescriptorGenerator : IHardwireGenerator
     {
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -16,6 +20,10 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Emits a nested descriptor that either stores the serialized DynValue or exposes a static userdata handle.
+        /// </summary>
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generatorContext,

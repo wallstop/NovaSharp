@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 args.AsType(0, "create", DataType.Function); // this throws
             }
 
-            return executionContext.GetScript().CreateCoroutine(args[0]);
+            return executionContext.Script.CreateCoroutine(args[0]);
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            Coroutine c = executionContext.GetCallingCoroutine();
+            Coroutine c = executionContext.CallingCoroutine;
             return DynValue.NewTuple(
                 DynValue.NewCoroutine(c),
                 DynValue.NewBoolean(c.State == CoroutineState.Main)
@@ -214,7 +214,7 @@ namespace NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue handle = args.AsType(0, "status", DataType.Thread);
-            Coroutine running = executionContext.GetCallingCoroutine();
+            Coroutine running = executionContext.CallingCoroutine;
             CoroutineState cs = handle.Coroutine.State;
 
             switch (cs)

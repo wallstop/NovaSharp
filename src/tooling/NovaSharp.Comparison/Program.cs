@@ -7,8 +7,15 @@ namespace NovaSharp.Comparison
     using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
 
+    /// <summary>
+    /// Entry point for running NovaSharp vs. NLua comparison benchmarks.
+    /// </summary>
     internal static class Program
     {
+        /// <summary>
+        /// Executes the requested BenchmarkDotNet suites and prints a completion summary.
+        /// </summary>
+        /// <param name="args">Command-line arguments passed to BenchmarkDotNet.</param>
         public static void Main(string[] args)
         {
             string[] effectiveArgs = args.Length > 0 ? args : new[] { "--filter", "*" };

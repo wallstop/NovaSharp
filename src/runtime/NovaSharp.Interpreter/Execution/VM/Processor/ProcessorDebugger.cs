@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System.Linq;
     using Debugging;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
 
     // This part is practically written procedural style - it looks more like C than C#.
@@ -537,7 +538,22 @@ namespace NovaSharp.Interpreter.Execution.VM
                     Name = dynExpr.ExpressionCode,
                 };
             }
+            catch (InterpreterException ex)
+            {
+                return new WatchItem()
+                {
+                    IsError = true,
+                    Value = DynValue.NewString(ex.DecoratedMessage ?? ex.Message),
+                    Name = dynExpr.ExpressionCode,
+                };
+            }
             catch (Exception ex)
+                when (ex is ArgumentException
+                    || ex is InvalidOperationException
+                    || ex is ArithmeticException
+                    || ex is NotSupportedException
+                    || ex is FormatException
+                )
             {
                 return new WatchItem()
                 {

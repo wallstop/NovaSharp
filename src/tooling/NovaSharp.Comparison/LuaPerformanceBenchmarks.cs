@@ -10,6 +10,9 @@ using NovaSharp.Interpreter.Modules;
 
 #nullable enable
 
+/// <summary>
+/// BenchmarkDotNet suite that compares NovaSharp and NLua compilation/execution throughput.
+/// </summary>
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
 [SuppressMessage(
@@ -26,6 +29,9 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
     private LuaFunction? _nLuaFunction;
     private bool _disposed;
 
+    /// <summary>
+    /// Scenario executed for each benchmark iteration.
+    /// </summary>
     [Params(
         ScriptScenario.TowerOfHanoi,
         ScriptScenario.EightQueens,
@@ -34,6 +40,9 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
     public ScriptScenario Scenario { get; set; }
 
     [GlobalSetup]
+    /// <summary>
+    /// Compiles the selected scenario for both NovaSharp and NLua before the benchmarks run.
+    /// </summary>
     public void Setup()
     {
         Script.WarmUp();
@@ -48,9 +57,15 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
     }
 
     [GlobalCleanup]
+    /// <summary>
+    /// Releases NLua resources after the benchmark run.
+    /// </summary>
     public void Cleanup() => Dispose();
 
     [Benchmark(Description = "NovaSharp Compile")]
+    /// <summary>
+    /// Compiles the scenario using a fresh NovaSharp script instance.
+    /// </summary>
     public DynValue NovaSharpCompile()
     {
         Script script = new(CoreModules.PresetComplete);
@@ -58,9 +73,15 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
     }
 
     [Benchmark(Description = "NovaSharp Execute")]
+    /// <summary>
+    /// Executes the previously compiled NovaSharp chunk.
+    /// </summary>
     public DynValue NovaSharpExecute() => _novaSharpScript.Call(_novaSharpFunction);
 
     [Benchmark(Description = "NLua Compile")]
+    /// <summary>
+    /// Compiles the scenario using NLua.
+    /// </summary>
     public LuaFunction NLuaCompile()
     {
         LuaFunction? compiled = _nLua.LoadString(_source, $"compile_{Scenario}") as LuaFunction;
@@ -73,6 +94,9 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
     }
 
     [Benchmark(Description = "NLua Execute")]
+    /// <summary>
+    /// Executes the previously compiled NLua chunk.
+    /// </summary>
     public object? NLuaExecute()
     {
         if (_nLuaFunction == null)
@@ -88,6 +112,9 @@ internal sealed class LuaPerformanceBenchmarks : IDisposable
         return result;
     }
 
+    /// <summary>
+    /// Disposes NLua resources created by the benchmark.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)

@@ -153,7 +153,7 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue message = args.AsType(0, "error", DataType.String, false);
             DynValue level = args.AsType(1, "error", DataType.Number, true);
 
-            Coroutine cor = executionContext.GetCallingCoroutine();
+            Coroutine cor = executionContext.CallingCoroutine;
 
             WatchItem[] stacktrace = cor.GetStackTrace(0, executionContext.CallingLocation);
 
@@ -170,7 +170,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 // Probably never will be a problem, just leaving this note here
                 WatchItem wi = stacktrace[(int)level.Number];
 
-                e.DecorateMessage(executionContext.GetScript(), wi.Location);
+                e.DecorateMessage(executionContext.Script, wi.Location);
             }
             else
             {
@@ -515,7 +515,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
             }
 
-            executionContext.GetScript().Options.DebugPrint(sb.ToString());
+            executionContext.Script.Options.DebugPrint(sb.ToString());
 
             return DynValue.Nil;
         }
@@ -549,7 +549,7 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             string payload = sb.ToString();
-            Script script = executionContext.GetScript();
+            Script script = executionContext.Script;
             DynValue warnHandler = script.Globals.RawGet("_WARN");
 
             if (

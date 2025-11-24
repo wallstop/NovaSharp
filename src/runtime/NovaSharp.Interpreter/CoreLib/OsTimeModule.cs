@@ -225,7 +225,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (format == "*t")
             {
-                Table t = new(executionContext.GetScript());
+                Table t = new(executionContext.Script);
 
                 t.Set("year", DynValue.NewNumber(reference.Year));
                 t.Set("month", DynValue.NewNumber(reference.Month));

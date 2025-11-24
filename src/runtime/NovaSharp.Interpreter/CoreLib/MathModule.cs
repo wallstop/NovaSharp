@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Security.Cryptography;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -39,6 +40,11 @@ namespace NovaSharp.Interpreter.CoreLib
         {
             DynValue rr = UserData.Create(new AnonWrapper<Random>(random));
             s.Registry.Set("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM", rr);
+        }
+
+        private static Random CreateRandom()
+        {
+            return new Random(RandomNumberGenerator.GetInt32(int.MaxValue));
         }
 
         private static bool TryGetIntegerFromDouble(double number, out long value) =>
@@ -81,7 +87,7 @@ namespace NovaSharp.Interpreter.CoreLib
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
-            SetRandom(globalTable.OwnerScript, new Random());
+            SetRandom(globalTable.OwnerScript, CreateRandom());
         }
 
         private static DynValue Exec1(
@@ -653,6 +659,11 @@ namespace NovaSharp.Interpreter.CoreLib
         /// </param>
         /// <returns>The generated random number.</returns>
         [NovaSharpModuleMethod(Name = "random")]
+        [SuppressMessage(
+            "Security",
+            "CA5394:Do not use insecure randomness",
+            Justification = "Lua math.random is intentionally deterministic and non-cryptographic."
+        )]
         public static DynValue Random(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -665,7 +676,7 @@ namespace NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue m = args.AsType(0, "random", DataType.Number, true);
             DynValue n = args.AsType(1, "random", DataType.Number, true);
-            Random r = GetRandom(executionContext.GetScript());
+            Random r = GetRandom(executionContext.Script);
             double d;
 
             if (m.IsNil() && n.IsNil())
@@ -697,6 +708,11 @@ namespace NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the integer seed.</param>
         /// <returns><see cref="DynValue.Nil"/> per Lua semantics.</returns>
         [NovaSharpModuleMethod(Name = "randomseed")]
+        [SuppressMessage(
+            "Security",
+            "CA5394:Do not use insecure randomness",
+            Justification = "Lua math.randomseed mirrors the non-cryptographic behavior of the upstream interpreter."
+        )]
         public static DynValue RandomSeed(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -708,7 +724,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue arg = args.AsType(0, "randomseed", DataType.Number, false);
-            Script script = executionContext.GetScript();
+            Script script = executionContext.Script;
             SetRandom(script, new Random((int)arg.Number));
             return DynValue.Nil;
         }

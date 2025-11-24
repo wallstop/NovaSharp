@@ -130,7 +130,14 @@ namespace NovaSharp.Interpreter.Modding
             {
                 fullPath = fileSystem.GetFullPath(scriptPath);
             }
-            catch (Exception)
+            catch (Exception ex)
+                when (ex is ArgumentException
+                    || ex is PathTooLongException
+                    || ex is NotSupportedException
+                    || ex is IOException
+                    || ex is UnauthorizedAccessException
+                    || ex is System.Security.SecurityException
+                )
             {
                 fullPath = scriptPath;
             }

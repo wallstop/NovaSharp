@@ -6,8 +6,12 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
 
+    /// <summary>
+    /// Generates descriptors that aggregate multiple overload descriptors under a single method name.
+    /// </summary>
     internal sealed class OverloadedMethodMemberDescriptorGenerator : IHardwireGenerator
     {
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -16,6 +20,10 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Builds an <see cref="OverloadedMethodMemberDescriptor"/> that wraps the generated overload descriptors.
+        /// </summary>
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generator,

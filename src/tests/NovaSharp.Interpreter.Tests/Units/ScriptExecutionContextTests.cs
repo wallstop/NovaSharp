@@ -156,7 +156,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (context, args) =>
                 {
                     ScriptRuntimeException exception = new("boom");
-                    DynValue handler = context.GetScript().Globals.Get("decorator");
+                    DynValue handler = context.Script.Globals.Get("decorator");
 
                     context.PerformMessageDecorationBeforeUnwind(handler, exception);
 

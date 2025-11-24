@@ -73,7 +73,7 @@ namespace NovaSharp.Interpreter.Platforms
                         lambda.Compile();
                         RunningOnAotCache = false;
                     }
-                    catch (Exception)
+                    catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
                     {
                         RunningOnAotCache = true;
                     }
@@ -311,6 +311,16 @@ namespace NovaSharp.Interpreter.Platforms
             {
                 AutoDetectionsDone = value;
             }
+        }
+
+        private static bool IsAotDetectionSuppressedException(Exception ex)
+        {
+            return ex is PlatformNotSupportedException
+                || ex is MemberAccessException
+                || ex is NotSupportedException
+                || ex is InvalidOperationException
+                || ex is TypeLoadException
+                || ex is System.Security.SecurityException;
         }
     }
 }

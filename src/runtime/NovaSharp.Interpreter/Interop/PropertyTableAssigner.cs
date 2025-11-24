@@ -54,11 +54,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Gets the type-unsafe assigner corresponding to this object.
         /// </summary>
-        /// <returns></returns>
-        public PropertyTableAssigner GetTypeUnsafeAssigner()
-        {
-            return _internalAssigner;
-        }
+        public PropertyTableAssigner TypeUnsafeAssigner => _internalAssigner;
 
         /// <summary>
         /// Sets the subassigner for the given type. Pass null to remove usage of subassigner for the given type.

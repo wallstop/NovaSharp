@@ -58,7 +58,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 byte[] bytes;
                 using (MemoryStream ms = new())
                 {
-                    executionContext.GetScript().Dump(fn, ms);
+                    executionContext.Script.Dump(fn, ms);
                     ms.Seek(0, SeekOrigin.Begin);
                     bytes = ms.ToArray();
                 }

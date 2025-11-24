@@ -85,6 +85,7 @@ namespace NovaSharp.Interpreter.REPL
 
             _currentCommand += "\n";
 
+            bool resetCurrentCommand = true;
             try
             {
                 DynValue result = null;
@@ -113,31 +114,33 @@ namespace NovaSharp.Interpreter.REPL
                 }
 
                 _currentCommand = string.Empty;
+                resetCurrentCommand = false;
                 return result;
             }
             catch (SyntaxErrorException ex)
             {
                 if (forced || !ex.IsPrematureStreamTermination)
                 {
-                    _currentCommand = string.Empty;
                     ex.Rethrow();
                     throw;
                 }
                 else
                 {
+                    resetCurrentCommand = false;
                     return null;
                 }
             }
             catch (ScriptRuntimeException sre)
             {
-                _currentCommand = string.Empty;
                 sre.Rethrow();
                 throw;
             }
-            catch (Exception)
+            finally
             {
-                _currentCommand = string.Empty;
-                throw;
+                if (resetCurrentCommand)
+                {
+                    _currentCommand = string.Empty;
+                }
             }
         }
 

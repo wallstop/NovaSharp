@@ -12,6 +12,9 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using Utils;
 
+    /// <summary>
+    /// Generates descriptors for reflection-backed methods, including operator overloading and optional arguments.
+    /// </summary>
     internal sealed class MethodMemberDescriptorGenerator : IHardwireGenerator
     {
         private readonly string _prefix;
@@ -24,6 +27,7 @@ namespace NovaSharp.Hardwire.Generators
             _prefix = prefix;
         }
 
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -32,6 +36,10 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Emits a nested descriptor type that invokes the described method with proper overload handling.
+        /// </summary>
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generator,

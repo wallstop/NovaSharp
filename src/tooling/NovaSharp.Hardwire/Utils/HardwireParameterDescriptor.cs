@@ -6,13 +6,39 @@ namespace NovaSharp.Hardwire.Utils
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
 
+    /// <summary>
+    /// Captures parameter metadata emitted by the hardwire dump and exposes CodeDOM helpers.
+    /// </summary>
     public class HardwireParameterDescriptor
     {
+        /// <summary>
+        /// Gets the CodeDOM expression that constructs a <see cref="ParameterDescriptor"/>.
+        /// </summary>
         public CodeExpression Expression { get; private set; }
+
+        /// <summary>
+        /// Gets the fully qualified parameter type name.
+        /// </summary>
         public string ParamType { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the parameter has a default value.
+        /// </summary>
         public bool HasDefaultValue { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the parameter is an out parameter.
+        /// </summary>
         public bool IsOut { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the parameter is by-reference.
+        /// </summary>
         public bool IsRef { get; private set; }
+
+        /// <summary>
+        /// Gets the temporary variable name assigned when emitting ref/out handling.
+        /// </summary>
         public string TempVarName { get; private set; }
 
         public HardwireParameterDescriptor(Table tpar)
@@ -52,6 +78,9 @@ namespace NovaSharp.Hardwire.Utils
             IsRef = tpar.Get("ref").Boolean;
         }
 
+        /// <summary>
+        /// Creates descriptors for every entry in the given dump table.
+        /// </summary>
         public static List<HardwireParameterDescriptor> LoadDescriptorsFromTable(Table t)
         {
             List<HardwireParameterDescriptor> list = new();
@@ -64,6 +93,9 @@ namespace NovaSharp.Hardwire.Utils
             return list;
         }
 
+        /// <summary>
+        /// Records the temporary variable name used to materialize ref/out parameters.
+        /// </summary>
         public void SetTempVar(string varName)
         {
             if (!IsOut && !IsRef)

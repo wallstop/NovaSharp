@@ -7,8 +7,12 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using Utils;
 
+    /// <summary>
+    /// Generates hardwired descriptors for array members described in the Lua dump.
+    /// </summary>
     public class ArrayMemberDescriptorGenerator : IHardwireGenerator
     {
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -17,6 +21,14 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Emits a nested descriptor type tailored to the provided array member metadata.
+        /// </summary>
+        /// <param name="table">Dump table describing the member.</param>
+        /// <param name="generatorContext">Context used for logging and shared metadata.</param>
+        /// <param name="members">Collection receiving the generated type.</param>
+        /// <returns>Expressions that instantiate the descriptor.</returns>
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generatorContext,

@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            Table t = new(executionContext.GetScript());
+            Table t = new(executionContext.Script);
             DynValue v = DynValue.NewTable(t);
 
             for (int i = 0; i < args.Count; i++)
@@ -153,16 +153,16 @@ namespace NovaSharp.Interpreter.CoreLib
                 else
                 {
                     return LuaComparerToClrComparer(
-                        executionContext.GetScript().Call(lt, a, b),
-                        executionContext.GetScript().Call(lt, b, a)
+                        executionContext.Script.Call(lt, a, b),
+                        executionContext.Script.Call(lt, b, a)
                     );
                 }
             }
             else
             {
                 return LuaComparerToClrComparer(
-                    executionContext.GetScript().Call(lt, a, b),
-                    executionContext.GetScript().Call(lt, b, a)
+                    executionContext.Script.Call(lt, a, b),
+                    executionContext.Script.Call(lt, b, a)
                 );
             }
         }
@@ -434,7 +434,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (len != null)
             {
-                DynValue lenv = executionContext.GetScript().Call(len, vlist);
+                DynValue lenv = executionContext.Script.Call(len, vlist);
 
                 double? lengthValue = lenv.CastToNumber();
 

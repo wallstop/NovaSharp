@@ -1,7 +1,13 @@
 namespace NovaSharp.Comparison;
 
+/// <summary>
+/// Supplies Lua scripts used by the comparison benchmarks.
+/// </summary>
 internal static class BenchmarkScripts
 {
+    /// <summary>
+    /// Returns the script associated with <paramref name="scenario"/>.
+    /// </summary>
     public static string GetScript(ScriptScenario scenario) =>
         scenario switch
         {

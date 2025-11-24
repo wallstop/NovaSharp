@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 DynValue vs = args.AsType(0, "parse", DataType.String, false);
-                Table t = JsonTableConverter.JsonToTable(vs.String, executionContext.GetScript());
+                Table t = JsonTableConverter.JsonToTable(vs.String, executionContext.Script);
                 return DynValue.NewTable(t);
             }
             catch (SyntaxErrorException ex)

@@ -77,8 +77,9 @@ namespace NovaSharp.Interpreter.DataTypes
             if (isMethodCall)
             {
                 ColonOperatorBehaviour colon = executionContext
-                    .GetScript()
-                    .Options.ColonOperatorClrCallbackBehaviour;
+                    .Script
+                    .Options
+                    .ColonOperatorClrCallbackBehaviour;
 
                 if (colon == ColonOperatorBehaviour.TreatAsColon)
                 {

@@ -2,6 +2,9 @@ namespace NovaSharp.Comparison;
 
 using System;
 
+/// <summary>
+/// Benchmark scenarios used when comparing NovaSharp against NLua.
+/// </summary>
 internal enum ScriptScenario
 {
     [Obsolete("Use a specific ScriptScenario.", false)]

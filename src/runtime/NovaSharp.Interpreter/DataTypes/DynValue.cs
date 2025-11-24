@@ -799,12 +799,11 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Returns this DynValue as an instance of <see cref="IScriptPrivateResource"/>, if possible,
-        /// null otherwise
+        /// null otherwise.
         /// </summary>
-        /// <returns>False if value is false or nil, true otherwise.</returns>
-        public IScriptPrivateResource GetAsPrivateResource()
+        public IScriptPrivateResource ScriptPrivateResource
         {
-            return _object as IScriptPrivateResource;
+            get { return _object as IScriptPrivateResource; }
         }
 
         /// <summary>

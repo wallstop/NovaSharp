@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            Script script = executionContext.GetScript();
+            Script script = executionContext.Script;
 
             if (script.Options.DebugInput == null)
             {
@@ -173,7 +173,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.NewTable(executionContext.GetScript().Registry);
+            return DynValue.NewTable(executionContext.Script.Registry);
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue v = args[0];
-            Script s = executionContext.GetScript();
+            Script s = executionContext.Script;
 
             if (v.Type.CanHaveTypeMetatables())
             {
@@ -232,7 +232,7 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue v = args[0];
             DynValue t = args.AsType(1, "setmetatable", DataType.Table, true);
             Table m = (t.IsNil()) ? null : t.Table;
-            Script s = executionContext.GetScript();
+            Script s = executionContext.Script;
 
             if (v.Type.CanHaveTypeMetatables())
             {
@@ -432,7 +432,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             double defaultSkip = 1.0;
 
-            Coroutine cor = executionContext.GetCallingCoroutine();
+            Coroutine cor = executionContext.CallingCoroutine;
 
             if (vmessage.Type == DataType.Thread)
             {
@@ -486,7 +486,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 string loc =
                     wi.Location != null
-                        ? wi.Location.FormatLocation(executionContext.GetScript())
+                        ? wi.Location.FormatLocation(executionContext.Script)
                         : "[clr]";
                 sb.Append('\t').Append(loc).Append(": in ").Append(name).Append('\n');
             }
@@ -544,7 +544,7 @@ namespace NovaSharp.Interpreter.CoreLib
         //[NovaSharpMethod]
         //public static DynValue getinfo(ScriptExecutionContext executionContext, CallbackArguments args)
         //{
-        //	Coroutine cor = executionContext.GetCallingCoroutine();
+        //	Coroutine cor = executionContext.CallingCoroutine();
         //	int vfArgIdx = 0;
 
         //	if (args[0].Type == DataType.Thread)

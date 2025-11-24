@@ -4,8 +4,12 @@ namespace NovaSharp.Hardwire.Generators
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// Generates descriptors that expose a value type's parameterless constructor as __new.
+    /// </summary>
     internal sealed class ValueTypeDefaultCtorMemberDescriptorGenerator : IHardwireGenerator
     {
+        /// <inheritdoc />
         public string ManagedType
         {
             get
@@ -14,6 +18,7 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
         public CodeExpression[] Generate(
             Table table,
             HardwireCodeGenerationContext generator,

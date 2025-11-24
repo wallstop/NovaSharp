@@ -307,7 +307,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
             for (int i = 0; i < dargs.Length; i++)
             {
-                dargs[i] = DynValue.FromObject(context.GetScript(), args[i]);
+                dargs[i] = DynValue.FromObject(context.Script, args[i]);
             }
 
             return Resume(context, dargs);
