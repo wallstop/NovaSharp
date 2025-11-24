@@ -94,14 +94,14 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 if (v.Type == DataType.String)
                 {
-                    double? nd = v.CastToNumber();
-                    if (nd == null)
+                    double? nullableNumber = v.CastToNumber();
+                    if (nullableNumber == null)
                     {
                         args.AsType(i, "char", DataType.Number, false);
                     }
                     else
                     {
-                        d = nd.Value;
+                        d = nullableNumber.Value;
                     }
                 }
                 else

@@ -154,11 +154,11 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         }
 
         /// <summary>
-        /// Converts the specified values boxed type to its correpsonding unsigned
+        /// Converts the specified values boxed type to its corresponding unsigned
         /// type.
         /// </summary>
         /// <param name="value">The value.</param>
-        /// <returns>A boxed numeric object whos type is unsigned.</returns>
+        /// <returns>A boxed numeric object whose type is unsigned.</returns>
         public static object ToUnsigned(object value)
         {
             Type t = value.GetType();
@@ -222,13 +222,13 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         }
 
         /// <summary>
-        /// Converts the specified values boxed type to its correpsonding integer
+        /// Converts the specified values boxed type to its corresponding integer
         /// type.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <param name="round">if set to <c>true</c> [round].</param>
         /// <returns>
-        /// A boxed numeric object whos type is an integer type.
+        /// A boxed numeric object whose type is an integer type.
         /// </returns>
         public static object ToInteger(object value, bool round)
         {
@@ -482,7 +482,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
 
                 // extract field length and
-                // pading character
+                // padding character
                 paddingCharacter = ' ';
                 fieldLength = int.MinValue;
                 if (m.Groups[3] != null && m.Groups[3].Value.Length > 0)
@@ -496,7 +496,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     paddingCharacter = '0';
                 }
 
-                // left2right allignment overrides zero padding
+                // left2right alignment overrides zero padding
                 if (flagLeft2Right && flagZeroPadding)
                 {
                     flagZeroPadding = false;

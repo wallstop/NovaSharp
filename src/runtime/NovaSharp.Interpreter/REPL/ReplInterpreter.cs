@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.REPL
     using NovaSharp.Interpreter.Execution;
 
     /// <summary>
-    /// This class provides a simple REPL intepreter ready to be reused in a simple way.
+    /// This class provides a simple REPL interpreter ready to be reused in a simple way.
     /// </summary>
     public class ReplInterpreter
     {

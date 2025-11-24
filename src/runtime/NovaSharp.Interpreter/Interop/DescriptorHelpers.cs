@@ -257,7 +257,7 @@ namespace NovaSharp.Interpreter.Interop
         /// <summary>
         /// Gets the Types implemented in the assembly, catching the ReflectionTypeLoadException just in case..
         /// </summary>
-        /// <param name="asm">The assebly</param>
+        /// <param name="asm">The assembly</param>
         /// <returns></returns>
         public static Type[] SafeGetTypes(this Assembly asm)
         {
@@ -303,9 +303,9 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static IEnumerable<Type> GetAllImplementedTypes(this Type t)
         {
-            for (Type ot = t; ot != null; ot = Framework.Do.GetBaseType(ot))
+            for (Type current = t; current != null; current = Framework.Do.GetBaseType(current))
             {
-                yield return ot;
+                yield return current;
             }
 
             foreach (Type it in Framework.Do.GetInterfaces(t))

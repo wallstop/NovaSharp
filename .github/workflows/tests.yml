@@ -16,6 +16,14 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Python tooling deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.tooling.txt
       - name: Enforce NovaSharp branding
         run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash
@@ -25,6 +33,10 @@ jobs:
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+      - name: Enforce spelling conventions
+        run: python3 tools/SpellingAudit/spelling_audit.py
+      - name: Verify spelling audit log
+        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
       - name: Generate documentation audit log
         run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
       - name: Verify documentation audit log
@@ -40,14 +52,6 @@ jobs:
         env:
           NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Install Python tooling deps
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.tooling.txt
       - name: Markdown formatting + links
         env:
           NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}
@@ -71,6 +75,14 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Python tooling deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.tooling.txt
       - name: Enforce NovaSharp branding
         run: ./scripts/branding/ensure-novasharp-branding.sh
         shell: bash
@@ -80,6 +92,10 @@ jobs:
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+      - name: Enforce spelling conventions
+        run: python3 tools/SpellingAudit/spelling_audit.py
+      - name: Verify spelling audit log
+        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
       - name: Generate documentation audit log
         run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
       - name: Verify documentation audit log

@@ -319,7 +319,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Creates a new request for a yield of the current coroutine.
         /// </summary>
-        /// <param name="args">The yield argumenst.</param>
+        /// <param name="args">The yield arguments.</param>
         /// <returns></returns>
         public static DynValue NewYieldReq(DynValue[] args)
         {
@@ -333,7 +333,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Creates a new request for a yield of the current coroutine.
         /// </summary>
-        /// <param name="args">The yield argumenst.</param>
+        /// <param name="args">The yield arguments.</param>
         /// <returns></returns>
         internal static DynValue NewForcedYieldReq()
         {
@@ -992,7 +992,7 @@ namespace NovaSharp.Interpreter.DataTypes
 #endif
 
         /// <summary>
-        /// Checks the type of this value corresponds to the desired type. A propert ScriptRuntimeException is thrown
+        /// Checks the type of this value corresponds to the desired type. A property ScriptRuntimeException is thrown
         /// if the value is not of the specified type or - considering the TypeValidationFlags - is not convertible
         /// to the specified type.
         /// </summary>

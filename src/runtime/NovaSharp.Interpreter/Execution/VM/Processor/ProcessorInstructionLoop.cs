@@ -331,7 +331,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             throw new NotImplementedException($"Invalid opcode : {i.Name}");
                         default:
                             throw new NotImplementedException(
-                                $"Execution for {i.OpCode} not implented yet!"
+                                $"Execution for {i.OpCode} not implemented yet!"
                             );
                     }
 

@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 }
             }
 
-            // eat away all superfluos ';'s
+            // eat away all superfluous ';'s
             while (lcontext.Lexer.Current.Type == TokenType.SemiColon)
             {
                 lcontext.Lexer.Next();

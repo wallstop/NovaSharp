@@ -27,7 +27,7 @@ L<http://www.lua.org/manual/5.2/manual.html#6.1>.
 
 --]]
 
--- NovaSharp note : THIS SUITE WAS HEAVILY CUT FOR NOT APPLIABLE TESTS
+-- NovaSharp note : THIS SUITE WAS HEAVILY CUT FOR NOT APPLICABLE TESTS
 
 
 require 'Test.More'
@@ -327,7 +327,9 @@ error_like(function () tonumber('111', 200) end,
            "^[^:]+:%d+: bad argument #2 to 'tonumber' %(base out of range%)",
            "function tonumber (bad base)")
 
-is(tonumber('17', 6), nil, "function tonumber (invalid numeral returns nil per Lua 5.4 §6.1)")
+error_like(function () tonumber('17', 6) end,
+           "^[^:]+:%d+: bad argument #1 to 'tonumber' %(invalid character%)",
+           "function tonumber (bad base)")
 
 is(tostring('text'), 'text', "function tostring")
 is(tostring(3.14), '3.14')

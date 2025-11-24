@@ -156,7 +156,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// This is kept for backward compatibility, see the overload taking a prompt as an input parameter.
         ///
         /// Default handler for interactive line input calls. Can be customized in ScriptOptions.
-        /// If an inheriting class whants to give a meaningful implementation, this method MUST be overridden.
+        /// If an inheriting class wants to give a meaningful implementation, this method MUST be overridden.
         /// </summary>
         /// <returns>null</returns>
         [Obsolete("Replace with DefaultInput(string)")]
@@ -167,7 +167,7 @@ namespace NovaSharp.Interpreter.Platforms
 
         /// <summary>
         /// Default handler for interactive line input calls. Can be customized in ScriptOptions.
-        /// If an inheriting class whants to give a meaningful implementation, this method MUST be overridden.
+        /// If an inheriting class wants to give a meaningful implementation, this method MUST be overridden.
         /// </summary>
         /// <returns>null</returns>
         public virtual string DefaultInput(string prompt)

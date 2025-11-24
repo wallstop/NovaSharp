@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
 
     /// <summary>
-    /// Registry of all extension methods. Use UserData statics to access these.
+    /// Registry of all extension methods. Use the UserData static helpers to access these.
     /// </summary>
     internal class ExtensionMethodsRegistry
     {
@@ -109,7 +109,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         }
 
         /// <summary>
-        /// Gets a number which gets incremented everytime the extension methods registry changes.
+        /// Gets a number which gets incremented every time the extension methods registry changes.
         /// Use this to invalidate caches based on extension methods
         /// </summary>
         /// <returns></returns>

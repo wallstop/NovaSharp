@@ -375,7 +375,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 SendErrorResponse(
                     response,
                     3010,
-                    "setBreakpoints: property 'source' is empty or misformed",
+                    "setBreakpoints: property 'source' is empty or malformed",
                     null,
                     false,
                     true

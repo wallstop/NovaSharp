@@ -9,10 +9,10 @@ Contents:
                       Use this if you want to just embed the interpreter in your application.
                       
  - /vscodedebugger -> The DLL for the Visual Studio Code debugger facilities (plus the interpreter DLL itself). 
-                      Use this if you want to embed the intepreter in your application with vscode debugging enabled.
+                      Use this if you want to embed the interpreter in your application with vscode debugging enabled.
                       
  - /remotedebugger -> The DLL for the remote debugger facilities (plus the interpreter DLL itself). 
-                      Use this if you want to embed the intepreter in your application with remote debugging enabled.
+                      Use this if you want to embed the interpreter in your application with remote debugging enabled.
                       
  - /cli           -> The NovaSharp CLI (`NovaSharp.Cli`) used for REPL exploration, bytecode compilation,
                      and hardwire authoring. This replaces the former `repl` drop and ships both CLI binaries

@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.DataTypes
         public DynValue UserValue { get; set; }
 
         /// <summary>
-        /// Gets the object associated to this userdata (null for statics)
+        /// Gets the object associated to this userdata (null for static members)
         /// </summary>
         public object Object { get; private set; }
 
@@ -409,7 +409,7 @@ namespace NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets a number which gets incremented everytime the extension methods registry changes.
+        /// Gets a number which gets incremented every time the extension methods registry changes.
         /// Use this to invalidate caches based on extension methods
         /// </summary>
         /// <returns></returns>

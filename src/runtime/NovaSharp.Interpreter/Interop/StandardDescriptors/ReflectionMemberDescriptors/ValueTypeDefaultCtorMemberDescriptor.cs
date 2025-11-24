@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
         /// <summary>
         /// Invokes the member from script.
-        /// Implementors should raise exceptions if the value cannot be executed or if access to an
+        /// Implementers should raise exceptions if the value cannot be executed or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Gets the value of this member as a
         /// <see cref="DynValue" /> to be exposed to scripts.
-        /// Implementors should raise exceptions if the value cannot be read or if access to an
+        /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -145,7 +145,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Sets the value of this member from a
         /// <see cref="DynValue" />.
-        /// Implementors should raise exceptions if the value cannot be read or if access to an
+        /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>

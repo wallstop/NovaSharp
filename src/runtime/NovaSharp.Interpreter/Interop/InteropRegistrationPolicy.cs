@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Interop
     public static class InteropRegistrationPolicy
     {
         /// <summary>
-        /// The default registration policy used by NovaSharp unless explicitely replaced.
+        /// The default registration policy used by NovaSharp unless explicitly replaced.
         /// Deregistrations are allowed, but registration of a new descriptor are not allowed
         /// if a descriptor is already registered for that type.
         ///
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Interop
         }
 
         /// <summary>
-        /// The default registration policy used by NovaSharp unless explicitely replaced.
+        /// The default registration policy used by NovaSharp unless explicitly replaced.
         /// Deregistrations are allowed, but registration of a new descriptor are not allowed
         /// if a descriptor is already registered for that type.
         ///

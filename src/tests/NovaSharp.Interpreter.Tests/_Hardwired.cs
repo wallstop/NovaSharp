@@ -8552,7 +8552,7 @@ namespace MyNamespace
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired decriptors.");
+					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired descriptors.");
 				}
 			}
 
@@ -8567,7 +8567,7 @@ namespace MyNamespace
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired decriptors.");
+					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired descriptors.");
 				}
 			}
 
@@ -8582,7 +8582,7 @@ namespace MyNamespace
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired decriptors.");
+					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired descriptors.");
 				}
 			}
 
@@ -8597,7 +8597,7 @@ namespace MyNamespace
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired decriptors.");
+					throw new System.InvalidOperationException("Access to event special methods is not supported by hardwired descriptors.");
 				}
 			}
 

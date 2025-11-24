@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Interop
     public enum InteropAccessMode
     {
         /// <summary>
-        /// Optimization is not performed and reflection is used everytime to access members.
-        /// This is the slowest approach but saves a lot of memory if members are seldomly used.
+        /// Optimization is not performed and reflection is used every time to access members.
+        /// This is the slowest approach but saves a lot of memory if members are seldom used.
         /// </summary>
         [Obsolete("Use a specific InteropAccessMode.", false)]
         Unknown = 0,

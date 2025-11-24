@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
 
     /// <summary>
-    /// Registry of all type descriptors. Use UserData statics to access these.
+    /// Registry of all type descriptors. Use the UserData static helpers to access these.
     /// </summary>
     internal static class TypeDescriptorRegistry
     {
@@ -343,7 +343,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     typeDescriptor = descriptor.Generate(type);
                 }
 
-                // we should not search interfaces (for example, it's just for statics..), no need to look further
+                // we should not search interfaces (for example, it's just for static members..), no need to look further
                 if (!searchInterfaces)
                 {
                     return typeDescriptor;

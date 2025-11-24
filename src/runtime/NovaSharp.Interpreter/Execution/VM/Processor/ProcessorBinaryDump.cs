@@ -119,10 +119,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private static void AddSymbolToMap(Dictionary<SymbolRef, int> symbolMap, SymbolRef s)
         {
-            if (!symbolMap.ContainsKey(s))
-            {
-                symbolMap.Add(s, symbolMap.Count);
-            }
+            symbolMap.TryAdd(s, symbolMap.Count);
         }
 
         /// <summary>

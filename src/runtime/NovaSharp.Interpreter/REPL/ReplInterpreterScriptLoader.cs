@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.REPL
     ///		* The LUA_PATH environment variable if LUA_PATH_5_2 and NovaSharp_PATH do not exists
     ///		* The "?;?.lua" path if all the above fail
     ///
-    /// Also, everytime a module is require(d), the "LUA_PATH" global variable is checked. If it exists, those paths
+    /// Also, every time a module is require(d), the "LUA_PATH" global variable is checked. If it exists, those paths
     /// will be used to load the module instead of the global ones.
     /// </summary>
     public class ReplInterpreterScriptLoader : FileSystemScriptLoader

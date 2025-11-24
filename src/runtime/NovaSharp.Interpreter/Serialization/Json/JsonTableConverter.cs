@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Serialization.Json
     /// <summary>
     /// Class performing conversions between Tables and Json.
     /// NOTE : the conversions are done respecting json syntax but using Lua constructs. This means mostly that:
-    /// 1) Lua string escapes can be accepted while they are not technically valid JSON, and viceversa
+    /// 1) Lua string escapes can be accepted while they are not technically valid JSON, and vice versa
     /// 2) Null values are represented using a static userdata of type JsonNull
     /// 3) Do not use it when input cannot be entirely trusted
     /// </summary>

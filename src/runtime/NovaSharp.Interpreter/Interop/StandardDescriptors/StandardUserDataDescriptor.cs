@@ -180,7 +180,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                 AddMember(ei.Name, EventMemberDescriptor.TryCreateIfVisible(ei, AccessMode));
             }
 
-            // get nested types and create statics
+            // get nested types and create static descriptors
             foreach (Type nestedType in Framework.Do.GetNestedTypes(type))
             {
                 if (membersToIgnore.Contains(nestedType.Name))

@@ -68,7 +68,7 @@ is(Account.balance, 200, "object")
 Account:withdraw(100.00)
 is(Account.balance, 100)
 
---[[ classe ]]
+--[[ class ]]
 Account = {balance = 0}
 
 function Account:new (o)
@@ -88,7 +88,7 @@ end
 
 a = Account:new{balance = 0}
 a:deposit(100.00)
-is(a.balance, 100, "classe")
+is(a.balance, 100, "class")
 
 b = Account:new()
 is(b.balance, 0)
@@ -113,7 +113,7 @@ end
 
 function Account:withdraw (v)
 --    print "Account:withdraw"
-    if v > self.balance then error"insuficient funds" end
+    if v > self.balance then error"insufficient funds" end
     self.balance = self.balance - v
 end
 
@@ -127,7 +127,7 @@ SpecialAccount = Account:new()
 function SpecialAccount:withdraw (v)
 --    print "SpecialAccount:withdraw"
     if self.balance - v <= -self:getLimit() then
-        error"insuficient funds"
+        error"insufficient funds"
     end
     self.balance = self.balance - v
 end

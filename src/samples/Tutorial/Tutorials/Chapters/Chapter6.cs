@@ -204,12 +204,12 @@ namespace Tutorials.Chapters
 				return obj.CalcHypotenuse(3, 4);
 			";
 
-            // Register just MyClass, explicitely.
+            // Register just MyClass, explicitly.
             UserData.RegisterType<MyClass>();
 
             Script script = new Script();
 
-            // create a userdata, again, explicitely.
+            // create a userdata, again, explicitly.
             DynValue obj = UserData.Create(new MyClass());
 
             script.Globals.Set("obj", obj);

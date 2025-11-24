@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     {
         /// <summary>
         /// Invokes the member from script.
-        /// Implementors should raise exceptions if the value cannot be executed or if access to an
+        /// Implementers should raise exceptions if the value cannot be executed or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>

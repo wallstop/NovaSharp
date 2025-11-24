@@ -618,7 +618,7 @@ namespace NovaSharp.Hardwire.Generators
                             new CodeObjectCreateExpression(
                                 typeof(InvalidOperationException),
                                 new CodePrimitiveExpression(
-                                    "Access to event special methods is not supported by hardwired decriptors."
+                                    "Access to event special methods is not supported by hardwired descriptors."
                                 )
                             )
                         )

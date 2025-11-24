@@ -3,7 +3,7 @@ namespace NovaSharp.Interpreter.Interop.Attributes
     using System;
 
     /// <summary>
-    /// Marks a property as a configruation property
+    /// Marks a property as a configuration property
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
     public sealed class NovaSharpPropertyAttribute : Attribute

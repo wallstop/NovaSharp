@@ -6,7 +6,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
     /// <summary>
     /// This is a very very (very!) simplified and light http server. It exists to run on platforms where
-    /// more standard methods offered by .NET BCL are not available and/or if priviledges cannot be
+    /// more standard methods offered by .NET BCL are not available and/or if privileges cannot be
     /// excalated. This just uses a TcpListener and a Socket.
     /// This supports only GET method and basic (or no) authentication.
     /// </summary>

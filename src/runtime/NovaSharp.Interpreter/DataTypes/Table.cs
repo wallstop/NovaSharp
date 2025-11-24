@@ -447,7 +447,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets the value associated with the specified key,
-        /// without bringing to Nil the non-existant values.
+        /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
         public DynValue RawGet(DynValue key)

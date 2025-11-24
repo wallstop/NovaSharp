@@ -27,7 +27,7 @@ L<http://www.lua.org/manual/5.2/manual.html#6.1>.
 
 --]]
 
--- NovaSharp note : THIS SUITE WAS HEAVILY CUT FOR NOT APPLIABLE TESTS
+-- NovaSharp note : THIS SUITE WAS HEAVILY CUT FOR NOT APPLICABLE TESTS
 
 
 require 'Test.More'

@@ -25,7 +25,7 @@ namespace Tutorials.Chapters
             }
             catch (ScriptRuntimeException ex)
             {
-                Console.WriteLine("Doh! An error occured! {0}", ex.DecoratedMessage);
+                Console.WriteLine("Doh! An error occurred! {0}", ex.DecoratedMessage);
             }
         }
 
