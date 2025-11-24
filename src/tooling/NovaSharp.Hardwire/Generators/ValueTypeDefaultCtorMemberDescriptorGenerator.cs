@@ -1,5 +1,6 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -21,10 +22,25 @@ namespace NovaSharp.Hardwire.Generators
         /// <inheritdoc />
         public CodeExpression[] Generate(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             MethodMemberDescriptorGenerator mgen = new("VTDC");
 
             Table mt = new(null)
@@ -39,7 +55,7 @@ namespace NovaSharp.Hardwire.Generators
                 ["special"] = false,
             };
 
-            return mgen.Generate(mt, generator, members);
+            return mgen.Generate(mt, generatorContext, members);
         }
     }
 }

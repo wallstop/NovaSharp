@@ -1,5 +1,6 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -25,22 +26,31 @@ namespace NovaSharp.Hardwire.Generators
         /// </summary>
         public CodeExpression[] Generate(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             string type = (string)table["$key"];
             string className = "TYPE_" + Guid.NewGuid().ToString("N");
 
             CodeTypeDeclaration classCode = new(className);
 
             classCode.Comments.Add(new CodeCommentStatement("Descriptor of " + type));
-
-            classCode.StartDirectives.Add(
-                new CodeRegionDirective(CodeRegionMode.Start, "Descriptor of " + type)
-            );
-
-            classCode.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, string.Empty));
 
             classCode.TypeAttributes =
                 System.Reflection.TypeAttributes.NestedPrivate
@@ -53,7 +63,7 @@ namespace NovaSharp.Hardwire.Generators
 
             classCode.Members.Add(ctor);
 
-            generator.DispatchTablePairs(
+            generatorContext.DispatchTablePairs(
                 table.Get("members").Table,
                 classCode.Members,
                 (key, exp) =>
@@ -71,7 +81,7 @@ namespace NovaSharp.Hardwire.Generators
                 }
             );
 
-            generator.DispatchTablePairs(
+            generatorContext.DispatchTablePairs(
                 table.Get("metamembers").Table,
                 classCode.Members,
                 (key, exp) =>

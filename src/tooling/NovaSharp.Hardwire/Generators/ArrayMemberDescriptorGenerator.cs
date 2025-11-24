@@ -1,6 +1,9 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
+    using System.Collections.Generic;
+    using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -35,6 +38,21 @@ namespace NovaSharp.Hardwire.Generators
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             string className = "AIDX_" + Guid.NewGuid().ToString("N");
             string name = table.Get("name").String;
             bool setter = table.Get("setter").Boolean;
@@ -58,7 +76,7 @@ namespace NovaSharp.Hardwire.Generators
 
             if (vparams.Type == DataType.Table)
             {
-                List<HardwireParameterDescriptor> paramDescs =
+                IReadOnlyList<HardwireParameterDescriptor> paramDescs =
                     HardwireParameterDescriptor.LoadDescriptorsFromTable(vparams.Table);
 
                 ctor.BaseConstructorArgs.Add(

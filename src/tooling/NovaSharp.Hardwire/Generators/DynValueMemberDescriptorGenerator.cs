@@ -1,5 +1,6 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -30,6 +31,21 @@ namespace NovaSharp.Hardwire.Generators
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             string className = "DVAL_" + Guid.NewGuid().ToString("N");
             DynValue kval = table.Get("value");
 

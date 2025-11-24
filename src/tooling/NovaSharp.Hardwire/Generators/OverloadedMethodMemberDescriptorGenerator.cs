@@ -1,6 +1,8 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -26,13 +28,28 @@ namespace NovaSharp.Hardwire.Generators
         /// </summary>
         public CodeExpression[] Generate(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             List<CodeExpression> initializers = new();
 
-            generator.DispatchTablePairs(
+            generatorContext.DispatchTablePairs(
                 table.Get("overloads").Table,
                 members,
                 exp =>

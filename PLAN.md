@@ -1,7 +1,7 @@
 # Modern Testing & Coverage Plan
 
 ## Repository Snapshot — 2025-11-25 (UTC)
-- Build: `dotnet build src/NovaSharp.sln -c Release -nologo` succeeds but emits 1,322 warnings. Most come from NovaSharp.Hardwire (CA1062, CA1305, CA1854, CA1822, CA1859, CA1031, CA1725), NovaSharp.VsCodeDebugger (CA1063, CA1051, CA1716, CA1012, CA1805, CA1865), and the NUnit projects (CA1812/CA1859 helpers). Runtime code itself only reports CA1024 on `Closure.GetClosureContext`.
+- Build: `dotnet build src/NovaSharp.sln -c Release -nologo` now emits ~1,285 warnings. NovaSharp.Hardwire is clean for CA1062/CA1305/CA1854/CA1822/CA1031/CA1725 after the latest guard/invariant/static sweep, so most remaining hits live in NovaSharp.VsCodeDebugger (CA1063, CA1051, CA1716, CA1012, CA1805, CA1865) and the NUnit projects (CA1812/CA1859 helpers). Runtime code itself only reports CA1024 on `Closure.GetUpvaluesCount/GetUpvalue*`.
 - Tests: `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build` passes 2,779 tests in ~38 seconds; TAP IO/OS fixtures remain skipped.
 - Coverage: `docs/coverage/latest/Summary.md` (2025-11-23 20:56 UTC) reports 87.8% line / 87.2% branch overall.
   - NovaSharp.Interpreter: 96.0% line / 92.9% branch (still below the ≥95% branch target needed before turning `COVERAGE_GATING_MODE` back to `enforce`).
@@ -23,11 +23,13 @@
 ## Active Initiatives
 
 ### 1. Analyzer and warning debt
-- Triaged Release build count: 1,322 warnings (Hardwire generators, VS Code debugger, and NUnit fixtures dominate). Runtime itself only raises CA1024 in `Closure.cs`.
-- Hardwire: add argument validation, invariant formatting, and `static` helpers across `HardwireParameterDescriptor`, `HardwireCodeGenerationContext`, and every descriptor generator to clear CA1062/CA1305/CA1854/CA1822/CA1859/CA1031/CA1725 hits.
-- VS Code debugger: implement `IDisposable` correctly, replace public fields with properties, drop redundant default-value assignments, and remove the abstract-constructor warning (CA1012) so the SDK/Debugger projects build warning-free.
+- Triaged Release build count: ~1,285 warnings (VS Code debugger and NUnit fixtures dominate). Runtime itself only raises CA1024 in `Closure.cs`.
+- Hardwire (2025-11-24): completed a context/generator sweep that adds explicit null-argument guards, invariant formatting, `TryGetValue` usage, and `static` helper conversions while deleting the legacy CodeDom region directives. NovaSharp.Hardwire no longer reports CA1062/CA1305/CA1854/CA1822/CA1031/CA1725 in Release builds, and generator discovery now skips placeholders (e.g., `NullGenerator`) so HardWireCommand + registry tests wire up the built-ins again. Follow-on work should tackle the remaining CA1859 spots (list/dictionary abstractions) and add analyzer coverage for any new generators.
+- VS Code debugger: `NovaSharpVsCodeDebugServer` now follows the full dispose pattern, exposes the `CurrentDebugger` property (replacing the obsolete `GetDebugger()` helper), and guards public entry points (clearing CA1063/CA1816/CA2213/CA1805/CA1062/CA1024). `ProtocolServer` and `DebugSession` now use protected constructors, eliminating the CA1012 warnings while keeping the public API surface abstract-only. The latest `dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo` pass reports 43 warnings (down from 53). Next steps: continue trimming SDK/DebuggerLogic warnings (CA1002 collection exposures, CA1310/CA1865 string helpers, CA1031 catch-alls, CA1854 dictionary lookups) and apply the same guard/dispose patterns to the remaining debugger helpers.
 - Tests: convert nested fixtures to `static`/records, mark helper methods `static`, and adjust collection types to eliminate the CA1812 and CA1859 noise inside `NovaSharp.Interpreter.Tests`.
 - Runtime: decide whether to expose `Closure.Context` as a property or suppress CA1024 with rationale.
+- Foreach allocation audit: sweep runtime/tooling/tests to ensure every `foreach` uses value-based enumeration (e.g., `Span<T>`, pooled struct enumerators, or `List<T>.Enumerator`) whenever the source type supports it, so we avoid iterator allocations on hot paths; document guidance in `docs/Modernization.md`.
+- Foreach allocation audit: sweep runtime/tooling/tests to ensure every `foreach` uses value-based enumeration (e.g., `Span<T>`, pooled struct enumerators, or `List<T>.Enumerator`) whenever the source type supports it, so we avoid iterator allocations on hot paths; document guidance in `docs/Modernization.md`.
 - After each sweep rerun `dotnet build src/NovaSharp.sln -c Release -nologo | Select-String "warning"` and log counts per CA rule; once zeroed, flip `TreatWarningsAsErrors` in `Directory.Build.props` and document the policy in `docs/Testing.md`.
 
 ### 2. Coverage and test depth

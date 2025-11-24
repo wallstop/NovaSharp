@@ -576,7 +576,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         private bool _clientLinesStartAt1 = true;
         private bool _clientPathsAreUri = true;
 
-        public DebugSession(bool debuggerLinesStartAt1, bool debuggerPathsAreUri = false)
+        protected DebugSession(bool debuggerLinesStartAt1, bool debuggerPathsAreUri = false)
         {
             _debuggerLinesStartAt1 = debuggerLinesStartAt1;
             _debuggerPathsAreUri = debuggerPathsAreUri;

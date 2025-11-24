@@ -1,6 +1,8 @@
 namespace NovaSharp.Hardwire
 {
+    using System;
     using System.CodeDom.Compiler;
+    using System.IO;
     using Languages;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -22,6 +24,27 @@ namespace NovaSharp.Hardwire
             ITimeProvider timeProvider = null
         )
         {
+            if (string.IsNullOrWhiteSpace(namespaceName))
+            {
+                throw new ArgumentException(
+                    "Namespace cannot be null or whitespace.",
+                    nameof(namespaceName)
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(entryClassName))
+            {
+                throw new ArgumentException(
+                    "Entry class name cannot be null or whitespace.",
+                    nameof(entryClassName)
+                );
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             _language = language ?? HardwireCodeGenerationLanguage.CSharp;
             _context = new HardwireCodeGenerationContext(
                 namespaceName,
@@ -37,6 +60,10 @@ namespace NovaSharp.Hardwire
         /// </summary>
         public void BuildCodeModel(Table table)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
             _context.GenerateCode(table);
         }
 
@@ -46,6 +73,10 @@ namespace NovaSharp.Hardwire
         public string GenerateSourceCode()
         {
             CodeDomProvider codeDomProvider = _language.CodeDomProvider;
+            if (codeDomProvider == null)
+            {
+                throw new InvalidOperationException("CodeDom provider cannot be null.");
+            }
             CodeGeneratorOptions codeGeneratorOptions = new();
 
             using StringWriter sourceWriter = new();

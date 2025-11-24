@@ -22,10 +22,11 @@ namespace NovaSharp.VsCodeDebugger
     {
         private readonly object _lock = new object();
         private readonly List<AsyncDebugger> _debuggerList = new List<AsyncDebugger>();
-        private AsyncDebugger _current = null;
+        private AsyncDebugger _current;
         private readonly ManualResetEvent _stopEvent = new ManualResetEvent(false);
-        private bool _started = false;
+        private bool _started;
         private readonly int _port;
+        private bool _disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NovaSharpVsCodeDebugServer" /> class.
@@ -73,6 +74,13 @@ namespace NovaSharp.VsCodeDebugger
             Func<SourceCode, string> sourceFinder = null
         )
         {
+            ThrowIfDisposed();
+
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             lock (_lock)
             {
                 if (_debuggerList.Any(d => d.Script == script))
@@ -100,6 +108,8 @@ namespace NovaSharp.VsCodeDebugger
         /// </summary>
         public IEnumerable<KeyValuePair<int, string>> GetAttachedDebuggersByIdAndName()
         {
+            ThrowIfDisposed();
+
             lock (_lock)
             {
                 return _debuggerList
@@ -118,6 +128,8 @@ namespace NovaSharp.VsCodeDebugger
         {
             get
             {
+                ThrowIfDisposed();
+
                 lock (_lock)
                 {
                     return _current != null ? _current.Id : (int?)null;
@@ -125,6 +137,8 @@ namespace NovaSharp.VsCodeDebugger
             }
             set
             {
+                ThrowIfDisposed();
+
                 lock (_lock)
                 {
                     if (value == null)
@@ -153,6 +167,8 @@ namespace NovaSharp.VsCodeDebugger
         {
             get
             {
+                ThrowIfDisposed();
+
                 lock (_lock)
                 {
                     return _current != null ? _current.Script : null;
@@ -160,6 +176,8 @@ namespace NovaSharp.VsCodeDebugger
             }
             set
             {
+                ThrowIfDisposed();
+
                 lock (_lock)
                 {
                     if (value == null)
@@ -189,6 +207,13 @@ namespace NovaSharp.VsCodeDebugger
         /// <exception cref="ArgumentException">Thrown if the script cannot be found.</exception>
         public void Detach(Script script)
         {
+            ThrowIfDisposed();
+
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             lock (_lock)
             {
                 AsyncDebugger removed = _debuggerList.FirstOrDefault(d => d.Script == script);
@@ -223,24 +248,62 @@ namespace NovaSharp.VsCodeDebugger
         public Action<string> Logger { get; set; }
 
         /// <summary>
-        /// Gets the debugger object. Obsolete, use the new interface using the Attach method instead.
+        /// Gets the debugger object registered with the current server instance.
         /// </summary>
         [Obsolete("Use the Attach method instead.")]
-        public IDebugger GetDebugger()
+        public IDebugger CurrentDebugger
         {
-            lock (_lock)
+            get
             {
-                return _current;
+                ThrowIfDisposed();
+
+                lock (_lock)
+                {
+                    return _current;
+                }
             }
         }
 
         /// <summary>
         /// Signals the listener loop to stop accepting new VS Code connections.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Cannot stop; server was not started.</exception>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~NovaSharpVsCodeDebugServer()
+        {
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
             _stopEvent.Set();
+
+            if (disposing)
+            {
+                _stopEvent.Dispose();
+
+                lock (_lock)
+                {
+                    foreach (AsyncDebugger debugger in _debuggerList)
+                    {
+                        debugger.Client = null;
+                    }
+
+                    _debuggerList.Clear();
+                    _current = null;
+                }
+            }
+
+            _disposed = true;
         }
 
         /// <summary>
@@ -248,6 +311,8 @@ namespace NovaSharp.VsCodeDebugger
         /// </summary>
         public NovaSharpVsCodeDebugServer Start()
         {
+            ThrowIfDisposed();
+
             lock (_lock)
             {
                 if (_started)
@@ -278,7 +343,7 @@ namespace NovaSharp.VsCodeDebugger
         {
             try
             {
-                while (!_stopEvent.WaitOne(0))
+                while (!IsStopRequested())
                 {
 #if DOTNET_CORE
                     Task<Socket> task = serverSocket.AcceptSocketAsync();
@@ -390,6 +455,26 @@ namespace NovaSharp.VsCodeDebugger
 
             return string.Format(CultureInfo.InvariantCulture, format, args);
         }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(NovaSharpVsCodeDebugServer));
+            }
+        }
+
+        private bool IsStopRequested()
+        {
+            try
+            {
+                return _stopEvent.WaitOne(0);
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
+            }
+        }
     }
 }
 
@@ -459,13 +544,13 @@ namespace NovaSharp.VsCodeDebugger
         /// </summary>
         public Action<string> Logger { get; set; }
 
-        [Obsolete("Use the Attach method instead.")]
         /// <summary>
         /// Returns <c>null</c> because live debugging is not supported on this platform.
         /// </summary>
-        public IDebugger GetDebugger()
+        [Obsolete("Use the Attach method instead.")]
+        public IDebugger CurrentDebugger
         {
-            return null;
+            get { return null; }
         }
 
         /// <summary>

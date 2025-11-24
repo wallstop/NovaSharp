@@ -1,7 +1,11 @@
 namespace NovaSharp.Hardwire.Languages
 {
+    using System;
     using System.CodeDom;
     using System.CodeDom.Compiler;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
 
     /// <summary>
     /// Abstraction over the language-specific helpers needed to emit hardwired descriptors.
@@ -72,6 +76,11 @@ namespace NovaSharp.Hardwire.Languages
 
         protected string ExpressionToString(CodeExpression exp)
         {
+            if (exp == null)
+            {
+                throw new ArgumentNullException(nameof(exp));
+            }
+
             using StringWriter sourceWriter = new();
             CodeDomProvider.GenerateCodeFromExpression(
                 exp,
@@ -83,10 +92,21 @@ namespace NovaSharp.Hardwire.Languages
 
         protected CodeExpression SnippetExpression(string format, params CodeExpression[] args)
         {
+            if (string.IsNullOrEmpty(format))
+            {
+                throw new ArgumentException("Format cannot be null or empty.", nameof(format));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             string fmt = "(" + format + ")";
             string res = string.Format(
+                CultureInfo.InvariantCulture,
                 fmt,
-                args.Select(e => ExpressionToString(e)).OfType<object>().ToArray()
+                args.Select(ExpressionToString).OfType<object>().ToArray()
             );
             return new CodeSnippetExpression(res);
         }

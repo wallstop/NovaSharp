@@ -1,5 +1,6 @@
 namespace NovaSharp.Hardwire.Generators.Base
 {
+    using System;
     using System.CodeDom;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -33,10 +34,25 @@ namespace NovaSharp.Hardwire.Generators.Base
         /// <returns>Expressions that instantiate the descriptor.</returns>
         public CodeExpression[] Generate(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             bool isStatic = table.Get("static").Boolean;
             string memberType = table.Get("type").String;
             string name = table.Get("name").String;
@@ -47,7 +63,7 @@ namespace NovaSharp.Hardwire.Generators.Base
 
             if (declvtype && canWrite)
             {
-                generator.Warning(
+                generatorContext.Warning(
                     "Member '{0}.{1}::Set' will be a no-op, as it's a member of a value type.",
                     decltype,
                     name

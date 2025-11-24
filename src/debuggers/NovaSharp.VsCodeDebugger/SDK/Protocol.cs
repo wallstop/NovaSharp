@@ -188,7 +188,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
         private bool _stopRequested;
 
-        public ProtocolServer()
+        protected ProtocolServer()
         {
             _sequenceNumber = 1;
             _bodyLength = -1;

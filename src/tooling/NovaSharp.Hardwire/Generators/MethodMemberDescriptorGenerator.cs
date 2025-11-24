@@ -42,10 +42,25 @@ namespace NovaSharp.Hardwire.Generators
         /// </summary>
         public CodeExpression[] Generate(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (generatorContext == null)
+            {
+                throw new ArgumentNullException(nameof(generatorContext));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             bool isArray = table.Get("arraytype").IsNotNil();
             string memberName = table.Get("name").String;
 
@@ -74,7 +89,7 @@ namespace NovaSharp.Hardwire.Generators
             classCode.Members.Add(ctor);
 
             // Create the parameters
-            List<HardwireParameterDescriptor> paramDescs =
+            IReadOnlyList<HardwireParameterDescriptor> paramDescs =
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(table.Get("params").Table);
 
             int paramNum = paramDescs.Count;
@@ -203,7 +218,7 @@ namespace NovaSharp.Hardwire.Generators
                     condition,
                     GenerateCall(
                             table,
-                            generator,
+                            generatorContext,
                             isVoid,
                             isCtor,
                             isStatic,
@@ -224,7 +239,7 @@ namespace NovaSharp.Hardwire.Generators
             m.Statements.AddRange(
                 GenerateCall(
                     table,
-                    generator,
+                    generatorContext,
                     isVoid,
                     isCtor,
                     isStatic,
@@ -243,14 +258,14 @@ namespace NovaSharp.Hardwire.Generators
             return new CodeExpression[] { new CodeObjectCreateExpression(className) };
         }
 
-        private string GenerateRefParamVariable(int refparIdx)
+        private static string GenerateRefParamVariable(int refparIdx)
         {
             return $"refp_{refparIdx}";
         }
 
-        private CodeStatementCollection GenerateCall(
+        private static CodeStatementCollection GenerateCall(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             bool isVoid,
             bool isCtor,
             bool isStatic,
@@ -273,10 +288,11 @@ namespace NovaSharp.Hardwire.Generators
             {
                 if (arrayCtorType != null)
                 {
-                    CodeExpression exp = generator.TargetLanguage.CreateMultidimensionalArray(
-                        arrayCtorType,
-                        arguments
-                    );
+                    CodeExpression exp =
+                        generatorContext.TargetLanguage.CreateMultidimensionalArray(
+                            arrayCtorType,
+                            arguments
+                        );
 
                     retVal = new CodeArrayCreateExpression(arrayCtorType, arguments);
                 }
@@ -289,7 +305,7 @@ namespace NovaSharp.Hardwire.Generators
             {
                 GenerateSpecialNameCall(
                     table,
-                    generator,
+                    generatorContext,
                     isVoid,
                     isCtor,
                     isStatic,
@@ -357,7 +373,7 @@ namespace NovaSharp.Hardwire.Generators
             return coll;
         }
 
-        private CodeExpression WrapFromObject(CodeExpression retVal)
+        private static CodeMethodInvokeExpression WrapFromObject(CodeExpression retVal)
         {
             CodeVariableReferenceExpression script = new("script");
             return new CodeMethodInvokeExpression(
@@ -368,9 +384,9 @@ namespace NovaSharp.Hardwire.Generators
             );
         }
 
-        private void GenerateSpecialNameCall(
+        private static void GenerateSpecialNameCall(
             Table table,
-            HardwireCodeGenerationContext generator,
+            HardwireCodeGenerationContext generatorContext,
             bool isVoid,
             bool isCtor,
             bool isStatic,
@@ -392,7 +408,7 @@ namespace NovaSharp.Hardwire.Generators
                     if (isStatic)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
                             "Static indexers are not supported by hardwired descriptors."
                         );
@@ -407,7 +423,7 @@ namespace NovaSharp.Hardwire.Generators
                     if (isStatic)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
                             "Static indexers are not supported by hardwired descriptors."
                         );
@@ -435,7 +451,9 @@ namespace NovaSharp.Hardwire.Generators
                     GenerateBooleanOperator(paramThis, coll, true);
                     break;
                 case ReflectionSpecialNameType.OperatorFalse:
-                    generator.Minor("'false' operator is implemented in terms of 'true' operator.");
+                    generatorContext.Minor(
+                        "'false' operator is implemented in terms of 'true' operator."
+                    );
                     GenerateBooleanOperator(paramThis, coll, false);
                     break;
                 case ReflectionSpecialNameType.PropertyGetter:
@@ -482,13 +500,13 @@ namespace NovaSharp.Hardwire.Generators
                     exp = BinaryOperator(CodeBinaryOperatorType.BitwiseOr, paramThis, arguments);
                     break;
                 case ReflectionSpecialNameType.OperatorDec:
-                    exp = generator.TargetLanguage.UnaryDecrement(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryDecrement(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support decrement operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support decrement operators."
                         );
                     }
 
@@ -504,13 +522,13 @@ namespace NovaSharp.Hardwire.Generators
                     );
                     break;
                 case ReflectionSpecialNameType.OperatorXor:
-                    exp = generator.TargetLanguage.BinaryXor(arguments[0], arguments[1]);
+                    exp = generatorContext.TargetLanguage.BinaryXor(arguments[0], arguments[1]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support XOR operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support XOR operators."
                         );
                     }
 
@@ -526,13 +544,13 @@ namespace NovaSharp.Hardwire.Generators
                     );
                     break;
                 case ReflectionSpecialNameType.OperatorInc:
-                    exp = generator.TargetLanguage.UnaryIncrement(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryIncrement(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support increment operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support increment operators."
                         );
                     }
 
@@ -555,13 +573,13 @@ namespace NovaSharp.Hardwire.Generators
                     );
                     break;
                 case ReflectionSpecialNameType.OperatorNot:
-                    exp = generator.TargetLanguage.UnaryLogicalNot(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryLogicalNot(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support logical NOT operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support logical NOT operators."
                         );
                     }
 
@@ -573,13 +591,13 @@ namespace NovaSharp.Hardwire.Generators
                     exp = BinaryOperator(CodeBinaryOperatorType.Multiply, paramThis, arguments);
                     break;
                 case ReflectionSpecialNameType.OperatorCompl:
-                    exp = generator.TargetLanguage.UnaryOneComplement(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryOneComplement(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support bitwise NOT operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support bitwise NOT operators."
                         );
                     }
 
@@ -588,25 +606,25 @@ namespace NovaSharp.Hardwire.Generators
                     exp = BinaryOperator(CodeBinaryOperatorType.Subtract, paramThis, arguments);
                     break;
                 case ReflectionSpecialNameType.OperatorNeg:
-                    exp = generator.TargetLanguage.UnaryNegation(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryNegation(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support negation operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support negation operators."
                         );
                     }
 
                     break;
                 case ReflectionSpecialNameType.OperatorUnaryPlus:
-                    exp = generator.TargetLanguage.UnaryPlus(arguments[0]);
+                    exp = generatorContext.TargetLanguage.UnaryPlus(arguments[0]);
                     if (exp == null)
                     {
                         EmitInvalid(
-                            generator,
+                            generatorContext,
                             coll,
-                            $"Language {generator.TargetLanguage.Name} does not support unary + operators."
+                            $"Language {generatorContext.TargetLanguage.Name} does not support unary + operators."
                         );
                     }
 
@@ -640,7 +658,7 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
-        private CodeExpression BinaryOperator(
+        private static CodeBinaryOperatorExpression BinaryOperator(
             CodeBinaryOperatorType codeBinaryOperatorType,
             CodeExpression paramThis,
             CodeExpression[] arguments
@@ -653,7 +671,7 @@ namespace NovaSharp.Hardwire.Generators
             );
         }
 
-        private void GenerateBooleanOperator(
+        private static void GenerateBooleanOperator(
             CodeExpression paramThis,
             CodeStatementCollection coll,
             bool boolOp
@@ -674,13 +692,13 @@ namespace NovaSharp.Hardwire.Generators
             );
         }
 
-        private void EmitInvalid(
-            HardwireCodeGenerationContext generator,
+        private static void EmitInvalid(
+            HardwireCodeGenerationContext generatorContext,
             CodeStatementCollection coll,
             string message
         )
         {
-            generator.Warning(message);
+            generatorContext.Warning(message);
             coll.Add(
                 new CodeThrowExceptionStatement(
                     new CodeObjectCreateExpression(
