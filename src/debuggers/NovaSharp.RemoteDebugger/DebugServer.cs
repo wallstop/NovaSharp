@@ -27,10 +27,10 @@ namespace NovaSharp.RemoteDebugger
         private readonly string _appName;
         private readonly object _lock = new();
         private readonly BlockingQueue<DebuggerAction> _queuedActions = new();
-        private readonly SourceRef _lastSentSourceRef = null;
-        private bool _inGetActionLoop = false;
-        private bool _hostBusySent = false;
-        private bool _requestPause = false;
+        private SourceRef _lastSentSourceRef;
+        private bool _inGetActionLoop;
+        private bool _hostBusySent;
+        private bool _requestPause;
         private readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
         private bool _freeRunAfterAttach;
         private Regex _errorRegEx = new(@"\A.*\Z");
@@ -298,6 +298,8 @@ namespace NovaSharp.RemoteDebugger
                     {
                         SendSourceRef(xw, sourceref);
                     });
+
+                    _lastSentSourceRef = sourceref;
                 }
 
                 while (true)

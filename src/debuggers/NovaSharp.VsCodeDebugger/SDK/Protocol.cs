@@ -158,12 +158,12 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Outbound event notification.
     /// </summary>
-    public class Event : ProtocolMessage
+    public class ProtocolEvent : ProtocolMessage
     {
         public string @event { get; }
         public object Body { get; }
 
-        public Event(string type, object bdy = null)
+        public ProtocolEvent(string type, object bdy = null)
             : base("event")
         {
             @event = type;
@@ -250,7 +250,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// <summary>
         /// Sends an event payload to VS Code.
         /// </summary>
-        public void SendEvent(Event e)
+        public void SendEvent(ProtocolEvent e)
         {
             SendMessage(e);
         }
@@ -352,7 +352,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
             }
             if (Trace && message.Type == "event")
             {
-                Event e = (Event)message;
+                ProtocolEvent e = (ProtocolEvent)message;
                 Console.Error.WriteLine($"E {e.@event}: {JsonTableConverter.ObjectToJson(e.Body)}");
             }
 
@@ -403,7 +403,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
         public ByteBuffer()
         {
-            _buffer = new byte[0];
+            _buffer = Array.Empty<byte>();
         }
 
         /// <summary>

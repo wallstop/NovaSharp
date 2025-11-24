@@ -132,12 +132,11 @@ namespace NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets the number of upvalues in this closure
+        /// Gets the number of upvalues in this closure.
         /// </summary>
-        /// <returns>The number of upvalues in this closure</returns>
-        public int GetUpvaluesCount()
+        public int UpvaluesCount
         {
-            return ClosureContext.Count;
+            get { return ClosureContext.Count; }
         }
 
         /// <summary>
@@ -161,24 +160,26 @@ namespace NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets the type of the upvalues contained in this closure
+        /// Gets the type of the upvalues contained in this closure.
         /// </summary>
-        /// <returns></returns>
-        public UpvaluesType GetUpvaluesType()
+        public UpvaluesType CapturedUpvaluesType
         {
-            int count = GetUpvaluesCount();
+            get
+            {
+                int count = UpvaluesCount;
 
-            if (count == 0)
-            {
-                return default;
-            }
-            else if (count == 1 && GetUpvalueName(0) == WellKnownSymbols.ENV)
-            {
-                return UpvaluesType.Environment;
-            }
-            else
-            {
-                return UpvaluesType.Closure;
+                if (count == 0)
+                {
+                    return default;
+                }
+                else if (count == 1 && GetUpvalueName(0) == WellKnownSymbols.ENV)
+                {
+                    return UpvaluesType.Environment;
+                }
+                else
+                {
+                    return UpvaluesType.Closure;
+                }
             }
         }
     }

@@ -314,7 +314,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Signals that the adapter is ready to accept configuration requests.
     /// </summary>
-    public class InitializedEvent : Event
+    public class InitializedEvent : ProtocolEvent
     {
         public InitializedEvent()
             : base("initialized") { }
@@ -323,7 +323,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Notifies VS Code that execution paused (breakpoint, step, exception, etc.).
     /// </summary>
-    public class StoppedEvent : Event
+    public class StoppedEvent : ProtocolEvent
     {
         public StoppedEvent(int tid, string reasn, string txt = null)
             : base(
@@ -340,7 +340,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Indicates that the debuggee process terminated with an exit code.
     /// </summary>
-    public class ExitedEvent : Event
+    public class ExitedEvent : ProtocolEvent
     {
         public ExitedEvent(int exCode)
             : base("exited", new { exitCode = exCode }) { }
@@ -349,7 +349,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Indicates that the debugging session has ended.
     /// </summary>
-    public class TerminatedEvent : Event
+    public class TerminatedEvent : ProtocolEvent
     {
         public TerminatedEvent()
             : base("terminated") { }
@@ -358,7 +358,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Announces that a thread started or exited.
     /// </summary>
-    public class ThreadEvent : Event
+    public class ThreadEvent : ProtocolEvent
     {
         public ThreadEvent(string reasn, int tid)
             : base("thread", new { reason = reasn, threadId = tid }) { }
@@ -367,7 +367,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// <summary>
     /// Sends console output (stdout/stderr/custom channels) back to VS Code.
     /// </summary>
-    public class OutputEvent : Event
+    public class OutputEvent : ProtocolEvent
     {
         public OutputEvent(string cat, string outpt)
             : base("output", new { category = cat, output = outpt }) { }
@@ -626,7 +626,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// <summary>
         /// Routes incoming requests to concrete adapter overrides.
         /// </summary>
-        protected override void DispatchRequest(string command, Table args, Response response)
+        protected override void DispatchRequest(string Command, Table args, Response response)
         {
             if (args == null)
             {
@@ -635,7 +635,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
             try
             {
-                switch (command)
+                switch (Command)
                 {
                     case "initialize":
 
@@ -681,11 +681,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
                         break;
 
                     case "next":
-                        Next(response, args);
+                        StepOver(response, args);
                         break;
 
                     case "continue":
-                        Continue(response, args);
+                        ContinueExecution(response, args);
                         break;
 
                     case "stepIn":
@@ -741,7 +741,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                             response,
                             1014,
                             "unrecognized request: {_request}",
-                            new { _request = command }
+                            new { _request = Command }
                         );
                         break;
                 }
@@ -752,7 +752,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     response,
                     1104,
                     "error while processing request '{_request}' (exception: {_exception})",
-                    new { _request = command, _exception = e.DecoratedMessage ?? e.Message }
+                    new { _request = Command, _exception = e.DecoratedMessage ?? e.Message }
                 );
             }
             catch (InterpreterException e)
@@ -762,11 +762,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     response,
                     1104,
                     "error while processing request '{_request}' (exception: {_exception})",
-                    new { _request = command, _exception = message }
+                    new { _request = Command, _exception = message }
                 );
             }
 
-            if (command == "disconnect")
+            if (Command == "disconnect")
             {
                 Stop();
             }
@@ -810,12 +810,12 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// <summary>
         /// Resumes execution.
         /// </summary>
-        public abstract void Continue(Response response, Table arguments);
+        public abstract void ContinueExecution(Response response, Table arguments);
 
         /// <summary>
         /// Executes a step-over.
         /// </summary>
-        public abstract void Next(Response response, Table arguments);
+        public abstract void StepOver(Response response, Table arguments);
 
         /// <summary>
         /// Executes a step-in.

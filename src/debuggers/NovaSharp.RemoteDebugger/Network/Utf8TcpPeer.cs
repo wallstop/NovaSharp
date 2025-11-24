@@ -12,7 +12,7 @@ namespace NovaSharp.RemoteDebugger.Network
     {
         private readonly Socket _socket;
         private readonly Utf8TcpServer _server;
-        private int _prevSize = 0;
+        private int _prevSize;
         private readonly byte[] _recvBuffer;
 
         /// <summary>

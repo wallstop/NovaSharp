@@ -364,7 +364,7 @@ namespace NovaSharp.Interpreter
                 throw new ArgumentException("stream is readonly!");
             }
 
-            Closure.UpvaluesType upvaluesType = function.Function.GetUpvaluesType();
+            Closure.UpvaluesType upvaluesType = function.Function.CapturedUpvaluesType;
 
             if (upvaluesType == Closure.UpvaluesType.Closure)
             {

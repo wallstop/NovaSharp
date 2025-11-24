@@ -1,5 +1,6 @@
 namespace NovaSharp.Hardwire.Generators
 {
+    using System;
     using System.CodeDom;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -34,7 +35,7 @@ namespace NovaSharp.Hardwire.Generators
         {
             generator.Error("Missing code generator for '{0}'.", ManagedType);
 
-            return new CodeExpression[0];
+            return Array.Empty<CodeExpression>();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         private readonly AsyncDebugger _debug;
         private readonly NovaSharpVsCodeDebugServer _server;
         private readonly List<DynValue> _variables = new();
-        private bool _notifyExecutionEnd = false;
+        private bool _notifyExecutionEnd;
 
         private const int ScopeLocals = 65536;
         private const int ScopeSelf = 65537;
@@ -114,7 +114,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <summary>
         /// Resumes script execution when VS Code issues a Continue request.
         /// </summary>
-        public override void Continue(Response response, Table Arguments)
+        public override void ContinueExecution(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -339,7 +339,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <summary>
         /// Performs a step-over action in response to a Next request.
         /// </summary>
-        public override void Next(Response response, Table Arguments)
+        public override void StepOver(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)

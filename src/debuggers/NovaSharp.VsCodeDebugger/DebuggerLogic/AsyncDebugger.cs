@@ -21,11 +21,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     internal sealed class AsyncDebugger : IDebugger
     {
         private static readonly object SAsyncDebuggerIdLock = new();
-        private static int AsyncDebuggerIdCounter = 0;
+        private static int AsyncDebuggerIdCounter;
 
         private readonly object _lock = new();
         private IAsyncDebuggerClient _client;
-        private DebuggerAction _pendingAction = null;
+        private DebuggerAction _pendingAction;
 
         private readonly List<WatchItem>[] _watchItems;
         private readonly Dictionary<int, SourceCode> _sourcesMap = new();

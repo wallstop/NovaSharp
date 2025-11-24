@@ -105,7 +105,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <summary>
         /// Handles continue requests by reprinting the script list.
         /// </summary>
-        public override void Continue(Response response, Table arguments)
+        public override void ContinueExecution(Response response, Table arguments)
         {
             SendList();
             SendResponse(response);
@@ -177,7 +177,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <summary>
         /// Prints the script list when VS Code attempts to step while unattached.
         /// </summary>
-        public override void Next(Response response, Table arguments)
+        public override void StepOver(Response response, Table arguments)
         {
             SendList();
             SendResponse(response);

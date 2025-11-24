@@ -1,3 +1,4 @@
+﻿#pragma warning disable IDE0130
 namespace System.Runtime.CompilerServices
 {
     /// <summary>
@@ -5,3 +6,4 @@ namespace System.Runtime.CompilerServices
     /// </summary>
     internal static class IsExternalInit { }
 }
+#pragma warning restore IDE0130

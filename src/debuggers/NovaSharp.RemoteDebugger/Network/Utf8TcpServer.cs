@@ -14,7 +14,7 @@ namespace NovaSharp.RemoteDebugger.Network
     {
         private readonly int _portNumber = 1912;
         private readonly IPAddress _ipAddress;
-        private TcpListener _listener = null;
+        private TcpListener _listener;
         private Action<string> _logger;
         private readonly List<Utf8TcpPeer> _peerList = new();
         private readonly object _peerListLock = new();

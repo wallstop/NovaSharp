@@ -17,10 +17,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(1));
+                Assert.That(closure.UpvaluesCount, Is.EqualTo(1));
                 Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
                 Assert.That(
-                    closure.GetUpvaluesType(),
+                    closure.CapturedUpvaluesType,
                     Is.EqualTo(Closure.UpvaluesType.Environment)
                 );
             });
@@ -50,10 +50,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(1));
+                Assert.That(closure.UpvaluesCount, Is.EqualTo(1));
                 Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
                 Assert.That(
-                    closure.GetUpvaluesType(),
+                    closure.CapturedUpvaluesType,
                     Is.EqualTo(Closure.UpvaluesType.Environment)
                 );
             });
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Closure closure = function.Function;
 
-            int upvalueCount = closure.GetUpvaluesCount();
+            int upvalueCount = closure.UpvaluesCount;
             string[] names = new string[upvalueCount];
             for (int i = 0; i < upvalueCount; i++)
             {
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(yIndex, Is.GreaterThanOrEqualTo(0));
                 Assert.That(closure.GetUpvalue(xIndex).Number, Is.EqualTo(3d));
                 Assert.That(closure.GetUpvalue(yIndex).Number, Is.EqualTo(4d));
-                Assert.That(closure.GetUpvaluesType(), Is.EqualTo(Closure.UpvaluesType.Closure));
+                Assert.That(closure.CapturedUpvaluesType, Is.EqualTo(Closure.UpvaluesType.Closure));
             });
         }
 
@@ -152,8 +152,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.GetUpvaluesCount(), Is.EqualTo(0));
-                Assert.That(closure.GetUpvaluesType(), Is.EqualTo(default(Closure.UpvaluesType)));
+                Assert.That(closure.UpvaluesCount, Is.EqualTo(0));
+                Assert.That(
+                    closure.CapturedUpvaluesType,
+                    Is.EqualTo(default(Closure.UpvaluesType))
+                );
             });
         }
     }
