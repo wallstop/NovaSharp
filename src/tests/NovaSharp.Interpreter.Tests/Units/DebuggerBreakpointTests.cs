@@ -138,7 +138,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public void Update(WatchType watchType, IEnumerable<WatchItem> items) { }
 
-            public List<DynamicExpression> GetWatchItems()
+            public IReadOnlyList<DynamicExpression> GetWatchItems()
             {
                 return new List<DynamicExpression>();
             }

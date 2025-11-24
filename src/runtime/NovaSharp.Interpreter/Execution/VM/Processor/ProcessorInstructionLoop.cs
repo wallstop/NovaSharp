@@ -761,10 +761,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             {
                 return _executionStack.Peek().ClosureScope[s.IndexValue];
             }
-            else
-            {
-                throw new Exception("unsupported symbol type");
-            }
+            throw new InvalidOperationException("Unsupported symbol type in closure capture.");
         }
 
         private void ExecMkTuple(Instruction i)

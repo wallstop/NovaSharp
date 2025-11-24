@@ -907,7 +907,7 @@ namespace NovaSharp.Interpreter
                 $"[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: {profile.DisplayName}. Update Script.Options.CompatibilityVersion or ship a custom bit32 module.";
 
             Action<string> sink = Options.DebugPrint ?? Script.GlobalOptions.Platform.DefaultPrint;
-            sink?.Invoke(message);
+            sink(message);
 
             _bit32CompatibilityWarningEmitted = true;
         }

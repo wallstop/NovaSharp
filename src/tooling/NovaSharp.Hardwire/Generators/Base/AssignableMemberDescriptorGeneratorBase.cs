@@ -100,10 +100,10 @@ namespace NovaSharp.Hardwire.Generators.Base
             if (canRead)
             {
                 CodeExpression memberExp = GetMemberAccessExpression(thisExp, name);
-                //	protected virtual object GetValueImpl(Script script, object obj)
+                //	protected virtual object GetValueCore(Script script, object obj)
                 CodeMemberMethod m = new();
                 classCode.Members.Add(m);
-                m.Name = "GetValueImpl";
+                m.Name = "GetValueCore";
                 m.Attributes = MemberAttributes.Override | MemberAttributes.Family;
                 m.ReturnType = new CodeTypeReference(typeof(object));
                 m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Script), "script"));
@@ -113,10 +113,10 @@ namespace NovaSharp.Hardwire.Generators.Base
 
             if (canWrite)
             {
-                //	protected virtual object GetValueImpl(Script script, object obj)
+                //	protected virtual object GetValueCore(Script script, object obj)
                 CodeMemberMethod m = new();
                 classCode.Members.Add(m);
-                m.Name = "SetValueImpl";
+                m.Name = "SetValueCore";
                 m.Attributes = MemberAttributes.Override | MemberAttributes.Family;
                 m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Script), "script"));
                 m.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "obj"));

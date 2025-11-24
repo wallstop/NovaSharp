@@ -2,6 +2,7 @@
 namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 {
 #pragma warning disable IDE1006 // Mirrors upstream Lua C API naming (snake_case preserved intentionally).
+#pragma warning disable CA1720 // Legacy LuaPort identifiers intentionally match upstream pointer naming.
 
     using System;
     using lua_Integer = System.Int32;

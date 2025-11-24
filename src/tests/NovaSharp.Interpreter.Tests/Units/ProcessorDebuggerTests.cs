@@ -1398,7 +1398,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 }
             }
 
-            public List<DynamicExpression> GetWatchItems()
+            public IReadOnlyList<DynamicExpression> GetWatchItems()
             {
                 return WatchItems.Select(expr => expr).ToList();
             }

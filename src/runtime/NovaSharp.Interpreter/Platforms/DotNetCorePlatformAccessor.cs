@@ -105,7 +105,10 @@ namespace NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException("type");
+                    throw new ArgumentException(
+                        "Unsupported standard stream requested.",
+                        nameof(type)
+                    );
             }
         }
 
@@ -196,13 +199,13 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Filters the CoreModules enumeration to exclude non-supported operations
         /// </summary>
-        /// <param name="module">The requested modules.</param>
+        /// <param name="coreModules">The requested modules.</param>
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        public override CoreModules FilterSupportedCoreModules(CoreModules module)
+        public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         /// <summary>

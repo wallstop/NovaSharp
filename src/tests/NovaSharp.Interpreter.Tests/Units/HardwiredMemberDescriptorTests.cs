@@ -95,13 +95,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                     MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite
                 ) { }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 SampleTarget target = (SampleTarget)obj;
                 return target.Value;
             }
 
-            protected override void SetValueImpl(Script script, object obj, object value)
+            protected override void SetValueCore(Script script, object obj, object value)
             {
                 SampleTarget target = (SampleTarget)obj;
                 target.Value = (int)value;
@@ -118,7 +118,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _value = value;
             }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 return _value;
             }

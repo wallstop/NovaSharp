@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
         {
             this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
 
-            List<int> outParams = null;
+            IList<int> outParams = null;
             object[] pars = base.BuildArgumentList(script, obj, context, args, out outParams);
             object retv = Invoke(script, obj, pars, CalcArgsCount(pars));
 

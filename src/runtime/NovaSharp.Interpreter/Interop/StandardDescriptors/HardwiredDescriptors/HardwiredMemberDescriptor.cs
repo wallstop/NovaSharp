@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
         public DynValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
-            object result = GetValueImpl(script, obj);
+            object result = GetValueCore(script, obj);
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
@@ -70,13 +70,13 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
                 null,
                 false
             );
-            SetValueImpl(script, obj, v);
+            SetValueCore(script, obj, v);
         }
 
         /// <summary>
         /// Override to supply the actual getter implementation for the descriptor.
         /// </summary>
-        protected virtual object GetValueImpl(Script script, object obj)
+        protected virtual object GetValueCore(Script script, object obj)
         {
             throw new InvalidOperationException(
                 "GetValue on write-only hardwired descriptor " + Name
@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
         /// <summary>
         /// Override to supply the actual setter implementation for the descriptor.
         /// </summary>
-        protected virtual void SetValueImpl(Script script, object obj, object value)
+        protected virtual void SetValueCore(Script script, object obj, object value)
         {
             throw new InvalidOperationException(
                 "SetValue on read-only hardwired descriptor " + Name

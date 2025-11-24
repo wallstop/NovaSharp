@@ -372,13 +372,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public object LastAssignedValue { get; private set; }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 GetCallCount += 1;
                 return $"value-for:{obj}";
             }
 
-            protected override void SetValueImpl(Script script, object obj, object value)
+            protected override void SetValueCore(Script script, object obj, object value)
             {
                 SetCallCount += 1;
                 LastAssignedValue = value;

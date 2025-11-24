@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.IO
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
 
     /// <summary>
@@ -8,6 +9,11 @@ namespace NovaSharp.Interpreter.IO
     /// Used to work around the pesky wrappers .NET has over Stream (BinaryReader, StreamWriter, etc.) which think they
     /// own the Stream and close them when they shouldn't. Damn.
     /// </summary>
+    [SuppressMessage(
+        "Usage",
+        "CA2213:Disposable fields should be disposed",
+        Justification = "Wrapper intentionally leaves the underlying stream open so nested readers/writers cannot close shared streams."
+    )]
     public class UndisposableStream : Stream
     {
         private readonly Stream _stream;

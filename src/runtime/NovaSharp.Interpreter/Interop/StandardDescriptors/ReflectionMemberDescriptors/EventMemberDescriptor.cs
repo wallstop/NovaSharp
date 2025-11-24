@@ -712,8 +712,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The v.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to assign.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

@@ -535,7 +535,7 @@ namespace NovaSharp.RemoteDebugger
         /// Gets the watch expressions currently tracked by the debugger.
         /// </summary>
         /// <returns>The list of dynamic expressions representing watch slots.</returns>
-        public List<DynamicExpression> GetWatchItems()
+        public IReadOnlyList<DynamicExpression> GetWatchItems()
         {
             return _watches;
         }

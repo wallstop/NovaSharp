@@ -279,7 +279,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 obj,
                 context,
                 args,
-                out List<int> outParams
+                out IList<int> outParams
             );
             object retv = null;
 
@@ -316,7 +316,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
         /// </summary>
         /// <exception cref="InternalErrorException">Out/Ref params cannot be precompiled.</exception>
-        public virtual void Optimize()
+        public void Optimize()
         {
             ParameterDescriptor[] parameters = GetParameterArray();
 

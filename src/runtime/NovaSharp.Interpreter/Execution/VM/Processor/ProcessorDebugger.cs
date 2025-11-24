@@ -425,7 +425,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             SourceRef sref = GetCurrentSourceRef(instructionPtr);
             ScriptExecutionContext context = new(this, null, sref);
 
-            List<DynamicExpression> watchList = _debug.DebuggerAttached.GetWatchItems();
+            IReadOnlyList<DynamicExpression> watchList = _debug.DebuggerAttached.GetWatchItems();
             List<WatchItem> callStack = GetDebuggerCallStack(sref);
             List<WatchItem> watches = RefreshDebuggerWatches(context, watchList);
             List<WatchItem> vstack = RefreshValueStack();
@@ -482,7 +482,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private static List<WatchItem> RefreshDebuggerWatches(
             ScriptExecutionContext context,
-            List<DynamicExpression> watchList
+            IReadOnlyList<DynamicExpression> watchList
         )
         {
             return watchList.Select(w => RefreshDebuggerWatch(context, w)).ToList();

@@ -163,7 +163,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             object obj,
             ScriptExecutionContext context,
             CallbackArguments args,
-            out List<int> outParams
+            out IList<int> outParams
         )
         {
             if (args == null)
@@ -301,7 +301,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <returns>A DynValue to be returned to scripts</returns>
         protected static DynValue BuildReturnValue(
             Script script,
-            List<int> outParams,
+            IList<int> outParams,
             object[] pars,
             object retv
         )
@@ -382,9 +382,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The v.</param>
+        /// <param name="value">The value to assign.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public virtual void SetValue(Script script, object obj, DynValue v)
+        public virtual void SetValue(Script script, object obj, DynValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

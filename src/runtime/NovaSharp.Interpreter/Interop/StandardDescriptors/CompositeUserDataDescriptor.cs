@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
     /// </summary>
     public class CompositeUserDataDescriptor : IUserDataDescriptor
     {
-        private readonly List<IUserDataDescriptor> _descriptors;
+        private readonly IList<IUserDataDescriptor> _descriptors;
         private readonly Type _type;
 
         /// <summary>
@@ -22,10 +22,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// </summary>
         /// <param name="descriptors">The descriptors.</param>
         /// <param name="type">The type.</param>
-        public CompositeUserDataDescriptor(List<IUserDataDescriptor> descriptors, Type type)
+        public CompositeUserDataDescriptor(IList<IUserDataDescriptor> descriptors, Type type)
         {
-            _descriptors = descriptors;
-            _type = type;
+            _descriptors = descriptors ?? throw new ArgumentNullException(nameof(descriptors));
+            _type = type ?? throw new ArgumentNullException(nameof(type));
         }
 
         /// <summary>
@@ -60,11 +60,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public DynValue Index(Script script, object obj, DynValue index, bool isNameIndex)
+        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                DynValue v = dd.Index(script, obj, index, isNameIndex);
+                DynValue v = dd.Index(script, obj, index, isDirectIndexing);
 
                 if (v != null)
                 {
@@ -88,12 +88,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             object obj,
             DynValue index,
             DynValue value,
-            bool isNameIndex
+            bool isDirectIndexing
         )
         {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                if (dd.SetIndex(script, obj, index, value, isNameIndex))
+                if (dd.SetIndex(script, obj, index, value, isDirectIndexing))
                 {
                     return true;
                 }

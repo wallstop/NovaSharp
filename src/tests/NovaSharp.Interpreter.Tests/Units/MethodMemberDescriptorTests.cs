@@ -588,9 +588,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     internal sealed class AotStubPlatformAccessor : IPlatformAccessor
     {
-        public CoreModules FilterSupportedCoreModules(CoreModules module)
+        public CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         public string GetEnvironmentVariable(string envvarname)
@@ -658,9 +658,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     internal sealed class NonAotStubPlatformAccessor : IPlatformAccessor
     {
-        public CoreModules FilterSupportedCoreModules(CoreModules module)
+        public CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         public string GetEnvironmentVariable(string envvarname)

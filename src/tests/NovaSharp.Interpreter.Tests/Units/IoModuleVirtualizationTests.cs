@@ -250,7 +250,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override bool FileExists(string file) => _files.ContainsKey(file);
 
-            public override CoreModules FilterSupportedCoreModules(CoreModules module) => module;
+            public override CoreModules FilterSupportedCoreModules(CoreModules coreModules) =>
+                coreModules;
 
             public override void DeleteFile(string file)
             {

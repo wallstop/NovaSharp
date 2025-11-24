@@ -802,9 +802,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return null;
             }
 
-            public CoreModules FilterSupportedCoreModules(CoreModules module)
+            public CoreModules FilterSupportedCoreModules(CoreModules coreModules)
             {
-                return _inner.FilterSupportedCoreModules(module);
+                return _inner.FilterSupportedCoreModules(coreModules);
             }
 
             public string GetEnvironmentVariable(string envvarname)

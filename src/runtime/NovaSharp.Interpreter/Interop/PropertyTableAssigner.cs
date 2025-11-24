@@ -325,9 +325,9 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="o">The object.</param>
         /// <param name="data">The data.</param>
-        public virtual void AssignObjectUnchecked(object obj, Table data)
+        public virtual void AssignObjectUnchecked(object o, Table data)
         {
-            AssignObject(obj, data);
+            AssignObject(o, data);
         }
     }
 

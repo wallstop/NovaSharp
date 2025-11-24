@@ -216,7 +216,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             public Dictionary<string, string> Environment { get; } =
                 new(StringComparer.OrdinalIgnoreCase);
 
-            public CoreModules FilterSupportedCoreModules(CoreModules module) => module;
+            public CoreModules FilterSupportedCoreModules(CoreModules coreModules) => coreModules;
 
             public string GetEnvironmentVariable(string envvarname) =>
                 Environment.TryGetValue(envvarname, out string value) ? value : null;

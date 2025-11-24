@@ -307,6 +307,31 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RawGetParamsThrowsWhenPathMissing()
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet("missing", "child")
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("did not point to anything"));
+        }
+
+        [Test]
+        public void RawGetParamsThrowsWhenIntermediateIsNotTable()
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet("leaf", "child")
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("did not point to a table"));
+        }
+
+        [Test]
         public void RemoveParamsReturnsFalseWhenNoKeys()
         {
             Table table = new(new Script());

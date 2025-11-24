@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             MethodInfo method = MetaFixtures.Metadata.Metamethods;
 
-            List<string> names = method.GetMetaNamesFromAttributes();
+            IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
             Assert.That(names, Is.EquivalentTo(new[] { "__index", "__len" }));
         }

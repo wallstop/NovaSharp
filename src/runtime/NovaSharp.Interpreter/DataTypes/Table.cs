@@ -353,7 +353,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(object[] keys, DynValue value)
         {
-            if (keys is not { Length: > 0 })
+            if (keys == null || keys.Length == 0)
             {
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
@@ -501,9 +501,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="keys">The keys to access the table and subtables</param>
         public DynValue RawGet(params object[] keys)
         {
-            return keys is not { Length: > 0 }
-                ? null
-                : ResolveMultipleKeys(keys, out object key).RawGet(key);
+            if (keys == null || keys.Length == 0)
+            {
+                return null;
+            }
+
+            return ResolveMultipleKeys(keys, out object key).RawGet(key);
         }
 
         private bool PerformTableRemove<T>(

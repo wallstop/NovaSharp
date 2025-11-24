@@ -195,7 +195,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        List<DynamicExpression> IDebugger.GetWatchItems()
+        IReadOnlyList<DynamicExpression> IDebugger.GetWatchItems()
         {
             return new List<DynamicExpression>();
         }

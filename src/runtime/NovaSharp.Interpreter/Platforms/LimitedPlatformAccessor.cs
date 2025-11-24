@@ -27,13 +27,13 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Filters the CoreModules enumeration to exclude non-supported operations
         /// </summary>
-        /// <param name="module">The requested modules.</param>
+        /// <param name="coreModules">The requested modules.</param>
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        public override CoreModules FilterSupportedCoreModules(CoreModules module)
+        public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module & (~(CoreModules.Io | CoreModules.OsSystem));
+            return coreModules & (~(CoreModules.Io | CoreModules.OsSystem));
         }
 
         /// <summary>

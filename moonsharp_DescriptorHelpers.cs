@@ -155,12 +155,17 @@ namespace MoonSharp.Interpreter.Interop
         /// </summary>
         /// <param name="mi">The mi.</param>
         /// <returns></returns>
-        public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
+        public static IReadOnlyList<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
-            return mi.GetCustomAttributes(typeof(MoonSharpUserDataMetamethodAttribute), true)
+            List<string> names = mi.GetCustomAttributes(
+                    typeof(MoonSharpUserDataMetamethodAttribute),
+                    true
+                )
                 .OfType<MoonSharpUserDataMetamethodAttribute>()
                 .Select(a => a.Name)
                 .ToList();
+
+            return names.Count == 0 ? Array.Empty<string>() : names;
         }
 
         /// <summary>

@@ -168,12 +168,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                     MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite
                 ) { }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 return ((TestHost)obj).Value;
             }
 
-            protected override void SetValueImpl(Script script, object obj, object value)
+            protected override void SetValueCore(Script script, object obj, object value)
             {
                 ((TestHost)obj).Value = (int)value;
             }
@@ -185,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 : base(typeof(string), "readonly", isStatic: false, MemberDescriptorAccess.CanRead)
             { }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 return "constant";
             }

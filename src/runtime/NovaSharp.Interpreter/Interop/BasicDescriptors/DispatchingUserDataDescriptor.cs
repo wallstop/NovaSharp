@@ -858,18 +858,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 }
             }
 
-            if (p1 != null)
-            {
-                return p1.Equals(p2);
-            }
-            else if (p2 != null)
-            {
-                return p2.Equals(p1);
-            }
-            else
-            {
-                return true;
-            }
+            return Equals(p1, p2);
         }
 
         private DynValue DispatchMetaOnMethod(Script script, object obj, string methodName)

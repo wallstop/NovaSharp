@@ -236,9 +236,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return 0;
             }
 
-            public override CoreModules FilterSupportedCoreModules(CoreModules module)
+            public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
             {
-                return module;
+                return coreModules;
             }
 
             public override string GetEnvironmentVariable(string envvarname)
@@ -299,9 +299,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return 0;
             }
 
-            public override CoreModules FilterSupportedCoreModules(CoreModules module)
+            public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
             {
-                return module;
+                return coreModules;
             }
 
             public override string GetEnvironmentVariable(string envvarname)

@@ -1,6 +1,8 @@
 namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 {
 #pragma warning disable IDE1006 // Mirrors upstream Lua C API naming (snake_case preserved intentionally).
+#pragma warning disable CA1720 // Legacy LuaPort identifiers intentionally match upstream pointer naming.
+#pragma warning disable CA1725 // Legacy LuaPort overrides keep upstream parameter shapes for readability.
 
     //
     // This part taken from KopiLua - https://github.com/NLua/KopiLua
@@ -297,9 +299,9 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return !(ptr1 == ptr2);
         }
 
-        public override bool Equals(object o)
+        public override bool Equals(object obj)
         {
-            return this == (o as CharPtr);
+            return this == (obj as CharPtr);
         }
 
         public override int GetHashCode()

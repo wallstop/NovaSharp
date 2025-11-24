@@ -206,12 +206,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The value to set.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to set.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
-            if (v == null)
+            if (value == null)
             {
-                throw new ArgumentNullException(nameof(v));
+                throw new ArgumentNullException(nameof(value));
             }
 
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
@@ -225,8 +225,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 );
             }
 
-            object value = ScriptToClrConversions.DynValueToObjectOfType(
-                v,
+            object convertedValue = ScriptToClrConversions.DynValueToObjectOfType(
+                value,
                 FieldInfo.FieldType,
                 null,
                 false
@@ -234,18 +234,18 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             try
             {
-                if (value is double d)
+                if (convertedValue is double d)
                 {
-                    value = NumericConversions.DoubleToType(FieldInfo.FieldType, d);
+                    convertedValue = NumericConversions.DoubleToType(FieldInfo.FieldType, d);
                 }
 
-                FieldInfo.SetValue(IsStatic ? null : obj, value);
+                FieldInfo.SetValue(IsStatic ? null : obj, convertedValue);
             }
             catch (ArgumentException)
             {
                 // non-optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     FieldInfo.FieldType
                 );
             }
@@ -253,7 +253,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             {
                 // optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     FieldInfo.FieldType
                 );
             }

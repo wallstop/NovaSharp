@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return LoadImpl(executionContext, args, null);
+            return LoadCore(executionContext, args, null);
         }
 
         // loadsafe (ld [, source [, mode [, env]]])
@@ -114,7 +114,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return LoadImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
+            return LoadCore(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.CoreLib
         /// <param name="args">Loader arguments.</param>
         /// <param name="defaultEnv">Optional default environment when callers omit `env`.</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
-        public static DynValue LoadImpl(
+        public static DynValue LoadCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
@@ -388,7 +388,7 @@ namespace NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 is the module name.</param>
         /// <returns>Compiled module chunk.</returns>
         [NovaSharpModuleMethod(Name = "__require_clr_impl")]
-        public static DynValue __require_clr_impl(
+        public static DynValue RequireClrCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -424,7 +424,7 @@ function(modulename)
 		return m;
 	end
 
-	local func = __require_clr_impl(modulename);
+local func = __require_clr_impl(modulename);
 
 	local res = func(modulename);
 

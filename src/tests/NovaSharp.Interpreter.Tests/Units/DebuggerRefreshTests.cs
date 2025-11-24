@@ -146,7 +146,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 snapshots.Add(items.ToList());
             }
 
-            public List<DynamicExpression> GetWatchItems()
+            public IReadOnlyList<DynamicExpression> GetWatchItems()
             {
                 if (_service == null)
                 {

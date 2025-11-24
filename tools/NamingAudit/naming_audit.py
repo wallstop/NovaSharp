@@ -98,7 +98,6 @@ MEMBER_ALLOWLIST = {
 }
 MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
-    Path("src/runtime/NovaSharp.Interpreter/CoreLib/LoadModule.cs"): {"__require_clr_impl"},
     Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
 }
 TYPE_PATTERN = re.compile(

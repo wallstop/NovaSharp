@@ -78,7 +78,10 @@ namespace NovaSharp.Interpreter.CoreLib
         /// <param name="args">Numeric or numeric-string arguments.</param>
         /// <returns>Concatenated characters.</returns>
         [NovaSharpModuleMethod(Name = "char")]
-        public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static DynValue CharFunction(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,

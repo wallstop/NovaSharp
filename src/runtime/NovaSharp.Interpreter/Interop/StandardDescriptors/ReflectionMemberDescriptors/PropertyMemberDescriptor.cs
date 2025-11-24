@@ -155,7 +155,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             if (getter == null && setter == null)
             {
-                throw new ArgumentNullException("getter and setter cannot both be null");
+                throw new ArgumentNullException(
+                    nameof(getter),
+                    "Getter and setter cannot both be null."
+                );
             }
 
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
@@ -338,12 +341,12 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The value to set.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to set.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
-            if (v == null)
+            if (value == null)
             {
-                throw new ArgumentNullException(nameof(v));
+                throw new ArgumentNullException(nameof(value));
             }
 
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
@@ -357,8 +360,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 );
             }
 
-            object value = ScriptToClrConversions.DynValueToObjectOfType(
-                v,
+            object convertedValue = ScriptToClrConversions.DynValueToObjectOfType(
+                value,
                 PropertyInfo.PropertyType,
                 null,
                 false
@@ -366,9 +369,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             try
             {
-                if (value is double d)
+                if (convertedValue is double d)
                 {
-                    value = NumericConversions.DoubleToType(PropertyInfo.PropertyType, d);
+                    convertedValue = NumericConversions.DoubleToType(PropertyInfo.PropertyType, d);
                 }
 
                 if (AccessMode == InteropAccessMode.LazyOptimized && _optimizedSetter == null)
@@ -378,18 +381,18 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
                 if (_optimizedSetter != null)
                 {
-                    _optimizedSetter(obj, value);
+                    _optimizedSetter(obj, convertedValue);
                 }
                 else
                 {
-                    _setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
+                    _setter.Invoke(IsStatic ? null : obj, new object[] { convertedValue }); // convoluted workaround for --full-aot Mono execution
                 }
             }
             catch (ArgumentException)
             {
                 // non-optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     PropertyInfo.PropertyType
                 );
             }
@@ -397,7 +400,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             {
                 // optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     PropertyInfo.PropertyType
                 );
             }

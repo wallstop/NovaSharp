@@ -377,12 +377,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem)(obj)).Value;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem)(obj));
 					tmp.Value = ((int)(value));
@@ -1397,12 +1397,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<int>)(obj)).Capacity;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					System.Collections.Generic.List<int> tmp = ((System.Collections.Generic.List<int>)(obj));
 					tmp.Capacity = ((int)(value));
@@ -1417,7 +1417,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<int>)(obj)).Count;
 				}
@@ -2090,7 +2090,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Length;
 				}
@@ -2104,7 +2104,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).LongLength;
 				}
@@ -2118,7 +2118,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Rank;
 				}
@@ -2132,7 +2132,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).SyncRoot;
 				}
@@ -2146,7 +2146,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsReadOnly;
 				}
@@ -2160,7 +2160,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsFixedSize;
 				}
@@ -2174,7 +2174,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsSynchronized;
 				}
@@ -3209,12 +3209,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Capacity;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem> tmp = ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj));
 					tmp.Capacity = ((int)(value));
@@ -3229,7 +3229,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Count;
 				}
@@ -3507,12 +3507,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem)(obj)).Value;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem)(obj));
 					tmp.Value = ((int)(value));
@@ -4770,7 +4770,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Length;
 				}
@@ -4784,7 +4784,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).LongLength;
 				}
@@ -4798,7 +4798,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Rank;
 				}
@@ -4812,7 +4812,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).SyncRoot;
 				}
@@ -4826,7 +4826,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsReadOnly;
 				}
@@ -4840,7 +4840,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsFixedSize;
 				}
@@ -4854,7 +4854,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsSynchronized;
 				}
@@ -5886,12 +5886,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Capacity;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem> tmp = ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj));
 					tmp.Capacity = ((int)(value));
@@ -5906,7 +5906,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Count;
 				}
@@ -6184,12 +6184,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem)(obj)).Value;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem)(obj));
 					tmp.Value = ((int)(value));
@@ -7204,12 +7204,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Capacity;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem> tmp = ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj));
 					tmp.Capacity = ((int)(value));
@@ -7224,7 +7224,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.List<NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Count;
 				}
@@ -7918,7 +7918,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Length;
 				}
@@ -7932,7 +7932,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).LongLength;
 				}
@@ -7946,7 +7946,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).Rank;
 				}
@@ -7960,7 +7960,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).SyncRoot;
 				}
@@ -7974,7 +7974,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsReadOnly;
 				}
@@ -7988,7 +7988,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsFixedSize;
 				}
@@ -8002,7 +8002,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Array)(obj)).IsSynchronized;
 				}
@@ -8329,12 +8329,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Transform)(obj)).position;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Transform tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Transform)(obj));
 					tmp.position = ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(value));
@@ -8443,12 +8443,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj)).X;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3 tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj));
 					tmp.X = ((float)(value));
@@ -8463,12 +8463,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj)).Y;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3 tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj));
 					tmp.Y = ((float)(value));
@@ -8483,12 +8483,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj)).Z;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3 tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.StructAssignmentTechnique.Vector3)(obj));
 					tmp.Z = ((float)(value));
@@ -8786,7 +8786,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return System.EventArgs.Empty;
 				}
@@ -9817,12 +9817,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).IntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.IntProp = ((int)(value));
@@ -9837,12 +9837,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).NIntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.NIntProp = ((System.Nullable<int>)(value));
@@ -9857,12 +9857,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).ObjProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.ObjProp = ((object)(value));
@@ -9877,12 +9877,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass.StaticProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass.StaticProp = ((string)(value));
 				}
@@ -9896,7 +9896,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).RoIntProp;
 				}
@@ -9910,7 +9910,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).RoIntProp2;
 				}
@@ -9924,7 +9924,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.WoIntProp = ((int)(value));
@@ -9939,7 +9939,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.WoIntProp2 = ((int)(value));
@@ -9954,7 +9954,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj));
 					tmp.AccessOverrProp = ((int)(value));
@@ -9969,7 +9969,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass.Numbers;
 				}
@@ -11290,12 +11290,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests.ArithmOperatorsTestClass)(obj)).Value;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests.ArithmOperatorsTestClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests.ArithmOperatorsTestClass)(obj));
 					tmp.Value = ((int)(value));
@@ -11556,7 +11556,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests.ClassWithCount)(obj)).Count;
 				}
@@ -11678,7 +11678,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMetaTests.ClassWithLength)(obj)).Length;
 				}
@@ -11860,12 +11860,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataIndexerTests.IndexerTestClass)(obj)).mymap;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataIndexerTests.IndexerTestClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataIndexerTests.IndexerTestClass)(obj));
 					tmp.mymap = ((System.Collections.Generic.Dictionary<int, int>)(value));
@@ -11976,12 +11976,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj)).IntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj));
 					tmp.IntProp = ((int)(value));
@@ -11996,12 +11996,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj)).NIntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj));
 					tmp.NIntProp = ((System.Nullable<int>)(value));
@@ -12016,12 +12016,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj)).ObjProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass)(obj));
 					tmp.ObjProp = ((object)(value));
@@ -12036,12 +12036,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass.StaticProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass.StaticProp = ((string)(value));
 				}
@@ -12055,7 +12055,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests.SomeClass.ConstIntProp;
 				}
@@ -12568,12 +12568,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests.ArithmOperatorsTestClass)(obj)).Value;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests.ArithmOperatorsTestClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests.ArithmOperatorsTestClass)(obj));
 					tmp.Value = ((int)(value));
@@ -12834,7 +12834,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests.ClassWithCount)(obj)).Count;
 				}
@@ -12956,7 +12956,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataMetaTests.ClassWithLength)(obj)).Length;
 				}
@@ -14055,7 +14055,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.Dictionary<int, int>)(obj)).Comparer;
 				}
@@ -14069,7 +14069,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.Dictionary<int, int>)(obj)).Count;
 				}
@@ -14083,7 +14083,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.Dictionary<int, int>)(obj)).Keys;
 				}
@@ -14097,7 +14097,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((System.Collections.Generic.Dictionary<int, int>)(obj)).Values;
 				}
@@ -14505,12 +14505,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj)).IntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj));
 					tmp.IntProp = ((int)(value));
@@ -14525,7 +14525,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj)).RoIntProp;
 				}
@@ -14539,12 +14539,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj)).NIntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj));
 					tmp.NIntProp = ((System.Nullable<int>)(value));
@@ -14559,12 +14559,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj)).ObjProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass)(obj));
 					tmp.ObjProp = ((object)(value));
@@ -14579,12 +14579,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass.StaticProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass.StaticProp = ((string)(value));
 				}
@@ -14598,7 +14598,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.UserDataFieldsTests.SomeClass.ConstIntProp;
 				}
@@ -14957,12 +14957,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj)).IntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.IntProp = ((int)(value));
@@ -14977,12 +14977,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj)).NIntProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.NIntProp = ((System.Nullable<int>)(value));
@@ -14997,12 +14997,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj)).ObjProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.ObjProp = ((object)(value));
@@ -15017,12 +15017,12 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass.StaticProp;
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass.StaticProp = ((string)(value));
 				}
@@ -15036,7 +15036,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj)).RoIntProp;
 				}
@@ -15050,7 +15050,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj)).RoIntProp2;
 				}
@@ -15064,7 +15064,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.WoIntProp = ((int)(value));
@@ -15079,7 +15079,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.WoIntProp2 = ((int)(value));
@@ -15094,7 +15094,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override void SetValueImpl(NovaSharp.Interpreter.Script script, object obj, object value)
+				protected override void SetValueCore(NovaSharp.Interpreter.Script script, object obj, object value)
 				{
 					NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass tmp = ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass)(obj));
 					tmp.AccessOverrProp = ((int)(value));
@@ -15109,7 +15109,7 @@ namespace MyNamespace
 				{
 				}
 
-				protected override object GetValueImpl(NovaSharp.Interpreter.Script script, object obj)
+				protected override object GetValueCore(NovaSharp.Interpreter.Script script, object obj)
 				{
 					return NovaSharp.Interpreter.Tests.EndToEnd.UserDataPropertiesTests.SomeClass.Numbers;
 				}

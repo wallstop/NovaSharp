@@ -241,17 +241,22 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="mi">The mi.</param>
         /// <returns></returns>
-        public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
+        public static IReadOnlyList<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
             if (mi == null)
             {
                 throw new ArgumentNullException(nameof(mi));
             }
 
-            return mi.GetCustomAttributes(typeof(NovaSharpUserDataMetamethodAttribute), true)
+            List<string> names = mi.GetCustomAttributes(
+                    typeof(NovaSharpUserDataMetamethodAttribute),
+                    true
+                )
                 .OfType<NovaSharpUserDataMetamethodAttribute>()
                 .Select(a => a.Name)
                 .ToList();
+
+            return names.Count == 0 ? Array.Empty<string>() : names;
         }
 
         /// <summary>
