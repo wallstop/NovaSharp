@@ -35,15 +35,12 @@ namespace Tutorials.Chapters
                 warningSink: message => Console.WriteLine($"[compatibility] {message}")
             );
 
-            string debuggerUrl = remoteDebugger.HttpUrlStringLocalHost;
-            if (
-                !string.IsNullOrWhiteSpace(debuggerUrl)
-                && Uri.TryCreate(debuggerUrl, UriKind.Absolute, out Uri debuggerUri)
-            )
+            Uri debuggerUrl = remoteDebugger.HttpUrlStringLocalHost;
+            if (debuggerUrl != null)
             {
                 // start the web browser at the correct URL. Replace this or just
                 // pass the URL to the user in some other way.
-                ProcessBrowserLauncher.Instance.Launch(debuggerUri);
+                ProcessBrowserLauncher.Instance.Launch(debuggerUrl);
             }
 
             return script;

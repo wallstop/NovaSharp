@@ -109,10 +109,10 @@ Script script = debugger.AttachFromDirectory(
 );
 
 script.DoFile(entryPointPath);
-string debuggerUrl = debugger.HttpUrlStringLocalHost;
-if (!string.IsNullOrEmpty(debuggerUrl))
+Uri debuggerUrl = debugger.HttpUrlStringLocalHost;
+if (debuggerUrl != null)
 {
-    Application.OpenURL(debuggerUrl); // or surface the URL in your own UI
+    Application.OpenURL(debuggerUrl.AbsoluteUri); // or surface the URL in your own UI
 }
 ```
 

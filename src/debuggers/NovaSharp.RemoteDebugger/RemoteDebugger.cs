@@ -2,6 +2,7 @@ namespace NovaSharp.RemoteDebugger
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using Network;
@@ -24,6 +25,7 @@ namespace NovaSharp.RemoteDebugger
         private readonly List<DebugServer> _debugServers = new();
 
         private readonly object _lock = new();
+        private bool _disposed;
 
         public RemoteDebuggerService()
             : this(RemoteDebuggerOptions.Default) { }
@@ -45,6 +47,7 @@ namespace NovaSharp.RemoteDebugger
                         HttpResource.CreateText(
                             HttpResourceType.Html,
                             string.Format(
+                                CultureInfo.InvariantCulture,
                                 "<html><body><iframe height='100%' width='100%' src='Debugger?port={0}'>Please follow <a href='{0}'>link</a>.</iframe></body></html>",
                                 options.RpcPortBase
                             )
@@ -53,7 +56,7 @@ namespace NovaSharp.RemoteDebugger
                 }
                 else
                 {
-                    _jumpPage = _httpServer.GetJumpPageText();
+                    _jumpPage = DebugWebHost.GetJumpPageText();
 
                     _httpServer.RegisterResource("/", HttpResource.CreateCallback(GetJumpPageData));
                 }
@@ -66,11 +69,13 @@ namespace NovaSharp.RemoteDebugger
 
         private HttpResource GetJumpPageData(Dictionary<string, string> arg)
         {
+            ThrowIfDisposed();
+
             lock (_lock)
             {
                 return HttpResource.CreateText(
                     HttpResourceType.Html,
-                    string.Format(_jumpPage, GetJumpHtmlFragment())
+                    string.Format(CultureInfo.InvariantCulture, _jumpPage, GetJumpHtmlFragment())
                 );
             }
         }
@@ -85,6 +90,13 @@ namespace NovaSharp.RemoteDebugger
         /// </param>
         public void Attach(Script s, string scriptName, bool freeRunAfterAttach = false)
         {
+            ThrowIfDisposed();
+
+            if (s == null)
+            {
+                throw new ArgumentNullException(nameof(s));
+            }
+
             lock (_lock)
             {
                 int rpcPort = AcquireNextRpcPort();
@@ -167,6 +179,8 @@ namespace NovaSharp.RemoteDebugger
             bool freeRunAfterAttach = false
         )
         {
+            ThrowIfDisposed();
+
             if (string.IsNullOrWhiteSpace(modDirectory))
             {
                 throw new ArgumentException(
@@ -202,17 +216,20 @@ namespace NovaSharp.RemoteDebugger
         /// <returns>HTML fragment listing each attached debugger server.</returns>
         public string GetJumpHtmlFragment()
         {
+            ThrowIfDisposed();
+
             StringBuilder sb = new();
             lock (_lock)
             {
                 foreach (DebugServer d in _debugServers)
                 {
                     sb.AppendFormat(
+                        CultureInfo.InvariantCulture,
                         "<tr><td><a href=\"Debugger?port={0}\">{1}</a></td><td>{2}</td><td>{3}</td><td>{0}</td></tr>\n",
                         d.Port,
                         d.AppName,
-                        d.GetState(),
-                        d.ConnectedClients()
+                        d.State,
+                        d.ConnectedClients
                     );
                 }
             }
@@ -224,17 +241,44 @@ namespace NovaSharp.RemoteDebugger
         /// </summary>
         public void Dispose()
         {
-            _httpServer?.Dispose();
-            _debugServers.ForEach(s => s.Dispose());
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public string HttpUrlStringLocalHost
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _httpServer?.Dispose();
+
+                lock (_lock)
+                {
+                    foreach (DebugServer server in _debugServers)
+                    {
+                        server.Dispose();
+                    }
+
+                    _debugServers.Clear();
+                }
+            }
+
+            _disposed = true;
+        }
+
+        public Uri HttpUrlStringLocalHost
         {
             get
             {
+                ThrowIfDisposed();
+
                 if (_httpServer != null)
                 {
-                    return $"http://127.0.0.1:{_options.HttpPort.Value}/";
+                    return new UriBuilder("http", "127.0.0.1", _options.HttpPort.Value, "/").Uri;
                 }
                 return null;
             }
@@ -248,9 +292,33 @@ namespace NovaSharp.RemoteDebugger
                     .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 return Path.GetFileName(fullPath);
             }
-            catch (Exception)
+            catch (PathTooLongException)
             {
                 return null;
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (NotSupportedException)
+            {
+                return null;
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(RemoteDebuggerService));
             }
         }
     }

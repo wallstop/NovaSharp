@@ -1,5 +1,6 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
+    using System;
     using NovaSharp.Interpreter;
     using RemoteDebugger;
 
@@ -19,7 +20,7 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <summary>
         /// Gets the HTTP URL that launches the debugger UI on localhost.
         /// </summary>
-        public string HttpUrlStringLocalHost { get; }
+        public Uri HttpUrlStringLocalHost { get; }
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ namespace NovaSharp.Cli.Commands.Implementations
         }
 
         /// <inheritdoc />
-        public string HttpUrlStringLocalHost
+        public Uri HttpUrlStringLocalHost
         {
             get { return _service.HttpUrlStringLocalHost; }
         }

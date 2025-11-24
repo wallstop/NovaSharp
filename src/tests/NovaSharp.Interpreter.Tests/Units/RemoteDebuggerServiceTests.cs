@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(body, Does.Contain($"Debugger?port={options.RpcPortBase}"));
                 Assert.That(
                     service.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.HttpPort.Value}/")
+                    Is.EqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"))
                 );
             });
         }
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(script.DebuggerEnabled, Is.True);
                 Assert.That(
                     bridge.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.HttpPort.Value}/")
+                    Is.EqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"))
                 );
             });
         }

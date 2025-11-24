@@ -1,5 +1,7 @@
 namespace NovaSharp.RemoteDebugger
 {
+    using System;
+    using System.IO;
     using System.Reflection;
     using System.Text;
     using Network;
@@ -41,15 +43,33 @@ namespace NovaSharp.RemoteDebugger
             return r;
         }
 
-        private byte[] GetResourceData(string resourceName)
+        private static byte[] GetResourceData(string resourceName)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
-            using Stream stream = assembly.GetManifestResourceStream(
-                "NovaSharp.RemoteDebugger.Resources." + resourceName
-            );
+            using Stream stream =
+                assembly.GetManifestResourceStream(
+                    "NovaSharp.RemoteDebugger.Resources." + resourceName
+                )
+                ?? throw new InvalidOperationException(
+                    $"Embedded resource '{resourceName}' could not be located."
+                );
+
             byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
+            int offset = 0;
+            while (offset < data.Length)
+            {
+                int read = stream.Read(data, offset, data.Length - offset);
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        $"Unexpected end of stream while reading '{resourceName}'."
+                    );
+                }
+
+                offset += read;
+            }
+
             return data;
         }
 
@@ -57,7 +77,7 @@ namespace NovaSharp.RemoteDebugger
         /// Retrieves the HTML template used for the debugger selection jump page.
         /// </summary>
         /// <returns>UTF-8 decoded HTML string for <c>JumpPage.html</c>.</returns>
-        public string GetJumpPageText()
+        public static string GetJumpPageText()
         {
             byte[] data = GetResourceData("JumpPage.html");
             return Encoding.UTF8.GetString(data);

@@ -1,5 +1,6 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    using System;
     using System.Text;
 
     /// <summary>
@@ -16,7 +17,7 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <summary>
         /// Gets the raw payload bytes for static resources.
         /// </summary>
-        public byte[] Data { get; private set; }
+        public ReadOnlyMemory<byte> Data { get; private set; }
 
         /// <summary>
         /// Gets the callback executed to build a dynamic response when <see cref="Type"/> is
@@ -34,7 +35,12 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <returns>A new <see cref="HttpResource"/> that always returns <paramref name="data"/>.</returns>
         public static HttpResource CreateBinary(HttpResourceType type, byte[] data)
         {
-            return new HttpResource() { Type = type, Data = data };
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            return new HttpResource() { Type = type, Data = new ReadOnlyMemory<byte>(data) };
         }
 
         /// <summary>
@@ -45,7 +51,16 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <returns>A <see cref="HttpResource"/> representing the decoded bytes.</returns>
         public static HttpResource CreateBinary(HttpResourceType type, string base64data)
         {
-            return new HttpResource() { Type = type, Data = Convert.FromBase64String(base64data) };
+            if (base64data == null)
+            {
+                throw new ArgumentNullException(nameof(base64data));
+            }
+
+            return new HttpResource()
+            {
+                Type = type,
+                Data = new ReadOnlyMemory<byte>(Convert.FromBase64String(base64data)),
+            };
         }
 
         /// <summary>
@@ -56,7 +71,16 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <returns>A <see cref="HttpResource"/> that emits the specified string.</returns>
         public static HttpResource CreateText(HttpResourceType type, string data)
         {
-            return new HttpResource() { Type = type, Data = Encoding.UTF8.GetBytes(data) };
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            return new HttpResource()
+            {
+                Type = type,
+                Data = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(data)),
+            };
         }
 
         /// <summary>
@@ -79,35 +103,37 @@ namespace NovaSharp.RemoteDebugger.Network
         /// <summary>
         /// Gets the HTTP <c>Content-Type</c> header value associated with <see cref="Type"/>.
         /// </summary>
-        /// <returns>The MIME type string representing the current resource classification.</returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when a callback type is queried for a content type.
         /// </exception>
-        public string GetContentTypeString()
+        public string ContentTypeString
         {
-            switch (Type)
+            get
             {
-                case HttpResourceType.PlainText:
-                    return "text/plain";
-                case HttpResourceType.Html:
-                    return "text/html";
-                case HttpResourceType.Json:
-                    return "application/json";
-                case HttpResourceType.Xml:
-                    return "application/xml";
-                case HttpResourceType.Jpeg:
-                    return "image/jpeg";
-                case HttpResourceType.Png:
-                    return "image/png";
-                case HttpResourceType.Binary:
-                    return "application/octet-stream";
-                case HttpResourceType.Javascript:
-                    return "application/javascript";
-                case HttpResourceType.Css:
-                    return "text/css";
-                case HttpResourceType.Callback:
-                default:
-                    throw new InvalidOperationException();
+                switch (Type)
+                {
+                    case HttpResourceType.PlainText:
+                        return "text/plain";
+                    case HttpResourceType.Html:
+                        return "text/html";
+                    case HttpResourceType.Json:
+                        return "application/json";
+                    case HttpResourceType.Xml:
+                        return "application/xml";
+                    case HttpResourceType.Jpeg:
+                        return "image/jpeg";
+                    case HttpResourceType.Png:
+                        return "image/png";
+                    case HttpResourceType.Binary:
+                        return "application/octet-stream";
+                    case HttpResourceType.Javascript:
+                        return "application/javascript";
+                    case HttpResourceType.Css:
+                        return "text/css";
+                    case HttpResourceType.Callback:
+                    default:
+                        throw new InvalidOperationException();
+                }
             }
         }
     }

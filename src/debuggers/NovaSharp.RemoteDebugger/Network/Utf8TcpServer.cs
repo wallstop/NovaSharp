@@ -18,6 +18,7 @@ namespace NovaSharp.RemoteDebugger.Network
         private Action<string> _logger;
         private readonly List<Utf8TcpPeer> _peerList = new();
         private readonly object _peerListLock = new();
+        private bool _disposed;
 
         /// <summary>
         /// Gets the character used to delimit packets within the stream.
@@ -131,13 +132,16 @@ namespace NovaSharp.RemoteDebugger.Network
         }
 
         /// <summary>
-        /// Returns the number of active client connections.
+        /// Gets the number of active client connections.
         /// </summary>
-        public int GetConnectedClients()
+        public int ConnectedClientCount
         {
-            lock (_peerListLock)
+            get
             {
-                return _peerList.Count;
+                lock (_peerListLock)
+                {
+                    return _peerList.Count;
+                }
             }
         }
 
@@ -179,18 +183,14 @@ namespace NovaSharp.RemoteDebugger.Network
 
         private void OnPeerDisconnected(object sender, Utf8TcpPeerEventArgs e)
         {
-            try
-            {
-                OnClientDisconnected?.Invoke(this, e);
+            OnClientDisconnected?.Invoke(this, e);
 
-                lock (_peerListLock)
-                {
-                    _peerList.Remove(e.Peer);
-                    e.Peer.OnConnectionClosed -= OnPeerDisconnected;
-                    e.Peer.OnDataReceived -= OnPeerDataReceived;
-                }
+            lock (_peerListLock)
+            {
+                _peerList.Remove(e.Peer);
+                e.Peer.OnConnectionClosed -= OnPeerDisconnected;
+                e.Peer.OnDataReceived -= OnPeerDataReceived;
             }
-            catch { }
         }
 
         /// <summary>
@@ -215,11 +215,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
             foreach (Utf8TcpPeer peer in peers)
             {
-                try
-                {
-                    peer.SendTerminated(message);
-                }
-                catch { }
+                peer.SendTerminated(message);
             }
         }
 
@@ -258,7 +254,37 @@ namespace NovaSharp.RemoteDebugger.Network
         /// </summary>
         public void Dispose()
         {
-            Stop();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Stop();
+
+                List<Utf8TcpPeer> peers;
+                lock (_peerListLock)
+                {
+                    peers = _peerList.ToList();
+                    _peerList.Clear();
+                }
+
+                foreach (Utf8TcpPeer peer in peers)
+                {
+                    peer.OnConnectionClosed -= OnPeerDisconnected;
+                    peer.OnDataReceived -= OnPeerDataReceived;
+                    peer.Disconnect();
+                }
+            }
+
+            _disposed = true;
         }
     }
 }

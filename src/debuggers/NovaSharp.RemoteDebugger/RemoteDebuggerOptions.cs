@@ -1,11 +1,12 @@
 namespace NovaSharp.RemoteDebugger
 {
+    using System;
     using Network;
 
     /// <summary>
     /// Configuration surface for <see cref="RemoteDebuggerService"/> instances.
     /// </summary>
-    public struct RemoteDebuggerOptions
+    public struct RemoteDebuggerOptions : IEquatable<RemoteDebuggerOptions>
     {
         /// <summary>
         /// Gets or sets the TCP server flags applied to each debug endpoint.
@@ -43,6 +44,37 @@ namespace NovaSharp.RemoteDebugger
                     RpcPortBase = 2006,
                 };
             }
+        }
+
+        /// <inheritdoc />
+        public bool Equals(RemoteDebuggerOptions other)
+        {
+            return NetworkOptions == other.NetworkOptions
+                && SingleScriptMode == other.SingleScriptMode
+                && HttpPort == other.HttpPort
+                && RpcPortBase == other.RpcPortBase;
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            return obj is RemoteDebuggerOptions other && Equals(other);
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(NetworkOptions, SingleScriptMode, HttpPort, RpcPortBase);
+        }
+
+        public static bool operator ==(RemoteDebuggerOptions left, RemoteDebuggerOptions right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(RemoteDebuggerOptions left, RemoteDebuggerOptions right)
+        {
+            return !left.Equals(right);
         }
     }
 }

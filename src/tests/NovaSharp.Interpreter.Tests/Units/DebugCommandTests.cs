@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteStartsDebuggerAndOpensBrowserOnce()
         {
-            FakeDebuggerBridge bridge = new() { Url = "http://debugger" };
+            FakeDebuggerBridge bridge = new() { Url = new Uri("http://debugger/") };
             TestBrowserLauncher launcher = new();
 
             DebugCommand.DebuggerFactory = () => bridge;
@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteSkipsBrowserLaunchWhenUrlIsEmpty()
         {
-            FakeDebuggerBridge bridge = new() { Url = string.Empty };
+            FakeDebuggerBridge bridge = new() { Url = null };
             TestBrowserLauncher launcher = new();
 
             DebugCommand.DebuggerFactory = () => bridge;
@@ -99,7 +99,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteLogsCompatibilityProfile()
         {
-            FakeDebuggerBridge bridge = new() { Url = string.Empty };
+            FakeDebuggerBridge bridge = new() { Url = null };
             DebugCommand.DebuggerFactory = () => bridge;
             DebugCommand.BrowserLauncher = new TestBrowserLauncher();
 
@@ -127,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class FakeDebuggerBridge : IRemoteDebuggerBridge
         {
-            public string Url { get; set; } = string.Empty;
+            public Uri Url { get; set; }
 
             public int AttachCount { get; private set; }
 
@@ -145,7 +145,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 LastFreeRun = freeRunAfterAttach;
             }
 
-            public string HttpUrlStringLocalHost
+            public Uri HttpUrlStringLocalHost
             {
                 get { return Url; }
             }

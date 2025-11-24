@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase(HttpResourceType.Binary, "application/octet-stream")]
         [TestCase(HttpResourceType.Javascript, "application/javascript")]
         [TestCase(HttpResourceType.Css, "text/css")]
-        public void GetContentTypeStringReturnsExpected(HttpResourceType type, string expected)
+        public void ContentTypeStringReturnsExpected(HttpResourceType type, string expected)
         {
             HttpResource resource = type switch
             {
@@ -29,14 +29,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _ => HttpResource.CreateBinary(type, new byte[] { 0 }),
             };
 
-            Assert.That(resource.GetContentTypeString(), Is.EqualTo(expected));
+            Assert.That(resource.ContentTypeString, Is.EqualTo(expected));
         }
 
         [Test]
         public void CallbackResourceThrowsWhenRequestingContentType()
         {
             HttpResource resource = HttpResource.CreateCallback(_ => null);
-            Assert.Throws<InvalidOperationException>(() => resource.GetContentTypeString());
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                _ = resource.ContentTypeString;
+            });
         }
     }
 }

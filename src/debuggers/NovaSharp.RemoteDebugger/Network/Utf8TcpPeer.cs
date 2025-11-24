@@ -1,6 +1,7 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
     using System;
+    using System.Globalization;
     using System.Net.Sockets;
     using System.Text;
 
@@ -129,9 +130,13 @@ namespace NovaSharp.RemoteDebugger.Network
             {
                 _socket.Close();
             }
-            catch
+            catch (SocketException ex)
             {
-                // Swallow
+                _server.Logger(ex.Message);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Socket already closed; nothing to do.
             }
         }
 
@@ -176,7 +181,7 @@ namespace NovaSharp.RemoteDebugger.Network
         /// Sends raw binary data to the peer.
         /// </summary>
         /// <param name="bytes">Payload to transmit.</param>
-        public void SendBinary(byte[] bytes)
+        public void SendBinary(ReadOnlySpan<byte> bytes)
         {
             try
             {
@@ -206,7 +211,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

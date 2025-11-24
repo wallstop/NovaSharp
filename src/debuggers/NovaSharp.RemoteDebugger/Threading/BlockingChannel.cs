@@ -1,10 +1,12 @@
 namespace NovaSharp.RemoteDebugger.Threading
 {
+    using System.Collections.Generic;
+    using System.Threading;
     /// <summary>
-    /// Thread-safe queue that blocks dequeuers until items arrive and supports cooperative shutdown.
+    /// Thread-safe channel that blocks dequeuers until items arrive and supports cooperative shutdown.
     /// </summary>
     /// <typeparam name="T">Item type.</typeparam>
-    public class BlockingQueue<T>
+    public class BlockingChannel<T>
     {
         private readonly Queue<T> _queue = new();
         private bool _stopped;

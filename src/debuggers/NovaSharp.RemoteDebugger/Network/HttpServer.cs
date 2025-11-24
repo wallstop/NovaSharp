@@ -1,6 +1,11 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
     using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
+    using System.Net.Sockets;
     using System.Reflection;
     using System.Text;
 
@@ -16,9 +21,15 @@ namespace NovaSharp.RemoteDebugger.Network
         private readonly Dictionary<string, List<string>> _httpData = new();
         private readonly Dictionary<string, HttpResource> _resources = new();
         private readonly object _lock = new();
+        private bool _disposed;
 
         private const string ErrorTemplate =
             "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>{0}</title></head><body><h1>{0}</h1>{1}<hr><address>NovaSharp Remote Debugger / {2}</address></body></html><!-- This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. This padding is added to bring the error message over 512 bytes to avoid some browsers custom errors. -->";
+        private static readonly char[] SpaceTabSeparators = { ' ', '\t' };
+        private static readonly char[] ColonSeparator = { ':' };
+        private static readonly char[] QuestionSeparator = { '?' };
+        private static readonly char[] AmpersandSeparator = { '&' };
+        private static readonly char[] EqualsSeparator = { '=' };
 
         private static readonly string Version = Assembly
             .GetExecutingAssembly()
@@ -26,6 +37,7 @@ namespace NovaSharp.RemoteDebugger.Network
             .Version.ToString();
 
         private readonly string _error401 = string.Format(
+            CultureInfo.InvariantCulture,
             ErrorTemplate,
             "401 Unauthorized",
             "Please login.",
@@ -33,6 +45,7 @@ namespace NovaSharp.RemoteDebugger.Network
         );
 
         private readonly string _error404 = string.Format(
+            CultureInfo.InvariantCulture,
             ErrorTemplate,
             "404 Not Found",
             "The specified resource cannot be found.",
@@ -40,6 +53,7 @@ namespace NovaSharp.RemoteDebugger.Network
         );
 
         private readonly string _error500 = string.Format(
+            CultureInfo.InvariantCulture,
             ErrorTemplate,
             "500 Internal Server Error",
             "An internal server error occurred.",
@@ -96,7 +110,7 @@ namespace NovaSharp.RemoteDebugger.Network
             }
         }
 
-        private void SendHttp(
+        private static void SendHttp(
             Utf8TcpPeer peer,
             string responseCode,
             string contentType,
@@ -107,11 +121,11 @@ namespace NovaSharp.RemoteDebugger.Network
             SendHttp(peer, responseCode, contentType, Encoding.UTF8.GetBytes(data), extraHeaders);
         }
 
-        private void SendHttp(
+        private static void SendHttp(
             Utf8TcpPeer peer,
             string responseCode,
             string contentType,
-            byte[] data,
+            ReadOnlyMemory<byte> data,
             params string[] extraHeaders
         )
         {
@@ -128,7 +142,7 @@ namespace NovaSharp.RemoteDebugger.Network
             }
 
             peer.Send("");
-            peer.SendBinary(data);
+            peer.SendBinary(data.Span);
         }
 
         private void ExecHttpRequest(Utf8TcpPeer peer, List<string> httpdata)
@@ -169,32 +183,47 @@ namespace NovaSharp.RemoteDebugger.Network
                 }
                 else
                 {
-                    SendHttp(peer, "200 OK", res.GetContentTypeString(), res.Data);
+                    SendHttp(peer, "200 OK", res.ContentTypeString, res.Data);
                 }
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
-                _server.Logger(ex.Message);
-
-                try
-                {
-                    SendHttp(peer, "500 Internal Server Error", "text/html", _error500);
-                }
-                catch (Exception ex2)
-                {
-                    _server.Logger(ex2.Message);
-                }
+                HandleHttpException(peer, ex);
+            }
+            catch (DecoderFallbackException ex)
+            {
+                HandleHttpException(peer, ex);
+            }
+            catch (SocketException ex)
+            {
+                HandleHttpException(peer, ex);
+            }
+            catch (ObjectDisposedException ex)
+            {
+                HandleHttpException(peer, ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                HandleHttpException(peer, ex);
+            }
+            catch (IOException ex)
+            {
+                HandleHttpException(peer, ex);
             }
         }
 
-        private void ParseAuthenticationString(string authstr, out string user, out string password)
+        private static void ParseAuthenticationString(
+            string authstr,
+            out string user,
+            out string password
+        )
         {
             // example: Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
             user = null;
             password = null;
 
             string[] parts = authstr.Split(
-                new char[] { ' ', '\t' },
+                SpaceTabSeparators,
                 StringSplitOptions.RemoveEmptyEntries
             );
 
@@ -210,7 +239,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
             byte[] credentialBytes = Convert.FromBase64String(parts[2]);
             string credentialString = Encoding.UTF8.GetString(credentialBytes);
-            string[] credentials = credentialString.Split(new char[] { ':' }, 2);
+            string[] credentials = credentialString.Split(ColonSeparator, 2);
 
             if (credentials.Length != 2)
             {
@@ -223,10 +252,7 @@ namespace NovaSharp.RemoteDebugger.Network
 
         private HttpResource GetResourceFromPath(string path)
         {
-            string[] parts = path.Split(
-                new char[] { ' ', '\t' },
-                StringSplitOptions.RemoveEmptyEntries
-            );
+            string[] parts = path.Split(SpaceTabSeparators, StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length < 2)
             {
@@ -246,10 +272,10 @@ namespace NovaSharp.RemoteDebugger.Network
             }
             else
             {
-                string[] macroparts = uri.Split(new char[] { '?' }, 2);
+                string[] macroparts = uri.Split(QuestionSeparator, 2);
                 uri = macroparts[0];
                 string[] tuples = macroparts[1]
-                    .Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
+                    .Split(AmpersandSeparator, StringSplitOptions.RemoveEmptyEntries);
 
                 Dictionary<string, string> args = new();
                 foreach (string t in tuples)
@@ -261,9 +287,9 @@ namespace NovaSharp.RemoteDebugger.Network
             }
         }
 
-        private void ParseArgument(string t, Dictionary<string, string> args)
+        private static void ParseArgument(string t, Dictionary<string, string> args)
         {
-            string[] parts = t.Split(new char[] { '=' }, 2);
+            string[] parts = t.Split(EqualsSeparator, 2);
 
             if (parts.Length == 2)
             {
@@ -303,6 +329,32 @@ namespace NovaSharp.RemoteDebugger.Network
             return null;
         }
 
+        private void HandleHttpException(Utf8TcpPeer peer, Exception ex)
+        {
+            _server.Logger(ex.Message);
+
+            try
+            {
+                SendHttp(peer, "500 Internal Server Error", "text/html", _error500);
+            }
+            catch (SocketException socketEx)
+            {
+                _server.Logger(socketEx.Message);
+            }
+            catch (ObjectDisposedException disposedEx)
+            {
+                _server.Logger(disposedEx.Message);
+            }
+            catch (InvalidOperationException invalidOpEx)
+            {
+                _server.Logger(invalidOpEx.Message);
+            }
+            catch (IOException ioEx)
+            {
+                _server.Logger(ioEx.Message);
+            }
+        }
+
         private void OnClientDisconnected(object sender, Utf8TcpPeerEventArgs e)
         {
             lock (_lock)
@@ -329,7 +381,25 @@ namespace NovaSharp.RemoteDebugger.Network
         /// </summary>
         public void Dispose()
         {
-            _server.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _server.OnDataReceived -= OnDataReceivedAny;
+                _server.OnClientDisconnected -= OnClientDisconnected;
+                _server.Dispose();
+            }
+
+            _disposed = true;
         }
     }
 }

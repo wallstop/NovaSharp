@@ -1,6 +1,7 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
     using System;
+    using System.Globalization;
     using System.Xml;
 
     /// <summary>
@@ -213,7 +214,7 @@ namespace NovaSharp.RemoteDebugger.Network
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

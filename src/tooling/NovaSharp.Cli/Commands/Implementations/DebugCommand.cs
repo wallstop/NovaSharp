@@ -58,13 +58,10 @@ namespace NovaSharp.Cli.Commands.Implementations
 
                 _debugger = DebuggerFactory();
                 _debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
-                string url = _debugger.HttpUrlStringLocalHost;
-                if (
-                    !string.IsNullOrWhiteSpace(url)
-                    && Uri.TryCreate(url, UriKind.Absolute, out Uri parsed)
-                )
+                Uri url = _debugger.HttpUrlStringLocalHost;
+                if (url != null)
                 {
-                    BrowserLauncher?.Launch(parsed);
+                    BrowserLauncher?.Launch(url);
                 }
             }
         }

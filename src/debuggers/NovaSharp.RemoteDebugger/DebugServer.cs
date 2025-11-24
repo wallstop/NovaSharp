@@ -1,7 +1,10 @@
 namespace NovaSharp.RemoteDebugger
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -26,7 +29,7 @@ namespace NovaSharp.RemoteDebugger
         private readonly Script _script;
         private readonly string _appName;
         private readonly object _lock = new();
-        private readonly BlockingQueue<DebuggerAction> _queuedActions = new();
+        private readonly BlockingChannel<DebuggerAction> _queuedActions = new();
         private SourceRef _lastSentSourceRef;
         private bool _inGetActionLoop;
         private bool _hostBusySent;
@@ -34,14 +37,18 @@ namespace NovaSharp.RemoteDebugger
         private readonly string[] _cachedWatches = new string[(int)WatchType.MaxValue];
         private bool _freeRunAfterAttach;
         private Regex _errorRegEx = new(@"\A.*\Z");
-        private static readonly IReadOnlyDictionary<WatchType, string> WatchElementNames =
-            new Dictionary<WatchType, string>()
-            {
-                { WatchType.CallStack, "callstack" },
-                { WatchType.Watches, "watches" },
-            };
+        private bool _disposed;
+        private static readonly Dictionary<WatchType, string> WatchElementNames = new Dictionary<
+            WatchType,
+            string
+        >()
+        {
+            { WatchType.CallStack, "callstack" },
+            { WatchType.Watches, "watches" },
+        };
         private static readonly ConcurrentDictionary<WatchType, string> WatchElementNameCache =
             new();
+        private static readonly char[] WatchSeparators = { ',' };
 
         public DebugServer(
             string appName,
@@ -70,21 +77,21 @@ namespace NovaSharp.RemoteDebugger
         }
 
         /// <summary>
-        /// Returns a short textual description of the server state reported on the jump page.
+        /// Gets the textual description of the server state reported on the jump page.
         /// </summary>
-        /// <returns><c>"Busy"</c>, <c>"Waiting debugger"</c>, or <c>"Unknown"</c> depending on the server state.</returns>
-        public string GetState()
+        public string State
         {
-            if (_hostBusySent)
+            get
             {
-                return "Busy";
-            }
-            else if (_inGetActionLoop)
-            {
-                return "Waiting debugger";
-            }
-            else
-            {
+                if (_hostBusySent)
+                {
+                    return "Busy";
+                }
+                else if (_inGetActionLoop)
+                {
+                    return "Waiting debugger";
+                }
+
                 return "Unknown";
             }
         }
@@ -92,10 +99,9 @@ namespace NovaSharp.RemoteDebugger
         /// <summary>
         /// Gets the number of currently connected remote debugger clients.
         /// </summary>
-        /// <returns>Active connection count.</returns>
-        public int ConnectedClients()
+        public int ConnectedClients
         {
-            return _server.GetConnectedClients();
+            get { return _server.ConnectedClientCount; }
         }
 
         /// <summary>
@@ -118,7 +124,7 @@ namespace NovaSharp.RemoteDebugger
             });
         }
 
-        private string EpurateNewLines(string line)
+        private static string EpurateNewLines(string line)
         {
             return line.Replace('\n', ' ').Replace('\r', ' ');
         }
@@ -135,11 +141,10 @@ namespace NovaSharp.RemoteDebugger
             };
 
             StringBuilder sb = new();
-            XmlWriter xw = XmlWriter.Create(sb, xs);
-
-            a(xw);
-
-            xw.Close();
+            using (XmlWriter xw = XmlWriter.Create(sb, xs))
+            {
+                a(xw);
+            }
 
             string xml = sb.ToString();
             _server.BroadcastMessage(xml);
@@ -230,10 +235,19 @@ namespace NovaSharp.RemoteDebugger
                                     );
                                 }
 
-                                xw.Attribute("address", wi.Address.ToString("X8"));
-                                xw.Attribute("baseptr", wi.BasePtr.ToString("X8"));
+                                xw.Attribute(
+                                    "address",
+                                    wi.Address.ToString("X8", CultureInfo.InvariantCulture)
+                                );
+                                xw.Attribute(
+                                    "baseptr",
+                                    wi.BasePtr.ToString("X8", CultureInfo.InvariantCulture)
+                                );
                                 xw.Attribute("lvalue", wi.LValue);
-                                xw.Attribute("retaddress", wi.RetAddress.ToString("X8"));
+                                xw.Attribute(
+                                    "retaddress",
+                                    wi.RetAddress.ToString("X8", CultureInfo.InvariantCulture)
+                                );
                             }
                         }
                     }
@@ -358,7 +372,15 @@ namespace NovaSharp.RemoteDebugger
             {
                 return _script.CreateDynamicExpression(code);
             }
-            catch (Exception ex)
+            catch (InterpreterException ex)
+            {
+                SendMessage($"Error setting watch {code} :\n{ex.Message}");
+                return _script.CreateConstantDynamicExpression(
+                    code,
+                    DynValue.NewString(ex.Message)
+                );
+            }
+            catch (ArgumentException ex)
             {
                 SendMessage($"Error setting watch {code} :\n{ex.Message}");
                 return _script.CreateConstantDynamicExpression(
@@ -368,7 +390,7 @@ namespace NovaSharp.RemoteDebugger
             }
         }
 
-        private void SendSourceRef(XmlWriter xw, SourceRef sourceref)
+        private static void SendSourceRef(XmlWriter xw, SourceRef sourceref)
         {
             using (xw.Element("source-loc"))
             {
@@ -451,7 +473,7 @@ namespace NovaSharp.RemoteDebugger
                         lock (_lock)
                         {
                             _watchesChanging.UnionWith(
-                                arg.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                arg.Split(WatchSeparators, StringSplitOptions.RemoveEmptyEntries)
                                     .Select(s => s.Trim())
                             );
                         }
@@ -462,7 +484,7 @@ namespace NovaSharp.RemoteDebugger
                         lock (_lock)
                         {
                             string[] args = arg.Split(
-                                new char[] { ',' },
+                                WatchSeparators,
                                 StringSplitOptions.RemoveEmptyEntries
                             );
 
@@ -489,13 +511,16 @@ namespace NovaSharp.RemoteDebugger
 
                         DebuggerAction breakpointAction = CreateAction(action);
                         breakpointAction.SourceId = int.Parse(
-                            xdoc.DocumentElement.GetAttribute("src")
+                            xdoc.DocumentElement.GetAttribute("src"),
+                            CultureInfo.InvariantCulture
                         );
                         breakpointAction.SourceLine = int.Parse(
-                            xdoc.DocumentElement.GetAttribute("line")
+                            xdoc.DocumentElement.GetAttribute("line"),
+                            CultureInfo.InvariantCulture
                         );
                         breakpointAction.SourceCol = int.Parse(
-                            xdoc.DocumentElement.GetAttribute("col")
+                            xdoc.DocumentElement.GetAttribute("col"),
+                            CultureInfo.InvariantCulture
                         );
                         QueueAction(breakpointAction);
                         break;
@@ -584,6 +609,11 @@ namespace NovaSharp.RemoteDebugger
         /// <returns><c>true</c> if the debugger should pause execution after logging the error.</returns>
         public bool SignalRuntimeException(ScriptRuntimeException ex)
         {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
             SendMessage($"Error: {ex.DecoratedMessage}");
             _requestPause = _errorRegEx.IsMatch(ex.Message);
             return IsPauseRequested();
@@ -594,7 +624,24 @@ namespace NovaSharp.RemoteDebugger
         /// </summary>
         public void Dispose()
         {
-            _server.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _server.OnDataReceived -= OnServerDataReceived;
+                _server.Dispose();
+            }
+
+            _disposed = true;
         }
 
         /// <summary>

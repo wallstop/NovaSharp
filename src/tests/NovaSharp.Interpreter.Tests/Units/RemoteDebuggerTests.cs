@@ -245,7 +245,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DefaultTimeout
             );
             Assert.That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy")), Is.True);
-            Assert.That(server.GetState(), Is.EqualTo("Busy"));
+            Assert.That(server.State, Is.EqualTo("Busy"));
 
             DebuggerAction refresh = server.GetAction(0, sourceRef);
             Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
@@ -255,7 +255,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DefaultTimeout
             );
             Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready")), Is.True);
-            Assert.That(server.GetState(), Is.EqualTo("Unknown"));
+            Assert.That(server.State, Is.EqualTo("Unknown"));
         }
 
         [Test]
@@ -275,7 +275,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Task<DebuggerAction> actionTask = Task.Run(() => server.GetAction(0, sourceRef));
             TestWaitHelpers.SpinUntilOrThrow(
-                () => server.GetState() == "Waiting debugger",
+                () => server.State == "Waiting debugger",
                 DefaultTimeout,
                 "Debugger never entered GetAction loop."
             );
@@ -557,7 +557,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             using RemoteDebuggerTestClient client = new(port);
 
             TestWaitHelpers.SpinUntilOrThrow(
-                () => server.ConnectedClients() == 1,
+                () => server.ConnectedClients == 1,
                 DefaultTimeout,
                 "Tcp client never registered with the server."
             );
@@ -582,7 +582,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             using RemoteDebuggerTestClient client = new(port);
             TestWaitHelpers.SpinUntilOrThrow(
-                () => server.ConnectedClients() == 1,
+                () => server.ConnectedClients == 1,
                 DefaultTimeout,
                 "Tcp client never registered with the server."
             );
@@ -606,7 +606,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             using RemoteDebuggerTestClient client = new(port);
             TestWaitHelpers.SpinUntilOrThrow(
-                () => server.ConnectedClients() == 1,
+                () => server.ConnectedClients == 1,
                 DefaultTimeout,
                 "Tcp client never registered with the server."
             );
