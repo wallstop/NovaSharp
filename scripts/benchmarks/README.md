@@ -4,7 +4,7 @@ Use this folder to regenerate the NovaSharp benchmark baselines documented in `d
 
 ## `run-benchmarks.ps1`
 
-Runs both the NovaSharp runtime benchmarks and the NLua/MoonSharp comparison suite. The script restores local tools, builds `src/NovaSharp.sln`, executes the BenchmarkDotNet harnesses, and reminds you where BenchmarkDotNet artifacts land.
+Runs both the NovaSharp runtime benchmarks and the NLua comparison suite that exercises the legacy interpreter mirror. The script restores local tools, builds `src/NovaSharp.sln`, executes the BenchmarkDotNet harnesses, and reminds you where BenchmarkDotNet artifacts land.
 
 ### Prerequisites
 
@@ -21,7 +21,7 @@ pwsh ./scripts/benchmarks/run-benchmarks.ps1
 Optional parameters:
 
 - `-Configuration <value>`: Build/benchmark configuration (defaults to `Release`).
-- `-SkipComparison`: Run only the NovaSharp runtime benchmarks (skips the NLua/MoonSharp comparison project).
+- `-SkipComparison`: Run only the NovaSharp runtime benchmarks (skips the NLua comparison project).
 
 ### Output
 

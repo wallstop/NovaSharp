@@ -15,8 +15,14 @@
         <LegacyNamespacePrefix>NovaSharp</LegacyNamespacePrefix>
         <TargetNamespacePrefix>WallstopStudios.NovaSharp</TargetNamespacePrefix>
         <NamespacePrefixExcludedNamespaces>NovaSharp.Interpreter.LuaPort</NamespacePrefixExcludedNamespaces>
-        <EnforcedNamespacePrefix Condition="'$(EnforcedNamespacePrefix)' == ''">$(LegacyNamespacePrefix)</EnforcedNamespacePrefix>
-        <NamespacePrefixDiagnosticSeverity Condition="'$(NamespacePrefixDiagnosticSeverity)' == ''">suggestion</NamespacePrefixDiagnosticSeverity>
-        <EnableNamespacePrefixRule Condition="'$(EnableNamespacePrefixRule)' == ''">true</EnableNamespacePrefixRule>
+        <EnforcedNamespacePrefix Condition="'$(EnforcedNamespacePrefix)' == ''"
+            >$(LegacyNamespacePrefix)</EnforcedNamespacePrefix
+        >
+        <NamespacePrefixDiagnosticSeverity Condition="'$(NamespacePrefixDiagnosticSeverity)' == ''"
+            >suggestion</NamespacePrefixDiagnosticSeverity
+        >
+        <EnableNamespacePrefixRule Condition="'$(EnableNamespacePrefixRule)' == ''"
+            >true</EnableNamespacePrefixRule
+        >
     </PropertyGroup>
 </Project>
