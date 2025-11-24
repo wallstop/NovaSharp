@@ -165,7 +165,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 );
             }
 
-            if (context == "repl" && expression.StartsWith("!"))
+            if (
+                context == "repl"
+                && !string.IsNullOrEmpty(expression)
+                && expression.StartsWith('!')
+            )
             {
                 ExecuteRepl(expression.Substring(1));
                 SendResponse(response);
@@ -211,7 +215,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     _debug.ErrorRegex = rx;
                     SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
                 }
-                catch (Exception ex)
+                catch (ArgumentException ex)
                 {
                     SendText("Error setting regex: {0}", ex.Message);
                 }
@@ -289,9 +293,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         );
                     }
                 }
-                catch (Exception ex)
+                catch (FormatException ex)
                 {
-                    SendText("Error setting regex: {0}", ex.Message);
+                    SendText("Error selecting debugger: {0}", ex.Message);
+                }
+                catch (OverflowException ex)
+                {
+                    SendText("Error selecting debugger: {0}", ex.Message);
                 }
             }
             else
@@ -342,7 +350,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        private StoppedEvent CreateStoppedEvent(string reason, string text = null)
+        private static StoppedEvent CreateStoppedEvent(string reason, string text = null)
         {
             return new StoppedEvent(0, reason, text);
         }
@@ -497,7 +505,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private readonly SourceRef _defaultSourceRef = new(-1, 0, 0, 0, 0, false);
 
-        private int GetInt(Table args, string propName, int defaultValue)
+        private static int GetInt(Table args, string propName, int defaultValue)
         {
             DynValue jo = args.Get(propName);
 

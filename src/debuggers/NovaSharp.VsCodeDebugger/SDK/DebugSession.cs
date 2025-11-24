@@ -33,6 +33,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System.IO;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     // ---- Types -------------------------------------------------------------------------
 
@@ -432,7 +433,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public IReadOnlyList<StackFrame> StackFrames { get; }
 
-        public StackTraceResponseBody(List<StackFrame> frames = null)
+        public StackTraceResponseBody(IEnumerable<StackFrame> frames = null)
         {
             if (frames == null)
             {
@@ -455,7 +456,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public IReadOnlyList<Scope> Scopes { get; }
 
-        public ScopesResponseBody(List<Scope> scps = null)
+        public ScopesResponseBody(IEnumerable<Scope> scps = null)
         {
             if (scps == null)
             {
@@ -478,7 +479,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public IReadOnlyList<Variable> Variables { get; }
 
-        public VariablesResponseBody(List<Variable> vars = null)
+        public VariablesResponseBody(IEnumerable<Variable> vars = null)
         {
             if (vars == null)
             {
@@ -501,7 +502,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public IReadOnlyList<Thread> Threads { get; }
 
-        public ThreadsResponseBody(List<Thread> vars = null)
+        public ThreadsResponseBody(IEnumerable<Thread> vars = null)
         {
             if (vars == null)
             {
@@ -551,7 +552,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public IReadOnlyList<Breakpoint> Breakpoints { get; }
 
-        public SetBreakpointsResponseBody(List<Breakpoint> bpts = null)
+        public SetBreakpointsResponseBody(IEnumerable<Breakpoint> bpts = null)
         {
             if (bpts == null)
             {
@@ -587,6 +588,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public void SendResponse(Response response, ResponseBody body = null)
         {
+            if (response == null)
+            {
+                throw new ArgumentNullException(nameof(response));
+            }
+
             if (body != null)
             {
                 response.SetBody(body);
@@ -606,6 +612,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
             bool telemetry = false
         )
         {
+            if (response == null)
+            {
+                throw new ArgumentNullException(nameof(response));
+            }
+
             Message msg = new(id, format, arguments, user, telemetry);
             string message = Utilities.ExpandVariables(msg.Format, msg.Variables);
             response.SetErrorBody(message, new ErrorResponseBody(msg));
@@ -735,13 +746,23 @@ namespace NovaSharp.VsCodeDebugger.SDK
                         break;
                 }
             }
-            catch (Exception e)
+            catch (ScriptRuntimeException e)
             {
                 SendErrorResponse(
                     response,
                     1104,
                     "error while processing request '{_request}' (exception: {_exception})",
-                    new { _request = command, _exception = e.Message }
+                    new { _request = command, _exception = e.DecoratedMessage ?? e.Message }
+                );
+            }
+            catch (InterpreterException e)
+            {
+                string message = e.DecoratedMessage ?? e.Message;
+                SendErrorResponse(
+                    response,
+                    1104,
+                    "error while processing request '{_request}' (exception: {_exception})",
+                    new { _request = command, _exception = message }
                 );
             }
 
@@ -874,35 +895,30 @@ namespace NovaSharp.VsCodeDebugger.SDK
         {
             if (_debuggerPathsAreUri)
             {
-                if (_clientPathsAreUri)
+                if (!_clientPathsAreUri)
                 {
-                    return path;
+                    if (Uri.TryCreate(path, UriKind.Absolute, out Uri uri))
+                    {
+                        return uri.LocalPath;
+                    }
+
+                    return null;
                 }
-                else
-                {
-                    Uri uri = new(path);
-                    return uri.LocalPath;
-                }
+
+                return path;
             }
-            else
+
+            if (_clientPathsAreUri)
             {
-                if (_clientPathsAreUri)
+                if (Uri.TryCreate(path, UriKind.Absolute, out Uri uri))
                 {
-                    try
-                    {
-                        Uri uri = new(path);
-                        return uri.AbsoluteUri;
-                    }
-                    catch
-                    {
-                        return null;
-                    }
+                    return uri.AbsoluteUri;
                 }
-                else
-                {
-                    return path;
-                }
+
+                return null;
             }
+
+            return path;
         }
 
         protected string ConvertClientPathToDebugger(string clientPath)

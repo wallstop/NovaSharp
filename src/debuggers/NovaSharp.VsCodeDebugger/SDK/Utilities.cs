@@ -68,7 +68,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 match =>
                 {
                     string name = match.Groups[1].Value;
-                    if (!underscoredOnly || name.StartsWith("_"))
+                    if (!underscoredOnly || name.StartsWith('_'))
                     {
                         PropertyInfo property = Framework.Do.GetProperty(type, name);
                         if (property != null)
@@ -94,7 +94,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// <returns>Relative path if <paramref name="absPath"/> is under <paramref name="dirPath"/>, otherwise the original path.</returns>
         public static string MakeRelativePath(string dirPath, string absPath)
         {
-            if (!dirPath.EndsWith("/", StringComparison.Ordinal))
+            if (!dirPath.EndsWith('/'))
             {
                 dirPath += "/";
             }

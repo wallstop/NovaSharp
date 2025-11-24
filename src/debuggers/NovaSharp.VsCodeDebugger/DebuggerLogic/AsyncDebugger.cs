@@ -175,12 +175,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private void Sleep(int v)
+        private static void Sleep(int milliseconds)
         {
 #if DOTNET_CORE
-            System.Threading.Tasks.Task.Delay(10).Wait();
+            System.Threading.Tasks.Task.Delay(milliseconds).Wait();
 #else
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(milliseconds);
 #endif
         }
 
@@ -190,9 +190,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             {
                 return Script.CreateDynamicExpression(code);
             }
-            catch (Exception ex)
+            catch (InterpreterException ex)
             {
-                return Script.CreateConstantDynamicExpression(code, DynValue.NewString(ex.Message));
+                string message = ex.DecoratedMessage ?? ex.Message;
+                return Script.CreateConstantDynamicExpression(code, DynValue.NewString(message));
             }
         }
 
@@ -227,7 +228,19 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         invalidFile = true;
                     }
                 }
-                catch
+                catch (IOException)
+                {
+                    invalidFile = true;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    invalidFile = true;
+                }
+                catch (ArgumentException)
+                {
+                    invalidFile = true;
+                }
+                catch (NotSupportedException)
                 {
                     invalidFile = true;
                 }
@@ -257,7 +270,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private string GetFooterForTempFile()
+        private static string GetFooterForTempFile()
         {
             return "\n\n"
                 + "----------------------------------------------------------------------------------------------------------\n"
@@ -273,13 +286,14 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <returns>Absolute path to the cached file, or the script name when no override exists.</returns>
         public string GetSourceFile(int sourceId)
         {
-            if (_sourcesOverride.ContainsKey(sourceId))
+            if (_sourcesOverride.TryGetValue(sourceId, out string overridePath))
             {
-                return _sourcesOverride[sourceId];
+                return overridePath;
             }
-            else if (_sourcesMap.ContainsKey(sourceId))
+
+            if (_sourcesMap.TryGetValue(sourceId, out SourceCode mappedSource))
             {
-                return _sourcesMap[sourceId].Name;
+                return mappedSource.Name;
             }
 
             return null;
@@ -354,9 +368,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <returns>The cached source or <c>null</c> when missing.</returns>
         public SourceCode GetSource(int id)
         {
-            if (_sourcesMap.ContainsKey(id))
+            if (_sourcesMap.TryGetValue(id, out SourceCode source))
             {
-                return _sourcesMap[id];
+                return source;
             }
 
             return null;

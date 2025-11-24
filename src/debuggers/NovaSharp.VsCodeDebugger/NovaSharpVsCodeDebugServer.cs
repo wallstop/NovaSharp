@@ -5,6 +5,7 @@ namespace NovaSharp.VsCodeDebugger
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Net.Sockets;
@@ -12,6 +13,7 @@ namespace NovaSharp.VsCodeDebugger
     using System.Threading.Tasks;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.VsCodeDebugger.DebuggerLogic;
     using NovaSharp.VsCodeDebugger.SDK;
 
@@ -370,9 +372,21 @@ namespace NovaSharp.VsCodeDebugger
                                 {
                                     RunSession(sessionId, networkStream);
                                 }
-                                catch (Exception ex)
+                                catch (InterpreterException ex)
                                 {
-                                    Log("[{0}] : Error : {1}", ex.Message);
+                                    Log(
+                                        "[{0}] : Interpreter error : {1}",
+                                        sessionId,
+                                        ex.DecoratedMessage ?? ex.Message
+                                    );
+                                }
+                                catch (IOException ex)
+                                {
+                                    Log("[{0}] : IO error : {1}", sessionId, ex.Message);
+                                }
+                                catch (InvalidOperationException ex)
+                                {
+                                    Log("[{0}] : Session error : {1}", sessionId, ex.Message);
                                 }
                             }
 
@@ -386,7 +400,15 @@ namespace NovaSharp.VsCodeDebugger
                     );
                 }
             }
-            catch (Exception e)
+            catch (SocketException e)
+            {
+                Log("Fatal socket error in listening thread : {0}", e.Message);
+            }
+            catch (ObjectDisposedException)
+            {
+                Log("Listener socket disposed; shutting down.");
+            }
+            catch (InvalidOperationException e)
             {
                 Log("Fatal error in listening thread : {0}", e.Message);
             }

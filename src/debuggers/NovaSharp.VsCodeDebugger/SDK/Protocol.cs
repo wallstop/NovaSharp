@@ -34,6 +34,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System.Text.RegularExpressions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Serialization.Json;
 
     /// <summary>
@@ -124,6 +125,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
         public Response(Table req)
             : base("response")
         {
+            if (req == null)
+            {
+                throw new ArgumentNullException(nameof(req));
+            }
+
             Success = true;
             RequestSequenceuence = req.Get("Sequenceuence").ToObject<int>();
             Command = req.Get("Command").ToObject<string>();
@@ -200,6 +206,16 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// </summary>
         public void ProcessLoop(Stream inputStream, Stream outputStream)
         {
+            if (inputStream == null)
+            {
+                throw new ArgumentNullException(nameof(inputStream));
+            }
+
+            if (outputStream == null)
+            {
+                throw new ArgumentNullException(nameof(outputStream));
+            }
+
             _outputStream = outputStream;
 
             byte[] buffer = new byte[BufferSize];
@@ -263,7 +279,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 else
                 {
                     string s = _rawData.GetString(Encoding);
-                    int idx = s.IndexOf(TwoCrLf);
+                    int idx = s.IndexOf(TwoCrLf, StringComparison.Ordinal);
                     if (idx != -1)
                     {
                         Match m = ContentLengthMatcher.Match(s);
@@ -307,14 +323,27 @@ namespace NovaSharp.VsCodeDebugger.SDK
                     SendMessage(response);
                 }
             }
-            catch
+            catch (InterpreterException ex)
             {
-                // Swallow
+                Console.Error.WriteLine("Dispatch error: {0}", ex.DecoratedMessage ?? ex.Message);
+            }
+            catch (FormatException ex)
+            {
+                Console.Error.WriteLine("Dispatch error: {0}", ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.Error.WriteLine("Dispatch error: {0}", ex.Message);
             }
         }
 
         protected void SendMessage(ProtocolMessage message)
         {
+            if (message == null)
+            {
+                throw new ArgumentNullException(nameof(message));
+            }
+
             message.Sequenceuence = _sequenceNumber++;
 
             if (TraceResponse && message.Type == "response")
@@ -333,9 +362,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
                 _outputStream.Write(data, 0, data.Length);
                 _outputStream.Flush();
             }
-            catch (Exception)
+            catch (IOException ex)
             {
-                // ignore
+                Console.Error.WriteLine("SendMessage IO error: {0}", ex.Message);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Stream was disposed; listener is shutting down.
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.Error.WriteLine("SendMessage error: {0}", ex.Message);
             }
         }
 
