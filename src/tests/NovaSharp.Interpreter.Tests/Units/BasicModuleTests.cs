@@ -157,5 +157,20 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(capture.ToString(), Does.Contain("console-warning"));
         }
+
+        [Test]
+        public void ToNumberReturnsNilWhenInvalidDigitProvidedForBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("17"), DynValue.NewNumber(6) },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            Assert.That(result.IsNil(), Is.True);
+        }
     }
 }
