@@ -7,13 +7,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class HelpCommandTests
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -27,16 +27,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         [SetUp]
         public void SetUp()
         {
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            _consoleScope.Dispose();
         }
 
         [Test]
@@ -47,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
             command.Execute(context, string.Empty);
 
-            string output = _writer.ToString();
+            string output = _consoleScope.Writer.ToString();
             string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
             Assert.Multiple(() =>
             {
@@ -69,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             command.Execute(new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)), "run");
 
             Assert.That(
-                _writer.ToString(),
+                _consoleScope.Writer.ToString(),
                 Does.Contain("run <filename> - Executes the specified Lua script.")
             );
         }
@@ -84,7 +81,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "garbage"
             );
 
-            Assert.That(_writer.ToString(), Does.Contain("Command 'garbage' not found."));
+            Assert.That(
+                _consoleScope.Writer.ToString(),
+                Does.Contain("Command 'garbage' not found.")
+            );
         }
 
         private static Script CreateScript(LuaCompatibilityVersion version)

@@ -11,14 +11,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class ProgramTests
     {
-        private TextWriter _originalOut = null!;
-        private TextReader _originalIn = null!;
-
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -26,20 +24,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 CommandManager.Initialize();
             }
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            _originalOut = Console.Out;
-            _originalIn = Console.In;
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Console.SetOut(_originalOut);
-            Console.SetIn(_originalIn);
         }
 
         [Test]
@@ -52,60 +36,56 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckArgsHelpFlagWritesUsageAndReturnsTrue()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             bool handled = Program.CheckArgs(new[] { "-H" }, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("usage: NovaSharp"));
+                Assert.That(console.Writer.ToString(), Does.Contain("usage: NovaSharp"));
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagRunsRequestedCommand()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             bool handled = Program.CheckArgs(new[] { "-X", "help" }, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Commands:"));
+                Assert.That(console.Writer.ToString(), Does.Contain("Commands:"));
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagWithMissingArgumentShowsSyntax()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             bool handled = Program.CheckArgs(new[] { "-X" }, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(console.Writer.ToString(), Does.Contain("Wrong syntax."));
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagWithUnknownCommandReportsError()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             bool handled = Program.CheckArgs(new[] { "-X", "nope" }, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Invalid command 'nope'."));
+                Assert.That(console.Writer.ToString(), Does.Contain("Invalid command 'nope'."));
             });
         }
 
@@ -115,8 +95,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string scriptPath = Path.Combine(Path.GetTempPath(), $"sample_{Guid.NewGuid():N}.lua");
             File.WriteAllText(scriptPath, "return 42");
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -146,8 +125,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     + "}"
             );
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -157,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(handled, Is.True);
                     Assert.That(
-                        writer.ToString(),
+                        console.Writer.ToString(),
                         Does.Contain("[compatibility] Applied Lua 5.3 profile")
                     );
                 });
@@ -188,8 +166,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     + "}"
             );
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -199,7 +176,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(handled, Is.True);
                     Assert.That(
-                        writer.ToString(),
+                        console.Writer.ToString(),
                         Does.Contain("[compatibility] Running").And.Contain("Lua 5.2")
                     );
                 });
@@ -216,15 +193,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             bool handled = Program.CheckArgs(new[] { "-W" }, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(console.Writer.ToString(), Does.Contain("Wrong syntax."));
             });
         }
 
@@ -241,8 +217,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return CreateDescriptorTable(script, "internal");
             };
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -263,7 +238,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.Multiple(() =>
                 {
                     Assert.That(handled, Is.True);
-                    Assert.That(writer.ToString(), Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(
+                        console.Writer.ToString(),
+                        Does.Contain("done: 0 errors, 0 warnings.")
+                    );
                     Assert.That(File.Exists(destPath), Is.True);
                     string generated = File.ReadAllText(destPath);
                     Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
@@ -285,13 +263,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InterpreterLoopExecutesCommandsWhenNoPendingInput()
         {
             StubReplInterpreter interpreter = new();
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("!help" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -308,13 +284,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 PendingCommand = true,
                 ReturnValue = DynValue.NewString("queued"),
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("!help" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -328,13 +302,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InterpreterLoopDoesNotPrintVoidResults()
         {
             StubReplInterpreter interpreter = new() { ReturnValue = DynValue.Void };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -353,13 +325,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                     DecoratedMessage = "decorated message",
                 },
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -375,13 +345,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 ExceptionToThrow = new InvalidOperationException("broken"),
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -393,15 +361,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void BannerPrintsCompatibilitySummary()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             Script script = new(CoreModules.PresetDefault);
             script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
             Program.ShowBannerForTests(script);
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.That(output, Does.Contain("[compatibility] Active profile: Lua 5.3"));
         }

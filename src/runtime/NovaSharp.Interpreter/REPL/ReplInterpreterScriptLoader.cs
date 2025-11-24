@@ -11,9 +11,9 @@ namespace NovaSharp.Interpreter.REPL
     /// AND starts with module paths taken from environment variables (again, not going through the platform object).
     ///
     /// The paths are preconstructed using :
-    ///		* The NovaSharp_PATH environment variable if it exists
-    ///		* The LUA_PATH_5_2 environment variable if NovaSharp_PATH does not exists
-    ///		* The LUA_PATH environment variable if LUA_PATH_5_2 and NovaSharp_PATH do not exists
+    ///		* The NOVASHARP_PATH environment variable if it exists
+    ///		* The LUA_PATH_5_2 environment variable if NOVASHARP_PATH does not exist
+    ///		* The LUA_PATH environment variable if LUA_PATH_5_2 does not exist
     ///		* The "?;?.lua" path if all the above fail
     ///
     /// Also, every time a module is require(d), the "LUA_PATH" global variable is checked. If it exists, those paths
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public ReplInterpreterScriptLoader()
         {
-            ModulePaths = TryLoadEnvironmentPaths("NovaSharp_PATH");
+            ModulePaths = TryLoadEnvironmentPaths(NovaSharpPathEnvironmentVariable);
 
             if (ModulePaths == null)
             {

@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Loaders
     {
         private static readonly char[] ModulePathSeparators = new[] { ';' };
         private static readonly IReadOnlyList<string> EmptyModulePaths = Array.Empty<string>();
+        protected internal const string NovaSharpPathEnvironmentVariable = "NOVASHARP_PATH";
 
         /// <summary>
         /// Checks if a script file exists.
@@ -149,10 +150,11 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
-            string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
             IReadOnlyList<string> paths =
                 TryUnpackEnvironmentVariable(
-                    Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH")
+                    Script.GlobalOptions.Platform.GetEnvironmentVariable(
+                        NovaSharpPathEnvironmentVariable
+                    )
                 )
                 ?? TryUnpackEnvironmentVariable(
                     Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH")

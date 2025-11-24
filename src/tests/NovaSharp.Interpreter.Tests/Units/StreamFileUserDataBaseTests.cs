@@ -1314,9 +1314,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class TestStreamFileUserData : StreamFileUserDataBase
         {
-            private readonly FaultyMemoryStream _innerStream;
-            private readonly StreamReader _innerReader;
-            private FaultyStreamWriter _innerWriter;
             private readonly Encoding _encoding = new UTF8Encoding(
                 encoderShouldEmitUTF8Identifier: false
             );
@@ -1331,52 +1328,64 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool allowSeek = true
             )
             {
-                _innerStream = new FaultyMemoryStream();
-                _innerStream.AllowSeek = allowSeek;
+                FaultyMemoryStream stream = null;
+                StreamReader reader = null;
+                FaultyStreamWriter writer = null;
 
-                if (!string.IsNullOrEmpty(initialContent))
+                try
                 {
-                    using StreamWriter seed = new StreamWriter(
-                        _innerStream,
-                        _encoding,
-                        bufferSize: 1024,
-                        leaveOpen: true
-                    );
-                    seed.Write(initialContent);
-                    seed.Flush();
-                }
+                    stream = new FaultyMemoryStream();
+                    stream.AllowSeek = allowSeek;
 
-                _innerStream.Position = 0;
-
-                if (allowRead)
-                {
-                    _innerReader = new StreamReader(
-                        _innerStream,
-                        _encoding,
-                        detectEncodingFromByteOrderMarks: false,
-                        bufferSize: 1024,
-                        leaveOpen: true
-                    );
-                }
-
-                if (allowWrite)
-                {
-                    _innerWriter = new FaultyStreamWriter(
-                        _innerStream,
-                        _encoding,
-                        bufferSize: 1024,
-                        leaveOpen: true
-                    )
+                    if (!string.IsNullOrEmpty(initialContent))
                     {
-                        AutoFlush = autoFlush,
-                    };
-                }
+                        using StreamWriter seed = new StreamWriter(
+                            stream,
+                            _encoding,
+                            bufferSize: 1024,
+                            leaveOpen: true
+                        );
+                        seed.Write(initialContent);
+                        seed.Flush();
+                    }
 
-                Initialize(
-                    _innerStream,
-                    allowRead ? _innerReader : null,
-                    allowWrite ? _innerWriter : null
-                );
+                    stream.Position = 0;
+
+                    if (allowRead)
+                    {
+                        reader = new StreamReader(
+                            stream,
+                            _encoding,
+                            detectEncodingFromByteOrderMarks: false,
+                            bufferSize: 1024,
+                            leaveOpen: true
+                        );
+                    }
+
+                    if (allowWrite)
+                    {
+                        writer = new FaultyStreamWriter(
+                            stream,
+                            _encoding,
+                            bufferSize: 1024,
+                            leaveOpen: true
+                        )
+                        {
+                            AutoFlush = autoFlush,
+                        };
+                    }
+
+                    Initialize(stream, reader, writer);
+                    stream = null;
+                    reader = null;
+                    writer = null;
+                }
+                finally
+                {
+                    stream?.Dispose();
+                    reader?.Dispose();
+                    writer?.Dispose();
+                }
             }
 
             internal List<string> Writes { get; } = new();
@@ -1410,11 +1419,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal string GetContent()
             {
-                long position = _innerStream.Position;
-                _innerStream.Position = 0;
+                FaultyMemoryStream stream = InnerStream;
+                long position = stream.Position;
+                stream.Position = 0;
 
-                StreamReader snapshot = new StreamReader(
-                    _innerStream,
+                using StreamReader snapshot = new StreamReader(
+                    stream,
                     _encoding,
                     detectEncodingFromByteOrderMarks: false,
                     bufferSize: 1024,
@@ -1422,7 +1432,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
 
                 string text = snapshot.ReadToEnd();
-                _innerStream.Position = position;
+                stream.Position = position;
                 return text;
             }
 
@@ -1513,36 +1523,41 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             internal void TriggerFlushFailure()
             {
-                _innerWriter.ThrowOnFlush = true;
+                FaultyStreamWriter writer =
+                    InnerWriter ?? throw new InvalidOperationException("Writer is not available.");
+                writer.ThrowOnFlush = true;
             }
 
             internal void TriggerSeekFailure()
             {
-                _innerStream.ThrowOnSeek = true;
+                InnerStream.ThrowOnSeek = true;
             }
 
             internal void ReplaceWriterWithDisposedInstance()
             {
                 FaultyStreamWriter disposed = new FaultyStreamWriter(
-                    _innerStream,
+                    InnerStream,
                     _encoding,
                     bufferSize: 1024,
                     leaveOpen: true
                 );
                 disposed.Dispose();
-                _innerWriter = disposed;
                 StreamWriterInstance = disposed;
             }
 
             internal void DisposeUnderlyingStream()
             {
-                _innerStream.Dispose();
+                InnerStream.Dispose();
             }
 
             internal void TriggerStreamWriteFailure()
             {
-                _innerStream.ThrowOnWrite = true;
+                InnerStream.ThrowOnWrite = true;
             }
+
+            private FaultyMemoryStream InnerStream => (FaultyMemoryStream)StreamInstance;
+
+            private FaultyStreamWriter InnerWriter => StreamWriterInstance as FaultyStreamWriter;
         }
 
         private sealed class FaultyMemoryStream : MemoryStream

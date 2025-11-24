@@ -29,6 +29,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void TearDown()
         {
             Script.GlobalOptions.Platform = _previousPlatform;
+            _platform.Dispose();
+            _platform = null!;
         }
 
         [Test]
@@ -160,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(_platform.GetStdOutText(), Is.Empty);
         }
 
-        private sealed class InMemoryPlatformAccessor : PlatformAccessorBase
+        private sealed class InMemoryPlatformAccessor : PlatformAccessorBase, IDisposable
         {
             private readonly ConcurrentDictionary<string, byte[]> _files = new(
                 StringComparer.OrdinalIgnoreCase
@@ -267,6 +269,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             public override int ExecuteCommand(string cmdline) => 0;
+
+            public void Dispose()
+            {
+                _stdin.Dispose();
+                _stdout.Dispose();
+                _stderr.Dispose();
+            }
 
             private static void WriteToStandardStream(MemoryStream stream, byte[] data)
             {

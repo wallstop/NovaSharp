@@ -8,27 +8,29 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class RunCommandTests
+    public sealed class RunCommandTests : IDisposable
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
 
         [SetUp]
         public void SetUp()
         {
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            _consoleScope.Dispose();
+        }
+
+        public void Dispose()
+        {
+            _consoleScope?.Dispose();
         }
 
         [Test]
@@ -39,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(context, string.Empty);
 
-            Assert.That(_writer.ToString(), Does.Contain("Syntax : !run <file>"));
+            Assert.That(_consoleScope.Writer.ToString(), Does.Contain("Syntax : !run <file>"));
         }
 
         [Test]
@@ -99,7 +101,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             command.Execute(context, "sample.lua");
 
             Assert.That(
-                _writer.ToString(),
+                _consoleScope.Writer.ToString(),
                 Does.Contain("[compatibility] Running").And.Contain("Lua 5.4")
             );
         }
@@ -135,8 +137,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 Assert.Multiple(() =>
                 {
+                    string consoleOutput = _consoleScope.Writer.ToString();
                     Assert.That(
-                        _writer.ToString(),
+                        consoleOutput,
                         Does.Contain("[compatibility] Applied Lua 5.3 profile")
                             .And.Contain("Lua 5.3")
                             .And.Contain("[compatibility] Running")

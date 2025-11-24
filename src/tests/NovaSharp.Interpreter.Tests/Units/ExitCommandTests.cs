@@ -5,27 +5,24 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class ExitCommandTests
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
 
         [SetUp]
         public void SetUp()
         {
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            _consoleScope.Dispose();
         }
 
         [Test]
@@ -43,7 +40,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.DisplayShortHelp();
 
-            Assert.That(_writer.ToString(), Does.Contain("exit - Exits the interpreter"));
+            Assert.That(
+                _consoleScope.Writer.ToString(),
+                Does.Contain("exit - Exits the interpreter")
+            );
         }
 
         [Test]
@@ -53,7 +53,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.DisplayLongHelp();
 
-            Assert.That(_writer.ToString(), Does.Contain("exit - Exits the interpreter"));
+            Assert.That(
+                _consoleScope.Writer.ToString(),
+                Does.Contain("exit - Exits the interpreter")
+            );
         }
 
         [Test]

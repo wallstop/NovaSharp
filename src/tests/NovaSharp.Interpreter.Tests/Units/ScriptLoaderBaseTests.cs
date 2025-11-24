@@ -136,7 +136,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             IPlatformAccessor original = Script.GlobalOptions.Platform;
             LoaderPlatformStub stub = new();
-            stub.Environment["NovaSharp_PATH"] = "mods/?.lua;packages/?/init.lua";
+            stub.Environment["NOVASHARP_PATH"] = "mods/?.lua;packages/?/init.lua";
 
             Script.GlobalOptions.Platform = stub;
 
@@ -213,8 +213,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class LoaderPlatformStub : IPlatformAccessor
         {
-            public Dictionary<string, string> Environment { get; } =
-                new(StringComparer.OrdinalIgnoreCase);
+            public Dictionary<string, string> Environment { get; } = new(StringComparer.Ordinal);
 
             public CoreModules FilterSupportedCoreModules(CoreModules coreModules) => coreModules;
 
