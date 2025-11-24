@@ -44,7 +44,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
         /// <summary>
         /// Running sequence assigned to the payload.
         /// </summary>
-        public int Sequenceuence;
+        public int Sequenceuence { get; internal set; }
 
         /// <summary>
         /// Message category (request/response/event).
@@ -68,8 +68,8 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public class Request : ProtocolMessage
     {
-        public string Command;
-        public Table Arguments;
+        public string Command { get; }
+        public Table Arguments { get; }
 
         public Request(int id, string cmd, Table arg)
             : base("request", id)
@@ -154,14 +154,14 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public class Event : ProtocolMessage
     {
-        public readonly string @event;
-        public readonly object Body;
+        public string @event { get; }
+        public object Body { get; }
 
         public Event(string type, object bdy = null)
             : base("event")
         {
             @event = type;
-            this.Body = bdy;
+            Body = bdy;
         }
     }
 
@@ -170,8 +170,8 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public abstract class ProtocolServer
     {
-        public bool Trace;
-        public bool TraceResponse;
+        public bool Trace { get; set; }
+        public bool TraceResponse { get; set; }
 
         protected const int BufferSize = 4096;
         protected const string TwoCrLf = "\r\n\r\n";

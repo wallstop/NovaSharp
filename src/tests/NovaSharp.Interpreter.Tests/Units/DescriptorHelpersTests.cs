@@ -290,17 +290,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public sealed class MemberVisibilityFixtures
         {
-            public const string InternalFieldName = nameof(InternalField);
-            public const string ProtectedFieldName = nameof(ProtectedField);
+            public const string InternalFieldName = nameof(_internalField);
+            public const string ProtectedFieldName = nameof(_protectedField);
             public const string PrivateMethodName = nameof(PrivateMethod);
 
-            public int PublicField = 0;
+            public int publicField = 0;
 
-            internal int InternalField = 0;
+            internal int _internalField = 0;
 
-            protected int ProtectedField = 0;
+            protected int _protectedField = 0;
 
-            protected internal int ProtectedInternalField = 0;
+            protected internal int _protectedInternalField = 0;
 
             public void PublicMethod() { }
 
@@ -311,16 +311,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             internal static class Metadata
             {
                 internal static FieldInfo PublicField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(nameof(PublicField))!;
+                    typeof(MemberVisibilityFixtures).GetField(
+                        nameof(MemberVisibilityFixtures.publicField)
+                    )!;
 
                 internal static FieldInfo InternalField { get; } =
-                    GetInstanceField(f => f.InternalField);
+                    GetInstanceField(f => f._internalField);
 
                 internal static FieldInfo ProtectedField { get; } =
-                    GetInstanceField(f => f.ProtectedField);
+                    GetInstanceField(f => f._protectedField);
 
                 internal static FieldInfo ProtectedInternalField { get; } =
-                    GetInstanceField(f => f.ProtectedInternalField);
+                    GetInstanceField(f => f._protectedInternalField);
 
                 internal static MethodBase PrivateMethod { get; } =
                     GetInstanceMethod(f => f.PrivateMethod());

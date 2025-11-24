@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         private class DynamicExpressionWrapper
         {
-            public DynamicExpression Expression;
+            public DynamicExpression Expression { get; set; }
         }
 
         /// <summary>

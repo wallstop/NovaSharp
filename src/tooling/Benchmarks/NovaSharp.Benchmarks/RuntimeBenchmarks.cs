@@ -69,7 +69,7 @@ namespace NovaSharp.Benchmarks
         private double RunTableScenario()
         {
             Table table = new(_script);
-            for (int i = 1; i <= LuaRuntimeSuites.tableEntryCount; i++)
+            for (int i = 1; i <= LuaRuntimeSuites.TableEntryCount; i++)
             {
                 table.Set(i, DynValue.NewNumber(i * 1.5));
             }
@@ -78,12 +78,12 @@ namespace NovaSharp.Benchmarks
         }
 
         private double RunCoroutineScenario() =>
-            _script.Call(_compiledEntry, LuaRuntimeSuites.coroutineSteps).Number;
+            _script.Call(_compiledEntry, LuaRuntimeSuites.CoroutineSteps).Number;
 
         private double RunUserDataScenario()
         {
             _host.Reset();
-            return _script.Call(_compiledEntry, _host, LuaRuntimeSuites.userDataIterations).Number;
+            return _script.Call(_compiledEntry, _host, LuaRuntimeSuites.UserDataIterations).Number;
         }
     }
 

@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         private const int YieldSpecialTrap = -99;
 
-        internal long AutoYieldCounter;
+        internal long AutoYieldCounter { get; set; }
 
         private DynValue ProcessingLoop(int instructionPtr)
         {

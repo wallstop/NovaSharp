@@ -37,7 +37,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Tracks active loop constructs while emitting so <c>break</c> statements can resolve jump sites.
         /// </summary>
-        internal LoopTracker LoopTracker = new();
+        internal LoopTracker LoopTracker { get; } = new();
 
         /// <summary>
         /// Initializes the bytecode builder for the given script.

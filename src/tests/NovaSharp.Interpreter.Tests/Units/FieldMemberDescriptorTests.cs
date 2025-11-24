@@ -140,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetValueReturnsInstanceFieldViaReflection()
         {
-            SampleFields instance = new() { InstanceValue = 42 };
+            SampleFields instance = new() { instanceValue = 42 };
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
@@ -152,14 +152,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Null);
                 Assert.That(result.Type, Is.EqualTo(DataType.Number));
-                Assert.That(result.Number, Is.EqualTo(instance.InstanceValue));
+                Assert.That(result.Number, Is.EqualTo(instance.instanceValue));
             });
         }
 
         [Test]
         public void PreoptimizedGetterCompilesForInstanceField()
         {
-            SampleFields instance = new() { InstanceValue = 99 };
+            SampleFields instance = new() { instanceValue = 99 };
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Preoptimized
@@ -170,7 +170,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
-                Assert.That(result.Number, Is.EqualTo(instance.InstanceValue));
+                Assert.That(result.Number, Is.EqualTo(instance.instanceValue));
             });
         }
 
@@ -223,7 +223,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
-            SampleFields instance = new() { InstanceValue = 64 };
+            SampleFields instance = new() { instanceValue = 64 };
 
             Assert.That(descriptor.OptimizedGetter, Is.Null);
 
@@ -235,7 +235,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
-                Assert.That(value.Number, Is.EqualTo(instance.InstanceValue));
+                Assert.That(value.Number, Is.EqualTo(instance.instanceValue));
             });
         }
 
@@ -279,7 +279,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             descriptor.SetValue(_script, instance, DynValue.NewNumber(5.0));
 
-            Assert.That(instance.InstanceValue, Is.EqualTo(5));
+            Assert.That(instance.instanceValue, Is.EqualTo(5));
         }
 
         [Test]
@@ -309,7 +309,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => descriptor.SetValue(_script, null, DynValue.NewNumber(1)),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("attempt to access instance member InstanceValue")
+                    .With.Message.Contains("attempt to access instance member instanceValue")
             );
         }
 
@@ -339,7 +339,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             descriptor.SetValue(_script, instance, DynValue.NewNumber(2.5));
 
-            Assert.That(instance.DoubleValue, Is.EqualTo(2.5));
+            Assert.That(instance.doubleValue, Is.EqualTo(2.5));
         }
 
         [Test]
@@ -367,8 +367,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             public const int ConstValue = 7;
             public static readonly string ReadonlyValue = "fixed";
             public static int StaticValue = 1;
-            public int InstanceValue;
-            public double DoubleValue;
+            public int instanceValue;
+            public double doubleValue;
             private int _privateValue;
 
             internal static FieldInfo PrivateValueField { get; } =
@@ -413,10 +413,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 typeof(SampleFields).GetField(nameof(SampleFields.StaticValue))!;
 
             internal static FieldInfo InstanceValue { get; } =
-                typeof(SampleFields).GetField(nameof(SampleFields.InstanceValue))!;
+                typeof(SampleFields).GetField(nameof(SampleFields.instanceValue))!;
 
             internal static FieldInfo DoubleValue { get; } =
-                typeof(SampleFields).GetField(nameof(SampleFields.DoubleValue))!;
+                typeof(SampleFields).GetField(nameof(SampleFields.doubleValue))!;
 
             internal static FieldInfo PrivateValue { get; } = SampleFields.PrivateValueField;
         }

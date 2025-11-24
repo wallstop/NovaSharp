@@ -13,14 +13,14 @@ namespace NovaSharp.Interpreter.Execution.VM
     /// </summary>
     internal class Instruction
     {
-        internal OpCode OpCode;
-        internal SymbolRef Symbol;
-        internal SymbolRef[] SymbolList;
-        internal string Name;
-        internal DynValue Value;
-        internal int NumVal;
-        internal int NumVal2;
-        internal SourceRef SourceCodeRef;
+        internal OpCode OpCode { get; set; }
+        internal SymbolRef Symbol { get; set; }
+        internal SymbolRef[] SymbolList { get; set; }
+        internal string Name { get; set; }
+        internal DynValue Value { get; set; }
+        internal int NumVal { get; set; }
+        internal int NumVal2 { get; set; }
+        internal SourceRef SourceCodeRef { get; set; }
 
         /// <summary>
         /// Initializes an instruction bound to the specified source reference.

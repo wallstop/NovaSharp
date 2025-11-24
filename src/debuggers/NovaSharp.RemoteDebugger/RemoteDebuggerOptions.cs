@@ -10,22 +10,22 @@ namespace NovaSharp.RemoteDebugger
         /// <summary>
         /// Gets or sets the TCP server flags applied to each debug endpoint.
         /// </summary>
-        public Utf8TcpServerOptions NetworkOptions;
+        public Utf8TcpServerOptions NetworkOptions { get; set; }
 
         /// <summary>
         /// When true, every HTTP request redirects to the single script instance.
         /// </summary>
-        public bool SingleScriptMode;
+        public bool SingleScriptMode { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP port used to serve the debugger UI (when enabled).
         /// </summary>
-        public int? HttpPort;
+        public int? HttpPort { get; set; }
 
         /// <summary>
         /// Gets or sets the first port used when allocating RPC listeners for attached scripts.
         /// </summary>
-        public int RpcPortBase;
+        public int RpcPortBase { get; set; }
 
         /// <summary>
         /// Gets the default configuration used when no options are supplied.

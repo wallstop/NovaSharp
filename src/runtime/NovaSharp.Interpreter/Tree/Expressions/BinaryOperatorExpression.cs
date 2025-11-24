@@ -47,17 +47,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private class Node
         {
-            public Expression Expression;
-            public Operator Operator;
-            public Node Previous;
-            public Node Next;
+            public Expression expression;
+            public Operator operatorKind;
+            public Node previous;
+            public Node next;
         }
 
         private class LinkedList
         {
-            public Node Head;
-            public Node Tail;
-            public Operator OperatorMask;
+            public Node head;
+            public Node tail;
+            public Operator operatorMask;
         }
 
         private const Operator PowerOperator = Operator.Power;
@@ -99,9 +99,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             }
 
             LinkedList list = (LinkedList)chain;
-            if (list.Head != null)
+            if (list.head != null)
             {
-                list.Head.Expression = null;
+                list.head.expression = null;
             }
         }
 
@@ -119,7 +119,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public static void AddExpressionToChain(object chain, Expression exp)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { Expression = exp };
+            Node node = new() { expression = exp };
             AddNode(list, node);
         }
 
@@ -129,7 +129,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public static void AddOperatorToChain(object chain, Token op)
         {
             LinkedList list = (LinkedList)chain;
-            Node node = new() { Operator = ParseBinaryOperator(op) };
+            Node node = new() { operatorKind = ParseBinaryOperator(op) };
             AddNode(list, node);
         }
 
@@ -155,17 +155,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
         private static void AddNode(LinkedList list, Node node)
         {
-            list.OperatorMask |= node.Operator;
+            list.operatorMask |= node.operatorKind;
 
-            if (list.Head == null)
+            if (list.head == null)
             {
-                list.Head = list.Tail = node;
+                list.head = list.tail = node;
             }
             else
             {
-                list.Tail.Next = node;
-                node.Previous = list.Tail;
-                list.Tail = node;
+                list.tail.next = node;
+                node.previous = list.tail;
+                list.tail = node;
             }
         }
 
@@ -174,9 +174,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         /// </summary>
         private static Expression CreateSubTree(LinkedList list, ScriptLoadingContext lcontext)
         {
-            Operator opfound = list.OperatorMask;
+            Operator opfound = list.operatorMask;
 
-            Node nodes = list.Head;
+            Node nodes = list.head;
 
             if ((opfound & PowerOperator) != 0)
             {
@@ -237,17 +237,17 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 nodes = PrioritizeLeftAssociative(nodes, lcontext, LogicalOrOperator);
             }
 
-            if (nodes.Next != null || nodes.Previous != null)
+            if (nodes.next != null || nodes.previous != null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 1");
             }
 
-            if (nodes.Expression == null)
+            if (nodes.expression == null)
             {
                 throw new InternalErrorException("Expression reduction didn't work! - 2");
             }
 
-            return nodes.Expression;
+            return nodes.expression;
         }
 
         private static Node PrioritizeLeftAssociative(
@@ -256,33 +256,33 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             Operator operatorsToFind
         )
         {
-            for (Node n = nodes; n != null; n = n.Next)
+            for (Node n = nodes; n != null; n = n.next)
             {
-                Operator o = n.Operator;
+                Operator o = n.operatorKind;
 
                 if ((o & operatorsToFind) == 0)
                 {
                     continue;
                 }
 
-                n.Operator = Operator.NotAnOperator;
-                n.Expression = new BinaryOperatorExpression(
-                    n.Previous.Expression,
-                    n.Next.Expression,
+                n.operatorKind = Operator.NotAnOperator;
+                n.expression = new BinaryOperatorExpression(
+                    n.previous.expression,
+                    n.next.expression,
                     o,
                     lcontext
                 );
-                n.Previous = n.Previous.Previous;
-                n.Next = n.Next.Next;
+                n.previous = n.previous.previous;
+                n.next = n.next.next;
 
-                if (n.Next != null)
+                if (n.next != null)
                 {
-                    n.Next.Previous = n;
+                    n.next.previous = n;
                 }
 
-                if (n.Previous != null)
+                if (n.previous != null)
                 {
-                    n.Previous.Next = n;
+                    n.previous.next = n;
                 }
                 else
                 {
@@ -300,35 +300,35 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         )
         {
             Node last;
-            for (last = nodes; last.Next != null; last = last.Next) { }
+            for (last = nodes; last.next != null; last = last.next) { }
 
-            for (Node n = last; n != null; n = n.Previous)
+            for (Node n = last; n != null; n = n.previous)
             {
-                Operator o = n.Operator;
+                Operator o = n.operatorKind;
 
                 if ((o & operatorsToFind) == 0)
                 {
                     continue;
                 }
 
-                n.Operator = Operator.NotAnOperator;
-                n.Expression = new BinaryOperatorExpression(
-                    n.Previous.Expression,
-                    n.Next.Expression,
+                n.operatorKind = Operator.NotAnOperator;
+                n.expression = new BinaryOperatorExpression(
+                    n.previous.expression,
+                    n.next.expression,
                     o,
                     lcontext
                 );
-                n.Previous = n.Previous.Previous;
-                n.Next = n.Next.Next;
+                n.previous = n.previous.previous;
+                n.next = n.next.next;
 
-                if (n.Next != null)
+                if (n.next != null)
                 {
-                    n.Next.Previous = n;
+                    n.next.previous = n;
                 }
 
-                if (n.Previous != null)
+                if (n.previous != null)
                 {
-                    n.Previous.Next = n;
+                    n.previous.next = n;
                 }
                 else
                 {

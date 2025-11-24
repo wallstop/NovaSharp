@@ -16,42 +16,42 @@ namespace NovaSharp.Interpreter.Execution.VM
             /// <summary>
             /// Gets or sets a value indicating whether debugging is enabled for this processor.
             /// </summary>
-            public bool DebuggerEnabled = true;
+            public bool DebuggerEnabled { get; set; } = true;
 
             /// <summary>
             /// Gets or sets the debugger currently attached to the processor.
             /// </summary>
-            public IDebugger DebuggerAttached;
+            public IDebugger DebuggerAttached { get; set; }
 
             /// <summary>
             /// Gets or sets the pending debugger action (step, continue, break).
             /// </summary>
-            public DebuggerAction.ActionType DebuggerCurrentAction;
+            public DebuggerAction.ActionType DebuggerCurrentAction { get; set; }
 
             /// <summary>
             /// Gets or sets the bytecode target for the current debugger action.
             /// </summary>
-            public int DebuggerCurrentActionTarget = -1;
+            public int DebuggerCurrentActionTarget { get; set; } = -1;
 
             /// <summary>
             /// Gets or sets the last highlighted source reference.
             /// </summary>
-            public SourceRef LastHlRef;
+            public SourceRef LastHlRef { get; set; }
 
             /// <summary>
             /// Gets or sets the execution stack depth at which a step action was scheduled.
             /// </summary>
-            public int ExecutionStackDepthAtStep = -1;
+            public int ExecutionStackDepthAtStep { get; set; } = -1;
 
             /// <summary>
             /// Gets the list of breakpoints evaluated by the debugger.
             /// </summary>
-            public readonly List<SourceRef> BreakPoints = new();
+            public List<SourceRef> BreakPoints { get; } = new();
 
             /// <summary>
             /// Gets or sets a value indicating whether breakpoints are matched on line numbers only.
             /// </summary>
-            public bool LineBasedBreakPoints;
+            public bool LineBasedBreakPoints { get; set; }
         }
     }
 }

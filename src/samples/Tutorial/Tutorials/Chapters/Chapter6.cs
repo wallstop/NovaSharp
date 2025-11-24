@@ -450,7 +450,7 @@ namespace Tutorials.Chapters
             private int _field1 = 0;
 
             // Visible - it's public
-            public int Field2 = 0;
+            public int field2 = 0;
 
             // Visible - it's private but forced visible by attribute
             [NovaSharpVisible(true)]
@@ -458,7 +458,7 @@ namespace Tutorials.Chapters
 
             // Not visible - it's public but forced hidden by attribute
             [NovaSharpVisible(false)]
-            public int Field4 = 0;
+            public int field4 = 0;
 
             // Not visible at all - it's private
             private int Property1 { get; set; }

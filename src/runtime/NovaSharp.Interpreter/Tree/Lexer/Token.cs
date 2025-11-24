@@ -7,14 +7,14 @@ namespace NovaSharp.Interpreter.Tree.Lexer
     /// </summary>
     internal class Token
     {
-        public readonly int SourceId;
-        public readonly int FromCol,
-            ToCol,
-            FromLine,
-            ToLine,
-            PrevCol,
-            PrevLine;
-        public readonly TokenType Type;
+        public int SourceId { get; }
+        public int FromCol { get; }
+        public int ToCol { get; }
+        public int FromLine { get; }
+        public int ToLine { get; }
+        public int PrevCol { get; }
+        public int PrevLine { get; }
+        public TokenType Type { get; }
 
         /// <summary>
         /// Gets or sets the textual payload associated with the token.

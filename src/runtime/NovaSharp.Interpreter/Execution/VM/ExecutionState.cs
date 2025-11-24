@@ -21,12 +21,12 @@ namespace NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets or sets the instruction pointer at the time of suspension.
         /// </summary>
-        public int InstructionPtr;
+        public int InstructionPtr { get; set; }
 
         /// <summary>
         /// Gets or sets the coroutine state associated with the snapshot.
         /// </summary>
-        public CoroutineState State;
+        public CoroutineState State { get; set; }
 
         /// <summary>
         /// Initializes a new execution state with the default coroutine status.

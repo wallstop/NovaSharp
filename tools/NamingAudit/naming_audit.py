@@ -4,7 +4,7 @@ Naming audit helper.
 
 Scans C# source files under `src/` and reports file/type identifiers that do not
 follow the repository's naming expectations (PascalCase for types/methods/properties,
-camelCase for public fields, per .editorconfig / C# style).
+camelCase for public fields, _camelCase for non-public fields, per .editorconfig / C# style).
 The goal is to provide actionable guidance ahead of the full naming sweep that
 Milestone F calls out.
 """
@@ -114,8 +114,9 @@ PROPERTY_PATTERN = re.compile(
     r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*(?:\{|=>)"
 )
 FIELD_PATTERN = re.compile(
-    r"^\s*(public|protected|internal)\s+(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*(?:=|;)"
+    r"^\s*(?P<access>public|protected\s+internal|private\s+protected|protected|internal)\s+"
+    r"(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
+    r"[A-Za-z0-9_<>,\[\].?]+\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
 )
 FIELD_NAME_ALLOWLIST = {"operator"}
 PRIVATE_FIELD_PATTERN = re.compile(
@@ -276,40 +277,69 @@ def audit_file(
 
                 field_match = FIELD_PATTERN.match(line)
                 if field_match:
-                    field_name = field_match.group(2)
+                    field_name = field_match.group("name")
+                    field_access = field_match.group("access") or ""
+                    modifiers_text = field_match.group("modifiers") or ""
+                    modifiers = modifiers_text.split()
+                    is_static = "static" in modifiers
+                    is_const = "const" in modifiers
                     if (
                         field_name
                         and field_name not in FIELD_NAME_ALLOWLIST
                         and not is_allowlisted(rel_path, field_name, FIELD_ALLOWLIST)
                     ):
-                        if not is_camel_case(field_name):
-                            issues.append(
-                                NamingIssue(
-                                    rel_path,
-                                    "field",
-                                    field_name,
-                                    f"Field '{field_name}' should be camelCase "
-                                    f"(line {line_number}).",
-                                )
-                            )
-                    continue
-
-                private_field_match = PRIVATE_FIELD_PATTERN.match(line)
-                if private_field_match:
-                    field_name = private_field_match.group("name")
-                    modifiers = (private_field_match.group("modifiers") or "").split()
-                    is_const = "const" in modifiers
-                    is_static = "static" in modifiers
-                    if field_name:
-                        if is_const or is_static:
+                        normalized_access = " ".join(field_access.split())
+                        if is_static or is_const:
                             if not is_pascal_case(field_name):
-                                label = "Const" if is_const else "Static"
                                 issues.append(
                                     NamingIssue(
                                         rel_path,
                                         "field",
                                         field_name,
-                                        f"{label} field '{field_name}' should be PascalCase "
+                                        f"Static field '{field_name}' should be PascalCase "
+                                        f"(line {line_number}).",
+                                    )
+                                )
+                        elif normalized_access == "public":
+                            if not is_camel_case(field_name):
+                                issues.append(
+                                    NamingIssue(
+                                        rel_path,
+                                        "field",
+                                        field_name,
+                                        f"Public instance field '{field_name}' should be camelCase "
+                                        f"(line {line_number}).",
+                                    )
+                                )
+                        else:
+                            if not is_private_field_style(field_name):
+                                issues.append(
+                                    NamingIssue(
+                                        rel_path,
+                                        "field",
+                                        field_name,
+                                        f"Non-public instance field '{field_name}' should be _camelCase "
+                                        f"(line {line_number}).",
+                                    )
+                                )
+                    continue
+
+                private_field_match = PRIVATE_FIELD_PATTERN.match(line)
+                if private_field_match:
+                    field_name = private_field_match.group("name")
+                    modifiers_text = private_field_match.group("modifiers") or ""
+                    modifiers = modifiers_text.split()
+                    is_static = "static" in modifiers
+                    is_const = "const" in modifiers
+                    if field_name:
+                        if is_static or is_const:
+                            if not is_pascal_case(field_name):
+                                issues.append(
+                                    NamingIssue(
+                                        rel_path,
+                                        "field",
+                                        field_name,
+                                        f"Static field '{field_name}' should be PascalCase "
                                         f"(line {line_number}).",
                                     )
                                 )
@@ -361,7 +391,7 @@ def render_report(
 
     if not issues:
         lines.append(
-            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties, camelCase for public fields)."
+            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties/static fields, camelCase for public instance fields, _camelCase for non-public instance fields)."
         )
     else:
         lines.append("Naming inconsistencies detected (per .editorconfig/C# style):")
@@ -520,7 +550,7 @@ def main(argv: list[str]) -> int:
     exit_code = 0
     if not issues:
         print(
-            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties, camelCase for public fields)."
+            "All inspected files/types follow naming expectations (PascalCase for types/methods/properties/static fields, camelCase for public instance fields, _camelCase for non-public instance fields)."
         )
     else:
         print("Naming inconsistencies detected (per .editorconfig/C# style):\n")

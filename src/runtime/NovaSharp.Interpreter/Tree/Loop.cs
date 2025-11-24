@@ -15,12 +15,12 @@ namespace NovaSharp.Interpreter.Tree
         /// <summary>
         /// Scope guarded by this loop; the compiler emits `Exit` instructions for any `break`.
         /// </summary>
-        public RuntimeScopeBlock Scope;
+        public RuntimeScopeBlock Scope { get; set; }
 
         /// <summary>
         /// Jump instructions emitted for `break` statements that still need to be patched to the loop exit.
         /// </summary>
-        public List<Instruction> BreakJumps = new();
+        public List<Instruction> BreakJumps { get; } = new();
 
         /// <summary>
         /// Emits the bytecode for a `break` statement within this loop and records the jump for later patching.

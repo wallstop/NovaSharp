@@ -14,10 +14,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
     {
         private class IfBlock
         {
-            public Expression Condition;
-            public CompositeStatement Body;
-            public RuntimeScopeBlock StackFrame;
-            public SourceRef Source;
+            public Expression Condition { get; set; }
+            public CompositeStatement Body { get; set; }
+            public RuntimeScopeBlock StackFrame { get; set; }
+            public SourceRef Source { get; set; }
         }
 
         private readonly List<IfBlock> _ifs = new();

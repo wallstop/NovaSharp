@@ -28,9 +28,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
         private class UnresolvedGenericMethod
         {
-            public readonly MethodInfo Method;
-            public readonly InteropAccessMode AccessMode;
-            public readonly HashSet<Type> AlreadyAddedTypes = new();
+            public MethodInfo Method { get; }
+            public InteropAccessMode AccessMode { get; }
+            public HashSet<Type> AlreadyAddedTypes { get; } = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)
             {
