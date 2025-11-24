@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.REPL
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// This class provides a simple REPL interpreter ready to be reused in a simple way.
@@ -97,14 +98,14 @@ namespace NovaSharp.Interpreter.REPL
 
                 if (isFirstLine && HandleDynamicExprs && _currentCommand[0] == '?')
                 {
-                    string code = _currentCommand.Substring(1).Trim();
-                    if (code.Length == 0)
+                    ReadOnlySpan<char> codeSpan = _currentCommand.AsSpan(1).TrimWhitespace();
+                    if (codeSpan.IsEmpty)
                     {
                         _currentCommand = string.Empty;
                         return DynValue.Void;
                     }
 
-                    DynamicExpression exp = _script.CreateDynamicExpression(code);
+                    DynamicExpression exp = _script.CreateDynamicExpression(new string(codeSpan));
                     result = exp.Evaluate();
                 }
                 else

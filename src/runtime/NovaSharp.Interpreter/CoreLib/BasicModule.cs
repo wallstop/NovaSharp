@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Class implementing basic Lua functions (print, type, tostring, etc) as a NovaSharp module.
@@ -410,7 +411,14 @@ namespace NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                if (TryParseIntegerInBase(numeral.String.Trim(), bb, out double parsedValue))
+                ReadOnlySpan<char> numeralSpan = numeral.String.AsSpan().TrimWhitespace();
+
+                if (numeralSpan.IsEmpty)
+                {
+                    return DynValue.Nil;
+                }
+
+                if (TryParseIntegerInBase(numeralSpan, bb, out double parsedValue))
                 {
                     return DynValue.NewNumber(parsedValue);
                 }
@@ -419,33 +427,37 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
-        private static bool TryParseIntegerInBase(string text, int numberBase, out double value)
+        private static bool TryParseIntegerInBase(
+            ReadOnlySpan<char> text,
+            int numberBase,
+            out double value
+        )
         {
             value = 0;
-            if (string.IsNullOrWhiteSpace(text))
+            ReadOnlySpan<char> span = text.TrimWhitespace();
+            if (span.IsEmpty)
             {
                 return false;
             }
 
-            string trimmed = text.Trim();
             int index = 0;
             bool negative = false;
 
-            if (trimmed[index] == '+' || trimmed[index] == '-')
+            if (span[index] == '+' || span[index] == '-')
             {
-                negative = trimmed[index] == '-';
+                negative = span[index] == '-';
                 index++;
             }
 
-            if (index >= trimmed.Length)
+            if (index >= span.Length)
             {
                 return false;
             }
 
             double accumulator = 0;
-            for (; index < trimmed.Length; index++)
+            for (; index < span.Length; index++)
             {
-                int digit = GetDigitValue(trimmed[index]);
+                int digit = GetDigitValue(span[index]);
 
                 if (digit < 0 || digit >= numberBase)
                 {

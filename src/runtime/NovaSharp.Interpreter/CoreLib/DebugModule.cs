@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
     using REPL;
 
     /// <summary>
@@ -65,14 +66,9 @@ namespace NovaSharp.Interpreter.CoreLib
                     break;
                 }
 
-                string trimmedInput = input.Trim();
+                ReadOnlySpan<char> trimmedInput = input.AsSpan().TrimWhitespace();
 
-                if (trimmedInput.Length == 0)
-                {
-                    trimmedInput = string.Empty;
-                }
-
-                if (string.Equals(trimmedInput, "return", StringComparison.OrdinalIgnoreCase))
+                if (trimmedInput.Equals("return".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
                     break;
                 }
