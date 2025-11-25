@@ -12,12 +12,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebugModuleTests
     {
-        private static readonly string[] _printThenReturn = { "print('hello')", "return" };
-        private static readonly string[] _errorThenReturn = { "error('boom')", "return" };
-        private static readonly string[] _returnValueSequence = { "return 42", "return" };
-        private static readonly string[] _callClrSequence = { "callClr()", "return" };
-        private static readonly string[] _whitespaceReturnSequence = { "   ", "\treturn" };
-        private static readonly string[] _singleReturnSequence = { "RETURN" };
+        private static readonly string[] PrintThenReturn = { "print('hello')", "return" };
+        private static readonly string[] ErrorThenReturn = { "error('boom')", "return" };
+        private static readonly string[] ReturnValueSequence = { "return 42", "return" };
+        private static readonly string[] CallClrSequence = { "callClr()", "return" };
+        private static readonly string[] WhitespaceReturnSequence = { "   ", "\treturn" };
+        private static readonly string[] SingleReturnSequence = { "RETURN" };
 
         [OneTimeSetUp]
         public void RegisterTypes()
@@ -480,7 +480,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopProcessesQueuedCommands()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_printThenReturn);
+            Queue<string> commands = new(PrintThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -500,7 +500,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopReportsErrorsAndRespectsReturnCommand()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_errorThenReturn);
+            Queue<string> commands = new(ErrorThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -519,7 +519,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopPrintsReturnedValues()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_returnValueSequence);
+            Queue<string> commands = new(ReturnValueSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -538,7 +538,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHandlesGeneralExceptions()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_callClrSequence);
+            Queue<string> commands = new(CallClrSequence);
             List<string> output = new();
 
             script.Globals["callClr"] = DynValue.NewCallback(
@@ -581,7 +581,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopTreatsWhitespaceInputAsNoOp()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_whitespaceReturnSequence);
+            Queue<string> commands = new(WhitespaceReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -601,7 +601,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHonoursReturnCommandWithDifferentCase()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(_singleReturnSequence);
+            Queue<string> commands = new(SingleReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;

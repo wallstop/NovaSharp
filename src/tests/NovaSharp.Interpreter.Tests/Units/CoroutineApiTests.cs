@@ -12,10 +12,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CoroutineApiTests
     {
-        private static readonly double[] _typedEnumerableResults = { 1d, 2d };
-        private static readonly object[] _enumerableResults = { "foo", 7d };
-        private static readonly int[] _enumerableOfTResults = { 10, 20 };
-        private static readonly object[] _unityCoroutineResults = { null, null, null };
+        private static readonly double[] TypedEnumerableResults = { 1d, 2d };
+        private static readonly object[] EnumerableResults = { "foo", 7d };
+        private static readonly int[] EnumerableOfTResults = { 10, 20 };
+        private static readonly object[] UnityCoroutineResults = { null, null, null };
 
         [Test]
         public void AsTypedEnumerableReturnsAllResults()
@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(results, Is.EqualTo(_typedEnumerableResults));
+                Assert.That(results, Is.EqualTo(TypedEnumerableResults));
                 Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
             });
         }
@@ -84,7 +84,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 results.Add(value);
             }
 
-            Assert.That(results, Is.EqualTo(_enumerableResults));
+            Assert.That(results, Is.EqualTo(EnumerableResults));
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 results.Add(value);
             }
 
-            Assert.That(results, Is.EqualTo(_enumerableOfTResults));
+            Assert.That(results, Is.EqualTo(EnumerableOfTResults));
         }
 
         [Test]
@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 yielded.Add(enumerator.Current);
             }
 
-            Assert.That(yielded, Is.EqualTo(_unityCoroutineResults));
+            Assert.That(yielded, Is.EqualTo(UnityCoroutineResults));
             Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
         }
 

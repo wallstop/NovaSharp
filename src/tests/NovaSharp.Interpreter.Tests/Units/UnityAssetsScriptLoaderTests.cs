@@ -11,8 +11,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class UnityAssetsScriptLoaderTests
     {
-        private static readonly string[] _expectedLoadedScripts = { "alpha.lua", "beta.lua" };
-        private static readonly string[] _reflectionLoadedScripts =
+        private static readonly string[] ExpectedLoadedScripts = { "alpha.lua", "beta.lua" };
+        private static readonly string[] ReflectionLoadedScripts =
         {
             "from_unity.lua",
             "extra.lua",
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             string[] loaded = loader.GetLoadedScripts();
 
-            Assert.That(loaded, Is.EquivalentTo(_expectedLoadedScripts));
+            Assert.That(loaded, Is.EquivalentTo(ExpectedLoadedScripts));
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null!),
                     Is.EqualTo("print('unity')")
                 );
-                Assert.That(loader.GetLoadedScripts(), Is.EquivalentTo(_reflectionLoadedScripts));
+                Assert.That(loader.GetLoadedScripts(), Is.EquivalentTo(ReflectionLoadedScripts));
                 Assert.That(
                     UnityEngineReflectionHarness.LastRequestedPath,
                     Is.EqualTo("Custom/Unity/Scripts")

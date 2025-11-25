@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataMethodsTests
     {
-        private static readonly int[] _scriptToClrIntArray = { 43, 78, 126, 14 };
+        private static readonly int[] ScriptToClrIntArray = { 43, 78, 126, 14 };
 
         public class SomeClassNoRegister : IComparable
         {
@@ -545,7 +545,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
                     DataType.Table,
                     typeof(int[]),
-                    v => (int[])_scriptToClrIntArray.Clone()
+                    v => (int[])ScriptToClrIntArray.Clone()
                 );
 
                 Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(

@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CoroutineTests
     {
-        private static readonly int[] _yieldedValues = { 1, 2, 3 };
+        private static readonly int[] YieldedValues = { 1, 2, 3 };
 
         [Test]
         public void ResumeAfterCompletionThrows()
@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 results.Add((int)value.Number);
             }
 
-            Assert.That(results, Is.EqualTo(_yieldedValues));
+            Assert.That(results, Is.EqualTo(YieldedValues));
         }
 
         [Test]

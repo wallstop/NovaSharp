@@ -44,14 +44,14 @@ FIELD_ALLOWLIST: dict[Path, set[str]] = {
     ): {"value"},
     Path("src/tests/NovaSharp.Interpreter.Tests/EndToEnd/UserDataFieldsTests.cs"): {
         "intProp",
-        "CONST_INT_PROP",
+        "ConstIntProp",
         "roIntProp",
         "nIntProp",
         "objProp",
     },
     Path("src/tests/NovaSharp.Interpreter.Tests/EndToEnd/VtUserDataFieldsTests.cs"): {
         "intProp",
-        "CONST_INT_PROP",
+        "ConstIntProp",
         "nIntProp",
         "objProp",
     },

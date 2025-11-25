@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebuggerActionTests
     {
-        private static readonly int[] _breakpointLines = { 1, 2, 3 };
+        private static readonly int[] BreakpointLines = { 1, 2, 3 };
 
         [Test]
         public void ConstructorInitializesTimestampNearCurrentTime()
@@ -40,12 +40,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DebuggerAction action = new();
 
-            int[] original = (int[])_breakpointLines.Clone();
+            int[] original = (int[])BreakpointLines.Clone();
             action.Lines = original;
 
             original[0] = 42;
 
-            Assert.That(action.Lines, Is.EqualTo(_breakpointLines));
+            Assert.That(action.Lines, Is.EqualTo(BreakpointLines));
 
             action.Lines = null;
 

@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [NonParallelizable]
     public sealed class StreamFileUserDataBaseTests
     {
-        private static readonly string[] _expectedWriteSequence = { "A", "B" };
+        private static readonly string[] ExpectedWriteSequence = { "A", "B" };
 
         [OneTimeSetUp]
         public void RegisterUserData()
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(result.Type, Is.EqualTo(DataType.UserData));
                 Assert.That(result.UserData.Object, Is.SameAs(file));
-                Assert.That(file.Writes, Is.EquivalentTo(_expectedWriteSequence));
+                Assert.That(file.Writes, Is.EquivalentTo(ExpectedWriteSequence));
                 Assert.That(file.GetContent().EndsWith("AB", StringComparison.Ordinal), Is.True);
             });
         }

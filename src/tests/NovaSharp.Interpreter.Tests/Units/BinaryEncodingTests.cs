@@ -8,8 +8,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class BinaryEncodingTests
     {
         private readonly BinaryEncoding _encoding = new();
-        private static readonly byte[] _expectedDestinationBytes = { 1, 2, 3 };
-        private static readonly char[] _expectedCharSnapshot = { 'a', 'b', 'c' };
+        private static readonly byte[] ExpectedDestinationBytes = { 1, 2, 3 };
+        private static readonly char[] ExpectedCharSnapshot = { 'a', 'b', 'c' };
 
         [Test]
         public void GetBytesCopiesCharactersVerbatim()
@@ -105,7 +105,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(written, Is.EqualTo(0));
-                Assert.That(destination, Is.EqualTo(_expectedDestinationBytes));
+                Assert.That(destination, Is.EqualTo(ExpectedDestinationBytes));
             });
         }
 
@@ -206,7 +206,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(read, Is.EqualTo(0));
-                Assert.That(destination, Is.EqualTo(_expectedCharSnapshot));
+                Assert.That(destination, Is.EqualTo(ExpectedCharSnapshot));
             });
         }
 

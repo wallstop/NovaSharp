@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public struct SomeClass
         {
             public int intProp;
-            public const int CONST_INT_PROP = 115;
+            public const int ConstIntProp = 115;
             public int? nIntProp;
             public object objProp;
             public static string StaticProp;

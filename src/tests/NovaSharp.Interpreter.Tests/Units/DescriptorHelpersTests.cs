@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DescriptorHelpersTests
     {
-        private static readonly string[] _expectedMetaNames = { "__index", "__len" };
+        private static readonly string[] ExpectedMetaNames = { "__index", "__len" };
 
         [Test]
         public void GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
@@ -133,7 +133,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
-            Assert.That(names, Is.EquivalentTo(_expectedMetaNames));
+            Assert.That(names, Is.EquivalentTo(ExpectedMetaNames));
         }
 
         [Test]
@@ -268,7 +268,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
         }
 
-        public class VisibilityFixtures
+        public static class VisibilityFixtures
         {
             private static readonly object PrivateNestedAnchor = new PrivateNested();
 
@@ -282,6 +282,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public class GenericHost<T>
             {
+                private readonly string _instanceLabel;
+
+                public GenericHost()
+                {
+                    _instanceLabel = typeof(T).Name;
+                }
+
+                internal string InstanceLabel => _instanceLabel;
+
                 public class InnerType { }
             }
 

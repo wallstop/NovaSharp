@@ -12,6 +12,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class SomeType
         {
+            private readonly string _instanceLabel;
+
+            public SomeType()
+            {
+                _instanceLabel = nameof(SomeType);
+            }
+
+            internal string InstanceLabel => _instanceLabel;
+
             private static readonly SomeNestedTypePrivate PrivateAnchor =
                 new SomeNestedTypePrivate();
 
@@ -27,6 +36,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public class SomeNestedType
             {
+                private readonly string _instanceLabel;
+
+                public SomeNestedType()
+                {
+                    _instanceLabel = nameof(SomeNestedType);
+                }
+
+                internal string InstanceLabel => _instanceLabel;
+
                 public static string Get()
                 {
                     return "Ciao from SomeNestedType";
