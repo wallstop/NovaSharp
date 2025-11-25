@@ -111,7 +111,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static void RegisterSampleStruct()
         {
-            if (!UserData.IsTypeRegistered(typeof(SampleStruct)))
+            if (!UserData.IsTypeRegistered<SampleStruct>())
             {
                 UserData.RegisterType<SampleStruct>();
             }

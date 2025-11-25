@@ -40,7 +40,7 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.TableIterators))
             {
-                RegisterModuleType<TableIteratorsModule>(table);
+                RegisterModuleType(table, typeof(TableIteratorsModule));
             }
 
             if (modules.Has(CoreModules.Basic))
@@ -55,12 +55,12 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.Metatables))
             {
-                RegisterModuleType<MetaTableModule>(table);
+                RegisterModuleType(table, typeof(MetaTableModule));
             }
 
             if (modules.Has(CoreModules.StringLib))
             {
-                RegisterModuleType<StringModule>(table);
+                RegisterModuleType(table, typeof(StringModule));
 
                 if (profile.SupportsUtf8Library)
                 {
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.Table))
             {
-                RegisterModuleType<TableModule>(table);
+                RegisterModuleType(table, typeof(TableModule));
 
                 if (!profile.SupportsTableMove)
                 {
@@ -85,7 +85,7 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.Table))
             {
-                RegisterModuleType<TableModuleGlobals>(table);
+                RegisterModuleType(table, typeof(TableModuleGlobals));
             }
 
             if (modules.Has(CoreModules.ErrorHandling))

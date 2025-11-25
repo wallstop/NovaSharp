@@ -130,8 +130,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 UserData.UnregisterType<RegCollItem>();
                 UserData.UnregisterType<Array>();
                 UserData.UnregisterType(typeof(List<>));
-                UserData.UnregisterType(typeof(List<RegCollItem>));
-                UserData.UnregisterType(typeof(List<int>));
+                UserData.UnregisterType<List<RegCollItem>>();
+                UserData.UnregisterType<List<int>>();
                 //UserData.UnregisterType<IEnumerable>();
             }
         }

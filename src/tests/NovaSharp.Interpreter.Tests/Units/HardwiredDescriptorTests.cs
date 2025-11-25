@@ -258,13 +258,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DynValueMemberDescriptorPrepareForWiringHandlesStaticUserData()
         {
-            if (!UserData.IsTypeRegistered(typeof(DummyStaticUserData)))
+            if (!UserData.IsTypeRegistered<DummyStaticUserData>())
             {
                 UserData.RegisterType<DummyStaticUserData>();
             }
             DynValueMemberDescriptor descriptor = new(
                 "userdata",
-                UserData.CreateStatic(typeof(DummyStaticUserData))
+                UserData.CreateStatic<DummyStaticUserData>()
             );
             Table wiring = new(null);
 
@@ -284,7 +284,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DynValueMemberDescriptorPrepareForWiringHandlesInstanceUserDataError()
         {
-            if (!UserData.IsTypeRegistered(typeof(DummyInstanceUserData)))
+            if (!UserData.IsTypeRegistered<DummyInstanceUserData>())
             {
                 UserData.RegisterType<DummyInstanceUserData>();
             }

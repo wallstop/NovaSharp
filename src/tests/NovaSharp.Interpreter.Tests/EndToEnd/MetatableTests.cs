@@ -73,8 +73,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
             Table globalCtx = s.Globals;
 
-            globalCtx.RegisterModuleType<TableIteratorsModule>();
-            globalCtx.RegisterModuleType<MetaTableModule>();
+            globalCtx.RegisterModuleType(typeof(TableIteratorsModule));
+            globalCtx.RegisterModuleType(typeof(MetaTableModule));
 
             DynValue res = s.DoString(script);
 

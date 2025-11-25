@@ -277,7 +277,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue number = DynValue.NewNumber(7);
 
-            double converted = (double)number.ToObject(typeof(double));
+            double converted = number.ToObject<double>();
 
             Assert.That(converted, Is.EqualTo(7d));
         }

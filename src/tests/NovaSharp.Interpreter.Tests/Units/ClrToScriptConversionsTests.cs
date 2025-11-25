@@ -171,7 +171,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static void RegisterSampleUserData()
         {
-            if (!UserData.IsTypeRegistered(typeof(SampleUserData)))
+            if (!UserData.IsTypeRegistered<SampleUserData>())
             {
                 UserData.RegisterType<SampleUserData>();
             }

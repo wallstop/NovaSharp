@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void CountAndIndexerReflectSliceLength()
         {
-            IList<int> source = new List<int> { 1, 2, 3, 4, 5 };
+            List<int> source = new List<int> { 1, 2, 3, 4, 5 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: false);
 
             Assert.Multiple(() =>
@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void IndexerWritesPropagateToSource()
         {
-            IList<int> source = new List<int> { 1, 2, 3, 4, 5 };
+            List<int> source = new List<int> { 1, 2, 3, 4, 5 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: false);
 
             slice[1] = 42;
@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void EnumeratorYieldsItemsInOrder()
         {
-            IList<string> source = new List<string> { "a", "b", "c", "d" };
+            List<string> source = new List<string> { "a", "b", "c", "d" };
             Slice<string> slice = new Slice<string>(source, from: 1, length: 2, reversed: false);
 
             Assert.That(slice, Is.EqualTo(_expectedStringSlice));
@@ -54,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void ReversedSliceEnumeratesBackwards()
         {
-            IList<int> source = new List<int> { 10, 20, 30, 40, 50 };
+            List<int> source = new List<int> { 10, 20, 30, 40, 50 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: true);
 
             Assert.That(slice, Is.EqualTo(_reversedSlice));
@@ -63,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void CalcRealIndexThrowsWhenOutOfRange()
         {
-            IList<int> source = new List<int> { 1, 2, 3 };
+            List<int> source = new List<int> { 1, 2, 3 };
             Slice<int> slice = new Slice<int>(source, from: 0, length: 2, reversed: false);
 
             Assert.Multiple(() =>
@@ -76,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void CopyToWritesSequentially()
         {
-            IList<int> source = new List<int> { 5, 6, 7, 8 };
+            List<int> source = new List<int> { 5, 6, 7, 8 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 2, reversed: false);
             int[] buffer = new int[4];
 
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void IndexOfHonoursReversedSlices()
         {
-            IList<string> source = new List<string> { "a", "b", "c", "d" };
+            List<string> source = new List<string> { "a", "b", "c", "d" };
             Slice<string> slice = new Slice<string>(source, from: 0, length: 3, reversed: true);
 
             Assert.Multiple(() =>
@@ -102,7 +102,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void AddAndInsertThrowNotSupported()
         {
-            IList<int> source = new List<int> { 1, 2, 3 };
+            List<int> source = new List<int> { 1, 2, 3 };
             Slice<int> slice = new Slice<int>(source, from: 0, length: 2, reversed: false);
 
             Assert.Multiple(() =>
@@ -121,7 +121,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void RemoveAndClearThrowNotSupported()
         {
-            IList<int> source = new List<int> { 1, 2, 3 };
+            List<int> source = new List<int> { 1, 2, 3 };
             Slice<int> slice = new Slice<int>(source, from: 0, length: 2, reversed: false);
 
             Assert.Multiple(() =>
@@ -140,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void ContainsAndIndexOfRespectSliceWindow()
         {
-            IList<int> source = new List<int> { 1, 2, 3, 4, 5 };
+            List<int> source = new List<int> { 1, 2, 3, 4, 5 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: false);
 
             Assert.Multiple(() =>
@@ -155,7 +155,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
         [Test]
         public void CopyToThrowsWhenDestinationTooSmall()
         {
-            IList<int> source = new List<int> { 1, 2, 3, 4 };
+            List<int> source = new List<int> { 1, 2, 3, 4 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: false);
             int[] buffer = new int[3];
 

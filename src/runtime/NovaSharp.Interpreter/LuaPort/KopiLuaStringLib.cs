@@ -57,12 +57,13 @@ namespace NovaSharp.Interpreter.LuaPort
     using LuaPort.LuaStateInterop;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
+    using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
     using lua_Integer = System.Int32;
     using LUA_INTFRM_T = System.Int64;
     using ptrdiff_t = System.Int32;
     using UNSIGNED_LUA_INTFRM_T = System.UInt64;
 
-    internal class KopiLuaStringLib : LuaBase
+    internal static class KopiLuaStringLib
     {
         public const int LuaPatternMaxCaptures = 32;
 

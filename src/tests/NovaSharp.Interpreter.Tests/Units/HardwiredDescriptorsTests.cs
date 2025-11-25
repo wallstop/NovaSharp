@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [SetUp]
         public void SetUp()
         {
-            UserData.UnregisterType(typeof(TestHost));
+            UserData.UnregisterType<TestHost>();
             _descriptor = new TestHardwiredDescriptor();
             UserData.RegisterType(_descriptor);
         }
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            UserData.UnregisterType(typeof(TestHost));
+            UserData.UnregisterType<TestHost>();
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void HardwiredMethodDescriptorRejectsStaticInvocation()
         {
             Script script = CreateScript();
-            script.Globals["TestHost"] = UserData.CreateStatic(typeof(TestHost));
+            script.Globals["TestHost"] = UserData.CreateStatic<TestHost>();
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("TestHost:call(3)")

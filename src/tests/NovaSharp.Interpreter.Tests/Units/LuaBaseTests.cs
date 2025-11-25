@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NUnit.Framework;
+    using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
 
     [TestFixture]
     public sealed class LuaBaseTests
@@ -25,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (DynValue.Void, LuaBaseProxy.TNone),
                 (DynValue.Nil, LuaBaseProxy.TNil),
                 (DynValue.NewNumber(42), LuaBaseProxy.TNumber),
-                (UserData.CreateStatic(typeof(SampleUserData)), LuaBaseProxy.TUserData),
+                (UserData.CreateStatic<SampleUserData>(), LuaBaseProxy.TUserData),
                 (coroutine, LuaBaseProxy.TThread),
             };
 
@@ -452,7 +453,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             return new LuaState(context, callbackArguments, "LuaBaseTests");
         }
 
-        public sealed class LuaBaseProxy : LuaBase
+        public static class LuaBaseProxy
         {
             public static int TNone => LuaTypeNone;
             public static int TNil => LuaTypeNil;

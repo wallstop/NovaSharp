@@ -787,7 +787,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        private static DispatchingUserDataDescriptor CreateDescriptorHostDescriptor()
+        private static DescriptorHostDescriptor CreateDescriptorHostDescriptor()
         {
             return new DescriptorHostDescriptor();
         }

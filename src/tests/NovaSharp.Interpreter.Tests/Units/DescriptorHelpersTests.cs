@@ -72,9 +72,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             FieldInfo protectedInternalField = MemberVisibilityFixtures
                 .Metadata
                 .ProtectedInternalField;
-            MethodBase privateMethod = MemberVisibilityFixtures.Metadata.PrivateMethod;
-            MethodBase publicMethod = MemberVisibilityFixtures.Metadata.PublicMethod;
-            MethodBase protectedInternalMethod = MemberVisibilityFixtures
+            MethodInfo privateMethod = MemberVisibilityFixtures.Metadata.PrivateMethod;
+            MethodInfo publicMethod = MemberVisibilityFixtures.Metadata.PublicMethod;
+            MethodInfo protectedInternalMethod = MemberVisibilityFixtures
                 .Metadata
                 .ProtectedInternalMethod;
 
@@ -331,13 +331,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 internal static FieldInfo ProtectedInternalField { get; } =
                     GetInstanceField(f => f._protectedInternalField);
 
-                internal static MethodBase PrivateMethod { get; } =
+                internal static MethodInfo PrivateMethod { get; } =
                     GetInstanceMethod(f => f.PrivateMethod());
 
-                internal static MethodBase PublicMethod { get; } =
+                internal static MethodInfo PublicMethod { get; } =
                     typeof(MemberVisibilityFixtures).GetMethod(nameof(PublicMethod))!;
 
-                internal static MethodBase ProtectedInternalMethod { get; } =
+                internal static MethodInfo ProtectedInternalMethod { get; } =
                     GetInstanceMethod(f => f.ProtectedInternalMethod());
 
                 private static FieldInfo GetInstanceField<TValue>(
@@ -347,7 +347,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     return (FieldInfo)GetMemberExpression(accessor.Body).Member;
                 }
 
-                private static MethodBase GetInstanceMethod(
+                private static MethodInfo GetInstanceMethod(
                     Expression<Action<MemberVisibilityFixtures>> call
                 )
                 {

@@ -55,8 +55,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
     public class CharPtr
     {
-        public char[] chars;
-        public int index;
+        internal char[] chars;
+        internal int index;
 
         public char this[int offset]
         {
@@ -88,6 +88,21 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         public static implicit operator CharPtr(byte[] bytes)
         {
             return new CharPtr(bytes);
+        }
+
+        public static CharPtr FromString(string value)
+        {
+            return new CharPtr(value);
+        }
+
+        public static CharPtr FromCharArray(char[] value)
+        {
+            return new CharPtr(value);
+        }
+
+        public static CharPtr FromByteArray(byte[] value)
+        {
+            return new CharPtr(value);
         }
 
         public CharPtr()
@@ -171,6 +186,21 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return new CharPtr(validated.chars, validated.index - (int)offset);
         }
 
+        public static CharPtr Subtract(CharPtr ptr, int offset)
+        {
+            return ptr - offset;
+        }
+
+        public static CharPtr Subtract(CharPtr ptr, uint offset)
+        {
+            return ptr - offset;
+        }
+
+        public static int Subtract(CharPtr left, CharPtr right)
+        {
+            return left - right;
+        }
+
         public void Inc()
         {
             index++;
@@ -196,9 +226,14 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return new CharPtr(chars, index + ofs);
         }
 
-        public CharPtr Sub(int ofs)
+        public CharPtr Subtract(int ofs)
         {
             return new CharPtr(chars, index - ofs);
+        }
+
+        public CharPtr Sub(int ofs)
+        {
+            return Subtract(ofs);
         }
 
         public static bool operator ==(CharPtr ptr, char ch)
@@ -277,6 +312,20 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
             Debug.Assert(left.chars == right.chars);
             return left.index >= right.index;
+        }
+
+        public static int Compare(CharPtr left, CharPtr right)
+        {
+            CharPtr validatedLeft = EnsureArgument(left, nameof(left));
+            CharPtr validatedRight = EnsureArgument(right, nameof(right));
+            Debug.Assert(validatedLeft.chars == validatedRight.chars);
+
+            if (validatedLeft.index == validatedRight.index)
+            {
+                return 0;
+            }
+
+            return validatedLeft.index < validatedRight.index ? -1 : 1;
         }
 
         public static bool operator ==(CharPtr ptr1, CharPtr ptr2)

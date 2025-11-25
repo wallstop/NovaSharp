@@ -1,14 +1,13 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Text;
     using NovaSharp.Interpreter.CoreLib.IO;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class BinaryEncodingTests
     {
-        private readonly Encoding _encoding = new BinaryEncoding();
+        private readonly BinaryEncoding _encoding = new();
         private static readonly byte[] _expectedDestinationBytes = { 1, 2, 3 };
         private static readonly char[] _expectedCharSnapshot = { 'a', 'b', 'c' };
 

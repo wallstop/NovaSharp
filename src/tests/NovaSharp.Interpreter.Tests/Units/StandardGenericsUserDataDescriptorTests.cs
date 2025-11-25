@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GenerateReturnsNullWhenTypeAlreadyRegistered()
         {
-            UserData.RegisterType(typeof(GenericStub<int>));
+            UserData.RegisterType<GenericStub<int>>();
             try
             {
                 StandardGenericsUserDataDescriptor descriptor = new(
@@ -128,7 +128,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
             finally
             {
-                UserData.UnregisterType(typeof(GenericStub<int>));
+                UserData.UnregisterType<GenericStub<int>>();
             }
         }
 

@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Implements Lua's `string` library (§6.4), providing formatting, pattern matching, and utility helpers.
     /// </summary>
     [NovaSharpModule(Namespace = "string")]
-    public class StringModule
+    public static class StringModule
     {
         public const string Base64DumpHeader = "NovaSharp_dump_b64::";
 

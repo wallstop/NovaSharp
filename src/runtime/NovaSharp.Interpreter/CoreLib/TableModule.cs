@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "table")]
-    public class TableModule
+    public static class TableModule
     {
         /// <summary>
         /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
@@ -456,7 +456,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class exposing table.unpack and table.pack in the global namespace (to work around the most common Lua 5.1 compatibility issue).
     /// </summary>
     [NovaSharpModule]
-    public class TableModuleGlobals
+    public static class TableModuleGlobals
     {
         /// <summary>
         /// Global alias for `table.unpack` to maintain Lua 5.1 compatibility.

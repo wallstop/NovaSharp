@@ -227,8 +227,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(descriptor.OptimizedGetter, Is.Null);
 
-            IOptimizableDescriptor optimizable = descriptor;
-            optimizable.Optimize();
+            ((IOptimizableDescriptor)descriptor).Optimize();
 
             DynValue value = descriptor.GetValue(_script, instance);
 

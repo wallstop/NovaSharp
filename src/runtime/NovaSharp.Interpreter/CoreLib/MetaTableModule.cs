@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// per Lua 5.4 §6.5.
     /// </summary>
     [NovaSharpModule]
-    public class MetaTableModule
+    public static class MetaTableModule
     {
         // setmetatable (table, metatable)
         // -------------------------------------------------------------------------------------------------------------------

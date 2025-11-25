@@ -23,23 +23,23 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void Cleanup()
         {
-            UserData.UnregisterType(typeof(CustomDescriptorHost));
-            UserData.UnregisterType(typeof(HistoricalHost));
-            UserData.UnregisterType(typeof(ProxyTarget));
-            UserData.UnregisterType(typeof(ProxySurface));
-            UserData.UnregisterType(typeof(RegistryHost));
-            UserData.UnregisterType(typeof(AutoPolicyHost));
-            UserData.UnregisterType(typeof(BaseHost));
-            UserData.UnregisterType(typeof(EqualityHost));
-            UserData.UnregisterType(typeof(IMarker));
-            UserData.UnregisterType(typeof(AnnotatedHost));
+            UserData.UnregisterType<CustomDescriptorHost>();
+            UserData.UnregisterType<HistoricalHost>();
+            UserData.UnregisterType<ProxyTarget>();
+            UserData.UnregisterType<ProxySurface>();
+            UserData.UnregisterType<RegistryHost>();
+            UserData.UnregisterType<AutoPolicyHost>();
+            UserData.UnregisterType<BaseHost>();
+            UserData.UnregisterType<EqualityHost>();
+            UserData.UnregisterType<IMarker>();
+            UserData.UnregisterType<AnnotatedHost>();
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
         }
 
         [Test]
         public void CreateReturnsNullForUnregisteredType()
         {
-            UserData.UnregisterType(typeof(UnregisteredHost));
+            UserData.UnregisterType<UnregisteredHost>();
 
             DynValue result = UserData.Create(new UnregisteredHost());
 
@@ -149,9 +149,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CreateStaticReturnsNullWhenDescriptorUnavailable()
         {
-            UserData.UnregisterType(typeof(UnregisteredHost));
+            UserData.UnregisterType<UnregisteredHost>();
 
-            DynValue result = UserData.CreateStatic(typeof(UnregisteredHost));
+            DynValue result = UserData.CreateStatic<UnregisteredHost>();
 
             Assert.That(result, Is.Null);
         }
@@ -169,7 +169,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AutomaticRegistrationPolicyRegistersTypesOnDemand()
         {
-            UserData.UnregisterType(typeof(AutoPolicyHost));
+            UserData.UnregisterType<AutoPolicyHost>();
 
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
             DynValue dynValue = UserData.Create(new AutoPolicyHost());
@@ -213,7 +213,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 InteropAccessMode.Reflection
             );
             MarkerDescriptor interfaceDescriptor = new();
-            UserData.RegisterType(typeof(IMarker), interfaceDescriptor);
+            UserData.RegisterType<IMarker>(interfaceDescriptor);
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
                 typeof(DerivedInterfaceHost),
@@ -260,7 +260,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void RegisterAssemblyRegistersAnnotatedTypesWhenAssemblyIsNull()
         {
-            UserData.UnregisterType(typeof(AnnotatedHost));
+            UserData.UnregisterType<AnnotatedHost>();
             Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.False);
 
             try
@@ -355,8 +355,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void StaticUserDataWithMatchingDescriptorsAreEqual()
         {
             UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
-            DynValue left = UserData.CreateStatic(typeof(EqualityHost));
-            DynValue right = UserData.CreateStatic(typeof(EqualityHost));
+            DynValue left = UserData.CreateStatic<EqualityHost>();
+            DynValue right = UserData.CreateStatic<EqualityHost>();
 
             Assert.That(left.Equals(right), Is.True);
         }
@@ -401,7 +401,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetDescriptorForTypeSearchInterfacesReturnsInterfaceDescriptor()
         {
-            UserData.RegisterType(typeof(IMarker), InteropAccessMode.Reflection);
+            UserData.RegisterType<IMarker>(InteropAccessMode.Reflection);
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
                 typeof(InterfaceHost),
