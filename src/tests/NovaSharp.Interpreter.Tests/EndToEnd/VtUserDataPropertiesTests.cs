@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VtUserDataPropertiesTests
     {
-        public struct SomeClass
+        internal struct SomeClass
         {
             public int IntProp { get; set; }
             public int? NIntProp { get; set; }

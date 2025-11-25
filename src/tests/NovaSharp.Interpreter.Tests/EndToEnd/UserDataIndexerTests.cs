@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataIndexerTests
     {
-        public class IndexerTestClass
+        internal sealed class IndexerTestClass
         {
             private readonly Dictionary<int, int> _mymap = new();
 

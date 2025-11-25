@@ -8,19 +8,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class StructAssignmentTechnique
     {
-        public struct Vector3
+        internal struct Vector3
         {
             public float x;
             public float y;
             public float z;
         }
 
-        public class Transform
+        internal sealed class Transform
         {
             public Vector3 position;
         }
 
-        public class Vector3Accessor
+        internal sealed class Vector3Accessor
         {
             private readonly Transform _transf;
 
@@ -83,6 +83,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
 
             Transform t = new();
+            Vector3Accessor accessor = new(t);
+            _ = accessor.X;
 
             t.position.x = 3;
 

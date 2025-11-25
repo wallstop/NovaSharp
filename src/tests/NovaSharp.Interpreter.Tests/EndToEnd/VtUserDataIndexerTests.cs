@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VtUserDataIndexerTests
     {
-        public struct IndexerTestClass
+        internal struct IndexerTestClass
         {
             public Dictionary<int, int> mymap;
 

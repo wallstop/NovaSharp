@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         private static readonly int[] ScriptToClrIntArray = { 43, 78, 126, 14 };
 
-        public struct SomeClassNoRegister : IComparable
+        internal struct SomeClassNoRegister : IComparable
         {
             private int _instanceTouchCounter;
             private string _lastConcatResult;
@@ -195,7 +195,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeClass : IComparable
+        internal struct SomeClass : IComparable
         {
             private int _instanceTouchCounter;
             private string _lastConcatResult;
@@ -374,17 +374,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public interface INterface1
+        internal interface INterface1
         {
             public string Test1();
         }
 
-        public interface INterface2
+        internal interface INterface2
         {
             public string Test2();
         }
 
-        public class SomeOtherClass
+        internal sealed class SomeOtherClass
         {
             private readonly string _test1Response = "Test1";
             private readonly string _test2Response = "Test2";
@@ -400,9 +400,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeOtherClassCustomDescriptor { }
+        internal struct SomeOtherClassCustomDescriptor { }
 
-        public struct CustomDescriptor : IUserDataDescriptor
+        internal struct CustomDescriptor : IUserDataDescriptor
         {
             public string Name
             {
@@ -446,7 +446,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SelfDescribingClass : IUserDataType
+        internal struct SelfDescribingClass : IUserDataType
         {
             public DynValue Index(Script script, DynValue index, bool isNameIndex)
             {
@@ -464,7 +464,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeOtherClassWithDualInterfaces : INterface1, INterface2
+        internal struct SomeOtherClassWithDualInterfaces : INterface1, INterface2
         {
             public string Test1()
             {

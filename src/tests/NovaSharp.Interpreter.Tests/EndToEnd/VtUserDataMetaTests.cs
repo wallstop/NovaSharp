@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VtUserDataMetaTests
     {
-        public struct ClassWithLength
+        internal struct ClassWithLength
         {
             public int Length
             {
@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct ClassWithCount
+        internal struct ClassWithCount
         {
             public int Count
             {
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
+        internal struct ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
         {
             public int Value { get; set; }
 

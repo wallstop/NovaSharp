@@ -25,11 +25,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return func.Function.Call();
         }
 
-        private static DynValue ScriptLoadFunc(string script, string funcname)
+        private static DynValue ScriptLoadFunc(string script, string functionName)
         {
             Script s1 = new();
             DynValue v1 = s1.DoString(script);
-            DynValue func = s1.Globals.Get(funcname);
+            DynValue func = s1.Globals.Get(functionName);
 
             using MemoryStream ms = new();
             s1.Dump(func, ms);

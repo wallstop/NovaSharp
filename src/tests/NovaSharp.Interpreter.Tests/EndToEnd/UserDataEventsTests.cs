@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataEventsTests
     {
-        public class SomeClass
+        internal sealed class SomeClass
         {
             public event EventHandler OnMyEvent;
             public static event EventHandler OnMySEvent;

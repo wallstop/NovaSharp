@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Linq;
     using System.Text;
@@ -59,6 +60,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// Gets the values in the tuple (valid only if the <see cref="Type"/> is Tuple).
         /// This field is currently also used to hold arguments in values whose <see cref="Type"/> is <see cref="DataType.TailCallRequest"/>.
         /// </summary>
+        [SuppressMessage(
+            "Performance",
+            "CA1819:Properties should not return arrays",
+            Justification = "Tuple semantics rely on sharing the backing array to avoid per-call allocations."
+        )]
         public DynValue[] Tuple
         {
             get { return _object as DynValue[]; }

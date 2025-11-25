@@ -17,7 +17,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         private static readonly int[] ScriptToClrIntArray = { 43, 78, 126, 14 };
 
-        public class SomeClassNoRegister : IComparable
+        internal sealed class SomeClassNoRegister : IComparable
         {
             private int _instanceTouchCounter;
             private string _lastConcatResult = string.Empty;
@@ -198,7 +198,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class SomeClass : IComparable
+        internal sealed class SomeClass : IComparable
         {
             private int _instanceTouchCounter;
             private string _lastConcatResult = string.Empty;
@@ -377,17 +377,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public interface INterface1
+        internal interface INterface1
         {
             public string Test1();
         }
 
-        public interface INterface2
+        internal interface INterface2
         {
             public string Test2();
         }
 
-        public class SomeOtherClass
+        internal sealed class SomeOtherClass
         {
             private readonly string _test1Response = "Test1";
             private readonly string _test2Response = "Test2";
@@ -403,9 +403,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class SomeOtherClassCustomDescriptor { }
+        internal sealed class SomeOtherClassCustomDescriptor { }
 
-        public class CustomDescriptor : IUserDataDescriptor
+        internal sealed class CustomDescriptor : IUserDataDescriptor
         {
             public string Name
             {
@@ -449,7 +449,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class SelfDescribingClass : IUserDataType
+        internal sealed class SelfDescribingClass : IUserDataType
         {
             public DynValue Index(Script script, DynValue index, bool isNameIndex)
             {
@@ -467,7 +467,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class SomeOtherClassWithDualInterfaces : INterface1, INterface2
+        internal sealed class SomeOtherClassWithDualInterfaces : INterface1, INterface2
         {
             private readonly string _test1Response = "Test1";
             private readonly string _test2Response = "Test2";

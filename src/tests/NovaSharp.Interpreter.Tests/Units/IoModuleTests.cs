@@ -568,6 +568,109 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CloseStdErrReturnsErrorTuple()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return io.close(io.stderr)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("standard file"));
+            });
+        }
+
+        [Test]
+        public void StdErrMethodCloseReturnsErrorTuple()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return io.stderr:close()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].IsNil(), Is.True);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("standard file"));
+            });
+        }
+
+        [Test]
+        public void LinesMethodIteratesOverHandle()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            File.WriteAllText(path, "first\nsecond\nthird\n");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local out = {{}}
+                    for line in f:lines() do
+                        out[#out + 1] = line
+                    end
+                    return out[1], out[2], out[3], io.Type(f)
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("first"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("second"));
+                    Assert.That(tuple.Tuple[2].String, Is.EqualTo("third"));
+                    Assert.That(tuple.Tuple[3].String, Is.EqualTo("file"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void LinesMethodSupportsReadOptions()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            File.WriteAllText(path, "abcdef");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local chunks = {{}}
+                    for chunk in f:lines(2) do
+                        chunks[#chunks + 1] = chunk
+                        if #chunks == 3 then break end
+                    end
+                    f:close()
+                    return chunks[1], chunks[2], chunks[3]
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("ab"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("cd"));
+                    Assert.That(tuple.Tuple[2].String, Is.EqualTo("ef"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
         public void OpenReturnsErrorTupleForUnknownEncoding()
         {
             string escapedPath = EscapePath(

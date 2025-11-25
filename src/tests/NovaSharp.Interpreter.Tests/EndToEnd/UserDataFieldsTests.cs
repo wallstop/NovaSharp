@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataFieldsTests
     {
-        public class SomeClass
+        internal sealed class SomeClass
         {
             public int intProp;
             public const int ConstIntProp = 115;

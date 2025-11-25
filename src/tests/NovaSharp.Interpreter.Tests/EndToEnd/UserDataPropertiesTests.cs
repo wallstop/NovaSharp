@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataPropertiesTests
     {
-        public class SomeClass
+        internal sealed class SomeClass
         {
             public int IntProp { get; set; }
             public int? NIntProp { get; set; }

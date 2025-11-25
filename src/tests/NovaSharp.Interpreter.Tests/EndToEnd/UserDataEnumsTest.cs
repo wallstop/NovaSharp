@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataEnumsTests
     {
-        public class EnumOverloadsTestClass
+        internal sealed class EnumOverloadsTestClass
         {
             private int _callCount;
 

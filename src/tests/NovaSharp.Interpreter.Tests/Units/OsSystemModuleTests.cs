@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
@@ -202,6 +203,165 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple[1].String, Does.Contain("source"));
                 Assert.That(result.Tuple[2].Number, Is.EqualTo(-1));
             });
+        }
+
+        [Test]
+        public void DateUtcEpochMatchesExpectedFields()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                @"
+                local t = os.date('!*t', 0)
+                return t.year, t.month, t.day, t.hour, t.min, t.sec, t.wday, t.yday, t.isdst
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.EqualTo(1970));
+                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(1));
+                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(1));
+                Assert.That(tuple.Tuple[3].Number, Is.EqualTo(0));
+                Assert.That(tuple.Tuple[4].Number, Is.EqualTo(0));
+                Assert.That(tuple.Tuple[5].Number, Is.EqualTo(0));
+                Assert.That(tuple.Tuple[6].Number, Is.EqualTo(5));
+                Assert.That(tuple.Tuple[7].Number, Is.EqualTo(1));
+                Assert.That(tuple.Tuple[8].Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void DateUtcFormatMatchesExpectedString()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.date('!%d/%m/%y %H:%M:%S', 0)");
+            Assert.That(result.String, Is.EqualTo("01/01/70 00:00:00"));
+        }
+
+        [Test]
+        public void DateInvalidSpecifierThrows()
+        {
+            Script script = CreateScript();
+            Assert.That(
+                () => script.DoString("return os.date('%Ja', 0)"),
+                Throws
+                    .InstanceOf<ScriptRuntimeException>()
+                    .With.Message.Contains("invalid conversion specifier")
+            );
+        }
+
+        [Test]
+        public void DateLocalFormatMatchesClockPattern()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.date('%H:%M:%S')");
+            Assert.That(result.String, Does.Match(@"^\d\d:\d\d:\d\d$"));
+        }
+
+        [Test]
+        public void DifftimeReturnsDelta()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.difftime(1234, 1200)");
+            Assert.That(result.Number, Is.EqualTo(34d));
+        }
+
+        [Test]
+        public void DifftimeSingleArgumentReturnsValue()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.difftime(1234)");
+            Assert.That(result.Number, Is.EqualTo(1234d));
+        }
+
+        [Test]
+        public void TimeReturnsPositiveNumber()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.time()");
+            Assert.That(result.Number, Is.GreaterThan(0d));
+        }
+
+        [Test]
+        public void TimeRoundTripsThroughUtcDate()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                @"
+                local stamp = os.time({
+                    year = 2000,
+                    month = 1,
+                    day = 1,
+                    hour = 0,
+                    min = 0,
+                    sec = 0,
+                    isdst = 0,
+                })
+                local t = os.date('!*t', stamp)
+                return stamp, t.year, t.month, t.day, t.hour, t.min, t.sec
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Number, Is.GreaterThan(0d));
+                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(2000));
+                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(1));
+                Assert.That(tuple.Tuple[3].Number, Is.EqualTo(1));
+                Assert.That(tuple.Tuple[4].Number, Is.EqualTo(0));
+                Assert.That(tuple.Tuple[5].Number, Is.EqualTo(0));
+                Assert.That(tuple.Tuple[6].Number, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
+        public void TimeMissingFieldRaisesError()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function()
+                    return os.time({ year = 2000 })
+                end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("field 'day' missing"));
+            });
+        }
+
+        [Test]
+        public void ClockReturnsMonotonicValues()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return os.clock(), os.clock()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(tuple.Tuple[0].Number, Is.GreaterThanOrEqualTo(0d));
+                Assert.That(tuple.Tuple[1].Number, Is.GreaterThanOrEqualTo(tuple.Tuple[0].Number));
+            });
+        }
+
+        [Test]
+        public void DatePercentOyYieldsTwoDigitYear()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.date('!%Oy', 0)");
+            Assert.That(result.String, Is.EqualTo("70"));
+        }
+
+        [Test]
+        public void TimeWithNilArgumentReturnsTimestamp()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return os.time(nil)");
+            Assert.That(result.Number, Is.GreaterThan(0d));
         }
 
         [Test]

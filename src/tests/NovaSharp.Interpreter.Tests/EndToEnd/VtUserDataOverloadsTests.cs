@@ -7,9 +7,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public static class VtOverloadsExtMethods
+    internal static class VtOverloadsExtMethods
     {
-        public static string Method1(
+        internal static string Method1(
             this VtUserDataOverloadsTests.OverloadsTestClass obj,
             string x,
             bool b
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return "X" + obj.Method1();
         }
 
-        public static string Method3(this VtUserDataOverloadsTests.OverloadsTestClass obj)
+        internal static string Method3(this VtUserDataOverloadsTests.OverloadsTestClass obj)
         {
             obj.Method1();
             return "X3";
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VtUserDataOverloadsTests
     {
-        public struct OverloadsTestClass
+        internal struct OverloadsTestClass
         {
             public static void UnCalled()
             {
