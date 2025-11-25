@@ -568,9 +568,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                         new Instruction(_currentSourceRef) { OpCode = OpCode.Local, Symbol = sym }
                     );
                     return 1;
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     AppendInstruction(
-                        new Instruction(_currentSourceRef) { OpCode = OpCode.Upvalue, Symbol = sym }
+                        new Instruction(_currentSourceRef) { OpCode = OpCode.UpValue, Symbol = sym }
                     );
                     return 1;
                 default:
@@ -613,7 +613,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         }
                     );
                     return 1;
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {

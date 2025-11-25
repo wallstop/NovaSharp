@@ -212,19 +212,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void DynValueToObjectOfTypeConvertsFunctionToScriptFunctionDelegate()
+        public void DynValueToObjectOfTypeConvertsFunctionToScriptFunctionCallback()
         {
             DynValue functionValue = CreateConstantClosure("return 21 + 21");
 
             object result = ScriptToClrConversions.DynValueToObjectOfType(
                 functionValue,
-                typeof(ScriptFunctionDelegate),
+                typeof(ScriptFunctionCallback),
                 defaultValue: null,
                 isOptional: false
             );
 
-            Assert.That(result, Is.InstanceOf<ScriptFunctionDelegate>());
-            ScriptFunctionDelegate functionDelegate = (ScriptFunctionDelegate)result;
+            Assert.That(result, Is.InstanceOf<ScriptFunctionCallback>());
+            ScriptFunctionCallback functionDelegate = (ScriptFunctionCallback)result;
             object invocationResult = functionDelegate(Array.Empty<object>());
             Assert.That(invocationResult, Is.EqualTo(42d));
         }
@@ -556,13 +556,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void DynValueToObjectOfTypeWeightReturnsExactMatchForScriptFunctionDelegates()
+        public void DynValueToObjectOfTypeWeightReturnsExactMatchForScriptFunctionCallbacks()
         {
             DynValue functionValue = CreateConstantClosure("return 2");
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 functionValue,
-                typeof(ScriptFunctionDelegate),
+                typeof(ScriptFunctionCallback),
                 isOptional: false
             );
 

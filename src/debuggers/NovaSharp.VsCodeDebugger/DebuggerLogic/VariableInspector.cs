@@ -50,11 +50,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     variables.Add(
                         new Variable(
                             "(upvalues)",
-                            v.Function.UpvaluesCount.ToString(CultureInfo.InvariantCulture)
+                            v.Function.UpValuesCount.ToString(CultureInfo.InvariantCulture)
                         )
                     );
                     variables.Add(
-                        new Variable("(upvalues type)", v.Function.CapturedUpvaluesType.ToString())
+                        new Variable("(upvalues type)", v.Function.CapturedUpValuesType.ToString())
                     );
                     break;
                 case DataType.Table:

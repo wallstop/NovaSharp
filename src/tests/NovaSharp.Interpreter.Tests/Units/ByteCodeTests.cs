@@ -155,13 +155,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void EmitLoadHandlesGlobalSymbols()
         {
             ByteCode byteCode = new(new Script());
-            SymbolRef env = SymbolRef.Upvalue("_ENV", 0);
+            SymbolRef env = SymbolRef.UpValue("_ENV", 0);
             SymbolRef symbol = SymbolRef.Global("globalValue", env);
 
             int stackSlots = byteCode.EmitLoad(symbol);
 
             Assert.That(stackSlots, Is.EqualTo(2));
-            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.UpValue));
             Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Index));
             Assert.That(byteCode.Code[^1].Value.String, Is.EqualTo("globalValue"));
         }
@@ -180,15 +180,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void EmitLoadHandlesUpvalueSymbols()
+        public void EmitLoadHandlesUpValueSymbols()
         {
             ByteCode byteCode = new(new Script());
-            SymbolRef symbol = SymbolRef.Upvalue("upvalue", 2);
+            SymbolRef symbol = SymbolRef.UpValue("upvalue", 2);
 
             int stackSlots = byteCode.EmitLoad(symbol);
 
             Assert.That(stackSlots, Is.EqualTo(1));
-            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.UpValue));
             Assert.That(byteCode.Code[^1].Symbol, Is.EqualTo(symbol));
         }
 
@@ -196,13 +196,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void EmitStoreHandlesGlobalSymbols()
         {
             ByteCode byteCode = new(new Script());
-            SymbolRef env = SymbolRef.Upvalue("_ENV", 0);
+            SymbolRef env = SymbolRef.UpValue("_ENV", 0);
             SymbolRef symbol = SymbolRef.Global("globalValue", env);
 
             int stackSlots = byteCode.EmitStore(symbol, stackofs: 1, tupleidx: 2);
 
             Assert.That(stackSlots, Is.EqualTo(2));
-            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.Upvalue));
+            Assert.That(byteCode.Code[^2].OpCode, Is.EqualTo(OpCode.UpValue));
             Instruction setter = byteCode.Code[^1];
             Assert.That(setter.OpCode, Is.EqualTo(OpCode.IndexSet));
             Assert.That(setter.NumVal, Is.EqualTo(1));
@@ -227,10 +227,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void EmitStoreHandlesUpvalueSymbols()
+        public void EmitStoreHandlesUpValueSymbols()
         {
             ByteCode byteCode = new(new Script());
-            SymbolRef symbol = SymbolRef.Upvalue("upvalue", 5);
+            SymbolRef symbol = SymbolRef.UpValue("upvalue", 5);
 
             int stackSlots = byteCode.EmitStore(symbol, stackofs: 6, tupleidx: 0);
 

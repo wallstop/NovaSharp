@@ -12,6 +12,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class SerializationExtensionsTests
     {
+        private static readonly string[] _lineSplitSeparator = { Environment.NewLine };
+        private static readonly string[] _expectedBodyLines =
+        {
+            "\tanswer = 42,",
+            "\tmessage = \"hello\",",
+            "\tflag = true,",
+        };
+
         [Test]
         public void SerializePrimeTableFormatsEntries()
         {
@@ -23,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string serialized = table.Serialize(prefixReturn: true);
 
             string[] split = serialized.Split(
-                new[] { Environment.NewLine },
+                _lineSplitSeparator,
                 StringSplitOptions.RemoveEmptyEntries
             );
 
@@ -32,12 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             List<string> bodyLines = new List<string> { split[1], split[2], split[3] };
 
-            Assert.That(
-                bodyLines,
-                Is.EquivalentTo(
-                    new[] { "\tanswer = 42,", "\tmessage = \"hello\",", "\tflag = true," }
-                )
-            );
+            Assert.That(bodyLines, Is.EquivalentTo(_expectedBodyLines));
 
             Assert.That(split[4], Is.EqualTo("}"));
         }

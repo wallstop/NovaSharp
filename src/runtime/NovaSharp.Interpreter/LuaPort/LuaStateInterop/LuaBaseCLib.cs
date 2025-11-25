@@ -9,12 +9,12 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
     public partial class LuaBase
     {
-        protected static lua_Integer Memcmp(CharPtr ptr1, CharPtr ptr2, uint size)
+        protected static lua_Integer MemoryCompare(CharPtr ptr1, CharPtr ptr2, uint size)
         {
-            return Memcmp(ptr1, ptr2, (int)size);
+            return MemoryCompare(ptr1, ptr2, (int)size);
         }
 
-        protected static int Memcmp(CharPtr ptr1, CharPtr ptr2, int size)
+        protected static int MemoryCompare(CharPtr ptr1, CharPtr ptr2, int size)
         {
             EnsurePointer(ptr1, nameof(ptr1));
             EnsurePointer(ptr2, nameof(ptr2));
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return 0;
         }
 
-        protected static CharPtr Memchr(CharPtr ptr, char c, uint count)
+        protected static CharPtr MemoryFindCharacter(CharPtr ptr, char c, uint count)
         {
             EnsurePointer(ptr, nameof(ptr));
             for (uint i = 0; i < count; i++)
@@ -50,7 +50,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return null;
         }
 
-        protected static CharPtr Strpbrk(CharPtr str, CharPtr charset)
+        protected static CharPtr StringFindAny(CharPtr str, CharPtr charset)
         {
             EnsurePointer(str, nameof(str));
             EnsurePointer(charset, nameof(charset));
@@ -68,123 +68,123 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return null;
         }
 
-        protected static bool Isalpha(char c)
+        protected static bool IsAlpha(char c)
         {
             return Char.IsLetter(c);
         }
 
-        protected static bool Iscntrl(char c)
+        protected static bool IsControl(char c)
         {
             return Char.IsControl(c);
         }
 
-        protected static bool Isdigit(char c)
+        protected static bool IsDigit(char c)
         {
             return Char.IsDigit(c);
         }
 
-        protected static bool Islower(char c)
+        protected static bool IsLower(char c)
         {
             return Char.IsLower(c);
         }
 
-        protected static bool Ispunct(char c)
+        protected static bool IsPunctuation(char c)
         {
             return Char.IsPunctuation(c);
         }
 
-        protected static bool Isspace(char c)
+        protected static bool IsSpace(char c)
         {
             return (c == ' ') || (c >= (char)0x09 && c <= (char)0x0D);
         }
 
-        protected static bool Isupper(char c)
+        protected static bool IsUpper(char c)
         {
             return Char.IsUpper(c);
         }
 
-        protected static bool Isalnum(char c)
+        protected static bool IsAlphanumeric(char c)
         {
             return Char.IsLetterOrDigit(c);
         }
 
-        protected static bool Isxdigit(char c)
+        protected static bool IsHexDigit(char c)
         {
             return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
         }
 
-        protected static bool Isgraph(char c)
+        protected static bool IsGraphical(char c)
         {
             return !Char.IsControl(c) && !Char.IsWhiteSpace(c);
         }
 
-        protected static bool Isalpha(int c)
+        protected static bool IsAlpha(int c)
         {
             return Char.IsLetter((char)c);
         }
 
-        protected static bool Iscntrl(int c)
+        protected static bool IsControl(int c)
         {
             return Char.IsControl((char)c);
         }
 
-        protected static bool Isdigit(int c)
+        protected static bool IsDigit(int c)
         {
             return Char.IsDigit((char)c);
         }
 
-        protected static bool Islower(int c)
+        protected static bool IsLower(int c)
         {
             return Char.IsLower((char)c);
         }
 
-        protected static bool Ispunct(int c)
+        protected static bool IsPunctuation(int c)
         {
-            return ((char)c != ' ') && !Isalnum((char)c);
+            return ((char)c != ' ') && !IsAlphanumeric((char)c);
         } // *not* the same as Char.IsPunctuation
 
-        protected static bool Isspace(int c)
+        protected static bool IsSpace(int c)
         {
             return ((char)c == ' ') || ((char)c >= (char)0x09 && (char)c <= (char)0x0D);
         }
 
-        protected static bool Isupper(int c)
+        protected static bool IsUpper(int c)
         {
             return Char.IsUpper((char)c);
         }
 
-        protected static bool Isalnum(int c)
+        protected static bool IsAlphanumeric(int c)
         {
             return Char.IsLetterOrDigit((char)c);
         }
 
-        protected static bool Isgraph(int c)
+        protected static bool IsGraphical(int c)
         {
             return !Char.IsControl((char)c) && !Char.IsWhiteSpace((char)c);
         }
 
-        protected static char Tolower(char c)
+        protected static char ToLower(char c)
         {
             return Char.ToLowerInvariant(c);
         }
 
-        protected static char Toupper(char c)
+        protected static char ToUpper(char c)
         {
             return Char.ToUpperInvariant(c);
         }
 
-        protected static char Tolower(int c)
+        protected static char ToLower(int c)
         {
             return Char.ToLowerInvariant((char)c);
         }
 
-        protected static char Toupper(int c)
+        protected static char ToUpper(int c)
         {
             return Char.ToUpperInvariant((char)c);
         }
 
         // find c in str
-        protected static CharPtr Strchr(CharPtr str, char c)
+        protected static CharPtr StringFindCharacter(CharPtr str, char c)
         {
             EnsurePointer(str, nameof(str));
             for (int index = str.index; str.chars[index] != 0; index++)
@@ -198,7 +198,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return null;
         }
 
-        protected static CharPtr Strcpy(CharPtr dst, CharPtr src)
+        protected static CharPtr StringCopy(CharPtr dst, CharPtr src)
         {
             EnsurePointer(dst, nameof(dst));
             EnsurePointer(src, nameof(src));
@@ -212,7 +212,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return dst;
         }
 
-        protected static CharPtr Strncpy(CharPtr dst, CharPtr src, int length)
+        protected static CharPtr StringCopyWithLength(CharPtr dst, CharPtr src, int length)
         {
             EnsurePointer(dst, nameof(dst));
             EnsurePointer(src, nameof(src));
@@ -230,7 +230,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return dst;
         }
 
-        protected static int Strlen(CharPtr str)
+        protected static int StringLength(CharPtr str)
         {
             EnsurePointer(str, nameof(str));
             int index = 0;
@@ -242,12 +242,12 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return index;
         }
 
-        public static void Sprintf(CharPtr buffer, CharPtr str, params object[] argv)
+        public static void StringFormat(CharPtr buffer, CharPtr str, params object[] argv)
         {
             EnsurePointer(buffer, nameof(buffer));
             EnsurePointer(str, nameof(str));
-            string temp = Tools.Sprintf(str.ToString(), argv);
-            Strcpy(buffer, temp);
+            string temp = Tools.StringFormat(str.ToString(), argv);
+            StringCopy(buffer, temp);
         }
     }
 }

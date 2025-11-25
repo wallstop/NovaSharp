@@ -249,7 +249,7 @@ return g(|x,y|f(x,y,1), 2)
         }
 
         [Test]
-        public void NestedUpvalues()
+        public void NestedUpValues()
         {
             string script =
                 @"
@@ -281,7 +281,7 @@ return g(|x,y|f(x,y,1), 2)
         }
 
         [Test]
-        public void NestedOutOfScopeUpvalues()
+        public void NestedOutOfScopeUpValues()
         {
             string script =
                 @"

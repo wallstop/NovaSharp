@@ -454,14 +454,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public sealed class LuaBaseProxy : LuaBase
         {
-            public static int TNone => LUA_TNONE;
-            public static int TNil => LUA_TNIL;
-            public static int TNumber => LUA_TNUMBER;
-            public static int TString => LUA_TSTRING;
-            public static int TFunction => LUA_TFUNCTION;
-            public static int TTable => LUA_TTABLE;
-            public static int TUserData => LUA_TUSERDATA;
-            public static int TThread => LUA_TTHREAD;
+            public static int TNone => LuaTypeNone;
+            public static int TNil => LuaTypeNil;
+            public static int TNumber => LuaTypeNumber;
+            public static int TString => LuaTypeString;
+            public static int TFunction => LuaTypeFunction;
+            public static int TTable => LuaTypeTable;
+            public static int TUserData => LuaTypeUserData;
+            public static int TThread => LuaTypeThread;
 
             public static int GetLuaType(LuaState state, int position)
             {
@@ -530,7 +530,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static void CheckStack(LuaState state, int count, string message) =>
                 LuaLCheckStack(state, count, message);
 
-            public static string QuoteLiteral(string value) => LUA_QL(value);
+            public static string QuoteLiteral(string value) => LuaQuoteLiteral(value);
 
             public static void AssertCondition(bool condition) => LuaAssert(condition);
 
@@ -571,85 +571,82 @@ namespace NovaSharp.Interpreter.Tests.Units
                 params object[] args
             ) => LuaLError(state, message, args);
 
-            public static int MemoryCompare(CharPtr left, CharPtr right, uint size)
-            {
-                return Memcmp(left, right, size);
-            }
+            public static int MemoryCompare(CharPtr left, CharPtr right, uint size) =>
+                LuaBase.MemoryCompare(left, right, size);
 
-            public static int MemoryCompareExact(CharPtr left, CharPtr right, int size)
-            {
-                return Memcmp(left, right, size);
-            }
+            public static int MemoryCompareExact(CharPtr left, CharPtr right, int size) =>
+                LuaBase.MemoryCompare(left, right, size);
 
             public static CharPtr MemoryCharacter(CharPtr source, char value, uint count)
             {
-                return Memchr(source, value, count);
+                return MemoryFindCharacter(source, value, count);
             }
 
             public static CharPtr StringBreak(CharPtr source, CharPtr charset)
             {
-                return Strpbrk(source, charset);
+                return StringFindAny(source, charset);
             }
 
-            public static bool IsAlphaChar(char value) => Isalpha(value);
+            public static bool IsAlphaChar(char value) => IsAlpha(value);
 
-            public static bool IsAlphaInt(int value) => Isalpha(value);
+            public static bool IsAlphaInt(int value) => IsAlpha(value);
 
-            public static bool IsControlChar(char value) => Iscntrl(value);
+            public static bool IsControlChar(char value) => IsControl(value);
 
-            public static bool IsControlInt(int value) => Iscntrl(value);
+            public static bool IsControlInt(int value) => IsControl(value);
 
-            public static bool IsDigitChar(char value) => Isdigit(value);
+            public static bool IsDigitChar(char value) => IsDigit(value);
 
-            public static bool IsDigitInt(int value) => Isdigit(value);
+            public static bool IsDigitInt(int value) => IsDigit(value);
 
-            public static bool IsLowerChar(char value) => Islower(value);
+            public static bool IsLowerChar(char value) => IsLower(value);
 
-            public static bool IsLowerInt(int value) => Islower(value);
+            public static bool IsLowerInt(int value) => IsLower(value);
 
-            public static bool IsPunctuationChar(char value) => Ispunct(value);
+            public static bool IsPunctuationChar(char value) => IsPunctuation(value);
 
-            public static bool IsPunctuationInt(int value) => Ispunct(value);
+            public static bool IsPunctuationInt(int value) => IsPunctuation(value);
 
-            public static bool IsSpaceChar(char value) => Isspace(value);
+            public static bool IsSpaceChar(char value) => IsSpace(value);
 
-            public static bool IsSpaceInt(int value) => Isspace(value);
+            public static bool IsSpaceInt(int value) => IsSpace(value);
 
-            public static bool IsUpperChar(char value) => Isupper(value);
+            public static bool IsUpperChar(char value) => IsUpper(value);
 
-            public static bool IsUpperInt(int value) => Isupper(value);
+            public static bool IsUpperInt(int value) => IsUpper(value);
 
-            public static bool IsAlphaNumericChar(char value) => Isalnum(value);
+            public static bool IsAlphaNumericChar(char value) => IsAlphanumeric(value);
 
-            public static bool IsAlphaNumericInt(int value) => Isalnum(value);
+            public static bool IsAlphaNumericInt(int value) => IsAlphanumeric(value);
 
-            public static bool IsHexDigitChar(char value) => Isxdigit(value);
+            public static bool IsHexDigitChar(char value) => IsHexDigit(value);
 
-            public static bool IsGraphicChar(char value) => Isgraph(value);
+            public static bool IsGraphicChar(char value) => IsGraphical(value);
 
-            public static bool IsGraphicInt(int value) => Isgraph(value);
+            public static bool IsGraphicInt(int value) => IsGraphical(value);
 
-            public static char ToLowerChar(char value) => Tolower(value);
+            public static char ToLowerChar(char value) => ToLower(value);
 
-            public static char ToLowerInt(int value) => Tolower(value);
+            public static char ToLowerInt(int value) => ToLower(value);
 
-            public static char ToUpperChar(char value) => Toupper(value);
+            public static char ToUpperChar(char value) => ToUpper(value);
 
-            public static char ToUpperInt(int value) => Toupper(value);
+            public static char ToUpperInt(int value) => ToUpper(value);
 
-            public static CharPtr StringChar(CharPtr value, char target) => Strchr(value, target);
+            public static CharPtr StringChar(CharPtr value, char target) =>
+                StringFindCharacter(value, target);
 
             public static CharPtr StringCopy(CharPtr destination, CharPtr source) =>
-                Strcpy(destination, source);
+                LuaBase.StringCopy(destination, source);
 
             public static CharPtr StringCopyN(CharPtr destination, CharPtr source, int length) =>
-                Strncpy(destination, source, length);
+                StringCopyWithLength(destination, source, length);
 
-            public static int StringLength(CharPtr value) => Strlen(value);
+            public static int StringLength(CharPtr value) => LuaBase.StringLength(value);
 
             public static void StringPrint(CharPtr buffer, CharPtr format, params object[] args)
             {
-                Sprintf(buffer, format, args);
+                StringFormat(buffer, format, args);
             }
         }
 

@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class DummyClosureBuilder : IClosureBuilder
         {
-            public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
+            public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol)
             {
                 return symbol;
             }

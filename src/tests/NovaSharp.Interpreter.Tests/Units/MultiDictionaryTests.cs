@@ -9,6 +9,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class MultiDictionaryTests
     {
+        private static readonly int[] AlphaValues = { 1, 2 };
+
         [Test]
         public void AddCreatesListForNewKeyAndAppendsForExistingKey()
         {
@@ -21,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(firstInsert, Is.True);
                 Assert.That(secondInsert, Is.False);
-                Assert.That(dictionary.Find("alpha").ToArray(), Is.EqualTo(new[] { 1, 2 }));
+                Assert.That(dictionary.Find("alpha").ToArray(), Is.EqualTo(AlphaValues));
             });
         }
 

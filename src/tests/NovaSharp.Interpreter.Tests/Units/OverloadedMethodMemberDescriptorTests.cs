@@ -17,6 +17,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class OverloadedMethodMemberDescriptorTests
     {
+        private static readonly string[] CachedUserData = { "cached" };
+        private static readonly string[] WrappedUserData = { "wrapped" };
+        private static readonly string[] LuaUserData = { "lua" };
+
         [OneTimeSetUp]
         public void RegisterUserData()
         {
@@ -183,7 +187,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
                 descriptor.GetCallback(script, host);
 
-            DynValue userDataArray = UserData.Create(new[] { "cached" });
+            DynValue userDataArray = UserData.Create(CachedUserData);
             DynValue result = callback(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewString("|"), userDataArray)
@@ -238,7 +242,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
                 descriptor.GetCallback(script, null);
 
-            DynValue userDataArray = UserData.Create(new[] { "wrapped" });
+            DynValue userDataArray = UserData.Create(WrappedUserData);
             DynValue result = callback(context, TestHelpers.CreateArguments(userDataArray));
 
             Assert.That(result.String, Is.EqualTo("vararg"));
@@ -316,7 +320,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new IOverloadableMemberDescriptor[] { stub }
             );
 
-            DynValue userDataArray = UserData.Create(new[] { "lua" });
+            DynValue userDataArray = UserData.Create(LuaUserData);
             int score = OverloadedMethodMemberDescriptorTestUtilities.InvokeCalcScore(
                 descriptor,
                 stub,

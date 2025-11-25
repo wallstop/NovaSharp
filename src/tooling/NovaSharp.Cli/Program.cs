@@ -194,7 +194,7 @@ namespace NovaSharp.Cli
                 }
                 else
                 {
-                    HardWireCommand.Generate(
+                    HardwireCommand.Generate(
                         useVb ? "vb" : "cs",
                         dumpfile,
                         destfile,

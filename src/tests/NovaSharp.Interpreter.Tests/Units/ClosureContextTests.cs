@@ -8,6 +8,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ClosureContextTests
     {
+        private static readonly string[] _expectedSymbols = { "alpha", "beta" };
+
         [Test]
         public void ConstructorCopiesSymbolNamesAndValues()
         {
@@ -23,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(context.Symbols, Is.EqualTo(new[] { "alpha", "beta" }));
+                Assert.That(context.Symbols, Is.EqualTo(_expectedSymbols));
                 Assert.That(context.Count, Is.EqualTo(2));
                 Assert.That(context[0].Number, Is.EqualTo(1));
                 Assert.That(context[1].String, Is.EqualTo("two"));

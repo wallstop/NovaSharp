@@ -412,14 +412,14 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             params object[] parameters
         )
         {
-            destination.Write(Sprintf(format, parameters));
+            destination.Write(StringFormat(format, parameters));
         }
 
         internal static Regex FormatRegex = new(
             @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
-        public static string Sprintf(string format, params object[] parameters)
+        public static string StringFormat(string format, params object[] parameters)
         {
             StringBuilder f = new();
             //Regex FormatRegex = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );

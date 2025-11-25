@@ -317,13 +317,13 @@ namespace NovaSharp.Interpreter
                         codeStream,
                         _sources.Count - 1,
                         globalTable ?? _globalTable,
-                        out bool hasUpvalues
+                        out bool hasUpValues
                     );
 
                     SignalSourceCodeChange(source);
                     SignalByteCodeChange();
 
-                    if (hasUpvalues)
+                    if (hasUpValues)
                     {
                         return MakeClosure(address, globalTable ?? _globalTable);
                     }
@@ -371,9 +371,9 @@ namespace NovaSharp.Interpreter
                 throw new ArgumentException("stream is readonly!");
             }
 
-            Closure.UpvaluesType upvaluesType = function.Function.CapturedUpvaluesType;
+            Closure.UpValuesType upvaluesType = function.Function.CapturedUpValuesType;
 
-            if (upvaluesType == Closure.UpvaluesType.Closure)
+            if (upvaluesType == Closure.UpValuesType.Closure)
             {
                 throw new ArgumentException("function arg has upvalues other than _ENV");
             }
@@ -383,7 +383,7 @@ namespace NovaSharp.Interpreter
                 _mainProcessor.Dump(
                     outStream,
                     function.Function.EntryPointByteCodeLocation,
-                    upvaluesType == Closure.UpvaluesType.Environment
+                    upvaluesType == Closure.UpValuesType.Environment
                 );
             }
         }
@@ -571,7 +571,7 @@ namespace NovaSharp.Interpreter
                     c = new Closure(
                         this,
                         address,
-                        new SymbolRef[] { SymbolRef.Upvalue(WellKnownSymbols.ENV, 0) },
+                        new SymbolRef[] { SymbolRef.UpValue(WellKnownSymbols.ENV, 0) },
                         new DynValue[] { meta.Value }
                     );
                 }

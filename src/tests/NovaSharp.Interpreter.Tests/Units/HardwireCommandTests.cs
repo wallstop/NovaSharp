@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class HardWireCommandTests
+    public sealed class HardwireCommandTests
     {
         private TextWriter _originalOut = null!;
         private TextReader _originalIn = null!;
@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             _originalOut = Console.Out;
             _originalIn = Console.In;
-            _originalDumpLoader = HardWireCommand.DumpLoader;
+            _originalDumpLoader = HardwireCommand.DumpLoader;
         }
 
         [TearDown]
@@ -29,13 +29,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Console.SetOut(_originalOut);
             Console.SetIn(_originalIn);
-            HardWireCommand.DumpLoader = _originalDumpLoader;
+            HardwireCommand.DumpLoader = _originalDumpLoader;
         }
 
         [Test]
         public void ExecuteAbortOnQuitStopsInteractiveFlow()
         {
-            HardWireCommand command = new();
+            HardwireCommand command = new();
             using StringWriter writer = new();
             Console.SetOut(writer);
             Console.SetIn(new StringReader("#quit\n"));
@@ -48,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExecuteInvalidLuaFilePromptsForRetry()
         {
-            HardWireCommand command = new();
+            HardwireCommand command = new();
             using StringWriter writer = new();
             Console.SetOut(writer);
             Console.SetIn(new StringReader("cs\nnonexistent.lua\n#quit\n"));
@@ -69,7 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             try
             {
-                HardWireCommand.Generate(
+                HardwireCommand.Generate(
                     "cs",
                     dumpPath,
                     destPath,
@@ -96,7 +96,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
             File.WriteAllText(dumpPath, "return {}");
 
-            HardWireCommand command = new();
+            HardwireCommand command = new();
             using StringWriter writer = new();
             Console.SetOut(writer);
             Console.SetIn(
@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
 
-            HardWireCommand.DumpLoader = _ =>
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "public");
@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             try
             {
-                HardWireCommand.Generate(
+                HardwireCommand.Generate(
                     "cs",
                     dumpPath,
                     destPath,
@@ -185,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
 
-            HardWireCommand.DumpLoader = _ =>
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
@@ -197,7 +197,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             try
             {
-                HardWireCommand.Generate(
+                HardwireCommand.Generate(
                     "cs",
                     dumpPath,
                     destPath,
@@ -242,7 +242,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
 
-            HardWireCommand.DumpLoader = _ =>
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "public");
@@ -254,7 +254,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             try
             {
-                HardWireCommand.Generate(
+                HardwireCommand.Generate(
                     "vb",
                     dumpPath,
                     destPath,
@@ -301,7 +301,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
 
-            HardWireCommand.DumpLoader = _ =>
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
@@ -313,7 +313,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             try
             {
-                HardWireCommand.Generate(
+                HardwireCommand.Generate(
                     "cs",
                     dumpPath,
                     destPath,

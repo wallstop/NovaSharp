@@ -127,7 +127,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
             // it's a 0-level upvalue. Just create it and we're done.
             if (closuredFrame == currentFrame)
             {
-                return _closureBuilders[currentFrame + 1].CreateUpvalue(this, symb);
+                return _closureBuilders[currentFrame + 1].CreateUpValue(this, symb);
             }
 
             SymbolRef upvalue = CreateUpValue(
@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Execution.Scopes
                 currentFrame - 1
             );
 
-            return _closureBuilders[currentFrame + 1].CreateUpvalue(this, upvalue);
+            return _closureBuilders[currentFrame + 1].CreateUpValue(this, upvalue);
         }
 
         /// <summary>

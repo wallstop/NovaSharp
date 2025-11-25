@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Execution
                         | InstructionFieldUsage.NumVal
                         | InstructionFieldUsage.NumVal2;
                 case OpCode.Local:
-                case OpCode.Upvalue:
+                case OpCode.UpValue:
                     return InstructionFieldUsage.Symbol;
                 case OpCode.IndexSet:
                 case OpCode.IndexSetN:

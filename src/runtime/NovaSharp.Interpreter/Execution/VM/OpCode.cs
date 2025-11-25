@@ -34,7 +34,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         StoreLcl = 10,
         Local = 11,
         StoreUpv = 12,
-        Upvalue = 13,
+        UpValue = 13,
         IndexSet = 14,
         Index = 15,
         IndexSetN = 16,

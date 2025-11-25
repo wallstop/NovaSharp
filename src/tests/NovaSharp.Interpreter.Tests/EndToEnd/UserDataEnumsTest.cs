@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public enum MyEnum : short
+    public enum SampleRating : short
     {
         Uno = 1,
         MenoUno = -1,
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     }
 
     [Flags]
-    public enum MyFlags : ushort
+    public enum SampleFlagSet : ushort
     {
         Uno = 1,
         Due = 2,
@@ -32,17 +32,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class EnumOverloadsTestClass
         {
-            public string MyMethod(MyEnum enm)
+            public string MyMethod(SampleRating enm)
             {
                 return "[" + enm.ToString() + "]";
             }
 
-            public string MyMethod(MyFlags enm)
+            public string MyMethod(SampleFlagSet enm)
             {
                 return ((long)enm).ToString();
             }
 
-            public string MyMethod2(MyEnum enm)
+            public string MyMethod2(SampleRating enm)
             {
                 return "(" + enm.ToString() + ")";
             }
@@ -57,9 +57,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 "CA1024:UsePropertiesWhereAppropriate",
                 Justification = "Enum interop coverage uses callable getters to validate overload resolution."
             )]
-            public MyEnum Get()
+            public SampleRating Get()
             {
-                return MyEnum.Quattro;
+                return SampleRating.Quattro;
             }
 
             [SuppressMessage(
@@ -67,9 +67,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 "CA1024:UsePropertiesWhereAppropriate",
                 Justification = "Enum interop coverage uses callable getters to validate overload resolution."
             )]
-            public MyFlags GetF()
+            public SampleFlagSet GetF()
             {
-                return MyFlags.Quattro;
+                return SampleFlagSet.Quattro;
             }
         }
 
@@ -81,12 +81,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             UserData.RegisterType<EnumOverloadsTestClass>(InteropAccessMode.Reflection);
 
-            UserData.RegisterType<MyEnum>();
-            UserData.RegisterType<MyFlags>();
+            UserData.RegisterType<SampleRating>();
+            UserData.RegisterType<SampleFlagSet>();
 
-            s.Globals.Set("MyEnum", UserData.CreateStatic<MyEnum>());
-            //			S.Globals.Set("MyFlags", UserData.CreateStatic<MyFlags>());
-            s.Globals["MyFlags"] = typeof(MyFlags);
+            s.Globals.Set("SampleRating", UserData.CreateStatic<SampleRating>());
+            //			S.Globals.Set("SampleFlagSet", UserData.CreateStatic<SampleFlagSet>());
+            s.Globals["SampleFlagSet"] = typeof(SampleFlagSet);
 
             s.Globals.Set("o", UserData.Create(obj));
 
@@ -99,20 +99,23 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumSimple()
         {
-            RunTestOverload("o:MyMethod2(MyEnum.Cinque)", "(Cinque)");
+            RunTestOverload("o:MyMethod2(SampleRating.Cinque)", "(Cinque)");
         }
 
         [Test]
         public void InteropEnumSimple2()
         {
-            RunTestOverload("o:MyMethod2(MyEnum.cinque)", "(Cinque)");
+            RunTestOverload("o:MyMethod2(SampleRating.cinque)", "(Cinque)");
         }
 
         [Test]
         public void InteropEnumOverload1()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, MyFlags.Due))", "3");
-            RunTestOverload("o:MyMethod(MyEnum.Cinque)", "[Cinque]");
+            RunTestOverload(
+                "o:MyMethod(SampleFlagSet.FlagsOr(SampleFlagSet.Uno, SampleFlagSet.Due))",
+                "3"
+            );
+            RunTestOverload("o:MyMethod(SampleRating.Cinque)", "[Cinque]");
         }
 
         [Test]
@@ -124,26 +127,35 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumFlagsOr()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, MyFlags.Due))", "3");
+            RunTestOverload(
+                "o:MyMethod(SampleFlagSet.FlagsOr(SampleFlagSet.Uno, SampleFlagSet.Due))",
+                "3"
+            );
         }
 
         [Test]
         public void InteropEnumFlagsAnd()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsAnd(MyFlags.Uno, MyFlags.Cinque))", "1");
+            RunTestOverload(
+                "o:MyMethod(SampleFlagSet.FlagsAnd(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                "1"
+            );
         }
 
         [Test]
         public void InteropEnumFlagsXor()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsXor(MyFlags.Uno, MyFlags.Cinque))", "4");
+            RunTestOverload(
+                "o:MyMethod(SampleFlagSet.FlagsXor(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                "4"
+            );
         }
 
         [Test]
         public void InteropEnumFlagsNot()
         {
             RunTestOverload(
-                "o:MyMethod(MyFlags.FlagsAnd(MyFlags.Cinque, MyFlags.FlagsNot(MyFlags.Uno)))",
+                "o:MyMethod(SampleFlagSet.FlagsAnd(SampleFlagSet.Cinque, SampleFlagSet.FlagsNot(SampleFlagSet.Uno)))",
                 "4"
             );
         }
@@ -151,34 +163,49 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumFlagsOr2()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(MyFlags.Uno, 2))", "3");
+            RunTestOverload("o:MyMethod(SampleFlagSet.FlagsOr(SampleFlagSet.Uno, 2))", "3");
         }
 
         [Test]
         public void InteropEnumFlagsOr3()
         {
-            RunTestOverload("o:MyMethod(MyFlags.FlagsOr(1, MyFlags.Due))", "3");
+            RunTestOverload("o:MyMethod(SampleFlagSet.FlagsOr(1, SampleFlagSet.Due))", "3");
         }
 
         [Test]
         public void InteropEnumFlagsOrMeta()
         {
-            RunTestOverload("o:MyMethod(MyFlags.Uno .. MyFlags.Due)", "3");
+            RunTestOverload("o:MyMethod(SampleFlagSet.Uno .. SampleFlagSet.Due)", "3");
         }
 
         [Test]
         public void InteropEnumFlagsHasAll()
         {
-            RunTestOverload("o:MyMethodB(MyFlags.hasAll(MyFlags.Uno, MyFlags.Cinque))", "F");
-            RunTestOverload("o:MyMethodB(MyFlags.hasAll(MyFlags.Cinque, MyFlags.Uno))", "T");
+            RunTestOverload(
+                "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                "F"
+            );
+            RunTestOverload(
+                "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
+                "T"
+            );
         }
 
         [Test]
         public void InteropEnumFlagsHasAny()
         {
-            RunTestOverload("o:MyMethodB(MyFlags.hasAny(MyFlags.Uno, MyFlags.Cinque))", "T");
-            RunTestOverload("o:MyMethodB(MyFlags.hasAny(MyFlags.Cinque, MyFlags.Uno))", "T");
-            RunTestOverload("o:MyMethodB(MyFlags.hasAny(MyFlags.Quattro, MyFlags.Uno))", "F");
+            RunTestOverload(
+                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                "T"
+            );
+            RunTestOverload(
+                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
+                "T"
+            );
+            RunTestOverload(
+                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Quattro, SampleFlagSet.Uno))",
+                "F"
+            );
         }
 
         [Test]
@@ -190,7 +217,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumFlagsOrMetaRead()
         {
-            RunTestOverload("o:MyMethod(o:getF() .. MyFlags.Due)", "6");
+            RunTestOverload("o:MyMethod(o:getF() .. SampleFlagSet.Due)", "6");
         }
     }
 }

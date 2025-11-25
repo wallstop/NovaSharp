@@ -221,7 +221,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     {
                         return value.Function;
                     }
-                    else if (desiredType == typeof(ScriptFunctionDelegate))
+                    else if (desiredType == typeof(ScriptFunctionCallback))
                     {
                         return value.Function.GetDelegate();
                     }
@@ -415,7 +415,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     {
                         return WeightExactMatch;
                     }
-                    else if (desiredType == typeof(ScriptFunctionDelegate))
+                    else if (desiredType == typeof(ScriptFunctionCallback))
                     {
                         return WeightExactMatch;
                     }

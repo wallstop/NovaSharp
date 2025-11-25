@@ -15,14 +15,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private static readonly SomeNestedTypePrivate PrivateAnchor =
                 new SomeNestedTypePrivate();
 
-            public enum SomeNestedEnum
+            public enum NestedSampleState
             {
                 Asdasdasd,
             }
 
-            public static SomeNestedEnum Get()
+            public static NestedSampleState Get()
             {
-                return SomeNestedEnum.Asdasdasd;
+                return NestedSampleState.Asdasdasd;
             }
 
             public class SomeNestedType

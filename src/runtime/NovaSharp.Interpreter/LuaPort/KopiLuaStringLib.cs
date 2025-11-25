@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.LuaPort
 
     internal class KopiLuaStringLib : LuaBase
     {
-        public const int LUA_MAXCAPTURES = 32;
+        public const int LuaPatternMaxCaptures = 32;
 
         private static ptrdiff_t Posrelat(ptrdiff_t pos, uint len)
         {
@@ -90,7 +90,7 @@ namespace NovaSharp.Interpreter.LuaPort
         {
             public MatchState()
             {
-                for (int i = 0; i < LUA_MAXCAPTURES; i++)
+                for (int i = 0; i < LuaPatternMaxCaptures; i++)
                 {
                     capture[i] = new Capture();
                 }
@@ -108,7 +108,7 @@ namespace NovaSharp.Interpreter.LuaPort
                 public ptrdiff_t len;
             };
 
-            public Capture[] capture = new Capture[LUA_MAXCAPTURES];
+            public Capture[] capture = new Capture[LuaPatternMaxCaptures];
         };
 
         public const int MAXCCALLS = 200;
@@ -151,7 +151,10 @@ namespace NovaSharp.Interpreter.LuaPort
                 {
                     if (p[0] == '\0')
                     {
-                        LuaLError(ms.l, "malformed pattern (ends with " + LUA_QL("%") + ")");
+                        LuaLError(
+                            ms.l,
+                            "malformed pattern (ends with " + LuaQuoteLiteral("%") + ")"
+                        );
                     }
 
                     return p + 1;
@@ -167,7 +170,10 @@ namespace NovaSharp.Interpreter.LuaPort
                     { /* look for a `]' */
                         if (p[0] == '\0')
                         {
-                            LuaLError(ms.l, "malformed pattern (missing " + LUA_QL("]") + ")");
+                            LuaLError(
+                                ms.l,
+                                "malformed pattern (missing " + LuaQuoteLiteral("]") + ")"
+                            );
                         }
 
                         c = p[0];
@@ -189,37 +195,37 @@ namespace NovaSharp.Interpreter.LuaPort
         private static int match_class(char c, char cl)
         {
             bool res;
-            switch (Tolower(cl))
+            switch (ToLower(cl))
             {
                 case 'a':
-                    res = Isalpha(c);
+                    res = IsAlpha(c);
                     break;
                 case 'c':
-                    res = Iscntrl(c);
+                    res = IsControl(c);
                     break;
                 case 'd':
-                    res = Isdigit(c);
+                    res = IsDigit(c);
                     break;
                 case 'l':
-                    res = Islower(c);
+                    res = IsLower(c);
                     break;
                 case 'p':
-                    res = Ispunct(c);
+                    res = IsPunctuation(c);
                     break;
                 case 's':
-                    res = Isspace(c);
+                    res = IsSpace(c);
                     break;
                 case 'g':
-                    res = Isgraph(c);
+                    res = IsGraphical(c);
                     break;
                 case 'u':
-                    res = Isupper(c);
+                    res = IsUpper(c);
                     break;
                 case 'w':
-                    res = Isalnum(c);
+                    res = IsAlphanumeric(c);
                     break;
                 case 'x':
-                    res = Isxdigit((char)c);
+                    res = IsHexDigit((char)c);
                     break;
                 case 'z':
                     res = (c == 0);
@@ -227,7 +233,7 @@ namespace NovaSharp.Interpreter.LuaPort
                 default:
                     return (cl == c) ? 1 : 0;
             }
-            return (Islower(cl) ? (res ? 1 : 0) : ((!res) ? 1 : 0));
+            return (IsLower(cl) ? (res ? 1 : 0) : ((!res) ? 1 : 0));
         }
 
         private static int Matchbracketclass(int c, CharPtr p, CharPtr ec)
@@ -359,7 +365,7 @@ namespace NovaSharp.Interpreter.LuaPort
         {
             CharPtr res;
             int level = ms.level;
-            if (level >= LUA_MAXCAPTURES)
+            if (level >= LuaPatternMaxCaptures)
             {
                 LuaLError(ms.l, "too many captures");
             }
@@ -393,7 +399,7 @@ namespace NovaSharp.Interpreter.LuaPort
             uint len;
             l = check_capture(ms, l);
             len = (uint)ms.capture[l].len;
-            if ((uint)(ms.srcEnd - s) >= len && Memcmp(ms.capture[l].init, s, len) == 0)
+            if ((uint)(ms.srcEnd - s) >= len && MemoryCompare(ms.capture[l].init, s, len) == 0)
             {
                 return s + len;
             }
@@ -455,9 +461,9 @@ namespace NovaSharp.Interpreter.LuaPort
                                 LuaLError(
                                     ms.l,
                                     "missing "
-                                        + LUA_QL("[")
+                                        + LuaQuoteLiteral("[")
                                         + " after "
-                                        + LUA_QL("%f")
+                                        + LuaQuoteLiteral("%f")
                                         + " in pattern"
                                 );
                             }
@@ -477,7 +483,7 @@ namespace NovaSharp.Interpreter.LuaPort
                         }
                         default:
                         {
-                            if (Isdigit((char)(p[1])))
+                            if (IsDigit((char)(p[1])))
                             { /* capture results (%0-%9)? */
                                 s = match_capture(ms, s, (byte)(p[1]));
                                 if (s == null)
@@ -613,10 +619,10 @@ namespace NovaSharp.Interpreter.LuaPort
                 CharPtr init; /* to search for a `*s2' inside `s1' */
                 l2--; /* 1st char will be checked by `memchr' */
                 l1 = l1 - l2; /* `s2' cannot be found after that */
-                while (l1 > 0 && (init = Memchr(s1, s2[0], l1)) != null)
+                while (l1 > 0 && (init = MemoryFindCharacter(s1, s2[0], l1)) != null)
                 {
                     init = init.Next(); /* 1st char is already checked */
-                    if (Memcmp(init, s2 + 1, l2) == 0)
+                    if (MemoryCompare(init, s2 + 1, l2) == 0)
                     {
                         return init - 1;
                     }
@@ -695,7 +701,7 @@ namespace NovaSharp.Interpreter.LuaPort
                 && (
                     (LuaToBoolean(l, 4) != 0)
                     || /* explicit request? */
-                    Strpbrk(p, SPECIALS) == null
+                    StringFindAny(p, SPECIALS) == null
                 )
             )
             { /* or no special characters? */
@@ -833,7 +839,9 @@ namespace NovaSharp.Interpreter.LuaPort
         {
             return LuaLError(
                 l,
-                LUA_QL("string.gfind") + " was renamed to " + LUA_QL("string.gmatch")
+                LuaQuoteLiteral("string.gfind")
+                    + " was renamed to "
+                    + LuaQuoteLiteral("string.gmatch")
             );
         }
 
@@ -850,7 +858,7 @@ namespace NovaSharp.Interpreter.LuaPort
                 else
                 {
                     i++; /* skip ESC */
-                    if (!Isdigit((char)(news[i])))
+                    if (!IsDigit((char)(news[i])))
                     {
                         if (news[i] != L_ESC)
                         {
@@ -876,14 +884,14 @@ namespace NovaSharp.Interpreter.LuaPort
             LuaState l = ms.l;
             switch (LuaType(l, 3))
             {
-                case LUA_TNUMBER:
-                case LUA_TSTRING:
+                case LuaTypeNumber:
+                case LuaTypeString:
                 {
                     add_s(ms, b, s, e);
                     return;
                 }
-                // case LUA_TUSERDATA: /// +++ does this make sense ??
-                case LUA_TFUNCTION:
+                // case LuaTypeUserData: /// +++ does this make sense ??
+                case LuaTypeFunction:
                 {
                     int n;
                     LuaPushValue(l, 3);
@@ -891,7 +899,7 @@ namespace NovaSharp.Interpreter.LuaPort
                     LuaCall(l, n, 1);
                     break;
                 }
-                case LUA_TTABLE:
+                case LuaTypeTable:
                 {
                     push_onecapture(ms, 0, s, e);
                     LuaGetTable(l, 3);
@@ -928,11 +936,11 @@ namespace NovaSharp.Interpreter.LuaPort
             LuaLBuffer b = new(l);
             LuaLArgCheck(
                 l,
-                tr == LUA_TNUMBER
-                    || tr == LUA_TSTRING
-                    || tr == LUA_TFUNCTION
-                    || tr == LUA_TTABLE
-                    || tr == LUA_TUSERDATA,
+                tr == LuaTypeNumber
+                    || tr == LuaTypeString
+                    || tr == LuaTypeFunction
+                    || tr == LuaTypeTable
+                    || tr == LuaTypeUserData,
                 3,
                 "string/function/table expected"
             );
@@ -991,7 +999,8 @@ namespace NovaSharp.Interpreter.LuaPort
         ** maximum size of each format specification (such as '%-099.99d')
         ** (+10 accounts for %99.99x plus margin of error)
         */
-        public static readonly int MaxFormat = (FLAGS.Length + 1) + (LUA_INTFRMLEN.Length + 1) + 10;
+        public static readonly int MaxFormat =
+            (FLAGS.Length + 1) + (LuaIntegerFormatLength.Length + 1) + 10;
 
         private static void Addquoted(LuaState l, LuaLBuffer b, int arg)
         {
@@ -1052,7 +1061,7 @@ namespace NovaSharp.Interpreter.LuaPort
         private static CharPtr Scanformat(LuaState l, CharPtr strfrmt, CharPtr form)
         {
             CharPtr p = strfrmt;
-            while (p[0] != '\0' && Strchr(FLAGS, p[0]) != null)
+            while (p[0] != '\0' && StringFindCharacter(FLAGS, p[0]) != null)
             {
                 p = p.Next(); /* skip flags */
             }
@@ -1062,12 +1071,12 @@ namespace NovaSharp.Interpreter.LuaPort
                 LuaLError(l, "invalid format (repeated flags)");
             }
 
-            if (Isdigit((byte)(p[0])))
+            if (IsDigit((byte)(p[0])))
             {
                 p = p.Next(); /* skip width */
             }
 
-            if (Isdigit((byte)(p[0])))
+            if (IsDigit((byte)(p[0])))
             {
                 p = p.Next(); /* (2 digits at most) */
             }
@@ -1075,24 +1084,24 @@ namespace NovaSharp.Interpreter.LuaPort
             if (p[0] == '.')
             {
                 p = p.Next();
-                if (Isdigit((byte)(p[0])))
+                if (IsDigit((byte)(p[0])))
                 {
                     p = p.Next(); /* skip precision */
                 }
 
-                if (Isdigit((byte)(p[0])))
+                if (IsDigit((byte)(p[0])))
                 {
                     p = p.Next(); /* (2 digits at most) */
                 }
             }
-            if (Isdigit((byte)(p[0])))
+            if (IsDigit((byte)(p[0])))
             {
                 LuaLError(l, "invalid format (width or precision too long)");
             }
 
             form[0] = '%';
             form = form.Next();
-            Strncpy(form, strfrmt, p - strfrmt + 1);
+            StringCopyWithLength(form, strfrmt, p - strfrmt + 1);
             form += p - strfrmt + 1;
             form[0] = '\0';
             return p;
@@ -1100,11 +1109,11 @@ namespace NovaSharp.Interpreter.LuaPort
 
         private static void Addintlen(CharPtr form)
         {
-            uint l = (uint)Strlen(form);
+            uint l = (uint)StringLength(form);
             char spec = form[l - 1];
-            Strcpy(form + l - 1, LUA_INTFRMLEN);
-            form[l + (LUA_INTFRMLEN.Length + 1) - 2] = spec;
-            form[l + (LUA_INTFRMLEN.Length + 1) - 1] = '\0';
+            StringCopy(form + l - 1, LuaIntegerFormatLength);
+            form[l + (LuaIntegerFormatLength.Length + 1) - 2] = spec;
+            form[l + (LuaIntegerFormatLength.Length + 1) - 1] = '\0';
         }
 
         public static int str_format(LuaState l)
@@ -1144,14 +1153,14 @@ namespace NovaSharp.Interpreter.LuaPort
                     {
                         case 'c':
                         {
-                            Sprintf(buff, form, (int)LuaLCheckNumber(l, arg));
+                            StringFormat(buff, form, (int)LuaLCheckNumber(l, arg));
                             break;
                         }
                         case 'd':
                         case 'i':
                         {
                             Addintlen(form);
-                            Sprintf(buff, form, (LUA_INTFRM_T)LuaLCheckNumber(l, arg));
+                            StringFormat(buff, form, (LUA_INTFRM_T)LuaLCheckNumber(l, arg));
                             break;
                         }
                         case 'o':
@@ -1160,7 +1169,11 @@ namespace NovaSharp.Interpreter.LuaPort
                         case 'X':
                         {
                             Addintlen(form);
-                            Sprintf(buff, form, (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg));
+                            StringFormat(
+                                buff,
+                                form,
+                                (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg)
+                            );
                             break;
                         }
                         case 'e':
@@ -1169,7 +1182,7 @@ namespace NovaSharp.Interpreter.LuaPort
                         case 'g':
                         case 'G':
                         {
-                            Sprintf(buff, form, (double)LuaLCheckNumber(l, arg));
+                            StringFormat(buff, form, (double)LuaLCheckNumber(l, arg));
                             break;
                         }
                         case 'q':
@@ -1180,7 +1193,7 @@ namespace NovaSharp.Interpreter.LuaPort
                         case 's':
                         {
                             CharPtr s = LuaLCheckLString(l, arg, out uint localLength);
-                            if ((Strchr(form, '.') == null) && localLength >= 100)
+                            if ((StringFindCharacter(form, '.') == null) && localLength >= 100)
                             {
                                 /* no precision and string is too long to be formatted;
                                    keep original string */
@@ -1190,7 +1203,7 @@ namespace NovaSharp.Interpreter.LuaPort
                             }
                             else
                             {
-                                Sprintf(buff, form, s);
+                                StringFormat(buff, form, s);
                                 break;
                             }
                         }
@@ -1198,12 +1211,15 @@ namespace NovaSharp.Interpreter.LuaPort
                         { /* also treat cases `pnLlh' */
                             return LuaLError(
                                 l,
-                                "invalid option " + LUA_QL("%" + ch) + " to " + LUA_QL("format"),
+                                "invalid option "
+                                    + LuaQuoteLiteral("%" + ch)
+                                    + " to "
+                                    + LuaQuoteLiteral("format"),
                                 strfrmt[-1]
                             );
                         }
                     }
-                    LuaLAddLString(b, buff, (uint)Strlen(buff));
+                    LuaLAddLString(b, buff, (uint)StringLength(buff));
                 }
             }
             LuaLPushResult(b);

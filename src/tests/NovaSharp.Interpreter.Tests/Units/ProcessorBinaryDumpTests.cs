@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             using MemoryStream stream = new();
             Assert.That(
-                () => processor.Dump(stream, invalidBase, hasUpvalues: false),
+                () => processor.Dump(stream, invalidBase, hasUpValues: false),
                 Throws.ArgumentException.With.Message.Contains("baseAddress")
             );
         }

@@ -19,6 +19,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ProcessorTests
     {
+        private static readonly double[] DescendingPair = { 3d, 2d };
+        private static readonly double[] AscendingTriple = { 2d, 3d, 4d };
+        private static readonly double[] AscendingPair = { 1d, 2d };
+        private static readonly double[] AscendingPairWithHead = { 1d, 2d, 3d };
+
         [Test]
         public void CallThrowsWhenEnteredFromDifferentThread()
         {
@@ -448,7 +453,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void AssignGenericSymbolUpdatesUpvalueScope()
+        public void AssignGenericSymbolUpdatesUpValueScope()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
@@ -463,7 +468,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             };
             processor.PushCallStackFrameForTests(frame);
 
-            processor.AssignGenericSymbol(SymbolRef.Upvalue("uv", 0), DynValue.NewNumber(11));
+            processor.AssignGenericSymbol(SymbolRef.UpValue("uv", 0), DynValue.NewNumber(11));
             Assert.That(frame.ClosureScope[0].Number, Is.EqualTo(11));
         }
 
@@ -511,14 +516,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue[] peeked = processor.StackTopToArrayForTests(2, pop: false);
             Assert.Multiple(() =>
             {
-                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(new[] { 3d, 2d }));
+                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(DescendingPair));
                 Assert.That(stack.Count, Is.EqualTo(3));
             });
 
             DynValue[] popped = processor.StackTopToArrayForTests(2, pop: true);
             Assert.Multiple(() =>
             {
-                Assert.That(popped.Select(v => v.Number), Is.EqualTo(new[] { 3d, 2d }));
+                Assert.That(popped.Select(v => v.Number), Is.EqualTo(DescendingPair));
                 Assert.That(stack.Count, Is.EqualTo(1));
             });
         }
@@ -538,14 +543,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue[] peeked = processor.StackTopToArrayReverseForTests(3, pop: false);
             Assert.Multiple(() =>
             {
-                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(new[] { 2d, 3d, 4d }));
+                Assert.That(peeked.Select(v => v.Number), Is.EqualTo(AscendingTriple));
                 Assert.That(stack.Count, Is.EqualTo(4));
             });
 
             DynValue[] popped = processor.StackTopToArrayReverseForTests(3, pop: true);
             Assert.Multiple(() =>
             {
-                Assert.That(popped.Select(v => v.Number), Is.EqualTo(new[] { 2d, 3d, 4d }));
+                Assert.That(popped.Select(v => v.Number), Is.EqualTo(AscendingTriple));
                 Assert.That(stack.Count, Is.EqualTo(1));
             });
         }
@@ -706,7 +711,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 frame.LocalScope.Where(v => v != null).Select(v => v.Number),
-                Is.EqualTo(new[] { 1d, 2d })
+                Is.EqualTo(AscendingPair)
             );
         }
 
@@ -762,7 +767,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue[] result = Processor.InternalAdjustTupleForTests(values);
 
-            Assert.That(result.Select(v => v.Number), Is.EqualTo(new[] { 1d, 2d, 3d }));
+            Assert.That(result.Select(v => v.Number), Is.EqualTo(AscendingPairWithHead));
         }
 
         [Test]

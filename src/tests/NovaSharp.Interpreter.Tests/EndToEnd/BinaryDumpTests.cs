@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public void BinDumpFactorialDumpFuncUpvalue()
+        public void BinDumpFactorialDumpFuncUpValue()
         {
             string script =
                 @"
@@ -206,7 +206,7 @@ return y;
         }
 
         [Test]
-        public void BinDumpNestedUpvalues()
+        public void BinDumpNestedUpValues()
         {
             string script =
                 @"
@@ -235,7 +235,7 @@ return y;
         }
 
         [Test]
-        public void BinDumpNestedOutOfScopeUpvalues()
+        public void BinDumpNestedOutOfScopeUpValues()
         {
             string script =
                 @"
@@ -271,7 +271,7 @@ return y;
         }
 
         [Test]
-        public void LoadChangeEnvWithDebugSetUpvalue()
+        public void LoadChangeEnvWithDebugSetUpValue()
         {
             List<Table> list = new();
 

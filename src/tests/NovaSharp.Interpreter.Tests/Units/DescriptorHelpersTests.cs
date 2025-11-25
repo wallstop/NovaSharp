@@ -13,6 +13,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DescriptorHelpersTests
     {
+        private static readonly string[] _expectedMetaNames = { "__index", "__len" };
+
         [Test]
         public void GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
         {
@@ -131,7 +133,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
-            Assert.That(names, Is.EquivalentTo(new[] { "__index", "__len" }));
+            Assert.That(names, Is.EquivalentTo(_expectedMetaNames));
         }
 
         [Test]

@@ -292,7 +292,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             int index = i.Symbol.IndexValue;
                             _valueStack.Push(scope[index].AsReadOnly());
                             break;
-                        case OpCode.Upvalue:
+                        case OpCode.UpValue:
                             _valueStack.Push(
                                 _executionStack
                                     .Peek()
@@ -743,7 +743,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             List<DynValue> resolvedSymbols = new(i.SymbolList.Length);
             foreach (SymbolRef symbol in i.SymbolList)
             {
-                resolvedSymbols.Add(GetUpvalueSymbol(symbol));
+                resolvedSymbols.Add(GetUpValueSymbol(symbol));
             }
 
             Closure c = new(_script, i.NumVal, i.SymbolList, resolvedSymbols);
@@ -751,13 +751,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             _valueStack.Push(DynValue.NewClosure(c));
         }
 
-        private DynValue GetUpvalueSymbol(SymbolRef s)
+        private DynValue GetUpValueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
             {
                 return _executionStack.Peek().LocalScope[s.IndexValue];
             }
-            else if (s.Type == SymbolRefType.Upvalue)
+            else if (s.Type == SymbolRefType.UpValue)
             {
                 return _executionStack.Peek().ClosureScope[s.IndexValue];
             }

@@ -21,20 +21,20 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
     /// </summary>
     public partial class LuaBase
     {
-        protected const int LUA_TNONE = -1;
-        protected const int LUA_TNIL = 0;
-        protected const int LUA_TBOOLEAN = 1;
-        protected const int LUA_TLIGHTUSERDATA = 2;
-        protected const int LUA_TNUMBER = 3;
-        protected const int LUA_TSTRING = 4;
-        protected const int LUA_TTABLE = 5;
-        protected const int LUA_TFUNCTION = 6;
-        protected const int LUA_TUSERDATA = 7;
-        protected const int LUA_TTHREAD = 8;
+        protected const int LuaTypeNone = -1;
+        protected const int LuaTypeNil = 0;
+        protected const int LuaTypeBoolean = 1;
+        protected const int LuaTypeLightUserData = 2;
+        protected const int LuaTypeNumber = 3;
+        protected const int LuaTypeString = 4;
+        protected const int LuaTypeTable = 5;
+        protected const int LuaTypeFunction = 6;
+        protected const int LuaTypeUserData = 7;
+        protected const int LuaTypeThread = 8;
 
-        protected const int LUA_MULTRET = -1;
+        protected const int LuaMultipleResults = -1;
 
-        protected const string LUA_INTFRMLEN = "l";
+        protected const string LuaIntegerFormatLength = "l";
 
         protected static DynValue GetArgument(LuaState l, lua_Integer pos)
         {
@@ -56,8 +56,8 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     type,
                     pos - 1,
                     allowNil
-                        ? TypeValidationFlags.AllowNil | TypeValidationFlags.AutoConvert
-                        : TypeValidationFlags.AutoConvert
+                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                        : TypeValidationOptions.AutoConvert
                 );
         }
 
@@ -66,25 +66,25 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             switch (GetArgument(l, p).Type)
             {
                 case DataType.Void:
-                    return LUA_TNONE;
+                    return LuaTypeNone;
                 case DataType.Nil:
-                    return LUA_TNIL;
+                    return LuaTypeNil;
                 case DataType.Boolean:
-                    return LUA_TNIL;
+                    return LuaTypeNil;
                 case DataType.Number:
-                    return LUA_TNUMBER;
+                    return LuaTypeNumber;
                 case DataType.String:
-                    return LUA_TSTRING;
+                    return LuaTypeString;
                 case DataType.Function:
-                    return LUA_TFUNCTION;
+                    return LuaTypeFunction;
                 case DataType.Table:
-                    return LUA_TTABLE;
+                    return LuaTypeTable;
                 case DataType.UserData:
-                    return LUA_TUSERDATA;
+                    return LuaTypeUserData;
                 case DataType.Thread:
-                    return LUA_TTHREAD;
+                    return LuaTypeThread;
                 case DataType.ClrFunction:
-                    return LUA_TFUNCTION;
+                    return LuaTypeFunction;
                 case DataType.TailCallRequest:
                 case DataType.YieldRequest:
                 case DataType.Tuple:
@@ -229,7 +229,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
             // nop ?
         }
 
-        protected static string LUA_QL(string p)
+        protected static string LuaQuoteLiteral(string p)
         {
             return "'" + p + "'";
         }
@@ -329,7 +329,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         /// the arguments to the function are pushed in direct order; that is, the first argument is pushed first. Finally you call
         /// lua_call; nargs is the number of arguments that you pushed onto the stack. All arguments and the function value are
         /// popped from the stack when the function is called. The function results are pushed onto the stack when the function
-        /// returns. The number of results is adjusted to nresults, unless nresults is LUA_MULTRET. In this case, all results from
+        /// returns. The number of results is adjusted to nresults, unless nresults is LuaMultipleResults. In this case, all results from
         /// the function are pushed. Lua takes care that the returned values fit into the stack space. The function results are
         /// pushed onto the stack in direct order (the first result is pushed first), so that after the call the last result is on
         /// the top of the stack.
@@ -341,7 +341,7 @@ namespace NovaSharp.Interpreter.LuaPort.LuaStateInterop
         protected static void LuaCall(
             LuaState l,
             lua_Integer nargs,
-            lua_Integer nresults = LUA_MULTRET
+            lua_Integer nresults = LuaMultipleResults
         )
         {
             EnsureState(l, nameof(l));

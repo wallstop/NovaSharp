@@ -238,192 +238,197 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SprintfSupportsNumericFormatting()
+        public void StringFormatSupportsNumericFormatting()
         {
-            string result = Tools.Sprintf("Value: %+06d, Hex: %#x, Text: %-5s", -42, 255, "Hi");
+            string result = Tools.StringFormat(
+                "Value: %+06d, Hex: %#x, Text: %-5s",
+                -42,
+                255,
+                "Hi"
+            );
 
             Assert.That(result, Is.EqualTo("Value: -00042, Hex: 0xff, Text: Hi   "));
         }
 
         [Test]
-        public void SprintfSupportsOctalAlternateZeroPadding()
+        public void StringFormatSupportsOctalAlternateZeroPadding()
         {
-            string result = Tools.Sprintf("%#06o", 9);
+            string result = Tools.StringFormat("%#06o", 9);
             Assert.That(result, Is.EqualTo("000011"));
         }
 
         [Test]
-        public void SprintfFormatsPointerAsLowercaseHex()
+        public void StringFormatFormatsPointerAsLowercaseHex()
         {
-            string result = Tools.Sprintf("ptr:%p", new IntPtr(0x2A));
+            string result = Tools.StringFormat("ptr:%p", new IntPtr(0x2A));
             Assert.That(result, Is.EqualTo("ptr:0x2a"));
         }
 
         [Test]
-        public void SprintfReplacesPercentNWithProcessedLength()
+        public void StringFormatReplacesPercentNWithProcessedLength()
         {
-            string result = Tools.Sprintf("abc%nXYZ");
+            string result = Tools.StringFormat("abc%nXYZ");
             Assert.That(result, Is.EqualTo("abc3XYZ"));
         }
 
         [Test]
-        public void SprintfHonoursPositiveSpaceFlag()
+        public void StringFormatHonoursPositiveSpaceFlag()
         {
-            string result = Tools.Sprintf("% d", 5);
+            string result = Tools.StringFormat("% d", 5);
             Assert.That(result, Is.EqualTo(" 5"));
         }
 
         [Test]
-        public void SprintfSpaceFlagIsSuppressedByPlusFlag()
+        public void StringFormatSpaceFlagIsSuppressedByPlusFlag()
         {
-            string result = Tools.Sprintf("%+ d", 7);
+            string result = Tools.StringFormat("%+ d", 7);
             Assert.That(result, Is.EqualTo("+7"));
         }
 
         [Test]
-        public void SprintfFormatsUppercaseHexWithAlternateZeroPadding()
+        public void StringFormatFormatsUppercaseHexWithAlternateZeroPadding()
         {
-            string result = Tools.Sprintf("%#08X", 0x2A);
+            string result = Tools.StringFormat("%#08X", 0x2A);
             Assert.That(result, Is.EqualTo("0X00002A"));
         }
 
         [Test]
-        public void SprintfDoesNotDuplicateOctalPrefixForZero()
+        public void StringFormatDoesNotDuplicateOctalPrefixForZero()
         {
-            string result = Tools.Sprintf("%#o", 0);
+            string result = Tools.StringFormat("%#o", 0);
             Assert.That(result, Is.EqualTo("0"));
         }
 
         [Test]
-        public void SprintfAlternateOctalWithSpacePadding()
+        public void StringFormatAlternateOctalWithSpacePadding()
         {
-            string result = Tools.Sprintf("%#6o", 15);
+            string result = Tools.StringFormat("%#6o", 15);
             Assert.That(result, Is.EqualTo("   017"));
         }
 
         [Test]
-        public void SprintfAppliesPositiveSignWhenZeroPadding()
+        public void StringFormatAppliesPositiveSignWhenZeroPadding()
         {
-            string result = Tools.Sprintf("%+06d", 5);
+            string result = Tools.StringFormat("%+06d", 5);
             Assert.That(result, Is.EqualTo("+00005"));
         }
 
         [Test]
-        public void SprintfSupportsLiteralPercent()
+        public void StringFormatSupportsLiteralPercent()
         {
-            string result = Tools.Sprintf("Progress: 50%% done");
+            string result = Tools.StringFormat("Progress: 50%% done");
             Assert.That(result, Is.EqualTo("Progress: 50% done"));
         }
 
         [Test]
-        public void SprintfLeftAlignmentDisablesZeroPadding()
+        public void StringFormatLeftAlignmentDisablesZeroPadding()
         {
-            string result = Tools.Sprintf("%-05d", 12);
+            string result = Tools.StringFormat("%-05d", 12);
             Assert.That(result, Is.EqualTo("12   "));
         }
 
         [Test]
-        public void SprintfSupportsExplicitParameterIndexes()
+        public void StringFormatSupportsExplicitParameterIndexes()
         {
-            string result = Tools.Sprintf("%2$d %1$+05d", 3, 10);
+            string result = Tools.StringFormat("%2$d %1$+05d", 3, 10);
             Assert.That(result, Is.EqualTo("10 +0003"));
         }
 
         [Test]
-        public void SprintfHonoursShortAndLongLengthModifiers()
+        public void StringFormatHonoursShortAndLongLengthModifiers()
         {
-            string result = Tools.Sprintf("%hd %lu", 40000, (ushort)65535);
+            string result = Tools.StringFormat("%hd %lu", 40000, (ushort)65535);
             Assert.That(result, Is.EqualTo("-25536 65535"));
         }
 
         [Test]
-        public void SprintfShortIndicatorCastsWideInputs()
+        public void StringFormatShortIndicatorCastsWideInputs()
         {
-            string result = Tools.Sprintf("%hd %hu", 70000L, 131071UL);
+            string result = Tools.StringFormat("%hd %hu", 70000L, 131071UL);
             Assert.That(result, Is.EqualTo("4464 65535"));
         }
 
         [Test]
-        public void SprintfShortIndicatorCastsUnsignedIntegers()
+        public void StringFormatShortIndicatorCastsUnsignedIntegers()
         {
-            string result = Tools.Sprintf("%hu", 131071u);
+            string result = Tools.StringFormat("%hu", 131071u);
             Assert.That(result, Is.EqualTo("65535"));
         }
 
         [Test]
-        public void SprintfLongIndicatorExtendsNarrowInputs()
+        public void StringFormatLongIndicatorExtendsNarrowInputs()
         {
-            string result = Tools.Sprintf("%ld %lu", (short)-3, uint.MaxValue);
+            string result = Tools.StringFormat("%ld %lu", (short)-3, uint.MaxValue);
             Assert.That(result, Is.EqualTo("-3 4294967295"));
         }
 
         [Test]
-        public void SprintfAlternateHexLeftAlignedPadsWithSpaces()
+        public void StringFormatAlternateHexLeftAlignedPadsWithSpaces()
         {
-            string result = Tools.Sprintf("%-#6x", 26);
+            string result = Tools.StringFormat("%-#6x", 26);
             Assert.That(result, Is.EqualTo("0x1a  "));
         }
 
         [Test]
-        public void SprintfAlternateOctalLeftAlignedPadsWithSpaces()
+        public void StringFormatAlternateOctalLeftAlignedPadsWithSpaces()
         {
-            string result = Tools.Sprintf("%-#6o", 8);
+            string result = Tools.StringFormat("%-#6o", 8);
             Assert.That(result, Is.EqualTo("010   "));
         }
 
         [Test]
-        public void SprintfUnsignedIgnoresNonNumericValues()
+        public void StringFormatUnsignedIgnoresNonNumericValues()
         {
-            string result = Tools.Sprintf("%u", "text");
+            string result = Tools.StringFormat("%u", "text");
             Assert.That(result, Is.EqualTo(string.Empty));
         }
 
         [Test]
-        public void SprintfFloatIgnoresNonNumericValues()
+        public void StringFormatFloatIgnoresNonNumericValues()
         {
-            string result = Tools.Sprintf("%f", "text");
+            string result = Tools.StringFormat("%f", "text");
             Assert.That(result, Is.EqualTo(string.Empty));
         }
 
         [Test]
-        public void SprintfAppliesThousandsGroupingFlag()
+        public void StringFormatAppliesThousandsGroupingFlag()
         {
-            string result = Tools.Sprintf("%'15d", 1234567);
+            string result = Tools.StringFormat("%'15d", 1234567);
             Assert.That(result, Is.EqualTo("      1,234,567"));
         }
 
         [Test]
-        public void SprintfTruncatesStringsWhenPrecisionSpecified()
+        public void StringFormatTruncatesStringsWhenPrecisionSpecified()
         {
-            string result = Tools.Sprintf("%.3s", "LuaState");
+            string result = Tools.StringFormat("%.3s", "LuaState");
             Assert.That(result, Is.EqualTo("Lua"));
         }
 
         [Test]
-        public void SprintfStringRightAlignmentUsesPadding()
+        public void StringFormatStringRightAlignmentUsesPadding()
         {
-            string result = Tools.Sprintf("%5s", "Lua");
+            string result = Tools.StringFormat("%5s", "Lua");
             Assert.That(result, Is.EqualTo("  Lua"));
         }
 
         [Test]
-        public void SprintfUsesFirstCharacterOfStringForCharFormat()
+        public void StringFormatUsesFirstCharacterOfStringForCharFormat()
         {
-            string result = Tools.Sprintf("%c", "Hello");
+            string result = Tools.StringFormat("%c", "Hello");
             Assert.That(result, Is.EqualTo("H"));
         }
 
         [Test]
-        public void SprintfCharSpecifierAcceptsNumericAndCharInputs()
+        public void StringFormatCharSpecifierAcceptsNumericAndCharInputs()
         {
-            string result = Tools.Sprintf("%c %c", 65, 'Z');
+            string result = Tools.StringFormat("%c %c", 65, 'Z');
             Assert.That(result, Is.EqualTo("A Z"));
         }
 
         [Test]
-        public void SprintfFormatsFloatingPointSpecifiers()
+        public void StringFormatFormatsFloatingPointSpecifiers()
         {
-            string result = Tools.Sprintf(
+            string result = Tools.StringFormat(
                 "%.2f|%.2e|%.2E|%.2g|%.2G",
                 1.2345,
                 1.2345,
@@ -435,9 +440,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SprintfIgnoresUnsupportedFormatSpecifier()
+        public void StringFormatIgnoresUnsupportedFormatSpecifier()
         {
-            string result = Tools.Sprintf("Value:%q:%d", 42, 7);
+            string result = Tools.StringFormat("Value:%q:%d", 42, 7);
 
             Assert.Multiple(() =>
             {
@@ -447,9 +452,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SprintfTreatsSpecifierIAsSignedInteger()
+        public void StringFormatTreatsSpecifierIAsSignedInteger()
         {
-            string result = Tools.Sprintf("%i %d", 42, 7);
+            string result = Tools.StringFormat("%i %d", 42, 7);
             Assert.That(result, Is.EqualTo("42 7"));
         }
 
@@ -470,9 +475,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void SprintfDropsNonNumericValuesForNumericFormats()
+        public void StringFormatDropsNonNumericValuesForNumericFormats()
         {
-            string result = Tools.Sprintf("Value:%d", "text");
+            string result = Tools.StringFormat("Value:%d", "text");
             Assert.That(result, Is.EqualTo("Value:"));
         }
 

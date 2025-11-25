@@ -993,22 +993,22 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Checks the type of this value corresponds to the desired type. A property ScriptRuntimeException is thrown
-        /// if the value is not of the specified type or - considering the TypeValidationFlags - is not convertible
+        /// if the value is not of the specified type or - considering the TypeValidationOptions - is not convertible
         /// to the specified type.
         /// </summary>
         /// <param name="funcName">Name of the function requesting the value, for error message purposes.</param>
         /// <param name="desiredType">The desired data type.</param>
         /// <param name="argNum">The argument number, for error message purposes.</param>
-        /// <param name="flags">The TypeValidationFlags.</param>
+        /// <param name="flags">The TypeValidationOptions.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">Thrown
-        /// if the value is not of the specified type or - considering the TypeValidationFlags - is not convertible
+        /// if the value is not of the specified type or - considering the TypeValidationOptions - is not convertible
         /// to the specified type.</exception>
         public DynValue CheckType(
             string funcName,
             DataType desiredType,
             int argNum = -1,
-            TypeValidationFlags flags = TypeValidationFlags.Default
+            TypeValidationOptions flags = TypeValidationOptions.None
         )
         {
             if (Type == desiredType)
@@ -1016,14 +1016,14 @@ namespace NovaSharp.Interpreter.DataTypes
                 return this;
             }
 
-            bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
+            bool allowNil = ((int)(flags & TypeValidationOptions.AllowNil) != 0);
 
             if (allowNil && IsNil())
             {
                 return this;
             }
 
-            bool autoConvert = ((int)(flags & TypeValidationFlags.AutoConvert) != 0);
+            bool autoConvert = ((int)(flags & TypeValidationOptions.AutoConvert) != 0);
 
             if (autoConvert)
             {
@@ -1070,11 +1070,11 @@ namespace NovaSharp.Interpreter.DataTypes
         public T CheckUserDataType<T>(
             string funcName,
             int argNum = -1,
-            TypeValidationFlags flags = TypeValidationFlags.Default
+            TypeValidationOptions flags = TypeValidationOptions.None
         )
         {
             DynValue v = CheckType(funcName, DataType.UserData, argNum, flags);
-            bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
+            bool allowNil = ((int)(flags & TypeValidationOptions.AllowNil) != 0);
 
             if (v.IsNil())
             {

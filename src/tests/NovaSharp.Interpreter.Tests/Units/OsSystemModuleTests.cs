@@ -14,6 +14,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [NonParallelizable]
     public sealed class OsSystemModuleTests
     {
+        private static readonly string[] BuildCommand = { "build" };
+        private static readonly string[] FailCommand = { "fail" };
         private IPlatformAccessor _originalPlatform;
         private StubPlatformAccessor _stub;
 
@@ -48,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Tuple[0].IsNil(), Is.True);
                 Assert.That(result.Tuple[1].String, Is.EqualTo("exit"));
                 Assert.That(result.Tuple[2].Number, Is.EqualTo(42));
-                Assert.That(_stub.ExecutedCommands, Is.EqualTo(new[] { "build" }));
+                Assert.That(_stub.ExecutedCommands, Is.EqualTo(BuildCommand));
             });
         }
 
@@ -63,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsNil(), Is.True);
-                Assert.That(_stub.ExecutedCommands, Is.EqualTo(new[] { "fail" }));
+                Assert.That(_stub.ExecutedCommands, Is.EqualTo(FailCommand));
             });
         }
 

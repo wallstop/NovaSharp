@@ -16,6 +16,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class ReplInterpreterScriptLoaderTests
     {
         private const string NovaSharpPathVariable = "NOVASHARP_PATH";
+        private static readonly string[] NovaPreferredModulePaths = { "?/fromNova", "alt/?.lua" };
+        private static readonly string[] Lua52ModulePaths = { "lua52/?.lua" };
+        private static readonly string[] LuaGlobalModulePaths = { "luaGlobal/?.lua" };
+        private static readonly string[] DefaultModulePaths = { "?", "?.lua" };
 
         private static EnvRestore OverrideEnv(string name, string? value)
         {
@@ -33,7 +37,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TestReplLoader loader = new();
 
-            CollectionAssert.AreEqual(new[] { "?/fromNova", "alt/?.lua" }, loader.ModulePaths);
+            CollectionAssert.AreEqual(NovaPreferredModulePaths, loader.ModulePaths);
         }
 
         [Test]
@@ -44,11 +48,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             using EnvRestore lua = OverrideEnv("LUA_PATH", "luaGlobal/?.lua");
 
             TestReplLoader loader = new();
-            CollectionAssert.AreEqual(new[] { "lua52/?.lua" }, loader.ModulePaths);
+            CollectionAssert.AreEqual(Lua52ModulePaths, loader.ModulePaths);
 
             using EnvRestore clearLua52 = OverrideEnv("LUA_PATH_5_2", null);
             loader = new TestReplLoader();
-            CollectionAssert.AreEqual(new[] { "luaGlobal/?.lua" }, loader.ModulePaths);
+            CollectionAssert.AreEqual(LuaGlobalModulePaths, loader.ModulePaths);
         }
 
         [Test]
@@ -61,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestReplLoader loader = new();
 
             Assert.That(loader.ModulePaths, Is.Not.Null);
-            CollectionAssert.AreEqual(new[] { "lua52/?.lua" }, loader.ModulePaths);
+            CollectionAssert.AreEqual(Lua52ModulePaths, loader.ModulePaths);
         }
 
         [Test]
@@ -73,7 +77,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TestReplLoader loader = new();
 
-            CollectionAssert.AreEqual(new[] { "?", "?.lua" }, loader.ModulePaths);
+            CollectionAssert.AreEqual(DefaultModulePaths, loader.ModulePaths);
         }
 
         [Test]

@@ -20,6 +20,10 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private const string IndexerGetterName = "get_Item";
         private const string IndexerSetterName = "set_Item";
+        private static readonly int[] _hostAddSequence = { 1, 2 };
+        private static readonly int[] _hostOtherSequence = { 3 };
+        private static readonly int[] _hostCopySequence = { 2 };
+        private static readonly int[] _hostZeroSequence = { 0 };
         private Script _script = null!;
         private DispatchHost _hostAdd = null!;
         private DispatchHost _hostOther = null!;
@@ -40,10 +44,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CreateScript()
         {
             _script = new Script(CoreModules.PresetComplete);
-            _hostAdd = new DispatchHost(2, new[] { 1, 2 });
-            _hostOther = new DispatchHost(3, new[] { 3 });
-            _hostCopy = new DispatchHost(2, new[] { 2 });
-            _hostZero = new DispatchHost(0, new[] { 0 });
+            _hostAdd = new DispatchHost(2, _hostAddSequence);
+            _hostOther = new DispatchHost(3, _hostOtherSequence);
+            _hostCopy = new DispatchHost(2, _hostCopySequence);
+            _hostZero = new DispatchHost(0, _hostZeroSequence);
 
             _script.Globals["hostAdd"] = UserData.Create(_hostAdd);
             _script.Globals["hostOther"] = UserData.Create(_hostOther);

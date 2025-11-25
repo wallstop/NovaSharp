@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
@@ -8,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class ClosureTests
     {
         [Test]
-        public void GetUpvaluesTypeReturnsEnvironmentWhenOnlyEnvIsCaptured()
+        public void GetUpValuesTypeReturnsEnvironmentWhenOnlyEnvIsCaptured()
         {
             Script script = new();
             DynValue function = script.DoString("return function(a) return a end");
@@ -17,11 +18,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.UpvaluesCount, Is.EqualTo(1));
-                Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
+                Assert.That(closure.UpValuesCount, Is.EqualTo(1));
+                Assert.That(closure.GetUpValueName(0), Is.EqualTo(WellKnownSymbols.ENV));
                 Assert.That(
-                    closure.CapturedUpvaluesType,
-                    Is.EqualTo(Closure.UpvaluesType.Environment)
+                    closure.CapturedUpValuesType,
+                    Is.EqualTo(Closure.UpValuesType.Environment)
                 );
             });
         }
@@ -41,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvaluesTypeDetectsEnvironmentUpvalue()
+        public void GetUpValuesTypeDetectsEnvironmentUpValue()
         {
             Script script = new();
             DynValue function = script.DoString("return function() return _ENV end");
@@ -50,17 +51,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.UpvaluesCount, Is.EqualTo(1));
-                Assert.That(closure.GetUpvalueName(0), Is.EqualTo(WellKnownSymbols.ENV));
+                Assert.That(closure.UpValuesCount, Is.EqualTo(1));
+                Assert.That(closure.GetUpValueName(0), Is.EqualTo(WellKnownSymbols.ENV));
                 Assert.That(
-                    closure.CapturedUpvaluesType,
-                    Is.EqualTo(Closure.UpvaluesType.Environment)
+                    closure.CapturedUpValuesType,
+                    Is.EqualTo(Closure.UpValuesType.Environment)
                 );
             });
         }
 
         [Test]
-        public void GetUpvaluesExposesCapturedSymbols()
+        public void GetUpValuesExposesCapturedSymbols()
         {
             Script script = new();
             DynValue function = script.DoString(
@@ -75,11 +76,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Closure closure = function.Function;
 
-            int upvalueCount = closure.UpvaluesCount;
+            int upvalueCount = closure.UpValuesCount;
             string[] names = new string[upvalueCount];
             for (int i = 0; i < upvalueCount; i++)
             {
-                names[i] = closure.GetUpvalueName(i);
+                names[i] = closure.GetUpValueName(i);
             }
 
             int envIndex = System.Array.IndexOf(names, WellKnownSymbols.ENV);
@@ -92,9 +93,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(envIndex, Is.GreaterThanOrEqualTo(0));
                 Assert.That(xIndex, Is.GreaterThanOrEqualTo(0));
                 Assert.That(yIndex, Is.GreaterThanOrEqualTo(0));
-                Assert.That(closure.GetUpvalue(xIndex).Number, Is.EqualTo(3d));
-                Assert.That(closure.GetUpvalue(yIndex).Number, Is.EqualTo(4d));
-                Assert.That(closure.CapturedUpvaluesType, Is.EqualTo(Closure.UpvaluesType.Closure));
+                Assert.That(closure.GetUpValue(xIndex).Number, Is.EqualTo(3d));
+                Assert.That(closure.GetUpValue(yIndex).Number, Is.EqualTo(4d));
+                Assert.That(closure.CapturedUpValuesType, Is.EqualTo(Closure.UpValuesType.Closure));
             });
         }
 
@@ -105,10 +106,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue function = script.DoString("return function(a, b) return a + b end");
             Closure closure = function.Function;
 
-            ScriptFunctionDelegate generic = closure.GetDelegate();
+            ScriptFunctionCallback generic = closure.GetDelegate();
             object genericResult = generic(1, 2);
 
-            ScriptFunctionDelegate<int> typed = closure.GetDelegate<int>();
+            ScriptFunctionCallback<int> typed = closure.GetDelegate<int>();
             int typedResult = typed(5, 7);
 
             Assert.Multiple(() =>
@@ -140,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvaluesTypeIsNoneWhenNoUpvaluesAreCaptured()
+        public void UpValuesTypeIsNoneWhenNoUpValuesAreCaptured()
         {
             Script script = new();
             Closure closure = new(
@@ -152,11 +153,46 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(closure.UpvaluesCount, Is.EqualTo(0));
+                Assert.That(closure.UpValuesCount, Is.EqualTo(0));
                 Assert.That(
-                    closure.CapturedUpvaluesType,
-                    Is.EqualTo(default(Closure.UpvaluesType))
+                    closure.CapturedUpValuesType,
+                    Is.EqualTo(default(Closure.UpValuesType))
                 );
+            });
+        }
+
+        [Test]
+        public void ContextPropertySurfacesCapturedUpValues()
+        {
+            Script script = new();
+            DynValue function = script.DoString(
+                @"
+                local captured = 99
+                return function()
+                    return captured
+                end
+                "
+            );
+
+            Closure closure = function.Function;
+            IReadOnlyList<DynValue> context = closure.Context;
+            int capturedIndex = -1;
+
+            for (int i = 0; i < closure.UpValuesCount; i++)
+            {
+                if (closure.GetUpValueName(i) == "captured")
+                {
+                    capturedIndex = i;
+                    break;
+                }
+            }
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(context, Is.Not.Null);
+                Assert.That(context.Count, Is.EqualTo(closure.UpValuesCount));
+                Assert.That(capturedIndex, Is.GreaterThanOrEqualTo(0));
+                Assert.That(context[capturedIndex].Number, Is.EqualTo(99d));
             });
         }
     }

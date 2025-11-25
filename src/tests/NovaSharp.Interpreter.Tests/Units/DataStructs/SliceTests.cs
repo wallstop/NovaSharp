@@ -8,6 +8,10 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
     [TestFixture]
     public sealed class SliceTests
     {
+        private static readonly string[] _expectedStringSlice = { "b", "c" };
+        private static readonly int[] _reversedSlice = { 40, 30, 20 };
+        private static readonly int[] _copyBufferExpectation = { 0, 6, 7, 0 };
+
         [Test]
         public void CountAndIndexerReflectSliceLength()
         {
@@ -44,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
             IList<string> source = new List<string> { "a", "b", "c", "d" };
             Slice<string> slice = new Slice<string>(source, from: 1, length: 2, reversed: false);
 
-            Assert.That(slice, Is.EqualTo(new[] { "b", "c" }));
+            Assert.That(slice, Is.EqualTo(_expectedStringSlice));
         }
 
         [Test]
@@ -53,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
             IList<int> source = new List<int> { 10, 20, 30, 40, 50 };
             Slice<int> slice = new Slice<int>(source, from: 1, length: 3, reversed: true);
 
-            Assert.That(slice, Is.EqualTo(new[] { 40, 30, 20 }));
+            Assert.That(slice, Is.EqualTo(_reversedSlice));
         }
 
         [Test]
@@ -78,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.Units.DataStructs
 
             slice.CopyTo(buffer, 1);
 
-            Assert.That(buffer, Is.EqualTo(new[] { 0, 6, 7, 0 }));
+            Assert.That(buffer, Is.EqualTo(_copyBufferExpectation));
         }
 
         [Test]

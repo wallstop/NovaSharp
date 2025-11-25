@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.EmitBeginFn(_stackFrame);
             bc.EmitArgs(_varArgs);
 
-            bc.EmitLoad(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
+            bc.EmitLoad(SymbolRef.UpValue(WellKnownSymbols.ENV, 0));
             bc.EmitStore(_env, 0, 0);
             bc.EmitPop();
 
@@ -65,7 +65,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         /// <summary>
         /// Chunk statements do not create additional upvalues; returns <c>null</c> so callers fall back to default resolution.
         /// </summary>
-        public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
+        public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol)
         {
             return null;
         }

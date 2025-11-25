@@ -13,6 +13,6 @@ namespace NovaSharp.Interpreter.Execution.Scopes
         /// <param name="scope">The scope requesting the capture.</param>
         /// <param name="symbol">The symbol being captured.</param>
         /// <returns>The upvalue symbol reference visible to the nested function.</returns>
-        public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol);
+        public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol);
     }
 }

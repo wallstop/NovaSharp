@@ -179,13 +179,13 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="name">The name.</param>
         /// <param name="index">The index of the var in closure scope.</param>
         /// <returns></returns>
-        internal static SymbolRef Upvalue(string name, int index)
+        internal static SymbolRef UpValue(string name, int index)
         {
             //Debug.Assert(index >= 0, "Symbol Index < 0");
             return new SymbolRef()
             {
                 _indexValue = index,
-                _symbolType = SymbolRefType.Upvalue,
+                _symbolType = SymbolRefType.UpValue,
                 _nameValue = name,
                 _symbolAttributes = default,
             };

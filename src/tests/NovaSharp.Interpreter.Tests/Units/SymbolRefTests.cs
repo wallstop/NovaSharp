@@ -95,9 +95,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueSymbolSerializationRetainsIndex()
+        public void UpValueSymbolSerializationRetainsIndex()
         {
-            SymbolRef original = SymbolRef.Upvalue("baz", 5);
+            SymbolRef original = SymbolRef.UpValue("baz", 5);
 
             using MemoryStream stream = new();
             using BinaryWriter writer = new(stream);
@@ -113,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(restored.Type, Is.EqualTo(SymbolRefType.Upvalue));
+                Assert.That(restored.Type, Is.EqualTo(SymbolRefType.UpValue));
                 Assert.That(restored.Index, Is.EqualTo(5));
                 Assert.That(restored.Name, Is.EqualTo("baz"));
                 Assert.That(restored.Environment, Is.Null);

@@ -14,6 +14,15 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebuggerResumeHelpersTests
     {
+        private static readonly DebuggerAction.ActionType[] _stepSequence =
+        {
+            DebuggerAction.ActionType.StepIn,
+            DebuggerAction.ActionType.StepOut,
+            DebuggerAction.ActionType.Run,
+        };
+
+        private static readonly int[] _breakLines = { 7, 8 };
+
         [Test]
         public void StepInThenStepOutBreaksOnExpectedLines()
         {
@@ -34,15 +43,7 @@ end
 return caller()
 ";
 
-            StepSequencingDebugger debugger = new(
-                new[]
-                {
-                    DebuggerAction.ActionType.StepIn,
-                    DebuggerAction.ActionType.StepOut,
-                    DebuggerAction.ActionType.Run,
-                },
-                new[] { 7, 8 }
-            );
+            StepSequencingDebugger debugger = new(_stepSequence, _breakLines);
 
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;

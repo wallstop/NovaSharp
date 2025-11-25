@@ -91,7 +91,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                     );
                 case SymbolRefType.Local:
                     return GetTopNonClrFunction().LocalScope[symref.IndexValue];
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     return GetTopNonClrFunction().ClosureScope[symref.IndexValue];
                 default:
                     throw new InternalErrorException(
@@ -139,7 +139,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                 case SymbolRefType.Local:
                     AssignLocal(symref, value);
                     break;
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
 
@@ -214,7 +214,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         {
                             if (closure.Symbols[i] == name)
                             {
-                                return SymbolRef.Upvalue(name, i);
+                                return SymbolRef.UpValue(name, i);
                             }
                         }
                     }

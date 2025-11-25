@@ -25,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             RuntimeScopeFrame frame = new();
             frame.DebugSymbols.Add(SymbolRef.Local("a", 0));
-            frame.DebugSymbols.Add(SymbolRef.Upvalue("b", 1));
+            frame.DebugSymbols.Add(SymbolRef.UpValue("b", 1));
 
             Assert.Multiple(() =>
             {

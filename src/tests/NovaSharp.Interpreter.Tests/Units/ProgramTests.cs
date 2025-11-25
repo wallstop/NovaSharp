@@ -17,6 +17,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ProgramTests
     {
+        private static readonly string[] HelpFlagArguments = { "-H" };
+        private static readonly string[] ExecuteHelpCommandArguments = { "-X", "help" };
+        private static readonly string[] ExecuteCommandMissingArgument = { "-X" };
+        private static readonly string[] ExecuteUnknownCommandArguments = { "-X", "nope" };
+        private static readonly string[] HardwireFlagArguments = { "-W" };
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -38,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-H" }, NewShellContext());
+            bool handled = Program.CheckArgs(HelpFlagArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
@@ -52,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X", "help" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteHelpCommandArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
@@ -66,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteCommandMissingArgument, NewShellContext());
 
             Assert.Multiple(() =>
             {
@@ -80,7 +86,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X", "nope" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteUnknownCommandArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
@@ -195,7 +201,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-W" }, NewShellContext());
+            bool handled = Program.CheckArgs(HardwireFlagArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
@@ -210,8 +216,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
 
-            Func<string, Table> originalLoader = HardWireCommand.DumpLoader;
-            HardWireCommand.DumpLoader = _ =>
+            Func<string, Table> originalLoader = HardwireCommand.DumpLoader;
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
                 return CreateDescriptorTable(script, "internal");
@@ -250,7 +256,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
             finally
             {
-                HardWireCommand.DumpLoader = originalLoader;
+                HardwireCommand.DumpLoader = originalLoader;
 
                 if (File.Exists(destPath))
                 {

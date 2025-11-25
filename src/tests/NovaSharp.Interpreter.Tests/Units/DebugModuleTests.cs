@@ -12,6 +12,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebugModuleTests
     {
+        private static readonly string[] _printThenReturn = { "print('hello')", "return" };
+        private static readonly string[] _errorThenReturn = { "error('boom')", "return" };
+        private static readonly string[] _returnValueSequence = { "return 42", "return" };
+        private static readonly string[] _callClrSequence = { "callClr()", "return" };
+        private static readonly string[] _whitespaceReturnSequence = { "   ", "\treturn" };
+        private static readonly string[] _singleReturnSequence = { "RETURN" };
+
         [OneTimeSetUp]
         public void RegisterTypes()
         {
@@ -155,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueAndSetupvalueRoundtrip()
+        public void GetUpValueAndSetupvalueRoundtrip()
         {
             Script script = CreateScript();
             script.DoString(
@@ -197,7 +204,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueReturnsNilForClrFunctions()
+        public void GetUpValueReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
@@ -206,7 +213,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueReturnsNilWhenIndexOutOfRange()
+        public void GetUpValueReturnsNilWhenIndexOutOfRange()
         {
             Script script = CreateScript();
             script.DoString(
@@ -225,7 +232,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueReturnsNilWhenZeroIndexRequested()
+        public void GetUpValueReturnsNilWhenZeroIndexRequested()
         {
             Script script = CreateScript();
             script.DoString(
@@ -272,7 +279,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueIdAndJoinShareClosures()
+        public void UpValueIdAndJoinShareClosures()
         {
             Script script = CreateScript();
             script.DoString(
@@ -321,7 +328,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueIdReturnsNilForClrFunctions()
+        public void UpValueIdReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.upvalueid(print, 1)");
@@ -330,7 +337,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueIdReturnsNilWhenIndexOutOfRange()
+        public void UpValueIdReturnsNilWhenIndexOutOfRange()
         {
             Script script = CreateScript();
             script.DoString(
@@ -349,7 +356,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueJoinThrowsOnInvalidIndex()
+        public void UpValueJoinThrowsOnInvalidIndex()
         {
             Script script = CreateScript();
 
@@ -372,7 +379,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueJoinThrowsWhenSecondIndexInvalid()
+        public void UpValueJoinThrowsWhenSecondIndexInvalid()
         {
             Script script = CreateScript();
 
@@ -473,7 +480,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopProcessesQueuedCommands()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "print('hello')", "return" });
+            Queue<string> commands = new(_printThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -493,7 +500,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopReportsErrorsAndRespectsReturnCommand()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "error('boom')", "return" });
+            Queue<string> commands = new(_errorThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -512,7 +519,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopPrintsReturnedValues()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "return 42", "return" });
+            Queue<string> commands = new(_returnValueSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -531,7 +538,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHandlesGeneralExceptions()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "callClr()", "return" });
+            Queue<string> commands = new(_callClrSequence);
             List<string> output = new();
 
             script.Globals["callClr"] = DynValue.NewCallback(
@@ -574,7 +581,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopTreatsWhitespaceInputAsNoOp()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "   ", "\treturn" });
+            Queue<string> commands = new(_whitespaceReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -594,7 +601,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHonoursReturnCommandWithDifferentCase()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "RETURN" });
+            Queue<string> commands = new(_singleReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;

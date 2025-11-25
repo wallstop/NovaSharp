@@ -11,6 +11,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class TableConversionsTests
     {
+        private static readonly int[] ListIntExpectation = { 3, 4 };
+        private static readonly int[] EnumerableIntExpectation = { 5, 6 };
+        private static readonly object[] ObjectArrayExpectation = { 1d, "two" };
+        private static readonly int[] GenericArrayExpectation = { 1, 2, 3 };
+
         [TestCase(typeof(Dictionary<object, object>))]
         [TestCase(typeof(Dictionary<DynValue, DynValue>))]
         [TestCase(typeof(List<object>))]
@@ -156,7 +161,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             object[] array = (object[])TableConversions.ConvertTableToType(table, typeof(object[]));
 
-            Assert.That(array, Is.EqualTo(new object[] { 1d, "two" }));
+            Assert.That(array, Is.EqualTo(ObjectArrayExpectation));
         }
 
         [Test]
@@ -180,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             List<int> list =
                 (List<int>)TableConversions.ConvertTableToType(table, typeof(List<int>));
 
-            Assert.That(list, Is.EqualTo(new[] { 3, 4 }));
+            Assert.That(list, Is.EqualTo(ListIntExpectation));
         }
 
         [Test]
@@ -192,7 +197,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (IEnumerable<int>)
                     TableConversions.ConvertTableToType(table, typeof(IEnumerable<int>));
 
-            Assert.That(enumerable, Is.EqualTo(new[] { 5, 6 }));
+            Assert.That(enumerable, Is.EqualTo(EnumerableIntExpectation));
         }
 
         [Test]
@@ -207,10 +212,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (Dictionary<string, int>)
                     TableConversions.ConvertTableToType(table, typeof(Dictionary<string, int>));
 
-            Assert.That(
-                dictionary,
-                Is.EqualTo(new Dictionary<string, int> { ["alpha"] = 1, ["beta"] = 2 })
-            );
+            Assert.That(dictionary["alpha"], Is.EqualTo(1));
+            Assert.That(dictionary["beta"], Is.EqualTo(2));
         }
 
         [Test]
@@ -238,7 +241,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             int[] result = (int[])TableConversions.ConvertTableToType(table, typeof(int[]));
 
-            Assert.That(result, Is.EqualTo(new[] { 1, 2, 3 }));
+            Assert.That(result, Is.EqualTo(GenericArrayExpectation));
         }
 
         [Test]

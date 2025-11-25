@@ -217,13 +217,13 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         /// <param name="scope">Scope that owns the symbol being captured.</param>
         /// <param name="symbol">Symbol that must remain accessible inside the compiled function.</param>
         /// <returns>An upvalue pointing to the captured symbol.</returns>
-        public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
+        public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol)
         {
             for (int i = 0; i < _closure.Count; i++)
             {
                 if (_closure[i].NameValue == symbol.NameValue)
                 {
-                    return SymbolRef.Upvalue(symbol.NameValue, i);
+                    return SymbolRef.UpValue(symbol.NameValue, i);
                 }
             }
 
@@ -234,7 +234,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _closureInstruction.SymbolList = _closure.ToArray();
             }
 
-            return SymbolRef.Upvalue(symbol.NameValue, _closure.Count - 1);
+            return SymbolRef.UpValue(symbol.NameValue, _closure.Count - 1);
         }
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_usesGlobalEnv)
             {
-                bc.EmitLoad(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
+                bc.EmitLoad(SymbolRef.UpValue(WellKnownSymbols.ENV, 0));
                 bc.EmitStore(_env, 0, 0);
                 bc.EmitPop();
             }

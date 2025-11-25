@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void DumpRejectsFunctionsWithExternalUpvalues()
+        public void DumpRejectsFunctionsWithExternalUpValues()
         {
             Script script = new();
             DynValue chunk = script.LoadString(

@@ -13,6 +13,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ProcessorDebuggerTests
     {
+        private static readonly int[] SingleLineOne = { 1 };
+        private static readonly int[] SingleLineHundred = { 100 };
+
         [Test]
         public void ListenDebuggerUpdatesHighlightForLineBasedRun()
         {
@@ -802,7 +805,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     SourceId = 0,
                     SourceLine = 100,
                     SourceCol = 1,
-                    Lines = new[] { 100 },
+                    Lines = SingleLineHundred,
                 }
             );
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
@@ -1044,7 +1047,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     SourceId = source.SourceId,
                     SourceLine = 1,
                     SourceCol = 1,
-                    Lines = new[] { 1 },
+                    Lines = SingleLineOne,
                 }
             );
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);

@@ -154,8 +154,8 @@ namespace NovaSharp.Interpreter.DataTypes
                     type,
                     argNum,
                     allowNil
-                        ? TypeValidationFlags.AllowNil | TypeValidationFlags.AutoConvert
-                        : TypeValidationFlags.AutoConvert
+                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                        : TypeValidationOptions.AutoConvert
                 );
         }
 
@@ -174,7 +174,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 .CheckUserDataType<T>(
                     funcName,
                     argNum,
-                    allowNil ? TypeValidationFlags.AllowNil : default
+                    allowNil ? TypeValidationOptions.AllowNil : default
                 );
         }
 

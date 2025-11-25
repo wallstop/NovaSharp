@@ -179,7 +179,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "func",
                 DataType.String,
                 argNum: 0,
-                flags: TypeValidationFlags.AutoConvert
+                flags: TypeValidationOptions.AutoConvert
             );
 
             Assert.Multiple(() =>
@@ -195,7 +195,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue number = DynValue.NewNumber(12.5);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                number.CheckType("func", DataType.String, argNum: 0, flags: (TypeValidationFlags)0)
+                number.CheckType(
+                    "func",
+                    DataType.String,
+                    argNum: 0,
+                    flags: (TypeValidationOptions)0
+                )
             );
 
             Assert.That(exception.Message, Does.Contain("bad argument #1"));
@@ -328,7 +333,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = DynValue.Nil.CheckType(
                 "func",
                 DataType.Table,
-                flags: TypeValidationFlags.AllowNil
+                flags: TypeValidationOptions.AllowNil
             );
 
             Assert.That(result, Is.SameAs(DynValue.Nil));
@@ -361,7 +366,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
                 "func",
-                flags: TypeValidationFlags.AllowNil
+                flags: TypeValidationOptions.AllowNil
             );
 
             Assert.That(result, Is.Null);
@@ -485,13 +490,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             DynValue boolValue = DynValue
                 .NewString("truthy")
-                .CheckType("func", DataType.Boolean, flags: TypeValidationFlags.AutoConvert);
+                .CheckType("func", DataType.Boolean, flags: TypeValidationOptions.AutoConvert);
             DynValue numberValue = DynValue
                 .NewString("42")
-                .CheckType("func", DataType.Number, flags: TypeValidationFlags.AutoConvert);
+                .CheckType("func", DataType.Number, flags: TypeValidationOptions.AutoConvert);
             DynValue stringValue = DynValue
                 .NewNumber(3.5)
-                .CheckType("func", DataType.String, flags: TypeValidationFlags.AutoConvert);
+                .CheckType("func", DataType.String, flags: TypeValidationOptions.AutoConvert);
 
             Assert.Multiple(() =>
             {
@@ -518,7 +523,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = original.CheckType(
                 "func",
                 DataType.String,
-                flags: TypeValidationFlags.AutoConvert
+                flags: TypeValidationOptions.AutoConvert
             );
 
             Assert.That(result, Is.SameAs(original));
@@ -529,7 +534,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
                 "func",
-                flags: TypeValidationFlags.AllowNil
+                flags: TypeValidationOptions.AllowNil
             );
 
             Assert.That(result, Is.Null);

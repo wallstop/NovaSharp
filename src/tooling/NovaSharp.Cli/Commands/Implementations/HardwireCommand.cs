@@ -12,7 +12,7 @@ namespace NovaSharp.Cli.Commands.Implementations
     /// <summary>
     /// CLI command that guides users through generating hardwired userdata descriptors from a Lua dump.
     /// </summary>
-    internal sealed class HardWireCommand : ICommand
+    internal sealed class HardwireCommand : ICommand
     {
         /// <summary>
         /// Logger implementation that funnels hardwire generation messages to the console.
