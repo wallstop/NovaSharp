@@ -12,6 +12,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class LuaBaseTests
     {
+        static LuaBaseTests()
+        {
+            _ = new SampleUserData();
+        }
+
         [Test]
         public void LuaTypeMapsNovaSharpValuesAndThrowsOnUnsupported()
         {
@@ -335,8 +340,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 LuaBaseProxy.PushLString(state, new CharPtr("WXYZ"), 3);
                 Assert.That(state.Pop().String, Is.EqualTo("WXY"));
 
-                CharPtr ptr = LuaBaseProxy.CheckStringPointer(state, 3);
-                Assert.That(ptr.ToString(), Is.EqualTo("source"));
+                CharPtr pointer = LuaBaseProxy.CheckStringPointer(state, 3);
+                Assert.That(pointer.ToString(), Is.EqualTo("source"));
                 Assert.That(LuaBaseProxy.CheckStringString(state, 3), Is.EqualTo("source"));
                 Assert.That(LuaBaseProxy.CheckNumber(state, 2), Is.EqualTo(21));
 
@@ -360,7 +365,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             LuaBaseProxy.AssertCondition(false); // no-op path
 
             Assert.That(
-                () => LuaBaseProxy.RaiseLuaError(finalState, "boom {0}", 1),
+                () => LuaBaseProxy.ThrowLuaError(finalState, "boom {0}", 1),
                 Throws.TypeOf<ScriptRuntimeException>()
             );
         }
@@ -453,7 +458,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             return new LuaState(context, callbackArguments, "LuaBaseTests");
         }
 
-        public static class LuaBaseProxy
+        private static class LuaBaseProxy
         {
             public static int TNone => LuaTypeNone;
             public static int TNil => LuaTypeNil;
@@ -556,17 +561,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static void AddString(LuaLBuffer buffer, string value) =>
                 LuaLAddString(buffer, value);
 
-            public static void AddLString(LuaLBuffer buffer, CharPtr ptr, uint length) =>
-                LuaLAddLString(buffer, ptr, length);
+            public static void AddLString(LuaLBuffer buffer, CharPtr pointer, uint length) =>
+                LuaLAddLString(buffer, pointer, length);
 
             public static void AddValue(LuaLBuffer buffer) => LuaLAddValue(buffer);
 
             public static void PushResult(LuaLBuffer buffer) => LuaLPushResult(buffer);
 
-            public static void PushLString(LuaState state, CharPtr ptr, uint length) =>
-                LuaPushLString(state, ptr, length);
+            public static void PushLString(LuaState state, CharPtr pointer, uint length) =>
+                LuaPushLString(state, pointer, length);
 
-            public static void RaiseLuaError(
+            public static void ThrowLuaError(
                 LuaState state,
                 string message,
                 params object[] args
@@ -651,6 +656,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class SampleUserData { }
+        private sealed class SampleUserData { }
     }
 }

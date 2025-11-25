@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class ConfigPropertyAssignerTests
     {
-        public sealed class MySubclass
+        private sealed class MySubclass
         {
             [NovaSharpProperty]
             public string MyString { get; set; }
@@ -40,6 +40,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private static MyClass Test(string tableDef)
         {
+            _ = new MySubclass();
+
             Script s = new(default(CoreModules));
 
             DynValue table = s.DoString("return " + tableDef);

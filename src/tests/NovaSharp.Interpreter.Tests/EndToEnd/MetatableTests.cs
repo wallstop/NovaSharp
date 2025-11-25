@@ -231,7 +231,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("abc!bc"));
         }
 
-        public class MyObject
+        internal sealed class MyObject
         {
             private readonly int _value;
 

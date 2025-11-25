@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class CollectionsBaseGenRegisteredTests
     {
-        public class RegCollItem
+        private sealed class RegCollItem
         {
             public int value;
 
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class RegCollMethods
+        private sealed class RegCollMethods
         {
             private readonly List<RegCollItem> _items = new()
             {

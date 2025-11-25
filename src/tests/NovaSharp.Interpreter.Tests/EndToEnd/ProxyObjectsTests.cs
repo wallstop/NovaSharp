@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class ProxyObjectsTests
     {
-        public class Proxy
+        private sealed class Proxy
         {
             [NovaSharpVisible(false)]
             public Random randomSource;
