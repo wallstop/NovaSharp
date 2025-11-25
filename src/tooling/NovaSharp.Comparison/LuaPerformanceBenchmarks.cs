@@ -20,7 +20,7 @@ using NovaSharp.Interpreter.Modules;
     "CA1812",
     Justification = "Instantiated via BenchmarkDotNet reflection."
 )]
-public class LuaPerformanceBenchmarks : IDisposable
+public sealed class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
     private Script _novaSharpScript = null!;
@@ -118,6 +118,17 @@ public class LuaPerformanceBenchmarks : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
+            return;
+        }
+
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!disposing || _disposed)
         {
             return;
         }

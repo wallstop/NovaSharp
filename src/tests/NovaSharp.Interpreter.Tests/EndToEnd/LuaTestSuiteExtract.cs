@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public sealed class LuaTestSuiteExtract
     {
-        private void RunTest(string script)
+        private static void RunTest(string script)
         {
             HashSet<string> failedTests = new();
             int i = 0;

@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
-    using Loaders;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;

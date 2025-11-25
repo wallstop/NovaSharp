@@ -7,7 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class JsonSerializationTests
     {
-        private void AssertTableValues(Table t)
+        private static void AssertTableValues(Table t)
         {
             Assert.That(t.Get("aNumber").Type, Is.EqualTo(DataType.Number));
             Assert.That(t.Get("aNumber").Number, Is.EqualTo(1));

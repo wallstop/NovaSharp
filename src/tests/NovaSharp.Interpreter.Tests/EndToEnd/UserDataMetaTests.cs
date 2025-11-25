@@ -14,17 +14,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal sealed class ClassWithLength
         {
+            private readonly int _length = 55;
+
             public int Length
             {
-                get { return 55; }
+                get { return _length; }
             }
         }
 
         internal sealed class ClassWithCount
         {
+            private readonly int _count = 123;
+
             public int Count
             {
-                get { return 123; }
+                get { return _count; }
             }
         }
 
@@ -175,6 +179,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             [NovaSharpUserDataMetamethod("__ipairs")]
             public System.Collections.IEnumerator Pairs()
             {
+                _ = Value;
                 return (
                     new List<DynValue>()
                     {

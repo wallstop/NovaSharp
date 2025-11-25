@@ -35,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        private void IndexerTest(string code, int expected)
+        private static void IndexerTest(string code, int expected)
         {
             Script s = new();
 

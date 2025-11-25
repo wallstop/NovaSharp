@@ -32,23 +32,34 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class EnumOverloadsTestClass
         {
+            private int _callCount;
+
+            private void RecordCall()
+            {
+                _callCount = (_callCount + 1) % int.MaxValue;
+            }
+
             public string MyMethod(SampleRating enm)
             {
+                RecordCall();
                 return "[" + enm.ToString() + "]";
             }
 
             public string MyMethod(SampleFlagSet enm)
             {
+                RecordCall();
                 return ((long)enm).ToString();
             }
 
             public string MyMethod2(SampleRating enm)
             {
+                RecordCall();
                 return "(" + enm.ToString() + ")";
             }
 
             public string MyMethodB(bool b)
             {
+                RecordCall();
                 return b ? "T" : "F";
             }
 
@@ -59,6 +70,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             )]
             public SampleRating Get()
             {
+                RecordCall();
                 return SampleRating.Quattro;
             }
 
@@ -69,11 +81,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             )]
             public SampleFlagSet GetF()
             {
+                RecordCall();
                 return SampleFlagSet.Quattro;
             }
         }
 
-        private void RunTestOverload(string code, string expected)
+        private static void RunTestOverload(string code, string expected)
         {
             Script s = new();
 

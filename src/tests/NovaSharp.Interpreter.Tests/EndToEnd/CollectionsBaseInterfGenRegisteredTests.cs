@@ -87,12 +87,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class CollectionsBaseInterfGenRegisteredTests
     {
-        private void Do(string code, Action<DynValue> asserts)
+        private static void Do(string code, Action<DynValue> asserts)
         {
             Do(code, (d, o) => asserts(d));
         }
 
-        private void Do(string code, Action<DynValue, RegCollMethods> asserts)
+        private static void Do(string code, Action<DynValue, RegCollMethods> asserts)
         {
             try
             {

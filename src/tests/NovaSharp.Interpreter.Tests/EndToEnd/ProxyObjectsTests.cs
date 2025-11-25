@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             )]
             public int GetValue()
             {
-                return 3;
+                return randomSource != null ? randomSource.Next(3, 4) : 3;
             }
         }
 

@@ -149,7 +149,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             Generate(language, luafile, destfile, allowinternals == "y", className, namespaceName);
         }
 
-        private bool IsValidIdentifier(string s)
+        private static bool IsValidIdentifier(string s)
         {
             if (string.IsNullOrEmpty(s))
             {
@@ -240,7 +240,7 @@ namespace NovaSharp.Cli.Commands.Implementations
             return eee.Evaluate(null).Table;
         }
 
-        private string AskQuestion(
+        private static string AskQuestion(
             string prompt,
             string defval,
             Func<string, bool> validator,

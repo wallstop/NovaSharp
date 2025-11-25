@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        private void Do(string code, Action<DynValue> asserts)
+        private static void Do(string code, Action<DynValue> asserts)
         {
             // useless ops, to trick AOT to include the extension methods..
             List<int> lst = new() { 1, 1, 1, 1 };
@@ -98,7 +98,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Do(code, (d, o) => asserts(d));
         }
 
-        private void Do(string code, Action<DynValue, RegCollMethods> asserts)
+        private static void Do(string code, Action<DynValue, RegCollMethods> asserts)
         {
             try
             {

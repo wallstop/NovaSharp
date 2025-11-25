@@ -38,7 +38,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public MySubclass SubObj { get; private set; }
         }
 
-        private MyClass Test(string tableDef)
+        private static MyClass Test(string tableDef)
         {
             Script s = new(default(CoreModules));
 

@@ -18,12 +18,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class SomeClassNoRegister : IComparable
         {
+            private int _instanceTouchCounter;
+            private string _lastConcatResult = string.Empty;
+            private string _lastFormattedString = string.Empty;
+
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
                 out string lowercase
             )
             {
+                _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
                 lowercase = input.ToLower();
                 return input.ToUpper();
@@ -31,11 +36,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string ConcatNums(int p1, int p2)
             {
-                return $"{p1}%{p2}";
+                string result = $"{p1}%{p2}";
+                _lastConcatResult = result;
+                return result;
             }
 
             public int SomeMethodWithLongName(int i)
             {
+                _instanceTouchCounter ^= i;
                 return i * 2;
             }
 
@@ -143,7 +151,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return FormatUnchecked(s, args);
+                string formatted = FormatUnchecked(s, args);
+                _lastFormattedString = formatted;
+                return formatted;
             }
 
             public StringBuilder ConcatI(
@@ -177,6 +187,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     l.Add(i);
                 }
 
+                _instanceTouchCounter += l.Count;
                 return l;
             }
 
@@ -188,12 +199,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class SomeClass : IComparable
         {
+            private int _instanceTouchCounter;
+            private string _lastConcatResult = string.Empty;
+            private string _lastFormattedString = string.Empty;
+
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
                 out string lowercase
             )
             {
+                _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
                 lowercase = input.ToLower();
                 return input.ToUpper();
@@ -201,11 +217,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string ConcatNums(int p1, int p2)
             {
-                return $"{p1}%{p2}";
+                string result = $"{p1}%{p2}";
+                _lastConcatResult = result;
+                return result;
             }
 
             public int SomeMethodWithLongName(int i)
             {
+                _instanceTouchCounter ^= i;
                 return i * 2;
             }
 
@@ -311,7 +330,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return FormatUnchecked(s, args);
+                string formatted = FormatUnchecked(s, args);
+                _lastFormattedString = formatted;
+                return formatted;
             }
 
             public StringBuilder ConcatI(
@@ -345,6 +366,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     l.Add(i);
                 }
 
+                _instanceTouchCounter += l.Count;
                 return l;
             }
 
@@ -366,14 +388,17 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class SomeOtherClass
         {
+            private readonly string _test1Response = "Test1";
+            private readonly string _test2Response = "Test2";
+
             public string Test1()
             {
-                return "Test1";
+                return _test1Response;
             }
 
             public string Test2()
             {
-                return "Test2";
+                return _test2Response;
             }
         }
 
@@ -443,18 +468,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class SomeOtherClassWithDualInterfaces : INterface1, INterface2
         {
+            private readonly string _test1Response = "Test1";
+            private readonly string _test2Response = "Test2";
+
             public string Test1()
             {
-                return "Test1";
+                return _test1Response;
             }
 
             public string Test2()
             {
-                return "Test2";
+                return _test2Response;
             }
         }
 
-        public void TestVarArgs(InteropAccessMode opt)
+        private static void TestVarArgs(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -477,7 +505,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1.2@ciao:True"));
         }
 
-        public void TestConcatMethodStaticComplexCustomConv(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplexCustomConv(InteropAccessMode opt)
         {
             try
             {
@@ -543,7 +571,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public void TestConcatMethodStaticComplex(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplex(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -578,7 +606,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodStaticComplexRec(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplexRec(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -606,7 +634,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1,2,3|11,35,77|16,42,64|99,76,17|"));
         }
 
-        public void TestRefOutParams(InteropAccessMode opt)
+        private static void TestRefOutParams(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -637,7 +665,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[2].String, Is.EqualTo("ciao"));
         }
 
-        public void TestConcatMethodStatic(InteropAccessMode opt)
+        private static void TestConcatMethodStatic(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -668,7 +696,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethod(InteropAccessMode opt)
+        private static void TestConcatMethod(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -698,7 +726,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodSemicolon(InteropAccessMode opt)
+        private static void TestConcatMethodSemicolon(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -728,7 +756,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConstructorAndConcatMethodSemicolon(InteropAccessMode opt)
+        private static void TestConstructorAndConcatMethodSemicolon(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -759,7 +787,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodStaticSimplifiedSyntax(InteropAccessMode opt)
+        private static void TestConcatMethodStaticSimplifiedSyntax(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -790,7 +818,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestDelegateMethod(InteropAccessMode opt)
+        private static void TestDelegateMethod(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -815,7 +843,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1%2"));
         }
 
-        public void TestListMethod(InteropAccessMode opt)
+        private static void TestListMethod(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 

@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class BinaryDumpTests
     {
-        private DynValue ScriptRunString(string script)
+        private static DynValue ScriptRunString(string script)
         {
             Script s1 = new();
             DynValue v1 = s1.LoadString(script);
@@ -25,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return func.Function.Call();
         }
 
-        private DynValue ScriptLoadFunc(string script, string funcname)
+        private static DynValue ScriptLoadFunc(string script, string funcname)
         {
             Script s1 = new();
             DynValue v1 = s1.DoString(script);

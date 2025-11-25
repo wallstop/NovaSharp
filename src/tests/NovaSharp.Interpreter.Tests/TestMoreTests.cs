@@ -223,7 +223,7 @@ namespace NovaSharp.Interpreter.Tests
             TapRunner.Run(@"TestMore/310-close-var.t");
         }
 
-        private bool AreCoreModulesFullySupported(CoreModules modules)
+        private static bool AreCoreModulesFullySupported(CoreModules modules)
         {
             CoreModules supp = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
             return supp == modules;

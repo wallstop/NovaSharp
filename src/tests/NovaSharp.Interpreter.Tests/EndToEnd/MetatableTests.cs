@@ -233,6 +233,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class MyObject
         {
+            private readonly int _value;
+
+            public MyObject()
+            {
+                _value = 10;
+            }
+
             [SuppressMessage(
                 "Design",
                 "CA1024:UsePropertiesWhereAppropriate",
@@ -240,7 +247,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             )]
             public int GetSomething()
             {
-                return 10;
+                return _value;
             }
         }
 

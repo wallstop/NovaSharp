@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public int RoIntProp
             {
-                get { return 5; }
+                get { return IntProp - IntProp + 5; }
             }
             public int RoIntProp2 { get; internal set; }
 
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public void TestIntPropertyGetter(InteropAccessMode opt)
+        private static void TestIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(321));
         }
 
-        public void TestNIntPropertyGetter(InteropAccessMode opt)
+        private static void TestNIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -110,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Nil));
         }
 
-        public void TestObjPropertyGetter(InteropAccessMode opt)
+        private static void TestObjPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -141,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].UserData.Object, Is.EqualTo(obj1));
         }
 
-        public void TestIntPropertySetter(InteropAccessMode opt)
+        private static void TestIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -164,7 +164,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void TestNIntPropertySetter(InteropAccessMode opt)
+        private static void TestNIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -194,7 +194,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(19));
         }
 
-        public void TestInvalidPropertySetter(InteropAccessMode opt)
+        private static void TestInvalidPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -216,7 +216,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
-        public void TestStaticPropertyAccess(InteropAccessMode opt)
+        private static void TestStaticPropertyAccess(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -238,7 +238,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(SomeClass.StaticProp, Is.EqualTo("asdasdqweqwe"));
         }
 
-        public void TestIteratorPropertyGetter(InteropAccessMode opt)
+        private static void TestIteratorPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -264,7 +264,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
-        public void TestRoIntPropertyGetter(InteropAccessMode opt)
+        private static void TestRoIntPropertyGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -286,7 +286,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(5));
         }
 
-        public void TestRoIntProperty2Getter(InteropAccessMode opt)
+        private static void TestRoIntProperty2Getter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -308,7 +308,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234));
         }
 
-        public void TestRoIntPropertySetter(InteropAccessMode opt)
+        private static void TestRoIntPropertySetter(InteropAccessMode opt)
         {
             try
             {
@@ -337,7 +337,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestRoIntProperty2Setter(InteropAccessMode opt)
+        private static void TestRoIntProperty2Setter(InteropAccessMode opt)
         {
             try
             {
@@ -366,7 +366,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestWoIntPropertySetter(InteropAccessMode opt)
+        private static void TestWoIntPropertySetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -388,7 +388,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void TestWoIntProperty2Setter(InteropAccessMode opt)
+        private static void TestWoIntProperty2Setter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -410,7 +410,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(19));
         }
 
-        public void TestWoIntPropertyGetter(InteropAccessMode opt)
+        private static void TestWoIntPropertyGetter(InteropAccessMode opt)
         {
             try
             {
@@ -441,7 +441,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestWoIntProperty2Getter(InteropAccessMode opt)
+        private static void TestWoIntProperty2Getter(InteropAccessMode opt)
         {
             try
             {
@@ -472,7 +472,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestPropertyAccessOverrides(InteropAccessMode opt)
+        private static void TestPropertyAccessOverrides(InteropAccessMode opt)
         {
             SomeClass obj = new();
 

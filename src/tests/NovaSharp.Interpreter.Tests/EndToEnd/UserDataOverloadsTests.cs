@@ -43,18 +43,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public class OverloadsTestClass
         {
+            private int _callCounter;
+            private string _lastFormat = string.Empty;
+
             public string MethodV(string fmt, params object[] args)
             {
+                _lastFormat = fmt ?? string.Empty;
+                _callCounter += args?.Length ?? 0;
                 return "varargs:" + FormatUnchecked(fmt, args);
             }
 
             public string MethodV(string fmt, int a, bool b)
             {
+                _lastFormat = fmt ?? string.Empty;
+                _callCounter += a;
                 return "exact:" + string.Format(fmt, a, b);
             }
 
             public string Method1()
             {
+                _callCounter++;
                 return "1";
             }
 
@@ -65,41 +73,57 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Method1(int a)
             {
+                _callCounter += a;
                 return "2";
             }
 
             public string Method1(double d)
             {
+                _callCounter += (int)d;
                 return "3";
             }
 
             public string Method1(double d, string x = null)
             {
+                _callCounter += (int)d;
+                _lastFormat = x ?? string.Empty;
                 return "4";
             }
 
             public string Method1(double d, string x, int y = 5)
             {
+                _callCounter += y;
+                _lastFormat = x ?? string.Empty;
                 return "5";
             }
 
             public string Method2(string x, string y)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += y?.Length ?? 0;
                 return "v";
             }
 
             public string Method2(string x, ref string y)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += y?.Length ?? 0;
                 return "r";
             }
 
             public string Method2(string x, ref string y, int z)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += z;
                 return "R";
             }
         }
 
-        private void RunTestOverload(string code, string expected, bool tupleExpected = false)
+        private static void RunTestOverload(
+            string code,
+            string expected,
+            bool tupleExpected = false
+        )
         {
             Script s = new();
 

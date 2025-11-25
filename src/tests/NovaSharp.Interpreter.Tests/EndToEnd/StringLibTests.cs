@@ -266,7 +266,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             TestMatch(s, p, true);
         }
 
-        private void TestMatch(string s, string p, bool expected)
+        private static void TestMatch(string s, string p, bool expected)
         {
             Script script = new(CoreModules.StringLib);
             script.Globals["s"] = s;
