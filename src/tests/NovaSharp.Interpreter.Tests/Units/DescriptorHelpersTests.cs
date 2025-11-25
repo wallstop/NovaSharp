@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using System.Linq.Expressions;
@@ -310,13 +311,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             public const string ProtectedFieldName = nameof(_protectedField);
             public const string PrivateMethodName = nameof(PrivateMethod);
 
-            public int publicField = 0;
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            public int publicField;
 
-            internal int _internalField = 0;
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            internal int _internalField;
 
-            protected int _protectedField = 0;
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            protected int _protectedField;
 
-            protected internal int _protectedInternalField = 0;
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            protected internal int _protectedInternalField;
 
             public void PublicMethod() { }
 

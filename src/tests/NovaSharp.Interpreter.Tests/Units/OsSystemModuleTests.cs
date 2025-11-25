@@ -475,6 +475,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
     public sealed class ExitFastException : Exception
     {
+        public ExitFastException() { }
+
+        public ExitFastException(string message)
+            : base(message) { }
+
+        public ExitFastException(string message, Exception innerException)
+            : base(message, innerException) { }
+
         public ExitFastException(int exitCode)
         {
             ExitCode = exitCode;

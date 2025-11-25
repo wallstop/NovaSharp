@@ -698,7 +698,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _result = DynValue.NewString(discriminant);
             }
 
-            public bool IsStatic { get; } = false;
+            public bool IsStatic { get; }
 
             public string Name { get; }
 
@@ -749,7 +749,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 this._optimize = optimize;
             }
 
-            public bool IsStatic { get; } = false;
+            public bool IsStatic { get; }
 
             public string Name { get; }
 

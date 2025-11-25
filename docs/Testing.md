@@ -117,3 +117,23 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 - `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests live inside `src/tests/NovaSharp.Interpreter.Tests`—notably `Units/RemoteDebuggerServiceTests.cs`, `Units/RemoteDebuggerTests.cs`, and `Units/DebugCommandTests.cs`—so `scripts/coverage/coverage.ps1` and `dotnet test` already execute them; add new coverage there when touching RemoteDebugger code.
 
 - Other projects still surface warnings but do not yet gate builds; as we zero remaining analyzer debt, treat-warnings-as-errors will expand solution-wide. Track the rollout status in `PLAN.md`.
+
+### Debugger Analyzer Guardrails
+
+Both debugger stacks now rely on analyzers to catch regressions; any new warning fails the Release build, so keep the following guardrails in mind whenever you touch debugger code.
+
+- **Disposal & ownership (CA1063/CA2213/CA2000)**: `NovaSharpVsCodeDebugServer`, `ProtocolServer`, `DebugSession`, `RemoteDebuggerService`, `HttpServer`, `Utf8TcpServer`, and every socket/listener/`HttpClient` wrapper must implement the full dispose pattern and wrap transient streams/sockets/readers in `using` statements. Tests should assert deterministic disposal by creating helpers such as the blocking channel/queue fixtures already in the suite.
+- **Argument validation & targeted catches (CA1031/CA1062)**: Guard every public/protected entry point (commands, protocol handlers, HTTP endpoints) against `null` or invalid arguments and only catch specific exception types (IO/security/format) so analyzers keep `Program`, `RunCommand`, `HardwireCommand`, and debugger transports free of blanket `catch (Exception)` blocks.
+- **Culture/compare invariance (CA1305/CA1310/CA1865/CA1866)**: Always format/parse using `CultureInfo.InvariantCulture` and specify `StringComparison.Ordinal` (or the char overloads) for protocol routing, manifest parsing, and CLI messaging. Remote debugger HTTP payload builders should also stay culture-invariant when emitting JSON or diagnostics.
+- **Collections & API surfaces (CA1002/CA1012/CA1716/CA1822/CA1854/CA1859)**: Expose protocol lists as `IEnumerable<T>`, keep debugger constructors `protected` to enforce abstract entry points, rename identifiers that collide with reserved keywords, and favor `static` helpers when no instance state is touched. Access dictionaries via `TryGetValue` to avoid double lookups, and store concrete list/dictionary instances instead of their interfaces when state mutation is required.
+- **Binary payload & immutability rules (CA1008/CA1056/CA1815/CA1819)**: Remote debugger URIs must use `System.Uri`, byte payloads should flow through `ReadOnlyMemory<byte>`/`ReadOnlySpan<byte>`, and value types such as `RemoteDebuggerOptions` need explicit equality members so analyzers see deterministic semantics.
+
+Validation checklist:
+
+```powershell
+dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
+dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo
+dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+```
+
+Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.

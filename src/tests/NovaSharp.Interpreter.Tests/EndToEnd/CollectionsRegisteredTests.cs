@@ -81,10 +81,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return _list;
             }
 
-            public IEnumerator<int> GetEnumerator()
-            {
-                return GetList().GetEnumerator();
-            }
+            public List<int>.Enumerator GetEnumerator() => _list.GetEnumerator();
         }
 
         private static void Do(string code, Action<DynValue> asserts)

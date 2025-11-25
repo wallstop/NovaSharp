@@ -156,6 +156,72 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void HostBusyMessagesClearWhenNextActionRuns()
+        {
+            Script script = BuildScript("return 0", "host-busy.lua");
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
+            using RemoteDebuggerTestClient client = new(port);
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"foo\" />");
+            List<string> busyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host busy")),
+                DefaultTimeout
+            );
+            Assert.That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy")), Is.True);
+
+            DebuggerAction refresh = server.GetAction(0, sourceRef);
+            Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
+
+            List<string> readyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host ready")),
+                DefaultTimeout
+            );
+            Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready")), Is.True);
+        }
+
+        [Test]
+        public void WatchesEvaluateExpressionsAgainstScriptState()
+        {
+            Script script = BuildScript("return watched", "watch-eval.lua");
+            script.Globals.Set("watched", DynValue.NewNumber(10));
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
+            using RemoteDebuggerTestClient client = new(port);
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"watched\" />");
+            DebuggerAction refresh = server.GetAction(0, sourceRef);
+            Assert.That(refresh.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
+
+            DynamicExpression watch = server.GetWatchItems().Single();
+            DynValue firstValue = watch.Evaluate();
+            Assert.Multiple(() =>
+            {
+                Assert.That(watch.IsConstant(), Is.False);
+                Assert.That(firstValue.Type, Is.EqualTo(DataType.Number));
+                Assert.That(firstValue.Number, Is.EqualTo(10));
+            });
+
+            script.Globals.Set("watched", DynValue.NewNumber(42));
+            DynValue updatedValue = watch.Evaluate();
+            Assert.That(updatedValue.Number, Is.EqualTo(42));
+        }
+
+        [Test]
         public void InvalidWatchExpressionFallsBackToConstant()
         {
             Script script = BuildScript("return 0", "invalid-watch.lua");
@@ -256,6 +322,79 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready")), Is.True);
             Assert.That(server.State, Is.EqualTo("Unknown"));
+        }
+
+        [Test]
+        public void QueuedRefreshesIncludeLatestWatchChanges()
+        {
+            Script script = BuildScript("return 0", "queued-refresh.lua");
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
+            using RemoteDebuggerTestClient client = new(port);
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"alpha\" />");
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"beta\" />");
+
+            DebuggerAction first = server.GetAction(0, sourceRef);
+            DebuggerAction second = server.GetAction(0, sourceRef);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
+                Assert.That(second.Action, Is.EqualTo(DebuggerAction.ActionType.HardRefresh));
+            });
+
+            string[] watchExpressions = server
+                .GetWatchItems()
+                .Select(w => w.ExpressionCode)
+                .ToArray();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(watchExpressions.Length, Is.EqualTo(2));
+                Assert.That(watchExpressions, Does.Contain("alpha"));
+                Assert.That(watchExpressions, Does.Contain("beta"));
+                Assert.That(watchExpressions.Distinct().Count(), Is.EqualTo(2));
+            });
+        }
+
+        [Test]
+        public void QueuedActionsDrainAfterPauseRequest()
+        {
+            Script script = BuildScript("return 0", "pause-queue.lua");
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
+            using RemoteDebuggerTestClient client = new(port);
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"pause\" arg=\"\" />");
+            TestWaitHelpers.SpinUntilOrThrow(
+                server.IsPauseRequested,
+                DefaultTimeout,
+                "Pause request was not registered."
+            );
+
+            client.SendCommand("<Command cmd=\"run\" arg=\"\" />");
+
+            DebuggerAction action = server.GetAction(0, sourceRef);
+            Assert.Multiple(() =>
+            {
+                Assert.That(action.Action, Is.EqualTo(DebuggerAction.ActionType.Run));
+                Assert.That(server.IsPauseRequested(), Is.False);
+            });
         }
 
         [Test]
@@ -593,6 +732,36 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DefaultTimeout
             );
             Assert.That(payloads.Last(), Does.Contain("execution-completed"));
+        }
+
+        [Test]
+        public void SignalRuntimeExceptionBroadcastsDecoratedMessage()
+        {
+            Script script = BuildScript("return 0", "decorated-error.lua");
+            using DebugServer server = CreateServer(
+                script,
+                freeRunAfterAttach: false,
+                out int port
+            );
+            using RemoteDebuggerTestClient client = new(port);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            ScriptRuntimeException exception = new("failure")
+            {
+                DecoratedMessage = "decorated:failure",
+            };
+
+            bool shouldPause = server.SignalRuntimeException(exception);
+            Assert.That(shouldPause, Is.True);
+
+            List<string> messages = client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "decorated:failure")),
+                DefaultTimeout
+            );
+
+            Assert.That(messages.Any(m => ContainsOrdinal(m, "decorated:failure")), Is.True);
         }
 
         [Test]

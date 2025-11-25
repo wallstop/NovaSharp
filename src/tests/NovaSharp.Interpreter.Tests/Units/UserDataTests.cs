@@ -498,89 +498,92 @@ namespace NovaSharp.Interpreter.Tests.Units
     }
 }
 
-internal sealed class CustomDescriptorHost
+namespace NovaSharp.Interpreter.Tests.Units
 {
-    public CustomDescriptorHost(string name)
+    internal sealed class CustomDescriptorHost
     {
-        Name = name;
+        public CustomDescriptorHost(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+
+        public override string ToString()
+        {
+            return $"Host:{Name}";
+        }
     }
 
-    public string Name { get; }
+    public sealed class HistoricalHost { }
 
-    public override string ToString()
+    internal sealed class ProxyTarget
     {
-        return $"Host:{Name}";
+        public ProxyTarget(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
     }
+
+    internal sealed class ProxySurface
+    {
+        public ProxySurface(ProxyTarget target)
+        {
+            Target = target;
+        }
+
+        public ProxyTarget Target { get; }
+    }
+
+    internal sealed class UnregisteredHost { }
+
+    internal static class CustomDescriptorHostExtensions
+    {
+        public static string Decorate(this CustomDescriptorHost host, string suffix)
+        {
+            return (host?.ToString() ?? string.Empty) + suffix;
+        }
+    }
+
+    public sealed class RegistryHost { }
+
+    internal sealed class AutoPolicyHost { }
+
+    public class BaseHost { }
+
+    internal sealed class DerivedHost : BaseHost { }
+
+    public sealed class DerivedInterfaceHost : BaseHost, IMarker { }
+
+    internal interface IMarker { }
+
+    public sealed class InterfaceHost : IMarker { }
+
+    internal sealed class EqualityHost
+    {
+        public EqualityHost(string label)
+        {
+            Label = label;
+        }
+
+        public string Label { get; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is EqualityHost other
+                && string.Equals(Label, other.Label, System.StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode()
+        {
+            return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
+        }
+    }
+
+    [global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
+        AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
+    )]
+    public sealed class AnnotatedHost { }
 }
-
-public sealed class HistoricalHost { }
-
-internal sealed class ProxyTarget
-{
-    public ProxyTarget(string name)
-    {
-        Name = name;
-    }
-
-    public string Name { get; }
-}
-
-internal sealed class ProxySurface
-{
-    public ProxySurface(ProxyTarget target)
-    {
-        Target = target;
-    }
-
-    public ProxyTarget Target { get; }
-}
-
-internal sealed class UnregisteredHost { }
-
-internal static class CustomDescriptorHostExtensions
-{
-    public static string Decorate(this CustomDescriptorHost host, string suffix)
-    {
-        return (host?.ToString() ?? string.Empty) + suffix;
-    }
-}
-
-public sealed class RegistryHost { }
-
-internal sealed class AutoPolicyHost { }
-
-public class BaseHost { }
-
-internal sealed class DerivedHost : BaseHost { }
-
-public sealed class DerivedInterfaceHost : BaseHost, IMarker { }
-
-internal interface IMarker { }
-
-public sealed class InterfaceHost : IMarker { }
-
-internal sealed class EqualityHost
-{
-    public EqualityHost(string label)
-    {
-        Label = label;
-    }
-
-    public string Label { get; }
-
-    public override bool Equals(object obj)
-    {
-        return obj is EqualityHost other
-            && string.Equals(Label, other.Label, System.StringComparison.Ordinal);
-    }
-
-    public override int GetHashCode()
-    {
-        return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
-    }
-}
-
-[global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
-    AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
-)]
-public sealed class AnnotatedHost { }

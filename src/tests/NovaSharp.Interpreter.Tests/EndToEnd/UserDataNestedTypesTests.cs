@@ -21,8 +21,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             internal string InstanceLabel => _instanceLabel;
 
-            private static readonly SomeNestedTypePrivate PrivateAnchor =
-                new SomeNestedTypePrivate();
+            private static readonly SomeNestedTypePrivate PrivateAnchor;
 
             public enum NestedSampleState
             {

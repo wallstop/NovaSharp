@@ -25,15 +25,25 @@ namespace NovaSharp.Interpreter.Tests
         public TestResultType Type { get; set; }
     }
 
-    internal sealed class SkipThisTestException : Exception { }
+    internal sealed class SkipThisTestException : Exception
+    {
+        public SkipThisTestException() { }
+
+        public SkipThisTestException(string message)
+            : base(message) { }
+
+        public SkipThisTestException(string message, Exception innerException)
+            : base(message, innerException) { }
+    }
 
     public class TestRunner
     {
         private readonly Action<TestResult> _loggerAction;
-        public int okCount = 0;
-        public int failCount = 0;
-        public int totalCount = 0;
-        public int skippedCount = 0;
+
+        public int OkCount { get; private set; }
+        public int FailCount { get; private set; }
+        public int TotalCount { get; private set; }
+        public int SkippedCount { get; private set; }
 
         public static bool IsRunning { get; private set; }
 
@@ -109,7 +119,7 @@ namespace NovaSharp.Interpreter.Tests
 
                     if (skipList.Contains(mi.Name))
                     {
-                        ++skippedCount;
+                        SkippedCount++;
                         TestResult trs = new()
                         {
                             TestName = mi.Name,
@@ -126,18 +136,18 @@ namespace NovaSharp.Interpreter.Tests
                     {
                         if (tr.Type == TestResultType.Fail)
                         {
-                            failCount++;
+                            FailCount++;
                         }
                         else if (tr.Type == TestResultType.Ok)
                         {
-                            okCount++;
+                            OkCount++;
                         }
                         else
                         {
-                            skippedCount++;
+                            SkippedCount++;
                         }
 
-                        totalCount++;
+                        TotalCount++;
                     }
 
                     yield return tr;
@@ -147,10 +157,10 @@ namespace NovaSharp.Interpreter.Tests
             ConsoleWriteLine("");
             ConsoleWriteLine(
                 "OK : {0}/{2}, Failed {1}/{2}, Skipped {3}/{2}",
-                okCount,
-                failCount,
-                totalCount,
-                skippedCount
+                OkCount,
+                FailCount,
+                TotalCount,
+                SkippedCount
             );
         }
 

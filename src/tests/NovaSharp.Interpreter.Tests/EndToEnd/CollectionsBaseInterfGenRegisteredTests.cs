@@ -10,14 +10,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public class RegCollItem
+    public sealed class RegCollItem
     {
-        public int value;
-
-        public RegCollItem(int v)
+        public RegCollItem(int value)
         {
-            value = v;
+            Value = value;
         }
+
+        public int Value { get; }
     }
 
     public class RegCollMethods
@@ -78,10 +78,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return _list;
         }
 
-        public IEnumerator<int> GetEnumerator()
-        {
-            return GetList().GetEnumerator();
-        }
+        public List<int>.Enumerator GetEnumerator() => _list.GetEnumerator();
     }
 
     [TestFixture]
@@ -323,9 +320,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 {
                     Assert.That(r.Type, Is.EqualTo(DataType.Number));
                     Assert.That(r.Number, Is.EqualTo(7 + 17 + 9));
-                    Assert.That(o.GetItems()[0].value, Is.EqualTo(7));
-                    Assert.That(o.GetItems()[1].value, Is.EqualTo(17));
-                    Assert.That(o.GetItems()[2].value, Is.EqualTo(9));
+                    Assert.That(o.GetItems()[0].Value, Is.EqualTo(7));
+                    Assert.That(o.GetItems()[1].Value, Is.EqualTo(17));
+                    Assert.That(o.GetItems()[2].Value, Is.EqualTo(9));
                 }
             );
         }
