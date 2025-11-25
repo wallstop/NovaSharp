@@ -83,9 +83,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             CustomConverterRegistry registry = new CustomConverterRegistry();
             Script script = new Script();
 
-            Func<Script, object, DynValue> converter = (s, value) =>
+            Func<Script, string, DynValue> converter = (s, value) =>
                 DynValue.NewString(value + "-converted");
-            registry.SetClrToScriptCustomConversion(typeof(string), converter);
+            registry.SetClrToScriptCustomConversion(converter);
 
             Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(string)

@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using Compatibility;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NUnit.Framework;
@@ -1254,7 +1255,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 Assert.Fail();
             }
-            catch (Exception ex)
+            catch (ScriptRuntimeException ex)
             {
                 Assert.That(
                     ex.Message != null

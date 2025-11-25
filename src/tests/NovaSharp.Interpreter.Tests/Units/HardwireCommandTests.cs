@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(new ShellContext(new Interpreter.Script()), string.Empty);
 
-            Assert.That(writer.ToString(), Does.Contain("At any question, type #quit to abort."));
+            Assert.That(writer.ToString(), Does.Contain(CliMessages.HardwireCommandAbortHint));
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(new ShellContext(new Interpreter.Script()), string.Empty);
 
-            Assert.That(writer.ToString(), Does.Contain("File does not exists."));
+            Assert.That(writer.ToString(), Does.Contain(CliMessages.HardwireMissingFile));
         }
 
         [Test]
@@ -86,7 +86,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 }
             }
 
-            Assert.That(writer.ToString(), Does.Contain("Internal error"));
+            Assert.That(
+                writer.ToString(),
+                Does.Contain(CliMessages.HardwireInternalError(string.Empty))
+            );
         }
 
         [Test]
@@ -110,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(new ShellContext(new Interpreter.Script()), string.Empty);
 
-            Assert.That(writer.ToString(), Does.Contain("Not a valid identifier."));
+            Assert.That(writer.ToString(), Does.Contain(CliMessages.HardwireIdentifierValidation));
 
             File.Delete(dumpPath);
             if (File.Exists(destPath))
@@ -165,7 +168,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(generated, Does.Contain("namespace GeneratedNamespace"));
                     Assert.That(generated, Does.Contain("class GeneratedTypes"));
-                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(output, Does.Contain(CliMessages.HardwireGenerationSummary(0, 0)));
                     Assert.That(output, Does.Not.Contain("Internal error"));
                 });
             }
@@ -223,7 +226,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.Multiple(() =>
                 {
                     Assert.That(output, Does.Contain("visibility is 'internal'"));
-                    Assert.That(output, Does.Contain("done: 0 errors, 1 warnings."));
+                    Assert.That(output, Does.Contain(CliMessages.HardwireGenerationSummary(0, 1)));
                 });
             }
             finally
@@ -282,7 +285,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
                     Assert.That(generated, Does.Contain("Class GeneratedTypes"));
-                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(output, Does.Contain(CliMessages.HardwireGenerationSummary(0, 0)));
                 });
             }
             finally
@@ -339,7 +342,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.Multiple(() =>
                 {
                     Assert.That(output, Does.Not.Contain("visibility is 'internal'"));
-                    Assert.That(output, Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(output, Does.Contain(CliMessages.HardwireGenerationSummary(0, 0)));
                 });
             }
             finally

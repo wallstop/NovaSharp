@@ -49,15 +49,19 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(output, Does.Contain("Type Lua code to execute Lua code"));
-                Assert.That(output, Does.Contain("Commands:"));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandPrimaryInstruction));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCommandListHeading));
                 Assert.That(
                     output,
-                    Does.Contain("!help [command] - gets the list of possible commands")
+                    Does.Contain(
+                        $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.HelpCommandShortHelp}"
+                    )
                 );
                 Assert.That(
                     output,
-                    Does.Contain("!run <filename> - Executes the specified Lua script")
+                    Does.Contain(
+                        $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.RunCommandShortHelp}"
+                    )
                 );
             });
         }
@@ -67,10 +71,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string output = Execute("   help   run   ");
 
-            Assert.That(
-                output,
-                Does.Contain("run <filename> - Executes the specified Lua script.")
-            );
+            Assert.That(output, Does.Contain(CliMessages.RunCommandLongHelp));
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string output = Execute("nope");
 
-            Assert.That(output, Does.Contain("Invalid command 'nope'."));
+            Assert.That(output, Does.Contain(CliMessages.CommandManagerInvalidCommand("nope")));
         }
 
         [Test]
@@ -108,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             string output = Execute("     ");
 
-            Assert.That(output, Does.Contain("Invalid command ''."));
+            Assert.That(output, Does.Contain(CliMessages.CommandManagerEmptyCommand));
         }
 
         private string Execute(string commandLine)

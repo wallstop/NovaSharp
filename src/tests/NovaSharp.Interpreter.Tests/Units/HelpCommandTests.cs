@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class HelpCommandTests
+    public sealed class HelpCommandTests : IDisposable
     {
         private ConsoleCaptureScope _consoleScope = null!;
 
@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            _consoleScope.Dispose();
+            Dispose();
         }
 
         [Test]
@@ -48,13 +48,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
             Assert.Multiple(() =>
             {
-                Assert.That(output, Does.Contain("Commands:"));
-                Assert.That(output, Does.Contain("!help"));
-                Assert.That(output, Does.Contain("!run"));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCommandListHeading));
+                Assert.That(output, Does.Contain($"{CliMessages.HelpCommandCommandPrefix}help"));
+                Assert.That(output, Does.Contain($"{CliMessages.HelpCommandCommandPrefix}run"));
                 Assert.That(
                     output,
-                    Does.Contain($"Active compatibility profile: {expectedSummary}")
+                    Does.Contain(CliMessages.ProgramActiveProfile(expectedSummary))
                 );
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCompatibilitySummary));
             });
         }
 
@@ -67,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 _consoleScope.Writer.ToString(),
-                Does.Contain("run <filename> - Executes the specified Lua script.")
+                Does.Contain(CliMessages.RunCommandLongHelp)
             );
         }
 
@@ -83,7 +84,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 _consoleScope.Writer.ToString(),
-                Does.Contain("Command 'garbage' not found.")
+                Does.Contain(CliMessages.HelpCommandCommandNotFound("garbage"))
             );
         }
 
@@ -92,6 +93,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptOptions options = new() { CompatibilityVersion = version };
 
             return new Script(options);
+        }
+
+        public void Dispose()
+        {
+            if (_consoleScope != null)
+            {
+                _consoleScope.Dispose();
+                _consoleScope = null!;
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ namespace NovaSharp.Cli.Commands
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
 
     /// <summary>
@@ -56,7 +57,7 @@ namespace NovaSharp.Cli.Commands
 
             if (trimmed.Length == 0)
             {
-                Console.WriteLine("Invalid command ''.");
+                Console.WriteLine(CliMessages.CommandManagerEmptyCommand);
                 return;
             }
 
@@ -77,7 +78,7 @@ namespace NovaSharp.Cli.Commands
 
             if (cmd == null)
             {
-                Console.WriteLine("Invalid command '{0}'.", command);
+                Console.WriteLine(CliMessages.CommandManagerInvalidCommand(command));
                 return;
             }
 

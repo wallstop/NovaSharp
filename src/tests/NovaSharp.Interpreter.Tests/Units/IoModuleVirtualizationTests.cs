@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using Platforms;
 
     [TestFixture]
-    public class IoModuleVirtualizationTests
+    public sealed class IoModuleVirtualizationTests : IDisposable
     {
         private IPlatformAccessor _previousPlatform = null!;
         private InMemoryPlatformAccessor _platform = null!;
@@ -28,9 +28,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            Script.GlobalOptions.Platform = _previousPlatform;
-            _platform.Dispose();
-            _platform = null!;
+            Dispose();
         }
 
         [Test]
@@ -160,6 +158,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(_platform.GetStdErrText(), Is.EqualTo("failure"));
             Assert.That(_platform.GetStdOutText(), Is.Empty);
+        }
+
+        public void Dispose()
+        {
+            if (_previousPlatform != null)
+            {
+                Script.GlobalOptions.Platform = _previousPlatform;
+                _previousPlatform = null!;
+            }
+
+            if (_platform != null)
+            {
+                _platform.Dispose();
+                _platform = null!;
+            }
         }
 
         private sealed class InMemoryPlatformAccessor : PlatformAccessorBase, IDisposable

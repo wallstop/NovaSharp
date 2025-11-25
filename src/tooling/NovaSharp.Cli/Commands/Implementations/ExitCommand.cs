@@ -1,6 +1,7 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
+    using NovaSharp.Cli;
 
     /// <summary>
     /// CLI command that terminates the REPL loop.
@@ -16,13 +17,13 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("exit - Exits the interpreter");
+            Console.WriteLine(CliMessages.ExitCommandShortHelp);
         }
 
         /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine("exit - Exits the interpreter");
+            Console.WriteLine(CliMessages.ExitCommandLongHelp);
         }
 
         /// <inheritdoc />

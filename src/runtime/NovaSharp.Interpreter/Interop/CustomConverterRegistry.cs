@@ -156,6 +156,12 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="converter">The converter, or null.</param>
         public void SetClrToScriptCustomConversion<T>(Func<Script, T, DynValue> converter = null)
         {
+            if (converter == null)
+            {
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue>)null);
+                return;
+            }
+
             SetClrToScriptCustomConversion(typeof(T), (s, o) => converter(s, (T)o));
         }
 
@@ -194,6 +200,12 @@ namespace NovaSharp.Interpreter.Interop
         )]
         public void SetClrToScriptCustomConversion<T>(Func<T, DynValue> converter = null)
         {
+            if (converter == null)
+            {
+                SetClrToScriptCustomConversion(typeof(T), (Func<object, DynValue>)null);
+                return;
+            }
+
             SetClrToScriptCustomConversion(typeof(T), o => converter((T)o));
         }
 

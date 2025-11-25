@@ -4,8 +4,10 @@ namespace NovaSharp.Cli.Commands.Implementations
     using System.IO;
     using Hardwire;
     using Hardwire.Languages;
+    using NovaSharp.Cli;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
 
@@ -32,21 +34,21 @@ namespace NovaSharp.Cli.Commands.Implementations
             /// <inheritdoc />
             public void LogError(string message)
             {
-                Console.WriteLine("[EE] - " + message);
+                Console.WriteLine(CliMessages.HardwireErrorLog(message));
                 ErrorCount++;
             }
 
             /// <inheritdoc />
             public void LogWarning(string message)
             {
-                Console.WriteLine("[ww] - " + message);
+                Console.WriteLine(CliMessages.HardwireWarningLog(message));
                 WarningCount++;
             }
 
             /// <inheritdoc />
             public void LogMinor(string message)
             {
-                Console.WriteLine("[ii] - " + message);
+                Console.WriteLine(CliMessages.HardwireInfoLog(message));
             }
         }
 
@@ -59,31 +61,27 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine(
-                "hardwire - Creates hardwire descriptors from a dump table (interactive). "
-            );
+            Console.WriteLine(CliMessages.HardwireCommandShortHelp);
         }
 
         /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine(
-                "hardwire - Creates hardwire descriptors from a dump table (interactive). "
-            );
+            Console.WriteLine(CliMessages.HardwireCommandLongHelp);
             Console.WriteLine();
         }
 
         /// <inheritdoc />
         public void Execute(ShellContext context, string argument)
         {
-            Console.WriteLine("At any question, type #quit to abort.");
+            Console.WriteLine(CliMessages.HardwireCommandAbortHint);
             Console.WriteLine();
 
             string language = AskQuestion(
-                "Language, cs or vb ? [cs] : ",
+                CliMessages.HardwireLanguagePrompt,
                 "cs",
                 s => s == "cs" || s == "vb",
-                "Must be 'cs' or 'vb'."
+                CliMessages.HardwireLanguageValidation
             );
 
             if (language == null)
@@ -92,10 +90,10 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             string luafile = AskQuestion(
-                "Lua dump table file: ",
+                CliMessages.HardwireDumpPrompt,
                 "",
                 s => File.Exists(s),
-                "File does not exists."
+                CliMessages.HardwireMissingFile
             );
 
             if (luafile == null)
@@ -103,7 +101,12 @@ namespace NovaSharp.Cli.Commands.Implementations
                 return;
             }
 
-            string destfile = AskQuestion("Destination file: ", "", s => true, "");
+            string destfile = AskQuestion(
+                CliMessages.HardwireDestinationPrompt,
+                "",
+                s => true,
+                string.Empty
+            );
 
             if (destfile == null)
             {
@@ -111,10 +114,10 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             string allowinternals = AskQuestion(
-                "Allow internals y/n ? [y]: ",
+                CliMessages.HardwireInternalsPrompt,
                 "y",
                 s => s == "y" || s == "n",
-                ""
+                string.Empty
             );
 
             if (allowinternals == null)
@@ -123,10 +126,10 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             string namespaceName = AskQuestion(
-                "Namespace ? [HardwiredClasses]: ",
+                CliMessages.HardwireNamespacePrompt,
                 "HardwiredClasses",
                 s => IsValidIdentifier(s),
-                "Not a valid identifier."
+                CliMessages.HardwireIdentifierValidation
             );
 
             if (namespaceName == null)
@@ -135,10 +138,10 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             string className = AskQuestion(
-                "Class ? [HardwireTypes]: ",
+                CliMessages.HardwireClassPrompt,
                 "HardwireTypes",
                 s => IsValidIdentifier(s),
-                "Not a valid identifier."
+                CliMessages.HardwireIdentifierValidation
             );
 
             if (className == null)
@@ -215,16 +218,28 @@ namespace NovaSharp.Cli.Commands.Implementations
 
                 File.WriteAllText(destfile, code);
             }
-            catch (Exception ex)
+            catch (InterpreterException ex)
             {
-                Console.WriteLine("Internal error : {0}", ex.Message);
+                Console.WriteLine(
+                    CliMessages.HardwireInternalError(ex.DecoratedMessage ?? ex.Message)
+                );
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine(CliMessages.HardwireInternalError(ex.Message));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine(CliMessages.HardwireInternalError(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine(CliMessages.HardwireInternalError(ex.Message));
             }
 
             Console.WriteLine();
             Console.WriteLine(
-                "done: {0} errors, {1} warnings.",
-                logger.ErrorCount,
-                logger.WarningCount
+                CliMessages.HardwireGenerationSummary(logger.ErrorCount, logger.WarningCount)
             );
         }
 

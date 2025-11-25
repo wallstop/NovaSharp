@@ -2,6 +2,8 @@ namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using System.IO;
+    using System.Security;
+    using NovaSharp.Cli;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
@@ -22,13 +24,13 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("run <filename> - Executes the specified Lua script");
+            Console.WriteLine(CliMessages.RunCommandShortHelp);
         }
 
         /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine("run <filename> - Executes the specified Lua script.");
+            Console.WriteLine(CliMessages.RunCommandLongHelp);
         }
 
         /// <inheritdoc />
@@ -36,7 +38,7 @@ namespace NovaSharp.Cli.Commands.Implementations
         {
             if (arguments.Length == 0)
             {
-                Console.WriteLine("Syntax : !run <file>");
+                Console.WriteLine(CliMessages.RunCommandSyntax);
             }
             else
             {
@@ -46,8 +48,8 @@ namespace NovaSharp.Cli.Commands.Implementations
                     resolvedPath,
                     options,
                     Script.GlobalOptions.CompatibilityVersion,
-                    info => Console.WriteLine($"[compatibility] {info}"),
-                    warning => Console.WriteLine($"[compatibility] {warning}")
+                    info => Console.WriteLine(CliMessages.ContextualCompatibilityInfo(info)),
+                    warning => Console.WriteLine(CliMessages.CompatibilityWarning(warning))
                 );
 
                 if (!manifestApplied)
@@ -78,7 +80,19 @@ namespace NovaSharp.Cli.Commands.Implementations
             {
                 return Path.GetFullPath(candidate);
             }
-            catch (Exception)
+            catch (ArgumentException)
+            {
+                return candidate;
+            }
+            catch (PathTooLongException)
+            {
+                return candidate;
+            }
+            catch (NotSupportedException)
+            {
+                return candidate;
+            }
+            catch (SecurityException)
             {
                 return candidate;
             }

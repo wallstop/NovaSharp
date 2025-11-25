@@ -18,9 +18,7 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine(
-                "help [command] - gets the list of possible commands or help about the specified command"
-            );
+            Console.WriteLine(CliMessages.HelpCommandShortHelp);
         }
 
         /// <inheritdoc />
@@ -42,26 +40,26 @@ namespace NovaSharp.Cli.Commands.Implementations
                 }
                 else
                 {
-                    Console.WriteLine("Command '{0}' not found.", arguments);
+                    Console.WriteLine(CliMessages.HelpCommandCommandNotFound(arguments));
                 }
             }
             else
             {
-                Console.WriteLine("Type Lua code to execute Lua code (multilines are accepted)");
-                Console.WriteLine("or type one of the following commands to execute them.");
-                Console.WriteLine("");
-                Console.WriteLine("Commands:");
-                Console.WriteLine("");
+                Console.WriteLine(CliMessages.HelpCommandPrimaryInstruction);
+                Console.WriteLine(CliMessages.HelpCommandSecondaryInstruction);
+                Console.WriteLine();
+                Console.WriteLine(CliMessages.HelpCommandCommandListHeading);
+                Console.WriteLine();
 
                 foreach (ICommand cmd in CommandManager.GetCommands())
                 {
-                    Console.Write("  !");
+                    Console.Write(CliMessages.HelpCommandCommandPrefix);
                     cmd.DisplayShortHelp();
                 }
 
-                Console.WriteLine("");
+                Console.WriteLine();
                 WriteCompatibilitySummary(context);
-                Console.WriteLine("");
+                Console.WriteLine();
             }
         }
 
@@ -73,10 +71,8 @@ namespace NovaSharp.Cli.Commands.Implementations
             }
 
             LuaCompatibilityProfile profile = context.Script.CompatibilityProfile;
-            Console.WriteLine($"Active compatibility profile: {profile.GetFeatureSummary()}");
-            Console.WriteLine(
-                "Use Script.Options.CompatibilityVersion or set luaCompatibility in mod.json to change it."
-            );
+            Console.WriteLine(CliMessages.ProgramActiveProfile(profile.GetFeatureSummary()));
+            Console.WriteLine(CliMessages.HelpCommandCompatibilitySummary);
         }
     }
 }

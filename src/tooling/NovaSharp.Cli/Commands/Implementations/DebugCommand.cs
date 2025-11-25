@@ -1,6 +1,7 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
+    using NovaSharp.Cli;
     using NovaSharp.Interpreter.Compatibility;
     using RemoteDebugger;
 
@@ -32,15 +33,13 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("debug - Starts the interactive debugger");
+            Console.WriteLine(CliMessages.DebugCommandShortHelp);
         }
 
         /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine(
-                "debug - Starts the interactive debugger. Requires a web browser with Flash installed."
-            );
+            Console.WriteLine(CliMessages.DebugCommandLongHelp);
         }
 
         /// <inheritdoc />

@@ -49,7 +49,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(console.Writer.ToString(), Does.Contain("usage: NovaSharp"));
+                Assert.That(console.Writer.ToString(), Does.Contain(CliMessages.ProgramUsageLong));
             });
         }
 
@@ -63,7 +63,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(console.Writer.ToString(), Does.Contain("Commands:"));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.HelpCommandCommandListHeading)
+                );
             });
         }
 
@@ -77,7 +80,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(console.Writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.ProgramWrongSyntax)
+                );
             });
         }
 
@@ -91,7 +97,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(console.Writer.ToString(), Does.Contain("Invalid command 'nope'."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.CommandManagerInvalidCommand("nope"))
+                );
             });
         }
 
@@ -142,7 +151,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Assert.That(handled, Is.True);
                     Assert.That(
                         console.Writer.ToString(),
-                        Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                        Does.Contain(
+                            CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile")
+                        )
                     );
                 });
             }
@@ -177,14 +188,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+                string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
+                string expectedLine = CliMessages.ProgramRunningScript(scriptPath, expectedSummary);
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(handled, Is.True);
-                    Assert.That(
-                        console.Writer.ToString(),
-                        Does.Contain("[compatibility] Running").And.Contain("Lua 5.2")
-                    );
+                    Assert.That(console.Writer.ToString(), Does.Contain(expectedLine));
                 });
             }
             finally
@@ -206,7 +216,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(console.Writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.ProgramWrongSyntax)
+                );
             });
         }
 
@@ -246,7 +259,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     Assert.That(handled, Is.True);
                     Assert.That(
                         console.Writer.ToString(),
-                        Does.Contain("done: 0 errors, 0 warnings.")
+                        Does.Contain(CliMessages.HardwireGenerationSummary(0, 0))
                     );
                     Assert.That(File.Exists(destPath), Is.True);
                     string generated = File.ReadAllText(destPath);
@@ -278,7 +291,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(interpreter.EvaluateCalled, Is.False);
-                Assert.That(output, Does.Contain("Commands:"));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCommandListHeading));
             });
         }
 
@@ -375,8 +388,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             Program.ShowBannerForTests(script);
 
             string output = console.Writer.ToString();
+            string expectedActiveProfile = CliMessages.ProgramActiveProfile(
+                script.CompatibilityProfile.GetFeatureSummary()
+            );
 
-            Assert.That(output, Does.Contain("[compatibility] Active profile: Lua 5.3"));
+            Assert.That(output, Does.Contain(expectedActiveProfile));
+        }
+
+        private static string GetCompatibilitySummary(LuaCompatibilityVersion version)
+        {
+            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            return script.CompatibilityProfile.GetFeatureSummary();
         }
 
         private static ShellContext NewShellContext()

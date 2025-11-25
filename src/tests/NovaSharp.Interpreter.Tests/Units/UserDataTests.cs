@@ -215,8 +215,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             MarkerDescriptor interfaceDescriptor = new();
             UserData.RegisterType<IMarker>(interfaceDescriptor);
 
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
-                typeof(DerivedInterfaceHost),
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<DerivedInterfaceHost>(
                 searchInterfaces: true
             );
 
@@ -237,20 +236,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             CustomWireableDescriptor competing = new("competing");
 
             UserData.RegisterType(initial);
-            IUserDataDescriptor result = UserData.RegisterType(
-                typeof(CustomDescriptorHost),
-                competing
-            );
+            IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(competing);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
 
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.SameAs(competing));
                 Assert.That(
-                    UserData.GetDescriptorForType(
-                        typeof(CustomDescriptorHost),
-                        searchInterfaces: false
-                    ),
+                    UserData.GetDescriptorForType<CustomDescriptorHost>(searchInterfaces: false),
                     Is.SameAs(initial)
                 );
                 Assert.That(dynValue.UserData.Descriptor, Is.SameAs(initial));
@@ -403,10 +396,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             UserData.RegisterType<IMarker>(InteropAccessMode.Reflection);
 
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
-                typeof(InterfaceHost),
-                true
-            );
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<InterfaceHost>(true);
 
             Assert.Multiple(() =>
             {

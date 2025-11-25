@@ -2,6 +2,7 @@ namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using System.IO;
+    using NovaSharp.Cli;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
@@ -20,15 +21,13 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("compile <filename> - Compiles the file in a binary format");
+            Console.WriteLine(CliMessages.CompileCommandShortHelp);
         }
 
         /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine(
-                "compile <filename> - Compiles the file in a binary format.\nThe destination filename will be appended with '-compiled'."
-            );
+            Console.WriteLine(CliMessages.CompileCommandLongHelp);
         }
 
         /// <inheritdoc />

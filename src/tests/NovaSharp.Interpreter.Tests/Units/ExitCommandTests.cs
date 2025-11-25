@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class ExitCommandTests
+    public sealed class ExitCommandTests : IDisposable
     {
         private ConsoleCaptureScope _consoleScope = null!;
 
@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            _consoleScope.Dispose();
+            Dispose();
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 _consoleScope.Writer.ToString(),
-                Does.Contain("exit - Exits the interpreter")
+                Does.Contain(CliMessages.ExitCommandShortHelp)
             );
         }
 
@@ -55,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 _consoleScope.Writer.ToString(),
-                Does.Contain("exit - Exits the interpreter")
+                Does.Contain(CliMessages.ExitCommandLongHelp)
             );
         }
 
@@ -80,6 +80,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             ExitCommand command = new();
 
             Assert.That(() => command.Execute(null!, string.Empty), Throws.ArgumentNullException);
+        }
+
+        public void Dispose()
+        {
+            if (_consoleScope != null)
+            {
+                _consoleScope.Dispose();
+                _consoleScope = null!;
+            }
         }
     }
 }

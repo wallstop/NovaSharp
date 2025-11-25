@@ -37,14 +37,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 executionNesting: 1
             );
 
-            Exception observed = null;
+            InvalidOperationException observed = null;
             Thread worker = new Thread(() =>
             {
                 try
                 {
                     script.Call(chunk);
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
                     observed = ex;
                 }

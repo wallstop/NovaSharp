@@ -2,6 +2,7 @@ namespace NovaSharp.Cli
 {
     using System;
     using System.IO;
+    using System.Security;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
@@ -54,7 +55,7 @@ namespace NovaSharp.Cli
             Type tt = Type.GetType(type);
             if (tt == null)
             {
-                Console.WriteLine("Type '{0}' not found.", type);
+                Console.WriteLine(CliMessages.ProgramTypeNotFound(type));
             }
             else
             {
@@ -82,16 +83,16 @@ namespace NovaSharp.Cli
 
                 if (result != null && result.Type != DataType.Void)
                 {
-                    Console.WriteLine("{0}", result);
+                    Console.WriteLine(result);
                 }
             }
             catch (InterpreterException ex)
             {
-                Console.WriteLine("{0}", ex.DecoratedMessage ?? ex.Message);
+                Console.WriteLine(ex.DecoratedMessage ?? ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableInterpreterLoopException(ex))
             {
-                Console.WriteLine("{0}", ex.Message);
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -100,14 +101,12 @@ namespace NovaSharp.Cli
             Console.WriteLine(Script.GetBanner("Console"));
             Console.WriteLine();
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
-            Console.WriteLine($"[compatibility] Active profile: {profile.GetFeatureSummary()}");
-            Console.WriteLine(
-                "[compatibility] Use Script.Options.CompatibilityVersion or set luaCompatibility in mod.json to change it."
-            );
-            Console.WriteLine(
-                "Type Lua code to execute it or type !help to see help on commands.\n"
-            );
-            Console.WriteLine("Welcome.\n");
+            Console.WriteLine(CliMessages.ProgramActiveProfile(profile.GetFeatureSummary()));
+            Console.WriteLine(CliMessages.ProgramCompatibilityHint);
+            Console.WriteLine(CliMessages.ProgramCompatibilityUsage);
+            Console.WriteLine();
+            Console.WriteLine(CliMessages.ProgramWelcome);
+            Console.WriteLine();
         }
 
         /// <summary>
@@ -140,7 +139,7 @@ namespace NovaSharp.Cli
                 }
                 else
                 {
-                    Console.WriteLine("Wrong syntax.");
+                    Console.WriteLine(CliMessages.ProgramWrongSyntax);
                     ShowCmdLineHelp();
                 }
             }
@@ -189,7 +188,7 @@ namespace NovaSharp.Cli
 
                 if (fail)
                 {
-                    Console.WriteLine("Wrong syntax.");
+                    Console.WriteLine(CliMessages.ProgramWrongSyntax);
                     ShowCmdLineHelp();
                 }
                 else
@@ -221,13 +220,16 @@ namespace NovaSharp.Cli
                 resolvedScriptPath,
                 options,
                 Script.GlobalOptions.CompatibilityVersion,
-                info => Console.WriteLine($"[compatibility] {info}"),
-                warning => Console.WriteLine($"[compatibility] {warning}")
+                info => Console.WriteLine(CliMessages.ContextualCompatibilityInfo(info)),
+                warning => Console.WriteLine(CliMessages.CompatibilityWarning(warning))
             );
 
             Script script = new(CoreModules.PresetComplete, options);
             Console.WriteLine(
-                $"[compatibility] Running '{resolvedScriptPath}' with {script.CompatibilityProfile.GetFeatureSummary()}"
+                CliMessages.ProgramRunningScript(
+                    resolvedScriptPath,
+                    script.CompatibilityProfile.GetFeatureSummary()
+                )
             );
             script.DoFile(resolvedScriptPath);
             return true;
@@ -248,7 +250,19 @@ namespace NovaSharp.Cli
             {
                 return Path.GetFullPath(candidate);
             }
-            catch (Exception)
+            catch (ArgumentException)
+            {
+                return candidate;
+            }
+            catch (PathTooLongException)
+            {
+                return candidate;
+            }
+            catch (NotSupportedException)
+            {
+                return candidate;
+            }
+            catch (SecurityException)
             {
                 return candidate;
             }
@@ -256,21 +270,17 @@ namespace NovaSharp.Cli
 
         private static void ShowCmdLineHelpBig()
         {
-            Console.WriteLine(
-                "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] [--class:<name>] [--namespace:<name>] | <script>]"
-            );
+            Console.WriteLine(CliMessages.ProgramUsageLong);
             Console.WriteLine();
-            Console.WriteLine("-H : shows this help");
-            Console.WriteLine("-X : executes the specified command");
-            Console.WriteLine("-W : creates hardwire descriptors");
+            Console.WriteLine(CliMessages.ProgramUsageHelpSwitch);
+            Console.WriteLine(CliMessages.ProgramUsageExecuteSwitch);
+            Console.WriteLine(CliMessages.ProgramUsageHardwireSwitch);
             Console.WriteLine();
         }
 
         private static void ShowCmdLineHelp()
         {
-            Console.WriteLine(
-                "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] | <script>]"
-            );
+            Console.WriteLine(CliMessages.ProgramUsageShort);
         }
 
         private static void ExecuteCommand(ShellContext shellContext, string cmdline)
@@ -281,6 +291,15 @@ namespace NovaSharp.Cli
             {
                 Environment.Exit(shellContext.ExitCode);
             }
+        }
+
+        private static bool IsRecoverableInterpreterLoopException(Exception exception)
+        {
+            return exception is IOException
+                || exception is UnauthorizedAccessException
+                || exception is InvalidOperationException
+                || exception is ArgumentException
+                || exception is FormatException;
         }
     }
 }

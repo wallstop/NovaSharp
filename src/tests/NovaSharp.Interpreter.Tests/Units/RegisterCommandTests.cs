@@ -1,36 +1,32 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.IO;
     using System.Linq;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class RegisterCommandTests
+    public sealed class RegisterCommandTests : IDisposable
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
         private ShellContext _context = null!;
 
         [SetUp]
         public void SetUp()
         {
             _context = new ShellContext(new Script());
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            Dispose();
             UserData.UnregisterType<SampleType>();
         }
 
@@ -42,8 +38,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             command.Execute(_context, "Missing.Namespace.TypeName");
 
             Assert.That(
-                _writer.ToString(),
-                Does.Contain("Type Missing.Namespace.TypeName not found.")
+                _consoleScope!.Writer.ToString(),
+                Does.Contain(CliMessages.RegisterCommandTypeNotFound("Missing.Namespace.TypeName"))
             );
         }
 
@@ -68,9 +64,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(_context, string.Empty);
 
-            Assert.That(_writer.ToString(), Does.Contain(typeof(SampleType).FullName));
+            Assert.That(
+                _consoleScope!.Writer.ToString(),
+                Does.Contain(typeof(SampleType).FullName)
+            );
         }
 
         public sealed class SampleType { }
+
+        public void Dispose()
+        {
+            if (_consoleScope != null)
+            {
+                _consoleScope.Dispose();
+                _consoleScope = null!;
+            }
+        }
     }
 }
