@@ -1,8 +1,8 @@
 namespace NovaSharp.Interpreter.Platforms
 {
     using System;
-    using System.Linq;
     using System.Linq.Expressions;
+    using System.Reflection;
     using Loaders;
     using NovaSharp.Interpreter.Interop;
 
@@ -105,10 +105,30 @@ namespace NovaSharp.Interpreter.Platforms
             IsUnityIL2CPP = true;
 #endif
 #elif !(NETFX_CORE)
-            IsRunningOnUnity = AppDomain
-                .CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.SafeGetTypes())
-                .Any(t => t.FullName.StartsWith("UnityEngine.", StringComparison.Ordinal));
+            Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            bool unityTypeFound = false;
+
+            for (
+                int asmIndex = 0;
+                asmIndex < loadedAssemblies.Length && !unityTypeFound;
+                asmIndex++
+            )
+            {
+                Type[] assemblyTypes = loadedAssemblies[asmIndex].SafeGetTypes();
+                for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
+                {
+                    if (
+                        assemblyTypes[typeIndex]
+                            .FullName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                    )
+                    {
+                        unityTypeFound = true;
+                        break;
+                    }
+                }
+            }
+
+            IsRunningOnUnity = unityTypeFound;
 #endif
 #endif
 

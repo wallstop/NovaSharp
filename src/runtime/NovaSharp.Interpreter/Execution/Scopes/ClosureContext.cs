@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -17,7 +16,18 @@ namespace NovaSharp.Interpreter.Execution.Scopes
 
         internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)
         {
-            Symbols = symbols.Select(s => s.NameValue).ToArray();
+            if (symbols == null)
+            {
+                throw new ArgumentNullException(nameof(symbols));
+            }
+
+            string[] names = new string[symbols.Length];
+            for (int i = 0; i < symbols.Length; i++)
+            {
+                names[i] = symbols[i].NameValue;
+            }
+
+            Symbols = names;
             AddRange(values);
         }
 

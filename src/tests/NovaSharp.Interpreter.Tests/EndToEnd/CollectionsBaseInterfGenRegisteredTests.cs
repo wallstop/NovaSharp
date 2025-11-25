@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -37,21 +38,41 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             { 7, 8, 9 },
         };
 
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public int[,] GetMultiArray()
         {
             return _multiArray;
         }
 
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public int[] GetArray()
         {
             return _array;
         }
 
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public List<RegCollItem> GetItems()
         {
             return _items;
         }
 
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public List<int> GetList()
         {
             return _list;

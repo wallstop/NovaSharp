@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -90,10 +89,20 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
                 VarArgsElementType = _parameters[^1].Type.GetElementType();
             }
 
-            SortDiscriminant = string.Join(
-                ":",
-                _parameters.Select(pi => pi.Type.FullName).ToArray()
-            );
+            if (_parameters.Length == 0)
+            {
+                SortDiscriminant = string.Empty;
+            }
+            else
+            {
+                string[] discriminants = new string[_parameters.Length];
+                for (int i = 0; i < _parameters.Length; i++)
+                {
+                    discriminants[i] = _parameters[i].Type.FullName ?? string.Empty;
+                }
+
+                SortDiscriminant = string.Join(":", discriminants);
+            }
         }
 
         /// <summary>

@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -493,11 +492,20 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static IEnumerable<Type> GetRegisteredTypes(bool useHistoricalData = false)
         {
+            return GetRegisteredTypesIterator(useHistoricalData);
+        }
+
+        private static IEnumerable<Type> GetRegisteredTypesIterator(bool useHistoricalData)
+        {
             IEnumerable<KeyValuePair<Type, IUserDataDescriptor>> registeredTypesPairs =
                 useHistoricalData
                     ? TypeDescriptorRegistry.RegisteredTypesHistory
                     : TypeDescriptorRegistry.RegisteredTypes;
-            return registeredTypesPairs.Select(p => p.Value.Type);
+
+            foreach (KeyValuePair<Type, IUserDataDescriptor> pair in registeredTypesPairs)
+            {
+                yield return pair.Value.Type;
+            }
         }
     }
 }

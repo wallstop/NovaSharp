@@ -5,7 +5,7 @@ namespace NovaSharp.Cli.Commands
     /// <summary>
     /// Represents a REPL command exposed by the NovaSharp CLI shell.
     /// </summary>
-    public interface ICommand
+    internal interface ICommand
     {
         /// <summary>
         /// Gets the command token that users type in the REPL (e.g., <c>!run</c>).

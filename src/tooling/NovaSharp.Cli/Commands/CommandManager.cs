@@ -9,7 +9,7 @@ namespace NovaSharp.Cli.Commands
     /// <summary>
     /// Discovers CLI commands via reflection and routes REPL invocations to the appropriate handlers.
     /// </summary>
-    public static class CommandManager
+    internal static class CommandManager
     {
         /// <summary>
         /// Backing store mapping command names to their handlers.
@@ -19,7 +19,7 @@ namespace NovaSharp.Cli.Commands
         /// <summary>
         /// Scans the current assembly for <see cref="ICommand"/> implementations and populates the registry.
         /// </summary>
-        public static void Initialize()
+        internal static void Initialize()
         {
             foreach (
                 Type t in Assembly
@@ -40,7 +40,7 @@ namespace NovaSharp.Cli.Commands
         /// </summary>
         /// <param name="context">Active REPL context.</param>
         /// <param name="commandLine">Full command line entered by the user.</param>
-        public static void Execute(ShellContext context, string commandLine)
+        internal static void Execute(ShellContext context, string commandLine)
         {
             if (context == null)
             {
@@ -87,7 +87,7 @@ namespace NovaSharp.Cli.Commands
         /// <summary>
         /// Returns the registered commands ordered as expected by <c>!help</c> (help command first).
         /// </summary>
-        public static IEnumerable<ICommand> GetCommands()
+        internal static IEnumerable<ICommand> GetCommands()
         {
             yield return Registry["help"];
 
@@ -104,14 +104,9 @@ namespace NovaSharp.Cli.Commands
         /// </summary>
         /// <param name="cmd">Command token (e.g., <c>help</c>).</param>
         /// <returns>The registered command or <c>null</c> when no match exists.</returns>
-        public static ICommand Find(string cmd)
+        internal static ICommand Find(string cmd)
         {
-            if (Registry.ContainsKey(cmd))
-            {
-                return Registry[cmd];
-            }
-
-            return null;
+            return Registry.TryGetValue(cmd, out ICommand command) ? command : null;
         }
     }
 }

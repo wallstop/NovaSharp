@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Diagnostics.CodeAnalysis;
     using CoreLib;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -232,6 +233,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         public class MyObject
         {
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Metatable sample ensures callable Lua getter semantics."
+            )]
             public int GetSomething()
             {
                 return 10;

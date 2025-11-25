@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void StartAndDisposeProducesResult()
         {
-            PerformanceStopwatch stopwatch = new(PerformanceCounter.Execution);
+            using PerformanceStopwatch stopwatch = new(PerformanceCounter.Execution);
 
             using (stopwatch.Start())
             {
@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ReentrantStartCountsSingleInstance()
         {
-            PerformanceStopwatch stopwatch = new(PerformanceCounter.Compilation);
+            using PerformanceStopwatch stopwatch = new(PerformanceCounter.Compilation);
 
             using (stopwatch.Start())
             {

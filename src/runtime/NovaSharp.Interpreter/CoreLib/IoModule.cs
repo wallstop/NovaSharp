@@ -4,7 +4,6 @@ namespace NovaSharp.Interpreter.CoreLib
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
-    using System.Linq;
     using System.Security;
     using System.Text;
     using IO;
@@ -14,6 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
 
@@ -389,7 +389,10 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 readLines.Add(DynValue.Nil);
 
-                return DynValue.FromObject(executionContext.Script, readLines.Select(s => s));
+                return EnumerableWrapper.ConvertIterator(
+                    executionContext.Script,
+                    readLines.GetEnumerator()
+                );
             }
             catch (Exception ex)
             {

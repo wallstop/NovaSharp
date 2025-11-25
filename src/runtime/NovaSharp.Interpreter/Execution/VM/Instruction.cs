@@ -81,7 +81,13 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (((usage & ((int)InstructionFieldUsage.SymbolList)) != 0) && (SymbolList != null))
             {
-                append += " " + string.Join(",", SymbolList.Select(s => s.ToString()).ToArray());
+                string[] serializedSymbols = new string[SymbolList.Length];
+                for (int i = 0; i < SymbolList.Length; i++)
+                {
+                    serializedSymbols[i] = SymbolList[i].ToString();
+                }
+
+                append += " " + string.Join(",", serializedSymbols);
             }
 
             return append;

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -51,11 +52,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return b ? "T" : "F";
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Enum interop coverage uses callable getters to validate overload resolution."
+            )]
             public MyEnum Get()
             {
                 return MyEnum.Quattro;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Enum interop coverage uses callable getters to validate overload resolution."
+            )]
             public MyFlags GetF()
             {
                 return MyFlags.Quattro;

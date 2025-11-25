@@ -3,7 +3,6 @@ namespace NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Linq;
     using Debugging;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -452,15 +451,23 @@ namespace NovaSharp.Interpreter.Execution.VM
             List<Processor> coroutinesStack =
                 _parent != null ? _parent._coroutinesStack : _coroutinesStack;
 
-            return coroutinesStack
-                .Select(c => new WatchItem()
-                {
-                    Address = c.AssociatedCoroutine.ReferenceId,
-                    Name = FormattableString.Invariant(
-                        $"coroutine #{c.AssociatedCoroutine.ReferenceId}"
-                    ),
-                })
-                .ToList();
+            List<WatchItem> threads = new(coroutinesStack.Count);
+
+            for (int i = 0; i < coroutinesStack.Count; i++)
+            {
+                Processor coroutineProcessor = coroutinesStack[i];
+                int referenceId = coroutineProcessor.AssociatedCoroutine.ReferenceId;
+
+                threads.Add(
+                    new WatchItem()
+                    {
+                        Address = referenceId,
+                        Name = FormattableString.Invariant($"coroutine #{referenceId}"),
+                    }
+                );
+            }
+
+            return threads;
         }
 
         /// <summary>
@@ -485,7 +492,14 @@ namespace NovaSharp.Interpreter.Execution.VM
             IReadOnlyList<DynamicExpression> watchList
         )
         {
-            return watchList.Select(w => RefreshDebuggerWatch(context, w)).ToList();
+            List<WatchItem> watches = new(watchList.Count);
+
+            for (int i = 0; i < watchList.Count; i++)
+            {
+                watches.Add(RefreshDebuggerWatch(context, watchList[i]));
+            }
+
+            return watches;
         }
 
         /// <summary>

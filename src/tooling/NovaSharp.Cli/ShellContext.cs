@@ -6,7 +6,7 @@ namespace NovaSharp.Cli
     /// <summary>
     /// Captures the state shared between CLI commands and the REPL loop.
     /// </summary>
-    public class ShellContext
+    internal class ShellContext
     {
         private bool _exitRequested;
 

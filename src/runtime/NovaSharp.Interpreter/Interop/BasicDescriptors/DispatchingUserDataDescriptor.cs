@@ -3,7 +3,6 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Linq;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
@@ -505,16 +504,20 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         public virtual void Optimize()
         {
-            foreach (
-                IOptimizableDescriptor m in _metaMembers.Values.OfType<IOptimizableDescriptor>()
-            )
+            foreach (IMemberDescriptor descriptor in _metaMembers.Values)
             {
-                m.Optimize();
+                if (descriptor is IOptimizableDescriptor optimizable)
+                {
+                    optimizable.Optimize();
+                }
             }
 
-            foreach (IOptimizableDescriptor m in _members.Values.OfType<IOptimizableDescriptor>())
+            foreach (IMemberDescriptor descriptor in _members.Values)
             {
-                m.Optimize();
+                if (descriptor is IOptimizableDescriptor optimizable)
+                {
+                    optimizable.Optimize();
+                }
             }
         }
 

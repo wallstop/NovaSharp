@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Modules
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
@@ -203,17 +202,26 @@ namespace NovaSharp.Interpreter.Modules
             LuaCompatibilityVersion scriptVersion =
                 ownerScript?.CompatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
 
-            foreach (MethodInfo mi in Framework.Do.GetMethods(t).Where(mi => mi.IsStatic))
+            MethodInfo[] methods = Framework.Do.GetMethods(t);
+
+            for (int i = 0; i < methods.Length; i++)
             {
-                if (
-                    mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
-                        .ToArray()
-                        .Length > 0
-                )
+                MethodInfo mi = methods[i];
+
+                if (!mi.IsStatic)
+                {
+                    continue;
+                }
+
+                object[] methodAttributes = mi.GetCustomAttributes(
+                    typeof(NovaSharpModuleMethodAttribute),
+                    inherit: false
+                );
+
+                if (methodAttributes.Length > 0)
                 {
                     NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
-                        mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
-                            .First();
+                        methodAttributes[0];
 
                     if (!IsMemberCompatible(mi, scriptVersion))
                     {
@@ -245,54 +253,74 @@ namespace NovaSharp.Interpreter.Modules
                     {
                         table.Set(name, DynValue.NewCallback(func, name));
                     }
+                    continue;
                 }
-                else if (mi.Name == "NovaSharpInit")
+
+                if (mi.Name == "NovaSharpInit")
                 {
                     object[] args = new object[2] { gtable, table };
                     mi.Invoke(null, args);
                 }
             }
 
-            foreach (
-                FieldInfo fi in Framework
-                    .Do.GetFields(t)
-                    .Where(mi =>
-                        mi.IsStatic
-                        && mi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false)
-                            .ToArray()
-                            .Length > 0
-                    )
-            )
+            FieldInfo[] fields = Framework.Do.GetFields(t);
+
+            for (int i = 0; i < fields.Length; i++)
             {
+                FieldInfo fi = fields[i];
+
+                if (!fi.IsStatic)
+                {
+                    continue;
+                }
+
+                object[] methodAttributes = fi.GetCustomAttributes(
+                    typeof(NovaSharpModuleMethodAttribute),
+                    inherit: false
+                );
+
+                if (methodAttributes.Length == 0)
+                {
+                    continue;
+                }
+
                 if (!IsMemberCompatible(fi, scriptVersion))
                 {
                     continue;
                 }
 
                 NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
-                    fi.GetCustomAttributes(typeof(NovaSharpModuleMethodAttribute), false).First();
+                    methodAttributes[0];
                 RegisterScriptField(fi, null, table, t, attr.Name, fi.Name);
             }
 
-            foreach (
-                FieldInfo fi in Framework
-                    .Do.GetFields(t)
-                    .Where(mi =>
-                        mi.IsStatic
-                        && mi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false)
-                            .ToArray()
-                            .Length > 0
-                    )
-            )
+            for (int i = 0; i < fields.Length; i++)
             {
+                FieldInfo fi = fields[i];
+
+                if (!fi.IsStatic)
+                {
+                    continue;
+                }
+
+                object[] constantAttributes = fi.GetCustomAttributes(
+                    typeof(NovaSharpModuleConstantAttribute),
+                    inherit: false
+                );
+
+                if (constantAttributes.Length == 0)
+                {
+                    continue;
+                }
+
                 if (!IsMemberCompatible(fi, scriptVersion))
                 {
                     continue;
                 }
 
                 NovaSharpModuleConstantAttribute attr = (NovaSharpModuleConstantAttribute)
-                    fi.GetCustomAttributes(typeof(NovaSharpModuleConstantAttribute), false).First();
-                string name = (!string.IsNullOrEmpty(attr.Name)) ? attr.Name : fi.Name;
+                    constantAttributes[0];
+                string name = string.IsNullOrEmpty(attr.Name) ? fi.Name : attr.Name;
 
                 RegisterScriptFieldAsConst(fi, null, table, t, name);
             }
@@ -361,9 +389,12 @@ namespace NovaSharp.Interpreter.Modules
 
         private static Table CreateModuleNamespace(Table gtable, Type t)
         {
-            NovaSharpModuleAttribute attr = (NovaSharpModuleAttribute)(
-                Framework.Do.GetCustomAttributes(t, typeof(NovaSharpModuleAttribute), false).First()
+            Attribute[] moduleAttributes = Framework.Do.GetCustomAttributes(
+                t,
+                typeof(NovaSharpModuleAttribute),
+                inherit: false
             );
+            NovaSharpModuleAttribute attr = (NovaSharpModuleAttribute)moduleAttributes[0];
 
             if (string.IsNullOrEmpty(attr.Namespace))
             {

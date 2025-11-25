@@ -35,7 +35,12 @@ namespace NovaSharp.Interpreter.Tests
         /// <param name="str">The string.</param>
         public void Print(string str)
         {
-            Assert.That(str.Trim().StartsWith("not ok"), Is.False, $"TAP fail ({_file}) : {str}");
+            string trimmed = str.Trim();
+            Assert.That(
+                trimmed.StartsWith("not ok", StringComparison.Ordinal),
+                Is.False,
+                $"TAP fail ({_file}) : {str}"
+            );
         }
 
         public TapRunner(string filename, LuaCompatibilityVersion? compatibilityVersion = null)

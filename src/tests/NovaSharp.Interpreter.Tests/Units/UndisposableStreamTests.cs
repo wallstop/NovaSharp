@@ -12,8 +12,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DisposeAndCloseDoNotPropagateToInnerStream()
         {
-            TrackingStream inner = new();
-            UndisposableStream wrapper = new(inner);
+            using TrackingStream inner = new();
+            using UndisposableStream wrapper = new(inner);
 
             wrapper.Dispose();
             Assert.Multiple(() =>
@@ -31,8 +31,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void OperationsForwardToInnerStream()
         {
-            TrackingStream inner = new();
-            UndisposableStream wrapper = new(inner);
+            using TrackingStream inner = new();
+            using UndisposableStream wrapper = new(inner);
 
             Assert.Multiple(() =>
             {

@@ -113,9 +113,9 @@ namespace NovaSharp.Benchmarks
         public void Store(double value) => _store = value;
 
         /// <summary>
-        /// Returns the most recently stored value.
+        /// Gets the most recently stored value.
         /// </summary>
-        public double GetStored() => _store;
+        public double Stored => _store;
 
         /// <summary>
         /// Resets the backing store to zero.

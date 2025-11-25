@@ -68,9 +68,9 @@ namespace NovaSharp.Cli
         {
             Console.Write(interpreter.ClassicPrompt + " ");
 
-            string s = Console.ReadLine();
+            string s = Console.ReadLine() ?? string.Empty;
 
-            if (!interpreter.HasPendingCommand && s.StartsWith("!"))
+            if (!interpreter.HasPendingCommand && s.Length > 0 && s[0] == '!')
             {
                 ExecuteCommand(shellContext, s.Substring(1));
                 return;
@@ -164,11 +164,11 @@ namespace NovaSharp.Cli
                     {
                         useVb = true;
                     }
-                    else if (args[i].StartsWith("--class:"))
+                    else if (args[i].StartsWith("--class:", StringComparison.Ordinal))
                     {
                         classname = args[i].Substring("--class:".Length);
                     }
-                    else if (args[i].StartsWith("--namespace:"))
+                    else if (args[i].StartsWith("--namespace:", StringComparison.Ordinal))
                     {
                         namespacename = args[i].Substring("--namespace:".Length);
                     }

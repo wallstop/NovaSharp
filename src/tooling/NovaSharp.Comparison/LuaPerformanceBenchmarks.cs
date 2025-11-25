@@ -20,7 +20,7 @@ using NovaSharp.Interpreter.Modules;
     "CA1812",
     Justification = "Instantiated via BenchmarkDotNet reflection."
 )]
-internal sealed class LuaPerformanceBenchmarks : IDisposable
+public class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
     private Script _novaSharpScript = null!;

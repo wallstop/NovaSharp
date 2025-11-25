@@ -27,6 +27,13 @@ NovaSharp now targets `netstandard2.1` for all runtime components and `net8.0` f
 
 Keep this page current when additional modernization steps land (e.g., nullable annotations, trimming support, native AOT testing).
 
+## Value-Typed Enumeration Policy (2025-11-26)
+
+- Limit `foreach` loops to sources that expose value-type enumerators (arrays, `List<T>`, `Dictionary<TKey, TValue>` collections, spans) so the compiler can elide heap allocations and interface boxing.
+- When APIs only expose `IEnumerable<T>`, perform explicit type tests (`IReadOnlyList<T>`, arrays, lists) and fall back to manual `IEnumerator<T>` traversal only when no value-typed path exists.
+- Avoid chaining LINQ operators (`Where`, `Select`, `OfType`, etc.) directly inside `foreach` statements. Filter with inline `if` statements while iterating the underlying list/span so the enumerator remains value-typed.
+- Document any exceptions (e.g., third-party iterators) in the relevant code comments and prefer helper utilities that hide the fallback enumerator allocation from hot paths.
+
 ## Reflection Audit (Phase 1 – 2025-11-22)
 
 | Area                                  | Current reflection usage                                                                                                                                                                                                                      | Next steps                                                                                                                                                           | Status                                                                                                                                                                                                                                                                                                                                                                                                    |

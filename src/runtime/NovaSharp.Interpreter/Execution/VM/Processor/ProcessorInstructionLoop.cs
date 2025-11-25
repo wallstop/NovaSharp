@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataStructs;
@@ -741,12 +740,13 @@ namespace NovaSharp.Interpreter.Execution.VM
 
         private void ExecClosure(Instruction i)
         {
-            Closure c = new(
-                _script,
-                i.NumVal,
-                i.SymbolList,
-                i.SymbolList.Select(s => GetUpvalueSymbol(s)).ToList()
-            );
+            List<DynValue> resolvedSymbols = new(i.SymbolList.Length);
+            foreach (SymbolRef symbol in i.SymbolList)
+            {
+                resolvedSymbols.Add(GetUpvalueSymbol(symbol));
+            }
+
+            Closure c = new(_script, i.NumVal, i.SymbolList, resolvedSymbols);
 
             _valueStack.Push(DynValue.NewClosure(c));
         }

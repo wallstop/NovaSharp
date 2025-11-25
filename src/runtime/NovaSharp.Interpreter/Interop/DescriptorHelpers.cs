@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
@@ -33,12 +32,36 @@ namespace NovaSharp.Interpreter.Interop
                 return false;
             }
 
-            NovaSharpVisibleAttribute va = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpVisibleAttribute>()
-                .SingleOrDefault();
-            NovaSharpHiddenAttribute ha = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpHiddenAttribute>()
-                .SingleOrDefault();
+            object[] attributes = mi.GetCustomAttributes(inherit: true);
+
+            NovaSharpVisibleAttribute va = null;
+            NovaSharpHiddenAttribute ha = null;
+
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                if (attributes[i] is NovaSharpVisibleAttribute visibleAttr)
+                {
+                    if (va != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Member '{mi.Name}' specifies NovaSharpVisibleAttribute multiple times."
+                        );
+                    }
+
+                    va = visibleAttr;
+                }
+                else if (attributes[i] is NovaSharpHiddenAttribute hiddenAttr)
+                {
+                    if (ha != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Member '{mi.Name}' specifies NovaSharpHiddenAttribute multiple times."
+                        );
+                    }
+
+                    ha = hiddenAttr;
+                }
+            }
 
             if (va != null && ha != null && va.Visible)
             {
@@ -248,13 +271,25 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentNullException(nameof(mi));
             }
 
-            List<string> names = mi.GetCustomAttributes(
-                    typeof(NovaSharpUserDataMetamethodAttribute),
-                    true
-                )
-                .OfType<NovaSharpUserDataMetamethodAttribute>()
-                .Select(a => a.Name)
-                .ToList();
+            object[] attributes = mi.GetCustomAttributes(
+                typeof(NovaSharpUserDataMetamethodAttribute),
+                inherit: true
+            );
+
+            if (attributes.Length == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            List<string> names = new(attributes.Length);
+
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                if (attributes[i] is NovaSharpUserDataMetamethodAttribute attr)
+                {
+                    names.Add(attr.Name);
+                }
+            }
 
             return names.Count == 0 ? Array.Empty<string>() : names;
         }

@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(result.Type, Is.EqualTo(DataType.UserData));
                 Assert.That(result.UserData.Object, Is.SameAs(file));
                 Assert.That(file.Writes, Is.EquivalentTo(new[] { "A", "B" }));
-                Assert.That(file.GetContent().EndsWith("AB"));
+                Assert.That(file.GetContent().EndsWith("AB", StringComparison.Ordinal), Is.True);
             });
         }
 

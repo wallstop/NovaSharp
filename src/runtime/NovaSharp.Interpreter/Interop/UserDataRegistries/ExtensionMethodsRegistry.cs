@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using System.Runtime.CompilerServices;
     using NovaSharp.Interpreter.Compatibility;
@@ -53,8 +52,17 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             {
                 bool changesDone = false;
 
-                foreach (MethodInfo mi in Framework.Do.GetMethods(type).Where(mi => mi.IsStatic))
+                MethodInfo[] methods = Framework.Do.GetMethods(type);
+
+                for (int i = 0; i < methods.Length; i++)
                 {
+                    MethodInfo mi = methods[i];
+
+                    if (!mi.IsStatic)
+                    {
+                        continue;
+                    }
+
                     if (mi.GetCustomAttributes(typeof(ExtensionAttribute), false).Length == 0)
                     {
                         continue;
@@ -129,11 +137,24 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             Type extendedType
         )
         {
-            List<UnresolvedGenericMethod> unresolvedGenerics = null;
+            List<UnresolvedGenericMethod> unresolvedGenerics;
 
             lock (SLock)
             {
-                unresolvedGenerics = SUnresolvedGenericsRegistry.Find(name).ToList();
+                IEnumerable<UnresolvedGenericMethod> found = SUnresolvedGenericsRegistry.Find(name);
+
+                if (found is List<UnresolvedGenericMethod> existing)
+                {
+                    unresolvedGenerics = new List<UnresolvedGenericMethod>(existing);
+                }
+                else
+                {
+                    unresolvedGenerics = new List<UnresolvedGenericMethod>();
+                    foreach (UnresolvedGenericMethod method in found)
+                    {
+                        unresolvedGenerics.Add(method);
+                    }
+                }
             }
 
             foreach (UnresolvedGenericMethod ugm in unresolvedGenerics)
@@ -174,13 +195,21 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 }
             }
 
-            return SRegistry
-                .Find(name)
-                .Where(d =>
-                    d.ExtensionMethodType != null
-                    && Framework.Do.IsAssignableFrom(d.ExtensionMethodType, extendedType)
+            List<IOverloadableMemberDescriptor> matches = new();
+
+            foreach (IOverloadableMemberDescriptor descriptor in SRegistry.Find(name))
+            {
+                Type extensionType = descriptor.ExtensionMethodType;
+                if (
+                    extensionType != null
+                    && Framework.Do.IsAssignableFrom(extensionType, extendedType)
                 )
-                .ToList();
+                {
+                    matches.Add(descriptor);
+                }
+            }
+
+            return matches;
         }
 
         private static MethodInfo InstantiateMethodInfo(

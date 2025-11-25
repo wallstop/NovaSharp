@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
-    using System.Linq;
     using Debugging;
     using Execution.Scopes;
     using Expressions;
@@ -53,12 +52,17 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             lcontext.Scope.PushBlock();
 
-            _names = names.Select(n => lcontext.Scope.TryDefineLocal(n)).ToArray();
+            _names = new SymbolRef[names.Count];
+            for (int i = 0; i < names.Count; i++)
+            {
+                _names[i] = lcontext.Scope.TryDefineLocal(names[i]);
+            }
 
-            _nameExps = _names
-                .Select(s => new SymbolRefExpression(lcontext, s))
-                .Cast<IVariable>()
-                .ToArray();
+            _nameExps = new IVariable[_names.Length];
+            for (int i = 0; i < _names.Length; i++)
+            {
+                _nameExps[i] = new SymbolRefExpression(lcontext, _names[i]);
+            }
 
             _refFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
 

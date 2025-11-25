@@ -7,7 +7,7 @@ namespace NovaSharp.Cli.Commands.Implementations
     /// <summary>
     /// Abstraction that lets CLI commands attach the remote debugger without referencing concrete services.
     /// </summary>
-    public interface IRemoteDebuggerBridge
+    internal interface IRemoteDebuggerBridge
     {
         /// <summary>
         /// Attaches the debugger to the specified script.

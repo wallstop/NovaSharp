@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -30,6 +31,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
             public int WoIntProp2 { internal get; set; }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Helper method exposes write-only property state to Lua for validation."
+            )]
             public int GetWoIntProp2()
             {
                 return WoIntProp2;

@@ -4,7 +4,6 @@ namespace NovaSharp.Interpreter
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
     using System.Text;
     using CoreLib;
     using Debugging;
@@ -210,7 +209,15 @@ namespace NovaSharp.Interpreter
         {
             if (_debugger != null)
             {
-                _debugger.SetByteCode(_byteCode.Code.Select(s => s.ToString()).ToArray());
+                int instructionCount = _byteCode.Code.Count;
+                string[] instructions = new string[instructionCount];
+
+                for (int i = 0; i < instructionCount; i++)
+                {
+                    instructions[i] = _byteCode.Code[i].ToString();
+                }
+
+                _debugger.SetByteCode(instructions);
             }
         }
 

@@ -3,7 +3,6 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Runtime.CompilerServices;
@@ -97,7 +96,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
             else
             {
-                parameters = reflectionParams.Select(pi => new ParameterDescriptor(pi)).ToArray();
+                parameters = new ParameterDescriptor[reflectionParams.Length];
+                for (int i = 0; i < reflectionParams.Length; i++)
+                {
+                    parameters[i] = new ParameterDescriptor(reflectionParams[i]);
+                }
             }
 
             bool isExtensionMethod =
@@ -208,7 +211,19 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 return false;
             }
 
-            if (methodBase.GetParameters().Any(p => p.ParameterType.IsPointer))
+            bool hasPointerParameters = false;
+            ParameterInfo[] pointerCheckedParameters = methodBase.GetParameters();
+
+            for (int i = 0; i < pointerCheckedParameters.Length; i++)
+            {
+                if (pointerCheckedParameters[i].ParameterType.IsPointer)
+                {
+                    hasPointerParameters = true;
+                    break;
+                }
+            }
+
+            if (hasPointerParameters)
             {
                 if (throwException)
                 {

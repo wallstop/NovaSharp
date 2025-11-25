@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using DataTypes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Interop;
@@ -21,6 +22,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 randomSource = r;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Proxy tests validate callable getters exposed to Lua."
+            )]
             public int GetValue()
             {
                 return 3;
