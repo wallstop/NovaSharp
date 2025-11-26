@@ -50,11 +50,11 @@ jobs:
         run: ./scripts/ci/ensure-readme-updates.sh
         shell: bash
         env:
-          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || 'HEAD^' }}
+          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'HEAD^' }}
 
       - name: Markdown formatting + links
         env:
-          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || 'HEAD^' }}
+          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'HEAD^' }}
         run: ./scripts/ci/check-markdown.sh
         shell: bash
 
