@@ -7,13 +7,44 @@ namespace NovaSharp.Interpreter.Tree.Lexer
     /// </summary>
     internal class Token
     {
+        /// <summary>
+        /// Gets the identifier of the source chunk that produced the token.
+        /// </summary>
         public int SourceId { get; }
+
+        /// <summary>
+        /// Gets the starting column (1-based) of the token.
+        /// </summary>
         public int FromCol { get; }
+
+        /// <summary>
+        /// Gets the ending column (1-based, inclusive) of the token.
+        /// </summary>
         public int ToCol { get; }
+
+        /// <summary>
+        /// Gets the starting line (1-based) of the token.
+        /// </summary>
         public int FromLine { get; }
+
+        /// <summary>
+        /// Gets the ending line (1-based) of the token.
+        /// </summary>
         public int ToLine { get; }
+
+        /// <summary>
+        /// Gets the previous column recorded by the lexer (useful for exclusive spans).
+        /// </summary>
         public int PrevCol { get; }
+
+        /// <summary>
+        /// Gets the previous line recorded by the lexer (useful for exclusive spans).
+        /// </summary>
         public int PrevLine { get; }
+
+        /// <summary>
+        /// Gets the token classification (identifier, keyword, operator, etc.).
+        /// </summary>
         public TokenType Type { get; }
 
         /// <summary>

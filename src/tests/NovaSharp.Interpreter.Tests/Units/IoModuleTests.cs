@@ -654,6 +654,74 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TypeReportsClosedFileState()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            File.WriteAllText(path, "abc");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local before = io.type(f)
+                    f:close()
+                    local after = io.type(f)
+                    return before, after
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("file"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("closed file"));
+                });
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
+        public void OutputCanBeRedirectedToCustomFile()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                script.DoString(
+                    $@"
+                    local original = io.output()
+                    local temp = assert(io.open('{escapedPath}', 'w'))
+                    io.output(temp)
+                    io.write('hello world')
+                    io.flush()
+                    io.output(original)
+                    temp:close()
+                    "
+                );
+
+                string contents = File.ReadAllText(path);
+                Assert.That(contents, Is.EqualTo("hello world"));
+            }
+            finally
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        [Test]
         public void PopenIsUnsupportedAndProvidesErrorMessage()
         {
             Script script = CreateScript();

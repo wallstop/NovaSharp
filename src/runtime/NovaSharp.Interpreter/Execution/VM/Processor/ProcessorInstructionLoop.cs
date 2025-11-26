@@ -18,6 +18,9 @@ namespace NovaSharp.Interpreter.Execution.VM
     {
         private const int YieldSpecialTrap = -99;
 
+        /// <summary>
+        /// Gets or sets how many instructions the VM may execute before automatically yielding.
+        /// </summary>
         internal long AutoYieldCounter { get; set; }
 
         private DynValue ProcessingLoop(int instructionPtr)

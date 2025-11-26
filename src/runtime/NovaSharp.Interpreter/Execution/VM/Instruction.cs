@@ -13,13 +13,44 @@ namespace NovaSharp.Interpreter.Execution.VM
     /// </summary>
     internal class Instruction
     {
+        /// <summary>
+        /// Gets or sets the operation code executed by the VM for this instruction.
+        /// </summary>
         internal OpCode OpCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the primary symbol operand referenced by the instruction.
+        /// </summary>
         internal SymbolRef Symbol { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ordered list of symbol operands consumed by multi-symbol opcodes.
+        /// </summary>
         internal SymbolRef[] SymbolList { get; set; }
+
+        /// <summary>
+        /// Gets or sets the textual operand (function name, local name, etc.) carried by the instruction.
+        /// </summary>
         internal string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the literal Lua value embedded in the instruction stream.
+        /// </summary>
         internal DynValue Value { get; set; }
+
+        /// <summary>
+        /// Gets or sets the primary numeric operand (register index, jump target, etc.).
+        /// </summary>
         internal int NumVal { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secondary numeric operand used by opcodes that require two integers.
+        /// </summary>
         internal int NumVal2 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Lua source reference associated with this instruction.
+        /// </summary>
         internal SourceRef SourceCodeRef { get; set; }
 
         /// <summary>

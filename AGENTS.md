@@ -19,7 +19,7 @@
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
 - Private and internal state prefers `_camelCase` fields; avoid implicit `var` when the type is unclear.
 - Preserve Lua fixture indentation at two spaces to ease diffing with upstream scripts.
-- Run `dotnet csharpier .` before committing; formatter preferences are configured in `csharpier.json`.
+- Run `dotnet csharpier .` before committing; CSharpier output is the canonical formatting/whitespace for the repo. If `dotnet format` or any other tool disagrees with CSharpier, treat that as a tooling bug to fix (update `.editorconfig`, disable the conflicting rule, etc.) rather than reformatting away from CSharpier style.
 - Keep `using` directives minimal, add explicit access modifiers, and discuss any new analyzer suppressions first. `.editorconfig` captures the authoritative formatting/spacing rules—follow it.
 - Ensure comments, docs, and diagnostic strings use clear English. Run `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log` when touching text-heavy areas so the spelling audit stays green and `spelling_audit.log` remains up to date.
 - Prefer explicit types instead of `var`; only fall back to implicit typing when the language requires it (e.g., anonymous types).

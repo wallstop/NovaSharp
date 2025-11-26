@@ -107,7 +107,7 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 
 - `tools/NamingAudit`: add a `--namespace-prefix WallstopStudios.NovaSharp` flag plus an `--allowlist` for LuaPort & legacy wrappers.
 - `.editorconfig`: add `dotnet_naming_symbols.namespace_symbols` rule enforcing `WallstopStudios.` prefix once the rename lands.
-- CI: extend `tests.yml` to run `dotnet format` + `naming_audit.py --verify-log` using the new prefix and fail early.
+- CI: extend `tests.yml` to run `dotnet csharpier check .` (via `scripts/ci/check-csharpier.sh`) plus `naming_audit.py --verify-log` using the new prefix so formatting/naming regressions fail early.
 - Scripts: update `scripts/coverage/coverage.ps1` and `scripts/coverage/coverage-hotspots.md` references after the rename so coverage automation continues to work.
 
 ## Compatibility & Communication Plan

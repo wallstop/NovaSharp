@@ -100,6 +100,40 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SerializeValueReturnsNilForVoidAndNil()
+        {
+            Assert.That(SerializationExtensions.SerializeValue(DynValue.Nil), Is.EqualTo("nil"));
+            Assert.That(SerializationExtensions.SerializeValue(DynValue.Void), Is.EqualTo("nil"));
+        }
+
+        [Test]
+        public void SerializeValueSerializesBooleans()
+        {
+            Assert.That(
+                SerializationExtensions.SerializeValue(DynValue.NewBoolean(true)),
+                Is.EqualTo("true")
+            );
+            Assert.That(
+                SerializationExtensions.SerializeValue(DynValue.NewBoolean(false)),
+                Is.EqualTo("false")
+            );
+        }
+
+        [Test]
+        public void SerializeValueTupleWithNoValuesReturnsNil()
+        {
+            DynValue emptyTuple = DynValue.NewTuple(Array.Empty<DynValue>());
+            Assert.That(SerializationExtensions.SerializeValue(emptyTuple), Is.EqualTo("nil"));
+        }
+
+        [Test]
+        public void SerializeValueUsesInvariantCultureForNumbers()
+        {
+            DynValue number = DynValue.NewNumber(1234.5);
+            Assert.That(SerializationExtensions.SerializeValue(number), Is.EqualTo("1234.5"));
+        }
+
+        [Test]
         public void SerializeRoundtripExecutesInLua()
         {
             Table nested = new Table(owner: null);

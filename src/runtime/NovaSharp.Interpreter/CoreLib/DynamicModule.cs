@@ -22,6 +22,9 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         private class DynamicExpressionWrapper
         {
+            /// <summary>
+            /// Gets or sets the compiled expression that can be re-evaluated without recompiling.
+            /// </summary>
             public DynamicExpression Expression { get; set; }
         }
 

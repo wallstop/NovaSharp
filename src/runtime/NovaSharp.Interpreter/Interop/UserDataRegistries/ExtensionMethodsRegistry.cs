@@ -27,8 +27,19 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
         private class UnresolvedGenericMethod
         {
+            /// <summary>
+            /// Gets the reflection method info for the unresolved generic extension method.
+            /// </summary>
             public MethodInfo Method { get; }
+
+            /// <summary>
+            /// Gets the access mode that should be used when the descriptor is materialized.
+            /// </summary>
             public InteropAccessMode AccessMode { get; }
+
+            /// <summary>
+            /// Tracks the generic types that have already been materialized to avoid duplicates.
+            /// </summary>
             public HashSet<Type> AlreadyAddedTypes { get; } = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)

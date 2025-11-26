@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution.Scopes;
@@ -41,6 +42,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(context.Symbols, Is.EqualTo(Enumerable.Empty<string>()));
                 Assert.That(context.Count, Is.EqualTo(0));
             });
+        }
+
+        [Test]
+        public void ConstructorThrowsOnNullSymbols()
+        {
+            DynValue[] values = new[] { DynValue.NewNumber(1) };
+
+            Assert.That(
+                () => new ClosureContext(null, values),
+                Throws.TypeOf<ArgumentNullException>()
+            );
         }
     }
 }

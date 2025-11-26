@@ -73,13 +73,15 @@ jobs:
         run: ./scripts/ci/check-markdown.sh
         shell: bash
 
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v5
-          with:
-            dotnet-version: '8.0.x'
-        - name: CSharpier formatting gate
-          run: ./scripts/ci/check-csharpier.sh
-          shell: bash
+      - name: Setup .NET (formatting gate)
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+      - name: CSharpier formatting gate
+        run: ./scripts/ci/check-csharpier.sh
+        shell: bash
 
   dotnet-tests:
     runs-on: ubuntu-latest

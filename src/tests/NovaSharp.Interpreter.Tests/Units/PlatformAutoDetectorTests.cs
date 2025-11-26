@@ -34,6 +34,26 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetDefaultPlatformReturnsDotNetCoreAccessorWhenUnityNotDetected()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: false);
+
+            IPlatformAccessor platform = PlatformAutoDetector.GetDefaultPlatform();
+
+            Assert.That(platform, Is.TypeOf<DotNetCorePlatformAccessor>());
+        }
+
+        [Test]
+        public void GetDefaultScriptLoaderReturnsFileSystemLoaderWhenUnityNotDetected()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: false);
+
+            IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
+
+            Assert.That(loader, Is.TypeOf<FileSystemScriptLoader>());
+        }
+
+        [Test]
         public void IsRunningOnAotUsesCachedValueAfterProbe()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
@@ -46,6 +66,29 @@ namespace NovaSharp.Interpreter.Tests.Units
             bool cached = PlatformAutoDetector.IsRunningOnAot;
 
             Assert.That(cached, Is.True);
+        }
+
+        [Test]
+        public void SetFlagsUpdatesUnityIndicators()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            PlatformDetectorScope.SetFlags(
+                isRunningOnMono: true,
+                isRunningOnClr4: true,
+                isRunningOnUnity: true,
+                isUnityNative: true,
+                isUnityIl2Cpp: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.True);
+                Assert.That(PlatformAutoDetector.IsRunningOnClr4, Is.True);
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
+                Assert.That(PlatformAutoDetector.IsUnityNative, Is.True);
+                Assert.That(PlatformAutoDetector.IsUnityIl2Cpp, Is.True);
+            });
         }
 
         private sealed class PlatformDetectorScope : IDisposable
@@ -84,6 +127,25 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static void SetAotValue(bool? value)
             {
                 PlatformAutoDetector.TestHooks.SetRunningOnAot(value);
+            }
+
+            public static void SetFlags(
+                bool? isRunningOnMono = null,
+                bool? isRunningOnClr4 = null,
+                bool? isRunningOnUnity = null,
+                bool? isPortableFramework = null,
+                bool? isUnityNative = null,
+                bool? isUnityIl2Cpp = null
+            )
+            {
+                PlatformAutoDetector.TestHooks.SetFlags(
+                    isRunningOnMono,
+                    isRunningOnClr4,
+                    isRunningOnUnity,
+                    isPortableFramework,
+                    isUnityNative,
+                    isUnityIl2Cpp
+                );
             }
 
             public void Dispose()

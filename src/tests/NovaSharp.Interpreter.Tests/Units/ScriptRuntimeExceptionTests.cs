@@ -170,6 +170,64 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void BitwiseOnNonIntegerDescribesSourceType()
+        {
+            ScriptRuntimeException floatException = ScriptRuntimeException.BitwiseOnNonInteger(
+                DynValue.NewNumber(1.5)
+            );
+            ScriptRuntimeException stringException = ScriptRuntimeException.BitwiseOnNonInteger(
+                DynValue.NewString("bits")
+            );
+            ScriptRuntimeException tableException = ScriptRuntimeException.BitwiseOnNonInteger(
+                DynValue.NewTable(new Table(new Script()))
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    floatException.Message,
+                    Is.EqualTo("attempt to perform bitwise operation on a float value")
+                );
+                Assert.That(
+                    stringException.Message,
+                    Is.EqualTo("attempt to perform bitwise operation on a string value")
+                );
+                Assert.That(
+                    tableException.Message,
+                    Is.EqualTo("attempt to perform bitwise operation on a table value")
+                );
+            });
+        }
+
+        [Test]
+        public void CompareInvalidTypeReportsMatchingTypes()
+        {
+            DynValue left = DynValue.NewString("a");
+            DynValue right = DynValue.NewString("b");
+
+            ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
+                left,
+                right
+            );
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to compare two string values"));
+        }
+
+        [Test]
+        public void CompareInvalidTypeReportsMismatchedTypes()
+        {
+            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue right = DynValue.NewBoolean(true);
+
+            ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
+                left,
+                right
+            );
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to compare table with boolean"));
+        }
+
+        [Test]
         public void ArithmeticOnNonNumberPrefersRightOperandWhenInvalid()
         {
             DynValue left = DynValue.NewNumber(5);
@@ -245,6 +303,38 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void BadArgumentOverloadRespectsAllowNilPrefix()
+        {
+            ScriptRuntimeException withNil = ScriptRuntimeException.BadArgument(
+                argNum: 0,
+                funcName: "foo",
+                expected: "table",
+                got: "userdata",
+                allowNil: true
+            );
+
+            ScriptRuntimeException withoutNil = ScriptRuntimeException.BadArgument(
+                argNum: 0,
+                funcName: "foo",
+                expected: "table",
+                got: "userdata",
+                allowNil: false
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    withNil.Message,
+                    Is.EqualTo("bad argument #1 to 'foo' (nil or table expected, got userdata)")
+                );
+                Assert.That(
+                    withoutNil.Message,
+                    Is.EqualTo("bad argument #1 to 'foo' (table expected, got userdata)")
+                );
+            });
+        }
+
+        [Test]
         public void BadArgumentNoNegativeNumbersFormatsMessage()
         {
             ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentNoNegativeNumbers(
@@ -274,6 +364,30 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(
                     ScriptRuntimeException.LoopInCall().Message,
                     Is.EqualTo("loop in call")
+                );
+            });
+        }
+
+        [Test]
+        public void CannotCloseCoroutineProvidesStateSpecificMessages()
+        {
+            ScriptRuntimeException main = ScriptRuntimeException.CannotCloseCoroutine(
+                CoroutineState.Main
+            );
+            ScriptRuntimeException running = ScriptRuntimeException.CannotCloseCoroutine(
+                CoroutineState.Running
+            );
+            ScriptRuntimeException suspended = ScriptRuntimeException.CannotCloseCoroutine(
+                CoroutineState.Suspended
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(main.Message, Is.EqualTo("attempt to close the main coroutine"));
+                Assert.That(running.Message, Is.EqualTo("cannot close a running coroutine"));
+                Assert.That(
+                    suspended.Message,
+                    Is.EqualTo("cannot close coroutine in state suspended")
                 );
             });
         }
