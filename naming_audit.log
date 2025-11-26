@@ -1,0 +1,12 @@
+# Naming Audit Report
+
+_Generated via tools/NamingAudit/naming_audit.py_
+
+All inspected files/types follow naming expectations (PascalCase for types/methods/properties/static fields, camelCase for public instance fields, _camelCase for non-public instance fields).
+
+## Namespace Prefix Summary
+
+- WallstopStudios.NovaSharp: 0 (0.00% of 595)
+- NovaSharp: 579 (97.31% of 595)
+- <other>: 16 (2.69% of 595)
+- <total>: 595
