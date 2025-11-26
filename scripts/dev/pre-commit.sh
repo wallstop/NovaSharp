@@ -104,6 +104,22 @@ format_markdown_files() {
   )
 }
 
+update_documentation_audit_log() {
+  log "[pre-commit] Refreshing documentation audit log..."
+  run_python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
+  if [ -f documentation_audit.log ]; then
+    git add documentation_audit.log
+  fi
+}
+
+update_naming_audit_log() {
+  log "[pre-commit] Refreshing naming audit log..."
+  run_python tools/NamingAudit/naming_audit.py --write-log naming_audit.log
+  if [ -f naming_audit.log ]; then
+    git add naming_audit.log
+  fi
+}
+
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || printf '')"
 if [ -z "$repo_root" ]; then
   printf '%s\n' "pre-commit hook must run inside the repo." >&2
@@ -120,5 +136,7 @@ dotnet tool restore >/dev/null
 
 format_all_csharp_files
 format_markdown_files
+update_documentation_audit_log
+update_naming_audit_log
 
 log "[pre-commit] Completed successfully."
