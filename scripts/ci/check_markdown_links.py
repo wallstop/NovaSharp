@@ -34,7 +34,19 @@ SKIP_FILES = {
     "AGENTS.md",
     "CLAUDE.md",
 }
-MARKDOWN_PARSER = MarkdownIt("commonmark", {"linkify": True}).enable("linkify")
+
+
+def create_markdown_parser() -> MarkdownIt:
+    parser = MarkdownIt("commonmark")
+    try:
+        parser.enable("linkify")
+    except ModuleNotFoundError:
+        # linkify-it-py is optional; continue without automatic linkifying.
+        pass
+    return parser
+
+
+MARKDOWN_PARSER = create_markdown_parser()
 
 
 def parse_duration(value) -> float:
