@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void UnsupportedOperationsThrowNotImplemented()
         {
             LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
 
             Assert.Multiple(() =>
             {

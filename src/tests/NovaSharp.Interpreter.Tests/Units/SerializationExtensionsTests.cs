@@ -125,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SerializeNonPrimeTableThrows()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             Table table = new Table(script);
             table.Set(DynValue.NewNumber(1), DynValue.NewNumber(2));
 
@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SerializeValueTableOwnedByScriptThrows()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             Table table = new Table(script);
             DynValue tableValue = DynValue.NewTable(table);
 

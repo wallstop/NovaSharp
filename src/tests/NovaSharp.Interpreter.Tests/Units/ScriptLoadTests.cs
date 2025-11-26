@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using NovaSharp.Interpreter;
@@ -78,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = new();
             DynValue chunk = script.LoadString("return 1");
-            using MemoryStream stream = new(new byte[0], writable: false);
+            using MemoryStream stream = new(Array.Empty<byte>(), writable: false);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.Dump(chunk, stream)
@@ -154,7 +155,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ScriptUsesCustomTimeProviderForStartTimestamp()
         {
-            FrozenTimeProvider provider = new(DateTimeOffset.Parse("2025-11-16T10:00:00Z"));
+            FrozenTimeProvider provider = new(
+                DateTimeOffset.Parse("2025-11-16T10:00:00Z", CultureInfo.InvariantCulture)
+            );
             ScriptOptions options = new(Script.DefaultOptions) { TimeProvider = provider };
             Script script = new(options);
 

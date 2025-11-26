@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
                 Assert.That(
                     StringConversions.GetStringSubtype(typeof(int)),
-                    Is.EqualTo(StringConversions.StringSubtype.None)
+                    Is.EqualTo(default(StringConversions.StringSubtype))
                 );
             });
         }
@@ -88,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 () =>
                     StringConversions.ConvertString(
-                        StringConversions.StringSubtype.None,
+                        default,
                         "fallback",
                         typeof(object),
                         DataType.String

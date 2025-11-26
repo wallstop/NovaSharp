@@ -146,7 +146,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             BaseDefaultInputAccessor accessor = new("base");
 
-            string result = accessor.DefaultInput();
+            string result = accessor.DefaultInput("prompt> ");
 
             Assert.That(result, Is.Null);
         }

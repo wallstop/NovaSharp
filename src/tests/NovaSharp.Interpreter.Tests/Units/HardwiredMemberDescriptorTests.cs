@@ -13,10 +13,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwiredMemberDescriptorTests
     {
+        private const CoreModules MinimalScriptModules = TestCoreModules.BasicGlobals;
+
         [Test]
         public void ReadWriteDescriptorGetsAndSetsValues()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(MinimalScriptModules);
             SampleTarget target = new SampleTarget();
             SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
 
@@ -33,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ReadOnlyDescriptorThrowsOnSet()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(MinimalScriptModules);
             SampleTarget target = new SampleTarget();
             SampleReadOnlyDescriptor descriptor = new SampleReadOnlyDescriptor(10);
 
@@ -49,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AccessingInstanceMemberWithoutObjectThrows()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(MinimalScriptModules);
             SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
 
             Assert.That(
@@ -61,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void HardwiredMethodDescriptorHonoursDefaultValues()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(MinimalScriptModules);
             SampleTarget target = new SampleTarget { Value = 3 };
             SampleHardwiredMethodDescriptor descriptor = new SampleHardwiredMethodDescriptor();
 

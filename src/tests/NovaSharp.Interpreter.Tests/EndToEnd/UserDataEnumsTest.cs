@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -48,7 +49,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public string MyMethod(SampleFlagSet enm)
             {
                 RecordCall();
-                return ((long)enm).ToString();
+                return ((long)enm).ToString(CultureInfo.InvariantCulture);
             }
 
             public string MyMethod2(SampleRating enm)

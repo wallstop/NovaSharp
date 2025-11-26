@@ -97,6 +97,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the string value (valid only if the <see cref="Type"/> is <see cref="DataType.String"/>)
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1720:Identifier contains type name",
+            Justification = "DynValue exposes typed accessors that intentionally mirror Lua's DataType names."
+        )]
         public string String
         {
             get { return _object as string; }

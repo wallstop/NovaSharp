@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -86,6 +87,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <summary>
         /// Gets the value wrapped by this descriptor
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1721:The property name 'Value' is confusing given the existence of method 'GetValue'",
+            Justification = "IMemberDescriptor exposes GetValue; this property predates the interface and remains for back-compat and hardwire generators."
+        )]
         public virtual DynValue Value
         {
             get { return _value; }

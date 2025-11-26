@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using IO;
@@ -44,7 +45,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 for (int i = 0; i < values.Length; i++)
                 {
                     int v = bdbr.ReadInt32();
-                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
+                    Assert.That(
+                        v,
+                        Is.EqualTo(values[i]),
+                        $"i = {i.ToString(CultureInfo.InvariantCulture)}"
+                    );
                 }
             }
         }
@@ -83,7 +88,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 for (int i = 0; i < values.Length; i++)
                 {
                     uint v = bdbr.ReadUInt32();
-                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
+                    Assert.That(
+                        v,
+                        Is.EqualTo(values[i]),
+                        $"i = {i.ToString(CultureInfo.InvariantCulture)}"
+                    );
                 }
             }
         }
@@ -111,7 +120,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 for (int i = 0; i < values.Length; i++)
                 {
                     string v = bdbr.ReadString();
-                    Assert.That(v, Is.EqualTo(values[i]), "i = " + i.ToString());
+                    Assert.That(
+                        v,
+                        Is.EqualTo(values[i]),
+                        $"i = {i.ToString(CultureInfo.InvariantCulture)}"
+                    );
                 }
             }
         }

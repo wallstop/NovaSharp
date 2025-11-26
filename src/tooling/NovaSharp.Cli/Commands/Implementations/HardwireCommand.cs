@@ -16,6 +16,13 @@ namespace NovaSharp.Cli.Commands.Implementations
     /// </summary>
     internal sealed class HardwireCommand : ICommand
     {
+        private const CoreModules DumpLoaderModules =
+            CoreModules.Basic
+            | CoreModules.GlobalConsts
+            | CoreModules.Table
+            | CoreModules.StringLib
+            | CoreModules.Math;
+
         /// <summary>
         /// Logger implementation that funnels hardwire generation messages to the console.
         /// </summary>
@@ -250,7 +257,7 @@ namespace NovaSharp.Cli.Commands.Implementations
 
         private static Table LoadDumpTable(string path)
         {
-            Script s = new Script(CoreModules.None);
+            Script s = new Script(DumpLoaderModules);
             DynamicExpression eee = s.CreateDynamicExpression(File.ReadAllText(path));
             return eee.Evaluate(null).Table;
         }
@@ -272,7 +279,7 @@ namespace NovaSharp.Cli.Commands.Implementations
                     return null;
                 }
 
-                if (inp == "")
+                if (string.IsNullOrEmpty(inp))
                 {
                     inp = defval;
                 }

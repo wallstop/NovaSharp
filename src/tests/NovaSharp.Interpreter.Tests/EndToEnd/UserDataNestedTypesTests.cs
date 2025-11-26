@@ -13,15 +13,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         public class SomeType
         {
             private readonly string _instanceLabel;
+            private static readonly SomeNestedTypePrivate PrivateAnchor;
 
             public SomeType()
             {
                 _instanceLabel = nameof(SomeType);
             }
 
-            internal string InstanceLabel => _instanceLabel;
+            static SomeType()
+            {
+                PrivateAnchor = new SomeNestedTypePrivate();
+            }
 
-            private static readonly SomeNestedTypePrivate PrivateAnchor;
+            internal string InstanceLabel => _instanceLabel;
 
             public enum NestedSampleState
             {

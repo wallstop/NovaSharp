@@ -198,7 +198,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -375,7 +375,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -397,7 +397,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -432,7 +432,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -455,7 +455,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -494,7 +494,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -525,7 +525,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -556,7 +556,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -691,7 +691,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -726,7 +726,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -812,7 +812,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -858,7 +858,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -909,7 +909,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -954,7 +954,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -1014,7 +1014,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -1053,7 +1053,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             debugger.EnqueueAction(DebuggerAction.ActionType.Run);
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: null
@@ -1080,7 +1080,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()
@@ -1115,7 +1115,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()
@@ -1151,7 +1151,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()
@@ -1188,7 +1188,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()
@@ -1222,7 +1222,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()
@@ -1254,7 +1254,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
 
             processor.ConfigureDebuggerActionForTests(
-                DebuggerAction.ActionType.Unknown,
+                DebuggerAction.ActionType.None,
                 actionTarget: -1,
                 executionStackDepth: 0,
                 lastHighlight: SourceRef.GetClrLocation()

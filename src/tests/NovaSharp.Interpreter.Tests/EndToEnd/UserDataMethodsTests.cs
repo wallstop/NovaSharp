@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using Compatibility;
@@ -54,8 +55,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 foreach (int[] arr in intList)
                 {
-                    sb.Append(string.Join(",", arr.Select(s => s.ToString()).ToArray()));
-                    sb.Append("|");
+                    sb.Append(JoinInts(arr));
+                    sb.Append('|');
                 }
 
                 return sb;
@@ -73,29 +74,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intlist.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intlist));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(
-                    string.Join(",", map.Keys.OrderBy(x => x).Select(i => i.ToString()).ToArray())
-                );
+                sb.Append(string.Join(",", map.Keys.OrderBy(x => x, StringComparer.Ordinal)));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(
-                    string.Join(",", map.Values.OrderBy(x => x).Select(i => i.ToString()).ToArray())
-                );
+                sb.Append(JoinInts(map.Values.OrderBy(x => x)));
 
-                sb.Append("|");
+                sb.Append('|');
 
                 sb.Append(string.Join(",", strarray));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intarray.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intarray));
 
                 return sb;
             }
@@ -118,31 +115,31 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p3);
                 p7.Append(p4);
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p5)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p6)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Keys.OrderBy(x => x.ToString()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Values.OrderBy(x => x.ToString()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
 
                 p7.Append(p9);
                 p7.Append(p10);
@@ -196,6 +193,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 throw new NotImplementedException();
             }
+
+            private static string JoinInts(IEnumerable<int> values)
+            {
+                return string.Join(
+                    ",",
+                    values.Select(i => i.ToString(CultureInfo.InvariantCulture))
+                );
+            }
         }
 
         internal sealed class SomeClass : IComparable
@@ -235,8 +240,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 foreach (int[] arr in intList)
                 {
-                    sb.Append(string.Join(",", arr.Select(s => s.ToString()).ToArray()));
-                    sb.Append("|");
+                    sb.Append(JoinInts(arr));
+                    sb.Append('|');
                 }
 
                 return sb;
@@ -254,27 +259,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intlist.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intlist));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", map.Keys.OrderBy(x => x.ToUpperInvariant()).ToArray()));
+                sb.Append(string.Join(",", map.Keys.OrderBy(x => x, StringComparer.Ordinal)));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(
-                    string.Join(",", map.Values.OrderBy(x => x).Select(i => i.ToString()).ToArray())
-                );
+                sb.Append(JoinInts(map.Values.OrderBy(x => x)));
 
-                sb.Append("|");
+                sb.Append('|');
 
                 sb.Append(string.Join(",", strarray));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intarray.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intarray));
 
                 return sb;
             }
@@ -297,31 +300,31 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p3);
                 p7.Append(p4);
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p5)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p6)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
 
                 p7.Append(p9);
                 p7.Append(p10);
@@ -357,6 +360,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public override string ToString()
             {
                 return "!SOMECLASS!";
+            }
+
+            private static string JoinInts(IEnumerable<int> values)
+            {
+                return string.Join(
+                    ",",
+                    values.Select(i => i.ToString(CultureInfo.InvariantCulture))
+                );
             }
 
             public List<int> MkList(int from, int to)
@@ -1270,17 +1281,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private static string FormatUnchecked(string format, object[] args)
         {
-            if (format == null)
-            {
-                throw new ArgumentNullException(nameof(format));
-            }
+            ArgumentNullException.ThrowIfNull(format);
 
             if (args == null || args.Length == 0)
             {
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

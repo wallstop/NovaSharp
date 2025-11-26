@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Reflection;
     using System.Text;
@@ -290,7 +291,7 @@ namespace NovaSharp.Interpreter.Tests
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

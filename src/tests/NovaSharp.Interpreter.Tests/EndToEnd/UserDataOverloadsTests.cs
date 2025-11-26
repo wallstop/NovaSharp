@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -57,7 +58,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 _lastFormat = fmt ?? string.Empty;
                 _callCounter += a;
-                return "exact:" + string.Format(fmt, a, b);
+                return "exact:" + string.Format(CultureInfo.InvariantCulture, fmt, a, b);
             }
 
             public string Method1()
@@ -330,7 +331,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
 
 #if !DOTNET_CORE

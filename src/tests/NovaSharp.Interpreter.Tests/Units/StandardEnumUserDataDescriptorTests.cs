@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -282,10 +283,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.False);
-                Assert.That(
-                    Convert.ToInt64(result.UserData.Object),
-                    Is.EqualTo(Convert.ToInt64(flagValue))
-                );
+                long expected = Convert.ToInt64(flagValue, CultureInfo.InvariantCulture);
+                long actual = Convert.ToInt64(result.UserData.Object, CultureInfo.InvariantCulture);
+                Assert.That(actual, Is.EqualTo(expected));
             });
         }
 
@@ -304,10 +304,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.True);
-                Assert.That(
-                    Convert.ToUInt64(result.UserData.Object),
-                    Is.EqualTo(Convert.ToUInt64(flagValue))
+                ulong expected = Convert.ToUInt64(flagValue, CultureInfo.InvariantCulture);
+                ulong actual = Convert.ToUInt64(
+                    result.UserData.Object,
+                    CultureInfo.InvariantCulture
                 );
+                Assert.That(actual, Is.EqualTo(expected));
             });
         }
 

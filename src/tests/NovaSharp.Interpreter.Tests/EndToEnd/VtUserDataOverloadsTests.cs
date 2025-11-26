@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -30,6 +31,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal struct OverloadsTestClass
         {
+            private int _callCounter;
+
+            private void RecordCall(int delta = 1)
+            {
+                _callCounter = unchecked(_callCounter + Math.Max(1, delta));
+            }
+
             public static void UnCalled()
             {
                 OverloadsTestClass otc = new();
@@ -39,16 +47,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string MethodV(string fmt, params object[] args)
             {
+                RecordCall(args?.Length ?? 1);
                 return "varargs:" + FormatUnchecked(fmt, args);
             }
 
             public string MethodV(string fmt, int a, bool b)
             {
-                return "exact:" + string.Format(fmt, a, b);
+                RecordCall(a);
+                return "exact:" + string.Format(CultureInfo.InvariantCulture, fmt, a, b);
             }
 
             public string Method1()
             {
+                RecordCall();
                 return "1";
             }
 
@@ -59,41 +70,52 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Method1(int a)
             {
+                RecordCall(a);
                 return "2";
             }
 
             public string Method1(double d)
             {
+                RecordCall((int)Math.Round(d));
                 return "3";
             }
 
             public string Method1(double d, string x = null)
             {
+                RecordCall();
                 return "4";
             }
 
             public string Method1(double d, string x, int y = 5)
             {
+                RecordCall(y);
                 return "5";
             }
 
             public string Method2(string x, string y)
             {
+                RecordCall(x?.Length ?? 1);
                 return "v";
             }
 
             public string Method2(string x, ref string y)
             {
+                RecordCall(x?.Length ?? 1);
                 return "r";
             }
 
             public string Method2(string x, ref string y, int z)
             {
+                RecordCall(z);
                 return "R";
             }
         }
 
-        private void RunTestOverload(string code, string expected, bool tupleExpected = false)
+        private static void RunTestOverload(
+            string code,
+            string expected,
+            bool tupleExpected = false
+        )
         {
             Script s = new();
 
@@ -244,7 +266,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return format;
             }
 
-            return string.Format(format, args);
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

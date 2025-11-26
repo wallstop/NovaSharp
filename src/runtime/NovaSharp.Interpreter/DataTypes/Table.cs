@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using DataStructs;
     using Errors;
 
@@ -97,6 +98,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// The <see cref="System.Object" />.
         /// </value>
         /// <param name="keys">The keys to access the table and subtables</param>
+        [SuppressMessage(
+            "Design",
+            "CA1043:Use Integral Or String Argument For Indexers",
+            Justification = "Lua tables support arbitrary key sequences and the indexer mirrors that flexibility."
+        )]
         public object this[params object[] keys]
         {
             get { return Get(keys).ToObject(); }

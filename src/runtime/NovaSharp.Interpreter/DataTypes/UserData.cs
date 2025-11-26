@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -33,6 +34,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the object associated to this userdata (null for static members)
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1720:Identifier contains type name",
+            Justification = "UserData exposes the underlying CLR object and keeps the historical API surface."
+        )]
         public object Object { get; private set; }
 
         /// <summary>

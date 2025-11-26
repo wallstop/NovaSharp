@@ -109,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenFileSupportsReadAndWrite()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             try
             {

@@ -331,7 +331,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Script localScript = new Script(CoreModules.None);
+            Script localScript = new Script(TestCoreModules.BasicGlobals);
             DynValue result = descriptor.Index(
                 localScript,
                 new DescriptorHost(),
@@ -359,7 +359,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Script localScript = new Script(CoreModules.None);
+            Script localScript = new Script(TestCoreModules.BasicGlobals);
 
             Assert.That(
                 () =>
