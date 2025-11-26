@@ -7,6 +7,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwiredUserDataDescriptorTests
     {
+        static HardwiredUserDataDescriptorTests()
+        {
+            _ = new SampleUserData();
+        }
+
         [Test]
         public void FriendlyNamePrefixedForHardwiredDescriptors()
         {
@@ -20,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        public sealed class SampleUserData
+        private sealed class SampleUserData
         {
             public int Value { get; set; }
         }

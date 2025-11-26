@@ -648,14 +648,20 @@ namespace NovaSharp.Interpreter.Tests.Units
     internal sealed class OverloadedMethodHost
     {
         public string Label { get; set; } = "host";
+        public string LastHostLabel { get; private set; } = string.Empty;
+        public double LastDescribedNumber { get; private set; }
+        public int LastJoinOperationLength { get; private set; }
 
         public string DescribeHost(MethodMemberDescriptorHost other)
         {
-            return $"host:{other?.LastName ?? "null"}";
+            string label = Label ?? string.Empty;
+            LastHostLabel = label;
+            return $"{label}:{other?.LastName ?? "null"}";
         }
 
         public string DescribeNumber(double value)
         {
+            LastDescribedNumber = value;
             return $"num:{value}";
         }
 
@@ -666,11 +672,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public string JoinSingle(string value)
         {
+            LastJoinOperationLength = Label?.Length ?? 0;
             return value;
         }
 
         public string JoinMany(string separator, params string[] values)
         {
+            LastJoinOperationLength = values?.Length ?? 0;
             return string.Join(separator, values);
         }
     }

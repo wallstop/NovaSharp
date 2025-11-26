@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -8,101 +10,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
-    public class UserDataNestedTypesTests
+    public sealed class UserDataNestedTypesTests
     {
-        public class SomeType
-        {
-            private readonly string _instanceLabel;
-            private static readonly SomeNestedTypePrivate PrivateAnchor;
-
-            public SomeType()
-            {
-                _instanceLabel = nameof(SomeType);
-            }
-
-            static SomeType()
-            {
-                PrivateAnchor = new SomeNestedTypePrivate();
-            }
-
-            internal string InstanceLabel => _instanceLabel;
-
-            public enum NestedSampleState
-            {
-                Asdasdasd,
-            }
-
-            public static NestedSampleState Get()
-            {
-                return NestedSampleState.Asdasdasd;
-            }
-
-            public class SomeNestedType
-            {
-                private readonly string _instanceLabel;
-
-                public SomeNestedType()
-                {
-                    _instanceLabel = nameof(SomeNestedType);
-                }
-
-                internal string InstanceLabel => _instanceLabel;
-
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedType";
-                }
-            }
-
-            [NovaSharpUserData]
-            private sealed class SomeNestedTypePrivate
-            {
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedTypePrivate";
-                }
-            }
-
-            private static class SomeNestedTypePrivate2
-            {
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedTypePrivate2";
-                }
-            }
-        }
-
-        public struct VSomeType
-        {
-            public struct SomeNestedType
-            {
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedType";
-                }
-            }
-
-            [NovaSharpUserData]
-            private struct SomeNestedTypePrivate
-            {
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedTypePrivate";
-                }
-            }
-
-            private static readonly SomeNestedTypePrivate PrivateAnchor =
-                new SomeNestedTypePrivate();
-
-            private struct SomeNestedTypePrivate2
-            {
-                public static string Get()
-                {
-                    return "Ciao from SomeNestedTypePrivate2";
-                }
-            }
-        }
-
         [Test]
         public void InteropNestedTypesPublicEnum()
         {
@@ -207,6 +116,155 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Assert.That(res.Type, Is.EqualTo(DataType.String));
             Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate2"));
+        }
+    }
+
+    public sealed class SomeType
+    {
+        private readonly string _instanceLabel;
+
+        public SomeType()
+        {
+            _instanceLabel = nameof(SomeType);
+        }
+
+        internal string InstanceLabel => _instanceLabel;
+
+        public enum NestedSampleState
+        {
+            Asdasdasd,
+        }
+
+        public static NestedSampleState Get()
+        {
+            return NestedSampleState.Asdasdasd;
+        }
+
+        [SuppressMessage(
+            "Design",
+            "CA1034:Do not nest type",
+            Justification = "Lua interop coverage requires exposing this nested type to scripts."
+        )]
+        public sealed class SomeNestedType
+        {
+            private readonly string _instanceLabel;
+
+            public SomeNestedType()
+            {
+                _instanceLabel = nameof(SomeNestedType);
+            }
+
+            internal string InstanceLabel => _instanceLabel;
+
+            public static string Get()
+            {
+                return "Ciao from SomeNestedType";
+            }
+        }
+
+        [NovaSharpUserData]
+        [SuppressMessage(
+            "Performance",
+            "CA1812:Avoid uninstantiated internal classes",
+            Justification = "Instantiated indirectly via Lua user data reflection for private nested-type coverage."
+        )]
+        private sealed class SomeNestedTypePrivate
+        {
+            public static string Get()
+            {
+                return "Ciao from SomeNestedTypePrivate";
+            }
+        }
+
+        private static class SomeNestedTypePrivate2
+        {
+            public static string Get()
+            {
+                return "Ciao from SomeNestedTypePrivate2";
+            }
+        }
+    }
+
+    public readonly struct VSomeType : IEquatable<VSomeType>
+    {
+        [SuppressMessage(
+            "Design",
+            "CA1034:Do not nest type",
+            Justification = "Lua interop coverage requires exposing this nested type to scripts."
+        )]
+        public readonly struct SomeNestedType : IEquatable<SomeNestedType>
+        {
+            public static string Get()
+            {
+                return "Ciao from SomeNestedType";
+            }
+
+            public bool Equals(SomeNestedType other)
+            {
+                return true;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is SomeNestedType;
+            }
+
+            public override int GetHashCode()
+            {
+                return typeof(SomeNestedType).GetHashCode();
+            }
+
+            public static bool operator ==(SomeNestedType left, SomeNestedType right)
+            {
+                return true;
+            }
+
+            public static bool operator !=(SomeNestedType left, SomeNestedType right)
+            {
+                return false;
+            }
+        }
+
+        [NovaSharpUserData]
+        private struct SomeNestedTypePrivate
+        {
+            public static string Get()
+            {
+                return "Ciao from SomeNestedTypePrivate";
+            }
+        }
+
+        private struct SomeNestedTypePrivate2
+        {
+            public static string Get()
+            {
+                return "Ciao from SomeNestedTypePrivate2";
+            }
+        }
+
+        public bool Equals(VSomeType other)
+        {
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is VSomeType;
+        }
+
+        public override int GetHashCode()
+        {
+            return typeof(VSomeType).GetHashCode();
+        }
+
+        public static bool operator ==(VSomeType left, VSomeType right)
+        {
+            return true;
+        }
+
+        public static bool operator !=(VSomeType left, VSomeType right)
+        {
+            return false;
         }
     }
 }

@@ -15,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Task<int> consumer = Task.Run(() => channel.Dequeue());
 
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             Assert.That(
                 consumer.IsCompleted,
                 Is.False,
@@ -24,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(channel.Enqueue(7), Is.True);
 
-            int result = await consumer.WaitAsync(TimeSpan.FromSeconds(1));
+            int result = await consumer.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
             Assert.That(result, Is.EqualTo(7));
         }
 
@@ -34,10 +34,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             BlockingChannel<string> channel = new();
             Task<string> consumer = Task.Run(() => channel.Dequeue());
 
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             channel.Stop();
 
-            string result = await consumer.WaitAsync(TimeSpan.FromSeconds(1));
+            string result = await consumer.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
             Assert.That(result, Is.Null);
         }
 

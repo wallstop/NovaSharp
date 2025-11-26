@@ -117,206 +117,193 @@ namespace NovaSharp.Interpreter.Tests.Units
                 UnityEngineReflectionHarness.SetThrowOnLoad(false);
             }
         }
+    }
 
-        public static class UnityEngineReflectionHarness
+    public static class UnityEngineReflectionHarness
+    {
+        private static readonly object SyncRoot = new();
+        private static bool AssemblyBuilt;
+        private static bool ThrowOnLoad;
+        private static Assembly UnityAssembly;
+        private static Dictionary<string, string> Scripts = new(StringComparer.OrdinalIgnoreCase);
+
+        internal static string LastRequestedPath { get; private set; } = string.Empty;
+
+        internal static void EnsureUnityAssemblies(Dictionary<string, string> scripts)
         {
-            private static readonly object SyncRoot = new();
-            private static bool AssemblyBuilt;
-            private static bool ThrowOnLoad;
-            private static Assembly UnityAssembly;
-            private static Dictionary<string, string> Scripts = new(
-                StringComparer.OrdinalIgnoreCase
+            lock (SyncRoot)
+            {
+                Scripts = new Dictionary<string, string>(scripts, StringComparer.OrdinalIgnoreCase);
+                if (!AssemblyBuilt)
+                {
+                    BuildUnityAssembly();
+                    AssemblyBuilt = true;
+                    EnsureTypeIsAvailable("UnityEngine.Resources, UnityEngine");
+                    EnsureTypeIsAvailable("UnityEngine.TextAsset, UnityEngine");
+                }
+            }
+        }
+
+        internal static void SetThrowOnLoad(bool shouldThrow)
+        {
+            ThrowOnLoad = shouldThrow;
+        }
+
+        public static Array BuildAssetArray(string assetsPath, Type textAssetType)
+        {
+            LastRequestedPath = assetsPath;
+
+            if (ThrowOnLoad)
+            {
+                throw new InvalidOperationException("Simulated Unity failure.");
+            }
+
+            Array array = Array.CreateInstance(textAssetType, Scripts.Count);
+            int index = 0;
+
+            foreach (KeyValuePair<string, string> script in Scripts)
+            {
+                object instance = Activator.CreateInstance(textAssetType, script.Key, script.Value);
+
+                array.SetValue(instance, index++);
+            }
+
+            return array;
+        }
+
+        private static void BuildUnityAssembly()
+        {
+            AssemblyName name = new("UnityEngine");
+            AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(
+                name,
+                AssemblyBuilderAccess.Run
+            );
+            UnityAssembly = assembly;
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveUnityAssembly;
+            ModuleBuilder module = assembly.DefineDynamicModule("UnityEngine.Dynamic");
+
+            CreateTextAssetType(module);
+            CreateResourcesType(module);
+        }
+
+        private static void CreateTextAssetType(ModuleBuilder module)
+        {
+            TypeBuilder builder = module.DefineType(
+                "UnityEngine.TextAsset",
+                TypeAttributes.Public | TypeAttributes.Class
             );
 
-            internal static string LastRequestedPath { get; private set; } = string.Empty;
+            FieldBuilder nameField = builder.DefineField(
+                "_name",
+                typeof(string),
+                FieldAttributes.Private
+            );
+            FieldBuilder textField = builder.DefineField(
+                "_text",
+                typeof(string),
+                FieldAttributes.Private
+            );
 
-            internal static void EnsureUnityAssemblies(Dictionary<string, string> scripts)
+            ConstructorBuilder ctor = builder.DefineConstructor(
+                MethodAttributes.Public,
+                CallingConventions.Standard,
+                new[] { typeof(string), typeof(string) }
+            );
+
+            ILGenerator il = ctor.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stfld, nameField);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Stfld, textField);
+            il.Emit(OpCodes.Ret);
+
+            CreateAutoGetter(builder, "name", nameField);
+            CreateAutoGetter(builder, "text", textField);
+
+            builder.CreateTypeInfo();
+        }
+
+        private static void CreateAutoGetter(
+            TypeBuilder typeBuilder,
+            string propertyName,
+            FieldBuilder backingField
+        )
+        {
+            PropertyBuilder property = typeBuilder.DefineProperty(
+                propertyName,
+                PropertyAttributes.None,
+                typeof(string),
+                null
+            );
+
+            MethodBuilder getter = typeBuilder.DefineMethod(
+                $"get_{propertyName}",
+                MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+                typeof(string),
+                Type.EmptyTypes
+            );
+
+            ILGenerator il = getter.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, backingField);
+            il.Emit(OpCodes.Ret);
+
+            property.SetGetMethod(getter);
+        }
+
+        private static void CreateResourcesType(ModuleBuilder module)
+        {
+            TypeBuilder builder = module.DefineType(
+                "UnityEngine.Resources",
+                TypeAttributes.Public
+                    | TypeAttributes.Class
+                    | TypeAttributes.Sealed
+                    | TypeAttributes.Abstract
+            );
+
+            MethodBuilder loadAll = builder.DefineMethod(
+                "LoadAll",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(Array),
+                new[] { typeof(string), typeof(Type) }
+            );
+
+            ILGenerator il = loadAll.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            MethodInfo helper = typeof(UnityEngineReflectionHarness).GetMethod(
+                nameof(BuildAssetArray)
+            );
+            il.Emit(OpCodes.Call, helper);
+            il.Emit(OpCodes.Ret);
+
+            builder.CreateTypeInfo();
+        }
+
+        private static void EnsureTypeIsAvailable(string qualifiedName)
+        {
+            Type type = Type.GetType(qualifiedName, throwOnError: false);
+            if (type == null)
             {
-                lock (SyncRoot)
-                {
-                    Scripts = new Dictionary<string, string>(
-                        scripts,
-                        StringComparer.OrdinalIgnoreCase
-                    );
-                    if (!AssemblyBuilt)
-                    {
-                        BuildUnityAssembly();
-                        AssemblyBuilt = true;
-                        EnsureTypeIsAvailable("UnityEngine.Resources, UnityEngine");
-                        EnsureTypeIsAvailable("UnityEngine.TextAsset, UnityEngine");
-                    }
-                }
+                throw new InvalidOperationException($"Failed to load stub type '{qualifiedName}'.");
             }
+        }
 
-            internal static void SetThrowOnLoad(bool shouldThrow)
-            {
-                ThrowOnLoad = shouldThrow;
-            }
-
-            public static Array BuildAssetArray(string assetsPath, Type textAssetType)
-            {
-                LastRequestedPath = assetsPath;
-
-                if (ThrowOnLoad)
-                {
-                    throw new InvalidOperationException("Simulated Unity failure.");
-                }
-
-                Array array = Array.CreateInstance(textAssetType, Scripts.Count);
-                int index = 0;
-
-                foreach (KeyValuePair<string, string> script in Scripts)
-                {
-                    object instance = Activator.CreateInstance(
-                        textAssetType,
-                        script.Key,
-                        script.Value
-                    );
-
-                    array.SetValue(instance, index++);
-                }
-
-                return array;
-            }
-
-            private static void BuildUnityAssembly()
-            {
-                AssemblyName name = new("UnityEngine");
-                AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(
-                    name,
-                    AssemblyBuilderAccess.Run
-                );
-                UnityAssembly = assembly;
-                AppDomain.CurrentDomain.AssemblyResolve += ResolveUnityAssembly;
-                ModuleBuilder module = assembly.DefineDynamicModule("UnityEngine.Dynamic");
-
-                CreateTextAssetType(module);
-                CreateResourcesType(module);
-            }
-
-            private static void CreateTextAssetType(ModuleBuilder module)
-            {
-                TypeBuilder builder = module.DefineType(
-                    "UnityEngine.TextAsset",
-                    TypeAttributes.Public | TypeAttributes.Class
-                );
-
-                FieldBuilder nameField = builder.DefineField(
-                    "_name",
-                    typeof(string),
-                    FieldAttributes.Private
-                );
-                FieldBuilder textField = builder.DefineField(
-                    "_text",
-                    typeof(string),
-                    FieldAttributes.Private
-                );
-
-                ConstructorBuilder ctor = builder.DefineConstructor(
-                    MethodAttributes.Public,
-                    CallingConventions.Standard,
-                    new[] { typeof(string), typeof(string) }
-                );
-
-                ILGenerator il = ctor.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Stfld, nameField);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldarg_2);
-                il.Emit(OpCodes.Stfld, textField);
-                il.Emit(OpCodes.Ret);
-
-                CreateAutoGetter(builder, "name", nameField);
-                CreateAutoGetter(builder, "text", textField);
-
-                builder.CreateTypeInfo();
-            }
-
-            private static void CreateAutoGetter(
-                TypeBuilder typeBuilder,
-                string propertyName,
-                FieldBuilder backingField
+        private static Assembly ResolveUnityAssembly(object sender, ResolveEventArgs args)
+        {
+            if (
+                UnityAssembly != null
+                && args.Name.StartsWith("UnityEngine", StringComparison.Ordinal)
             )
             {
-                PropertyBuilder property = typeBuilder.DefineProperty(
-                    propertyName,
-                    PropertyAttributes.None,
-                    typeof(string),
-                    null
-                );
-
-                MethodBuilder getter = typeBuilder.DefineMethod(
-                    $"get_{propertyName}",
-                    MethodAttributes.Public
-                        | MethodAttributes.SpecialName
-                        | MethodAttributes.HideBySig,
-                    typeof(string),
-                    Type.EmptyTypes
-                );
-
-                ILGenerator il = getter.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldfld, backingField);
-                il.Emit(OpCodes.Ret);
-
-                property.SetGetMethod(getter);
+                return UnityAssembly;
             }
 
-            private static void CreateResourcesType(ModuleBuilder module)
-            {
-                TypeBuilder builder = module.DefineType(
-                    "UnityEngine.Resources",
-                    TypeAttributes.Public
-                        | TypeAttributes.Class
-                        | TypeAttributes.Sealed
-                        | TypeAttributes.Abstract
-                );
-
-                MethodBuilder loadAll = builder.DefineMethod(
-                    "LoadAll",
-                    MethodAttributes.Public | MethodAttributes.Static,
-                    typeof(Array),
-                    new[] { typeof(string), typeof(Type) }
-                );
-
-                ILGenerator il = loadAll.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldarg_1);
-                MethodInfo helper = typeof(UnityEngineReflectionHarness).GetMethod(
-                    nameof(BuildAssetArray)
-                );
-                il.Emit(OpCodes.Call, helper);
-                il.Emit(OpCodes.Ret);
-
-                builder.CreateTypeInfo();
-            }
-
-            private static void EnsureTypeIsAvailable(string qualifiedName)
-            {
-                Type type = Type.GetType(qualifiedName, throwOnError: false);
-                if (type == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to load stub type '{qualifiedName}'."
-                    );
-                }
-            }
-
-            private static Assembly ResolveUnityAssembly(object sender, ResolveEventArgs args)
-            {
-                if (
-                    UnityAssembly != null
-                    && args.Name.StartsWith("UnityEngine", StringComparison.Ordinal)
-                )
-                {
-                    return UnityAssembly;
-                }
-
-                return null;
-            }
+            return null;
         }
     }
 }

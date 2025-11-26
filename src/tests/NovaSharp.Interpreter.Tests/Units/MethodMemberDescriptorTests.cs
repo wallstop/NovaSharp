@@ -484,6 +484,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     internal sealed class MethodMemberDescriptorHost
     {
         public string LastName { get; private set; } = string.Empty;
+        public int LastProduct { get; private set; }
+        public int LastInputValue { get; private set; }
+        public bool HiddenHelperCalled { get; private set; }
 
         public MethodMemberDescriptorHost() { }
 
@@ -499,16 +502,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public int Multiply(int left, int right)
         {
-            return left * right;
+            LastProduct = left * right;
+            return LastProduct;
         }
 
         public bool TryDouble(int value, out int doubled)
         {
+            LastInputValue = value;
             doubled = value * 2;
             return true;
         }
 
-        private void HiddenHelper() { }
+        private void HiddenHelper()
+        {
+            HiddenHelperCalled = true;
+        }
 
         public static int Sum(int left, int right)
         {

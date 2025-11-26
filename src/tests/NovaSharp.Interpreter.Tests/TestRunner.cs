@@ -91,10 +91,14 @@ namespace NovaSharp.Interpreter.Tests
                 ?? Framework
                     .Do.GetAssemblyTypes(asm)
                     .Where(t =>
-                        Framework
-                            .Do.GetCustomAttributes(t, typeof(TestFixtureAttribute), true)
-                            .Any()
-                    )
+                    {
+                        object[] fixtures = Framework.Do.GetCustomAttributes(
+                            t,
+                            typeof(TestFixtureAttribute),
+                            true
+                        );
+                        return fixtures.Length != 0;
+                    })
                     .ToArray();
 
 #if UNITY_EDITOR_OSX
@@ -107,7 +111,7 @@ namespace NovaSharp.Interpreter.Tests
             {
                 MethodInfo[] tests = Framework
                     .Do.GetMethods(t)
-                    .Where(m => m.GetCustomAttributes(typeof(TestAttribute), true).Any())
+                    .Where(m => m.GetCustomAttributes(typeof(TestAttribute), true).Length != 0)
                     .ToArray();
                 //Console_WriteLine("Testing {0} - {1} tests found.", t.Name, tests.Length);
 
@@ -178,7 +182,7 @@ namespace NovaSharp.Interpreter.Tests
 
         private static TestResult RunTest(Type t, MethodInfo mi)
         {
-            if (mi.GetCustomAttributes(typeof(IgnoreAttribute), true).Any())
+            if (mi.GetCustomAttributes(typeof(IgnoreAttribute), true).Length != 0)
             {
                 return new TestResult()
                 {
@@ -281,10 +285,7 @@ namespace NovaSharp.Interpreter.Tests
 
         private static string FormatString(string format, object[] args)
         {
-            if (format == null)
-            {
-                throw new ArgumentNullException(nameof(format));
-            }
+            ArgumentNullException.ThrowIfNull(format);
 
             if (args == null || args.Length == 0)
             {

@@ -364,7 +364,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class SampleFields
         {
             public const int ConstValue = 7;
-            public static readonly string ReadonlyValue = "fixed";
+            public static readonly string ReadonlyValue = new string(
+                new[] { 'f', 'i', 'x', 'e', 'd' }
+            );
             public static int StaticValue = 1;
             public int instanceValue;
             public double doubleValue;

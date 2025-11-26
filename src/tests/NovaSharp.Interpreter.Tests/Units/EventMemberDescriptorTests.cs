@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter;
@@ -16,6 +17,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class EventMemberDescriptorTests
     {
+        static EventMemberDescriptorTests()
+        {
+            _ = new PrivateEventSource();
+            _ = new IncompatibleEventSource();
+        }
+
         [Test]
         public void TryCreateIfVisibleReturnsDescriptorForPublicEvent()
         {
@@ -546,7 +553,7 @@ end";
             public event Action ValueTypeEvent;
         }
 
-        public sealed class PrivateEventSource
+        private sealed class PrivateEventSource
         {
             private event Action HiddenEvent;
 
@@ -570,14 +577,34 @@ end";
                 PrivateEventSource.GetHiddenEventMetadata();
         }
 
-        public sealed class IncompatibleEventSource
+        private sealed class IncompatibleEventSource
         {
+            [SuppressMessage(
+                "Design",
+                "CA1003:Use generic EventHandler instances",
+                Justification = "These invalid signatures are required to verify EventMemberDescriptor rejects non-EventHandler delegates."
+            )]
             public event Func<int> ReturnsValue;
 
+            [SuppressMessage(
+                "Design",
+                "CA1003:Use generic EventHandler instances",
+                Justification = "These invalid signatures are required to verify EventMemberDescriptor rejects non-EventHandler delegates."
+            )]
             public event Action<int> ValueParameter;
 
+            [SuppressMessage(
+                "Design",
+                "CA1003:Use generic EventHandler instances",
+                Justification = "These invalid signatures are required to verify EventMemberDescriptor rejects non-EventHandler delegates."
+            )]
             public event ByRefHandler ByRefParameter;
 
+            [SuppressMessage(
+                "Design",
+                "CA1003:Use generic EventHandler instances",
+                Justification = "These invalid signatures are required to verify EventMemberDescriptor rejects non-EventHandler delegates."
+            )]
             public event TooManyArgumentsHandler TooManyArguments;
         }
 

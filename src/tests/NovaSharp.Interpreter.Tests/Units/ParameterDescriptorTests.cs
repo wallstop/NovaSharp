@@ -212,7 +212,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptor.ToString(), Is.EqualTo("Int32 count = ..."));
         }
 
-        public sealed class SampleTarget
+        private static class SampleTarget
         {
             public static void Optional(int value, string text = "fallback") { }
 

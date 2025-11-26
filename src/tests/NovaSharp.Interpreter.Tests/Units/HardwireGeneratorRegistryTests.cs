@@ -9,6 +9,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwireGeneratorRegistryTests
     {
+        static HardwireGeneratorRegistryTests()
+        {
+            _ = new RecordingGenerator();
+        }
+
         [Test]
         public void UnknownGeneratorFallsBackToNullGenerator()
         {
@@ -92,7 +97,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(generator.GetType().Name, Is.EqualTo("MethodMemberDescriptorGenerator"));
         }
 
-        public sealed class RecordingGenerator : IHardwireGenerator
+        private sealed class RecordingGenerator : IHardwireGenerator
         {
             private readonly string _managedType;
             private readonly CodeExpression[] _expressions;

@@ -70,8 +70,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.DoString(script);
 
+            bool hasFailures = failedTests.Count > 0;
+
             Assert.That(
-                failedTests.Any(),
+                hasFailures,
                 Is.False,
                 $"Failed asserts {string.Join(", ", failedTests.Select(xi => xi.ToString()).ToArray())}"
             );

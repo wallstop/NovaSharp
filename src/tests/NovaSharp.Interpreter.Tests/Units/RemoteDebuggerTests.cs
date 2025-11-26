@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RemoteDebuggerTests
     {
-        private static readonly Utf8TcpServerOptions ServerOptions =
+        private const Utf8TcpServerOptions ServerOptions =
             Utf8TcpServerOptions.LocalHostOnly | Utf8TcpServerOptions.SingleClientOnly;
 
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);

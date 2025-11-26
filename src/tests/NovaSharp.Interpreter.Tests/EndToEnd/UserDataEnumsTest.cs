@@ -8,8 +8,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public enum SampleRating : short
+    public enum SampleRating
     {
+        None = 0,
         Uno = 1,
         MenoUno = -1,
         Quattro = 4,
@@ -19,8 +20,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     }
 
     [Flags]
-    public enum SampleFlagSet : ushort
+    public enum SampleFlagSet
     {
+        None = 0,
         Uno = 1,
         Due = 2,
         Quattro = 4,

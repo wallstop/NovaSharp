@@ -35,12 +35,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private readonly List<int> _list = new() { 1, 2, 3 };
             private readonly int[] _array = new int[3] { 2, 4, 6 };
 
+            [SuppressMessage(
+                "Performance",
+                "CA1814:Prefer jagged arrays over multidimensional",
+                Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+            )]
             private readonly int[,] _multiArray = new int[2, 3]
             {
                 { 2, 4, 6 },
                 { 7, 8, 9 },
             };
 
+            [SuppressMessage(
+                "Performance",
+                "CA1814:Prefer jagged arrays over multidimensional",
+                Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+            )]
             [SuppressMessage(
                 "Design",
                 "CA1024:UsePropertiesWhereAppropriate",

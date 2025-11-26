@@ -1233,10 +1233,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private static string FormatUnchecked(string format, object[] args)
         {
-            if (format == null)
-            {
-                throw new ArgumentNullException(nameof(format));
-            }
+            ArgumentNullException.ThrowIfNull(format);
 
             if (args == null || args.Length == 0)
             {

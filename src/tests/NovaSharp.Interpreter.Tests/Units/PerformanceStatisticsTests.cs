@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class PerformanceStatisticsTests
     {
-        private static readonly PerformanceCounter ExecutionCounter = PerformanceCounter.Execution;
+        private const PerformanceCounter ExecutionCounter = PerformanceCounter.Execution;
 
         [SetUp]
         public void ResetGlobalState()

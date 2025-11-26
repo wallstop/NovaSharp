@@ -42,6 +42,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataOverloadsTests
     {
+        private int _helperCallCount;
+
         internal sealed class OverloadsTestClass
         {
             private int _callCounter;
@@ -311,20 +313,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private int Method1()
         {
+            _helperCallCount++;
             return 1;
         }
 
         private int Method1(int a)
         {
+            _helperCallCount += a;
             return 5 + a;
         }
 
         private static string FormatUnchecked(string format, object[] args)
         {
-            if (format == null)
-            {
-                throw new ArgumentNullException(nameof(format));
-            }
+            ArgumentNullException.ThrowIfNull(format);
 
             if (args == null || args.Length == 0)
             {

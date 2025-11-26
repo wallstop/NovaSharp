@@ -16,6 +16,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         private ConsoleCaptureScope _consoleScope = null!;
         private ShellContext _context = null!;
 
+        static RegisterCommandTests()
+        {
+            _ = new SampleType();
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -70,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        public sealed class SampleType { }
+        private sealed class SampleType { }
 
         public void Dispose()
         {

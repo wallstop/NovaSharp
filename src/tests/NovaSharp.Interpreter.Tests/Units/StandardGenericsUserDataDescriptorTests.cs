@@ -11,6 +11,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class StandardGenericsUserDataDescriptorTests
     {
+        static StandardGenericsUserDataDescriptorTests()
+        {
+            _ = new GenericStub<int>();
+        }
+
         [Test]
         public void ConstructorThrowsWhenReflectionDisabled()
         {
@@ -159,7 +164,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class GenericStub<T>
+        private sealed class GenericStub<T>
         {
             public override string ToString()
             {

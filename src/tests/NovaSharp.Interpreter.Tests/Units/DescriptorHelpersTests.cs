@@ -16,6 +16,24 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private static readonly string[] ExpectedMetaNames = { "__index", "__len" };
 
+        static DescriptorHelpersTests()
+        {
+            _ = new VisibilityTargets();
+            _ = new DescriptorHelpersPublicType();
+            _ = new VisibilityFixtures.PublicNested();
+            _ = new VisibilityFixtures.ProtectedInternalNested();
+            _ = Activator.CreateInstance(
+                VisibilityFixtures.Metadata.ProtectedType,
+                nonPublic: true
+            );
+            _ = new VisibilityFixtures.GenericHost<string>();
+            _ = new VisibilityFixtures.GenericHost<string>.InnerType();
+            _ = new MemberVisibilityFixtures();
+            _ = new PropertyFixtures();
+            _ = new MetaFixtures();
+            _ = new DerivedSample();
+        }
+
         [Test]
         public void GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
         {
@@ -50,7 +68,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(typeof(PublicType).GetClrVisibility(), Is.EqualTo("public"));
+                Assert.That(
+                    typeof(DescriptorHelpersPublicType).GetClrVisibility(),
+                    Is.EqualTo("public")
+                );
                 Assert.That(
                     typeof(DescriptorHelpersTestsInternalTopLevel).GetClrVisibility(),
                     Is.EqualTo("internal")
@@ -231,20 +252,39 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        public sealed class VisibilityTargets
+        private sealed class VisibilityTargets
         {
+            private int _invocationCount;
+
+            private void TouchInstance()
+            {
+                _invocationCount++;
+            }
+
             [NovaSharpVisible(true)]
-            public void VisibleMember() { }
+            public void VisibleMember()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpHidden]
-            public void HiddenMember() { }
+            public void HiddenMember()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpVisible(false)]
-            public void ForcedHidden() { }
+            public void ForcedHidden()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpVisible(true)]
             [NovaSharpHidden]
-            public void ConflictingMember() { }
+            public void ConflictingMember()
+            {
+                TouchInstance();
+            }
 
             internal static class Metadata
             {
@@ -262,26 +302,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public class PublicType { }
-
-        internal sealed class DescriptorHelpersTestsInternalTopLevel
-        {
-            internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
-        }
-
-        public static class VisibilityFixtures
+        private static class VisibilityFixtures
         {
             private static readonly object PrivateNestedAnchor = new PrivateNested();
 
-            public class PublicNested { }
+            public sealed class PublicNested { }
 
-            protected internal class ProtectedInternalNested { }
+            protected internal sealed class ProtectedInternalNested { }
 
-            protected class ProtectedNested { }
+            [SuppressMessage(
+                "Performance",
+                "CA1812",
+                Justification = "Instantiated via reflection to validate protected type visibility."
+            )]
+            protected sealed class ProtectedNested { }
 
             private sealed class PrivateNested { }
 
-            public class GenericHost<T>
+            public sealed class GenericHost<T>
             {
                 private readonly string _instanceLabel;
 
@@ -292,7 +330,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 internal string InstanceLabel => _instanceLabel;
 
-                public class InnerType { }
+                public sealed class InnerType { }
             }
 
             internal static class Metadata
@@ -305,11 +343,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public class MemberVisibilityFixtures
+        [SuppressMessage(
+            "Performance",
+            "CA1852:Seal internal types",
+            Justification = "Protected members must remain available for visibility reflection tests without triggering CS0628 warnings."
+        )]
+        private class MemberVisibilityFixtures
         {
             public const string InternalFieldName = nameof(_internalField);
             public const string ProtectedFieldName = nameof(_protectedField);
             public const string PrivateMethodName = nameof(PrivateMethod);
+
+            private int _invocationCount;
+
+            private void TouchInstance()
+            {
+                _invocationCount++;
+            }
 
             [SuppressMessage(
                 "Design",
@@ -339,11 +389,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             )]
             protected internal int _protectedInternalField;
 
-            public void PublicMethod() { }
+            public void PublicMethod()
+            {
+                TouchInstance();
+            }
 
-            private void PrivateMethod() { }
+            private void PrivateMethod()
+            {
+                TouchInstance();
+            }
 
-            protected internal void ProtectedInternalMethod() { }
+            protected internal void ProtectedInternalMethod()
+            {
+                TouchInstance();
+            }
 
             internal static class Metadata
             {
@@ -405,7 +464,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public class PropertyFixtures
+        [SuppressMessage(
+            "Performance",
+            "CA1852:Seal internal types",
+            Justification = "Provides protected members for visibility tests; sealing would trigger compiler warnings."
+        )]
+        private class PropertyFixtures
         {
             public const string PrivatePropertyName = nameof(PrivateBoth);
 
@@ -464,11 +528,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class MetaFixtures
+        private sealed class MetaFixtures
         {
+            private int _invocationCount;
+
             [NovaSharpUserDataMetamethod("__index")]
             [NovaSharpUserDataMetamethod("__len")]
-            public void Metamethods() { }
+            public void Metamethods()
+            {
+                _invocationCount++;
+            }
 
             internal static class Metadata
             {
@@ -477,11 +546,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public interface ISampleInterface { }
+        private interface ISampleInterface { }
 
-        public class BaseSample : ISampleInterface { }
+        private class BaseSample : ISampleInterface { }
 
-        public sealed class DerivedSample : BaseSample { }
+        private sealed class DerivedSample : BaseSample { }
 
         private sealed class ThrowingAssembly : Assembly
         {
@@ -570,5 +639,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return null;
             }
         }
+    }
+
+    public sealed class DescriptorHelpersPublicType { }
+
+    internal sealed class DescriptorHelpersTestsInternalTopLevel
+    {
+        internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
     }
 }

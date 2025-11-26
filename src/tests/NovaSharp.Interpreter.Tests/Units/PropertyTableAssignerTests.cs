@@ -12,6 +12,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class PropertyTableAssignerTests
     {
+        static PropertyTableAssignerTests()
+        {
+            _ = new DuplicateProperties();
+            _ = new AddressInfo();
+        }
+
         private Script _script = null!;
 
         [SetUp]
@@ -226,7 +232,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        public sealed class DuplicateProperties
+        private sealed class DuplicateProperties
         {
             [NovaSharpProperty("alias")]
             public string First { get; set; }
@@ -244,7 +250,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int Count { get; set; }
         }
 
-        public sealed class AddressInfo
+        private sealed class AddressInfo
         {
             [NovaSharpProperty("street")]
             public string Street { get; set; }

@@ -9,10 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         public static ScriptExecutionContext CreateExecutionContext(Script script)
         {
-            if (script == null)
-            {
-                throw new ArgumentNullException(nameof(script));
-            }
+            ArgumentNullException.ThrowIfNull(script);
 
             return script.CreateDynamicExecutionContext();
         }

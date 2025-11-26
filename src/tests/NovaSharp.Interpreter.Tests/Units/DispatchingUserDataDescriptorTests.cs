@@ -18,6 +18,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DispatchingUserDataDescriptorTests
     {
+        static DispatchingUserDataDescriptorTests()
+        {
+            _ = new AccessibleDispatchingUserDataDescriptor();
+        }
+
         private const string IndexerGetterName = "get_Item";
         private const string IndexerSetterName = "set_Item";
         private static readonly int[] HostAddSequence = { 1, 2 };
@@ -771,7 +776,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        public sealed class AccessibleDispatchingUserDataDescriptor : DispatchingUserDataDescriptor
+        private sealed class AccessibleDispatchingUserDataDescriptor : DispatchingUserDataDescriptor
         {
             public AccessibleDispatchingUserDataDescriptor()
                 : base(typeof(DescriptorHost)) { }

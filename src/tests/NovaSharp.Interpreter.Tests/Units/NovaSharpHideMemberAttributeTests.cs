@@ -46,31 +46,49 @@ namespace NovaSharp.Interpreter.Tests.Units
         [NovaSharpHideMember("HiddenMethod")]
         private sealed class HiddenMembersSample
         {
+            private readonly int _visibleValue;
+            private readonly int _hiddenValue;
+
+            public HiddenMembersSample()
+            {
+                _visibleValue = 5;
+                _hiddenValue = 15;
+            }
+
             public int VisibleMethod()
             {
-                return 5;
+                return _visibleValue;
             }
 
             public int HiddenMethod()
             {
-                return 15;
+                return _hiddenValue;
             }
         }
 
         [NovaSharpHideMember("HiddenProperty")]
         private class BaseHiddenMembersSample
         {
+            private readonly int _hiddenPropertyValue = 42;
+
             public int HiddenProperty
             {
-                get { return 42; }
+                get { return _hiddenPropertyValue; }
             }
         }
 
         private sealed class DerivedHiddenMembersSample : BaseHiddenMembersSample
         {
+            private readonly int _visibleValue;
+
+            public DerivedHiddenMembersSample()
+            {
+                _visibleValue = 10;
+            }
+
             public int Visible()
             {
-                return 10;
+                return _visibleValue;
             }
         }
     }

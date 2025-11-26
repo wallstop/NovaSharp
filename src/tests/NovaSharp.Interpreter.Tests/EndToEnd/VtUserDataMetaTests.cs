@@ -14,17 +14,33 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal struct ClassWithLength
         {
+            private const int DefaultLength = 55;
+            private readonly int _lengthOffset;
+
+            public ClassWithLength(int length)
+            {
+                _lengthOffset = length - DefaultLength;
+            }
+
             public int Length
             {
-                get { return 55; }
+                get { return DefaultLength + _lengthOffset; }
             }
         }
 
         internal struct ClassWithCount
         {
+            private const int DefaultCount = 123;
+            private readonly int _countOffset;
+
+            public ClassWithCount(int count)
+            {
+                _countOffset = count - DefaultCount;
+            }
+
             public int Count
             {
-                get { return 123; }
+                get { return DefaultCount + _countOffset; }
             }
         }
 
@@ -174,14 +190,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             [NovaSharpUserDataMetamethod("__ipairs")]
             public System.Collections.IEnumerator Pairs()
             {
-                return (
-                    new List<DynValue>()
-                    {
-                        DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
-                        DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
-                        DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
-                    }
-                ).GetEnumerator();
+                int capacity = Math.Max(3, Math.Abs(Value % 3) + 3);
+                List<DynValue> entries = new(capacity)
+                {
+                    DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
+                    DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
+                    DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
+                };
+                return entries.GetEnumerator();
             }
         }
 
@@ -314,7 +330,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(s.DoString("return o2 <= o1").Boolean, Is.False, "o2 <= o1");
         }
 
-        private void OperatorTest(string code, int input, int output)
+        private static void OperatorTest(string code, int input, int output)
         {
             Script s = new();
 

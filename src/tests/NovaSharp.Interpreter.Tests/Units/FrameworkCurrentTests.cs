@@ -10,7 +10,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private readonly FrameworkCurrent _framework = new();
 
-        public sealed class DisposableFixture : IDisposable
+        static FrameworkCurrentTests()
+        {
+            new DisposableFixture().Dispose();
+        }
+
+        private sealed class DisposableFixture : IDisposable
         {
             public void Dispose() { }
         }

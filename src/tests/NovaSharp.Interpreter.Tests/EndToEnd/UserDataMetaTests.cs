@@ -320,7 +320,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(s.DoString("return o2 <= o1").Boolean, Is.False, "o2 <= o1");
         }
 
-        private void OperatorTest(string code, int input, int output)
+        private static void OperatorTest(string code, int input, int output)
         {
             Script s = new();
 
