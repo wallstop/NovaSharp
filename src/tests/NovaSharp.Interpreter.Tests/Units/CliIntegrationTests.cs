@@ -355,6 +355,71 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
+        [Test]
+        public void InterpreterLoopHardwireCommandGeneratesDescriptors()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            ReplInterpreter interpreter = new(script);
+            string dumpPath = Path.Combine(
+                Path.GetTempPath(),
+                $"hardwire-repl-dump-{Guid.NewGuid():N}.lua"
+            );
+            string destPath = Path.Combine(
+                Path.GetTempPath(),
+                $"hardwire-repl-output-{Guid.NewGuid():N}.cs"
+            );
+            File.WriteAllText(dumpPath, "-- placeholder dump contents");
+
+            Func<string, Table> originalLoader = HardwireCommand.DumpLoader;
+            HardwireCommand.DumpLoader = _ =>
+            {
+                Script descriptorScript = new(default(CoreModules));
+                return HardwireTestUtilities.CreateDescriptorTable(descriptorScript, "public");
+            };
+
+            string input =
+                string.Join(
+                    Environment.NewLine,
+                    new[]
+                    {
+                        "!hardwire",
+                        string.Empty, // default language (cs)
+                        dumpPath,
+                        destPath,
+                        "y",
+                        "GeneratedNamespace",
+                        "GeneratedTypes",
+                    }
+                ) + Environment.NewLine;
+
+            using ConsoleRedirectionScope console = new(input);
+
+            try
+            {
+                Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+
+                string output = console.Writer.ToString();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(File.Exists(destPath), Is.True);
+                    Assert.That(output, Does.Contain(CliMessages.HardwireGenerationSummary(0, 0)));
+                });
+            }
+            finally
+            {
+                HardwireCommand.DumpLoader = originalLoader;
+                if (File.Exists(dumpPath))
+                {
+                    File.Delete(dumpPath);
+                }
+
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+            }
+        }
+
         private static ShellContext CreateShellContext()
         {
             return new ShellContext(new Script());
