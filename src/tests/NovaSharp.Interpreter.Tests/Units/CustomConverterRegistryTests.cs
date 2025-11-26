@@ -148,6 +148,37 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             DynValue longResult = longConverter(script, 7L);
             Assert.That(longResult.Number, Is.EqualTo(14));
+
+            registry.SetClrToScriptCustomConversion(
+                typeof(Guid),
+                (Func<Script, object, DynValue>)null
+            );
+            registry.SetClrToScriptCustomConversion<long>((Func<Script, long, DynValue>)null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(registry.GetClrToScriptCustomConversion(typeof(Guid)), Is.Null);
+                Assert.That(registry.GetClrToScriptCustomConversion(typeof(long)), Is.Null);
+            });
+        }
+
+        [Test]
+        public void ScriptAwareTypedClrToScriptConversionRemovesWhenNull()
+        {
+            CustomConverterRegistry registry = new CustomConverterRegistry();
+            registry.SetClrToScriptCustomConversion<int>(
+                (script, value) =>
+                {
+                    Assert.That(script, Is.Not.Null);
+                    return DynValue.NewNumber(value);
+                }
+            );
+
+            Assert.That(registry.GetClrToScriptCustomConversion(typeof(int)), Is.Not.Null);
+
+            registry.SetClrToScriptCustomConversion<int>((Func<Script, int, DynValue>)null);
+
+            Assert.That(registry.GetClrToScriptCustomConversion(typeof(int)), Is.Null);
         }
 
         [Test]

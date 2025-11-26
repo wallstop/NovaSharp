@@ -401,6 +401,28 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TryCreateIfVisibleThrowsWhenEventInfoIsNull()
+        {
+            Assert.That(
+                () => EventMemberDescriptor.TryCreateIfVisible(null, InteropAccessMode.Default),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("ei")
+            );
+        }
+
+        [Test]
+        public void CheckEventIsCompatibleThrowsWhenEventInfoIsNull()
+        {
+            Assert.That(
+                () => EventMemberDescriptor.CheckEventIsCompatible(null, throwException: true),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("ei")
+            );
+        }
+
+        [Test]
         public void DispatchEventInvokesZeroArgumentHandlers()
         {
             MultiSignatureEventSource source = new();

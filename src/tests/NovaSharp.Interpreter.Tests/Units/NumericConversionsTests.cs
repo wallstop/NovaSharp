@@ -61,5 +61,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(result, Is.EqualTo(3.14d));
         }
+
+        [Test]
+        public void DoubleToTypeSupportsNullableTargets()
+        {
+            double value = 12d;
+
+            object nullableInt = NumericConversions.DoubleToType(typeof(int?), value);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(nullableInt, Is.TypeOf<int>());
+                Assert.That(nullableInt, Is.EqualTo(12));
+            });
+        }
+
+        [Test]
+        public void TypeToDoubleFallsBackToDirectCastForNonNumericStructs()
+        {
+            double direct = NumericConversions.TypeToDouble(typeof(DateTime), 5d);
+
+            Assert.That(direct, Is.EqualTo(5d));
+        }
     }
 }

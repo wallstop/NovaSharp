@@ -34,6 +34,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ScriptFileExistsThrowsWhenNameIsNull()
+        {
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
+
+            Assert.That(
+                () => loader.ScriptFileExists(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("file")
+            );
+        }
+
+        [Test]
         public void LoadFileReturnsResourceStream()
         {
             EmbeddedResourcesScriptLoader loader = new(TestAssembly);
@@ -41,6 +54,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             using Stream stream = (Stream)loader.LoadFile("Resources/embedded.lua", null);
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.Length, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void LoadFileThrowsWhenNameIsNull()
+        {
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
+
+            Assert.That(
+                () => loader.LoadFile(null, null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("file")
+            );
         }
 
 #if DOTNET_CORE
@@ -51,6 +77,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => new EmbeddedResourcesScriptLoader(),
                 Throws.TypeOf<NotSupportedException>()
             );
+        }
+#else
+        [Test]
+        public void ParameterlessConstructorUsesCallingAssembly()
+        {
+            EmbeddedResourcesScriptLoader loader = new();
+
+            Assert.That(loader.ScriptFileExists("Resources/embedded.lua"), Is.True);
         }
 #endif
     }

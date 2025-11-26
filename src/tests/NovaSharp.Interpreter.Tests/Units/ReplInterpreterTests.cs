@@ -194,5 +194,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Throws<NullReferenceException>(() => interpreter.Evaluate("return 5"));
             Assert.That(interpreter.HasPendingCommand, Is.False);
         }
+
+        [Test]
+        public void EvaluateThrowsWhenInputIsNull()
+        {
+            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+
+            Assert.That(
+                () => interpreter.Evaluate(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("input")
+            );
+        }
     }
 }

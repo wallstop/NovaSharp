@@ -175,6 +175,104 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void IndexRecognizesAlternateNamesAndIgnoresUnknownEntries()
+        {
+            Script script = new Script();
+            TrackingEnumerator enumerator = new TrackingEnumerator("one", "two");
+            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+                0
+            ];
+            (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            DynValue moveNext =
+                descriptor.Index(script, instance, DynValue.NewString("move_next"), true)
+                ?? throw new AssertionException("move_next callback should exist");
+            DynValue reset =
+                descriptor.Index(script, instance, DynValue.NewString("reset"), true)
+                ?? throw new AssertionException("reset callback should exist");
+
+            DynValue GetCurrentAccessor()
+            {
+                return descriptor.Index(script, instance, DynValue.NewString("current"), true)
+                    ?? throw new AssertionException("current accessor should exist");
+            }
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean,
+                    Is.True
+                );
+                Assert.That(GetCurrentAccessor().String, Is.EqualTo("one"));
+                Assert.That(
+                    moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean,
+                    Is.True
+                );
+                Assert.That(GetCurrentAccessor().String, Is.EqualTo("two"));
+            });
+
+            DynValue unknown = descriptor.Index(
+                script,
+                instance,
+                DynValue.NewString("does_not_exist"),
+                true
+            );
+            Assert.That(unknown, Is.Null);
+
+            DynValue resetResult = reset.Callback.ClrCallback(
+                context,
+                TestHelpers.CreateArguments()
+            );
+            Assert.That(resetResult.IsNil(), Is.True);
+
+            // Second reset call exercises the branch that actually rewinds the iterator once the flag is set.
+            reset.Callback.ClrCallback(context, TestHelpers.CreateArguments());
+
+            bool restarted = moveNext
+                .Callback.ClrCallback(context, TestHelpers.CreateArguments())
+                .Boolean;
+            Assert.That(restarted, Is.True);
+            Assert.That(GetCurrentAccessor().String, Is.EqualTo("one"));
+        }
+
+        [Test]
+        public void SetIndexAlwaysReturnsFalse()
+        {
+            Script script = new Script();
+            TrackingEnumerator enumerator = new TrackingEnumerator();
+            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+                0
+            ];
+            (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
+
+            bool result = descriptor.SetIndex(
+                script,
+                instance,
+                DynValue.NewString("any"),
+                DynValue.NewNumber(1),
+                isDirectIndexing: true
+            );
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void MetaIndexReturnsNullForUnsupportedNames()
+        {
+            Script script = new Script();
+            TrackingEnumerator enumerator = new TrackingEnumerator(1);
+            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+                0
+            ];
+            (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
+
+            DynValue value = descriptor.MetaIndex(script, instance, "__len");
+
+            Assert.That(value, Is.Null);
+        }
+
         private static DynValue GetIteratorCallback(Script script, DynValue iteratorUserData)
         {
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);

@@ -56,6 +56,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void NewTupleNestedThrowsWhenValuesNull()
+        {
+            Assert.That(
+                () => DynValue.NewTupleNested((DynValue[])null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("values")
+            );
+        }
+
+        [Test]
         public void NewTupleNestedReturnsSingleValueUnchanged()
         {
             DynValue tuple = DynValue.NewTuple(DynValue.NewString("value"));
@@ -63,6 +74,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue nested = DynValue.NewTupleNested(tuple);
 
             Assert.That(nested, Is.SameAs(tuple));
+        }
+
+        [Test]
+        public void NewTupleNestedWithoutTuplesCreatesRegularTuple()
+        {
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewString("two");
+
+            DynValue result = DynValue.NewTupleNested(first, second);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(result.Tuple, Has.Length.EqualTo(2));
+                Assert.That(result.Tuple[0], Is.SameAs(first));
+                Assert.That(result.Tuple[1], Is.SameAs(second));
+            });
         }
 
         [Test]
@@ -380,6 +408,44 @@ namespace NovaSharp.Interpreter.Tests.Units
             builder.Append("mutated");
 
             Assert.That(value.String, Is.EqualTo("seed"));
+        }
+
+        [Test]
+        public void NewStringFromStringBuilderThrowsWhenBuilderIsNull()
+        {
+            Assert.That(
+                () => DynValue.NewString((StringBuilder)null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("sb")
+            );
+        }
+
+        [Test]
+        public void NewStringFormatThrowsWhenFormatIsNull()
+        {
+            Assert.That(
+                () => DynValue.NewString(null, "value"),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("format")
+            );
+        }
+
+        [Test]
+        public void NewStringFormatAppliesArguments()
+        {
+            DynValue value = DynValue.NewString("value {0} {1}", 5, "x");
+
+            Assert.That(value.String, Is.EqualTo("value 5 x"));
+        }
+
+        [Test]
+        public void NewStringFormatReturnsLiteralWhenArgsNull()
+        {
+            DynValue value = DynValue.NewString("literal", (object[])null);
+
+            Assert.That(value.String, Is.EqualTo("literal"));
         }
 
         [Test]

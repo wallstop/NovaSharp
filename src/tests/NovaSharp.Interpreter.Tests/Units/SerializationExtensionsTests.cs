@@ -191,5 +191,40 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(() => tableValue.SerializeValue(), Throws.TypeOf<ScriptRuntimeException>());
         }
+
+        [Test]
+        public void SerializeThrowsWhenTableIsNull()
+        {
+            Assert.That(
+                () => SerializationExtensions.Serialize((Table)null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("table")
+            );
+        }
+
+        [Test]
+        public void SerializeValueThrowsWhenValueIsNull()
+        {
+            Assert.That(
+                () => SerializationExtensions.SerializeValue(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("dynValue")
+            );
+        }
+
+        [Test]
+        public void SerializeValueThrowsForNonPrimitiveValues()
+        {
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "nonPrimitive");
+
+            Assert.That(
+                () => callback.SerializeValue(),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("Value is not a primitive value")
+            );
+        }
     }
 }

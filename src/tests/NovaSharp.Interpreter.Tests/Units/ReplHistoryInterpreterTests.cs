@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
@@ -84,6 +85,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(interpreter.HistoryNext(), Is.Null);
             Assert.That(interpreter.HistoryPrev(), Is.EqualTo("return 3"));
             Assert.That(interpreter.HistoryPrev(), Is.EqualTo("return 2"));
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenHistorySizeNotPositive()
+        {
+            Script script = new Script(MinimalScriptModules);
+
+            Assert.That(
+                () => new ReplHistoryInterpreter(script, historySize: 0),
+                Throws
+                    .InstanceOf<ArgumentOutOfRangeException>()
+                    .With.Property(nameof(ArgumentOutOfRangeException.ParamName))
+                    .EqualTo("historySize")
+            );
         }
     }
 }

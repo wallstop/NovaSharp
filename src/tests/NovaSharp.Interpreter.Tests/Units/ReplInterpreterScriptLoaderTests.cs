@@ -138,6 +138,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result, Is.Null);
         }
 
+        [Test]
+        public void ResolveModuleNameThrowsWhenGlobalContextIsNull()
+        {
+            TestReplLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleName("pkg.mod", null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("globalContext")
+            );
+        }
+
         private sealed class TestReplLoader : ReplInterpreterScriptLoader
         {
             private readonly HashSet<string> _existingPaths = new(StringComparer.Ordinal);

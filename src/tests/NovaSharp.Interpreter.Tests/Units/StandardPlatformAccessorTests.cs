@@ -82,6 +82,28 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ParseFileAccessThrowsWhenModeIsNull()
+        {
+            Assert.That(
+                () => StandardPlatformAccessor.ParseFileAccess(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("mode")
+            );
+        }
+
+        [Test]
+        public void ParseFileModeThrowsWhenModeIsNull()
+        {
+            Assert.That(
+                () => StandardPlatformAccessor.ParseFileMode(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("mode")
+            );
+        }
+
+        [Test]
         public void GetEnvironmentVariableReflectsEnvironment()
         {
             const string variable = "NOVASHARP_STD_TEST";

@@ -89,6 +89,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(ex!.ParamName, Is.EqualTo("lines"));
         }
 
+        [Test]
+        public void ResetBreakpointsThrowsWhenProcessorUnavailable()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            SourceCode source = new("chunk", "return 1", sourceId: 1, script);
+            DebugService service = new(script, null);
+
+            InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(() =>
+                service.ResetBreakpoints(source, new HashSet<int> { 1 })
+            );
+
+            Assert.That(ex!.Message, Does.Contain("processor"));
+        }
+
         private static (
             Script Script,
             BreakpointRecordingDebugger Debugger

@@ -32,6 +32,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstructorFromParameterInfoThrowsWhenNull()
+        {
+            Assert.That(
+                () => new ParameterDescriptor((ParameterInfo)null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("pi")
+            );
+        }
+
+        [Test]
         public void ConstructorDetectsVarArgsAndByRef()
         {
             ParameterInfo varArgs = typeof(SampleTarget)
@@ -54,6 +65,19 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(byRefDescriptor.IsRef, Is.True);
                 Assert.That(outDescriptor.IsOut, Is.True);
             });
+        }
+
+        [Test]
+        public void PrepareForWiringThrowsWhenTableIsNull()
+        {
+            ParameterDescriptor descriptor = new("value", typeof(object));
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws
+                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
+                    .EqualTo("t")
+            );
         }
 
         [Test]
