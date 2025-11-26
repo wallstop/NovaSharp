@@ -48,10 +48,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static IRegistrationPolicy GetExplicitPolicy(PropertyInfo property)
         {
-#pragma warning disable CS0618
-            object value = property.GetValue(null);
-#pragma warning restore CS0618
+            object value = InvokeObsoleteGetter(property, null);
             return (IRegistrationPolicy)value;
+        }
+
+        private static object InvokeObsoleteGetter(PropertyInfo property, object instance)
+        {
+            MethodInfo getter = property.GetGetMethod(nonPublic: true);
+            if (getter == null)
+            {
+                throw new InvalidOperationException(
+                    $"Property {property.Name} must expose a getter."
+                );
+            }
+
+            return getter.Invoke(instance, Array.Empty<object>());
         }
 
         private static bool IsExplicitPropertyObsolete(PropertyInfo property)

@@ -419,11 +419,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int instanceValue;
             public double doubleValue;
 
-            [SuppressMessage(
-                "Performance",
-                "CA1823:Avoid unused fields",
-                Justification = "Accessed via reflection to verify attribute-driven visibility."
-            )]
             [NovaSharpVisible(true)]
             private int _attributeValue;
             private int _privateValue;
@@ -439,6 +434,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 instanceValue = 0;
                 doubleValue = 0;
                 _privateValue = 0;
+                AnchorAttributeValueUsage();
             }
 
             internal static FieldInfo PrivateValueField { get; } =
@@ -449,6 +445,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 return (FieldInfo)GetMember(accessor.Body);
+            }
+
+            private void AnchorAttributeValueUsage()
+            {
+                GC.KeepAlive(_attributeValue);
             }
 
             private static MemberInfo GetMember(Expression expression)

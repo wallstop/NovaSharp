@@ -7,8 +7,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
-#pragma warning disable 169 // unused private field
-
     [TestFixture]
     public class UserDataEventsTests
     {

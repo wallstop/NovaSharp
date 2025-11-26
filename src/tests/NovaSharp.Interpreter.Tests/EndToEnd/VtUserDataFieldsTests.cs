@@ -18,14 +18,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public object objProp;
             public static string StaticProp;
 
-            [SuppressMessage(
-                "Performance",
-                "CA1823:Avoid unused fields",
-                Justification = "Private fields remain intentionally unused to validate that Lua user data cannot access them."
-            )]
-#pragma warning disable CS0169
             private string _privateProp;
-#pragma warning restore CS0169
+
+            private string HiddenPrivateAccessor
+            {
+                get { return _privateProp; }
+                set { _privateProp = value; }
+            }
         }
 
         private static void TestConstIntFieldGetter(InteropAccessMode opt)

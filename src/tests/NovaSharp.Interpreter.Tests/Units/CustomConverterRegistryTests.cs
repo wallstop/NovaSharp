@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -129,13 +130,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script();
             Guid sampleGuid = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
 
-#pragma warning disable CS0618
-            registry.SetClrToScriptCustomConversion(
+            InvokeLegacyClrToScriptConversion(
+                registry,
                 typeof(Guid),
                 value => DynValue.NewString(((Guid)value).ToString("N"))
             );
-            registry.SetClrToScriptCustomConversion<long>(value => DynValue.NewNumber(value * 2));
-#pragma warning restore CS0618
+            InvokeLegacyClrToScriptConversion<long>(
+                registry,
+                value => DynValue.NewNumber(value * 2)
+            );
 
             Func<Script, object, DynValue> guidConverter = registry.GetClrToScriptCustomConversion(
                 typeof(Guid)
@@ -205,6 +208,81 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
                 Assert.That(registry.GetClrToScriptCustomConversion(typeof(int)), Is.Null);
             });
+        }
+
+        private static readonly MethodInfo LegacyClrToScriptConversionMethod =
+            ResolveLegacyClrToScriptConversionMethod();
+
+        private static readonly MethodInfo LegacyTypedClrToScriptConversionMethod =
+            ResolveLegacyTypedClrToScriptConversionMethod();
+
+        private static void InvokeLegacyClrToScriptConversion(
+            CustomConverterRegistry registry,
+            Type clrType,
+            Func<object, DynValue> converter
+        )
+        {
+            LegacyClrToScriptConversionMethod.Invoke(registry, new object[] { clrType, converter });
+        }
+
+        private static void InvokeLegacyClrToScriptConversion<T>(
+            CustomConverterRegistry registry,
+            Func<T, DynValue> converter
+        )
+        {
+            MethodInfo method = LegacyTypedClrToScriptConversionMethod.MakeGenericMethod(typeof(T));
+            method.Invoke(registry, new object[] { converter });
+        }
+
+        private static MethodInfo ResolveLegacyClrToScriptConversionMethod()
+        {
+            MethodInfo method = typeof(CustomConverterRegistry).GetMethod(
+                nameof(CustomConverterRegistry.SetClrToScriptCustomConversion),
+                new[] { typeof(Type), typeof(Func<object, DynValue>) }
+            );
+
+            if (method == null)
+            {
+                throw new InvalidOperationException(
+                    "Could not locate the legacy SetClrToScriptCustomConversion(Type, Func<object, DynValue>) overload."
+                );
+            }
+
+            return method;
+        }
+
+        private static MethodInfo ResolveLegacyTypedClrToScriptConversionMethod()
+        {
+            MethodInfo[] candidates = typeof(CustomConverterRegistry).GetMethods();
+            foreach (MethodInfo method in candidates)
+            {
+                if (
+                    !method.IsGenericMethodDefinition
+                    || method.Name != nameof(CustomConverterRegistry.SetClrToScriptCustomConversion)
+                )
+                {
+                    continue;
+                }
+
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 1)
+                {
+                    continue;
+                }
+
+                Type parameterType = parameters[0].ParameterType;
+                if (
+                    parameterType.IsGenericType
+                    && parameterType.GetGenericTypeDefinition() == typeof(Func<,>)
+                )
+                {
+                    return method;
+                }
+            }
+
+            throw new InvalidOperationException(
+                "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, DynValue>) overload."
+            );
         }
     }
 }

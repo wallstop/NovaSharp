@@ -1,0 +1,35 @@
+## Build outputs and caches
+bin/
+obj/
+artifacts/
+BenchmarkDotNet.Artifacts/
+TestResults/
+**/bin/
+**/obj/
+
+## Generated coverage + test artefacts
+docs/coverage/latest/
+docs/coverage/history/
+artifacts/coverage/
+*.trx
+*.coverage*
+
+## Logs and temporary files
+*.log
+*.tmp
+*.cache
+*.user
+
+## Tool- or IDE-specific state
+.vs/
+.idea/
+.vscode/
+
+## Dependency/vendor directories
+node_modules/
+packages/
+
+## Misc
+*.nupkg
+*.snupkg
+*.tgz

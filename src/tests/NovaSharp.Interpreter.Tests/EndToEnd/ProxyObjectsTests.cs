@@ -8,7 +8,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Interop.Attributes;
     using NUnit.Framework;
 
-#pragma warning disable CA5394 // Random is not used for security; tests just proxy System.Random instances.
     [TestFixture]
     public class ProxyObjectsTests
     {
@@ -33,6 +32,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 "CA1024:UsePropertiesWhereAppropriate",
                 Justification = "Proxy tests validate callable getters exposed to Lua."
             )]
+            [SuppressMessage(
+                "Security",
+                "CA5394:Random is an insecure random number generator",
+                Justification = "System.Random is intentional for this proxy scenario; cryptographic strength is not required."
+            )]
             public int GetValue()
             {
                 return randomSource != null ? randomSource.Next(3, 4) : 3;
@@ -48,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 Globals =
                 {
-                    ["R"] = new Random(),
+                    ["R"] = CreateNonCryptographicRandom(),
                     ["func"] =
                         (Action<Random>)(
                             r =>
@@ -69,6 +73,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Assert.That(s.Globals.Get("x").Number, Is.EqualTo(3.0));
         }
+
+        [SuppressMessage(
+            "Security",
+            "CA5394:Random is an insecure random number generator",
+            Justification = "Tests explicitly validate proxying of System.Random instances; cryptographic strength is irrelevant."
+        )]
+        private static Random CreateNonCryptographicRandom()
+        {
+            return new Random();
+        }
     }
-#pragma warning restore CA5394
 }

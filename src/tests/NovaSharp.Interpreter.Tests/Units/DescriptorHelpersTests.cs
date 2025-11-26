@@ -485,7 +485,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
-#pragma warning disable CS0649
             [SuppressMessage(
                 "Design",
                 "CA1051:DoNotDeclareVisibleInstanceFields",
@@ -513,7 +512,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Justification = "Fixtures expose field visibilities for descriptor tests."
             )]
             protected internal int _protectedInternalField;
-#pragma warning restore CS0649
 
             public MemberVisibilityFixtures()
             {
@@ -521,6 +519,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _internalField = 0;
                 _protectedField = 0;
                 _protectedInternalField = 0;
+                AnchorFieldUsage();
             }
 
             public void PublicMethod()
@@ -536,6 +535,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             protected internal void ProtectedInternalMethod()
             {
                 TouchInstance();
+            }
+
+            private void AnchorFieldUsage()
+            {
+                _invocationCount += publicField;
+                _invocationCount += _internalField;
+                _invocationCount += _protectedField;
+                _invocationCount += _protectedInternalField;
             }
 
             internal static class Metadata

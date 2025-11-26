@@ -428,10 +428,39 @@ namespace Tutorials.Chapters
             script.DoString(scriptCode);
         }
 
-#pragma warning disable 67
-#pragma warning disable 414
         public class SampleClass
         {
+            public SampleClass()
+            {
+                TouchMembersForVisibilityDemo();
+            }
+
+            private void TouchMembersForVisibilityDemo()
+            {
+                int accumulator = _field1 + field2 + _field3 + field4;
+
+                field2 = accumulator;
+                field4 = accumulator;
+                Property1 = accumulator;
+                Property2 = accumulator;
+                Property3 = accumulator;
+                Property4 = accumulator;
+                Property5 = accumulator;
+                Property6 = accumulator;
+
+                EventHandler noop = static (_, _) => { };
+                Event1 += noop;
+                Event1 -= noop;
+                Event2 += noop;
+                Event2 -= noop;
+                Event3 += noop;
+                Event3 -= noop;
+                Event4 += noop;
+                Event4 -= noop;
+                Event5 += noop;
+                Event5 -= noop;
+            }
+
             // Not visible - it's private
             private void Method1() { }
 
@@ -515,7 +544,5 @@ namespace Tutorials.Chapters
                 remove { }
             }
         }
-#pragma warning restore 414
-#pragma warning restore 67
     }
 }
