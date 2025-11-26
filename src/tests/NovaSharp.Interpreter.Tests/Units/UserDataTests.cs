@@ -405,6 +405,90 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void RegisterTypeThrowsWhenTypeIsNull()
+        {
+            Assert.That(
+                () => UserData.RegisterType((Type)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+            );
+        }
+
+        [Test]
+        public void RegisterTypeWithCustomDescriptorThrowsWhenDescriptorIsNull()
+        {
+            Assert.That(
+                () =>
+                    UserData.RegisterType(typeof(CustomDescriptorHost), (IUserDataDescriptor)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("customDescriptor")
+            );
+        }
+
+        [Test]
+        public void RegisterTypeWithCustomDescriptorThrowsWhenTypeIsNull()
+        {
+            CustomWireableDescriptor descriptor = new();
+
+            Assert.That(
+                () => UserData.RegisterType((Type)null, descriptor),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+            );
+        }
+
+        [Test]
+        public void RegisterTypeOverloadThrowsWhenDescriptorIsNull()
+        {
+            Assert.That(
+                () => UserData.RegisterType((IUserDataDescriptor)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("customDescriptor")
+            );
+        }
+
+        [Test]
+        public void CreateStaticThrowsWhenTypeIsNull()
+        {
+            Assert.That(
+                () => UserData.CreateStatic((Type)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
+        public void GetDescriptorForObjectThrowsWhenValueIsNull()
+        {
+            Assert.That(
+                () => UserData.GetDescriptorForObject(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("o")
+            );
+        }
+
+        [Test]
+        public void GetDescriptorForTypeThrowsWhenTypeArgumentIsNull()
+        {
+            Assert.That(
+                () => UserData.GetDescriptorForType((Type)null, searchInterfaces: false),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+            );
+        }
+
+        [Test]
+        public void GetExtensionMethodsByNameThrowsWhenNameIsNull()
+        {
+            Assert.That(
+                () => UserData.GetExtensionMethodsByNameAndType(null, typeof(CustomDescriptorHost)),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("name")
+            );
+        }
+
+        [Test]
+        public void GetExtensionMethodsByNameThrowsWhenExtendedTypeIsNull()
+        {
+            Assert.That(
+                () => UserData.GetExtensionMethodsByNameAndType("Decorate", null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("extendedType")
+            );
+        }
+
         private sealed class CustomWireableDescriptor : IUserDataDescriptor, IWireableDescriptor
         {
             public CustomWireableDescriptor(string identifier = null)

@@ -68,10 +68,18 @@ namespace NovaSharp.Interpreter.Platforms
                 {
                     try
                     {
-                        Expression e = Expression.Constant(5, typeof(int));
-                        Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
-                        lambda.Compile();
-                        RunningOnAotCache = false;
+                        Func<bool> probeOverride = TestHooks.GetAotProbeOverride();
+                        if (probeOverride != null)
+                        {
+                            RunningOnAotCache = probeOverride();
+                        }
+                        else
+                        {
+                            Expression e = Expression.Constant(5, typeof(int));
+                            Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
+                            lambda.Compile();
+                            RunningOnAotCache = false;
+                        }
                     }
                     catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
                     {
@@ -198,7 +206,8 @@ namespace NovaSharp.Interpreter.Platforms
                 bool isUnityNative,
                 bool isUnityIl2Cpp,
                 bool? runningOnAotCache,
-                bool autoDetectionsDone
+                bool autoDetectionsDone,
+                Func<bool> aotProbeOverride
             )
             {
                 IsRunningOnMono = isRunningOnMono;
@@ -209,6 +218,7 @@ namespace NovaSharp.Interpreter.Platforms
                 IsUnityIl2Cpp = isUnityIl2Cpp;
                 RunningOnAotCache = runningOnAotCache;
                 AutoDetectionsDone = autoDetectionsDone;
+                AotProbeOverride = aotProbeOverride;
             }
 
             /// <summary>Gets the captured Mono detection flag.</summary>
@@ -234,6 +244,9 @@ namespace NovaSharp.Interpreter.Platforms
 
             /// <summary>Gets a value indicating whether auto-detection had already run.</summary>
             internal bool AutoDetectionsDone { get; }
+
+            /// <summary>Gets the captured AOT probe override delegate.</summary>
+            internal Func<bool> AotProbeOverride { get; }
         }
 
         /// <summary>
@@ -254,7 +267,8 @@ namespace NovaSharp.Interpreter.Platforms
                     IsUnityNative,
                     IsUnityIl2Cpp,
                     RunningOnAotCache,
-                    AutoDetectionsDone
+                    AutoDetectionsDone,
+                    _aotProbeOverride
                 );
             }
 
@@ -271,6 +285,7 @@ namespace NovaSharp.Interpreter.Platforms
                 IsUnityIl2Cpp = snapshot.IsUnityIl2Cpp;
                 RunningOnAotCache = snapshot.RunningOnAotCache;
                 AutoDetectionsDone = snapshot.AutoDetectionsDone;
+                AotProbeOverride = snapshot.AotProbeOverride;
             }
 
             /// <summary>
@@ -331,6 +346,21 @@ namespace NovaSharp.Interpreter.Platforms
             {
                 AutoDetectionsDone = value;
             }
+
+            /// <summary>
+            /// Overrides the AOT probe logic; when set, <see cref="IsRunningOnAot"/> uses the supplied delegate.
+            /// </summary>
+            public static void SetAotProbeOverride(Func<bool> probe)
+            {
+                AotProbeOverride = probe;
+            }
+
+            internal static Func<bool> GetAotProbeOverride()
+            {
+                return AotProbeOverride;
+            }
+
+            private static Func<bool> AotProbeOverride;
         }
 
         private static bool IsAotDetectionSuppressedException(Exception ex)

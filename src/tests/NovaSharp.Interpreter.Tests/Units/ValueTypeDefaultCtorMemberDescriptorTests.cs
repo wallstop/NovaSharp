@@ -91,6 +91,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void PrepareForWiringThrowsWhenTableIsNull()
+        {
+            ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
         public void DescriptorMetadataExposesDefaultValues()
         {
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));

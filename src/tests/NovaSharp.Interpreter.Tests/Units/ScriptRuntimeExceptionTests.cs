@@ -261,6 +261,23 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ArithmeticOnNonNumberThrowsWhenRightOperandIsString()
+        {
+            DynValue left = DynValue.NewNumber(1);
+            DynValue right = DynValue.NewString("text");
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ArithmeticOnNonNumber(
+                left,
+                right
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("attempt to perform arithmetic on a string value")
+            );
+        }
+
+        [Test]
         public void ConcatOnNonStringRejectsRightOperand()
         {
             DynValue left = DynValue.NewNumber(1);
@@ -349,6 +366,105 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LenOnInvalidTypeReportsOperandType()
+        {
+            DynValue value = DynValue.NewBoolean(true);
+
+            ScriptRuntimeException exception = ScriptRuntimeException.LenOnInvalidType(value);
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to get length of a boolean value"));
+        }
+
+        [Test]
+        public void IndexTypeReportsOperandType()
+        {
+            DynValue value = DynValue.NewTable(new Table(new Script()));
+
+            ScriptRuntimeException exception = ScriptRuntimeException.IndexType(value);
+
+            Assert.That(exception.Message, Is.EqualTo("attempt to index a table value"));
+        }
+
+        [Test]
+        public void BadArgumentFactoriesProduceExpectedMessages()
+        {
+            ScriptRuntimeException basic = ScriptRuntimeException.BadArgument(0, "foo", "message");
+            ScriptRuntimeException typed = ScriptRuntimeException.BadArgument(
+                1,
+                "bar",
+                DataType.Number,
+                DataType.Boolean,
+                allowNil: false
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(basic.Message, Is.EqualTo("bad argument #1 to 'foo' (message)"));
+                Assert.That(
+                    typed.Message,
+                    Is.EqualTo("bad argument #2 to 'bar' (number expected, got boolean)")
+                );
+            });
+        }
+
+        [Test]
+        public void BadArgumentNoValueAndValueExpectedUseDistinctMessages()
+        {
+            ScriptRuntimeException noValue = ScriptRuntimeException.BadArgumentNoValue(
+                2,
+                "baz",
+                DataType.UserData
+            );
+            ScriptRuntimeException valueExpected = ScriptRuntimeException.BadArgumentValueExpected(
+                4,
+                "qux"
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    noValue.Message,
+                    Is.EqualTo("bad argument #3 to 'baz' (userdata expected, got no value)")
+                );
+                Assert.That(
+                    valueExpected.Message,
+                    Is.EqualTo("bad argument #5 to 'qux' (value expected)")
+                );
+            });
+        }
+
+        [Test]
+        public void BadArgumentIndexOutOfRangeReportsFunctionName()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentIndexOutOfRange(
+                "insert",
+                1
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("bad argument #2 to 'insert' (index out of range)")
+            );
+        }
+
+        [Test]
+        public void BadArgumentDataTypeOverloadFormatsMessage()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgument(
+                argNum: 1,
+                funcName: "foo",
+                expected: DataType.Boolean,
+                got: DataType.Table,
+                allowNil: false
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("bad argument #2 to 'foo' (boolean expected, got table)")
+            );
+        }
+
+        [Test]
         public void LoopInMetamethodHelpersReturnStockMessages()
         {
             Assert.Multiple(() =>
@@ -427,6 +543,49 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void BadArgumentUserDataThrowsWhenExpectedTypeNull()
+        {
+            Assert.That(
+                () =>
+                    ScriptRuntimeException.BadArgumentUserData(
+                        0,
+                        "foo",
+                        expected: null,
+                        got: new object(),
+                        allowNil: false
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("expected")
+            );
+        }
+
+        [Test]
+        public void ConvertObjectFailedThrowsWhenClrTypeNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.ConvertObjectFailed(DataType.String, (Type)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t2")
+            );
+        }
+
+        [Test]
+        public void ScriptRuntimeExceptionCtorThrowsWhenInnerExceptionNull()
+        {
+            Assert.That(
+                () => new ScriptRuntimeException((Exception)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("ex")
+            );
+        }
+
+        [Test]
+        public void ScriptRuntimeExceptionCopyCtorThrowsWhenSourceNull()
+        {
+            Assert.That(
+                () => new ScriptRuntimeException((ScriptRuntimeException)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("ex")
+            );
+        }
+
+        [Test]
         public void RethrowRespectsGlobalOptionsWhenEnabled()
         {
             bool original = Script.GlobalOptions.RethrowExceptionNested;
@@ -467,6 +626,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Script.GlobalOptions.RethrowExceptionNested = original;
             }
+        }
+
+        [Test]
+        public void ConvertObjectFailedThrowsWhenObjectNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.ConvertObjectFailed((object)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("obj")
+            );
+        }
+
+        [Test]
+        public void UserDataArgumentTypeMismatchThrowsWhenClrTypeNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.UserDataArgumentTypeMismatch(DataType.Number, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("clrType")
+            );
         }
 
         private sealed class SampleClrType { }

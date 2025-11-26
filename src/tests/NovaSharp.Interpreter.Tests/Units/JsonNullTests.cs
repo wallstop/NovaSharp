@@ -48,5 +48,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(JsonNull.IsJsonNull(number), Is.False);
             });
         }
+
+        [Test]
+        public void IsJsonNullThrowsOnNullDynValue()
+        {
+            Assert.That(
+                () => JsonNull.IsJsonNull(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("v")
+            );
+        }
     }
 }

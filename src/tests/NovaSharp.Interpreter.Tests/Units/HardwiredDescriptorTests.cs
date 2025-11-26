@@ -179,6 +179,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void HardwiredMemberDescriptorThrowsWhenValueArgumentIsNull()
+        {
+            Script script = new Script();
+            TrackingMemberDescriptor descriptor = new(typeof(int), MemberDescriptorAccess.CanWrite);
+
+            Assert.That(
+                () => descriptor.SetValue(script, new object(), null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            );
+        }
+
+        [Test]
+        public void HardwiredUserDataDescriptorCtorThrowsWhenTypeIsNull()
+        {
+            Assert.That(
+                () => new StubHardwiredUserDataDescriptor(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
         public void DynValueMemberDescriptorReturnsStoredDynValue()
         {
             DynValueMemberDescriptor descriptor = new("constant", DynValue.NewNumber(123));
@@ -462,5 +483,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         private sealed class DummyInstanceUserData { }
+
+        private sealed class StubHardwiredUserDataDescriptor : HardwiredUserDataDescriptor
+        {
+            public StubHardwiredUserDataDescriptor(System.Type type)
+                : base(type) { }
+        }
     }
 }

@@ -292,5 +292,153 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue nil = context.EvaluateSymbol(null);
             Assert.That(nil, Is.EqualTo(DynValue.Nil));
         }
+
+        [Test]
+        public void GetMetatableThrowsWhenValueIsNull()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            Assert.That(
+                () => context.GetMetatable(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            );
+        }
+
+        [Test]
+        public void GetMetamethodThrowsWhenArgumentsAreNull()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue value = DynValue.NewNumber(1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => context.GetMetamethod(null, "__call"),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+                );
+                Assert.That(
+                    () => context.GetMetamethod(value, null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("metamethod")
+                );
+            });
+        }
+
+        [Test]
+        public void GetBinaryMetamethodValidatesArguments()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue operand = DynValue.NewNumber(1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => context.GetBinaryMetamethod(null, operand, "__add"),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("op1")
+                );
+                Assert.That(
+                    () => context.GetBinaryMetamethod(operand, null, "__add"),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("op2")
+                );
+                Assert.That(
+                    () => context.GetBinaryMetamethod(operand, operand, null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("eventName")
+                );
+            });
+        }
+
+        [Test]
+        public void EmulateClassicCallValidatesArguments()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(Array.Empty<DynValue>(), isMethodCall: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => context.EmulateClassicCall(null, "fn", _ => 0),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+                );
+                Assert.That(
+                    () => context.EmulateClassicCall(args, "fn", null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("callback")
+                );
+            });
+        }
+
+        [Test]
+        public void CallValidatesFunctionArgument()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            Assert.That(
+                () => context.Call(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("func")
+            );
+        }
+
+        [Test]
+        public void GetMetamethodTailCallReturnsNullWhenMetamethodMissing()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue target = DynValue.NewTable(new Table(script));
+
+            DynValue tail = context.GetMetamethodTailCall(target, "__call", DynValue.NewNumber(1));
+            Assert.That(tail, Is.Null);
+        }
+
+        [Test]
+        public void PerformMessageDecorationDefaultsToOriginalMessage()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            ScriptRuntimeException exception = new("boom");
+
+            context.PerformMessageDecorationBeforeUnwind(null, exception);
+
+            Assert.That(exception.DecoratedMessage, Is.EqualTo("boom"));
+        }
+
+        [Test]
+        public void IsYieldableReturnsFalseForDynamicContexts()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Assert.That(context.IsYieldable(), Is.False);
+        }
+
+        [Test]
+        public void IsYieldableReturnsFalseForMainProcessorCallbacks()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue callback = DynValue.NewCallback(
+                (context, _) => DynValue.NewBoolean(context.IsYieldable())
+            );
+            script.Globals["yieldState"] = callback;
+
+            DynValue result = script.DoString("return yieldState()");
+            Assert.That(result.Boolean, Is.False);
+        }
+
+        [Test]
+        public void IsYieldableReturnsTrueInsideCoroutine()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue callback = DynValue.NewCallback(
+                (context, _) => DynValue.NewBoolean(context.IsYieldable())
+            );
+            script.Globals["yieldState"] = callback;
+            script.DoString("function coroutineProbe() return yieldState() end");
+
+            DynValue coroutineHandle = script.CreateCoroutine(script.Globals.Get("coroutineProbe"));
+            DynValue resumeResult = coroutineHandle.Coroutine.Resume();
+
+            Assert.That(resumeResult.Boolean, Is.True);
+        }
     }
 }

@@ -75,5 +75,31 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(strings, Is.EqualTo(new List<string> { "one", "two", "three" }));
         }
+
+        [Test]
+        public void HelpersThrowWhenEnumerableIsNull()
+        {
+            IEnumerable<DynValue> values = null;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => new List<double>(values.Convert<double>(DataType.Number)),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("enumerable")
+                );
+                Assert.That(
+                    () => new List<DynValue>(values.OfDataType(DataType.String)),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("enumerable")
+                );
+                Assert.That(
+                    () => new List<object>(values.AsObjects()),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("enumerable")
+                );
+                Assert.That(
+                    () => new List<string>(values.AsObjects<string>()),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("enumerable")
+                );
+            });
+        }
     }
 }

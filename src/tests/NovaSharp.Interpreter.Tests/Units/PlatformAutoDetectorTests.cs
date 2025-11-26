@@ -91,6 +91,26 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void IsRunningOnAotUsesProbeOverride()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
+
+            Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
+        }
+
+        [Test]
+        public void IsRunningOnAotTreatsProbeExceptionsAsAotHosts()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
+                throw new PlatformNotSupportedException()
+            );
+
+            Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
+        }
+
         private sealed class PlatformDetectorScope : IDisposable
         {
             private readonly PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;
@@ -148,6 +168,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
             }
 
+            public static IDisposable OverrideAotProbe(Func<bool> probe)
+            {
+                PlatformAutoDetector.TestHooks.SetAotProbeOverride(probe);
+                return new AotProbeOverrideHandle();
+            }
+
             public void Dispose()
             {
                 PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
@@ -156,6 +182,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             private static void SetAutoDetectionsDone(bool value)
             {
                 PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(value);
+            }
+
+            private sealed class AotProbeOverrideHandle : IDisposable
+            {
+                public void Dispose()
+                {
+                    PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
+                }
             }
         }
 

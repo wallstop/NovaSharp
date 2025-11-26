@@ -77,6 +77,22 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SerializeNonStringAndDigitPrefixedKeysUseIndexerNotation()
+        {
+            Table table = new Table(owner: null);
+            table.Set(DynValue.NewNumber(5), DynValue.NewString("value"));
+            table.Set(DynValue.NewString("1start"), DynValue.NewNumber(10));
+
+            string serialized = table.Serialize(prefixReturn: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(serialized, Does.Contain("\t[5] = \"value\","));
+                Assert.That(serialized, Does.Contain("\t[\"1start\"] = 10,"));
+            });
+        }
+
+        [Test]
         public void SerializeEmptyTableHonorsReturnPrefix()
         {
             Table table = new Table(owner: null);

@@ -133,6 +133,109 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void TryApplyFromScriptPathReturnsFalseWhenPathMissing()
+        {
+            ScriptOptions options = new(Script.DefaultOptions);
+            bool result = ModManifestCompatibility.TryApplyFromScriptPath(
+                null,
+                options,
+                infoSink: null,
+                warningSink: null
+            );
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void TryApplyFromDirectoryReturnsFalseWhenManifestMissing()
+        {
+            string tempDir = CreateTempDirectory();
+            ScriptOptions options = new(Script.DefaultOptions);
+
+            bool applied = ModManifestCompatibility.TryApplyFromDirectory(tempDir, options);
+            Assert.That(applied, Is.False);
+        }
+
+        [Test]
+        public void TryApplyFromDirectoryDoesNotEmitInfoWhenCompatibilityMissing()
+        {
+            string tempDir = CreateTempDirectory();
+            File.WriteAllText(Path.Combine(tempDir, "mod.json"), "{ \"name\": \"sample\" }");
+
+            ScriptOptions options = new(Script.DefaultOptions);
+            List<string> info = new();
+
+            bool applied = ModManifestCompatibility.TryApplyFromDirectory(
+                tempDir,
+                options,
+                infoSink: info.Add,
+                warningSink: null
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(applied, Is.True);
+                Assert.That(info, Is.Empty);
+            });
+        }
+
+        [Test]
+        public void TryApplyFromScriptPathResolvesDirectoriesDirectly()
+        {
+            TestModFileSystem fileSystem = new();
+            string directory = fileSystem.AddDirectory("mods/dirscript");
+            fileSystem.AddFile(
+                Path.Combine(directory, "mod.json"),
+                "{ \"luaCompatibility\": \"Lua54\" }"
+            );
+
+            ScriptOptions options = new(Script.DefaultOptions);
+            bool applied = ModManifestCompatibility.TryApplyFromScriptPath(
+                directory,
+                options,
+                infoSink: null,
+                warningSink: null,
+                fileSystem: fileSystem
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(applied, Is.True);
+                Assert.That(
+                    options.CompatibilityVersion,
+                    Is.EqualTo(LuaCompatibilityVersion.Lua54)
+                );
+            });
+        }
+
+        [Test]
+        public void TryApplyFromScriptPathHandlesFullPathExceptions()
+        {
+            ThrowingFileSystem fileSystem = new();
+            ScriptOptions options = new(Script.DefaultOptions);
+
+            bool applied = ModManifestCompatibility.TryApplyFromScriptPath(
+                "invalid::path",
+                options,
+                infoSink: null,
+                warningSink: null,
+                fileSystem: fileSystem
+            );
+
+            Assert.That(applied, Is.False);
+            Assert.That(fileSystem.GetFullPathAttempts, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TryApplyFromDirectoryThrowsWhenOptionsNull()
+        {
+            Assert.That(
+                () => ModManifestCompatibility.TryApplyFromDirectory("mods", null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("options")
+            );
+        }
+
         private static string CreateTempDirectory()
         {
             string path = Path.Combine(
@@ -217,6 +320,37 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 string basePath = Path.Combine(Path.GetTempPath(), replaced);
                 return Path.GetFullPath(basePath);
+            }
+        }
+
+        private sealed class ThrowingFileSystem : IModFileSystem
+        {
+            public int GetFullPathAttempts { get; private set; }
+
+            public bool FileExists(string path)
+            {
+                return false;
+            }
+
+            public bool DirectoryExists(string path)
+            {
+                return false;
+            }
+
+            public Stream OpenRead(string path)
+            {
+                throw new NotSupportedException();
+            }
+
+            public string GetFullPath(string path)
+            {
+                GetFullPathAttempts++;
+                throw new ArgumentException("invalid path");
+            }
+
+            public string GetDirectoryName(string path)
+            {
+                return null;
             }
         }
     }

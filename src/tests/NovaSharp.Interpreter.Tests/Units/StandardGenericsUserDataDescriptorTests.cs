@@ -93,6 +93,20 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void AsStringThrowsWhenObjectIsNull()
+        {
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(List<>),
+                InteropAccessMode.Default
+            );
+
+            Assert.That(
+                () => descriptor.AsString(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("obj")
+            );
+        }
+
+        [Test]
         public void IsTypeCompatibleDelegatesToFramework()
         {
             StandardGenericsUserDataDescriptor descriptor = new(

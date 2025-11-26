@@ -14,6 +14,7 @@
 - Execute interpreter tests with `dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release`.
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
 - Generate coverage locally with `./scripts/coverage/coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`). When running on macOS/Linux without PowerShell, detect the absence of `pwsh`/`powershell` and fall back to `bash ./scripts/coverage/coverage.sh` (supports the same flags).
+- **After every change**, rerun all audits and keep their logs up to date: `python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log`, `python tools/NamingAudit/naming_audit.py --write-log naming_audit.log`, and `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log`. Fix any reported findings before pushing so CI stays green.
 
 ## Coding Style & Naming Conventions
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
