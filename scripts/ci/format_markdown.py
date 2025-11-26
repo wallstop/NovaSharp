@@ -29,6 +29,8 @@ SKIP_FILES = {
     "CLAUDE.md",
     "PLAN.md",
     "README.md",
+    "docs/modernization/moonsharp-issue-audit.md",
+    "docs/testing/spec-audit.md",
 }
 MD_EXTENSIONS = {"gfm"}
 
