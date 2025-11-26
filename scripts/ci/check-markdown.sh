@@ -16,6 +16,12 @@ detect_base_ref() {
     return
   fi
 
+  upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+  if [[ -n "$upstream_ref" ]]; then
+    printf '%s\n' "$upstream_ref"
+    return
+  fi
+
   if git symbolic-ref --quiet refs/remotes/origin/HEAD >/dev/null 2>&1; then
     remote_head="$(git symbolic-ref refs/remotes/origin/HEAD)"
     if [[ -n "$remote_head" ]]; then
@@ -31,12 +37,6 @@ detect_base_ref() {
 
   if git show-ref --verify --quiet refs/remotes/origin/master; then
     printf '%s\n' "origin/master"
-    return
-  fi
-
-  upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
-  if [[ -n "$upstream_ref" ]]; then
-    printf '%s\n' "$upstream_ref"
     return
   fi
 
