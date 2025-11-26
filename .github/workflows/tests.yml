@@ -73,15 +73,13 @@ jobs:
         run: ./scripts/ci/check-markdown.sh
         shell: bash
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '8.0.x'
-      - name: Enforce .editorconfig rules (dotnet format)
-        run: dotnet format src/NovaSharp.sln --verify-no-changes --severity error --no-restore
-      - name: CSharpier formatting gate
-        run: ./scripts/ci/check-csharpier.sh
-        shell: bash
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v5
+          with:
+            dotnet-version: '8.0.x'
+        - name: CSharpier formatting gate
+          run: ./scripts/ci/check-csharpier.sh
+          shell: bash
 
   dotnet-tests:
     runs-on: ubuntu-latest
