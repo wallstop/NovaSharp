@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Security;
     using System.Text;
@@ -20,13 +19,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing io Lua functions. Proper support requires a compatible IPlatformAccessor
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "io")]
-    public class IoModule
+    public static class IoModule
     {
         /// <summary>
         /// Initializes Lua's <c>io</c> module (§6.8) by registering the file userdata, wiring the

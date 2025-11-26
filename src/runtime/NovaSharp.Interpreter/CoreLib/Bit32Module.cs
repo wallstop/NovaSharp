@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -11,13 +10,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Implements Lua 5.2's <c>bit32</c> standard library (§6.7) for compatibility profiles that expose it.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "bit32")]
-    public class Bit32Module
+    public static class Bit32Module
     {
         private static readonly uint[] Masks =
         {

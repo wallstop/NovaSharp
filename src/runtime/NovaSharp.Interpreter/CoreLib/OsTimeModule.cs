@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
@@ -15,13 +14,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "os")]
-    public class OsTimeModule
+    public static class OsTimeModule
     {
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider

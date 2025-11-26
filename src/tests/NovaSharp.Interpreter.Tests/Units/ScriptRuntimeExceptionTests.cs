@@ -200,6 +200,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void BitwiseOnNonIntegerThrowsWhenValueNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.BitwiseOnNonInteger(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            );
+        }
+
+        [Test]
         public void CompareInvalidTypeReportsMatchingTypes()
         {
             DynValue left = DynValue.NewString("a");
@@ -291,6 +300,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ArithmeticOnNonNumberThrowsWhenLeftOperandNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.ArithmeticOnNonNumber(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("l")
+            );
+        }
+
+        [Test]
+        public void ArithmeticOnNonNumberThrowsInternalErrorWhenBothOperandsValid()
+        {
+            DynValue left = DynValue.NewNumber(3);
+            DynValue right = DynValue.NewNumber(4);
+
+            Assert.That(
+                () => ScriptRuntimeException.ArithmeticOnNonNumber(left, right),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.EqualTo("ArithmeticOnNonNumber - both are numbers")
+            );
+        }
+
+        [Test]
         public void ConcatOnNonStringRejectsRightOperand()
         {
             DynValue left = DynValue.NewNumber(1);
@@ -319,6 +351,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConcatOnNonStringThrowsWhenLeftOperandNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.ConcatOnNonString(null, DynValue.Nil),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("l")
+            );
+        }
+
+        [Test]
+        public void ConcatOnNonStringThrowsInternalErrorWhenOperandsValid()
+        {
+            DynValue left = DynValue.NewString("a");
+            DynValue right = DynValue.NewString("b");
+
+            Assert.That(
+                () => ScriptRuntimeException.ConcatOnNonString(left, right),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.EqualTo("ConcatOnNonString - both are numbers/strings")
+            );
+        }
+
+        [Test]
         public void BadArgumentUserDataIncludesAllowNilHint()
         {
             ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentUserData(
@@ -330,6 +385,37 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("userdata<String>nil or "));
+        }
+
+        [Test]
+        public void BadArgumentUserDataOmitsNilHintWhenDisallowed()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentUserData(
+                2,
+                "bar",
+                typeof(int),
+                new object(),
+                allowNil: false
+            );
+
+            Assert.That(exception.Message, Does.Not.Contain("nil or "));
+        }
+
+        [Test]
+        public void BadArgumentUserDataFormatsNullGotValue()
+        {
+            ScriptRuntimeException exception = ScriptRuntimeException.BadArgumentUserData(
+                0,
+                "baz",
+                typeof(int),
+                got: null,
+                allowNil: false
+            );
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("bad argument #1 to 'baz' (userdata<Int32> expected, got null)")
+            );
         }
 
         [Test]
@@ -389,6 +475,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LenOnInvalidTypeThrowsWhenOperandNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.LenOnInvalidType(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("r")
+            );
+        }
+
+        [Test]
         public void IndexTypeReportsOperandType()
         {
             DynValue value = DynValue.NewTable(new Table(new Script()));
@@ -396,6 +491,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptRuntimeException exception = ScriptRuntimeException.IndexType(value);
 
             Assert.That(exception.Message, Is.EqualTo("attempt to index a table value"));
+        }
+
+        [Test]
+        public void IndexTypeThrowsWhenOperandNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.IndexType(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("obj")
+            );
         }
 
         [Test]

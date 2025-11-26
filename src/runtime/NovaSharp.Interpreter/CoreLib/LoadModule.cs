@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -11,13 +10,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Implements Lua's core loading APIs (load, loadfile, dofile, require) per Lua 5.4 §4.6 so
     /// NovaSharp scripts can compile chunks from strings, files, and reader callbacks.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule]
-    public class LoadModule
+    public static class LoadModule
     {
         /// <summary>
         /// Initializes the `package` table with platform-specific defaults (notably `package.config`)

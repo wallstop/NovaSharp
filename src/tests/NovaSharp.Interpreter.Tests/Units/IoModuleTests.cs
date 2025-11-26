@@ -248,6 +248,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetDefaultFileThrowsWhenScriptNull()
+        {
+            using MemoryStream stream = new MemoryStream();
+
+            Assert.That(
+                () => IoModule.SetDefaultFile(null, StandardFileType.StdIn, stream),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
         public void LinesWithoutArgumentsReadFromDefaultInput()
         {
             Script script = CreateScript();
@@ -319,6 +330,28 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
 
                 Assert.That(result.String, Is.EqualTo("AB"));
+            }
+            finally
+            {
+                File.Delete(temp);
+            }
+        }
+
+        [Test]
+        public void OpenThrowsWhenModeEmpty()
+        {
+            Script script = CreateScript();
+            string temp = Path.GetTempFileName();
+            string path = EscapePath(temp);
+
+            try
+            {
+                Assert.That(
+                    () => script.DoString($"return io.open('{path}', \"\")"),
+                    Throws
+                        .InstanceOf<ScriptRuntimeException>()
+                        .With.Message.Contains("invalid mode")
+                );
             }
             finally
             {
@@ -435,6 +468,27 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = script.DoString("return io.Type(sampleUserData)");
 
             Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void IoExceptionToLuaMessageThrowsWhenExceptionNull()
+        {
+            Assert.That(
+                () => IoModule.IoExceptionToLuaMessage(null, "file.txt"),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("ex")
+            );
+        }
+
+        [Test]
+        public void IoExceptionToLuaMessageReturnsExceptionMessageWhenNotFileNotFound()
+        {
+            const string message = "access denied";
+            string result = IoModule.IoExceptionToLuaMessage(
+                new UnauthorizedAccessException(message),
+                "file.txt"
+            );
+
+            Assert.That(result, Is.EqualTo(message));
         }
 
         [Test]

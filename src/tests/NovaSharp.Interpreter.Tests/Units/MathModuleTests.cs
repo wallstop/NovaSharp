@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -131,6 +132,72 @@ namespace NovaSharp.Interpreter.Tests.Units
                     firstSequence.Tuple[2].Number,
                     Is.EqualTo(secondSequence.Tuple[2].Number).Within(1e-12)
                 );
+            });
+        }
+
+        [Test]
+        public void TypeDistinguishesIntegersAndFloats()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return math.type(5), math.type(3.14)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("integer"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("float"));
+            });
+        }
+
+        [Test]
+        public void ToIntegerConvertsNumericStrings()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.tointeger('42')");
+
+            Assert.That(result.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void ToIntegerReturnsNilWhenValueNotIntegral()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.tointeger(3.5)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void ToIntegerThrowsWhenArgumentMissing()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () => script.DoString("return math.tointeger()"),
+                Throws.InstanceOf<ScriptRuntimeException>().With.Message.Contains("got no value")
+            );
+        }
+
+        [Test]
+        public void ToIntegerThrowsWhenTypeUnsupported()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () => script.DoString("return math.tointeger(true)"),
+                Throws.InstanceOf<ScriptRuntimeException>().With.Message.Contains("boolean")
+            );
+        }
+
+        [Test]
+        public void UltPerformsUnsignedComparison()
+        {
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return math.ult(0, -1), math.ult(-1, 0)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                Assert.That(tuple.Tuple[1].Boolean, Is.False);
             });
         }
 

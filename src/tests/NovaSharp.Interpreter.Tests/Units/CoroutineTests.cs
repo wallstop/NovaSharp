@@ -51,6 +51,48 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void AsTypedEnumerableThrowsForClrCallbacks()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                coroutine.Coroutine.AsTypedEnumerable().ToList()
+            );
+
+            Assert.That(exception.Message, Does.Contain("Only non-CLR coroutines"));
+        }
+
+        [Test]
+        public void AsEnumerableReturnsObjects()
+        {
+            Script script = new();
+            DynValue function = script.DoString(
+                "return function() coroutine.yield(10) coroutine.yield(20) return 30 end"
+            );
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            List<object> results = coroutine.Coroutine.AsEnumerable().ToList();
+
+            Assert.That(results, Is.EqualTo(new object[] { 10d, 20d, 30d }));
+        }
+
+        [Test]
+        public void AsEnumerableOfTReturnsTypedScalars()
+        {
+            Script script = new();
+            DynValue function = script.DoString(
+                "return function() coroutine.yield(1) coroutine.yield(2) return 3 end"
+            );
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            List<int> results = coroutine.Coroutine.AsEnumerable<int>().ToList();
+
+            Assert.That(results, Is.EqualTo(YieldedValues));
+        }
+
+        [Test]
         public void MarkClrCallbackAsDeadTransitionsType()
         {
             Script script = new();
@@ -161,6 +203,124 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("Only non-CLR coroutines"));
+        }
+
+        [Test]
+        public void ResumeWithDynValueArgumentsThrowsWhenNull()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            Assert.That(
+                () => coroutine.Coroutine.Resume((DynValue[])null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void ResumeWithDynValueArgumentsThrowsForClrCallbacks()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                coroutine.Coroutine.Resume(Array.Empty<DynValue>())
+            );
+            Assert.That(exception.Message, Does.Contain("Only non-CLR coroutines"));
+        }
+
+        [Test]
+        public void ResumeWithContextArgsThrowsWhenContextNull()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            Assert.That(
+                () => coroutine.Coroutine.Resume(null, Array.Empty<DynValue>()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("context")
+            );
+        }
+
+        [Test]
+        public void ResumeWithContextArgsThrowsWhenArgsNull()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => coroutine.Coroutine.Resume(context, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void ResumeWithObjectArgsThrowsWhenArgsNull()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            Assert.That(
+                () => coroutine.Coroutine.Resume((object[])null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void ResumeWithContextObjectArgsThrowsWhenArgsNull()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => coroutine.Coroutine.Resume(context, (object[])null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void AutoYieldCounterProxiesProcessorValue()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() coroutine.yield(1) end");
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            coroutine.Coroutine.AutoYieldCounter = 42;
+
+            Assert.That(coroutine.Coroutine.AutoYieldCounter, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void GetProcessorForTestsThrowsForClrCallbacks()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+
+            Assert.That(
+                () => coroutine.Coroutine.GetProcessorForTests(),
+                Throws.InvalidOperationException.With.Message.Contains("CLR callback")
+            );
+        }
+
+        [Test]
+        public void ForceStateForTestsThrowsForClrCallbacks()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+
+            Assert.That(
+                () => coroutine.Coroutine.ForceStateForTests(CoroutineState.Suspended),
+                Throws.InvalidOperationException.With.Message.Contains("CLR callback")
+            );
         }
 
         [Test]

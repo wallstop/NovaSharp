@@ -251,6 +251,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 typeof(VisibilityFixtures.GenericHost<string>.InnerType).GetConversionMethodName();
 
             Assert.That(name, Is.EqualTo("__toInnerType"));
+
+            string genericName = typeof(VisibilityFixtures.GenericHost<>).GetConversionMethodName();
+            Assert.That(genericName, Is.EqualTo("__toGenericHost_1"));
         }
 
         [Test]
@@ -293,12 +296,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value_1"), Is.True);
                 Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("1value"), Is.False);
+                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value-1"), Is.False);
                 Assert.That(
                     DescriptorHelpers.ToValidSimpleIdentifier("1 invalid-name"),
                     Is.EqualTo("_1_invalid_name")
                 );
                 Assert.That(DescriptorHelpers.IsValidSimpleIdentifier(null), Is.False);
                 Assert.That(DescriptorHelpers.ToValidSimpleIdentifier(null), Is.EqualTo("_"));
+                Assert.That(
+                    DescriptorHelpers.ToValidSimpleIdentifier(string.Empty),
+                    Is.EqualTo("_")
+                );
             });
         }
 
@@ -315,6 +323,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     DescriptorHelpers.Camelify("__Already__Mixed__"),
                     Is.EqualTo("alreadyMixed")
                 );
+                Assert.That(DescriptorHelpers.Camelify("___"), Is.EqualTo(string.Empty));
                 Assert.That(
                     DescriptorHelpers.ToUpperUnderscore("HttpRequestV2"),
                     Is.EqualTo("HTTP_REQUEST_V2")
@@ -331,6 +340,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                     DescriptorHelpers.ToUpperUnderscore("Value123Name"),
                     Is.EqualTo("VALUE_123_NAME")
                 );
+                Assert.That(
+                    DescriptorHelpers.ToUpperUnderscore("Value123"),
+                    Is.EqualTo("VALUE123")
+                );
                 Assert.That(DescriptorHelpers.UpperFirstLetter("sample"), Is.EqualTo("Sample"));
                 Assert.That(
                     DescriptorHelpers.NormalizeUppercaseRuns("HTTPRequestURL"),
@@ -343,6 +356,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
                 Assert.That(
                     DescriptorHelpers.NormalizeUppercaseRuns(string.Empty),
+                    Is.EqualTo(string.Empty)
+                );
+                Assert.That(
+                    DescriptorHelpers.NormalizeUppercaseRuns("___"),
                     Is.EqualTo(string.Empty)
                 );
                 Assert.That(DescriptorHelpers.NormalizeUppercaseRuns(null), Is.Null);

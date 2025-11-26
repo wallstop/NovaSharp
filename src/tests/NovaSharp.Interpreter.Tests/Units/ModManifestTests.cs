@@ -202,6 +202,30 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ParseThrowsWhenJsonResolvesToNullDocument()
+        {
+            Assert.That(
+                () => ModManifest.Parse("null"),
+                Throws
+                    .TypeOf<InvalidDataException>()
+                    .With.Message.EqualTo("Manifest JSON resolved to an empty document.")
+            );
+        }
+
+        [Test]
+        public void TryParseReturnsFalseWhenJsonResolvesToNullDocument()
+        {
+            bool parsed = ModManifest.TryParse("null", out ModManifest manifest, out string error);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(manifest, Is.Null);
+                Assert.That(error, Is.EqualTo("Manifest JSON resolved to an empty document."));
+            });
+        }
+
+        [Test]
         public void ApplyCompatibilityUsesGenericLabelWhenNameMissing()
         {
             ModManifest manifest = new(null, "1.0", LuaCompatibilityVersion.Latest);

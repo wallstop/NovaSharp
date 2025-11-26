@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Numerics;
+    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
@@ -131,6 +132,46 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Number, Is.EqualTo(0b_1111));
         }
 
+        [Test]
+        public void BitwiseThrowsWhenArgumentsNull()
+        {
+            Assert.That(
+                () => Bit32Module.Bitwise("band", null, (x, y) => x & y),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void BitwiseThrowsWhenAccumulatorNull()
+        {
+            CallbackArguments args = new(new[] { DynValue.NewNumber(1) }, false);
+
+            Assert.That(
+                () => Bit32Module.Bitwise("band", args, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("accumFunc")
+            );
+        }
+
+        [Test]
+        public void NBitMaskHandlesZeroAndNegativeInputs()
+        {
+            uint resultZero = InvokeNBitMask(0);
+            uint resultNegative = InvokeNBitMask(-5);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(resultZero, Is.EqualTo(0));
+                Assert.That(resultNegative, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
+        public void NBitMaskSaturatesAt32Bits()
+        {
+            uint saturated = InvokeNBitMask(64);
+            Assert.That(saturated, Is.EqualTo(0xFFFFFFFF));
+        }
+
         [TestCase(0x10u, 2, 0x4u)]
         [TestCase(0x10u, -2, 0x40u)]
         public void RightShiftHandlesPositiveAndNegativeOffsets(
@@ -213,6 +254,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = Bit32Module.RightRotate(TestContext, args);
 
             Assert.That(Convert.ToUInt32(result.Number), Is.EqualTo(expected));
+        }
+
+        private static uint InvokeNBitMask(int bits)
+        {
+            MethodInfo method = typeof(Bit32Module).GetMethod(
+                "NBitMask",
+                BindingFlags.NonPublic | BindingFlags.Static
+            );
+            return (uint)method.Invoke(null, new object[] { bits })!;
         }
     }
 }

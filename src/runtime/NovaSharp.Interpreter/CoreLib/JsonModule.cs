@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -12,13 +11,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Provides Lua-facing helpers for converting between NovaSharp tables and JSON strings, plus a
     /// canonical `json.null` representation.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "json")]
-    public class JsonModule
+    public static class JsonModule
     {
         /// <summary>
         /// Parses a JSON string into a Lua table hierarchy using NovaSharp's JSON converter.

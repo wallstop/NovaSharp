@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -8,17 +7,12 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
 
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "dynamic")]
     /// <summary>
     /// Implements NovaSharp's `dynamic` module, enabling scripts to compile and execute Lua code
     /// strings at runtime (similar to <c>load</c> but optimized for short expressions).
     /// </summary>
-    public class DynamicModule
+    public static class DynamicModule
     {
         private class DynamicExpressionWrapper
         {

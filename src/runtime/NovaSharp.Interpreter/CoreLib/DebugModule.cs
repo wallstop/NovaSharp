@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.Text;
     using Debugging;
     using Execution.Scopes;
@@ -16,13 +15,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing debug Lua functions. Support for the debug module is partial.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "debug")]
-    public class DebugModule
+    public static class DebugModule
     {
         /// <summary>
         /// Implements Lua's interactive <c>debug.debug</c> helper by launching the REPL and allowing the host to inspect state.

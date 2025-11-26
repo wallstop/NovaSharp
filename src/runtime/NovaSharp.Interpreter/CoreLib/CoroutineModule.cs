@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -11,13 +10,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Implements Lua's coroutine library (§11.3) for creating, scheduling, and querying coroutines.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "coroutine")]
-    public class CoroutineModule
+    public static class CoroutineModule
     {
         /// <summary>
         /// Implements <c>coroutine.create</c>, producing a new coroutine that wraps the supplied function.

@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -123,6 +125,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ClockReturnsZeroWhenTimeProviderMovesBackward()
+        {
+            DateTimeOffset later = DateTimeOffset.FromUnixTimeSeconds(1_000_000);
+            DateTimeOffset earlier = DateTimeOffset.FromUnixTimeSeconds(999_990);
+            Script script = CreateScriptWithTimeProvider(later, earlier);
+
+            DynValue elapsed = script.DoString("return os.clock()");
+
+            Assert.That(elapsed.Number, Is.EqualTo(0.0));
+        }
+
+        [Test]
         public void DiffTimeHandlesOptionalStartArgument()
         {
             Script script = CreateScript();
@@ -197,6 +211,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void DateIgnoresOAndEFormatModifiers()
+        {
+            Script script = CreateScript();
+            DynValue formatted = script.DoString("return os.date('!%OY-%Ew', 0)");
+
+            Assert.That(formatted.String, Is.EqualTo("1970-4"));
+        }
+
+        [Test]
         public void DateSupportsEscapeAndExtendedSpecifiers()
         {
             Script script = CreateScript();
@@ -220,10 +243,84 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void TimeReturnsCurrentProviderTimestampWhenNoArguments()
+        {
+            long unixSeconds = 1_234_567;
+            DateTimeOffset stamp = DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
+            Script script = CreateScriptWithTimeProvider(stamp, stamp);
+
+            DynValue result = script.DoString("return os.time()");
+
+            Assert.That(result.Number, Is.EqualTo((double)unixSeconds).Within(1e-6));
+        }
+
+        [Test]
+        public void TimeDefaultsHourToNoonWhenFieldsOmitted()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "return os.time({ year = 1970, month = 1, day = 1 })"
+            );
+
+            Assert.That(result.Number, Is.EqualTo(12 * 60 * 60).Within(1e-6));
+        }
+
+        [Test]
+        public void TimeIgnoresNonNumericOptionalFields()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "return os.time({ year = 1970, month = 1, day = 1, hour = 'ignored' })"
+            );
+
+            Assert.That(result.Number, Is.EqualTo(12 * 60 * 60).Within(1e-6));
+        }
+
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
             return script;
+        }
+
+        private static Script CreateScriptWithTimeProvider(params DateTimeOffset[] timestamps)
+        {
+            if (timestamps == null || timestamps.Length == 0)
+            {
+                throw new ArgumentException(
+                    "At least one timestamp must be provided.",
+                    nameof(timestamps)
+                );
+            }
+
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                TimeProvider = new SequenceTimeProvider(timestamps),
+            };
+
+            return new Script(CoreModules.PresetComplete, options);
+        }
+
+        private sealed class SequenceTimeProvider : ITimeProvider
+        {
+            private readonly Queue<DateTimeOffset> _values;
+            private DateTimeOffset _last;
+
+            internal SequenceTimeProvider(params DateTimeOffset[] values)
+            {
+                _values = new Queue<DateTimeOffset>(values);
+                _last = values[^1];
+            }
+
+            public DateTimeOffset GetUtcNow()
+            {
+                if (_values.Count > 0)
+                {
+                    _last = _values.Dequeue();
+                }
+
+                return _last;
+            }
         }
     }
 }

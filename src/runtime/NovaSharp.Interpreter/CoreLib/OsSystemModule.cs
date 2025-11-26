@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -12,13 +11,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing system related Lua functions from the 'os' module.
     /// Proper support requires a compatible IPlatformAccessor
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "os")]
-    public class OsSystemModule
+    public static class OsSystemModule
     {
         /// <summary>
         /// Implements Lua `os.execute`, delegating to the host platform to run a shell command and
