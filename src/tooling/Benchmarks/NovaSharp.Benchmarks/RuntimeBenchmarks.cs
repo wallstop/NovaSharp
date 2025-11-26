@@ -1,5 +1,6 @@
 namespace NovaSharp.Benchmarks
 {
+    using System.Diagnostics.CodeAnalysis;
     using BenchmarkDotNet.Attributes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -9,6 +10,11 @@ namespace NovaSharp.Benchmarks
     /// BenchmarkDotNet suite that executes representative NovaSharp runtime scenarios.
     /// </summary>
     [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires benchmark classes to remain public for reflective discovery."
+    )]
     public class RuntimeBenchmarks
     {
         private Script _script = null!;
@@ -90,7 +96,7 @@ namespace NovaSharp.Benchmarks
     /// <summary>
     /// Host object exposed to Lua scripts for the userdata interop scenario.
     /// </summary>
-    public sealed class BenchmarkHost
+    internal sealed class BenchmarkHost
     {
         private double _store;
 

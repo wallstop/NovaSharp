@@ -123,6 +123,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         private readonly string _instanceLabel;
 
+        static SomeType()
+        {
+            _ = new SomeNestedTypePrivate();
+        }
+
         public SomeType()
         {
             _instanceLabel = nameof(SomeType);
@@ -163,11 +168,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [NovaSharpUserData]
-        [SuppressMessage(
-            "Performance",
-            "CA1812:Avoid uninstantiated internal classes",
-            Justification = "Instantiated indirectly via Lua user data reflection for private nested-type coverage."
-        )]
         private sealed class SomeNestedTypePrivate
         {
             public static string Get()

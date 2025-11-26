@@ -1,11 +1,17 @@
 namespace NovaSharp.Benchmarks
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Text;
 
     /// <summary>
     /// Describes the relative size/complexity of scripts used when benchmarking compilation performance.
     /// </summary>
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public enums for [Params] discovery."
+    )]
     public enum ScriptComplexity
     {
         [Obsolete("Use a specific ScriptComplexity.", false)]

@@ -1322,13 +1322,14 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 _valueStack.Push(tcd.Function);
 
-                for (int ii = 0; ii < tcd.Args.Length; ii++)
+                ReadOnlySpan<DynValue> tailArgs = tcd.ArgsSpan;
+                for (int ii = 0; ii < tailArgs.Length; ii++)
                 {
-                    _valueStack.Push(tcd.Args[ii]);
+                    _valueStack.Push(tailArgs[ii]);
                 }
 
                 return InternalExecCall(
-                    tcd.Args.Length,
+                    tailArgs.Length,
                     instructionPtr,
                     tcd.ErrorHandler,
                     tcd.Continuation,

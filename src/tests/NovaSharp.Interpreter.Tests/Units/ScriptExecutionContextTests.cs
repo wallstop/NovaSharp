@@ -121,7 +121,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     {
                         Assert.That(tail.Type, Is.EqualTo(DataType.TailCallRequest));
                         Assert.That(tail.TailCallData.Function.Type, Is.EqualTo(DataType.Function));
-                        Assert.That(tail.TailCallData.Args[1].Number, Is.EqualTo(7));
+                        Assert.That(tail.TailCallData.Args.Span[1].Number, Is.EqualTo(7));
                     });
 
                     return DynValue.NewNumber(0);

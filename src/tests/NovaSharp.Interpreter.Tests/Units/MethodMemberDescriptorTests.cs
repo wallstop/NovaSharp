@@ -23,6 +23,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class MethodMemberDescriptorTests
     {
+        // Serializes compatibility checks that mutate MethodMemberDescriptor's static caches.
+        private readonly object _compatibilityLock = new();
+
         [OneTimeSetUp]
         public void RegisterUserData()
         {
@@ -283,80 +286,85 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Performance",
-            "CA1822:Mark members as static",
-            Justification = "NUnit test instances intentionally non-static for fixture extensibility."
-        )]
+        [Test]
         public void CheckMethodIsCompatibleRejectsOpenGenericDefinitions()
         {
-            MethodInfo method = GenericMethodHostMetadata.GenericIdentity;
-
-            Assert.Multiple(() =>
+            lock (_compatibilityLock)
             {
-                Assert.That(
-                    MethodMemberDescriptor.CheckMethodIsCompatible(method, false),
-                    Is.False
-                );
-                Assert.That(
-                    () => MethodMemberDescriptor.CheckMethodIsCompatible(method, true),
-                    Throws
-                        .TypeOf<ArgumentException>()
-                        .With.Message.Contains("unresolved generic parameters")
-                );
-            });
+                MethodInfo method = GenericMethodHostMetadata.GenericIdentity;
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(
+                        MethodMemberDescriptor.CheckMethodIsCompatible(method, false),
+                        Is.False
+                    );
+                    Assert.That(
+                        () => MethodMemberDescriptor.CheckMethodIsCompatible(method, true),
+                        Throws
+                            .TypeOf<ArgumentException>()
+                            .With.Message.Contains("unresolved generic parameters")
+                    );
+                });
+            }
         }
 
         [Test]
         public void CheckMethodIsCompatibleRejectsPointerParameters()
         {
-            Type pointerType = typeof(int).MakePointerType();
-            DynamicMethod pointerMethod = new(
-                "PointerParameter",
-                typeof(void),
-                new[] { pointerType },
-                typeof(MethodMemberDescriptorTests).Module,
-                skipVisibility: true
-            );
-
-            Assert.Multiple(() =>
+            lock (_compatibilityLock)
             {
-                Assert.That(pointerMethod.GetParameters()[0].ParameterType.IsPointer, Is.True);
-                Assert.That(
-                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
-                    Is.False
+                Type pointerType = typeof(int).MakePointerType();
+                DynamicMethod pointerMethod = new(
+                    "PointerParameter",
+                    typeof(void),
+                    new[] { pointerType },
+                    typeof(MethodMemberDescriptorTests).Module,
+                    skipVisibility: true
                 );
-                Assert.That(
-                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
-                    Throws.ArgumentException.With.Message.Contains("pointer parameters")
-                );
-            });
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(pointerMethod.GetParameters()[0].ParameterType.IsPointer, Is.True);
+                    Assert.That(
+                        MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                        Is.False
+                    );
+                    Assert.That(
+                        () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                        Throws.ArgumentException.With.Message.Contains("pointer parameters")
+                    );
+                });
+            }
         }
 
         [Test]
         public void CheckMethodIsCompatibleRejectsPointerReturnTypes()
         {
-            Type pointerType = typeof(int).MakePointerType();
-            DynamicMethod pointerMethod = new(
-                "ReturnPointer",
-                pointerType,
-                Type.EmptyTypes,
-                typeof(MethodMemberDescriptorTests).Module,
-                skipVisibility: true
-            );
-
-            Assert.Multiple(() =>
+            lock (_compatibilityLock)
             {
-                Assert.That(pointerMethod.ReturnType.IsPointer, Is.True);
-                Assert.That(
-                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
-                    Is.False
+                Type pointerType = typeof(int).MakePointerType();
+                DynamicMethod pointerMethod = new(
+                    "ReturnPointer",
+                    pointerType,
+                    Type.EmptyTypes,
+                    typeof(MethodMemberDescriptorTests).Module,
+                    skipVisibility: true
                 );
-                Assert.That(
-                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
-                    Throws.ArgumentException.With.Message.Contains("pointer return type")
-                );
-            });
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(pointerMethod.ReturnType.IsPointer, Is.True);
+                    Assert.That(
+                        MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                        Is.False
+                    );
+                    Assert.That(
+                        () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                        Throws.ArgumentException.With.Message.Contains("pointer return type")
+                    );
+                });
+            }
         }
 
         [Test]

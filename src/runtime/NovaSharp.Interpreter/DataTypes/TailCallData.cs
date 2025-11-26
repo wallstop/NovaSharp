@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
-    using System.Diagnostics.CodeAnalysis;
+    using System;
+    using System.Runtime.InteropServices;
 
     /// <summary>
     /// Class used to support "tail" continuations - a way for C# / Lua interaction which supports
@@ -8,20 +9,54 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class TailCallData
     {
+        private DynValue[] _args = Array.Empty<DynValue>();
+
         /// <summary>
         /// Gets or sets the function to call
         /// </summary>
         public DynValue Function { get; set; }
 
         /// <summary>
-        /// Gets or sets the arguments to the function
+        /// Gets the arguments to the function as a read-only memory block.
         /// </summary>
-        [SuppressMessage(
-            "Performance",
-            "CA1819:Properties should not return arrays",
-            Justification = "Tail-call argument passing relies on sharing the array backing without copies."
-        )]
-        public DynValue[] Args { get; set; }
+        public ReadOnlyMemory<DynValue> Args
+        {
+            get { return _args; }
+            internal set { _args = ExtractBackingArray(value); }
+        }
+
+        /// <summary>
+        /// Provides a span view over the argument buffer for callers that need indexed access.
+        /// </summary>
+        internal ReadOnlySpan<DynValue> ArgsSpan => _args;
+
+        /// <summary>
+        /// Exposes the underlying argument buffer so VM internals can reuse it without allocating.
+        /// </summary>
+        internal DynValue[] BorrowArgsBuffer()
+        {
+            return _args;
+        }
+
+        private static DynValue[] ExtractBackingArray(ReadOnlyMemory<DynValue> value)
+        {
+            if (value.IsEmpty)
+            {
+                return Array.Empty<DynValue>();
+            }
+
+            if (
+                MemoryMarshal.TryGetArray(value, out ArraySegment<DynValue> segment)
+                && segment.Array != null
+                && segment.Offset == 0
+                && segment.Count == segment.Array.Length
+            )
+            {
+                return segment.Array;
+            }
+
+            return value.ToArray();
+        }
 
         /// <summary>
         /// Gets or sets the callback to be used as a continuation.

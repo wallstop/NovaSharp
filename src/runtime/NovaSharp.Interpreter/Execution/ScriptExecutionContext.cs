@@ -240,7 +240,7 @@ namespace NovaSharp.Interpreter.Execution
                         }
                         else
                         {
-                            args = tail.Args;
+                            args = tail.BorrowArgsBuffer();
                             func = tail.Function;
                         }
                     }

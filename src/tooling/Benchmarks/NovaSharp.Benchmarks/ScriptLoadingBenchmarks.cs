@@ -1,5 +1,6 @@
 namespace NovaSharp.Benchmarks
 {
+    using System.Diagnostics.CodeAnalysis;
     using BenchmarkDotNet.Attributes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -9,6 +10,11 @@ namespace NovaSharp.Benchmarks
     /// Benchmarks covering script compilation and execution throughput at multiple complexity levels.
     /// </summary>
     [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires benchmark classes to remain public for reflective discovery."
+    )]
     public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;

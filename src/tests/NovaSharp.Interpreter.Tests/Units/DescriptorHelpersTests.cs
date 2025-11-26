@@ -423,22 +423,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static class VisibilityFixtures
         {
-            [SuppressMessage(
-                "Performance",
-                "CA1823:Avoid unused fields",
-                Justification = "Anchor ensures the private nested type is instantiated for visibility tests."
-            )]
-            private static readonly object PrivateNestedAnchor = new PrivateNested();
+            static VisibilityFixtures()
+            {
+                _ = new PrivateNested();
+                _ = new ProtectedNested();
+            }
 
             public sealed class PublicNested { }
 
             protected internal sealed class ProtectedInternalNested { }
 
-            [SuppressMessage(
-                "Performance",
-                "CA1812",
-                Justification = "Instantiated via reflection to validate protected type visibility."
-            )]
             protected sealed class ProtectedNested { }
 
             private sealed class PrivateNested { }
@@ -474,8 +468,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         )]
         private class MemberVisibilityFixtures
         {
-            public const string InternalFieldName = nameof(_internalField);
-            public const string ProtectedFieldName = nameof(_protectedField);
+            public const string InternalFieldName = nameof(InternalFieldValue);
+            public const string ProtectedFieldName = nameof(ProtectedFieldValue);
             public const string PrivateMethodName = nameof(PrivateMethod);
 
             private int _invocationCount;
@@ -485,40 +479,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
-            [SuppressMessage(
-                "Design",
-                "CA1051:DoNotDeclareVisibleInstanceFields",
-                Justification = "Fixtures expose field visibilities for descriptor tests."
-            )]
-            public int publicField;
+            public static int PublicFieldValue;
 
-            [SuppressMessage(
-                "Design",
-                "CA1051:DoNotDeclareVisibleInstanceFields",
-                Justification = "Fixtures expose field visibilities for descriptor tests."
-            )]
-            internal int _internalField;
+            internal static int InternalFieldValue;
 
-            [SuppressMessage(
-                "Design",
-                "CA1051:DoNotDeclareVisibleInstanceFields",
-                Justification = "Fixtures expose field visibilities for descriptor tests."
-            )]
-            protected int _protectedField;
+            protected static int ProtectedFieldValue;
 
-            [SuppressMessage(
-                "Design",
-                "CA1051:DoNotDeclareVisibleInstanceFields",
-                Justification = "Fixtures expose field visibilities for descriptor tests."
-            )]
-            protected internal int _protectedInternalField;
+            protected internal static int ProtectedInternalFieldValue;
 
             public MemberVisibilityFixtures()
             {
-                publicField = 0;
-                _internalField = 0;
-                _protectedField = 0;
-                _protectedInternalField = 0;
+                PublicFieldValue = 0;
+                InternalFieldValue = 0;
+                ProtectedFieldValue = 0;
+                ProtectedInternalFieldValue = 0;
                 AnchorFieldUsage();
             }
 
@@ -539,27 +513,37 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             private void AnchorFieldUsage()
             {
-                _invocationCount += publicField;
-                _invocationCount += _internalField;
-                _invocationCount += _protectedField;
-                _invocationCount += _protectedInternalField;
+                _invocationCount += PublicFieldValue;
+                _invocationCount += InternalFieldValue;
+                _invocationCount += ProtectedFieldValue;
+                _invocationCount += ProtectedInternalFieldValue;
             }
 
             internal static class Metadata
             {
                 internal static FieldInfo PublicField { get; } =
                     typeof(MemberVisibilityFixtures).GetField(
-                        nameof(MemberVisibilityFixtures.publicField)
+                        nameof(MemberVisibilityFixtures.PublicFieldValue),
+                        BindingFlags.Public | BindingFlags.Static
                     )!;
 
                 internal static FieldInfo InternalField { get; } =
-                    GetInstanceField(f => f._internalField);
+                    typeof(MemberVisibilityFixtures).GetField(
+                        nameof(MemberVisibilityFixtures.InternalFieldValue),
+                        BindingFlags.NonPublic | BindingFlags.Static
+                    )!;
 
                 internal static FieldInfo ProtectedField { get; } =
-                    GetInstanceField(f => f._protectedField);
+                    typeof(MemberVisibilityFixtures).GetField(
+                        nameof(MemberVisibilityFixtures.ProtectedFieldValue),
+                        BindingFlags.NonPublic | BindingFlags.Static
+                    )!;
 
                 internal static FieldInfo ProtectedInternalField { get; } =
-                    GetInstanceField(f => f._protectedInternalField);
+                    typeof(MemberVisibilityFixtures).GetField(
+                        nameof(MemberVisibilityFixtures.ProtectedInternalFieldValue),
+                        BindingFlags.NonPublic | BindingFlags.Static
+                    )!;
 
                 internal static MethodInfo PrivateMethod { get; } =
                     GetInstanceMethod(f => f.PrivateMethod());
@@ -569,13 +553,6 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 internal static MethodInfo ProtectedInternalMethod { get; } =
                     GetInstanceMethod(f => f.ProtectedInternalMethod());
-
-                private static FieldInfo GetInstanceField<TValue>(
-                    Expression<Func<MemberVisibilityFixtures, TValue>> accessor
-                )
-                {
-                    return (FieldInfo)GetMemberExpression(accessor.Body).Member;
-                }
 
                 private static MethodInfo GetInstanceMethod(
                     Expression<Action<MemberVisibilityFixtures>> call

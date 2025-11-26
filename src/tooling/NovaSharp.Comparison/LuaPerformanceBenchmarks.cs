@@ -16,11 +16,11 @@ using NovaSharp.Interpreter.Modules;
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
 [SuppressMessage(
-    "Performance",
-    "CA1812",
-    Justification = "Instantiated via BenchmarkDotNet reflection."
+    "Usage",
+    "CA1515:Consider making public types internal",
+    Justification = "BenchmarkDotNet requires benchmark classes to remain public for discovery."
 )]
-public sealed class LuaPerformanceBenchmarks : IDisposable
+public class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
     private Script _novaSharpScript = null!;
@@ -117,24 +117,23 @@ public sealed class LuaPerformanceBenchmarks : IDisposable
     /// </summary>
     public void Dispose()
     {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
         if (_disposed)
         {
             return;
         }
 
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (!disposing || _disposed)
+        if (disposing)
         {
-            return;
+            _nLuaFunction?.Dispose();
+            _nLua?.Dispose();
         }
 
         _disposed = true;
-        _nLuaFunction?.Dispose();
-        _nLua?.Dispose();
     }
 }

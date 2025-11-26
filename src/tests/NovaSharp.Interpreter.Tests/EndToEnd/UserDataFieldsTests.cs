@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -19,11 +18,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public object objProp;
             public static string StaticProp;
 
-            [SuppressMessage(
-                "Performance",
-                "CA1823:Avoid unused fields",
-                Justification = "Private fields remain intentionally unused to validate that Lua user data cannot access them."
-            )]
             private string _privateProp;
 
             public SomeClass()
@@ -32,6 +26,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 nIntProp = null;
                 objProp = null;
                 _privateProp = string.Empty;
+                TouchPrivateField();
+            }
+
+            private void TouchPrivateField()
+            {
+                if (_privateProp.Length == 0)
+                {
+                    _privateProp = _privateProp.Trim();
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
-    using System.Diagnostics.CodeAnalysis;
+    using System;
+    using System.Runtime.InteropServices;
 
     /// <summary>
     /// Class wrapping a request to yield a coroutine
@@ -10,17 +11,48 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// The return values of the coroutine
         /// </summary>
-        private DynValue[] _returnValues;
+        private DynValue[] _returnValues = Array.Empty<DynValue>();
 
-        [SuppressMessage(
-            "Performance",
-            "CA1819:Properties should not return arrays",
-            Justification = "Coroutine yields must share the return tuple backing array without copying."
-        )]
-        public DynValue[] ReturnValues
+        /// <summary>
+        /// Gets the returned values as a read-only memory block.
+        /// </summary>
+        public ReadOnlyMemory<DynValue> ReturnValues
         {
             get { return _returnValues; }
-            internal set { _returnValues = value; }
+            internal set { _returnValues = ExtractBackingArray(value); }
+        }
+
+        /// <summary>
+        /// Gets a span view over the return values for low-level consumers.
+        /// </summary>
+        internal ReadOnlySpan<DynValue> ReturnValuesSpan => _returnValues;
+
+        /// <summary>
+        /// Exposes the underlying return-value buffer so coroutine machinery can reuse it without copying.
+        /// </summary>
+        internal DynValue[] BorrowReturnValuesBuffer()
+        {
+            return _returnValues;
+        }
+
+        private static DynValue[] ExtractBackingArray(ReadOnlyMemory<DynValue> value)
+        {
+            if (value.IsEmpty)
+            {
+                return Array.Empty<DynValue>();
+            }
+
+            if (
+                MemoryMarshal.TryGetArray(value, out ArraySegment<DynValue> segment)
+                && segment.Array != null
+                && segment.Offset == 0
+                && segment.Count == segment.Array.Length
+            )
+            {
+                return segment.Array;
+            }
+
+            return value.ToArray();
         }
 
         /// <summary>
