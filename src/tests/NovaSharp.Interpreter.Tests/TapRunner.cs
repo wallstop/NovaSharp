@@ -35,6 +35,7 @@ namespace NovaSharp.Interpreter.Tests
         /// <param name="str">The string.</param>
         public void Print(string str)
         {
+            ArgumentNullException.ThrowIfNull(str);
             string trimmed = str.Trim();
             Assert.That(
                 trimmed.StartsWith("not ok", StringComparison.Ordinal),

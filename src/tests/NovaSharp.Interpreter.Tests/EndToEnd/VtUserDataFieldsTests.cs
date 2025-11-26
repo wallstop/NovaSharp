@@ -1,12 +1,11 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
-
-#pragma warning disable 169 // unused private field
 
     [TestFixture]
     public class VtUserDataFieldsTests
@@ -18,7 +17,15 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public int? nIntProp;
             public object objProp;
             public static string StaticProp;
+
+            [SuppressMessage(
+                "Performance",
+                "CA1823:Avoid unused fields",
+                Justification = "Private fields remain intentionally unused to validate that Lua user data cannot access them."
+            )]
+#pragma warning disable CS0169
             private string _privateProp;
+#pragma warning restore CS0169
         }
 
         private static void TestConstIntFieldGetter(InteropAccessMode opt)

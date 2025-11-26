@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Linq;
     using System.Text;
@@ -24,6 +25,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private string _lastConcatResult = string.Empty;
             private string _lastFormattedString = string.Empty;
 
+            [SuppressMessage(
+                "Globalization",
+                "CA1308:Normalize strings to uppercase",
+                Justification = "The tests intentionally emit lowercase strings to validate Lua's string casing behaviour."
+            )]
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
@@ -32,8 +38,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
-                lowercase = input.ToLower();
-                return input.ToUpper();
+                lowercase = input.ToLowerInvariant();
+                return input.ToUpperInvariant();
             }
 
             public string ConcatNums(int p1, int p2)
@@ -209,6 +215,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private string _lastConcatResult = string.Empty;
             private string _lastFormattedString = string.Empty;
 
+            [SuppressMessage(
+                "Globalization",
+                "CA1308:Normalize strings to uppercase",
+                Justification = "The tests intentionally emit lowercase strings to validate Lua's string casing behaviour."
+            )]
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
@@ -217,8 +228,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             {
                 _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
-                lowercase = input.ToLower();
-                return input.ToUpper();
+                lowercase = input.ToLowerInvariant();
+                return input.ToUpperInvariant();
             }
 
             public string ConcatNums(int p1, int p2)
@@ -561,7 +572,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 );
 
                 Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-                    (s, v) => DynValue.NewString(v.ToString().ToUpper())
+                    (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
                 );
 
                 s.Globals.Set("static", UserData.CreateStatic<SomeClass>());

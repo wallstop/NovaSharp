@@ -394,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     new CallbackFunction(
                         (x, a) =>
                         {
-                            throw new Exception("FAIL!");
+                            throw new InvalidOperationException("FAIL!");
                         }
                     )
                 )
@@ -1646,7 +1646,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 Assert.Fail(); // ScriptRuntimeException should have been thrown, if it doesn't Assert.Fail should execute
             }
-            catch (ScriptRuntimeException e)
+            catch (ScriptRuntimeException)
             {
                 //Assert.Pass(e.DecoratedMessage);
             }

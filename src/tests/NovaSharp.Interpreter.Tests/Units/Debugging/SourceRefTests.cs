@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units.Debugging
 {
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
     using NUnit.Framework;
@@ -42,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests.Units.Debugging
 
             string snippet = source.GetCodeSnippet(span);
 
-            string expected = source.Lines[1].Substring(6) + source.Lines[2];
+            string expected = string.Concat(source.Lines[1].AsSpan(6), source.Lines[2]);
             Assert.That(snippet, Is.EqualTo(expected));
         }
 

@@ -43,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
             {
                 writer.Write(DumpChunkMagic);
-                writer.Write(0); // wrong version
+                writer.Write(DumpChunkVersion - 1); // wrong version
             }
 
             stream.Position = 0;

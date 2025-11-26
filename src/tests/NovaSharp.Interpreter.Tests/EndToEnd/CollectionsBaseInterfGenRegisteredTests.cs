@@ -73,7 +73,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             "CA1024:UsePropertiesWhereAppropriate",
             Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
         )]
-        public List<RegCollItem> GetItems()
+        public IList<RegCollItem> GetItems()
         {
             return _items;
         }
@@ -83,7 +83,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             "CA1024:UsePropertiesWhereAppropriate",
             Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
         )]
-        public List<int> GetList()
+        public IList<int> GetList()
         {
             return _list;
         }

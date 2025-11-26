@@ -372,6 +372,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             public double doubleValue;
             private int _privateValue;
 
+            public SampleFields()
+            {
+                instanceValue = 0;
+                doubleValue = 0;
+                _privateValue = 0;
+            }
+
             internal static FieldInfo PrivateValueField { get; } =
                 GetFieldInfo(f => f._privateValue);
 

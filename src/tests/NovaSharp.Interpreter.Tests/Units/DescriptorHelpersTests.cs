@@ -304,6 +304,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static class VisibilityFixtures
         {
+            [SuppressMessage(
+                "Performance",
+                "CA1823:Avoid unused fields",
+                Justification = "Anchor ensures the private nested type is instantiated for visibility tests."
+            )]
             private static readonly object PrivateNestedAnchor = new PrivateNested();
 
             public sealed class PublicNested { }
@@ -361,6 +366,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
+#pragma warning disable CS0649
             [SuppressMessage(
                 "Design",
                 "CA1051:DoNotDeclareVisibleInstanceFields",
@@ -388,6 +394,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Justification = "Fixtures expose field visibilities for descriptor tests."
             )]
             protected internal int _protectedInternalField;
+#pragma warning restore CS0649
+
+            public MemberVisibilityFixtures()
+            {
+                publicField = 0;
+                _internalField = 0;
+                _protectedField = 0;
+                _protectedInternalField = 0;
+            }
 
             public void PublicMethod()
             {

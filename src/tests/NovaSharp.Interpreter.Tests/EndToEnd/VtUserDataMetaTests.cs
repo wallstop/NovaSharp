@@ -44,7 +44,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        internal struct ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
+        internal struct ArithmOperatorsTestClass
+            : IComparable,
+                System.Collections.IEnumerable,
+                IEquatable<ArithmOperatorsTestClass>
         {
             public int Value { get; set; }
 
@@ -158,6 +161,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public override int GetHashCode()
             {
                 return Value.GetHashCode();
+            }
+
+            public bool Equals(ArithmOperatorsTestClass other)
+            {
+                return Value == other.Value;
             }
 
             public int CompareTo(object obj)

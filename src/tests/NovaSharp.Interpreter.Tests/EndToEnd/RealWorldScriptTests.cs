@@ -39,6 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Action<Script, DynValue> exercise
         )
         {
+            ArgumentNullException.ThrowIfNull(exercise);
             string scriptPath = Path.Combine(FixtureRoot, relativePath);
             Assert.That(File.Exists(scriptPath), Is.True, $"Fixture not found: {relativePath}");
 

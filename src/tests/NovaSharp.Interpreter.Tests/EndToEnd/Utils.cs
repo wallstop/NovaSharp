@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
     using NUnit.Framework;
 
@@ -7,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         public static void DynAssert(DynValue result, params object[] args)
         {
+            ArgumentNullException.ThrowIfNull(result);
             if (args == null)
             {
                 args = new object[1] { DataType.Void };

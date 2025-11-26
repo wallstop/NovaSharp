@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Processor processor = script.GetMainProcessorForTests();
             processor.SetThreadOwnershipStateForTests(
-                Thread.CurrentThread.ManagedThreadId,
+                Environment.CurrentManagedThreadId,
                 executionNesting: 1
             );
 

@@ -321,7 +321,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     return false;
                 }
 
-                return mode.Contains(symbol);
+                return mode.Contains(symbol, StringComparison.Ordinal);
             }
 
             private sealed class TrackingStream : Stream

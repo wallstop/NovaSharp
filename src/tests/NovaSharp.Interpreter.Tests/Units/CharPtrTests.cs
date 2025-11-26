@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CharPtrTests
     {
+        private static readonly char[] FriendlyCharArray = new[] { 'A', 'B', 'C', '\0' };
+        private static readonly byte[] FriendlyByteArray = new byte[] { (byte)'x', (byte)'y', 0 };
+
         [Test]
         public void ImplicitConversionFromStringCreatesNullTerminatedBuffer()
         {
@@ -221,8 +224,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void FriendlyAlternatesMirrorOperatorBehaviour()
         {
             CharPtr fromString = CharPtr.FromString("lua");
-            CharPtr fromChars = CharPtr.FromCharArray(new[] { 'A', 'B', 'C', '\0' });
-            CharPtr fromBytes = CharPtr.FromByteArray(new byte[] { (byte)'x', (byte)'y', 0 });
+            CharPtr fromChars = CharPtr.FromCharArray(FriendlyCharArray);
+            CharPtr fromBytes = CharPtr.FromByteArray(FriendlyByteArray);
 
             CharPtr buffer = "abcdef";
             CharPtr advanced = buffer.Add(4);

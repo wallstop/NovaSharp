@@ -202,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests
             try
             {
                 object o = Activator.CreateInstance(t);
-                mi.Invoke(o, new object[0]);
+                mi.Invoke(o, Array.Empty<object>());
 
                 if (expectedEx != null)
                 {
