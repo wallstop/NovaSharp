@@ -46,15 +46,30 @@ jobs:
             git --no-pager diff -- documentation_audit.log
             exit 1
           fi
+      - name: Determine documentation diff base
+        id: doc_diff_base
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            git fetch origin "$BASE_REF" --depth=1
+            merge_base="$(git merge-base HEAD "origin/$BASE_REF")"
+          else
+            merge_base="${BEFORE_SHA:-$(git rev-parse HEAD^)}"
+          fi
+          echo "merge_base=$merge_base" >> "$GITHUB_OUTPUT"
       - name: Enforce script/doc README coverage
         run: ./scripts/ci/ensure-readme-updates.sh
         shell: bash
         env:
-          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'HEAD^' }}
+          NOVASHARP_BASE_REF: ${{ steps.doc_diff_base.outputs.merge_base }}
 
       - name: Markdown formatting + links
         env:
-          NOVASHARP_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'HEAD^' }}
+          NOVASHARP_BASE_REF: ${{ steps.doc_diff_base.outputs.merge_base }}
         run: ./scripts/ci/check-markdown.sh
         shell: bash
 
