@@ -10,7 +10,7 @@
   - NovaSharp.RemoteDebugger: 86.1% line / 76.5% branch.
   - NovaSharp.VsCodeDebugger: 1.8% line / 2.1% branch (no automated debugger tests yet).
 - Coverage collateral: `docs/coverage/coverage-hotspots.md` now reflects the 2025-11-24 run (2,779 tests) and highlights the remaining interpreter branch debt.
-- Audits: `documentation_audit.log` and `spelling_audit.log` still report zero outstanding issues; `naming_audit.log` now tracks the 36 legacy `_`-prefixed test fixtures flagged by `tools/NamingAudit` so contributors can chip away at them. CI runs the corresponding scripts.
+- Audits: `documentation_audit.log` now lists 85 missing XML-doc entries (mostly `CliMessages`, interpreter instruction metadata, debugger protocol DTOs, and lexer tokens); prioritize filling those gaps before shipping any new public APIs. `spelling_audit.log` remains clean, and `naming_audit.log` mirrors the latest repo-wide sweep. CI runs all three scripts.
 - Regions: `rg -n '#region'` only finds references inside contributor docs (AGENTS.md and this file), so runtime/tooling/tests stay region-free.
 
 ## Baseline Controls (must stay green)
@@ -21,6 +21,9 @@
 - Keep `docs/Testing.md`, `docs/Modernization.md`, and `scripts/README.md` aligned with the helpers in `scripts/` so contributors have a single source of truth.
 
 ## Active Initiatives
+
+### Documentation audit backlog
+- Current status: `tools/DocumentationAudit` reports 85 undocumented public/internal members (see `documentation_audit.log` for the CLI (`CliMessages`), interpreter (`Instruction`, lexer tokens, processor auto-yield), and debugger protocol DTOs). `scripts/dev/pre-commit.sh` now regenerates the log automatically, so any new commits will surface fresh gaps until these areas are documented. **Next steps:** add XML summaries/remarks for each listed type/member (start with `CliMessages` because it drives user-facing strings, then the interpreter instruction metadata, then debugger protocol contracts). Re-run `python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log` plus the naming/spelling audits before merging so the log reflects a shrinking backlog.
 
 ### 1. Analyzer and warning debt
 - Current status: `dotnet build src/NovaSharp.sln -c Release -nologo` is clean and the root solution now runs with `<TreatWarningsAsErrors>true>`; keep running the build after each analyzer sweep so the zero-warning bar never regresses. Treat any new analyzer hits as stop-ship items. **Next steps:** document analyzer suppressions/command changes in `PLAN.md` as they happen and keep the PR template’s analyzer section up to date as new tooling expectations land.
