@@ -1,7 +1,9 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
+    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -87,8 +89,28 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public static class LuaTypeExtensions
     {
-        internal const DataType MAX_META_TYPES = DataType.Table;
-        internal const DataType MAX_CONVERTIBLE_TYPES = DataType.ClrFunction;
+        internal const DataType MaxMetaTypes = DataType.Table;
+        internal const DataType MaxConvertibleTypes = DataType.ClrFunction;
+        private static readonly ConcurrentDictionary<DataType, string> UnknownTypeCache = new();
+        private static readonly System.Collections.Generic.Dictionary<
+            DataType,
+            string
+        > KnownTypeNames = new()
+        {
+            { DataType.Nil, "nil" },
+            { DataType.Void, "void" },
+            { DataType.Boolean, "boolean" },
+            { DataType.Number, "number" },
+            { DataType.String, "string" },
+            { DataType.Function, "function" },
+            { DataType.ClrFunction, "clrfunction" },
+            { DataType.Table, "table" },
+            { DataType.Tuple, "tuple" },
+            { DataType.UserData, "userdata" },
+            { DataType.Thread, "thread" },
+            { DataType.TailCallRequest, "tailcallrequest" },
+            { DataType.YieldRequest, "yieldrequest" },
+        };
 
         /// <summary>
         /// Determines whether this data type can have type metatables.
@@ -97,7 +119,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static bool CanHaveTypeMetatables(this DataType type)
         {
-            return (int)type < (int)MAX_META_TYPES;
+            return (int)type < (int)MaxMetaTypes;
         }
 
         /// <summary>
@@ -147,7 +169,15 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="ScriptRuntimeException">The DataType is not a Lua type</exception>
         public static string ToLuaDebuggerString(this DataType type)
         {
-            return type.ToString().ToLowerInvariant();
+            if (KnownTypeNames.TryGetValue(type, out string known))
+            {
+                return known;
+            }
+
+            return UnknownTypeCache.GetOrAdd(
+                type,
+                static t => InvariantString.ToLowerInvariantIfNeeded(t.ToString())
+            );
         }
 
         /// <summary>

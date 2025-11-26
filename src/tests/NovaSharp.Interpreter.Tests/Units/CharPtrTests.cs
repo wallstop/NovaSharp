@@ -1,12 +1,15 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class CharPtrTests
     {
+        private static readonly char[] FriendlyCharArray = new[] { 'A', 'B', 'C', '\0' };
+        private static readonly byte[] FriendlyByteArray = new byte[] { (byte)'x', (byte)'y', 0 };
+
         [Test]
         public void ImplicitConversionFromStringCreatesNullTerminatedBuffer()
         {
@@ -214,6 +217,36 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(ptr[0], Is.EqualTo('a'));
                 Assert.That(ptr[1], Is.EqualTo('b'));
                 Assert.That(ptr[2], Is.EqualTo('c'));
+            });
+        }
+
+        [Test]
+        public void FriendlyAlternatesMirrorOperatorBehaviour()
+        {
+            CharPtr fromString = CharPtr.FromString("lua");
+            CharPtr fromChars = CharPtr.FromCharArray(FriendlyCharArray);
+            CharPtr fromBytes = CharPtr.FromByteArray(FriendlyByteArray);
+
+            CharPtr buffer = "abcdef";
+            CharPtr advanced = buffer.Add(4);
+            CharPtr rewindStatic = CharPtr.Subtract(advanced, 2);
+            CharPtr rewindStaticUnsigned = CharPtr.Subtract(advanced, (uint)1);
+            CharPtr rewindInstance = advanced.Subtract(2);
+            CharPtr start = new(buffer, 0);
+            CharPtr middle = new(buffer, 3);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(fromString.ToString(), Is.EqualTo("lua"));
+                Assert.That(fromChars[1], Is.EqualTo('B'));
+                Assert.That(fromBytes[1], Is.EqualTo('y'));
+                Assert.That(rewindStatic[0], Is.EqualTo('c'));
+                Assert.That(rewindStaticUnsigned[0], Is.EqualTo('d'));
+                Assert.That(rewindInstance[0], Is.EqualTo('c'));
+                Assert.That(CharPtr.Subtract(middle, start), Is.EqualTo(3));
+                Assert.That(CharPtr.Compare(start, middle), Is.LessThan(0));
+                Assert.That(CharPtr.Compare(middle, middle), Is.EqualTo(0));
+                Assert.That(CharPtr.Compare(middle, start), Is.GreaterThan(0));
             });
         }
     }

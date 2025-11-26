@@ -3,20 +3,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public class RegCollItem
+    public sealed class RegCollItem
     {
-        public int value;
-
-        public RegCollItem(int v)
+        public RegCollItem(int value)
         {
-            value = v;
+            Value = value;
         }
+
+        public int Value { get; }
     }
 
     public class RegCollMethods
@@ -31,47 +32,74 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         private readonly List<int> _list = new() { 1, 2, 3 };
         private readonly int[] _array = new int[3] { 2, 4, 6 };
 
+        [SuppressMessage(
+            "Performance",
+            "CA1814:Prefer jagged arrays over multidimensional",
+            Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+        )]
         private readonly int[,] _multiArray = new int[2, 3]
         {
             { 2, 4, 6 },
             { 7, 8, 9 },
         };
 
+        [SuppressMessage(
+            "Performance",
+            "CA1814:Prefer jagged arrays over multidimensional",
+            Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+        )]
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public int[,] GetMultiArray()
         {
             return _multiArray;
         }
 
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
         public int[] GetArray()
         {
             return _array;
         }
 
-        public List<RegCollItem> GetItems()
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
+        public IList<RegCollItem> GetItems()
         {
             return _items;
         }
 
-        public List<int> GetList()
+        [SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+        )]
+        public IList<int> GetList()
         {
             return _list;
         }
 
-        public IEnumerator<int> GetEnumerator()
-        {
-            return GetList().GetEnumerator();
-        }
+        public List<int>.Enumerator GetEnumerator() => _list.GetEnumerator();
     }
 
     [TestFixture]
     public class CollectionsBaseInterfGenRegisteredTests
     {
-        private void Do(string code, Action<DynValue> asserts)
+        private static void Do(string code, Action<DynValue> asserts)
         {
             Do(code, (d, o) => asserts(d));
         }
 
-        private void Do(string code, Action<DynValue, RegCollMethods> asserts)
+        private static void Do(string code, Action<DynValue, RegCollMethods> asserts)
         {
             try
             {
@@ -101,8 +129,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 UserData.UnregisterType<RegCollItem>();
                 UserData.UnregisterType<Array>();
                 UserData.UnregisterType(typeof(IList<>));
-                UserData.UnregisterType(typeof(IList<RegCollItem>));
-                UserData.UnregisterType(typeof(IList<int>));
+                UserData.UnregisterType<IList<RegCollItem>>();
+                UserData.UnregisterType<IList<int>>();
                 //UserData.UnregisterType<IEnumerable>();
             }
         }
@@ -302,9 +330,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 {
                     Assert.That(r.Type, Is.EqualTo(DataType.Number));
                     Assert.That(r.Number, Is.EqualTo(7 + 17 + 9));
-                    Assert.That(o.GetItems()[0].value, Is.EqualTo(7));
-                    Assert.That(o.GetItems()[1].value, Is.EqualTo(17));
-                    Assert.That(o.GetItems()[2].value, Is.EqualTo(9));
+                    Assert.That(o.GetItems()[0].Value, Is.EqualTo(7));
+                    Assert.That(o.GetItems()[1].Value, Is.EqualTo(17));
+                    Assert.That(o.GetItems()[2].Value, Is.EqualTo(9));
                 }
             );
         }

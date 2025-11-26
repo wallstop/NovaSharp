@@ -1,36 +1,42 @@
 #if !(DOTNET_CORE || NETFX_CORE) && PCL
 
-    using NovaSharp.Interpreter.Compatibility.Frameworks.Base;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using NovaSharp.Interpreter.Compatibility.Frameworks.Base;
 
 namespace NovaSharp.Interpreter.Compatibility.Frameworks
 {
-	class FrameworkCurrent : FrameworkClrBase
-	{
-		public override Type GetTypeInfoFromType(Type t)
-		{
-			return t;
-		}
+    /// <summary>
+    /// Portable Class Library implementation that emulates the CLR surface but must manually search
+    /// interfaces and string helpers because the legacy APIs are missing in this profile.
+    /// </summary>
+    internal class FrameworkCurrent : FrameworkClrBase
+    {
+        /// <inheritdoc/>
+        public override Type GetTypeInfoFromType(Type t)
+        {
+            return t;
+        }
 
-		public override bool IsDbNull(object o)
-		{
-			return o != null && o.GetType().FullName.StartsWith("System.DBNull");
-		}
+        /// <inheritdoc/>
+        public override bool IsDbNull(object o)
+        {
+            return o != null && o.GetType().FullName.StartsWith("System.DBNull", StringComparison.Ordinal);
+        }
 
-		public override bool StringContainsChar(string str, char chr)
-		{
-			return str.Contains(chr.ToString());
-		}
+        /// <inheritdoc/>
+        public override bool StringContainsChar(string str, char chr)
+        {
+            return str != null
+                && str.IndexOf(chr.ToString(), StringComparison.Ordinal) >= 0;
+        }
 
-		public override Type GetInterface(Type type, string name)
-		{
-			return type.GetInterfaces().
-				FirstOrDefault(t => t.Name == name);
-		}
-	}
+        /// <inheritdoc/>
+        public override Type GetInterface(Type type, string name)
+        {
+            return type.GetInterfaces().FirstOrDefault(t => t.Name == name);
+        }
+    }
 }
 
 #endif

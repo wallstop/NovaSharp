@@ -2,14 +2,18 @@ namespace NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// A base implementation of IScriptLoader, offering resolution of module names.
     /// </summary>
     public abstract class ScriptLoaderBase : IScriptLoader
     {
+        private static readonly char[] ModulePathSeparators = new[] { ';' };
+        private static readonly IReadOnlyList<string> EmptyModulePaths = Array.Empty<string>();
+        protected internal const string NovaSharpPathEnvironmentVariable = "NOVASHARP_PATH";
+
         /// <summary>
         /// Checks if a script file exists.
         /// </summary>
@@ -38,16 +42,21 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         protected virtual string ResolveModuleName(string modname, IEnumerable<string> paths)
         {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
             if (paths == null)
             {
                 return null;
             }
 
-            modname = modname.Replace('.', '/');
+            string normalizedModule = NormalizeModuleName(modname);
 
             foreach (string path in paths)
             {
-                string file = path.Replace("?", modname);
+                string file = path.Replace("?", normalizedModule, StringComparison.Ordinal);
 
                 if (ScriptFileExists(file))
                 {
@@ -69,6 +78,16 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         public virtual string ResolveModuleName(string modname, Table globalContext)
         {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
+            if (globalContext == null)
+            {
+                throw new ArgumentNullException(nameof(globalContext));
+            }
+
             if (!IgnoreLuaPathGlobal)
             {
                 DynValue s = globalContext.RawGet("LUA_PATH");
@@ -93,10 +112,37 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> UnpackStringPaths(string str)
         {
-            return str.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToArray();
+            if (str == null)
+            {
+                throw new ArgumentNullException(nameof(str));
+            }
+
+            ReadOnlySpan<char> span = str.AsSpan();
+            List<string> segments = null;
+            int position = 0;
+
+            while (position <= span.Length)
+            {
+                ReadOnlySpan<char> remainder = span.Slice(position);
+                int separatorIndex = remainder.IndexOfAny(ModulePathSeparators);
+                int segmentLength = separatorIndex < 0 ? remainder.Length : separatorIndex;
+                ReadOnlySpan<char> segment = remainder.Slice(0, segmentLength).TrimWhitespace();
+
+                if (!segment.IsEmpty)
+                {
+                    segments ??= new List<string>();
+                    segments.Add(new string(segment));
+                }
+
+                if (separatorIndex < 0)
+                {
+                    break;
+                }
+
+                position += segmentLength + 1;
+            }
+
+            return segments?.ToArray() ?? EmptyModulePaths;
         }
 
         /// <summary>
@@ -104,32 +150,17 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
-            IReadOnlyList<string> modulePaths = null;
+            IReadOnlyList<string> paths =
+                TryUnpackEnvironmentVariable(
+                    Script.GlobalOptions.Platform.GetEnvironmentVariable(
+                        NovaSharpPathEnvironmentVariable
+                    )
+                )
+                ?? TryUnpackEnvironmentVariable(
+                    Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH")
+                );
 
-            if (modulePaths == null)
-            {
-                string env = Script.GlobalOptions.Platform.GetEnvironmentVariable("NovaSharp_PATH");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    modulePaths = UnpackStringPaths(env);
-                }
-
-                if (modulePaths == null)
-                {
-                    env = Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH");
-                    if (!string.IsNullOrEmpty(env))
-                    {
-                        modulePaths = UnpackStringPaths(env);
-                    }
-                }
-
-                if (modulePaths == null)
-                {
-                    modulePaths = UnpackStringPaths("?;?.lua");
-                }
-            }
-
-            return modulePaths;
+            return paths ?? UnpackStringPaths("?;?.lua");
         }
 
         /// <summary>
@@ -140,7 +171,13 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns></returns>
         public virtual string ResolveFileName(string filename, Table globalContext)
         {
-            return filename;
+            if (filename == null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
+            ReadOnlySpan<char> trimmed = filename.AsSpan().TrimWhitespace();
+            return trimmed.Length == filename.Length ? filename : new string(trimmed);
         }
 
         /// <summary>
@@ -148,5 +185,37 @@ namespace NovaSharp.Interpreter.Loaders
         /// If true, the LUA_PATH global is NOT checked.
         /// </summary>
         public bool IgnoreLuaPathGlobal { get; set; }
+
+        private static string NormalizeModuleName(string modname)
+        {
+            if (modname.IndexOf('.', StringComparison.Ordinal) < 0)
+            {
+                return modname;
+            }
+
+            return string.Create(
+                modname.Length,
+                modname,
+                static (destination, source) =>
+                {
+                    for (int i = 0; i < destination.Length; i++)
+                    {
+                        char c = source[i];
+                        destination[i] = c == '.' ? '/' : c;
+                    }
+                }
+            );
+        }
+
+        private static IReadOnlyList<string> TryUnpackEnvironmentVariable(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            IReadOnlyList<string> paths = UnpackStringPaths(value);
+            return paths.Count > 0 ? paths : null;
+        }
     }
 }

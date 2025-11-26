@@ -9,6 +9,9 @@ namespace NovaSharp.Interpreter.Execution.VM
         "CA1069:Enums values should not be duplicated",
         Justification = "Opcode numeric values are serialized; Nop must remain 0 for backward compatibility."
     )]
+    /// <summary>
+    /// Defines the NovaSharp VM instruction set. Values must remain stable because they are persisted in chunk dumps.
+    /// </summary>
     internal enum OpCode
     {
         [Obsolete("Use a specific OpCode.", false)]
@@ -31,7 +34,7 @@ namespace NovaSharp.Interpreter.Execution.VM
         StoreLcl = 10,
         Local = 11,
         StoreUpv = 12,
-        Upvalue = 13,
+        UpValue = 13,
         IndexSet = 14,
         Index = 15,
         IndexSetN = 16,
@@ -87,6 +90,15 @@ namespace NovaSharp.Interpreter.Execution.VM
         // Iterators
         IterPrep = 56, // Prepares an iterator for execution
         IterUpd = 57, // Updates the var part of an iterator
+
+        // Extended operators
+        BitAnd = 59,
+        BitOr = 60,
+        BitXor = 61,
+        BitNot = 62,
+        ShiftLeft = 63,
+        ShiftRight = 64,
+        FloorDiv = 65,
 
         // Meta
         Invalid = 58, // Crashes the executor with an unrecoverable NotImplementedException. This MUST always be the last opcode in enum

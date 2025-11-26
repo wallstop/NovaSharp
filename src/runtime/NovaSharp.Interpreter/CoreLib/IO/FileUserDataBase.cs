@@ -3,13 +3,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Linq;
+    using System.IO;
+    using System.Security;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.PredefinedUserData;
     using NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
@@ -17,6 +19,14 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal abstract class FileUserDataBase : RefIdObject
     {
+        /// <summary>
+        /// Implements <c>file:lines</c> as defined by the Lua 5.4 manual (§6.8 I/O Facilities),
+        /// repeatedly invoking <see cref="Read(ScriptExecutionContext, CallbackArguments)"/> with
+        /// the supplied arguments until <c>nil</c> is returned.
+        /// </summary>
+        /// <param name="executionContext">Execution context owning the Lua script.</param>
+        /// <param name="args">Optional format arguments (mirroring <c>file:read</c>).</param>
+        /// <returns>A tuple whose elements contain each successful read followed by the final <c>nil</c>.</returns>
         public DynValue Lines(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             List<DynValue> readLines = new();
@@ -29,9 +39,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 readLines.Add(readValue);
             } while (readValue.IsNotNil());
 
-            return DynValue.FromObject(executionContext.GetScript(), readLines.Select(s => s));
+            return EnumerableWrapper.ConvertIterator(
+                executionContext.Script,
+                readLines.GetEnumerator()
+            );
         }
 
+        /// <summary>
+        /// Implements Lua's <c>file:read</c> contract (§6.8) by returning strings, numbers, or
+        /// tuples according to the provided format specifiers or byte counts.
+        /// </summary>
+        /// <param name="executionContext">Execution context owning the current script.</param>
+        /// <param name="args">Lua-style parameters describing byte counts or format specifiers.</param>
+        /// <returns>A tuple containing the requested values, or <c>nil</c> when the stream reaches EOF.</returns>
         public DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args.Count == 0)
@@ -72,9 +92,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
 
                         if (Eof())
                         {
-                            v = opt.StartsWith("*a") ? DynValue.NewString("") : DynValue.Nil;
+                            v = opt.StartsWith("*a", StringComparison.Ordinal)
+                                ? DynValue.NewString(string.Empty)
+                                : DynValue.Nil;
                         }
-                        else if (opt.StartsWith("*n"))
+                        else if (opt.StartsWith("*n", StringComparison.Ordinal))
                         {
                             double? d = ReadNumber();
 
@@ -87,18 +109,18 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                                 v = DynValue.Nil;
                             }
                         }
-                        else if (opt.StartsWith("*a"))
+                        else if (opt.StartsWith("*a", StringComparison.Ordinal))
                         {
                             string str = ReadToEnd();
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*l"))
+                        else if (opt.StartsWith("*l", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
                             str = str.TrimEnd('\n', '\r');
                             v = DynValue.NewString(str);
                         }
-                        else if (opt.StartsWith("*L"))
+                        else if (opt.StartsWith("*L", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
 
@@ -120,13 +142,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>file:write</c> (§6.8) by writing each provided argument to the
+        /// underlying stream using the current encoding.
+        /// </summary>
+        /// <param name="executionContext">Execution context owning the current script.</param>
+        /// <param name="args">Arguments that should be written sequentially to the stream.</param>
+        /// <returns>The userdata handle so Lua callers can chain additional writes.</returns>
         public DynValue Write(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
                 for (int i = 0; i < args.Count; i++)
                 {
-                    //string str = args.AsStringUsingMeta(executionContext, i, "file:write");
                     string str = args.AsType(i, "write", DataType.String, false).String;
                     Write(str);
                 }
@@ -137,16 +165,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
+        /// <summary>
+        /// Implements Lua's <c>file:close</c> (§6.8), returning <c>true</c> on success or the
+        /// <c>(nil, message, code)</c> tuple when closing fails with a recoverable IO error.
+        /// </summary>
+        /// <param name="executionContext">Execution context owning the current script.</param>
+        /// <param name="args">Unused Lua arguments; accepted for signature parity.</param>
+        /// <returns>A <see cref="DynValue"/> conveying <c>true</c> or the Lua error tuple.</returns>
         public DynValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
@@ -169,13 +200,9 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableIoException(ex))
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(ex.Message),
-                    DynValue.NewNumber(-1)
-                );
+                return CreateIoFailure(ex);
             }
         }
 
@@ -450,7 +477,19 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return true;
         }
 
-        private static bool IsSignAllowed(
+        /// <summary>
+        /// Determines whether the provided character can legally act as a sign while parsing a Lua
+        /// decimal or hexadecimal literal (§3.4.3 in the Lua 5.4 manual).
+        /// </summary>
+        /// <param name="literal">Characters consumed so far.</param>
+        /// <param name="isHex">Indicates whether the literal currently represents a hexadecimal number.</param>
+        /// <param name="exponentSeen">Whether a decimal exponent marker (<c>e/E</c>) has been processed.</param>
+        /// <param name="exponentHasDigits">Whether digits have been seen after the decimal exponent marker.</param>
+        /// <param name="hexExponentSeen">Whether a hexadecimal exponent marker (<c>p/P</c>) has been processed.</param>
+        /// <param name="hexExponentHasDigits">Whether digits have been seen after the hexadecimal exponent.</param>
+        /// <param name="candidate">The character being evaluated.</param>
+        /// <returns><c>true</c> when the candidate can serve as a sign, otherwise <c>false</c>.</returns>
+        internal static bool IsSignAllowed(
             StringBuilder literal,
             bool isHex,
             bool exponentSeen,
@@ -495,7 +534,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool IsStandaloneSignOrDot(string numericText)
+        /// <summary>
+        /// Determines whether the provided text is a solitary sign or decimal point, which Lua treats
+        /// as an incomplete numeric literal.
+        /// </summary>
+        /// <param name="numericText">Candidate text extracted from the stream.</param>
+        /// <returns><c>true</c> when the text is a lone <c>'+'</c>, <c>'-'</c>, or <c>'.'</c>.</returns>
+        internal static bool IsStandaloneSignOrDot(string numericText)
         {
             if (numericText.Length != 1)
             {
@@ -506,7 +551,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return single == '+' || single == '-' || single == '.';
         }
 
-        private static bool IsValidHexPrefix(StringBuilder literal)
+        /// <summary>
+        /// Determines whether the characters collected so far constitute a valid hexadecimal prefix
+        /// (<c>0x</c> or <c>-0x</c>) per Lua's numeric literal grammar (§3.4.3).
+        /// </summary>
+        /// <param name="literal">Characters consumed while reading the literal.</param>
+        /// <returns><c>true</c> when the literal can legally continue as a hexadecimal value.</returns>
+        internal static bool IsValidHexPrefix(StringBuilder literal)
         {
             if (literal.Length == 0)
             {
@@ -530,7 +581,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return false;
         }
 
-        private static bool TryParseHexFloatLiteral(string literal, out double value)
+        /// <summary>
+        /// Parses the supplied hexadecimal floating-point literal according to Lua 5.4 §3.4.3 rules.
+        /// </summary>
+        /// <param name="literal">Text that should represent a complete hexadecimal literal.</param>
+        /// <param name="value">Outputs the computed IEEE 754 double on success.</param>
+        /// <returns><c>true</c> when the literal is valid and <paramref name="value"/> contains the parsed number.</returns>
+        internal static bool TryParseHexFloatLiteral(string literal, out double value)
         {
             value = 0;
 
@@ -648,6 +705,29 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return LexerUtils.HexDigit2Value(c);
         }
 
+        private static DynValue CreateIoFailure(Exception exception)
+        {
+            return DynValue.NewTuple(
+                DynValue.Nil,
+                DynValue.NewString(exception.Message),
+                DynValue.NewNumber(-1)
+            );
+        }
+
+        private static bool IsRecoverableIoException(Exception exception)
+        {
+            return exception switch
+            {
+                IOException => true,
+                UnauthorizedAccessException => true,
+                ObjectDisposedException => true,
+                SecurityException => true,
+                NotSupportedException => true,
+                InvalidOperationException => true,
+                _ => false,
+            };
+        }
+
         protected abstract bool Eof();
         protected abstract string ReadLine();
         protected abstract string ReadBuffer(int p);
@@ -662,10 +742,31 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected internal abstract bool IsOpen();
         protected abstract string Close();
 
+        /// <summary>
+        /// Flushes buffered content to the underlying stream, mirroring Lua's <c>file:flush</c>.
+        /// </summary>
+        /// <returns><c>true</c> when the flush succeeds.</returns>
         public abstract bool Flush();
+
+        /// <summary>
+        /// Implements Lua's <c>file:seek</c> control, repositioning the file pointer relative to the specified origin.
+        /// </summary>
+        /// <param name="whence">Lua-style origin indicator (<c>"set"</c>, <c>"cur"</c>, or <c>"end"</c>).</param>
+        /// <param name="offset">Byte offset relative to <paramref name="whence"/>.</param>
+        /// <returns>The new absolute file position.</returns>
         public abstract long Seek(string whence, long offset = 0);
+
+        /// <summary>
+        /// Implements Lua's <c>file:setvbuf</c>, switching between <c>"no"</c>, <c>"full"</c>, or <c>"line"</c> buffering.
+        /// </summary>
+        /// <param name="mode">Desired Lua buffering mode.</param>
+        /// <returns><c>true</c> when the buffer mode is applied successfully.</returns>
         public abstract bool Setvbuf(string mode);
 
+        /// <summary>
+        /// Returns the Lua-facing identifier for the userdata so diagnostics match <c>tostring(file)</c>.
+        /// </summary>
+        /// <returns><c>"file (closed)"</c> when the handle is closed; otherwise the reference id.</returns>
         public override string ToString()
         {
             if (IsOpen())

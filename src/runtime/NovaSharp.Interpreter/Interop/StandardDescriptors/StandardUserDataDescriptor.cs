@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -179,7 +180,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                 AddMember(ei.Name, EventMemberDescriptor.TryCreateIfVisible(ei, AccessMode));
             }
 
-            // get nested types and create statics
+            // get nested types and create static descriptors
             foreach (Type nestedType in Framework.Do.GetNestedTypes(type))
             {
                 if (membersToIgnore.Contains(nestedType.Name))
@@ -222,7 +223,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
                     for (int i = 0; i < rank; i++)
                     {
                         getPars[i] = setPars[i] = new ParameterDescriptor(
-                            "idx" + i.ToString(),
+                            "idx" + i.ToString(CultureInfo.InvariantCulture),
                             typeof(int)
                         );
                     }
@@ -252,8 +253,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
+        /// <summary>
+        /// Serializes the descriptor and its members into a Lua table so tooling can inspect wiring info.
+        /// </summary>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             if (
                 AccessMode == InteropAccessMode.HideMembers
                 || Framework.Do.GetAssembly(Type) == Framework.Do.GetAssembly(GetType())
@@ -276,11 +285,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        private void Serialize(
+        private static void Serialize(
             Table t,
             IEnumerable<KeyValuePair<string, IMemberDescriptor>> members
         )
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             foreach (KeyValuePair<string, IMemberDescriptor> pair in members)
             {
                 if (pair.Value is IWireableDescriptor sd)

@@ -85,7 +85,7 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 4. Key Architecture Patterns
 
-**Closure & Upvalue Management:**
+**Closure & UpValue Management:**
 - `Closure` represents script functions with bytecode entry point
 - `ClosureContext` stores upvalue references and captured local values
 - `SymbolRef` identifies variables by name and scope, resolved at compile-time

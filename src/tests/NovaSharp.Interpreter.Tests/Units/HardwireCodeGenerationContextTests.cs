@@ -12,6 +12,15 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwireCodeGenerationContextTests
     {
+        private static readonly string[] ExpectedErrors = { "Failure 1" };
+        private static readonly string[] ExpectedWarnings = { "Warning 2" };
+        private static readonly string[] ExpectedMinorMessages = { "Note 3" };
+
+        static HardwireCodeGenerationContextTests()
+        {
+            _ = new RecordingHardwireGenerator();
+        }
+
         [Test]
         public void IsVisibilityAcceptedHonorsAllowInternalsFlag()
         {
@@ -57,9 +66,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             context.Warning("Warning {0}", 2);
             context.Minor("Note {0}", 3);
 
-            Assert.That(logger.Errors, Is.EqualTo(new[] { "Failure 1" }));
-            Assert.That(logger.Warnings, Is.EqualTo(new[] { "Warning 2" }));
-            Assert.That(logger.MinorMessages, Is.EqualTo(new[] { "Note 3" }));
+            Assert.That(logger.Errors, Is.EqualTo(ExpectedErrors));
+            Assert.That(logger.Warnings, Is.EqualTo(ExpectedWarnings));
+            Assert.That(logger.MinorMessages, Is.EqualTo(ExpectedMinorMessages));
         }
 
         [Test]
@@ -127,7 +136,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(invocation.Parameters, Has.Count.EqualTo(1));
         }
 
-        public sealed class RecordingHardwireGenerator : IHardwireGenerator
+        private sealed class RecordingHardwireGenerator : IHardwireGenerator
         {
             private readonly string _managedType;
 

@@ -9,6 +9,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class SliceTests
     {
+        private static readonly int[] ToArrayForwardExpected = { 6, 7 };
+        private static readonly int[] ToArrayReversedExpected = { 7, 6 };
+        private static readonly int[] EnumeratorForwardExpected = { 5, 6, 7 };
+        private static readonly int[] EnumeratorReversedExpected = { 7, 6, 5 };
+        private static readonly int[] CopyToTargetExpected = { 0, 1, 2, 0 };
+        private static readonly int[] NonGenericEnumeratorExpected = { 1, 2 };
+
         [Test]
         public void IndexerReturnsAndSetsUnderlyingItems()
         {
@@ -63,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 1, length: 2, reversed: false);
 
-            Assert.That(slice.ToArray(), Is.EqualTo(new[] { 6, 7 }));
+            Assert.That(slice.ToArray(), Is.EqualTo(ToArrayForwardExpected));
         }
 
         [Test]
@@ -72,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 1, length: 2, reversed: true);
 
-            Assert.That(slice.ToList(), Is.EqualTo(new[] { 7, 6 }));
+            Assert.That(slice.ToList(), Is.EqualTo(ToArrayReversedExpected));
         }
 
         [Test]
@@ -81,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
 
-            Assert.That(slice.ToArray(), Is.EqualTo(new[] { 5, 6, 7 }));
+            Assert.That(slice.ToArray(), Is.EqualTo(EnumeratorForwardExpected));
         }
 
         [Test]
@@ -90,7 +97,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: true);
 
-            Assert.That(slice.ToArray(), Is.EqualTo(new[] { 7, 6, 5 }));
+            Assert.That(slice.ToArray(), Is.EqualTo(EnumeratorReversedExpected));
         }
 
         [Test]
@@ -131,7 +138,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             int[] target = { 0, 0, 0, 0 };
             slice.CopyTo(target, 1);
 
-            Assert.That(target, Is.EqualTo(new[] { 0, 1, 2, 0 }));
+            Assert.That(target, Is.EqualTo(CopyToTargetExpected));
         }
 
         [Test]
@@ -157,7 +164,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Slice<int> slice = new(source, from: 0, length: 2, reversed: false);
             System.Collections.IEnumerable enumerable = slice;
 
-            Assert.That(enumerable.Cast<int>().ToArray(), Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(enumerable.Cast<int>().ToArray(), Is.EqualTo(NonGenericEnumeratorExpected));
         }
     }
 }

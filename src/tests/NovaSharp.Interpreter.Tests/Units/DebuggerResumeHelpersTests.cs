@@ -14,6 +14,15 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebuggerResumeHelpersTests
     {
+        private static readonly DebuggerAction.ActionType[] StepSequence =
+        {
+            DebuggerAction.ActionType.StepIn,
+            DebuggerAction.ActionType.StepOut,
+            DebuggerAction.ActionType.Run,
+        };
+
+        private static readonly int[] BreakLines = { 7, 8 };
+
         [Test]
         public void StepInThenStepOutBreaksOnExpectedLines()
         {
@@ -34,15 +43,7 @@ end
 return caller()
 ";
 
-            StepSequencingDebugger debugger = new(
-                new[]
-                {
-                    DebuggerAction.ActionType.StepIn,
-                    DebuggerAction.ActionType.StepOut,
-                    DebuggerAction.ActionType.Run,
-                },
-                new[] { 7, 8 }
-            );
+            StepSequencingDebugger debugger = new(StepSequence, BreakLines);
 
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;
@@ -110,7 +111,7 @@ return caller()
 
                 if (sourceCode.OwnerScript == _service.OwnerScript && sourceCode.Name == "chunk")
                 {
-                    _service.ResetBreakPoints(sourceCode, _breakLines);
+                    _service.ResetBreakpoints(sourceCode, _breakLines);
                     _breakpointsInstalled = true;
                 }
             }
@@ -146,7 +147,7 @@ return caller()
 
             public void Update(WatchType watchType, IEnumerable<WatchItem> items) { }
 
-            public List<DynamicExpression> GetWatchItems()
+            public IReadOnlyList<DynamicExpression> GetWatchItems()
             {
                 return new List<DynamicExpression>();
             }

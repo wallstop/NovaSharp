@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void UnsupportedOperationsThrowNotImplemented()
         {
             LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
 
             Assert.Multiple(() =>
             {
@@ -73,6 +73,23 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
             Assert.That(accessor.GetPlatformNamePrefix(), Is.EqualTo("limited"));
+        }
+
+        [Test]
+        public void FileExistsThrowsNotImplemented()
+        {
+            LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
+            Assert.That(
+                () => accessor.FileExists("file.txt"),
+                Throws.TypeOf<NotImplementedException>()
+            );
+        }
+
+        [Test]
+        public void DefaultPrintDoesNotThrow()
+        {
+            LimitedPlatformAccessor accessor = new LimitedPlatformAccessor();
+            Assert.That(() => accessor.DefaultPrint("hello limited platform"), Throws.Nothing);
         }
     }
 }

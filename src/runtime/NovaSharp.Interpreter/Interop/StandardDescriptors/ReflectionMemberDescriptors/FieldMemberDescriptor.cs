@@ -57,6 +57,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// Internal hook that exposes the compiled getter so interpreter tests (via InternalsVisibleTo)
         /// can assert optimization behavior without reflection.
         /// </summary>
+        /// <summary>
+        /// Gets the compiled getter delegate produced by <see cref="OptimizeGetter"/> when available.
+        /// </summary>
         internal Func<object, object> OptimizedGetter => _optimizedGetter;
 
         /// <summary>
@@ -71,6 +74,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             InteropAccessMode accessMode
         )
         {
+            if (fi == null)
+            {
+                throw new ArgumentNullException(nameof(fi));
+            }
+
             if (fi.GetVisibilityFromAttributes() ?? fi.IsPublic)
             {
                 return new FieldMemberDescriptor(fi, accessMode);
@@ -86,6 +94,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="accessMode">The <see cref="InteropAccessMode" /> </param>
         public FieldMemberDescriptor(FieldInfo fi, InteropAccessMode accessMode)
         {
+            if (fi == null)
+            {
+                throw new ArgumentNullException(nameof(fi));
+            }
+
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
             {
                 accessMode = InteropAccessMode.Reflection;
@@ -147,6 +160,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
+        /// <summary>
+        /// Compiles a fast getter delegate so repeated field access avoids reflection.
+        /// </summary>
         internal void OptimizeGetter()
         {
             if (IsConst)
@@ -190,9 +206,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The value to set.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to set.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (IsReadonly || IsConst)
@@ -204,8 +225,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 );
             }
 
-            object value = ScriptToClrConversions.DynValueToObjectOfType(
-                v,
+            object convertedValue = ScriptToClrConversions.DynValueToObjectOfType(
+                value,
                 FieldInfo.FieldType,
                 null,
                 false
@@ -213,18 +234,18 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             try
             {
-                if (value is double d)
+                if (convertedValue is double d)
                 {
-                    value = NumericConversions.DoubleToType(FieldInfo.FieldType, d);
+                    convertedValue = NumericConversions.DoubleToType(FieldInfo.FieldType, d);
                 }
 
-                FieldInfo.SetValue(IsStatic ? null : obj, value);
+                FieldInfo.SetValue(IsStatic ? null : obj, convertedValue);
             }
             catch (ArgumentException)
             {
                 // non-optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     FieldInfo.FieldType
                 );
             }
@@ -232,7 +253,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             {
                 // optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     FieldInfo.FieldType
                 );
             }
@@ -262,7 +283,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
-        void IOptimizableDescriptor.Optimize()
+        /// <summary>
+        /// Ensures getters are optimized when the access mode requires it.
+        /// </summary>
+        public virtual void Optimize()
         {
             if (_optimizedGetter == null)
             {
@@ -277,6 +301,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("visibility", DynValue.NewString(FieldInfo.GetClrVisibility()));
 

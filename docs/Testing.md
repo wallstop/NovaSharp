@@ -39,17 +39,40 @@ pwsh ./scripts/coverage/coverage.ps1
 ```
 
 - If the host only has .NET 9 installed (common on new Ubuntu images), set `DOTNET_ROLL_FORWARD=Major` when invoking the script (PowerShell or Bash) so the .NET 9 runtime can execute the net8.0 testhost.
+
 - Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
+
 - Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
+
 - Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
+
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
+
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
+
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **95 %** line/branch/method thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
+
+  ```powershell
+  $env:COVERAGE_GATING_MODE = "enforce"
+  $env:COVERAGE_GATING_TARGET_LINE = "95"
+  $env:COVERAGE_GATING_TARGET_BRANCH = "95"
+  $env:COVERAGE_GATING_TARGET_METHOD = "95"
+  pwsh ./scripts/coverage/coverage.ps1 -SkipBuild
+  ```
+
+  ```bash
+  COVERAGE_GATING_MODE=enforce \
+  COVERAGE_GATING_TARGET_LINE=95 \
+  COVERAGE_GATING_TARGET_BRANCH=95 \
+  COVERAGE_GATING_TARGET_METHOD=95 \
+  bash ./scripts/coverage/coverage.sh --skip-build
+  ```
 
 ### Coverage in CI
 
 - `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
-- The job appends the Markdown summary to the GitHub Action run, posts a PR comment with line/branch/method coverage, and uploads raw + HTML artefacts for inspection.
-- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise.
+- The job now exports `COVERAGE_GATING_MODE=enforce` together with 95 % line/branch/method targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow’s `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
+- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a “Coverage Gate” summary showing both the current percentages and thresholds.
 
 ## Pass/Fail Policy
 
@@ -57,9 +80,9 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Baseline (Release via `scripts/coverage/coverage.ps1`, 2025-11-11)**: 68.5 % line, 70.5 % branch, 73.0 % method coverage (interpreter module at 81.9 % line).
+- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 10:23 UTC)**: 96.98 % line / 95.13 % branch / 98.57 % method for `NovaSharp.Interpreter` across 2 547 Release tests (overall repository line coverage 87.5 %).
 
-- **Fixtures**: 42 `[TestFixture]` types, 1095 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
+- **Fixtures**: ~45 `[TestFixture]` types, 2 547 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 
@@ -68,6 +91,7 @@ pwsh ./scripts/coverage/coverage.ps1
 ## Naming & Conventions
 
 - NUnit test methods (`[Test]`, `[TestCase]`, etc.) must use PascalCase without underscores. The solution-wide `.editorconfig` enforces this as an error, so stray underscore names will fail analyzers and builds.
+- Multi-word Lua concepts keep their canonical casing when surfaced through C# APIs. In particular, treat “upvalue” as `UpValue`/`UpValues` so helpers such as `GetUpValue`, `UpValuesType`, and `SymbolRef.UpValue` remain consistent with the runtime surface. Do **not** collapse these identifiers to `Upvalue` or `Upvalues`, and document any additional Lua-specific casing decisions in `PLAN.md` before introducing new APIs.
 
 ## Expanding Coverage
 
@@ -77,3 +101,43 @@ pwsh ./scripts/coverage/coverage.ps1
 1. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.
+
+## Analyzer & Warning Policy
+
+- **Solution baseline (2025-12-07)**: `Directory.Build.props` now sets `<TreatWarningsAsErrors>true>`, so `dotnet build src/NovaSharp.sln -c Release -nologo` fails on any compiler or analyzer warning. Run that command before every push and note it in your PR (the template now calls out analyzer commands explicitly). If a warning is unavoidable, add a targeted suppression plus a `PLAN.md` entry before merging.
+
+- `src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>`. Any new warning in the VS Code debugger project fails the build locally and in CI, so always run:
+
+  ```bash
+  dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
+  ```
+
+  before pushing debugger changes. Keep the analyzer configuration warning-free; suppressions should be avoided unless they are documented in `PLAN.md`.
+
+- `src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj` now also treats warnings as errors. Run `dotnet build src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj -c Release -nologo` before committing tooling changes, and keep analyzer suppressions documented.
+
+- `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests live inside `src/tests/NovaSharp.Interpreter.Tests`—notably `Units/RemoteDebuggerServiceTests.cs`, `Units/RemoteDebuggerTests.cs`, and `Units/DebugCommandTests.cs`—so `scripts/coverage/coverage.ps1` and `dotnet test` already execute them; add new coverage there when touching RemoteDebugger code.
+
+- Record every analyzer command you run when filling out `.github/pull_request_template.md`. Reviewers expect to see the solution build plus any scoped project builds/tests for the areas you touched.
+
+- Because the solution-wide warning gate is now on, suppressions must remain surgical. Any new `[SuppressMessage]` or ruleset tweak requires a `PLAN.md` entry (rule, justification, follow-up owner) before merging.
+
+### Debugger Analyzer Guardrails
+
+Both debugger stacks now rely on analyzers to catch regressions; any new warning fails the Release build, so keep the following guardrails in mind whenever you touch debugger code.
+
+- **Disposal & ownership (CA1063/CA2213/CA2000)**: `NovaSharpVsCodeDebugServer`, `ProtocolServer`, `DebugSession`, `RemoteDebuggerService`, `HttpServer`, `Utf8TcpServer`, and every socket/listener/`HttpClient` wrapper must implement the full dispose pattern and wrap transient streams/sockets/readers in `using` statements. Tests should assert deterministic disposal by creating helpers such as the blocking channel/queue fixtures already in the suite.
+- **Argument validation & targeted catches (CA1031/CA1062)**: Guard every public/protected entry point (commands, protocol handlers, HTTP endpoints) against `null` or invalid arguments and only catch specific exception types (IO/security/format) so analyzers keep `Program`, `RunCommand`, `HardwireCommand`, and debugger transports free of blanket `catch (Exception)` blocks.
+- **Culture/compare invariance (CA1305/CA1310/CA1865/CA1866)**: Always format/parse using `CultureInfo.InvariantCulture` and specify `StringComparison.Ordinal` (or the char overloads) for protocol routing, manifest parsing, and CLI messaging. Remote debugger HTTP payload builders should also stay culture-invariant when emitting JSON or diagnostics.
+- **Collections & API surfaces (CA1002/CA1012/CA1716/CA1822/CA1854/CA1859)**: Expose protocol lists as `IEnumerable<T>`, keep debugger constructors `protected` to enforce abstract entry points, rename identifiers that collide with reserved keywords, and favor `static` helpers when no instance state is touched. Access dictionaries via `TryGetValue` to avoid double lookups, and store concrete list/dictionary instances instead of their interfaces when state mutation is required.
+- **Binary payload & immutability rules (CA1008/CA1056/CA1815/CA1819)**: Remote debugger URIs must use `System.Uri`, byte payloads should flow through `ReadOnlyMemory<byte>`/`ReadOnlySpan<byte>`, and value types such as `RemoteDebuggerOptions` need explicit equality members so analyzers see deterministic semantics.
+
+Validation checklist:
+
+```powershell
+dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
+dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo
+dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+```
+
+Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.

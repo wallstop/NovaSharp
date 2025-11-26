@@ -3,9 +3,11 @@ namespace NovaSharp.Benchmarks
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Runtime.InteropServices;
+    using System.Security;
     using System.Text;
     using System.Text.RegularExpressions;
     using BenchmarkDotNet.Environments;
@@ -18,8 +20,16 @@ namespace NovaSharp.Benchmarks
 
 #nullable enable
 
+    /// <summary>
+    /// Generates and updates the Markdown performance report under <c>docs/Performance.md</c>.
+    /// </summary>
     internal static class PerformanceReportWriter
     {
+        /// <summary>
+        /// Rewrites the OS-specific section of the performance report with the latest benchmark comparison.
+        /// </summary>
+        /// <param name="suiteName">Friendly name of the benchmark suite (e.g., Interpreter, CLI).</param>
+        /// <param name="summaries">BenchmarkDotNet summaries produced by the current run.</param>
         public static void Write(string suiteName, IEnumerable<Summary> summaries)
         {
             if (summaries == null)
@@ -39,8 +49,9 @@ namespace NovaSharp.Benchmarks
             string documentContent = File.ReadAllText(documentPath);
             string existingSection = ExtractOsSection(documentContent, osSectionName);
             string baselineBlock = ExtractBaseline(existingSection);
-            IReadOnlyDictionary<BenchmarkKey, BaselineMetrics> baselineMetrics =
-                ParseBaselineMetrics(baselineBlock);
+            Dictionary<BenchmarkKey, BaselineMetrics> baselineMetrics = ParseBaselineMetrics(
+                baselineBlock
+            );
 
             IReadOnlyList<ComparisonRow> comparisons = BuildComparisonRows(
                 summaryList,
@@ -48,7 +59,10 @@ namespace NovaSharp.Benchmarks
             );
 
             Summary firstSummary = summaryList[0];
-            string timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
+            string timestamp = DateTimeOffset.Now.ToString(
+                "yyyy-MM-dd HH:mm:ss zzz",
+                CultureInfo.InvariantCulture
+            );
             string latestBlock = BuildLatestBlock(
                 suiteName,
                 timestamp,
@@ -171,9 +185,17 @@ namespace NovaSharp.Benchmarks
                     return description.ToString();
                 }
             }
-            catch
+            catch (SecurityException)
             {
-                // If registry access fails, fall back to the version-based heuristic below.
+                // fall back to the version-based heuristic below
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // fall back to the version-based heuristic below
+            }
+            catch (IOException)
+            {
+                // fall back to the version-based heuristic below
             }
 
             Version fallbackVersion = Environment.OSVersion.Version;
@@ -234,6 +256,9 @@ namespace NovaSharp.Benchmarks
             return normalized.Substring(headerIndex, nextHeaderIndex - headerIndex).Trim();
         }
 
+        private static void AppendLineInvariant(StringBuilder builder, FormattableString value) =>
+            builder.AppendLine(FormattableString.Invariant(value));
+
         private static string BuildLatestBlock(
             string suiteName,
             string timestamp,
@@ -248,26 +273,26 @@ namespace NovaSharp.Benchmarks
 
             StringBuilder builder = new();
 
-            builder.AppendLine($"### NovaSharp Latest (captured {timestamp})");
+            AppendLineInvariant(builder, $"### NovaSharp Latest (captured {timestamp})");
             builder.AppendLine();
             builder.AppendLine("**Environment**");
-            builder.AppendLine($"- OS: {friendlyOsDescription}");
+            AppendLineInvariant(builder, $"- OS: {friendlyOsDescription}");
 
             if (!string.IsNullOrWhiteSpace(cpuInfo.Value.ProcessorName))
             {
-                builder.AppendLine($"- CPU: {cpuInfo.Value.ProcessorName}");
+                AppendLineInvariant(builder, $"- CPU: {cpuInfo.Value.ProcessorName}");
             }
 
-            builder.AppendLine($"- Logical cores: {Environment.ProcessorCount}");
-            builder.AppendLine($"- Runtime: {env.RuntimeVersion}");
+            AppendLineInvariant(builder, $"- Logical cores: {Environment.ProcessorCount}");
+            AppendLineInvariant(builder, $"- Runtime: {env.RuntimeVersion}");
 
             double totalMemory = GetTotalSystemMemoryInMegabytes();
             if (totalMemory > 0)
             {
-                builder.AppendLine($"- Approx. RAM: {totalMemory:N0} MB");
+                AppendLineInvariant(builder, $"- Approx. RAM: {totalMemory:N0} MB");
             }
 
-            builder.AppendLine($"- Suite: {suiteName}");
+            AppendLineInvariant(builder, $"- Suite: {suiteName}");
             builder.AppendLine();
 
             if (comparisons.Count > 0)
@@ -316,7 +341,7 @@ namespace NovaSharp.Benchmarks
                 AccumulationLogger logger = new();
                 MarkdownExporter.GitHub.ExportToLog(summary, logger);
 
-                builder.AppendLine($"#### {summary.Title}");
+                AppendLineInvariant(builder, $"#### {summary.Title}");
                 builder.AppendLine();
                 builder.AppendLine(logger.GetLog());
                 builder.AppendLine();
@@ -501,19 +526,15 @@ namespace NovaSharp.Benchmarks
             sectionBuilder.AppendLine(header);
             sectionBuilder.AppendLine();
 
-            if (string.IsNullOrWhiteSpace(baselineBlock))
+            if (string.IsNullOrWhiteSpace(latestBlock))
             {
-                sectionBuilder.AppendLine("_No MoonSharp baseline recorded yet._");
+                sectionBuilder.AppendLine("_No NovaSharp benchmarks recorded yet._");
             }
             else
             {
-                sectionBuilder.AppendLine(baselineBlock.Trim());
+                sectionBuilder.AppendLine(latestBlock.Trim());
             }
 
-            sectionBuilder.AppendLine();
-            sectionBuilder.AppendLine("---");
-            sectionBuilder.AppendLine();
-            sectionBuilder.AppendLine(latestBlock.Trim());
             sectionBuilder.AppendLine();
             sectionBuilder.AppendLine("To refresh this section, run:");
             sectionBuilder.AppendLine();
@@ -529,16 +550,32 @@ namespace NovaSharp.Benchmarks
             sectionBuilder.AppendLine(
                 "Then replace everything under `### NovaSharp Latest` with the new results."
             );
+            sectionBuilder.AppendLine();
+            sectionBuilder.AppendLine("---");
+            sectionBuilder.AppendLine();
+
+            if (string.IsNullOrWhiteSpace(baselineBlock))
+            {
+                sectionBuilder.AppendLine("_No MoonSharp baseline recorded yet._");
+            }
+            else
+            {
+                sectionBuilder.AppendLine(baselineBlock.Trim());
+            }
 
             return sectionBuilder.ToString().TrimEnd();
         }
 
-        private static string NormalizeLineEndings(string value) => value.Replace("\r\n", "\n");
+        private static string NormalizeLineEndings(string value) =>
+            value.Replace("\r\n", "\n", StringComparison.Ordinal);
 
         private static string NormalizeForWrite(string value)
         {
             string normalized = NormalizeLineEndings(value).TrimEnd('\n');
-            return normalized.Replace("\n", Environment.NewLine) + Environment.NewLine;
+            return (
+                normalized.Replace("\n", Environment.NewLine, StringComparison.Ordinal)
+                + Environment.NewLine
+            );
         }
 
         private static string ExtractBaseline(string existingSection)
@@ -573,7 +610,7 @@ namespace NovaSharp.Benchmarks
             return baseline.Trim();
         }
 
-        private static IReadOnlyDictionary<BenchmarkKey, BaselineMetrics> ParseBaselineMetrics(
+        private static Dictionary<BenchmarkKey, BaselineMetrics> ParseBaselineMetrics(
             string baselineBlock
         )
         {
@@ -602,7 +639,7 @@ namespace NovaSharp.Benchmarks
                     continue;
                 }
 
-                if (!trimmed.StartsWith("|", StringComparison.Ordinal))
+                if (!trimmed.StartsWith('|'))
                 {
                     continue;
                 }
@@ -714,7 +751,7 @@ namespace NovaSharp.Benchmarks
 
         private static string BuildParameterSignature(
             string[] header,
-            IReadOnlyList<string> cells,
+            List<string> cells,
             int methodIndex,
             int meanIndex
         )
@@ -1059,7 +1096,11 @@ namespace NovaSharp.Benchmarks
                     return info.TotalAvailableMemoryBytes / (1024d * 1024d);
                 }
             }
-            catch
+            catch (InvalidOperationException)
+            {
+                // ignore – best-effort metric
+            }
+            catch (PlatformNotSupportedException)
             {
                 // ignore – best-effort metric
             }
@@ -1078,6 +1119,16 @@ namespace NovaSharp.Benchmarks
             double AllocatedBytes
         );
 
+        /// <summary>
+        /// Represents the comparison between NovaSharp's current benchmark results and the stored baseline.
+        /// </summary>
+        /// <param name="SummaryName">Benchmark summary (suite) name.</param>
+        /// <param name="Method">Benchmark method name.</param>
+        /// <param name="ParameterDisplay">Parameter display string rendered by BenchmarkDotNet.</param>
+        /// <param name="NovaMeanNanoseconds">Current mean runtime (ns).</param>
+        /// <param name="BaselineMeanNanoseconds">Baseline mean runtime (ns).</param>
+        /// <param name="NovaAllocatedBytes">Current allocated bytes.</param>
+        /// <param name="BaselineAllocatedBytes">Baseline allocated bytes.</param>
         private sealed record ComparisonRow(
             string SummaryName,
             string Method,
@@ -1088,15 +1139,27 @@ namespace NovaSharp.Benchmarks
             double BaselineAllocatedBytes
         )
         {
+            /// <summary>
+            /// Delta between the current and baseline mean runtime (ns).
+            /// </summary>
             public double MeanDeltaNanoseconds => NovaMeanNanoseconds - BaselineMeanNanoseconds;
 
+            /// <summary>
+            /// Delta between the current and baseline allocation totals (bytes).
+            /// </summary>
             public double AllocatedDeltaBytes => NovaAllocatedBytes - BaselineAllocatedBytes;
 
+            /// <summary>
+            /// Percentage delta between the current and baseline mean runtime.
+            /// </summary>
             public double MeanDeltaPercent =>
                 BaselineMeanNanoseconds > 0
                     ? (MeanDeltaNanoseconds / BaselineMeanNanoseconds) * 100d
                     : double.NaN;
 
+            /// <summary>
+            /// Percentage delta between the current and baseline allocation totals.
+            /// </summary>
             public double AllocatedDeltaPercent =>
                 BaselineAllocatedBytes > 0
                     ? (AllocatedDeltaBytes / BaselineAllocatedBytes) * 100d

@@ -7,8 +7,18 @@ namespace NovaSharp.Interpreter.Serialization
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// Converts CLR objects (primitives, collections, POCOs) to <see cref="DynValue"/> trees.
+    /// </summary>
     public static class ObjectValueConverter
     {
+        /// <summary>
+        /// Serializes a CLR object into a Lua value, recursively walking enumerables and properties.
+        /// </summary>
+        /// <param name="script">Owning script used for table allocation and conversions.</param>
+        /// <param name="o">The CLR object to convert.</param>
+        /// <param name="valueForNulls">Optional value used when encountering <c>null</c> references.</param>
+        /// <returns>A <see cref="DynValue"/> representing the object graph.</returns>
         public static DynValue SerializeObjectToDynValue(
             Script script,
             object o,

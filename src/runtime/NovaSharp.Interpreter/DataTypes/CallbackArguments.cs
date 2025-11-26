@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.Errors;
@@ -123,7 +124,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (skip >= _count)
             {
-                return new DynValue[0];
+                return Array.Empty<DynValue>();
             }
 
             DynValue[] vals = new DynValue[_count - skip];
@@ -153,8 +154,8 @@ namespace NovaSharp.Interpreter.DataTypes
                     type,
                     argNum,
                     allowNil
-                        ? TypeValidationFlags.AllowNil | TypeValidationFlags.AutoConvert
-                        : TypeValidationFlags.AutoConvert
+                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                        : TypeValidationOptions.AutoConvert
                 );
         }
 
@@ -173,7 +174,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 .CheckUserDataType<T>(
                     funcName,
                     argNum,
-                    allowNil ? TypeValidationFlags.AllowNil : default
+                    allowNil ? TypeValidationOptions.AllowNil : default
                 );
         }
 
@@ -218,15 +219,21 @@ namespace NovaSharp.Interpreter.DataTypes
             string funcName
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
             if (
                 (this[argNum].Type == DataType.Table)
                 && (this[argNum].Table.MetaTable != null)
                 && (this[argNum].Table.MetaTable.RawGet("__tostring") != null)
             )
             {
-                DynValue v = executionContext
-                    .GetScript()
-                    .Call(this[argNum].Table.MetaTable.RawGet("__tostring"), this[argNum]);
+                DynValue v = executionContext.Script.Call(
+                    this[argNum].Table.MetaTable.RawGet("__tostring"),
+                    this[argNum]
+                );
 
                 if (v.Type != DataType.String)
                 {

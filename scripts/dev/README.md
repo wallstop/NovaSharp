@@ -4,7 +4,7 @@ The scripts in this folder keep local commits tidy by auto-fixing formatting iss
 
 ## Scripts
 
-- `pre-commit.sh` — Runs CSharpier across the repo, applies Markdown formatting fixes, re-validates Markdown link targets for staged files, and stages any resulting changes so the commit includes the auto-fixes.
+- `pre-commit.sh` — Formats staged C# files with CSharpier, applies Markdown formatting fixes, re-validates Markdown link targets for staged files, and re-stages only the affected files so the commit includes the auto-fixes. The script uses POSIX `sh`, so it runs inside Git's default hook runner on Windows without needing WSL or MSYS beyond what Git already ships.
 - `install-hooks.sh` — Configures `core.hooksPath` to `.githooks` so Git invokes the shared `pre-commit` hook from this repository.
 
 ## Usage

@@ -1,8 +1,6 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
@@ -22,12 +20,24 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class ErrorHandlingModule
     {
+        /// <summary>
+        /// Implements Lua's <c>pcall</c>, wrapping a function invocation in protected mode.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function to call and the rest flow into it.</param>
+        /// <returns>A tuple beginning with <c>true</c>/<c>false</c> followed by the function results or error message.</returns>
         [NovaSharpModuleMethod(Name = "pcall")]
         public static DynValue Pcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return SetErrorHandlerStrategy("pcall", executionContext, args, null);
         }
 
@@ -38,6 +48,12 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue handlerBeforeUnwind
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             DynValue[] a = new DynValue[args.Count - 1];
 
@@ -69,8 +85,8 @@ namespace NovaSharp.Interpreter.CoreLib
                             {
                                 Args = ret.TailCallData.Args,
                                 Function = ret.TailCallData.Function,
-                                Continuation = new CallbackFunction(pcall_continuation, funcName),
-                                ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                                Continuation = new CallbackFunction(PcallContinuation, funcName),
+                                ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                                 ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                             }
                         );
@@ -110,8 +126,8 @@ namespace NovaSharp.Interpreter.CoreLib
                     {
                         Args = a,
                         Function = v,
-                        Continuation = new CallbackFunction(pcall_continuation, funcName),
-                        ErrorHandler = new CallbackFunction(pcall_onerror, funcName),
+                        Continuation = new CallbackFunction(PcallContinuation, funcName),
+                        ErrorHandler = new CallbackFunction(PcallOnError, funcName),
                         ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                     }
                 );
@@ -132,28 +148,67 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(rets);
         }
 
-        public static DynValue pcall_continuation(
+        /// <summary>
+        /// Continuation invoked after a protected call completes successfully; it prepends
+        /// <c>true</c> to the callee's return values to match Lua's <c>pcall</c>/<c>xpcall</c>
+        /// contract.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments representing the protected call's return values.</param>
+        /// <returns>Tuple with <c>true</c> followed by the original return values.</returns>
+        public static DynValue PcallContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return MakeReturnTuple(true, args);
         }
 
-        public static DynValue pcall_onerror(
+        /// <summary>
+        /// Continuation invoked when a protected call fails; it prepends <c>false</c> and the error
+        /// object to mimic Lua's <c>pcall</c>/<c>xpcall</c> failure contract.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments containing the error object/message.</param>
+        /// <returns>Tuple beginning with <c>false</c> followed by the error payload.</returns>
+        public static DynValue PcallOnError(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return MakeReturnTuple(false, args);
         }
 
+        /// <summary>
+        /// Implements Lua's <c>xpcall</c>, invoking a function with a custom error handler when failures occur.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the function and index 1 is the error handler.</param>
+        /// <returns>A tuple matching <c>pcall</c>'s result contract.</returns>
         [NovaSharpModuleMethod(Name = "xpcall")]
         public static DynValue Xpcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             List<DynValue> a = new();
 
             for (int i = 0; i < args.Count; i++)

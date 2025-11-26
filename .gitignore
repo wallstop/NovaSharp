@@ -179,3 +179,6 @@ artifacts/
 
 docs/coverage/latest/
 !docs/coverage/README.md
+!documentation_audit.log
+!spelling_audit.log
+!naming_audit.log

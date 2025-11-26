@@ -1,5 +1,8 @@
 namespace NovaSharp.RemoteDebugger.Network
 {
+    /// <summary>
+    /// Flags that control how the remote debugger TCP server accepts and manages connections.
+    /// </summary>
     [Flags]
     public enum Utf8TcpServerOptions
     {
@@ -14,8 +17,8 @@ namespace NovaSharp.RemoteDebugger.Network
         SingleClientOnly = 2,
 
         /// <summary>
-        /// The default
+        /// No options enabled.
         /// </summary>
-        Default = 0,
+        None = 0,
     }
 }

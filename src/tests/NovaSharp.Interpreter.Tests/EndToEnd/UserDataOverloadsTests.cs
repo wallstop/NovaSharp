@@ -1,15 +1,17 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-    public static class OverloadsExtMethods
+    internal static class OverloadsExtMethods
     {
-        public static string Method1(
+        internal static string Method1(
             this UserDataOverloadsTests.OverloadsTestClass obj,
             string x,
             bool b
@@ -18,16 +20,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return "X" + obj.Method1();
         }
 
-        public static string Method3(this UserDataOverloadsTests.OverloadsTestClass obj)
+        internal static string Method3(this UserDataOverloadsTests.OverloadsTestClass obj)
         {
             obj.Method1();
             return "X3";
         }
     }
 
-    public static class OverloadsExtMethods2
+    internal static class OverloadsExtMethods2
     {
-        public static string MethodXxx(
+        internal static string MethodXxx(
             this UserDataOverloadsTests.OverloadsTestClass obj,
             string x,
             bool b
@@ -40,20 +42,30 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataOverloadsTests
     {
-        public class OverloadsTestClass
+        private int _helperCallCount;
+
+        internal sealed class OverloadsTestClass
         {
+            private int _callCounter;
+            private string _lastFormat = string.Empty;
+
             public string MethodV(string fmt, params object[] args)
             {
-                return "varargs:" + string.Format(fmt, args);
+                _lastFormat = fmt ?? string.Empty;
+                _callCounter += args?.Length ?? 0;
+                return "varargs:" + FormatUnchecked(fmt, args);
             }
 
             public string MethodV(string fmt, int a, bool b)
             {
-                return "exact:" + string.Format(fmt, a, b);
+                _lastFormat = fmt ?? string.Empty;
+                _callCounter += a;
+                return "exact:" + string.Format(CultureInfo.InvariantCulture, fmt, a, b);
             }
 
             public string Method1()
             {
+                _callCounter++;
                 return "1";
             }
 
@@ -64,41 +76,57 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Method1(int a)
             {
+                _callCounter += a;
                 return "2";
             }
 
             public string Method1(double d)
             {
+                _callCounter += (int)d;
                 return "3";
             }
 
             public string Method1(double d, string x = null)
             {
+                _callCounter += (int)d;
+                _lastFormat = x ?? string.Empty;
                 return "4";
             }
 
             public string Method1(double d, string x, int y = 5)
             {
+                _callCounter += y;
+                _lastFormat = x ?? string.Empty;
                 return "5";
             }
 
             public string Method2(string x, string y)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += y?.Length ?? 0;
                 return "v";
             }
 
             public string Method2(string x, ref string y)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += y?.Length ?? 0;
                 return "r";
             }
 
             public string Method2(string x, ref string y, int z)
             {
+                _lastFormat = x ?? string.Empty;
+                _callCounter += z;
                 return "R";
             }
         }
 
-        private void RunTestOverload(string code, string expected, bool tupleExpected = false)
+        private static void RunTestOverload(
+            string code,
+            string expected,
+            bool tupleExpected = false
+        )
         {
             Script s = new();
 
@@ -285,12 +313,26 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         private int Method1()
         {
+            _helperCallCount++;
             return 1;
         }
 
         private int Method1(int a)
         {
+            _helperCallCount += a;
             return 5 + a;
+        }
+
+        private static string FormatUnchecked(string format, object[] args)
+        {
+            ArgumentNullException.ThrowIfNull(format);
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
 
 #if !DOTNET_CORE

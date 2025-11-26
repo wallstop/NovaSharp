@@ -1,21 +1,37 @@
 namespace NovaSharp.Comparison;
 
+using System;
+using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;
 using NLua;
 using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.DataTypes;
 using NovaSharp.Interpreter.Modules;
 
+#nullable enable
+
+/// <summary>
+/// BenchmarkDotNet suite that compares NovaSharp and NLua compilation/execution throughput.
+/// </summary>
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
-public class LuaPerformanceBenchmarks
+[SuppressMessage(
+    "Performance",
+    "CA1812",
+    Justification = "Instantiated via BenchmarkDotNet reflection."
+)]
+public sealed class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
     private Script _novaSharpScript = null!;
     private DynValue _novaSharpFunction = DynValue.Nil;
     private Lua _nLua = null!;
-    private LuaFunction _nLuaFunction;
+    private LuaFunction? _nLuaFunction;
+    private bool _disposed;
 
+    /// <summary>
+    /// Scenario executed for each benchmark iteration.
+    /// </summary>
     [Params(
         ScriptScenario.TowerOfHanoi,
         ScriptScenario.EightQueens,
@@ -24,6 +40,9 @@ public class LuaPerformanceBenchmarks
     public ScriptScenario Scenario { get; set; }
 
     [GlobalSetup]
+    /// <summary>
+    /// Compiles the selected scenario for both NovaSharp and NLua before the benchmarks run.
+    /// </summary>
     public void Setup()
     {
         Script.WarmUp();
@@ -38,13 +57,15 @@ public class LuaPerformanceBenchmarks
     }
 
     [GlobalCleanup]
-    public void Cleanup()
-    {
-        _nLuaFunction?.Dispose();
-        _nLua.Dispose();
-    }
+    /// <summary>
+    /// Releases NLua resources after the benchmark run.
+    /// </summary>
+    public void Cleanup() => Dispose();
 
     [Benchmark(Description = "NovaSharp Compile")]
+    /// <summary>
+    /// Compiles the scenario using a fresh NovaSharp script instance.
+    /// </summary>
     public DynValue NovaSharpCompile()
     {
         Script script = new(CoreModules.PresetComplete);
@@ -52,27 +73,68 @@ public class LuaPerformanceBenchmarks
     }
 
     [Benchmark(Description = "NovaSharp Execute")]
+    /// <summary>
+    /// Executes the previously compiled NovaSharp chunk.
+    /// </summary>
     public DynValue NovaSharpExecute() => _novaSharpScript.Call(_novaSharpFunction);
 
     [Benchmark(Description = "NLua Compile")]
+    /// <summary>
+    /// Compiles the scenario using NLua.
+    /// </summary>
     public LuaFunction NLuaCompile()
     {
-        return _nLua.LoadString(_source, $"compile_{Scenario}") as LuaFunction;
+        LuaFunction? compiled = _nLua.LoadString(_source, $"compile_{Scenario}") as LuaFunction;
+        if (compiled == null)
+        {
+            throw new InvalidOperationException("NLua failed to compile the benchmark script.");
+        }
+
+        return compiled;
     }
 
     [Benchmark(Description = "NLua Execute")]
-    public object NLuaExecute()
+    /// <summary>
+    /// Executes the previously compiled NLua chunk.
+    /// </summary>
+    public object? NLuaExecute()
     {
         if (_nLuaFunction == null)
         {
             return null;
         }
 
-        object result = null;
+        object? result = null;
         foreach (object value in _nLuaFunction.Call())
         {
             result = value;
         }
         return result;
+    }
+
+    /// <summary>
+    /// Disposes NLua resources created by the benchmark.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!disposing || _disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _nLuaFunction?.Dispose();
+        _nLua?.Dispose();
     }
 }

@@ -11,8 +11,6 @@ namespace Tutorials.Chapters
     [Tutorial]
     static class Chapter06
     {
-        #region UserData classes
-
         [NovaSharpUserData]
         class MyClass
         {
@@ -24,7 +22,7 @@ namespace Tutorials.Chapters
                     SomethingHappened(this, EventArgs.Empty);
             }
 
-            public double calcHypotenuse(double a, double b)
+            public double CalcHypotenuse(double a, double b)
             {
                 return Math.Sqrt(a * a + b * b);
             }
@@ -44,7 +42,7 @@ namespace Tutorials.Chapters
         [NovaSharpUserData]
         class MyClassStatic
         {
-            public static double calcHypotenuse(double a, double b)
+            public static double CalcHypotenuse(double a, double b)
             {
                 return Math.Sqrt(a * a + b * b);
             }
@@ -177,15 +175,12 @@ namespace Tutorials.Chapters
             }
         }
 
-        #endregion
-
-
         [Tutorial]
         public static double CallMyClass1()
         {
             string scriptCode =
                 @"    
-				return obj.calcHypotenuse(3, 4);
+				return obj.CalcHypotenuse(3, 4);
 			";
 
             // Automatically register all NovaSharpUserData types
@@ -206,15 +201,15 @@ namespace Tutorials.Chapters
         {
             string scriptCode =
                 @"    
-				return obj.calcHypotenuse(3, 4);
+				return obj.CalcHypotenuse(3, 4);
 			";
 
-            // Register just MyClass, explicitely.
+            // Register just MyClass, explicitly.
             UserData.RegisterType<MyClass>();
 
             Script script = new Script();
 
-            // create a userdata, again, explicitely.
+            // create a userdata, again, explicitly.
             DynValue obj = UserData.Create(new MyClass());
 
             script.Globals.Set("obj", obj);
@@ -229,7 +224,7 @@ namespace Tutorials.Chapters
         {
             string scriptCode =
                 @"    
-				return obj.calcHypotenuse(3, 4);
+				return obj.CalcHypotenuse(3, 4);
 			";
 
             // Automatically register all NovaSharpUserData types
@@ -249,7 +244,7 @@ namespace Tutorials.Chapters
         {
             string scriptCode =
                 @"    
-				return obj.calcHypotenuse(3, 4);
+				return obj.CalcHypotenuse(3, 4);
 			";
 
             // Automatically register all NovaSharpUserData types
@@ -452,18 +447,18 @@ namespace Tutorials.Chapters
             public void Method4() { }
 
             // Not visible - it's private
-            private int Field1 = 0;
+            private int _field1 = 0;
 
             // Visible - it's public
-            public int Field2 = 0;
+            public int field2 = 0;
 
             // Visible - it's private but forced visible by attribute
             [NovaSharpVisible(true)]
-            private int Field3 = 0;
+            private int _field3 = 0;
 
             // Not visible - it's public but forced hidden by attribute
             [NovaSharpVisible(false)]
-            public int Field4 = 0;
+            public int field4 = 0;
 
             // Not visible at all - it's private
             private int Property1 { get; set; }

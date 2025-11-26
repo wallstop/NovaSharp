@@ -46,9 +46,19 @@ namespace NovaSharp.Interpreter.Interop
     /// </summary>
     public struct ReflectionSpecialName : IEquatable<ReflectionSpecialName>
     {
+        /// <summary>
+        /// Gets the category of special name discovered via reflection.
+        /// </summary>
         public ReflectionSpecialNameType Type { get; private set; }
+
+        /// <summary>
+        /// Gets the optional argument associated with the special name (property name, operator token, etc.).
+        /// </summary>
         public string Argument { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance with the specified type/argument.
+        /// </summary>
         public ReflectionSpecialName(ReflectionSpecialNameType type, string argument = null)
             : this()
         {
@@ -56,6 +66,9 @@ namespace NovaSharp.Interpreter.Interop
             Argument = argument;
         }
 
+        /// <summary>
+        /// Parses a CLR special-name string (e.g., <c>op_Addition</c> or <c>get_Item</c>).
+        /// </summary>
         public ReflectionSpecialName(string name)
             : this()
         {
@@ -64,7 +77,7 @@ namespace NovaSharp.Interpreter.Interop
                 throw new ArgumentException("Special name cannot be null or empty.", nameof(name));
             }
 
-            if (name.Contains("."))
+            if (name.Contains('.', StringComparison.Ordinal))
             {
                 string[] split = name.Split('.');
                 name = split[^1];
@@ -172,55 +185,66 @@ namespace NovaSharp.Interpreter.Interop
                     return;
             }
 
-            if (name.StartsWith("get_"))
+            if (name.StartsWith("get_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.PropertyGetter;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("set_"))
+            else if (name.StartsWith("set_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.PropertySetter;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("add_"))
+            else if (name.StartsWith("add_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.AddEvent;
                 Argument = name.Substring(4);
             }
-            else if (name.StartsWith("remove_"))
+            else if (name.StartsWith("remove_", StringComparison.Ordinal))
             {
                 Type = ReflectionSpecialNameType.RemoveEvent;
                 Argument = name.Substring(7);
             }
         }
 
+        /// <inheritdoc />
         public bool Equals(ReflectionSpecialName other)
         {
             return Type == other.Type
                 && string.Equals(Argument, other.Argument, StringComparison.Ordinal);
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return obj is ReflectionSpecialName name && Equals(name);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
             {
                 int hash = 17;
                 hash = (hash * 31) + Type.GetHashCode();
-                hash = (hash * 31) + (Argument != null ? Argument.GetHashCode() : 0);
+                hash =
+                    (hash * 31)
+                    + (Argument != null ? Argument.GetHashCode(StringComparison.Ordinal) : 0);
                 return hash;
             }
         }
 
+        /// <summary>
+        /// Equality operator for comparing two special names.
+        /// </summary>
         public static bool operator ==(ReflectionSpecialName left, ReflectionSpecialName right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Inequality operator for comparing two special names.
+        /// </summary>
         public static bool operator !=(ReflectionSpecialName left, ReflectionSpecialName right)
         {
             return !left.Equals(right);

@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua iterators (pairs, ipairs, next)
     /// </summary>
     [NovaSharpModule]
-    public class TableIteratorsModule
+    public static class TableIteratorsModule
     {
         // ipairs (t)
         // -------------------------------------------------------------------------------------------------------------------
@@ -21,12 +21,20 @@ namespace NovaSharp.Interpreter.CoreLib
         // Otherwise, returns three values: an iterator function, the table t, and 0, so that the construction
         //	  for i,v in ipairs(t) do body end
         // will iterate over the pairs (1,t[1]), (2,t[2]), ..., up to the first integer key absent from the table.
+        /// <summary>
+        /// Implements Lua `ipairs`, respecting `__ipairs` metamethods and otherwise yielding the array iterator triple.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "ipairs")]
         public static DynValue Ipairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
             DynValue meta = executionContext.GetMetamethodTailCall(
@@ -36,7 +44,7 @@ namespace NovaSharp.Interpreter.CoreLib
             );
 
             return meta
-                ?? DynValue.NewTuple(DynValue.NewCallback(__next_i), table, DynValue.NewNumber(0));
+                ?? DynValue.NewTuple(DynValue.NewCallback(NextArray), table, DynValue.NewNumber(0));
         }
 
         // pairs (t)
@@ -46,12 +54,20 @@ namespace NovaSharp.Interpreter.CoreLib
         //     for k,v in pairs(t) do body end
         // will iterate over all key–value pairs of table t.
         // See function next for the caveats of modifying the table during its traversal.
+        /// <summary>
+        /// Implements Lua `pairs`, honoring `__pairs` metamethods or returning the default `next` iterator triple.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "pairs")]
         public static DynValue Pairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
             DynValue meta = executionContext.GetMetamethodTailCall(
@@ -74,9 +90,17 @@ namespace NovaSharp.Interpreter.CoreLib
         // (To traverse a table in numeric order, use a numerical for.)
         // The behavior of next is undefined if, during the traversal, you assign any value to a non-existent field in the table.
         // You may however modify existing fields. In particular, you may clear existing fields.
+        /// <summary>
+        /// Implements Lua `next`, returning successive key/value pairs for a table (§3.3.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "next")]
         public static DynValue Next(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args.AsType(0, "next", DataType.Table);
             DynValue index = args[1];
 
@@ -95,11 +119,19 @@ namespace NovaSharp.Interpreter.CoreLib
         // __next_i (table [, index])
         // -------------------------------------------------------------------------------------------------------------------
         // Allows a program to traverse all fields of an array. index is an integer number
-        public static DynValue __next_i(
+        /// <summary>
+        /// Internal helper that drives the array-style iterator used by `ipairs`.
+        /// </summary>
+        public static DynValue NextArray(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args.AsType(0, "!!next_i!!", DataType.Table);
             DynValue index = args.AsType(1, "!!next_i!!", DataType.Number);
 

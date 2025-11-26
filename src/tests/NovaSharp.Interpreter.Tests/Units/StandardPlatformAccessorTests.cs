@@ -62,6 +62,26 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ParseFileAccessFallsBackToReadWrite()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    StandardPlatformAccessor.ParseFileAccess("a"),
+                    Is.EqualTo(FileAccess.ReadWrite)
+                );
+                Assert.That(
+                    StandardPlatformAccessor.ParseFileAccess("a+"),
+                    Is.EqualTo(FileAccess.ReadWrite)
+                );
+                Assert.That(
+                    StandardPlatformAccessor.ParseFileAccess("unknown"),
+                    Is.EqualTo(FileAccess.ReadWrite)
+                );
+            });
+        }
+
+        [Test]
         public void GetEnvironmentVariableReflectsEnvironment()
         {
             const string variable = "NOVASHARP_STD_TEST";
@@ -89,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OpenFileSupportsReadAndWrite()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             try
             {
@@ -125,7 +145,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             StandardPlatformAccessor accessor = new StandardPlatformAccessor();
             TextWriter original = Console.Out;
-            StringWriter capture = new StringWriter();
+            using StringWriter capture = new StringWriter();
 
             try
             {
@@ -151,6 +171,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(accessor.GetStandardStream(StandardFileType.StdOut), Is.Not.Null);
                 Assert.That(accessor.GetStandardStream(StandardFileType.StdErr), Is.Not.Null);
             });
+        }
+
+        [Test]
+        public void UnknownStandardStreamTypeThrows()
+        {
+            StandardPlatformAccessor accessor = new StandardPlatformAccessor();
+
+            Assert.Throws<ArgumentException>(() =>
+                accessor.GetStandardStream((StandardFileType)(-1))
+            );
         }
 
         [Test]

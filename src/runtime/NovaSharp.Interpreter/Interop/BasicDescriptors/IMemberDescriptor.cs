@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
@@ -27,7 +28,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         /// <summary>
         /// Gets the value of this member as a <see cref="DynValue"/> to be exposed to scripts.
-        /// Implementors should raise exceptions if the value cannot be read or if access to an
+        /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -37,7 +38,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
         /// <summary>
         /// Sets the value of this member from a <see cref="DynValue"/>.
-        /// Implementors should raise exceptions if the value cannot be read or if access to an
+        /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -72,6 +73,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanRead(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanRead);
         }
 
@@ -82,6 +88,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanWrite(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanWrite);
         }
 
@@ -92,6 +103,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public static bool CanExecute(this IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return desc.MemberAccess.HasAllFlags(MemberDescriptorAccess.CanExecute);
         }
 
@@ -108,6 +124,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             object obj
         )
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return DynValue.NewCallback((p1, p2) => desc.GetValue(script, obj));
         }
 
@@ -149,6 +170,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             object obj
         )
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             if (!desc.IsStatic && obj == null)
             {
                 throw ScriptRuntimeException.AccessInstanceMemberOnStatics(desc);

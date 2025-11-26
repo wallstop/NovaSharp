@@ -3,6 +3,7 @@ namespace NovaSharp.Hardwire
     using System;
     using System.CodeDom;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Reflection;
     using Languages;
     using NovaSharp.Interpreter;
@@ -27,8 +28,14 @@ namespace NovaSharp.Hardwire
 
         private readonly Stack<string> _nestStack = new();
 
+        /// <summary>
+        /// Gets the target language emitting the hardwired sources.
+        /// </summary>
         public HardwireCodeGenerationLanguage TargetLanguage { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether internal members are allowed in the generated code.
+        /// </summary>
         public bool AllowInternals { get; internal set; }
 
         internal HardwireCodeGenerationContext(
@@ -39,6 +46,32 @@ namespace NovaSharp.Hardwire
             ITimeProvider timeProvider = null
         )
         {
+            if (string.IsNullOrWhiteSpace(namespaceName))
+            {
+                throw new ArgumentException(
+                    "Namespace cannot be null or whitespace.",
+                    nameof(namespaceName)
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(entryClassName))
+            {
+                throw new ArgumentException(
+                    "Entry class name cannot be null or whitespace.",
+                    nameof(entryClassName)
+                );
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            if (language == null)
+            {
+                throw new ArgumentNullException(nameof(language));
+            }
+
             TargetLanguage = language;
 
             _logger = logger;
@@ -69,7 +102,10 @@ namespace NovaSharp.Hardwire
                 Comment("----------------------------------------------------------");
             }
 
-            Comment("Code generated on {0}", _timeProvider.GetUtcNow().UtcDateTime.ToString("O"));
+            Comment(
+                "Code generated on {0}",
+                _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
+            );
             Comment("----------------------------------------------------------");
 
             Comment("");
@@ -85,25 +121,23 @@ namespace NovaSharp.Hardwire
         /// <param name="table">The table.</param>
         internal void GenerateCode(Table table)
         {
-            try
+            if (table == null)
             {
-                DispatchTablePairs(
-                    table,
-                    _kickstarterClass.Members,
-                    exp =>
-                        _initStatements.Add(
-                            new CodeMethodInvokeExpression(
-                                new CodeTypeReferenceExpression(typeof(UserData)),
-                                "RegisterType",
-                                exp
-                            )
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            DispatchTablePairs(
+                table,
+                _kickstarterClass.Members,
+                (_, exp) =>
+                    _initStatements.Add(
+                        new CodeMethodInvokeExpression(
+                            new CodeTypeReferenceExpression(typeof(UserData)),
+                            "RegisterType",
+                            exp
                         )
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Internal error, code generation aborted : {ex}");
-            }
+                    )
+            );
         }
 
         /// <summary>
@@ -118,6 +152,16 @@ namespace NovaSharp.Hardwire
             Action<string, CodeExpression> action = null
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             foreach (TablePair pair in table.Pairs)
             {
                 DynValue key = pair.Key;
@@ -180,6 +224,9 @@ namespace NovaSharp.Hardwire
             }
         }
 
+        /// <summary>
+        /// Returns the current dispatcher stack trace for logging purposes.
+        /// </summary>
         public string GetStackTrace()
         {
             return string.Join(" - ", _nestStack.ToArray());
@@ -197,6 +244,10 @@ namespace NovaSharp.Hardwire
             Action<CodeExpression> action
         )
         {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
             DispatchTablePairs(table, members, (_, e) => action(e));
         }
 
@@ -214,6 +265,16 @@ namespace NovaSharp.Hardwire
             CodeTypeMemberCollection members
         )
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (members == null)
+            {
+                throw new ArgumentNullException(nameof(members));
+            }
+
             DynValue d = table.Get("class");
             if (d.Type != DataType.String)
             {
@@ -243,7 +304,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Comment(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement(str));
         }
 
@@ -254,7 +315,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Error(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("ERROR : " + str));
             _logger.LogError(str);
         }
@@ -266,7 +327,7 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Warning(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("WARNING : " + str));
             _logger.LogWarning(str);
         }
@@ -278,13 +339,20 @@ namespace NovaSharp.Hardwire
         /// <param name="args">The arguments.</param>
         public void Minor(string format, params object[] args)
         {
-            string str = string.Format(format, args);
+            string str = FormatString(format, args);
             _namespace.Comments.Add(new CodeCommentStatement("Minor : " + str));
             _logger.LogMinor(str);
         }
 
+        /// <summary>
+        /// Determines whether a member with the specified visibility may be hardwired.
+        /// </summary>
         public bool IsVisibilityAccepted(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
             DynValue dv = t.Get("visibility");
 
             if (dv.Type != DataType.String)
@@ -303,6 +371,21 @@ namespace NovaSharp.Hardwire
             }
 
             return false;
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
 
         private void GenerateKickstarter(string className)

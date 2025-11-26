@@ -12,38 +12,67 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Utilities;
 
+    /// <summary>
+    /// Implements the <see cref="IDebugger"/> contract for the VS Code adapter, coordinating
+    /// Script pauses and forwarding state to an <see cref="IAsyncDebuggerClient"/>.
+    /// </summary>
     internal sealed class AsyncDebugger : IDebugger
     {
         private static readonly object SAsyncDebuggerIdLock = new();
-        private static int _sAsyncDebuggerIdCounter = 0;
+        private static int AsyncDebuggerIdCounter;
 
         private readonly object _lock = new();
         private IAsyncDebuggerClient _client;
-        private DebuggerAction _pendingAction = null;
+        private DebuggerAction _pendingAction;
 
         private readonly List<WatchItem>[] _watchItems;
         private readonly Dictionary<int, SourceCode> _sourcesMap = new();
         private readonly Dictionary<int, string> _sourcesOverride = new();
         private readonly Func<SourceCode, string> _sourceFinder;
 
+        /// <summary>
+        /// Gets the <see cref="DebugService"/> instance exposed by the runtime.
+        /// </summary>
         public DebugService DebugService { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the regular expression that decides whether runtime exceptions trigger a pause.
+        /// </summary>
         public Regex ErrorRegex { get; set; }
 
+        /// <summary>
+        /// Gets the script currently being debugged.
+        /// </summary>
         public Script Script { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether a pause is pending.
+        /// </summary>
         public bool PauseRequested { get; set; }
 
+        /// <summary>
+        /// Gets or sets the debugger-friendly session name (displayed in VS Code).
+        /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Gets the unique identifier assigned to this async debugger instance.
+        /// </summary>
         public int Id { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AsyncDebugger"/> class.
+        /// </summary>
+        /// <param name="script">Script to debug.</param>
+        /// <param name="sourceFinder">Callback used to map <see cref="SourceCode"/> to filesystem paths.</param>
+        /// <param name="name">Human-readable session name.</param>
         public AsyncDebugger(Script script, Func<SourceCode, string> sourceFinder, string name)
         {
             lock (SAsyncDebuggerIdLock)
             {
-                Id = _sAsyncDebuggerIdCounter++;
+                Id = AsyncDebuggerIdCounter++;
             }
 
             _sourceFinder = sourceFinder;
@@ -58,6 +87,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <summary>
+        /// Gets or sets the debugger client that receives callbacks for state changes.
+        /// </summary>
         public IAsyncDebuggerClient Client
         {
             get { return _client; }
@@ -122,6 +154,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <summary>
+        /// Enqueues a debugger action requested by the VS Code client.
+        /// </summary>
+        /// <param name="action">The action to process.</param>
         public void QueueAction(DebuggerAction action)
         {
             while (true)
@@ -139,12 +175,12 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private void Sleep(int v)
+        private static void Sleep(int milliseconds)
         {
 #if DOTNET_CORE
-            System.Threading.Tasks.Task.Delay(10).Wait();
+            System.Threading.Tasks.Task.Delay(milliseconds).Wait();
 #else
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(milliseconds);
 #endif
         }
 
@@ -154,13 +190,14 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             {
                 return Script.CreateDynamicExpression(code);
             }
-            catch (Exception ex)
+            catch (InterpreterException ex)
             {
-                return Script.CreateConstantDynamicExpression(code, DynValue.NewString(ex.Message));
+                string message = ex.DecoratedMessage ?? ex.Message;
+                return Script.CreateConstantDynamicExpression(code, DynValue.NewString(message));
             }
         }
 
-        List<DynamicExpression> IDebugger.GetWatchItems()
+        IReadOnlyList<DynamicExpression> IDebugger.GetWatchItems()
         {
             return new List<DynamicExpression>();
         }
@@ -191,7 +228,19 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         invalidFile = true;
                     }
                 }
-                catch
+                catch (IOException)
+                {
+                    invalidFile = true;
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    invalidFile = true;
+                }
+                catch (ArgumentException)
+                {
+                    invalidFile = true;
+                }
+                catch (NotSupportedException)
                 {
                     invalidFile = true;
                 }
@@ -221,7 +270,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private string GetFooterForTempFile()
+        private static string GetFooterForTempFile()
         {
             return "\n\n"
                 + "----------------------------------------------------------------------------------------------------------\n"
@@ -230,20 +279,31 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 + "----------------------------------------------------------------------------------------------------------\n";
         }
 
+        /// <summary>
+        /// Gets the path used to locate the specified source identifier on disk.
+        /// </summary>
+        /// <param name="sourceId">Lua source identifier.</param>
+        /// <returns>Absolute path to the cached file, or the script name when no override exists.</returns>
         public string GetSourceFile(int sourceId)
         {
-            if (_sourcesOverride.ContainsKey(sourceId))
+            if (_sourcesOverride.TryGetValue(sourceId, out string overridePath))
             {
-                return _sourcesOverride[sourceId];
+                return overridePath;
             }
-            else if (_sourcesMap.ContainsKey(sourceId))
+
+            if (_sourcesMap.TryGetValue(sourceId, out SourceCode mappedSource))
             {
-                return _sourcesMap[sourceId].Name;
+                return mappedSource.Name;
             }
 
             return null;
         }
 
+        /// <summary>
+        /// Determines whether the debugger had to materialize an on-disk file for the given script chunk.
+        /// </summary>
+        /// <param name="sourceId">Source identifier.</param>
+        /// <returns><c>true</c> when the path was generated by the debugger.</returns>
         public bool IsSourceOverride(int sourceId)
         {
             return (_sourcesOverride.ContainsKey(sourceId));
@@ -291,37 +351,60 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <summary>
+        /// Returns the cached watch data for a specific channel (call stack, locals, watches, etc.).
+        /// </summary>
+        /// <param name="watchType">Watch category.</param>
+        /// <returns>The mutable watch list backing the specified type.</returns>
         public List<WatchItem> GetWatches(WatchType watchType)
         {
             return _watchItems[(int)watchType];
         }
 
+        /// <summary>
+        /// Retrieves the <see cref="SourceCode"/> entry associated with the identifier, if known.
+        /// </summary>
+        /// <param name="id">Source identifier.</param>
+        /// <returns>The cached source or <c>null</c> when missing.</returns>
         public SourceCode GetSource(int id)
         {
-            if (_sourcesMap.ContainsKey(id))
+            if (_sourcesMap.TryGetValue(id, out SourceCode source))
             {
-                return _sourcesMap[id];
+                return source;
             }
 
             return null;
         }
 
+        /// <summary>
+        /// Locates a cached source entry by its canonicalized path (case-insensitive, slash-normalized).
+        /// </summary>
+        /// <param name="path">Path provided by the debugger.</param>
+        /// <returns>The first matching source entry, or <c>null</c> when not found.</returns>
         public SourceCode FindSourceByName(string path)
         {
-            // we use case insensitive match - be damned if you have files which differ only by
-            // case in the same directory on Unix.
-            path = path.Replace('\\', '/').ToUpperInvariant();
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            string normalizedPath = path.NormalizeDirectorySeparators('/');
 
             foreach (KeyValuePair<int, string> kvp in _sourcesOverride)
             {
-                if (kvp.Value.Replace('\\', '/').ToUpperInvariant() == path)
+                string candidate = kvp.Value.NormalizeDirectorySeparators('/');
+                if (string.Equals(candidate, normalizedPath, StringComparison.OrdinalIgnoreCase))
                 {
                     return _sourcesMap[kvp.Key];
                 }
             }
 
             return _sourcesMap.Values.FirstOrDefault(s =>
-                s.Name.Replace('\\', '/').ToUpperInvariant() == path
+                string.Equals(
+                    s.Name.NormalizeDirectorySeparators('/'),
+                    normalizedPath,
+                    StringComparison.OrdinalIgnoreCase
+                )
             );
         }
 
@@ -330,6 +413,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             DebugService = debugService;
         }
 
+        /// <summary>
+        /// Evaluates an arbitrary Lua expression in the context of the running script.
+        /// </summary>
+        /// <param name="expression">Expression text.</param>
+        /// <returns>The resulting <see cref="DynValue"/>.</returns>
         public DynValue Evaluate(string expression)
         {
             DynamicExpression expr = CreateDynExpr(expression);

@@ -141,7 +141,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(
                 logger.Warnings.Any(error =>
-                    error.Contains("Static indexers are not supported by hardwired descriptors.")
+                    ContainsOrdinal(
+                        error,
+                        "Static indexers are not supported by hardwired descriptors."
+                    )
                 ),
                 Is.True,
                 "Expected static indexer error to be logged."
@@ -287,6 +290,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 AllowInternalsSeen = false;
             }
+        }
+
+        private static bool ContainsOrdinal(string source, string value)
+        {
+            return source != null && source.Contains(value, StringComparison.Ordinal);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TestCase(HttpResourceType.Binary, "application/octet-stream")]
         [TestCase(HttpResourceType.Javascript, "application/javascript")]
         [TestCase(HttpResourceType.Css, "text/css")]
-        public void GetContentTypeStringReturnsExpected(HttpResourceType type, string expected)
+        public void ContentTypeStringReturnsExpected(HttpResourceType type, string expected)
         {
             HttpResource resource = type switch
             {
@@ -29,14 +29,59 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _ => HttpResource.CreateBinary(type, new byte[] { 0 }),
             };
 
-            Assert.That(resource.GetContentTypeString(), Is.EqualTo(expected));
+            Assert.That(resource.ContentTypeString, Is.EqualTo(expected));
         }
 
         [Test]
         public void CallbackResourceThrowsWhenRequestingContentType()
         {
             HttpResource resource = HttpResource.CreateCallback(_ => null);
-            Assert.Throws<InvalidOperationException>(() => resource.GetContentTypeString());
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                _ = resource.ContentTypeString;
+            });
+        }
+
+        [Test]
+        public void CreateBinaryThrowsOnNullByteArray()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateBinary(HttpResourceType.Binary, (byte[])null)
+            );
+        }
+
+        [Test]
+        public void CreateBinaryThrowsOnNullBase64()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateBinary(HttpResourceType.Binary, (string)null)
+            );
+        }
+
+        [Test]
+        public void CreateTextThrowsOnNullString()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                HttpResource.CreateText(HttpResourceType.Html, null)
+            );
+        }
+
+        [Test]
+        public void CreateBinaryWrapsPayloadAsReadOnlyMemory()
+        {
+            byte[] data = { 1, 2, 3 };
+            HttpResource resource = HttpResource.CreateBinary(HttpResourceType.Binary, data);
+
+            Assert.That(resource.Data.ToArray(), Is.EqualTo(data));
+        }
+
+        [Test]
+        public void CreateTextEncodesUtf8Payload()
+        {
+            HttpResource resource = HttpResource.CreateText(HttpResourceType.Html, "✓");
+            byte[] bytes = resource.Data.ToArray();
+
+            Assert.That(bytes, Is.EqualTo(new byte[] { 0xE2, 0x9C, 0x93 }));
         }
     }
 }

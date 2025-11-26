@@ -1,13 +1,17 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
@@ -22,21 +26,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SingleScriptModeServesIframeWithConfiguredRpcPort()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = true;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = true;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
 
-            string body = GetHttpBody(options.httpPort.Value, "/");
+            string body = GetHttpBody(options.HttpPort.Value, "/");
 
             Assert.Multiple(() =>
             {
-                Assert.That(body, Does.Contain($"Debugger?port={options.rpcPortBase}"));
+                Assert.That(body, Does.Contain($"Debugger?port={options.RpcPortBase}"));
                 Assert.That(
                     service.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.httpPort.Value}/")
+                    Is.EqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"))
                 );
             });
         }
@@ -45,21 +49,50 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void JumpPageListsAttachedScripts()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = false;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             Script script = BuildScript("return 1", "jump.lua");
             service.Attach(script, "JumpScript");
 
-            string body = GetHttpBody(options.httpPort.Value, "/");
+            string body = GetHttpBody(options.HttpPort.Value, "/");
 
             Assert.Multiple(() =>
             {
                 Assert.That(body, Does.Contain("JumpScript"));
-                Assert.That(body, Does.Contain("Debugger?port=" + options.rpcPortBase));
+                Assert.That(body, Does.Contain("Debugger?port=" + options.RpcPortBase));
+            });
+        }
+
+        [Test]
+        public void JumpPageListsMultipleScriptsWithDistinctPorts()
+        {
+            RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
+
+            using RemoteDebuggerService service = new(options);
+            Script first = BuildScript("return 1", "multi1.lua");
+            Script second = BuildScript("return 2", "multi2.lua");
+            service.Attach(first, "FirstScript");
+            service.Attach(second, "SecondScript");
+
+            string body = GetHttpBody(options.HttpPort.Value, "/");
+            string firstLink = $"Debugger?port={options.RpcPortBase}";
+            string secondLink = $"Debugger?port={options.RpcPortBase + 1}";
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(body, Does.Contain("FirstScript"));
+                Assert.That(body, Does.Contain("SecondScript"));
+                Assert.That(body, Does.Contain(firstLink));
+                Assert.That(body, Does.Contain(secondLink));
+                Assert.That(CountOccurrences(body, "Debugger?port="), Is.EqualTo(2));
             });
         }
 
@@ -67,10 +100,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void CliBridgeForwardsAttachAndHttpUrl()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = true;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = true;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             RemoteDebuggerServiceBridge bridge = new(service);
@@ -83,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(script.DebuggerEnabled, Is.True);
                 Assert.That(
                     bridge.HttpUrlStringLocalHost,
-                    Is.EqualTo($"http://127.0.0.1:{options.httpPort.Value}/")
+                    Is.EqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"))
                 );
             });
         }
@@ -92,18 +125,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebuggerPageServesEmbeddedUi()
         {
             RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-            options.singleScriptMode = false;
-            options.httpPort = GetFreeTcpPort();
-            options.rpcPortBase = GetFreeTcpPort();
-            options.networkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
             using RemoteDebuggerService service = new(options);
             Script script = BuildScript("return 1", "debugger.lua");
             service.Attach(script, "DebuggerScript");
 
             string debuggerResponse = SendHttpRequest(
-                options.httpPort.Value,
-                $"/Debugger?port={options.rpcPortBase}"
+                options.HttpPort.Value,
+                $"/Debugger?port={options.RpcPortBase}"
             );
 
             Assert.Multiple(() =>
@@ -112,6 +145,85 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(debuggerResponse, Does.Contain("<html"));
                 Assert.That(debuggerResponse, Does.Contain("swfobject.js"));
             });
+        }
+
+        [Test]
+        public void InvalidDebuggerRequestReturnsPaddedErrorPage()
+        {
+            RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
+            options.SingleScriptMode = false;
+            options.HttpPort = GetFreeTcpPort();
+            options.RpcPortBase = GetFreeTcpPort();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
+
+            using RemoteDebuggerService service = new(options);
+            Script script = BuildScript("return 1", "pad.lua");
+            service.Attach(script, "PadScript");
+
+            string response = SendHttpRequest(options.HttpPort.Value, "/DebuggerInvalid?port=9999");
+            string body = ExtractHttpBody(response);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(response, Does.Contain("404 Not Found"));
+                Assert.That(body, Does.Contain("This padding is added to bring the error message"));
+            });
+        }
+
+        [Test]
+        public void AttachFromDirectoryAppliesManifestCompatibility()
+        {
+            string modDirectory = CreateTempDirectory();
+            try
+            {
+                File.WriteAllText(
+                    Path.Combine(modDirectory, "mod.json"),
+                    "{ \"name\": \"Sample\", \"luaCompatibility\": \"Lua52\" }"
+                );
+                File.WriteAllText(Path.Combine(modDirectory, "main.lua"), "return _VERSION");
+
+                RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
+                options.HttpPort = null; // no HTTP host needed for this test
+                options.RpcPortBase = GetFreeTcpPort();
+                options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
+
+                using RemoteDebuggerService service = new(options);
+                ScriptOptions baseOptions = new(Script.DefaultOptions);
+
+                List<string> info = new();
+                List<string> warnings = new();
+
+                Script script = service.AttachFromDirectory(
+                    modDirectory,
+                    scriptName: null,
+                    modules: CoreModules.Basic,
+                    baseOptions: baseOptions,
+                    infoSink: info.Add,
+                    warningSink: warnings.Add
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(script, Is.Not.Null);
+                    Assert.That(
+                        script.CompatibilityVersion,
+                        Is.EqualTo(LuaCompatibilityVersion.Lua52)
+                    );
+                    Assert.That(script.DebuggerEnabled, Is.True);
+                    Assert.That(info, Has.Count.GreaterThanOrEqualTo(2));
+                    Assert.That(info[0], Does.Contain("Lua 5.2"));
+                    Assert.That(
+                        info.Any(message => ContainsOrdinal(message, "running under")),
+                        Is.True,
+                        "Expected compatibility summary message."
+                    );
+                    Assert.That(warnings, Is.Empty);
+                });
+            }
+            finally
+            {
+                TryDeleteDirectory(modDirectory);
+            }
         }
 
         private static Script BuildScript(string code, string chunkName)
@@ -124,7 +236,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static int GetFreeTcpPort()
         {
-            TcpListener listener = new(IPAddress.Loopback, 0);
+            using TcpListener listener = new(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
             listener.Stop();
@@ -134,6 +246,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static string GetHttpBody(int port, string path)
         {
             string response = SendHttpRequest(port, path);
+            return ExtractHttpBody(response);
+        }
+
+        private static string ExtractHttpBody(string response)
+        {
             int separator = response.IndexOf("\r\n\r\n", StringComparison.Ordinal);
             int delimiterLength = 4;
             if (separator < 0)
@@ -199,6 +316,58 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             return Encoding.UTF8.GetString(buffer.ToArray());
+        }
+
+        private static int CountOccurrences(string source, string value)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(value))
+            {
+                return 0;
+            }
+
+            int count = 0;
+            int index = 0;
+            while (true)
+            {
+                int next = source.IndexOf(value, index, StringComparison.Ordinal);
+                if (next < 0)
+                {
+                    break;
+                }
+
+                count++;
+                index = next + value.Length;
+            }
+
+            return count;
+        }
+
+        private static bool ContainsOrdinal(string source, string value)
+        {
+            return source != null && source.Contains(value, StringComparison.Ordinal);
+        }
+
+        private static string CreateTempDirectory()
+        {
+            string directory = Path.Combine(
+                Path.GetTempPath(),
+                $"novasharp_debugger_{Guid.NewGuid():N}"
+            );
+            Directory.CreateDirectory(directory);
+            return directory;
+        }
+
+        private static void TryDeleteDirectory(string path)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                {
+                    Directory.Delete(path, recursive: true);
+                }
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
     }
 }

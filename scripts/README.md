@@ -3,6 +3,7 @@
 Helper scripts live under this directory so contributors can find tooling without hunting through the repo root. Subfolders group related commands:
 
 - `coverage/` — Coverlet + ReportGenerator wrappers (`coverage.ps1` / `coverage.sh`) that build the solution, run the interpreter tests, and publish Markdown/HTML/JSON summaries into `artifacts/coverage` + `docs/coverage/latest`.
+- `benchmarks/` — Helpers for running the runtime + comparison BenchmarkDotNet suites (`run-benchmarks.ps1`), keeping `docs/Performance.md` up to date.
 - `build/` — Cross-platform build helpers (`build.ps1` / `build.sh`) that restore local tools, build `src/NovaSharp.sln`, and (by default) execute the interpreter tests into `artifacts/test-results`.
 - `ci/` — Repository health guards (e.g., README/link enforcement) that run locally or in CI before builds/tests execute.
 - `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver that auto-fixes formatting issues before commits.

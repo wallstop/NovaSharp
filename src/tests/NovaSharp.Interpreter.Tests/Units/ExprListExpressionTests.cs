@@ -28,8 +28,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(first.CompileCount, Is.EqualTo(1));
                 Assert.That(second.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.MkTuple));
-                Assert.That(byteCode.code[^1].NumVal, Is.EqualTo(2));
+                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.MkTuple));
+                Assert.That(byteCode.Code[^1].NumVal, Is.EqualTo(2));
             });
         }
 
@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(expression.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.code[^1].OpCode, Is.EqualTo(OpCode.Nop));
+                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Nop));
             });
         }
 
@@ -95,7 +95,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             public override void Compile(ByteCode bc)
             {
                 CompileCount++;
-                bc.Emit_Nop("stub");
+                bc.EmitNop("stub");
             }
 
             public override DynValue Eval(ScriptExecutionContext context)

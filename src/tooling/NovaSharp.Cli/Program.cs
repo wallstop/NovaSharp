@@ -1,15 +1,23 @@
 namespace NovaSharp.Cli
 {
     using System;
+    using System.IO;
+    using System.Security;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
+    using NovaSharp.Interpreter.Utilities;
 
-    internal sealed class Program
+    /// <summary>
+    /// Entry point for the NovaSharp CLI REPL and command processor.
+    /// </summary>
+    internal sealed partial class Program
     {
         [STAThread]
         private static void Main(string[] args)
@@ -28,7 +36,7 @@ namespace NovaSharp.Cli
                 return;
             }
 
-            Banner();
+            Banner(script);
 
             ReplInterpreter interpreter = new(script)
             {
@@ -47,7 +55,7 @@ namespace NovaSharp.Cli
             Type tt = Type.GetType(type);
             if (tt == null)
             {
-                Console.WriteLine("Type '{0}' not found.", type);
+                Console.WriteLine(CliMessages.ProgramTypeNotFound(type));
             }
             else
             {
@@ -61,9 +69,9 @@ namespace NovaSharp.Cli
         {
             Console.Write(interpreter.ClassicPrompt + " ");
 
-            string s = Console.ReadLine();
+            string s = Console.ReadLine() ?? string.Empty;
 
-            if (!interpreter.HasPendingCommand && s.StartsWith("!"))
+            if (!interpreter.HasPendingCommand && s.Length > 0 && s[0] == '!')
             {
                 ExecuteCommand(shellContext, s.Substring(1));
                 return;
@@ -75,29 +83,38 @@ namespace NovaSharp.Cli
 
                 if (result != null && result.Type != DataType.Void)
                 {
-                    Console.WriteLine("{0}", result);
+                    Console.WriteLine(result);
                 }
             }
             catch (InterpreterException ex)
             {
-                Console.WriteLine("{0}", ex.DecoratedMessage ?? ex.Message);
+                Console.WriteLine(ex.DecoratedMessage ?? ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableInterpreterLoopException(ex))
             {
-                Console.WriteLine("{0}", ex.Message);
+                Console.WriteLine(ex.Message);
             }
         }
 
-        private static void Banner()
+        private static void Banner(Script script)
         {
             Console.WriteLine(Script.GetBanner("Console"));
             Console.WriteLine();
-            Console.WriteLine(
-                "Type Lua code to execute it or type !help to see help on commands.\n"
-            );
-            Console.WriteLine("Welcome.\n");
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
+            Console.WriteLine(CliMessages.ProgramActiveProfile(profile.GetFeatureSummary()));
+            Console.WriteLine(CliMessages.ProgramCompatibilityHint);
+            Console.WriteLine(CliMessages.ProgramCompatibilityUsage);
+            Console.WriteLine();
+            Console.WriteLine(CliMessages.ProgramWelcome);
+            Console.WriteLine();
         }
 
+        /// <summary>
+        /// Parses command-line arguments and executes any requested non-interactive actions.
+        /// </summary>
+        /// <param name="args">Raw command-line arguments.</param>
+        /// <param name="shellContext">Shell context used for executing command-line commands.</param>
+        /// <returns><c>true</c> when the application should exit after processing the arguments.</returns>
         internal static bool CheckArgs(string[] args, ShellContext shellContext)
         {
             if (args.Length == 0)
@@ -105,10 +122,9 @@ namespace NovaSharp.Cli
                 return false;
             }
 
-            if (args.Length == 1 && args[0].Length > 0 && args[0][0] != '-')
+            if (TryRunScriptArgument(args))
             {
-                Script script = new();
-                script.DoFile(args[0]);
+                return true;
             }
 
             if (args[0] == "-H" || args[0] == "--help" || args[0] == "/?" || args[0] == "-?")
@@ -123,7 +139,7 @@ namespace NovaSharp.Cli
                 }
                 else
                 {
-                    Console.WriteLine("Wrong syntax.");
+                    Console.WriteLine(CliMessages.ProgramWrongSyntax);
                     ShowCmdLineHelp();
                 }
             }
@@ -147,11 +163,11 @@ namespace NovaSharp.Cli
                     {
                         useVb = true;
                     }
-                    else if (args[i].StartsWith("--class:"))
+                    else if (args[i].StartsWith("--class:", StringComparison.Ordinal))
                     {
                         classname = args[i].Substring("--class:".Length);
                     }
-                    else if (args[i].StartsWith("--namespace:"))
+                    else if (args[i].StartsWith("--namespace:", StringComparison.Ordinal))
                     {
                         namespacename = args[i].Substring("--namespace:".Length);
                     }
@@ -172,12 +188,12 @@ namespace NovaSharp.Cli
 
                 if (fail)
                 {
-                    Console.WriteLine("Wrong syntax.");
+                    Console.WriteLine(CliMessages.ProgramWrongSyntax);
                     ShowCmdLineHelp();
                 }
                 else
                 {
-                    HardWireCommand.Generate(
+                    HardwireCommand.Generate(
                         useVb ? "vb" : "cs",
                         dumpfile,
                         destfile,
@@ -191,23 +207,80 @@ namespace NovaSharp.Cli
             return true;
         }
 
+        private static bool TryRunScriptArgument(string[] args)
+        {
+            if (args.Length != 1 || string.IsNullOrWhiteSpace(args[0]) || args[0][0] == '-')
+            {
+                return false;
+            }
+
+            string resolvedScriptPath = ResolveScriptPath(args[0]);
+            ScriptOptions options = new(Script.DefaultOptions);
+            ModManifestCompatibility.TryApplyFromScriptPath(
+                resolvedScriptPath,
+                options,
+                Script.GlobalOptions.CompatibilityVersion,
+                info => Console.WriteLine(CliMessages.ContextualCompatibilityInfo(info)),
+                warning => Console.WriteLine(CliMessages.CompatibilityWarning(warning))
+            );
+
+            Script script = new(CoreModules.PresetComplete, options);
+            Console.WriteLine(
+                CliMessages.ProgramRunningScript(
+                    resolvedScriptPath,
+                    script.CompatibilityProfile.GetFeatureSummary()
+                )
+            );
+            script.DoFile(resolvedScriptPath);
+            return true;
+        }
+
+        private static string ResolveScriptPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            ReadOnlySpan<char> trimmed = path.AsSpan().TrimWhitespace();
+            string candidate = trimmed.Length == path.Length ? path : new string(trimmed);
+            candidate = candidate.NormalizeDirectorySeparators(Path.DirectorySeparatorChar);
+
+            try
+            {
+                return Path.GetFullPath(candidate);
+            }
+            catch (ArgumentException)
+            {
+                return candidate;
+            }
+            catch (PathTooLongException)
+            {
+                return candidate;
+            }
+            catch (NotSupportedException)
+            {
+                return candidate;
+            }
+            catch (SecurityException)
+            {
+                return candidate;
+            }
+        }
+
         private static void ShowCmdLineHelpBig()
         {
-            Console.WriteLine(
-                "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] [--class:<name>] [--namespace:<name>] | <script>]"
-            );
+            Console.WriteLine(CliMessages.ProgramUsageLong);
             Console.WriteLine();
-            Console.WriteLine("-H : shows this help");
-            Console.WriteLine("-X : executes the specified command");
-            Console.WriteLine("-W : creates hardwire descriptors");
+            Console.WriteLine(CliMessages.ProgramUsageHelpSwitch);
+            Console.WriteLine(CliMessages.ProgramUsageExecuteSwitch);
+            Console.WriteLine(CliMessages.ProgramUsageHardwireSwitch);
             Console.WriteLine();
         }
 
         private static void ShowCmdLineHelp()
         {
-            Console.WriteLine(
-                "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] | <script>]"
-            );
+            Console.WriteLine(CliMessages.ProgramUsageShort);
         }
 
         private static void ExecuteCommand(ShellContext shellContext, string cmdline)
@@ -218,6 +291,15 @@ namespace NovaSharp.Cli
             {
                 Environment.Exit(shellContext.ExitCode);
             }
+        }
+
+        private static bool IsRecoverableInterpreterLoopException(Exception exception)
+        {
+            return exception is IOException
+                || exception is UnauthorizedAccessException
+                || exception is InvalidOperationException
+                || exception is ArgumentException
+                || exception is FormatException;
         }
     }
 }

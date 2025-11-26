@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Linq;
     using NovaSharp;
     using NovaSharp.Interpreter;
@@ -46,9 +47,9 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(frameNames.Any(name => name.Contains("level3")), Is.True);
-                Assert.That(frameNames.Any(name => name.Contains("level2")), Is.True);
-                Assert.That(frameNames.Any(name => name.Contains("level1")), Is.True);
+                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level3")), Is.True);
+                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level2")), Is.True);
+                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level1")), Is.True);
             });
         }
 
@@ -93,9 +94,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool hasLevel3 = captured
                     .CallStack.Select(w => w.Name)
                     .Where(n => !string.IsNullOrEmpty(n))
-                    .Any(n => n.Contains("level3"));
+                    .Any(n => ContainsOrdinal(n, "level3"));
                 Assert.That(hasLevel3, Is.True);
             });
+        }
+
+        private static bool ContainsOrdinal(string text, string value)
+        {
+            return text != null && text.Contains(value, StringComparison.Ordinal);
         }
     }
 }

@@ -7,10 +7,16 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua `break` statement.
+    /// </summary>
     internal class BreakStatement : Statement
     {
         private readonly SourceRef _ref;
 
+        /// <summary>
+        /// Parses a `break` statement and records its source location for diagnostics.
+        /// </summary>
         public BreakStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -18,11 +24,14 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_ref);
         }
 
+        /// <summary>
+        /// Emits a `break` by exiting the current loop scope and deferring jump patching to <see cref="Loop.CompileBreak(ByteCode)"/>.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             using (bc.EnterSource(_ref))
             {
-                if (bc.LoopTracker.loops.Count == 0)
+                if (bc.LoopTracker.Loops.Count == 0)
                 {
                     throw new SyntaxErrorException(
                         Script,
@@ -32,7 +41,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                     );
                 }
 
-                ILoop loop = bc.LoopTracker.loops.Peek();
+                ILoop loop = bc.LoopTracker.Loops.Peek();
 
                 if (loop.IsBoundary())
                 {

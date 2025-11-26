@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Text;
@@ -13,6 +10,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
     using REPL;
 
     /// <summary>
@@ -26,13 +24,25 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "debug")]
     public class DebugModule
     {
+        /// <summary>
+        /// Implements Lua's interactive <c>debug.debug</c> helper by launching the REPL and allowing the host to inspect state.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Unused but validated per Lua semantics.</param>
+        /// <returns><see cref="DynValue.Nil"/> after the user exits the REPL.</returns>
         [NovaSharpModuleMethod(Name = "debug")]
         public static DynValue Debug(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            Script script = executionContext.GetScript();
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            Script script = executionContext.Script;
 
             if (script.Options.DebugInput == null)
             {
@@ -56,14 +66,9 @@ namespace NovaSharp.Interpreter.CoreLib
                     break;
                 }
 
-                string trimmedInput = input.Trim();
+                ReadOnlySpan<char> trimmedInput = input.AsSpan().TrimWhitespace();
 
-                if (trimmedInput.Length == 0)
-                {
-                    trimmedInput = string.Empty;
-                }
-
-                if (string.Equals(trimmedInput, "return", StringComparison.OrdinalIgnoreCase))
+                if (trimmedInput.Equals("return".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
                     break;
                 }
@@ -81,7 +86,11 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
+                {
+                    script.Options.DebugPrint($"{ex.Message}");
+                }
+                catch (ArgumentException ex)
                 {
                     script.Options.DebugPrint($"{ex.Message}");
                 }
@@ -90,12 +99,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getuservalue</c>, returning the user value associated with userdata or nil otherwise.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (userdata whose user value should be returned).</param>
+        /// <returns>The stored user value or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "getuservalue")]
         public static DynValue GetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
 
             if (v.Type != DataType.UserData)
@@ -106,35 +127,71 @@ namespace NovaSharp.Interpreter.CoreLib
             return v.UserData.UserValue ?? DynValue.Nil;
         }
 
+        /// <summary>
+        /// Implements <c>debug.setuservalue</c>, assigning a new table to the supplied userdata's user value slot.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (userdata and optional table).</param>
+        /// <returns>The table that was assigned.</returns>
         [NovaSharpModuleMethod(Name = "setuservalue")]
         public static DynValue SetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args.AsType(0, "setuservalue", DataType.UserData, false);
             DynValue t = args.AsType(1, "setuservalue", DataType.Table, true);
 
             return v.UserData.UserValue = t;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getregistry</c>, returning the script registry table.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Unused but validated per Lua semantics.</param>
+        /// <returns>The registry table.</returns>
         [NovaSharpModuleMethod(Name = "getregistry")]
         public static DynValue GetRegistry(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return DynValue.NewTable(executionContext.GetScript().Registry);
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return DynValue.NewTable(executionContext.Script.Registry);
         }
 
+        /// <summary>
+        /// Implements <c>debug.getmetatable</c>, returning the metatable for the supplied value.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value whose metatable is requested).</param>
+        /// <returns>The metatable or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "getmetatable")]
         public static DynValue GetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
-            Script s = executionContext.GetScript();
+            Script s = executionContext.Script;
 
             if (v.Type.CanHaveTypeMetatables())
             {
@@ -150,16 +207,28 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements <c>debug.setmetatable</c>, assigning a new metatable to a type or table.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value and optional metatable).</param>
+        /// <returns>The original value after mutation.</returns>
         [NovaSharpModuleMethod(Name = "setmetatable")]
         public static DynValue SetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue v = args[0];
             DynValue t = args.AsType(1, "setmetatable", DataType.Table, true);
             Table m = (t.IsNil()) ? null : t.Table;
-            Script s = executionContext.GetScript();
+            Script s = executionContext.Script;
 
             if (v.Type.CanHaveTypeMetatables())
             {
@@ -180,12 +249,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
+        /// <summary>
+        /// Implements <c>debug.getupvalue</c>, returning the name and value of the specified closure upvalue.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (Lua closure and upvalue index).</param>
+        /// <returns>A tuple containing the upvalue name and value, or nil when unavailable.</returns>
         [NovaSharpModuleMethod(Name = "getupvalue")]
         public static DynValue GetUpValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -205,12 +286,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(DynValue.NewString(closure.Symbols[index]), closure[index]);
         }
 
+        /// <summary>
+        /// Implements <c>debug.upvalueid</c>, returning an identifier for the specified upvalue reference.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure and upvalue index).</param>
+        /// <returns>An identifier suitable for comparison or nil.</returns>
         [NovaSharpModuleMethod(Name = "upvalueid")]
         public static DynValue UpValueId(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -230,12 +323,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(closure[index].ReferenceId);
         }
 
+        /// <summary>
+        /// Implements <c>debug.setupvalue</c>, assigning a new value to the specified closure upvalue.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure, index, new value).</param>
+        /// <returns>The upvalue name or nil if the index is invalid.</returns>
         [NovaSharpModuleMethod(Name = "setupvalue")]
         public static DynValue SetUpValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             int index = (int)args.AsType(1, "setupvalue", DataType.Number, false).Number - 1;
 
             if (args[0].Type == DataType.ClrFunction)
@@ -257,12 +362,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(closure.Symbols[index]);
         }
 
+        /// <summary>
+        /// Implements <c>debug.upvaluejoin</c>, making two closures share the same upvalue reference.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (closure A/index, closure B/index).</param>
+        /// <returns><see cref="DynValue.Void"/> after the join completes.</returns>
         [NovaSharpModuleMethod(Name = "upvaluejoin")]
         public static DynValue UpValueJoin(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue f1 = args.AsType(0, "upvaluejoin", DataType.Function, false);
             DynValue f2 = args.AsType(2, "upvaluejoin", DataType.Function, false);
             int n1 = args.AsInt(1, "upvaluejoin") - 1;
@@ -286,12 +403,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Void;
         }
 
+        /// <summary>
+        /// Implements <c>debug.traceback</c>, formatting a stack trace for the current or supplied coroutine.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (optional thread, message, and level).</param>
+        /// <returns>A string containing the formatted traceback or the original message value.</returns>
         [NovaSharpModuleMethod(Name = "traceback")]
         public static DynValue Traceback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             StringBuilder sb = new();
 
             DynValue vmessage = args[0];
@@ -299,7 +428,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             double defaultSkip = 1.0;
 
-            Coroutine cor = executionContext.GetCallingCoroutine();
+            Coroutine cor = executionContext.CallingCoroutine;
 
             if (vmessage.Type == DataType.Thread)
             {
@@ -353,9 +482,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 string loc =
                     wi.Location != null
-                        ? wi.Location.FormatLocation(executionContext.GetScript())
+                        ? wi.Location.FormatLocation(executionContext.Script)
                         : "[clr]";
-                sb.AppendFormat("\t{0}: in {1}\n", loc, name);
+                sb.Append('\t').Append(loc).Append(": in ").Append(name).Append('\n');
             }
 
             return DynValue.NewString(sb);
@@ -411,7 +540,7 @@ namespace NovaSharp.Interpreter.CoreLib
         //[NovaSharpMethod]
         //public static DynValue getinfo(ScriptExecutionContext executionContext, CallbackArguments args)
         //{
-        //	Coroutine cor = executionContext.GetCallingCoroutine();
+        //	Coroutine cor = executionContext.CallingCoroutine();
         //	int vfArgIdx = 0;
 
         //	if (args[0].Type == DataType.Thread)

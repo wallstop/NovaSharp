@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -46,6 +48,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <param name="value">The value.</param>
         public DynValueMemberDescriptor(string name, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             _value = value;
             Name = name;
 
@@ -80,6 +87,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <summary>
         /// Gets the value wrapped by this descriptor
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1721:The property name 'Value' is confusing given the existence of method 'GetValue'",
+            Justification = "IMemberDescriptor exposes GetValue; this property predates the interface and remains for back-compat and hardwire generators."
+        )]
         public virtual DynValue Value
         {
             get { return _value; }
@@ -117,6 +129,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("name", DynValue.NewString(Name));
 

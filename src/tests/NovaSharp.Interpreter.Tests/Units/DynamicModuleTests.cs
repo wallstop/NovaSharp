@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [OneTimeSetUp]
         public void RegisterDummy()
         {
-            if (!UserData.IsTypeRegistered(typeof(Dummy)))
+            if (!UserData.IsTypeRegistered<Dummy>())
             {
                 UserData.RegisterType<Dummy>();
             }

@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using System.Collections.Generic;
-    using NovaSharp.Interpreter.DataStructs;
-    using NovaSharp.Interpreter.Errors;
+    using System.Diagnostics.CodeAnalysis;
+    using DataStructs;
+    using Errors;
 
     /// <summary>
     /// A class representing a Lua table.
@@ -40,6 +42,11 @@ namespace NovaSharp.Interpreter.DataTypes
         public Table(Script owner, params DynValue[] arrayValues)
             : this(owner)
         {
+            if (arrayValues == null)
+            {
+                throw new ArgumentNullException(nameof(arrayValues));
+            }
+
             for (int i = 0; i < arrayValues.Length; i++)
             {
                 Set(DynValue.NewNumber(i + 1), arrayValues[i]);
@@ -69,7 +76,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the integral key from a double.
         /// </summary>
-        private int GetIntegralKey(double d)
+        private static int GetIntegralKey(double d)
         {
             int v = ((int)d);
 
@@ -91,6 +98,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// The <see cref="System.Object" />.
         /// </value>
         /// <param name="keys">The keys to access the table and subtables</param>
+        [SuppressMessage(
+            "Design",
+            "CA1043:Use Integral Or String Argument For Indexers",
+            Justification = "Lua tables support arbitrary key sequences and the indexer mirrors that flexibility."
+        )]
         public object this[params object[] keys]
         {
             get { return Get(keys).ToObject(); }
@@ -147,6 +159,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Append(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(
                 _arrayMap,
@@ -157,8 +174,6 @@ namespace NovaSharp.Interpreter.DataTypes
                 Length + 1
             );
         }
-
-        #region Set
 
         private void PerformTableSet<T>(
             LinkedListIndex<T, TablePair> listIndex,
@@ -228,6 +243,11 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(_stringMap, key, DynValue.NewString(key), value, false, -1);
         }
@@ -239,6 +259,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(int key, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckScriptOwnership(value);
             PerformTableSet(_arrayMap, key, DynValue.NewNumber(key), value, true, -1);
         }
@@ -250,6 +275,16 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(DynValue key, DynValue value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (key.IsNilOrNan())
             {
                 if (key.IsNil())
@@ -297,17 +332,22 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            if (key is string s)
+            if (value == null)
             {
-                Set(s, value);
+                throw new ArgumentNullException(nameof(value));
             }
-            else if (key is int i)
+
+            switch (key)
             {
-                Set(i, value);
-            }
-            else
-            {
-                Set(DynValue.FromObject(OwnerScript, key), value);
+                case string s:
+                    Set(s, value);
+                    break;
+                case int i:
+                    Set(i, value);
+                    break;
+                default:
+                    Set(DynValue.FromObject(OwnerScript, key), value);
+                    break;
             }
         }
 
@@ -315,21 +355,22 @@ namespace NovaSharp.Interpreter.DataTypes
         /// Sets the value associated with the specified keys.
         /// Multiple keys can be used to access subtables.
         /// </summary>
-        /// <param name="key">The keys.</param>
+        /// <param name="keys">The keys.</param>
         /// <param name="value">The value.</param>
         public void Set(object[] keys, DynValue value)
         {
-            if (keys == null || keys.Length <= 0)
+            if (keys == null || keys.Length == 0)
             {
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             ResolveMultipleKeys(keys, out object key).Set(key, value);
         }
-
-        #endregion
-
-        #region Get
 
         /// <summary>
         /// Gets the value associated with the specified key.
@@ -385,18 +426,14 @@ namespace NovaSharp.Interpreter.DataTypes
             return RawGet(keys) ?? DynValue.Nil;
         }
 
-        #endregion
-
-        #region RawGet
-
         private static DynValue RawGetValue(LinkedListNode<TablePair> linkedListNode)
         {
-            return (linkedListNode != null) ? linkedListNode.Value.Value : null;
+            return linkedListNode?.Value.Value;
         }
 
         /// <summary>
         /// Gets the value associated with the specified key,
-        /// without bringing to Nil the non-existant values.
+        /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
         public DynValue RawGet(string key)
@@ -406,7 +443,7 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets the value associated with the specified key,
-        /// without bringing to Nil the non-existant values.
+        /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
         public DynValue RawGet(int key)
@@ -416,22 +453,29 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets the value associated with the specified key,
-        /// without bringing to Nil the non-existant values.
+        /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
         public DynValue RawGet(DynValue key)
         {
-            if (key.Type == DataType.String)
+            if (key == null)
             {
-                return RawGet(key.String);
+                throw new ArgumentNullException(nameof(key));
             }
 
-            if (key.Type == DataType.Number)
+            switch (key.Type)
             {
-                int idx = GetIntegralKey(key.Number);
-                if (idx > 0)
+                case DataType.String:
+                    return RawGet(key.String);
+                case DataType.Number:
                 {
-                    return RawGet(idx);
+                    int idx = GetIntegralKey(key.Number);
+                    if (idx > 0)
+                    {
+                        return RawGet(idx);
+                    }
+
+                    break;
                 }
             }
 
@@ -440,27 +484,18 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets the value associated with the specified key,
-        /// without bringing to Nil the non-existant values.
+        /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
         public DynValue RawGet(object key)
         {
-            if (key == null)
+            return key switch
             {
-                return null;
-            }
-
-            if (key is string s)
-            {
-                return RawGet(s);
-            }
-
-            if (key is int i)
-            {
-                return RawGet(i);
-            }
-
-            return RawGet(DynValue.FromObject(OwnerScript, key));
+                null => null,
+                string s => RawGet(s),
+                int i => RawGet(i),
+                _ => RawGet(DynValue.FromObject(OwnerScript, key)),
+            };
         }
 
         /// <summary>
@@ -472,17 +507,13 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="keys">The keys to access the table and subtables</param>
         public DynValue RawGet(params object[] keys)
         {
-            if (keys == null || keys.Length <= 0)
+            if (keys == null || keys.Length == 0)
             {
                 return null;
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
         }
-
-        #endregion
-
-        #region Remove
 
         private bool PerformTableRemove<T>(
             LinkedListIndex<T, TablePair> listIndex,
@@ -527,17 +558,24 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(DynValue key)
         {
-            if (key.Type == DataType.String)
+            if (key == null)
             {
-                return Remove(key.String);
+                throw new ArgumentNullException(nameof(key));
             }
 
-            if (key.Type == DataType.Number)
+            switch (key.Type)
             {
-                int idx = GetIntegralKey(key.Number);
-                if (idx > 0)
+                case DataType.String:
+                    return Remove(key.String);
+                case DataType.Number:
                 {
-                    return Remove(idx);
+                    int idx = GetIntegralKey(key.Number);
+                    if (idx > 0)
+                    {
+                        return Remove(idx);
+                    }
+
+                    break;
                 }
             }
 
@@ -551,36 +589,24 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(object key)
         {
-            if (key is string s)
+            return key switch
             {
-                return Remove(s);
-            }
-
-            if (key is int i)
-            {
-                return Remove(i);
-            }
-
-            return Remove(DynValue.FromObject(OwnerScript, key));
+                string s => Remove(s),
+                int i => Remove(i),
+                _ => Remove(DynValue.FromObject(OwnerScript, key)),
+            };
         }
 
         /// <summary>
         /// Remove the value associated with the specified keys from the table.
         /// Multiple keys can be used to access subtables.
         /// </summary>
-        /// <param name="key">The key.</param>
+        /// <param name="keys">The key.</param>
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(params object[] keys)
         {
-            if (keys == null || keys.Length <= 0)
-            {
-                return false;
-            }
-
-            return ResolveMultipleKeys(keys, out object key).Remove(key);
+            return keys is { Length: > 0 } && ResolveMultipleKeys(keys, out object key).Remove(key);
         }
-
-        #endregion
 
         /// <summary>
         /// Collects the dead keys. This frees up memory but invalidates pending iterators.
@@ -606,46 +632,53 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public TablePair? NextKey(DynValue v)
         {
-            if (v.IsNil())
+            while (true)
             {
-                LinkedListNode<TablePair> node = _values.First;
-
-                if (node == null)
+                if (v == null)
                 {
-                    return TablePair.Nil;
+                    throw new ArgumentNullException(nameof(v));
                 }
-                else
+
+                if (v.IsNil())
                 {
-                    if (node.Value.Value.IsNil())
+                    LinkedListNode<TablePair> node = _values.First;
+
+                    if (node == null)
                     {
-                        return NextKey(node.Value.Key);
+                        return TablePair.Nil;
                     }
-                    else
+
+                    if (!node.Value.Value.IsNil())
                     {
                         return node.Value;
                     }
+
+                    v = node.Value.Key;
+                    continue;
                 }
-            }
 
-            if (v.Type == DataType.String)
-            {
-                return GetNextOf(_stringMap.Find(v.String));
-            }
-
-            if (v.Type == DataType.Number)
-            {
-                int idx = GetIntegralKey(v.Number);
-
-                if (idx > 0)
+                switch (v.Type)
                 {
-                    return GetNextOf(_arrayMap.Find(idx));
-                }
-            }
+                    case DataType.String:
+                        return GetNextOf(_stringMap.Find(v.String));
+                    case DataType.Number:
+                    {
+                        int idx = GetIntegralKey(v.Number);
 
-            return GetNextOf(_valueMap.Find(v));
+                        if (idx > 0)
+                        {
+                            return GetNextOf(_arrayMap.Find(idx));
+                        }
+
+                        break;
+                    }
+                }
+
+                return GetNextOf(_valueMap.Find(v));
+            }
         }
 
-        private TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
+        private static TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
         {
             while (true)
             {
@@ -675,27 +708,34 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             get
             {
-                if (_cachedLength < 0)
+                if (_cachedLength >= 0)
                 {
-                    _cachedLength = 0;
+                    return _cachedLength;
+                }
 
-                    for (
-                        int i = 1;
-                        _arrayMap.ContainsKey(i) && !_arrayMap.Find(i).Value.Value.IsNil();
-                        i++
-                    )
-                    {
-                        _cachedLength = i;
-                    }
+                _cachedLength = 0;
+
+                for (
+                    int i = 1;
+                    _arrayMap.TryGetValue(i, out LinkedListNode<TablePair> node)
+                        && node?.Value.Value != null
+                        && node.Value.Value.IsNotNil();
+                    i++
+                )
+                {
+                    _cachedLength = i;
                 }
 
                 return _cachedLength;
             }
         }
 
-        internal void InitNextArrayKeys(DynValue val, bool lastpos)
+        /// <summary>
+        /// Initializes the hidden array iteration keys used by `next`/`ipairs` while inserting complex values (tables/functions).
+        /// </summary>
+        internal void InitNextArrayKeys(DynValue val, bool lastPosition)
         {
-            if (val.Type == DataType.Tuple && lastpos)
+            if (val.Type == DataType.Tuple && lastPosition)
             {
                 foreach (DynValue v in val.Tuple)
                 {

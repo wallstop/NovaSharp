@@ -2,40 +2,35 @@ namespace NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
 
     /// <summary>
     /// Static functions to handle conversions of numeric types
     /// </summary>
     internal static class NumericConversions
     {
-        static NumericConversions()
+        /// <summary>
+        /// Array of numeric types in order used for some conversions
+        /// </summary>
+        internal static readonly Type[] NumericTypesOrdered =
         {
-            NumericTypesOrdered = new Type[]
-            {
-                typeof(double),
-                typeof(decimal),
-                typeof(float),
-                typeof(long),
-                typeof(int),
-                typeof(short),
-                typeof(sbyte),
-                typeof(ulong),
-                typeof(uint),
-                typeof(ushort),
-                typeof(byte),
-            };
-            NumericTypes = new HashSet<Type>(NumericTypesOrdered);
-        }
+            typeof(double),
+            typeof(decimal),
+            typeof(float),
+            typeof(long),
+            typeof(int),
+            typeof(short),
+            typeof(sbyte),
+            typeof(ulong),
+            typeof(uint),
+            typeof(ushort),
+            typeof(byte),
+        };
 
         /// <summary>
         /// HashSet of numeric types
         /// </summary>
-        internal static readonly HashSet<Type> NumericTypes;
-
-        /// <summary>
-        /// Array of numeric types in order used for some conversions
-        /// </summary>
-        internal static readonly Type[] NumericTypesOrdered;
+        internal static readonly HashSet<Type> NumericTypes = new(NumericTypesOrdered);
 
         /// <summary>
         /// Converts a double to another type
@@ -101,7 +96,15 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     return Convert.ToDecimal(d);
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+                when (ex is InvalidCastException
+                    || ex is OverflowException
+                    || ex is FormatException
+                    || ex is ArgumentException
+                )
+            {
+                // Swallow conversion failures so the original double value can be returned.
+            }
 
             return d;
         }
@@ -128,7 +131,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 return (double)d;
             }
 
-            return Convert.ToDouble(d);
+            return Convert.ToDouble(d, CultureInfo.InvariantCulture);
         }
     }
 }

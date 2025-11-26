@@ -9,14 +9,23 @@ namespace NovaSharp.Interpreter.IO
     /// </summary>
     public class BinDumpBinaryReader : BinaryReader
     {
+        /// <summary>
+        /// Initializes a reader that uses the default encoding.
+        /// </summary>
         public BinDumpBinaryReader(Stream s)
             : base(s) { }
 
+        /// <summary>
+        /// Initializes a reader using the specified encoding.
+        /// </summary>
         public BinDumpBinaryReader(Stream s, Encoding e)
             : base(s, e) { }
 
         private readonly List<string> _strings = new();
 
+        /// <summary>
+        /// Reads an int32 using the compressed encoding (1, 2, or 4 bytes).
+        /// </summary>
         public override int ReadInt32()
         {
             sbyte b = base.ReadSByte();
@@ -35,6 +44,9 @@ namespace NovaSharp.Interpreter.IO
             }
         }
 
+        /// <summary>
+        /// Reads an unsigned int32 using the compressed encoding (1, 2, or 4 bytes).
+        /// </summary>
         public override uint ReadUInt32()
         {
             byte b = base.ReadByte();
@@ -53,6 +65,9 @@ namespace NovaSharp.Interpreter.IO
             }
         }
 
+        /// <summary>
+        /// Reads a string using the shared string table (deduplicates repeated values).
+        /// </summary>
         public override string ReadString()
         {
             int pos = ReadInt32();

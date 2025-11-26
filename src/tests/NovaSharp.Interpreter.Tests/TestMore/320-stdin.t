@@ -73,7 +73,7 @@ f = io.open('file.txt', 'w')
 f:write("file with text\n")
 f:close()
 
-cmd = lua .. [[ -e "print(io.read'*l'); print(io.read'*l'); print(io.type(io.stdin))" < file.txt]]
+cmd = lua .. [[ -e "print(io.read'*l'); print(io.read'*l'); print(io.Type(io.stdin))" < file.txt]]
 f = io.popen(cmd)
 is(f:read'*l', 'file with text', "function io.read *l")
 is(f:read'*l', 'nil')
@@ -122,3 +122,4 @@ os.remove('dbg.txt') -- clean up
 --   fill-column: 100
 -- End:
 -- vim: ft=lua expandtab shiftwidth=4:
+

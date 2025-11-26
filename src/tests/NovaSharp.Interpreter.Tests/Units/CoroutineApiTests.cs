@@ -12,6 +12,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CoroutineApiTests
     {
+        private static readonly double[] TypedEnumerableResults = { 1d, 2d };
+        private static readonly object[] EnumerableResults = { "foo", 7d };
+        private static readonly int[] EnumerableOfTResults = { 10, 20 };
+        private static readonly object[] UnityCoroutineResults = { null, null, null };
+
         [Test]
         public void AsTypedEnumerableReturnsAllResults()
         {
@@ -35,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(results, Is.EqualTo(new[] { 1d, 2d }));
+                Assert.That(results, Is.EqualTo(TypedEnumerableResults));
                 Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
             });
         }
@@ -79,7 +84,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 results.Add(value);
             }
 
-            Assert.That(results, Is.EqualTo(new object[] { "foo", 7d }));
+            Assert.That(results, Is.EqualTo(EnumerableResults));
         }
 
         [Test]
@@ -103,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 results.Add(value);
             }
 
-            Assert.That(results, Is.EqualTo(new[] { 10, 20 }));
+            Assert.That(results, Is.EqualTo(EnumerableOfTResults));
         }
 
         [Test]
@@ -129,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 yielded.Add(enumerator.Current);
             }
 
-            Assert.That(yielded, Is.EqualTo(new object[] { null, null, null }));
+            Assert.That(yielded, Is.EqualTo(UnityCoroutineResults));
             Assert.That(coroutine.State, Is.EqualTo(CoroutineState.Dead));
         }
 

@@ -148,9 +148,17 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             MethodInfo setter
         )
         {
+            if (pi == null)
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
+
             if (getter == null && setter == null)
             {
-                throw new ArgumentNullException("getter and setter cannot both be null");
+                throw new ArgumentNullException(
+                    nameof(getter),
+                    "Getter and setter cannot both be null."
+                );
             }
 
             if (Script.GlobalOptions.Platform.IsRunningOnAOT())
@@ -212,6 +220,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return ClrToScriptConversions.ObjectToDynValue(script, result);
         }
 
+        /// <summary>
+        /// Builds (and caches) a delegate for the backing getter when the current access mode allows precompilation.
+        /// </summary>
         internal void OptimizeGetter()
         {
             using (
@@ -260,6 +271,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Builds (and caches) a delegate for the backing setter when writable and precompilation is allowed.
+        /// </summary>
         internal void OptimizeSetter()
         {
             using (
@@ -327,9 +341,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The value to set.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to set.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (_setter == null)
@@ -341,8 +360,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 );
             }
 
-            object value = ScriptToClrConversions.DynValueToObjectOfType(
-                v,
+            object convertedValue = ScriptToClrConversions.DynValueToObjectOfType(
+                value,
                 PropertyInfo.PropertyType,
                 null,
                 false
@@ -350,9 +369,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
             try
             {
-                if (value is double d)
+                if (convertedValue is double d)
                 {
-                    value = NumericConversions.DoubleToType(PropertyInfo.PropertyType, d);
+                    convertedValue = NumericConversions.DoubleToType(PropertyInfo.PropertyType, d);
                 }
 
                 if (AccessMode == InteropAccessMode.LazyOptimized && _optimizedSetter == null)
@@ -362,18 +381,18 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
 
                 if (_optimizedSetter != null)
                 {
-                    _optimizedSetter(obj, value);
+                    _optimizedSetter(obj, convertedValue);
                 }
                 else
                 {
-                    _setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
+                    _setter.Invoke(IsStatic ? null : obj, new object[] { convertedValue }); // convoluted workaround for --full-aot Mono execution
                 }
             }
             catch (ArgumentException)
             {
                 // non-optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     PropertyInfo.PropertyType
                 );
             }
@@ -381,7 +400,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             {
                 // optimized setters fall here
                 throw ScriptRuntimeException.UserDataArgumentTypeMismatch(
-                    v.Type,
+                    value.Type,
                     PropertyInfo.PropertyType
                 );
             }
@@ -413,7 +432,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <summary>
         /// Called by standard descriptors when background optimization or preoptimization needs to be performed.
         /// </summary>
-        void IOptimizableDescriptor.Optimize()
+        public virtual void Optimize()
         {
             OptimizeGetter();
             OptimizeSetter();
@@ -426,6 +445,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// <param name="t">The table to be filled</param>
         public void PrepareForWiring(Table t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             t.Set("class", DynValue.NewString(GetType().FullName));
             t.Set("visibility", DynValue.NewString(PropertyInfo.GetClrVisibility()));
             t.Set("name", DynValue.NewString(Name));
@@ -438,6 +462,23 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 DynValue.NewBoolean(Framework.Do.IsValueType(PropertyInfo.DeclaringType))
             );
             t.Set("type", DynValue.NewString(PropertyInfo.PropertyType.FullName));
+        }
+
+        /// <summary>
+        /// Helpers exposed for tests to override caching state.
+        /// </summary>
+        internal static class TestHooks
+        {
+            /// <summary>
+            /// Injects a fake optimized setter so tests can simulate compiled delegates.
+            /// </summary>
+            public static void SetOptimizedSetter(
+                PropertyMemberDescriptor descriptor,
+                Action<object, object> setter
+            )
+            {
+                descriptor._optimizedSetter = setter;
+            }
         }
     }
 }

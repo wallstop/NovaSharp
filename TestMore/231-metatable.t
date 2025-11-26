@@ -342,7 +342,7 @@ is( r, 'abc', "__ipairs" )
 -- create a namespace
 Window = {}
 -- create a prototype with default values
-Window.prototype = {x=0, y=0, width=100, heigth=100, }
+Window.prototype = {x=0, y=0, width=100, height=100, }
 -- create a metatable
 Window.mt = {}
 -- declare the constructor function

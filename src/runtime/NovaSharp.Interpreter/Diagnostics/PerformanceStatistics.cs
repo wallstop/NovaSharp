@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Diagnostics
             (int)PerformanceCounter.LastValue
         ];
 
-        private static IPerformanceStopwatch[] _globalStopwatches = new IPerformanceStopwatch[
+        private static IPerformanceStopwatch[] GlobalStopwatches = new IPerformanceStopwatch[
             (int)PerformanceCounter.LastValue
         ];
         private static readonly object GlobalSyncRoot = new();
@@ -22,6 +22,13 @@ namespace NovaSharp.Interpreter.Diagnostics
         private readonly IHighResolutionClock _clock;
         private readonly object _syncRoot = new();
 
+        /// <summary>
+        /// Gets or sets the high-resolution clock shared by every global stopwatch instance.
+        /// </summary>
+        /// <remarks>
+        /// Tests replace this clock with a deterministic fake so global performance counters can be asserted
+        /// without depending on wall-clock time. Production code should leave it at the default.
+        /// </remarks>
         internal static IHighResolutionClock GlobalClock { get; set; } =
             SystemHighResolutionClock.Instance;
 
@@ -54,7 +61,7 @@ namespace NovaSharp.Interpreter.Diagnostics
                             for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
                             {
                                 _stopwatches[i] =
-                                    _globalStopwatches[i]
+                                    GlobalStopwatches[i]
                                     ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
                             }
                         }
@@ -65,7 +72,7 @@ namespace NovaSharp.Interpreter.Diagnostics
 
                         lock (GlobalSyncRoot)
                         {
-                            _globalStopwatches = new IPerformanceStopwatch[
+                            GlobalStopwatches = new IPerformanceStopwatch[
                                 (int)PerformanceCounter.LastValue
                             ];
                         }
@@ -105,12 +112,12 @@ namespace NovaSharp.Interpreter.Diagnostics
         {
             lock (GlobalSyncRoot)
             {
-                if (_globalStopwatches[(int)pc] == null)
+                if (GlobalStopwatches[(int)pc] == null)
                 {
-                    _globalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(pc, GlobalClock);
+                    GlobalStopwatches[(int)pc] = new GlobalPerformanceStopwatch(pc, GlobalClock);
                 }
 
-                return _globalStopwatches[(int)pc].Start();
+                return GlobalStopwatches[(int)pc].Start();
             }
         }
 
@@ -138,12 +145,31 @@ namespace NovaSharp.Interpreter.Diagnostics
         {
             lock (GlobalSyncRoot)
             {
-                if (_globalStopwatches[(int)counter] == null)
+                if (GlobalStopwatches[(int)counter] == null)
                 {
-                    _globalStopwatches[(int)counter] = new GlobalPerformanceStopwatch(
+                    GlobalStopwatches[(int)counter] = new GlobalPerformanceStopwatch(
                         counter,
                         GlobalClock
                     );
+                }
+            }
+        }
+
+        /// <summary>
+        /// Provides helpers that allow tests to interrogate and reset the global stopwatch cache.
+        /// </summary>
+        internal static class TestHooks
+        {
+            /// <summary>
+            /// Clears the global stopwatch cache so tests can assert cold-start behaviour.
+            /// </summary>
+            public static void ResetGlobalStopwatches()
+            {
+                lock (GlobalSyncRoot)
+                {
+                    GlobalStopwatches = new IPerformanceStopwatch[
+                        (int)PerformanceCounter.LastValue
+                    ];
                 }
             }
         }

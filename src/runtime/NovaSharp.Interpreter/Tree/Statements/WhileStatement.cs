@@ -6,16 +6,22 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua <c>while</c> loop.
+    /// </summary>
     internal class WhileStatement : Statement
     {
         private readonly Expression _condition;
-        private readonly Statement _block;
+        private readonly CompositeStatement _block;
         private readonly RuntimeScopeBlock _stackFrame;
 
         private readonly SourceRef _start;
 
         private readonly SourceRef _end;
 
+        /// <summary>
+        /// Parses the loop condition and body for a <c>while ... do ... end</c> construct.
+        /// </summary>
         public WhileStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
@@ -38,35 +44,38 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_end);
         }
 
+        /// <summary>
+        /// Compiles the while loop, emitting the condition check, loop body, and back-edge jump.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
-            Loop l = new() { scope = _stackFrame };
+            Loop l = new() { Scope = _stackFrame };
 
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             bc.PushSourceRef(_start);
 
             int start = bc.GetJumpPointForNextInstruction();
 
             _condition.Compile(bc);
-            Instruction jumpend = bc.Emit_Jump(OpCode.Jf, -1);
+            Instruction jumpend = bc.EmitJump(OpCode.Jf, -1);
 
-            bc.Emit_Enter(_stackFrame);
+            bc.EmitEnter(_stackFrame);
 
             _block.Compile(bc);
 
             bc.PopSourceRef();
-            bc.Emit_Debug("..end");
+            bc.EmitDebug("..end");
             bc.PushSourceRef(_end);
 
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Jump(OpCode.Jump, start);
+            bc.EmitLeave(_stackFrame);
+            bc.EmitJump(OpCode.Jump, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpoint;
             }

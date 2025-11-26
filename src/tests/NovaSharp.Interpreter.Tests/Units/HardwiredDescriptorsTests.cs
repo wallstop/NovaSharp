@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [SetUp]
         public void SetUp()
         {
-            UserData.UnregisterType(typeof(TestHost));
+            UserData.UnregisterType<TestHost>();
             _descriptor = new TestHardwiredDescriptor();
             UserData.RegisterType(_descriptor);
         }
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            UserData.UnregisterType(typeof(TestHost));
+            UserData.UnregisterType<TestHost>();
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void HardwiredMethodDescriptorRejectsStaticInvocation()
         {
             Script script = CreateScript();
-            script.Globals["TestHost"] = UserData.CreateStatic(typeof(TestHost));
+            script.Globals["TestHost"] = UserData.CreateStatic<TestHost>();
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("TestHost:call(3)")
@@ -168,12 +168,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                     MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite
                 ) { }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 return ((TestHost)obj).Value;
             }
 
-            protected override void SetValueImpl(Script script, object obj, object value)
+            protected override void SetValueCore(Script script, object obj, object value)
             {
                 ((TestHost)obj).Value = (int)value;
             }
@@ -185,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 : base(typeof(string), "readonly", isStatic: false, MemberDescriptorAccess.CanRead)
             { }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 return "constant";
             }

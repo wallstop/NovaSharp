@@ -1,6 +1,5 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
-    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
@@ -282,7 +281,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GsubAppliesGlobalReplacement()
+        public void GSubAppliesGlobalReplacement()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -371,11 +370,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.String, Does.StartWith(StringModule.BASE64_DUMP_HEADER));
+            Assert.That(result.String, Does.StartWith(StringModule.Base64DumpHeader));
         }
 
         [Test]
-        public void GmatchIteratesOverMatches()
+        public void GMatchIteratesOverMatches()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -428,27 +427,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AdjustIndexHandlesNilZeroPositiveAndNegativeInputs()
         {
-            MethodInfo adjustIndex = typeof(StringModule).GetMethod(
-                "AdjustIndex",
-                BindingFlags.NonPublic | BindingFlags.Static
+            int? defaultResult = StringModule.TestHooks.AdjustIndex("Nova", DynValue.Nil, 3);
+            int? zeroResult = StringModule.TestHooks.AdjustIndex("Nova", DynValue.NewNumber(0), 3);
+            int? positiveResult = StringModule.TestHooks.AdjustIndex(
+                "Nova",
+                DynValue.NewNumber(4),
+                3
             );
-            Assert.That(adjustIndex, Is.Not.Null);
-
-            object defaultResult = adjustIndex!.Invoke(
-                null,
-                new object[] { "Nova", DynValue.Nil, 3 }
-            );
-            object zeroResult = adjustIndex.Invoke(
-                null,
-                new object[] { "Nova", DynValue.NewNumber(0), 3 }
-            );
-            object positiveResult = adjustIndex.Invoke(
-                null,
-                new object[] { "Nova", DynValue.NewNumber(4), 3 }
-            );
-            object negativeResult = adjustIndex.Invoke(
-                null,
-                new object[] { "Nova", DynValue.NewNumber(-2), 3 }
+            int? negativeResult = StringModule.TestHooks.AdjustIndex(
+                "Nova",
+                DynValue.NewNumber(-2),
+                3
             );
 
             Assert.Multiple(() =>

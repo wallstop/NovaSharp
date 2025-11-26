@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// The symbol ref of an upvalue variable
         /// </summary>
-        Upvalue = 2,
+        UpValue = 2,
 
         /// <summary>
         /// The symbol ref of a global variable

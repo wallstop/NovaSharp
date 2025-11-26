@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.IO;
     using System.Text;
     using NovaSharp.Interpreter;
@@ -74,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             string contents = reader.ReadToEnd();
 
-            Assert.That(contents.EndsWith("payload"));
+            Assert.That(contents.EndsWith("payload", StringComparison.Ordinal), Is.True);
         }
 
         private static ScriptExecutionContext CreateExecutionContext()

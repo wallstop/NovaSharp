@@ -123,7 +123,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void DifftimeHandlesOptionalStartArgument()
+        public void DiffTimeHandlesOptionalStartArgument()
         {
             Script script = CreateScript();
             DynValue diff = script.DoString("return os.difftime(200, 150)");

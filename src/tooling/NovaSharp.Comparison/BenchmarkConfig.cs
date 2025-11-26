@@ -5,6 +5,9 @@ namespace NovaSharp.Comparison
     using BenchmarkDotNet.Diagnosers;
     using BenchmarkDotNet.Jobs;
 
+    /// <summary>
+    /// Builds the BenchmarkDotNet config shared by all comparison benchmarks.
+    /// </summary>
     internal static class BenchmarkConfig
     {
         private static readonly Job ComparisonJob = Job
@@ -12,6 +15,9 @@ namespace NovaSharp.Comparison
             .WithIterationCount(10)
             .WithId("Comparison");
 
+        /// <summary>
+        /// Creates a BenchmarkDotNet config tuned for short comparison runs.
+        /// </summary>
         public static IConfig Create() =>
             ManualConfig
                 .Create(DefaultConfig.Instance)

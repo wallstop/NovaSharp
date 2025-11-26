@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System.Diagnostics.CodeAnalysis;
+
     /// <summary>
     /// Class wrapping a request to yield a coroutine
     /// </summary>
@@ -10,6 +12,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         private DynValue[] _returnValues;
 
+        [SuppressMessage(
+            "Performance",
+            "CA1819:Properties should not return arrays",
+            Justification = "Coroutine yields must share the return tuple backing array without copying."
+        )]
         public DynValue[] ReturnValues
         {
             get { return _returnValues; }

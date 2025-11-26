@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
@@ -12,6 +13,46 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CallbackFunctionTests
     {
+        [Test]
+        public void ConstructorThrowsWhenCallbackIsNull()
+        {
+            Assert.That(
+                () => new CallbackFunction(null),
+                Throws
+                    .TypeOf<ArgumentNullException>()
+                    .With.Property("ParamName")
+                    .EqualTo("callBack")
+            );
+        }
+
+        [Test]
+        public void InvokeThrowsWhenExecutionContextIsNull()
+        {
+            CallbackFunction function = new((_, _) => DynValue.Nil);
+            List<DynValue> arguments = new() { DynValue.NewNumber(1) };
+
+            Assert.That(
+                () => function.Invoke(null, arguments),
+                Throws
+                    .TypeOf<ArgumentNullException>()
+                    .With.Property("ParamName")
+                    .EqualTo("executionContext")
+            );
+        }
+
+        [Test]
+        public void InvokeThrowsWhenArgumentsAreNull()
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackFunction function = new((_, _) => DynValue.Nil);
+
+            Assert.That(
+                () => function.Invoke(context, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("args")
+            );
+        }
+
         [Test]
         public void InvokeTreatsColonAsRegularCallWhenConfigured()
         {
@@ -133,20 +174,51 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void FromDelegateThrowsWhenScriptIsNull()
+        {
+            Assert.That(
+                () =>
+                    CallbackFunction.FromDelegate(null, new Func<int, int>(SampleUserData.AddOne)),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
+        public void FromDelegateThrowsWhenDelegateIsNull()
+        {
+            Script script = new();
+            Assert.That(
+                () => CallbackFunction.FromDelegate(script, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("del")
+            );
+        }
+
+        [Test]
+        public void FromMethodInfoThrowsWhenScriptIsNull()
+        {
+            MethodInfo method = SampleUserData.GetPublicCallbackMethod();
+            Assert.That(
+                () => CallbackFunction.FromMethodInfo(null, method),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("script")
+            );
+        }
+
+        [Test]
+        public void FromMethodInfoThrowsWhenMethodInfoIsNull()
+        {
+            Script script = new();
+            Assert.That(
+                () => CallbackFunction.FromMethodInfo(script, null),
+                Throws.TypeOf<ArgumentNullException>().With.Property("ParamName").EqualTo("mi")
+            );
+        }
+
+        [Test]
         public void CheckCallbackSignatureHonoursVisibilityRequirement()
         {
-            System.Reflection.MethodInfo publicMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.ValidCallback)
-            )!;
-
-            System.Reflection.MethodInfo internalMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.PrivateCallback),
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
-            )!;
-
-            System.Reflection.MethodInfo badMethod = typeof(SampleUserData).GetMethod(
-                nameof(SampleUserData.BadSignature)
-            )!;
+            MethodInfo publicMethod = SampleUserData.GetPublicCallbackMethod();
+            MethodInfo internalMethod = SampleUserData.GetInternalCallbackMethod();
+            MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
 
             Assert.Multiple(() =>
             {
@@ -163,6 +235,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class SampleUserData
         {
+            private static readonly MethodInfo ValidCallbackMethodInfo = (
+                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)ValidCallback
+            ).Method;
+
+            private static readonly MethodInfo PrivateCallbackMethodInfo = (
+                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)PrivateCallback
+            ).Method;
+
+            private static readonly MethodInfo BadSignatureMethodInfo = (
+                (Func<ScriptExecutionContext, int, DynValue>)BadSignature
+            ).Method;
+
             public static int AddOne(int value) => value + 1;
 
             public static DynValue ValidCallback(
@@ -185,6 +269,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 return DynValue.NewNumber(value);
             }
+
+            public static MethodInfo GetPublicCallbackMethod() => ValidCallbackMethodInfo;
+
+            public static MethodInfo GetInternalCallbackMethod() => PrivateCallbackMethodInfo;
+
+            public static MethodInfo GetBadSignatureMethod() => BadSignatureMethodInfo;
         }
     }
 }

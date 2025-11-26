@@ -155,18 +155,23 @@ namespace MoonSharp.Interpreter.Interop
         /// </summary>
         /// <param name="mi">The mi.</param>
         /// <returns></returns>
-        public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
+        public static IReadOnlyList<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
-            return mi.GetCustomAttributes(typeof(MoonSharpUserDataMetamethodAttribute), true)
+            List<string> names = mi.GetCustomAttributes(
+                    typeof(MoonSharpUserDataMetamethodAttribute),
+                    true
+                )
                 .OfType<MoonSharpUserDataMetamethodAttribute>()
                 .Select(a => a.Name)
                 .ToList();
+
+            return names.Count == 0 ? Array.Empty<string>() : names;
         }
 
         /// <summary>
         /// Gets the Types implemented in the assembly, catching the ReflectionTypeLoadException just in case..
         /// </summary>
-        /// <param name="asm">The assebly</param>
+        /// <param name="asm">The assembly</param>
         /// <returns></returns>
         public static Type[] SafeGetTypes(this Assembly asm)
         {
@@ -203,8 +208,8 @@ namespace MoonSharp.Interpreter.Interop
         /// <returns></returns>
         public static IEnumerable<Type> GetAllImplementedTypes(this Type t)
         {
-            for (Type ot = t; ot != null; ot = Framework.Do.GetBaseType(ot))
-                yield return ot;
+            for (Type current = t; current != null; current = Framework.Do.GetBaseType(current))
+                yield return current;
 
             foreach (Type it in Framework.Do.GetInterfaces(t))
                 yield return it;

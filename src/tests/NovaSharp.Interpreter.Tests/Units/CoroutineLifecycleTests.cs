@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
@@ -162,6 +163,48 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+        }
+
+        [Test]
+        public void ForceSuspendedCoroutineResumesWithContextWithoutArguments()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function heavyweight()
+                    local total = 0
+                    for i = 1, 300 do
+                        total = total + i
+                    end
+                    return total
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavyweight"));
+            coroutineValue.Coroutine.AutoYieldCounter = 1;
+
+            DynValue first = coroutineValue.Coroutine.Resume();
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(first.YieldRequest.Forced, Is.True);
+                Assert.That(
+                    coroutineValue.Coroutine.State,
+                    Is.EqualTo(CoroutineState.ForceSuspended)
+                );
+            });
+
+            coroutineValue.Coroutine.AutoYieldCounter = 0;
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue final = coroutineValue.Coroutine.Resume(context);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(final.Type, Is.EqualTo(DataType.Number));
+                Assert.That(final.Number, Is.EqualTo(300 * 301 / 2));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
         }
     }
 }

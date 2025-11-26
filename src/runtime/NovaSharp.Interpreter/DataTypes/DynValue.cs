@@ -2,20 +2,21 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Linq;
     using System.Text;
-    using NovaSharp.Interpreter.Errors;
-    using NovaSharp.Interpreter.Execution;
+    using Errors;
+    using Execution;
 
     /// <summary>
     /// A class representing a value in a Lua/NovaSharp script.
     /// </summary>
     public sealed class DynValue
     {
-        private static int _sRefIdCounter;
+        private static int RefIdCounter;
 
-        private readonly int _refId = ++_sRefIdCounter;
+        private readonly int _refId = ++RefIdCounter;
         private int _hashCode = -1;
 
         private bool _readOnly;
@@ -59,6 +60,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// Gets the values in the tuple (valid only if the <see cref="Type"/> is Tuple).
         /// This field is currently also used to hold arguments in values whose <see cref="Type"/> is <see cref="DataType.TailCallRequest"/>.
         /// </summary>
+        [SuppressMessage(
+            "Performance",
+            "CA1819:Properties should not return arrays",
+            Justification = "Tuple semantics rely on sharing the backing array to avoid per-call allocations."
+        )]
         public DynValue[] Tuple
         {
             get { return _object as DynValue[]; }
@@ -91,6 +97,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the string value (valid only if the <see cref="Type"/> is <see cref="DataType.String"/>)
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1720:Identifier contains type name",
+            Justification = "DynValue exposes typed accessors that intentionally mirror Lua's DataType names."
+        )]
         public string String
         {
             get { return _object as string; }
@@ -178,6 +189,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(StringBuilder sb)
         {
+            if (sb == null)
+            {
+                throw new ArgumentNullException(nameof(sb));
+            }
+
             return new DynValue() { _object = sb.ToString(), _type = DataType.String };
         }
 
@@ -186,11 +202,19 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewString(string format, params object[] args)
         {
-            return new DynValue()
+            if (format == null)
             {
-                _object = string.Format(format, args),
-                _type = DataType.String,
-            };
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            object[] formatArgs = args ?? Array.Empty<object>();
+
+            string formattedValue =
+                formatArgs.Length == 0
+                    ? format
+                    : string.Format(CultureInfo.InvariantCulture, format, formatArgs);
+
+            return new DynValue() { _object = formattedValue, _type = DataType.String };
         }
 
         /// <summary>
@@ -306,7 +330,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Creates a new request for a yield of the current coroutine.
         /// </summary>
-        /// <param name="args">The yield argumenst.</param>
+        /// <param name="args">The yield arguments.</param>
         /// <returns></returns>
         public static DynValue NewYieldReq(DynValue[] args)
         {
@@ -320,7 +344,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Creates a new request for a yield of the current coroutine.
         /// </summary>
-        /// <param name="args">The yield argumenst.</param>
+        /// <param name="args">The yield arguments.</param>
         /// <returns></returns>
         internal static DynValue NewForcedYieldReq()
         {
@@ -336,6 +360,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(params DynValue[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             if (values.Length == 0)
             {
                 return NewNil();
@@ -354,7 +383,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(params DynValue[] values)
         {
-            if (!values.Any(v => v.Type == DataType.Tuple))
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
+            if (!Array.Exists(values, v => v.Type == DataType.Tuple))
             {
                 return NewTuple(values);
             }
@@ -473,7 +507,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public string ToPrintString()
         {
-            if (_object != null && _object is RefIdObject refid)
+            if (_object is RefIdObject refId)
             {
                 string typeString = Type.ToLuaTypeString();
 
@@ -486,7 +520,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     }
                 }
 
-                return refid.FormatTypeString(typeString);
+                return refId.FormatTypeString(typeString);
             }
 
             switch (Type)
@@ -494,7 +528,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.String:
                     return String;
                 case DataType.Tuple:
-                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()).ToArray());
+                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()));
                 case DataType.TailCallRequest:
                     return "(TailCallRequest -- INTERNAL!)";
                 case DataType.YieldRequest:
@@ -509,7 +543,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public string ToDebugPrintString()
         {
-            if (_object != null && _object is RefIdObject refid)
+            if (_object is RefIdObject refid)
             {
                 string typeString = Type.ToLuaTypeString();
 
@@ -528,7 +562,7 @@ namespace NovaSharp.Interpreter.DataTypes
             switch (Type)
             {
                 case DataType.Tuple:
-                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()).ToArray());
+                    return string.Join("\t", Tuple.Select(t => t.ToPrintString()));
                 case DataType.TailCallRequest:
                     return "(TailCallRequest)";
                 case DataType.YieldRequest:
@@ -553,7 +587,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Nil:
                     return "nil";
                 case DataType.Boolean:
-                    return Boolean.ToString().ToLower();
+                    return Boolean ? "true" : "false";
                 case DataType.Number:
                     return Number.ToString(CultureInfo.InvariantCulture);
                 case DataType.String:
@@ -561,15 +595,13 @@ namespace NovaSharp.Interpreter.DataTypes
                 case DataType.Function:
                     return $"(Function {Function.EntryPointByteCodeLocation:X8})";
                 case DataType.ClrFunction:
-                    return string.Format("(Function CLR)", Function);
+                    return "(Function CLR)";
                 case DataType.Table:
                     return "(Table)";
                 case DataType.Tuple:
-                    return string.Join(", ", Tuple.Select(t => t.ToString()).ToArray());
+                    return string.Join(", ", Tuple.Select(t => t.ToString()));
                 case DataType.TailCallRequest:
-                    return "Tail:("
-                        + string.Join(", ", Tuple.Select(t => t.ToString()).ToArray())
-                        + ")";
+                    return "Tail:(" + string.Join(", ", Tuple.Select(t => t.ToString())) + ")";
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
@@ -607,7 +639,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     _hashCode = baseValue ^ Number.GetHashCode();
                     break;
                 case DataType.String:
-                    _hashCode = baseValue ^ String.GetHashCode();
+                    _hashCode = baseValue ^ StringComparer.Ordinal.GetHashCode(String);
                     break;
                 case DataType.Function:
                     _hashCode = baseValue ^ Function.GetHashCode();
@@ -722,7 +754,7 @@ namespace NovaSharp.Interpreter.DataTypes
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString();
+                return rv.Number.ToString(CultureInfo.InvariantCulture);
             }
             else if (rv.Type == DataType.String)
             {
@@ -778,12 +810,11 @@ namespace NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Returns this DynValue as an instance of <see cref="IScriptPrivateResource"/>, if possible,
-        /// null otherwise
+        /// null otherwise.
         /// </summary>
-        /// <returns>False if value is false or nil, true otherwise.</returns>
-        public IScriptPrivateResource GetAsPrivateResource()
+        public IScriptPrivateResource ScriptPrivateResource
         {
-            return _object as IScriptPrivateResource;
+            get { return _object as IScriptPrivateResource; }
         }
 
         /// <summary>
@@ -811,6 +842,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
         public void Assign(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (ReadOnly)
             {
                 throw new ScriptRuntimeException("Assigning on r-value");
@@ -926,6 +962,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public object ToObject(Type desiredType)
         {
+            if (desiredType == null)
+            {
+                throw new ArgumentNullException(nameof(desiredType));
+            }
+
             //Contract.Requires(desiredType != null);
             return Interop.Converters.ScriptToClrConversions.DynValueToObjectOfType(
                 this,
@@ -962,23 +1003,23 @@ namespace NovaSharp.Interpreter.DataTypes
 #endif
 
         /// <summary>
-        /// Checks the type of this value corresponds to the desired type. A propert ScriptRuntimeException is thrown
-        /// if the value is not of the specified type or - considering the TypeValidationFlags - is not convertible
+        /// Checks the type of this value corresponds to the desired type. A property ScriptRuntimeException is thrown
+        /// if the value is not of the specified type or - considering the TypeValidationOptions - is not convertible
         /// to the specified type.
         /// </summary>
         /// <param name="funcName">Name of the function requesting the value, for error message purposes.</param>
         /// <param name="desiredType">The desired data type.</param>
         /// <param name="argNum">The argument number, for error message purposes.</param>
-        /// <param name="flags">The TypeValidationFlags.</param>
+        /// <param name="flags">The TypeValidationOptions.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">Thrown
-        /// if the value is not of the specified type or - considering the TypeValidationFlags - is not convertible
+        /// if the value is not of the specified type or - considering the TypeValidationOptions - is not convertible
         /// to the specified type.</exception>
         public DynValue CheckType(
             string funcName,
             DataType desiredType,
             int argNum = -1,
-            TypeValidationFlags flags = TypeValidationFlags.Default
+            TypeValidationOptions flags = TypeValidationOptions.None
         )
         {
             if (Type == desiredType)
@@ -986,14 +1027,14 @@ namespace NovaSharp.Interpreter.DataTypes
                 return this;
             }
 
-            bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
+            bool allowNil = ((int)(flags & TypeValidationOptions.AllowNil) != 0);
 
             if (allowNil && IsNil())
             {
                 return this;
             }
 
-            bool autoConvert = ((int)(flags & TypeValidationFlags.AutoConvert) != 0);
+            bool autoConvert = ((int)(flags & TypeValidationOptions.AutoConvert) != 0);
 
             if (autoConvert)
             {
@@ -1040,11 +1081,11 @@ namespace NovaSharp.Interpreter.DataTypes
         public T CheckUserDataType<T>(
             string funcName,
             int argNum = -1,
-            TypeValidationFlags flags = TypeValidationFlags.Default
+            TypeValidationOptions flags = TypeValidationOptions.None
         )
         {
             DynValue v = CheckType(funcName, DataType.UserData, argNum, flags);
-            bool allowNil = ((int)(flags & TypeValidationFlags.AllowNil) != 0);
+            bool allowNil = ((int)(flags & TypeValidationOptions.AllowNil) != 0);
 
             if (v.IsNil())
             {
@@ -1052,7 +1093,7 @@ namespace NovaSharp.Interpreter.DataTypes
             }
 
             object o = v.UserData.Object;
-            if (o != null && o is T o1)
+            if (o is T o1)
             {
                 return o1;
             }

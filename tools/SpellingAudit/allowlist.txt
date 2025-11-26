@@ -1,0 +1,17 @@
+# Domain-specific terms that should not be flagged by codespell.
+Lua
+LuaJIT
+NovaSharp
+userdata
+metatable
+metatables
+NuGet
+Interop
+interop
+alo
+isnt
+aNumber
+aString
+anObject
+anArray
+aNegativeNumber

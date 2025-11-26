@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NUnit.Framework;
 
@@ -60,8 +61,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue getter = descriptor.GetGetterCallbackAsDynValue(script, obj: null);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue result = getter.Callback.Invoke(
-                null,
+                context,
                 Array.Empty<DynValue>(),
                 isMethodCall: false
             );

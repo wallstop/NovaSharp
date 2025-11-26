@@ -3,13 +3,14 @@ namespace NovaSharp.Interpreter.Tests
     using System;
     using System.IO;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
 #if !EMBEDTEST
-    internal sealed class TestsScriptLoader : ScriptLoaderBase
+    public sealed class TestsScriptLoader : ScriptLoaderBase
     {
         public override bool ScriptFileExists(string name)
         {
@@ -26,6 +27,7 @@ namespace NovaSharp.Interpreter.Tests
     public class TapRunner
     {
         private readonly string _file;
+        private readonly LuaCompatibilityVersion _compatibilityVersion;
 
         /// <summary>
         /// Prints the specified string.
@@ -33,45 +35,73 @@ namespace NovaSharp.Interpreter.Tests
         /// <param name="str">The string.</param>
         public void Print(string str)
         {
-            // System.Diagnostics.Debug.WriteLine(str);
-
-            Assert.That(str.Trim().StartsWith("not ok"), Is.False, $"TAP fail ({_file}) : {str}");
+            ArgumentNullException.ThrowIfNull(str);
+            string trimmed = str.Trim();
+            Assert.That(
+                trimmed.StartsWith("not ok", StringComparison.Ordinal),
+                Is.False,
+                $"TAP fail ({_file}) : {str}"
+            );
         }
 
-        public TapRunner(string filename)
+        public TapRunner(string filename, LuaCompatibilityVersion? compatibilityVersion = null)
         {
             _file = filename;
+            _compatibilityVersion =
+                compatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
         }
 
         public void Run()
         {
-            Script s = new() { Options = { DebugPrint = Print, UseLuaErrorLocations = true } };
-
-#if PCL
-#if EMBEDTEST
-            S.Options.ScriptLoader = new EmbeddedResourcesScriptLoader(
-                Assembly.GetExecutingAssembly()
-            );
-#else
-            S.Options.ScriptLoader = new TestsScriptLoader();
-#endif
-#endif
-
-            s.Globals.Set("arg", DynValue.NewTable(s));
-
-            ((ScriptLoaderBase)s.Options.ScriptLoader).ModulePaths = new string[]
+            ScriptOptions options = new(Script.DefaultOptions)
             {
-                "TestMore/Modules/?",
-                "TestMore/Modules/?.lua",
+                DebugPrint = Print,
+                UseLuaErrorLocations = true,
+                CompatibilityVersion = _compatibilityVersion,
             };
+            Script s = new(options);
 
-            s.DoFile(_file);
+            ConfigureScriptLoader(s);
+            s.Globals.Set("arg", DynValue.NewTable(s));
+            string friendlyName = _file.Replace('\\', '/');
+            s.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
         }
 
-        public static void Run(string filename)
+        public static void Run(
+            string filename,
+            LuaCompatibilityVersion? compatibilityVersion = null
+        )
         {
-            TapRunner t = new(filename);
+            TapRunner t = new(filename, compatibilityVersion);
             t.Run();
+        }
+
+        private static void ConfigureScriptLoader(Script script)
+        {
+            if (script.Options.ScriptLoader is not ScriptLoaderBase loader)
+            {
+                throw new InvalidOperationException(
+                    "TapRunner requires a ScriptLoaderBase loader."
+                );
+            }
+
+            string testDirectory =
+                TestContext.CurrentContext?.TestDirectory ?? AppContext.BaseDirectory;
+
+            // Normalize to forward slashes because the loader simply does string replacement.
+            string modulesDirectory = Path.Combine(testDirectory, "TestMore", "Modules")
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .Replace('\\', '/');
+
+            loader.ModulePaths = new[] { $"{modulesDirectory}/?", $"{modulesDirectory}/?.lua" };
+        }
+
+        private static string GetAbsoluteTestPath(string relativePath)
+        {
+            string testDirectory =
+                TestContext.CurrentContext?.TestDirectory ?? AppContext.BaseDirectory;
+            string normalized = relativePath.Replace('/', Path.DirectorySeparatorChar);
+            return Path.Combine(testDirectory, normalized);
         }
     }
 }

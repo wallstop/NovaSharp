@@ -10,9 +10,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     /// Selected tests extracted from Lua test suite
     /// </summary>
     [TestFixture]
-    internal sealed class LuaTestSuiteExtract
+    public sealed class LuaTestSuiteExtract
     {
-        private void RunTest(string script)
+        private static void RunTest(string script)
         {
             HashSet<string> failedTests = new();
             int i = 0;
@@ -70,8 +70,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.DoString(script);
 
+            bool hasFailures = failedTests.Count > 0;
+
             Assert.That(
-                failedTests.Any(),
+                hasFailures,
                 Is.False,
                 $"Failed asserts {string.Join(", ", failedTests.Select(xi => xi.ToString()).ToArray())}"
             );

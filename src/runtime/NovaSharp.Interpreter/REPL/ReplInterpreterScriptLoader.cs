@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.REPL
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
     using NovaSharp.Interpreter.DataTypes;
     using System;
+    using System.Collections.Generic;
     using Loaders;
 
     /// <summary>
@@ -10,12 +11,12 @@ namespace NovaSharp.Interpreter.REPL
     /// AND starts with module paths taken from environment variables (again, not going through the platform object).
     ///
     /// The paths are preconstructed using :
-    ///		* The NovaSharp_PATH environment variable if it exists
-    ///		* The LUA_PATH_5_2 environment variable if NovaSharp_PATH does not exists
-    ///		* The LUA_PATH environment variable if LUA_PATH_5_2 and NovaSharp_PATH do not exists
+    ///		* The NOVASHARP_PATH environment variable if it exists
+    ///		* The LUA_PATH_5_2 environment variable if NOVASHARP_PATH does not exist
+    ///		* The LUA_PATH environment variable if LUA_PATH_5_2 does not exist
     ///		* The "?;?.lua" path if all the above fail
     ///
-    /// Also, everytime a module is require(d), the "LUA_PATH" global variable is checked. If it exists, those paths
+    /// Also, every time a module is require(d), the "LUA_PATH" global variable is checked. If it exists, those paths
     /// will be used to load the module instead of the global ones.
     /// </summary>
     public class ReplInterpreterScriptLoader : FileSystemScriptLoader
@@ -25,28 +26,16 @@ namespace NovaSharp.Interpreter.REPL
         /// </summary>
         public ReplInterpreterScriptLoader()
         {
-            string env = Environment.GetEnvironmentVariable("NovaSharp_PATH");
-            if (!string.IsNullOrEmpty(env))
+            ModulePaths = TryLoadEnvironmentPaths(NovaSharpPathEnvironmentVariable);
+
+            if (ModulePaths == null)
             {
-                ModulePaths = UnpackStringPaths(env);
+                ModulePaths = TryLoadEnvironmentPaths("LUA_PATH_5_2");
             }
 
             if (ModulePaths == null)
             {
-                env = Environment.GetEnvironmentVariable("LUA_PATH_5_2");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    ModulePaths = UnpackStringPaths(env);
-                }
-            }
-
-            if (ModulePaths == null)
-            {
-                env = Environment.GetEnvironmentVariable("LUA_PATH");
-                if (!string.IsNullOrEmpty(env))
-                {
-                    ModulePaths = UnpackStringPaths(env);
-                }
+                ModulePaths = TryLoadEnvironmentPaths("LUA_PATH");
             }
 
             if (ModulePaths == null)
@@ -66,6 +55,11 @@ namespace NovaSharp.Interpreter.REPL
         /// <returns></returns>
         public override string ResolveModuleName(string modname, Table globalContext)
         {
+            if (globalContext == null)
+            {
+                throw new ArgumentNullException(nameof(globalContext));
+            }
+
             DynValue s = globalContext.RawGet("LUA_PATH");
 
             if (s != null && s.Type == DataType.String)
@@ -76,6 +70,18 @@ namespace NovaSharp.Interpreter.REPL
             {
                 return base.ResolveModuleName(modname, globalContext);
             }
+        }
+
+        private static IReadOnlyList<string> TryLoadEnvironmentPaths(string variable)
+        {
+            string env = Environment.GetEnvironmentVariable(variable);
+            if (string.IsNullOrWhiteSpace(env))
+            {
+                return null;
+            }
+
+            IReadOnlyList<string> paths = UnpackStringPaths(env);
+            return (paths.Count > 0) ? paths : null;
         }
     }
 }

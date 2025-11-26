@@ -26,6 +26,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ScriptFileExistsNormalizesBackslashes()
+        {
+            EmbeddedResourcesScriptLoader loader = new(TestAssembly);
+
+            Assert.That(loader.ScriptFileExists("Resources\\embedded.lua"), Is.True);
+        }
+
+        [Test]
         public void LoadFileReturnsResourceStream()
         {
             EmbeddedResourcesScriptLoader loader = new(TestAssembly);

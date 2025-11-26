@@ -7,30 +7,33 @@ namespace NovaSharp.Interpreter.Interop.Converters
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
 
+    /// <summary>
+    /// Converts NovaSharp values back into CLR types, including overload scoring helpers.
+    /// </summary>
     internal static class ScriptToClrConversions
     {
-        internal const int WEIGHT_MAX_VALUE = 100;
-        internal const int WEIGHT_CUSTOM_CONVERTER_MATCH = 100;
-        internal const int WEIGHT_EXACT_MATCH = 100;
-        internal const int WEIGHT_STRING_TO_STRINGBUILDER = 99;
-        internal const int WEIGHT_STRING_TO_CHAR = 98;
-        internal const int WEIGHT_NIL_TO_NULLABLE = 100;
-        internal const int WEIGHT_NIL_TO_REFTYPE = 100;
-        internal const int WEIGHT_VOID_WITH_DEFAULT = 50;
-        internal const int WEIGHT_VOID_WITHOUT_DEFAULT = 25;
-        internal const int WEIGHT_NIL_WITH_DEFAULT = 25;
-        internal const int WEIGHT_BOOL_TO_STRING = 5;
-        internal const int WEIGHT_NUMBER_TO_STRING = 50;
-        internal const int WEIGHT_NUMBER_TO_ENUM = 90;
-        internal const int WEIGHT_USERDATA_TO_STRING = 5;
-        internal const int WEIGHT_TABLE_CONVERSION = 90;
-        internal const int WEIGHT_NUMBER_DOWNCAST = 99;
-        internal const int WEIGHT_NO_MATCH = 0;
-        internal const int WEIGHT_NO_EXTRA_PARAMS_BONUS = 100;
-        internal const int WEIGHT_EXTRA_PARAMS_MALUS = 2;
-        internal const int WEIGHT_BYREF_BONUSMALUS = -10;
-        internal const int WEIGHT_VARARGS_MALUS = 1;
-        internal const int WEIGHT_VARARGS_EMPTY = 40;
+        internal const int WeightMaxValue = 100;
+        internal const int WeightCustomConverterMatch = 100;
+        internal const int WeightExactMatch = 100;
+        internal const int WeightStringToStringBuilder = 99;
+        internal const int WeightStringToChar = 98;
+        internal const int WeightNilToNullable = 100;
+        internal const int WeightNilToRefType = 100;
+        internal const int WeightVoidWithDefault = 50;
+        internal const int WeightVoidWithoutDefault = 25;
+        internal const int WeightNilWithDefault = 25;
+        internal const int WeightBoolToString = 5;
+        internal const int WeightNumberToString = 50;
+        internal const int WeightNumberToEnum = 90;
+        internal const int WeightUserDataToString = 5;
+        internal const int WeightTableConversion = 90;
+        internal const int WeightNumberDowncast = 99;
+        internal const int WeightNoMatch = 0;
+        internal const int WeightNoExtraParamsBonus = 100;
+        internal const int WeightExtraParamsMalus = 2;
+        internal const int WeightByRefBonusMalus = -10;
+        internal const int WeightVarArgsMalus = 1;
+        internal const int WeightVarArgsEmpty = 40;
 
         /// <summary>
         /// Converts a DynValue to a CLR object [simple conversion]
@@ -218,7 +221,7 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     {
                         return value.Function;
                     }
-                    else if (desiredType == typeof(ScriptFunctionDelegate))
+                    else if (desiredType == typeof(ScriptFunctionCallback))
                     {
                         return value.Function.GetDelegate();
                     }
@@ -307,17 +310,17 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 );
             if (customConverter != null)
             {
-                return WEIGHT_CUSTOM_CONVERTER_MATCH;
+                return WeightCustomConverterMatch;
             }
 
             if (desiredType == typeof(DynValue))
             {
-                return WEIGHT_EXACT_MATCH;
+                return WeightExactMatch;
             }
 
             if (desiredType == typeof(object))
             {
-                return WEIGHT_EXACT_MATCH;
+                return WeightExactMatch;
             }
 
             StringConversions.StringSubtype stringSubType = StringConversions.GetStringSubtype(
@@ -338,11 +341,11 @@ namespace NovaSharp.Interpreter.Interop.Converters
                 case DataType.Void:
                     if (isOptional)
                     {
-                        return WEIGHT_VOID_WITH_DEFAULT;
+                        return WeightVoidWithDefault;
                     }
                     else if ((!Framework.Do.IsValueType(desiredType)) || (nullableType != null))
                     {
-                        return WEIGHT_VOID_WITHOUT_DEFAULT;
+                        return WeightVoidWithoutDefault;
                     }
 
                     break;
@@ -351,35 +354,35 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     {
                         if (nullableType != null)
                         {
-                            return WEIGHT_NIL_TO_NULLABLE;
+                            return WeightNilToNullable;
                         }
 
                         if (isOptional)
                         {
-                            return WEIGHT_NIL_WITH_DEFAULT;
+                            return WeightNilWithDefault;
                         }
                     }
                     else
                     {
-                        return WEIGHT_NIL_TO_REFTYPE;
+                        return WeightNilToRefType;
                     }
                     break;
                 case DataType.Boolean:
                     if (desiredType == typeof(bool))
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
 
                     if (stringSubType != default)
                     {
-                        return WEIGHT_BOOL_TO_STRING;
+                        return WeightBoolToString;
                     }
 
                     break;
                 case DataType.Number:
                     if (Framework.Do.IsEnum(desiredType))
                     { // number to enum conv
-                        return WEIGHT_NUMBER_TO_ENUM;
+                        return WeightNumberToEnum;
                     }
                     if (NumericConversions.NumericTypes.Contains(desiredType))
                     {
@@ -388,47 +391,47 @@ namespace NovaSharp.Interpreter.Interop.Converters
 
                     if (stringSubType != default)
                     {
-                        return WEIGHT_NUMBER_TO_STRING;
+                        return WeightNumberToString;
                     }
 
                     break;
                 case DataType.String:
                     if (stringSubType == StringConversions.StringSubtype.String)
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
                     else if (stringSubType == StringConversions.StringSubtype.StringBuilder)
                     {
-                        return WEIGHT_STRING_TO_STRINGBUILDER;
+                        return WeightStringToStringBuilder;
                     }
                     else if (stringSubType == StringConversions.StringSubtype.Char)
                     {
-                        return WEIGHT_STRING_TO_CHAR;
+                        return WeightStringToChar;
                     }
 
                     break;
                 case DataType.Function:
                     if (desiredType == typeof(Closure))
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
-                    else if (desiredType == typeof(ScriptFunctionDelegate))
+                    else if (desiredType == typeof(ScriptFunctionCallback))
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
 
                     break;
                 case DataType.ClrFunction:
                     if (desiredType == typeof(CallbackFunction))
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
                     else if (
                         desiredType
                         == typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
                     )
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
 
                     break;
@@ -440,12 +443,12 @@ namespace NovaSharp.Interpreter.Interop.Converters
 
                         if (udDesc.IsTypeCompatible(desiredType, udObj))
                         {
-                            return WEIGHT_EXACT_MATCH;
+                            return WeightExactMatch;
                         }
 
                         if (stringSubType != default)
                         {
-                            return WEIGHT_USERDATA_TO_STRING;
+                            return WeightUserDataToString;
                         }
                     }
                     break;
@@ -455,11 +458,11 @@ namespace NovaSharp.Interpreter.Interop.Converters
                         || Framework.Do.IsAssignableFrom(desiredType, typeof(Table))
                     )
                     {
-                        return WEIGHT_EXACT_MATCH;
+                        return WeightExactMatch;
                     }
                     else if (TableConversions.CanConvertTableToType(value.Table, desiredType))
                     {
-                        return WEIGHT_TABLE_CONVERSION;
+                        return WeightTableConversion;
                     }
 
                     break;
@@ -467,18 +470,18 @@ namespace NovaSharp.Interpreter.Interop.Converters
                     break;
             }
 
-            return WEIGHT_NO_MATCH;
+            return WeightNoMatch;
         }
 
         private static int GetNumericTypeWeight(Type desiredType)
         {
             if (desiredType == typeof(double) || desiredType == typeof(decimal))
             {
-                return WEIGHT_EXACT_MATCH;
+                return WeightExactMatch;
             }
             else
             {
-                return WEIGHT_NUMBER_DOWNCAST;
+                return WeightNumberDowncast;
             }
         }
     }

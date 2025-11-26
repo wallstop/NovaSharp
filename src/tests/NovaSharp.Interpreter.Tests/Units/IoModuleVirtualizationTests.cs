@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using Platforms;
 
     [TestFixture]
-    public class IoModuleVirtualizationTests
+    public sealed class IoModuleVirtualizationTests : IDisposable
     {
         private IPlatformAccessor _previousPlatform = null!;
         private InMemoryPlatformAccessor _platform = null!;
@@ -28,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void TearDown()
         {
-            Script.GlobalOptions.Platform = _previousPlatform;
+            Dispose();
         }
 
         [Test]
@@ -160,7 +160,22 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(_platform.GetStdOutText(), Is.Empty);
         }
 
-        private sealed class InMemoryPlatformAccessor : PlatformAccessorBase
+        public void Dispose()
+        {
+            if (_previousPlatform != null)
+            {
+                Script.GlobalOptions.Platform = _previousPlatform;
+                _previousPlatform = null!;
+            }
+
+            if (_platform != null)
+            {
+                _platform.Dispose();
+                _platform = null!;
+            }
+        }
+
+        private sealed class InMemoryPlatformAccessor : PlatformAccessorBase, IDisposable
         {
             private readonly ConcurrentDictionary<string, byte[]> _files = new(
                 StringComparer.OrdinalIgnoreCase
@@ -192,9 +207,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 string normalizedMode = string.IsNullOrEmpty(mode) ? "r" : mode;
-                bool truncate = normalizedMode.Contains("w");
-                bool append = normalizedMode.Contains("a");
-                bool read = normalizedMode.Contains("r") || normalizedMode.Contains("+");
+                bool truncate = ModeContains(normalizedMode, 'w');
+                bool append = ModeContains(normalizedMode, 'a');
+                bool read = ModeContains(normalizedMode, 'r') || ModeContains(normalizedMode, '+');
                 bool write = normalizedMode.Any(c => c is 'w' or 'a' or '+');
 
                 if (write)
@@ -250,7 +265,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public override bool FileExists(string file) => _files.ContainsKey(file);
 
-            public override CoreModules FilterSupportedCoreModules(CoreModules module) => module;
+            public override CoreModules FilterSupportedCoreModules(CoreModules coreModules) =>
+                coreModules;
 
             public override void DeleteFile(string file)
             {
@@ -266,6 +282,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
 
             public override int ExecuteCommand(string cmdline) => 0;
+
+            public void Dispose()
+            {
+                _stdin.Dispose();
+                _stdout.Dispose();
+                _stderr.Dispose();
+            }
 
             private static void WriteToStandardStream(MemoryStream stream, byte[] data)
             {
@@ -289,6 +312,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             public string GetStdErrText()
             {
                 return Encoding.UTF8.GetString(_stderr.ToArray());
+            }
+
+            private static bool ModeContains(string mode, char symbol)
+            {
+                if (string.IsNullOrEmpty(mode))
+                {
+                    return false;
+                }
+
+                return mode.Contains(symbol, StringComparison.Ordinal);
             }
 
             private sealed class TrackingStream : Stream

@@ -1,28 +1,41 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
-#pragma warning disable 169 // unused private field
-
     [TestFixture]
     public class UserDataFieldsTests
     {
-        public class SomeClass
+        internal sealed class SomeClass
         {
             public int intProp;
-            public const int CONST_INT_PROP = 115;
+            public const int ConstIntProp = 115;
             public readonly int roIntProp = 123;
             public int? nIntProp;
             public object objProp;
             public static string StaticProp;
+
+            [SuppressMessage(
+                "Performance",
+                "CA1823:Avoid unused fields",
+                Justification = "Private fields remain intentionally unused to validate that Lua user data cannot access them."
+            )]
             private string _privateProp;
+
+            public SomeClass()
+            {
+                intProp = 0;
+                nIntProp = null;
+                objProp = null;
+                _privateProp = string.Empty;
+            }
         }
 
-        public void TestConstIntFieldGetter(InteropAccessMode opt)
+        private static void TestConstIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -44,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(115));
         }
 
-        public void TestReadOnlyIntFieldGetter(InteropAccessMode opt)
+        private static void TestReadOnlyIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -66,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(123));
         }
 
-        public void TestConstIntFieldSetter(InteropAccessMode opt)
+        private static void TestConstIntFieldSetter(InteropAccessMode opt)
         {
             try
             {
@@ -97,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestReadOnlyIntFieldSetter(InteropAccessMode opt)
+        private static void TestReadOnlyIntFieldSetter(InteropAccessMode opt)
         {
             try
             {
@@ -128,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Fail();
         }
 
-        public void TestIntFieldGetter(InteropAccessMode opt)
+        private static void TestIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -150,7 +163,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(321));
         }
 
-        public void TestNIntFieldGetter(InteropAccessMode opt)
+        private static void TestNIntFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -177,7 +190,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Nil));
         }
 
-        public void TestObjFieldGetter(InteropAccessMode opt)
+        private static void TestObjFieldGetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -208,7 +221,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].UserData.Object, Is.EqualTo(obj1));
         }
 
-        public void TestIntFieldSetter(InteropAccessMode opt)
+        private static void TestIntFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -230,7 +243,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.intProp, Is.EqualTo(19));
         }
 
-        public void TestNIntFieldSetter(InteropAccessMode opt)
+        private static void TestNIntFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -257,7 +270,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj2.nIntProp, Is.EqualTo(19));
         }
 
-        public void TestObjFieldSetter(InteropAccessMode opt)
+        private static void TestObjFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -284,7 +297,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj2.objProp, Is.EqualTo("hello"));
         }
 
-        public void TestInvalidFieldSetter(InteropAccessMode opt)
+        private static void TestInvalidFieldSetter(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -306,7 +319,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(obj.intProp, Is.EqualTo(19));
         }
 
-        public void TestStaticFieldAccess(InteropAccessMode opt)
+        private static void TestStaticFieldAccess(InteropAccessMode opt)
         {
             string script =
                 @"    

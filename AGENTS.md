@@ -21,9 +21,11 @@
 - Preserve Lua fixture indentation at two spaces to ease diffing with upstream scripts.
 - Run `dotnet csharpier .` before committing; formatter preferences are configured in `csharpier.json`.
 - Keep `using` directives minimal, add explicit access modifiers, and discuss any new analyzer suppressions first. `.editorconfig` captures the authoritative formatting/spacing rules—follow it.
+- Ensure comments, docs, and diagnostic strings use clear English. Run `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log` when touching text-heavy areas so the spelling audit stays green and `spelling_audit.log` remains up to date.
 - Prefer explicit types instead of `var`; only fall back to implicit typing when the language requires it (e.g., anonymous types).
 - Prefer exposing internal implementation details via proper `internal` APIs and `InternalsVisibleTo` (amend or create `AssemblyInfo.cs` as needed) for NovaSharp tests, benchmarks, and tooling rather than relying on reflection hacks. Encapsulation still matters, but leaking internals is acceptable when it replaces reflection within this repository.
 - Before introducing new reflection or dynamic type discovery, consult `docs/modernization/reflection-audit.md` and document any additions so the modernization plan stays accurate.
+- **Never** add or preserve `#region` / `#endregion` directives anywhere (runtime, tooling, tests, generated scaffolding, docs). If you encounter one, delete it immediately and rely on clear code or brief summary comments instead. Before submitting work, run `rg -n '#region'` to confirm zero matches; if a generator emits regions, update it or post-process the output so no regions make it into the repo.
 
 ## Testing Guidelines
 - NUnit 2.6 attributes (`[TestFixture]`, `[Test]`) drive coverage across interpreter and end-to-end suites.
@@ -31,6 +33,7 @@
 - When adding Lua fixtures, provide a mix of small-scoped, mixed-mode, and highly complex scenarios; name the `.lua`/`.t` files descriptively so their focus is obvious at a glance.
 - Extend `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes to keep builds in sync.
 - Write test method names in PascalCase (no underscores); rename legacy cases when you touch them.
+- When a test needs access to runtime internals, expose a dedicated `internal` helper (or widen the existing member) and rely on the repo-wide `InternalsVisibleTo` rather than reflection hacks (`BindingFlags`, `MethodInfo.Invoke`, etc.). Only fall back to reflection when the target type lives outside the NovaSharp assemblies or an analyzer explicitly disallows making the member internal.
 - Use `Assert.Ignore` only with a linked tracking issue and add coverage for new opcodes, metatables, and debugger paths.
 - When a regression test fails, assume the production code is wrong until proven otherwise. Align fixes with the Lua 5.4 specification and keep the test unchanged unless it is demonstrably incorrect.
 - If a test exposes a real runtime/spec gap, fix the production implementation (or MoonSharp carry-over design) instead of weakening the test; our target is full Lua 5.4 parity, not test green builds.

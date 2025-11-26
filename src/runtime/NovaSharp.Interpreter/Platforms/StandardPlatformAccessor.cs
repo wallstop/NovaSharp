@@ -14,31 +14,37 @@ namespace NovaSharp.Interpreter.Platforms
         /// </summary>
         public class StandardPlatformAccessor : PlatformAccessorBase
         {
+            /// <inheritdoc/>
             public override void DefaultPrint(string content)
             {
                 throw new NotImplementedException();
             }
 
-            public override CoreModules FilterSupportedCoreModules(CoreModules module)
+            /// <inheritdoc/>
+            public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetEnvironmentVariable(string envvarname)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetPlatformNamePrefix()
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override Stream GetStandardStream(StandardFileType type)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override Stream OpenFile(
                 Script script,
                 string filename,
@@ -49,31 +55,37 @@ namespace NovaSharp.Interpreter.Platforms
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override string GetTempFileName()
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override int ExecuteCommand(string cmdline)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void ExitFast(int exitCode)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void DeleteFile(string file)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override bool FileExists(string file)
             {
                 throw new NotImplementedException();
             }
 
+            /// <inheritdoc/>
             public override void MoveFile(string src, string dst)
             {
                 throw new NotImplementedException();
@@ -99,21 +111,21 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileAccess ParseFileAccess(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalizedMode = NormalizeMode(mode);
 
-            if (mode == "r")
+            if (normalizedMode == "r")
             {
                 return FileAccess.Read;
             }
-            else if (mode == "r+")
+            else if (normalizedMode == "r+")
             {
                 return FileAccess.ReadWrite;
             }
-            else if (mode == "w")
+            else if (normalizedMode == "w")
             {
                 return FileAccess.Write;
             }
-            else if (mode == "w+")
+            else if (normalizedMode == "w+")
             {
                 return FileAccess.ReadWrite;
             }
@@ -130,21 +142,21 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileMode ParseFileMode(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalizedMode = NormalizeMode(mode);
 
-            if (mode == "r")
+            if (normalizedMode == "r")
             {
                 return FileMode.Open;
             }
-            else if (mode == "r+")
+            else if (normalizedMode == "r+")
             {
                 return FileMode.OpenOrCreate;
             }
-            else if (mode == "w")
+            else if (normalizedMode == "w")
             {
                 return FileMode.Create;
             }
-            else if (mode == "w+")
+            else if (normalizedMode == "w+")
             {
                 return FileMode.Truncate;
             }
@@ -210,7 +222,7 @@ namespace NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException("type");
+                    throw new ArgumentException("Unknown standard file type.", nameof(type));
             }
         }
 
@@ -298,13 +310,13 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Filters the CoreModules enumeration to exclude non-supported operations
         /// </summary>
-        /// <param name="module">The requested modules.</param>
+        /// <param name="coreModules">The requested modules.</param>
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        public override CoreModules FilterSupportedCoreModules(CoreModules module)
+        public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         /// <summary>
@@ -315,6 +327,32 @@ namespace NovaSharp.Interpreter.Platforms
         public override string GetPlatformNamePrefix()
         {
             return "std";
+        }
+
+        private static string NormalizeMode(string mode)
+        {
+            if (mode == null)
+            {
+                throw new ArgumentNullException(nameof(mode));
+            }
+
+            if (mode.AsSpan().IndexOf("b", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return mode;
+            }
+
+            char[] buffer = new char[mode.Length];
+            int bufferIndex = 0;
+
+            foreach (char c in mode)
+            {
+                if (c != 'b' && c != 'B')
+                {
+                    buffer[bufferIndex++] = c;
+                }
+            }
+
+            return new string(buffer, 0, bufferIndex);
         }
     }
 #endif

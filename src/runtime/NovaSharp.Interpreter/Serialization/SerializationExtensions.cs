@@ -1,13 +1,15 @@
 namespace NovaSharp.Interpreter.Serialization
 {
+    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
     /// <summary>
-    ///
+    /// Provides helpers that serialize Lua tables/values into Lua source-friendly string representations.
     /// </summary>
     public static class SerializationExtensions
     {
@@ -37,8 +39,20 @@ namespace NovaSharp.Interpreter.Serialization
             "while",
         };
 
+        /// <summary>
+        /// Serializes a prime (ownerless) table into Lua syntax.
+        /// </summary>
+        /// <param name="table">Table to serialize (must not be owned by a script).</param>
+        /// <param name="prefixReturn">True to emit a leading <c>return</c> statement.</param>
+        /// <param name="tabs">Indentation depth used when emitting nested tables.</param>
+        /// <returns>A string containing Lua code that recreates the table.</returns>
         public static string Serialize(this Table table, bool prefixReturn = false, int tabs = 0)
         {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
             if (table.OwnerScript != null)
             {
                 throw new ScriptRuntimeException("Table is not a prime table.");
@@ -126,19 +140,30 @@ namespace NovaSharp.Interpreter.Serialization
             return true;
         }
 
+        /// <summary>
+        /// Serializes a primitive value (or prime table) into Lua syntax.
+        /// </summary>
+        /// <param name="dynValue">Value to serialize.</param>
+        /// <param name="tabs">Indentation depth used when emitting nested tables.</param>
+        /// <returns>Lua string representing the supplied value.</returns>
         public static string SerializeValue(this DynValue dynValue, int tabs = 0)
         {
+            if (dynValue == null)
+            {
+                throw new ArgumentNullException(nameof(dynValue));
+            }
+
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
             {
                 return "nil";
             }
             else if (dynValue.Type == DataType.Tuple)
             {
-                return (dynValue.Tuple.Any() ? SerializeValue(dynValue.Tuple[0], tabs) : "nil");
+                return dynValue.Tuple.Length > 0 ? SerializeValue(dynValue.Tuple[0], tabs) : "nil";
             }
             else if (dynValue.Type == DataType.Number)
             {
-                return dynValue.Number.ToString("r");
+                return dynValue.Number.ToString("r", CultureInfo.InvariantCulture);
             }
             else if (dynValue.Type == DataType.Boolean)
             {
@@ -160,19 +185,25 @@ namespace NovaSharp.Interpreter.Serialization
             }
         }
 
-        private static string EscapeString(string s)
+        private static string EscapeString(string input)
         {
-            s = s.Replace(@"\", @"\\");
-            s = s.Replace("\n", @"\n");
-            s = s.Replace("\r", @"\r");
-            s = s.Replace("\t", @"\t");
-            s = s.Replace("\a", @"\a");
-            s = s.Replace("\f", @"\f");
-            s = s.Replace("\b", @"\b");
-            s = s.Replace("\v", @"\v");
-            s = s.Replace("\"", "\\\"");
-            s = s.Replace("\'", @"\'");
+            string s = input ?? string.Empty;
+            s = ReplaceOrdinal(s, @"\", @"\\");
+            s = ReplaceOrdinal(s, "\n", @"\n");
+            s = ReplaceOrdinal(s, "\r", @"\r");
+            s = ReplaceOrdinal(s, "\t", @"\t");
+            s = ReplaceOrdinal(s, "\a", @"\a");
+            s = ReplaceOrdinal(s, "\f", @"\f");
+            s = ReplaceOrdinal(s, "\b", @"\b");
+            s = ReplaceOrdinal(s, "\v", @"\v");
+            s = ReplaceOrdinal(s, "\"", "\\\"");
+            s = ReplaceOrdinal(s, "\'", @"\'");
             return "\"" + s + "\"";
+        }
+
+        private static string ReplaceOrdinal(string text, string oldValue, string newValue)
+        {
+            return text.Replace(oldValue, newValue, StringComparison.Ordinal);
         }
     }
 }

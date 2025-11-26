@@ -855,8 +855,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ResumeFromDifferentThreadThrowsInvalidOperation()
         {
             Script script = new(CoreModules.PresetComplete);
-            ManualResetEventSlim entered = new(false);
-            ManualResetEventSlim allowCompletion = new(false);
+            using ManualResetEventSlim entered = new(false);
+            using ManualResetEventSlim allowCompletion = new(false);
 
             script.Globals["waitForSignal"] = DynValue.NewCallback(
                 (_, _) =>

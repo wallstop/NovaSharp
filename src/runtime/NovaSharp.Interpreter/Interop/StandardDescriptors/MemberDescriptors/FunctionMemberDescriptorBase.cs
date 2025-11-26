@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -90,10 +89,20 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
                 VarArgsElementType = _parameters[^1].Type.GetElementType();
             }
 
-            SortDiscriminant = string.Join(
-                ":",
-                _parameters.Select(pi => pi.Type.FullName).ToArray()
-            );
+            if (_parameters.Length == 0)
+            {
+                SortDiscriminant = string.Empty;
+            }
+            else
+            {
+                string[] discriminants = new string[_parameters.Length];
+                for (int i = 0; i < _parameters.Length; i++)
+                {
+                    discriminants[i] = _parameters[i].Type.FullName ?? string.Empty;
+                }
+
+                SortDiscriminant = string.Join(":", discriminants);
+            }
         }
 
         /// <summary>
@@ -163,9 +172,14 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
             object obj,
             ScriptExecutionContext context,
             CallbackArguments args,
-            out List<int> outParams
+            out IList<int> outParams
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             ParameterDescriptor[] parameters = _parameters;
 
             object[] pars = new object[parameters.Length];
@@ -296,11 +310,16 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// <returns>A DynValue to be returned to scripts</returns>
         protected static DynValue BuildReturnValue(
             Script script,
-            List<int> outParams,
+            IList<int> outParams,
             object[] pars,
             object retv
         )
         {
+            if (pars == null)
+            {
+                throw new ArgumentNullException(nameof(pars));
+            }
+
             if (outParams == null)
             {
                 return ClrToScriptConversions.ObjectToDynValue(script, retv);
@@ -372,9 +391,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The v.</param>
+        /// <param name="value">The value to assign.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public virtual void SetValue(Script script, object obj, DynValue v)
+        public virtual void SetValue(Script script, object obj, DynValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

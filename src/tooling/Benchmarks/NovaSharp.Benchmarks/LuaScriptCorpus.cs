@@ -3,6 +3,9 @@ namespace NovaSharp.Benchmarks
     using System;
     using System.Text;
 
+    /// <summary>
+    /// Describes the relative size/complexity of scripts used when benchmarking compilation performance.
+    /// </summary>
     public enum ScriptComplexity
     {
         [Obsolete("Use a specific ScriptComplexity.", false)]
@@ -13,9 +16,12 @@ namespace NovaSharp.Benchmarks
         Large = 4,
     }
 
+    /// <summary>
+    /// Supplies canned Lua scripts covering multiple complexity levels for compile-time benchmarks.
+    /// </summary>
     internal static class LuaScriptCorpus
     {
-        private static readonly string TinyScript = "return 1 + 1";
+        private const string TinyScript = "return 1 + 1";
 
         private static readonly string SmallScript = string.Join(
             '\n',
@@ -30,6 +36,11 @@ namespace NovaSharp.Benchmarks
 
         private static readonly string LargeScript = BuildScript(20, 320);
 
+        /// <summary>
+        /// Returns a Lua script tuned for the requested <paramref name="complexity"/>.
+        /// </summary>
+        /// <param name="complexity">Target complexity level.</param>
+        /// <returns>Lua script text that exercises the parser and compiler.</returns>
         public static string GetCompilationScript(ScriptComplexity complexity) =>
             complexity switch
             {
@@ -40,6 +51,9 @@ namespace NovaSharp.Benchmarks
                 _ => TinyScript,
             };
 
+        /// <summary>
+        /// Builds a synthetic Lua script with the requested number of helper functions/loop iterations.
+        /// </summary>
         private static string BuildScript(int functionCount, int loopIterations)
         {
             StringBuilder builder = new();
@@ -50,9 +64,11 @@ namespace NovaSharp.Benchmarks
 
             for (int f = 1; f <= functionCount; f++)
             {
-                builder.AppendLine($"local function func_{f}(seed)");
+                builder.AppendLine(FormattableString.Invariant($"local function func_{f}(seed)"));
                 builder.AppendLine("    local value = seed");
-                builder.AppendLine($"    for i = 1, {loopIterations} do");
+                builder.AppendLine(
+                    FormattableString.Invariant($"    for i = 1, {loopIterations} do")
+                );
                 builder.AppendLine("        value = value + math.sin(i + seed) * 0.125");
                 builder.AppendLine("        value = value + container[i % 32]");
                 builder.AppendLine("    end");
@@ -60,10 +76,10 @@ namespace NovaSharp.Benchmarks
                 builder.AppendLine("end");
             }
 
-            builder.AppendLine($"for i = 1, {loopIterations} do");
+            builder.AppendLine(FormattableString.Invariant($"for i = 1, {loopIterations} do"));
             for (int f = 1; f <= functionCount; f++)
             {
-                builder.AppendLine($"    total = total + func_{f}(i)");
+                builder.AppendLine(FormattableString.Invariant($"    total = total + func_{f}(i)"));
             }
 
             builder.AppendLine("    total = total % 1024");

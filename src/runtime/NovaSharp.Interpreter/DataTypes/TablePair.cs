@@ -5,7 +5,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public struct TablePair : System.IEquatable<TablePair>
     {
-        private static readonly TablePair SNilNode = new(DynValue.Nil, DynValue.Nil);
+        private static readonly TablePair NilNode = new(DynValue.Nil, DynValue.Nil);
         private readonly DynValue _key;
 
         private readonly DynValue _value;
@@ -13,26 +13,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the key.
         /// </summary>
-        public DynValue Key
-        {
-            get { return _key; }
-            private set { Key = _key; }
-        }
+        public DynValue Key => _key;
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
-        public DynValue Value
-        {
-            get { return _value; }
-            set
-            {
-                if (_key.IsNotNil())
-                {
-                    Value = value;
-                }
-            }
-        }
+        public DynValue Value => _value;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TablePair"/> struct.
@@ -50,19 +36,24 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static TablePair Nil
         {
-            get { return SNilNode; }
+            get { return NilNode; }
         }
 
+        /// <summary>
+        /// Determines whether two table pairs contain the same key and value.
+        /// </summary>
         public bool Equals(TablePair other)
         {
             return Equals(_key, other._key) && Equals(_value, other._value);
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             return obj is TablePair pair && Equals(pair);
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             unchecked
@@ -74,11 +65,17 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Equality operator; delegates to <see cref="Equals(TablePair)"/>.
+        /// </summary>
         public static bool operator ==(TablePair left, TablePair right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
         public static bool operator !=(TablePair left, TablePair right)
         {
             return !left.Equals(right);

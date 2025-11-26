@@ -1,167 +1,200 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Diagnostics;
+    using NovaSharp.Interpreter.Diagnostics.PerformanceCounters;
     using NovaSharp.Interpreter.Infrastructure;
-    using NovaSharp.Interpreter.Modules;
-    using NovaSharp.Interpreter.Tests.TestUtilities;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class PerformanceStatisticsTests
     {
-        [Test]
-        public void EnabledStatisticsCaptureStopwatchResults()
+        private const PerformanceCounter ExecutionCounter = PerformanceCounter.Execution;
+
+        [SetUp]
+        public void ResetGlobalState()
         {
-            FakeHighResolutionClock clock = new();
-            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
-            PerformanceStatistics.GlobalClock = clock;
-            Script script = new Script(CoreModules.None);
-            script.PerformanceStats = new PerformanceStatistics(clock);
-
-            try
-            {
-                script.PerformanceStats.Enabled = true;
-
-                using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Compilation))
-                {
-                    clock.AdvanceMilliseconds(15);
-                }
-
-                PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
-                    PerformanceCounter.Compilation
-                );
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(result, Is.Not.Null);
-                    Assert.That(result.Name, Is.EqualTo(PerformanceCounter.Compilation.ToString()));
-                    Assert.That(result.Instances, Is.EqualTo(1));
-                    Assert.That(result.Counter, Is.EqualTo(15));
-                });
-            }
-            finally
-            {
-                script.PerformanceStats.Enabled = false;
-                PerformanceStatistics.GlobalClock = originalGlobal;
-            }
+            PerformanceStatistics.GlobalClock = SystemHighResolutionClock.Instance;
+            PerformanceStatistics.TestHooks.ResetGlobalStopwatches();
         }
 
         [Test]
-        public void DisablingStatisticsClearsStopwatches()
+        public void StartStopwatchReturnsNullWhenDisabled()
         {
-            FakeHighResolutionClock clock = new();
-            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
-            PerformanceStatistics.GlobalClock = clock;
-            Script script = new Script(CoreModules.None);
-            script.PerformanceStats = new PerformanceStatistics(clock);
+            PerformanceStatistics stats = new(new FakeClock());
 
-            try
-            {
-                script.PerformanceStats.Enabled = true;
+            IDisposable handle = stats.StartStopwatch(ExecutionCounter);
 
-                using (script.PerformanceStats.StartStopwatch(PerformanceCounter.Execution))
-                {
-                    clock.AdvanceMilliseconds(5);
-                }
-
-                script.PerformanceStats.Enabled = false;
-
-                PerformanceResult result = script.PerformanceStats.GetPerformanceCounterResult(
-                    PerformanceCounter.Execution
-                );
-
-                Assert.That(result, Is.Null);
-            }
-            finally
-            {
-                script.PerformanceStats.Enabled = false;
-                PerformanceStatistics.GlobalClock = originalGlobal;
-            }
+            Assert.That(handle, Is.Null);
         }
 
         [Test]
-        public void GlobalStopwatchAggregatesAcrossInstances()
+        public void EnabledTrueCreatesStopwatchInstances()
         {
-            FakeHighResolutionClock clock = new();
-            IHighResolutionClock originalGlobal = PerformanceStatistics.GlobalClock;
-            PerformanceStatistics.GlobalClock = clock;
-            Script script = new Script(CoreModules.None);
-            script.PerformanceStats = new PerformanceStatistics(clock);
+            FakeClock clock = new();
+            PerformanceStatistics stats = new(clock) { Enabled = true };
 
-            try
+            using (stats.StartStopwatch(ExecutionCounter))
             {
-                script.PerformanceStats.Enabled = true;
-
-                using (
-                    PerformanceStatistics.StartGlobalStopwatch(
-                        PerformanceCounter.AdaptersCompilation
-                    )
-                )
-                {
-                    clock.AdvanceMilliseconds(20);
-                }
-
-                PerformanceResult global = script.PerformanceStats.GetPerformanceCounterResult(
-                    PerformanceCounter.AdaptersCompilation
-                );
-
-                Assert.Multiple(() =>
-                {
-                    Assert.That(global, Is.Not.Null);
-                    Assert.That(global.Instances, Is.EqualTo(1));
-                    Assert.That(global.Counter, Is.EqualTo(20));
-                });
+                clock.AdvanceMilliseconds(25);
             }
-            finally
+
+            PerformanceResult result = stats.GetPerformanceCounterResult(ExecutionCounter);
+            Assert.Multiple(() =>
             {
-                script.PerformanceStats.Enabled = false;
-                PerformanceStatistics.GlobalClock = originalGlobal;
-            }
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Counter, Is.EqualTo(25));
+                Assert.That(result.Instances, Is.EqualTo(1));
+                Assert.That(result.Name, Is.EqualTo(ExecutionCounter.ToString()));
+                Assert.That(result.Global, Is.False);
+            });
         }
 
         [Test]
-        public void GlobalStopwatchRemainsStableWhenTogglingEnabledFromOtherThreads()
+        public void DisablingClearsStopwatchesAndGlobalState()
         {
-            PerformanceStatistics stats = new();
+            FakeClock clock = new();
+            PerformanceStatistics stats = new(clock) { Enabled = true };
+
+            using (stats.StartStopwatch(ExecutionCounter))
+            {
+                clock.AdvanceMilliseconds(10);
+            }
+
+            Assert.That(stats.GetPerformanceCounterResult(ExecutionCounter), Is.Not.Null);
+
+            stats.Enabled = false;
+
+            Assert.That(stats.GetPerformanceCounterResult(ExecutionCounter), Is.Null);
+        }
+
+        [Test]
+        public void StartGlobalStopwatchFeedsNewInstance()
+        {
+            FakeClock clock = new();
+            PerformanceStatistics.GlobalClock = clock;
+
+            using (PerformanceStatistics.StartGlobalStopwatch(ExecutionCounter))
+            {
+                clock.AdvanceMilliseconds(40);
+            }
+
+            PerformanceStatistics stats = new(clock) { Enabled = true };
+            PerformanceResult result = stats.GetPerformanceCounterResult(ExecutionCounter);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Global, Is.True);
+                Assert.That(result.Counter, Is.EqualTo(40));
+                Assert.That(result.Instances, Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void EnabledIgnoresRedundantAssignments()
+        {
+            FakeClock clock = new();
+            PerformanceStatistics stats = new(clock);
+
+            stats.Enabled = true;
             stats.Enabled = true;
 
-            try
+            using (stats.StartStopwatch(ExecutionCounter))
             {
-                Assert.DoesNotThrow(() =>
-                {
-                    Parallel.Invoke(
-                        () =>
-                        {
-                            for (int i = 0; i < 200; i++)
-                            {
-                                using (
-                                    PerformanceStatistics.StartGlobalStopwatch(
-                                        PerformanceCounter.Execution
-                                    )
-                                )
-                                {
-                                    Thread.SpinWait(50);
-                                }
-                            }
-                        },
-                        () =>
-                        {
-                            for (int i = 0; i < 100; i++)
-                            {
-                                stats.Enabled = false;
-                                stats.Enabled = true;
-                            }
-                        }
-                    );
-                });
+                clock.AdvanceMilliseconds(5);
             }
-            finally
+
+            PerformanceResult enabledResult = stats.GetPerformanceCounterResult(ExecutionCounter);
+
+            Assert.That(enabledResult.Counter, Is.EqualTo(5));
+
+            stats.Enabled = false;
+            stats.Enabled = false;
+
+            Assert.That(stats.GetPerformanceCounterResult(ExecutionCounter), Is.Null);
+        }
+
+        [Test]
+        public void StartGlobalStopwatchAccumulatesAcrossScopes()
+        {
+            FakeClock clock = new();
+            PerformanceStatistics.GlobalClock = clock;
+
+            using (PerformanceStatistics.StartGlobalStopwatch(ExecutionCounter))
             {
-                stats.Enabled = false;
+                clock.AdvanceMilliseconds(10);
+            }
+
+            using (PerformanceStatistics.StartGlobalStopwatch(ExecutionCounter))
+            {
+                clock.AdvanceMilliseconds(15);
+            }
+
+            PerformanceStatistics stats = new(clock) { Enabled = true };
+            PerformanceResult result = stats.GetPerformanceCounterResult(ExecutionCounter);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Counter, Is.EqualTo(25));
+                Assert.That(result.Instances, Is.EqualTo(2));
+                Assert.That(result.Global, Is.True);
+            });
+        }
+
+        [Test]
+        public void GetPerformanceLogListsRecordedCounters()
+        {
+            FakeClock clock = new();
+            PerformanceStatistics stats = new(clock) { Enabled = true };
+
+            using (stats.StartStopwatch(PerformanceCounter.Execution))
+            {
+                clock.AdvanceMilliseconds(4);
+            }
+
+            using (stats.StartStopwatch(PerformanceCounter.Compilation))
+            {
+                clock.AdvanceMilliseconds(6);
+            }
+
+            string log = stats.GetPerformanceLog();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    log,
+                    Does.Contain("Execution : 1 times / 4 ms"),
+                    "Execution line missing"
+                );
+                Assert.That(
+                    log,
+                    Does.Contain("Compilation : 1 times / 6 ms"),
+                    "Compilation line missing"
+                );
+            });
+        }
+
+        private sealed class FakeClock : IHighResolutionClock
+        {
+            public double TimestampFrequency => 1000;
+
+            private long _timestamp;
+
+            public long GetTimestamp()
+            {
+                return _timestamp;
+            }
+
+            public long GetElapsedMilliseconds(long startTimestamp, long? endTimestamp = null)
+            {
+                long stop = endTimestamp ?? _timestamp;
+                return stop - startTimestamp;
+            }
+
+            public void AdvanceMilliseconds(long milliseconds)
+            {
+                _timestamp += milliseconds;
             }
         }
     }

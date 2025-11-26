@@ -8,7 +8,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VarargsTupleTests
     {
-        private void DoTest(string code, string expectedResult)
+        private static void DoTest(string code, string expectedResult)
         {
             Script s = new();
 

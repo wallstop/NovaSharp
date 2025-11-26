@@ -3,6 +3,14 @@ namespace NovaSharp.Interpreter.Tree.Lexer
     using System.Text;
     using NovaSharp.Interpreter.Errors;
 
+    /// <summary>
+    /// Incrementally tokenizes Lua source text for the parser.
+    /// </summary>
+    /// <remarks>
+    /// The lexer supports comment skipping, shebang handling, and Unicode-aware source tracking so
+    /// downstream AST nodes can generate precise
+    /// <see cref="NovaSharp.Interpreter.Debugging.SourceRef" /> locations.
+    /// </remarks>
     internal class Lexer
     {
         private Token _current;
@@ -29,6 +37,9 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             _autoSkipComments = autoSkipComments;
         }
 
+        /// <summary>
+        /// Gets the token the parser is currently positioned on, lexing on demand when necessary.
+        /// </summary>
         public Token Current
         {
             get
@@ -51,7 +62,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 //System.Diagnostics.Debug.WriteLine("LEXER : " + T.ToString());
 
                 if (
-                    (t.type != TokenType.Comment && t.type != TokenType.HashBang)
+                    (t.Type != TokenType.Comment && t.Type != TokenType.HashBang)
                     || (!_autoSkipComments)
                 )
                 {
@@ -60,11 +71,18 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Advances the lexer to the next token, honoring the auto-skip comment flag.
+        /// </summary>
         public void Next()
         {
             _current = FetchNewToken();
         }
 
+        /// <summary>
+        /// Returns the next token in the stream without consuming it.
+        /// </summary>
+        /// <returns>The lookahead token.</returns>
         public Token PeekNext()
         {
             int snapshot = _cursor;
@@ -143,7 +161,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return _cursor < _code.Length;
         }
 
-        private bool IsWhiteSpace(char c)
+        private static bool IsWhiteSpace(char c)
         {
             return char.IsWhiteSpace(c);
         }
@@ -171,7 +189,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             {
                 case '|':
                     CursorCharNext();
-                    return CreateToken(TokenType.Lambda, fromLine, fromCol, "|");
+                    return CreateToken(TokenType.Pipe, fromLine, fromCol, "|");
                 case ';':
                     CursorCharNext();
                     return CreateToken(TokenType.SemiColon, fromLine, fromCol, ";");
@@ -184,22 +202,52 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                         fromCol
                     );
                 case '<':
-                    return PotentiallyDoubleCharOperator(
-                        '=',
-                        TokenType.OpLessThan,
-                        TokenType.OpLessThanEqual,
-                        fromLine,
-                        fromCol
-                    );
+                {
+                    CursorCharNext();
+                    char current = CursorChar();
+                    if (current == '<')
+                    {
+                        CursorCharNext();
+                        return CreateToken(TokenType.OpShiftLeft, fromLine, fromCol, "<<");
+                    }
+
+                    if (current == '=')
+                    {
+                        CursorCharNext();
+                        return CreateToken(TokenType.OpLessThanEqual, fromLine, fromCol, "<=");
+                    }
+
+                    return CreateToken(TokenType.OpLessThan, fromLine, fromCol, "<");
+                }
                 case '>':
-                    return PotentiallyDoubleCharOperator(
-                        '=',
-                        TokenType.OpGreaterThan,
-                        TokenType.OpGreaterThanEqual,
-                        fromLine,
-                        fromCol
-                    );
+                {
+                    CursorCharNext();
+                    char current = CursorChar();
+                    if (current == '>')
+                    {
+                        CursorCharNext();
+                        return CreateToken(TokenType.OpShiftRight, fromLine, fromCol, ">>");
+                    }
+
+                    if (current == '=')
+                    {
+                        CursorCharNext();
+                        return CreateToken(TokenType.OpGreaterThanEqual, fromLine, fromCol, ">=");
+                    }
+
+                    return CreateToken(TokenType.OpGreaterThan, fromLine, fromCol, ">");
+                }
                 case '~':
+                {
+                    CursorCharNext();
+                    if (CursorChar() == '=')
+                    {
+                        CursorCharNext();
+                        return CreateToken(TokenType.OpNotEqual, fromLine, fromCol, "~=");
+                    }
+
+                    return CreateToken(TokenType.OpBitNotOrXor, fromLine, fromCol, "~");
+                }
                 case '!':
                     if (CursorCharNext() != '=')
                     {
@@ -211,7 +259,7 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                     }
 
                     CursorCharNext();
-                    return CreateToken(TokenType.OpNotEqual, fromLine, fromCol, "~=");
+                    return CreateToken(TokenType.OpNotEqual, fromLine, fromCol, "!=");
                 case '.':
                 {
                     char next = CursorCharNext();
@@ -251,11 +299,19 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 case '*':
                     return CreateSingleCharToken(TokenType.OpMul, fromLine, fromCol);
                 case '/':
-                    return CreateSingleCharToken(TokenType.OpDiv, fromLine, fromCol);
+                    return PotentiallyDoubleCharOperator(
+                        '/',
+                        TokenType.OpDiv,
+                        TokenType.OpFloorDiv,
+                        fromLine,
+                        fromCol
+                    );
                 case '%':
                     return CreateSingleCharToken(TokenType.OpMod, fromLine, fromCol);
                 case '^':
                     return CreateSingleCharToken(TokenType.OpPwr, fromLine, fromCol);
+                case '&':
+                    return CreateSingleCharToken(TokenType.OpBitAnd, fromLine, fromCol);
                 case '$':
                     return PotentiallyDoubleCharOperator(
                         '{',

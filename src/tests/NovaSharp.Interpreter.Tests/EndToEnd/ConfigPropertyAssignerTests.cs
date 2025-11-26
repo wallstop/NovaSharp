@@ -38,8 +38,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             public MySubclass SubObj { get; private set; }
         }
 
-        private MyClass Test(string tableDef)
+        private static MyClass Test(string tableDef)
         {
+            _ = new MySubclass();
+
             Script s = new(default(CoreModules));
 
             DynValue table = s.DoString("return " + tableDef);

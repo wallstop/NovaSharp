@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
-    using System.Linq;
     using Debugging;
     using Execution.Scopes;
     using Expressions;
@@ -10,18 +9,24 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua generic for loop (`for name in explist do ... end`).
+    /// </summary>
     internal class ForEachLoopStatement : Statement
     {
         private readonly RuntimeScopeBlock _stackFrame;
         private readonly SymbolRef[] _names;
         private readonly IVariable[] _nameExps;
-        private readonly Expression _rValues;
-        private readonly Statement _block;
+        private readonly ExprListExpression _rValues;
+        private readonly CompositeStatement _block;
 
         private readonly SourceRef _refFor;
 
         private readonly SourceRef _refEnd;
 
+        /// <summary>
+        /// Parses a generic for loop, capturing iterator names, expressions, and the loop body.
+        /// </summary>
         public ForEachLoopStatement(
             ScriptLoadingContext lcontext,
             Token firstNameToken,
@@ -34,7 +39,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             List<string> names = new();
             names.Add(firstNameToken.Text);
 
-            while (lcontext.Lexer.Current.type == TokenType.Comma)
+            while (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Token name = CheckTokenType(lcontext, TokenType.Name);
@@ -47,12 +52,17 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             lcontext.Scope.PushBlock();
 
-            _names = names.Select(n => lcontext.Scope.TryDefineLocal(n)).ToArray();
+            _names = new SymbolRef[names.Count];
+            for (int i = 0; i < names.Count; i++)
+            {
+                _names[i] = lcontext.Scope.TryDefineLocal(names[i]);
+            }
 
-            _nameExps = _names
-                .Select(s => new SymbolRefExpression(lcontext, s))
-                .Cast<IVariable>()
-                .ToArray();
+            _nameExps = new IVariable[_names.Length];
+            for (int i = 0; i < _names.Length; i++)
+            {
+                _nameExps[i] = new SymbolRefExpression(lcontext, _names[i]);
+            }
 
             _refFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
 
@@ -66,30 +76,33 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_refEnd);
         }
 
+        /// <summary>
+        /// Compiles the `for ... in ...` construct per Lua §3.3.5, including iterator preparation, per-iteration assignment, and loop exit patching.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             //for var_1, ···, var_n in explist do block end
 
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { scope = _stackFrame };
-            bc.LoopTracker.loops.Push(l);
+            Loop l = new() { Scope = _stackFrame };
+            bc.LoopTracker.Loops.Push(l);
 
             // get iterator tuple
             _rValues.Compile(bc);
 
             // prepares iterator tuple - stack : iterator-tuple
-            bc.Emit_IterPrep();
+            bc.EmitIterPrep();
 
             // loop start - stack : iterator-tuple
             int start = bc.GetJumpPointForNextInstruction();
-            bc.Emit_Enter(_stackFrame);
+            bc.EmitEnter(_stackFrame);
 
             // expand the tuple - stack : iterator-tuple, f, var, s
-            bc.Emit_ExpTuple(0);
+            bc.EmitExpTuple(0);
 
             // calls f(s, var) - stack : iterator-tuple, iteration result
-            bc.Emit_Call(2, "for..in");
+            bc.EmitCall(2, "for..in");
 
             // perform assignment of iteration result- stack : iterator-tuple, iteration result
             for (int i = 0; i < _nameExps.Length; i++)
@@ -98,16 +111,16 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             // pops  - stack : iterator-tuple
-            bc.Emit_Pop();
+            bc.EmitPop();
 
             // repushes the main iterator var - stack : iterator-tuple, main-iterator-var
-            bc.Emit_Load(_names[0]);
+            bc.EmitLoad(_names[0]);
 
             // updates the iterator tuple - stack : iterator-tuple, main-iterator-var
-            bc.Emit_IterUpd();
+            bc.EmitIterUpd();
 
             // checks head, jumps if nil - stack : iterator-tuple, main-iterator-var
-            Instruction endjump = bc.Emit_Jump(OpCode.JNil, -1);
+            Instruction endjump = bc.EmitJump(OpCode.JNil, -1);
 
             // executes the stuff - stack : iterator-tuple
             _block.Compile(bc);
@@ -116,19 +129,19 @@ namespace NovaSharp.Interpreter.Tree.Statements
             bc.PushSourceRef(_refEnd);
 
             // loop back again - stack : iterator-tuple
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Jump(OpCode.Jump, start);
+            bc.EmitLeave(_stackFrame);
+            bc.EmitJump(OpCode.Jump, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpointLoopExit = bc.GetJumpPointForNextInstruction();
-            bc.Emit_Leave(_stackFrame);
+            bc.EmitLeave(_stackFrame);
 
             int exitpointBreaks = bc.GetJumpPointForNextInstruction();
 
-            bc.Emit_Pop();
+            bc.EmitPop();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpointBreaks;
             }

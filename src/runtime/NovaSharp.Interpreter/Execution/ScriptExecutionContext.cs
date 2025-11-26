@@ -6,7 +6,7 @@ namespace NovaSharp.Interpreter.Execution
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
-    using NovaSharp.Interpreter.Interop.LuaStateInterop;
+    using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
 
     /// <summary>
     /// Class giving access to details of the environment where the script is executing
@@ -67,6 +67,11 @@ namespace NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public Table GetMetatable(DynValue value)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             return _processor.GetMetatable(value);
         }
 
@@ -78,6 +83,16 @@ namespace NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public DynValue GetMetamethod(DynValue value, string metamethod)
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (metamethod == null)
+            {
+                throw new ArgumentNullException(nameof(metamethod));
+            }
+
             return _processor.GetMetamethod(value, metamethod);
         }
 
@@ -104,26 +119,38 @@ namespace NovaSharp.Interpreter.Execution
         /// </summary>
         public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
+            if (op1 == null)
+            {
+                throw new ArgumentNullException(nameof(op1));
+            }
+
+            if (op2 == null)
+            {
+                throw new ArgumentNullException(nameof(op2));
+            }
+
+            if (eventName == null)
+            {
+                throw new ArgumentNullException(nameof(eventName));
+            }
+
             return _processor.GetBinaryMetamethod(op1, op2, eventName);
         }
 
         /// <summary>
-        /// Gets the script object associated with this request
+        /// Gets the script object associated with this request.
         /// </summary>
-        /// <returns></returns>
-        public Script GetScript()
-        {
-            return _processor.GetScript();
-        }
+        public Script Script => _processor.GetScript();
 
         /// <summary>
-        /// Gets the coroutine which is performing the call
+        /// Gets the coroutine currently performing the call.
         /// </summary>
-        public Coroutine GetCallingCoroutine()
-        {
-            return _processor.AssociatedCoroutine;
-        }
+        public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;
 
+        /// <summary>
+        /// Determines whether the current CLR callback is allowed to yield back into Lua (Lua 5.4 §3.3.4 coroutines).
+        /// </summary>
+        /// <returns><c>true</c> when the call originated from a resumable coroutine and the VM is prepared to yield.</returns>
         internal bool IsYieldable()
         {
             if (_processor == null || IsDynamicExecution)
@@ -158,6 +185,16 @@ namespace NovaSharp.Interpreter.Execution
             Func<LuaState, int> callback
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
             LuaState l = new(this, args, functionName);
             int retvals = callback(l);
             return l.GetReturnValue(retvals);
@@ -172,9 +209,14 @@ namespace NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, params DynValue[] args)
         {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
             if (func.Type == DataType.Function)
             {
-                return GetScript().Call(func, args);
+                return Script.Call(func, args);
             }
             else if (func.Type == DataType.ClrFunction)
             {
@@ -292,6 +334,11 @@ namespace NovaSharp.Interpreter.Execution
             ScriptRuntimeException exception
         )
         {
+            if (exception == null)
+            {
+                throw new ArgumentNullException(nameof(exception));
+            }
+
             if (messageHandler != null)
             {
                 exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
@@ -314,7 +361,7 @@ namespace NovaSharp.Interpreter.Execution
         /// </value>
         public Script OwnerScript
         {
-            get { return GetScript(); }
+            get { return Script; }
         }
     }
 }

@@ -9,7 +9,7 @@
 ## Goals
 
 - Generate the existing hardwire descriptor surface (`HardwiredUserDataDescriptor`, `HardwiredMemberDescriptor`, etc.) at compile time with parity to the output produced by the CLI today (`src/tooling/NovaSharp.Hardwire/HardwireCodeGenerationContext.cs:1`).
-- Support the same allow-list semantics as the current tool (`allowInternals`, skipped members, visibility validation) without requiring Lua dump files (`src/tooling/NovaSharp.Cli/Commands/Implementations/HardWireCommand.cs:90`).
+- Support the same allow-list semantics as the current tool (`allowInternals`, skipped members, visibility validation) without requiring Lua dump files (`src/tooling/NovaSharp.Cli/Commands/Implementations/HardwireCommand.cs:90`).
 - Enable opt-in adoption from runtime, CLI, and Unity consumers via `ItemGroup` metadata (e.g., `<NovaSharpHardwire Include="...">`), keeping incremental builds fast.
 - Offer diagnostics that surface when a type cannot be hardwired so contributors do not need to inspect generated code manually.
 - Document configuration + migration in `docs/Modernization.md` and align tests to the new pipeline.
@@ -22,7 +22,7 @@
 
 ## Current Pipeline
 
-1. Author runs `hardwire` from the CLI (`src/tooling/NovaSharp.Cli/Commands/Implementations/HardWireCommand.cs:18`).
+1. Author runs `hardwire` from the CLI (`src/tooling/NovaSharp.Cli/Commands/Implementations/HardwireCommand.cs:18`).
 1. The command loads a Lua dump table, instantiates `HardwireGenerator`, and emits a `.cs` / `.vb` file (`src/tooling/NovaSharp.Hardwire/HardwireGenerator.cs:8`).
 1. The generated file is committed or copied into a project; manual steps are required to keep descriptors synchronized.
 1. Validation is entirely post-generation (warnings printed to console); CI cannot fail early when members are skipped.
@@ -68,7 +68,7 @@
 
 - Keep `NovaSharp.Cli hardwire` but emit a deprecation warning that points to the generator.
 - Refactor the CLI command to proxy into the generator once the generator can emit sources to disk (for legacy workflows).
-- Update CLI tests (`src/tests/NovaSharp.Interpreter.Tests/Units/HardWireCommandTests.cs`) to validate the warning + generator fallback.
+- Update CLI tests (`src/tests/NovaSharp.Interpreter.Tests/Units/HardwireCommandTests.cs`) to validate the warning + generator fallback.
 
 ## Integration Plan
 

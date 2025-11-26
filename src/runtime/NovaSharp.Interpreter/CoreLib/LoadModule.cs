@@ -1,6 +1,3 @@
-// Disable warnings about XML documentation
-#pragma warning disable 1591
-
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System.Diagnostics.CodeAnalysis;
@@ -11,7 +8,8 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing loading Lua functions like 'require', 'load', etc.
+    /// Implements Lua's core loading APIs (load, loadfile, dofile, require) per Lua 5.4 §4.6 so
+    /// NovaSharp scripts can compile chunks from strings, files, and reader callbacks.
     /// </summary>
     [SuppressMessage(
         "Design",
@@ -21,8 +19,17 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class LoadModule
     {
+        /// <summary>
+        /// Initializes the `package` table with platform-specific defaults (notably `package.config`)
+        /// so the Lua loader pipeline behaves consistently across hosts.
+        /// </summary>
+        /// <param name="globalTable">Lua global table exposed to scripts.</param>
+        /// <param name="ioTable">IO table used by the bootstrapper (validated for completeness).</param>
         public static void NovaSharpInit(Table globalTable, Table ioTable)
         {
+            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
+            ioTable = ModuleArgumentValidation.RequireTable(ioTable, nameof(ioTable));
+
             DynValue package = globalTable.Get("package");
 
             if (package.IsNil())
@@ -60,34 +67,78 @@ namespace NovaSharp.Interpreter.CoreLib
         // or to "=(load)" otherwise.
         //
         // The string mode is ignored, and assumed to be "t";
+        /// <summary>
+        /// Lua `load` implementation that compiles a chunk from a string or reader function and
+        /// returns the resulting function or an error tuple.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Callback arguments following the Lua signature (<c>ld, source, mode, env</c>).
+        /// </param>
+        /// <returns>
+        /// A <see cref="DynValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
+        /// failure.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "load")]
         public static DynValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            return LoadImpl(executionContext, args, null);
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return LoadCore(executionContext, args, null);
         }
 
         // loadsafe (ld [, source [, mode [, env]]])
         // ----------------------------------------------------------------
         // Same as load, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
+        /// <summary>
+        /// Variant of <see cref="Load"/> that defaults the environment parameter to the caller's
+        /// current environment, mirroring Lua's <c>load</c> helper pattern.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments matching the Lua <c>load</c> signature.</param>
+        /// <returns>Compiled chunk or <c>(nil, errorMessage)</c> tuple.</returns>
         [NovaSharpModuleMethod(Name = "loadsafe")]
         public static DynValue LoadSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            return LoadImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return LoadCore(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
-        public static DynValue LoadImpl(
+        /// <summary>
+        /// Shared loader implementation used by both `load` and `loadsafe`.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Loader arguments.</param>
+        /// <param name="defaultEnv">Optional default environment when callers omit `env`.</param>
+        /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
+        public static DynValue LoadCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue ld = args[0];
                 string script = "";
 
@@ -95,7 +146,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 {
                     while (true)
                     {
-                        DynValue ret = executionContext.GetScript().Call(ld);
+                        DynValue ret = executionContext.Script.Call(ld);
                         if (ret.Type == DataType.String && ret.String.Length > 0)
                         {
                             script += ret.String;
@@ -137,7 +188,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
@@ -146,12 +197,24 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------
         // Similar to load, but gets the chunk from file filename or from the standard input,
         // if no file name is given. INCOMPAT: stdin not supported, mode ignored
+        /// <summary>
+        /// Compiles and returns a chunk loaded from the specified file path (Lua `loadfile`).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments (<c>filename, mode, env</c>).</param>
+        /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         [NovaSharpModuleMethod(Name = "loadfile")]
         public static DynValue LoadFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadFileImpl(executionContext, args, null);
         }
 
@@ -159,24 +222,50 @@ namespace NovaSharp.Interpreter.CoreLib
         // ----------------------------------------------------------------
         // Same as loadfile, except that "env" defaults to the current environment of the function
         // calling load, instead of the actual global environment.
+        /// <summary>
+        /// Variant of <see cref="LoadFile"/> that defaults the environment to the caller's current
+        /// environment when not explicitly provided.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments (<c>filename, mode, env</c>).</param>
+        /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         [NovaSharpModuleMethod(Name = "loadfilesafe")]
         public static DynValue LoadFileSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return LoadFileImpl(executionContext, args, GetSafeDefaultEnv(executionContext));
         }
 
+        /// <summary>
+        /// Shared implementation for `loadfile` and `loadfilesafe`.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Caller-supplied arguments.</param>
+        /// <param name="defaultEnv">Optional environment to use when callers omit one.</param>
+        /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         private static DynValue LoadFileImpl(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
                 DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
 
@@ -188,13 +277,38 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.NewTuple(
                     DynValue.Nil,
-                    DynValue.NewString(ex.DecoratedMessage ?? ex.Message)
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
 
+        /// <summary>
+        /// Extracts a human-friendly syntax error message from the provided exception.
+        /// </summary>
+        /// <param name="ex">Syntax exception thrown during compilation.</param>
+        /// <returns>Decorated error message suitable for returning to Lua.</returns>
+        internal static string GetSyntaxErrorMessage(SyntaxErrorException ex)
+        {
+            if (ex == null)
+            {
+                return string.Empty;
+            }
+
+            return ex.DecoratedMessage ?? ex.Message;
+        }
+
+        /// <summary>
+        /// Returns the caller's current environment table, throwing if it cannot be determined.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <returns>The active global environment.</returns>
         private static Table GetSafeDefaultEnv(ScriptExecutionContext executionContext)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+
             Table env = executionContext.CurrentGlobalEnv;
 
             if (env == null)
@@ -210,15 +324,28 @@ namespace NovaSharp.Interpreter.CoreLib
         //Opens the named file and executes its contents as a Lua chunk. When called without arguments,
         //dofile executes the contents of the standard input (stdin). Returns all values returned by the chunk.
         //In case of errors, dofile propagates the error to its caller (that is, dofile does not run in protected mode).
+        /// <summary>
+        /// Executes a Lua chunk loaded from disk immediately (Lua `dofile`).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the file name.</param>
+        /// <returns>Tail-call request that executes the loaded chunk.</returns>
+        /// <exception cref="ScriptRuntimeException">Propagates syntax errors to the caller.</exception>
         [NovaSharpModuleMethod(Name = "dofile")]
         public static DynValue DoFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             try
             {
-                Script s = executionContext.GetScript();
+                Script s = executionContext.Script;
                 DynValue v = args.AsType(0, "dofile", DataType.String, false);
 
                 DynValue fn = s.LoadFile(v.String);
@@ -252,13 +379,27 @@ namespace NovaSharp.Interpreter.CoreLib
         //
         //If there is any error loading or running the module, or if it cannot find any loader for the module, then require
         //signals an error.
+        /// <summary>
+        /// NovaSharp's host-side require entry point; it resolves modules through the script loader
+        /// and returns the compiled chunk. Lua's `require` wrapper in <see cref="REQUIRE"/> calls
+        /// into this helper.
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments where index 0 is the module name.</param>
+        /// <returns>Compiled module chunk.</returns>
         [NovaSharpModuleMethod(Name = "__require_clr_impl")]
-        public static DynValue __require_clr_impl(
+        public static DynValue RequireClrCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            Script s = executionContext.GetScript();
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            Script s = executionContext.Script;
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 
             DynValue fn = s.RequireModule(v.String);
@@ -266,6 +407,10 @@ namespace NovaSharp.Interpreter.CoreLib
             return fn; // tail call to dofile
         }
 
+        /// <summary>
+        /// Lua implementation of `require` that defers to <c>__require_clr_impl</c> for actual
+        /// module resolution while preserving the standard `package.loaded` semantics.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "require")]
         public const string REQUIRE =
             @"
@@ -279,7 +424,7 @@ function(modulename)
 		return m;
 	end
 
-	local func = __require_clr_impl(modulename);
+local func = __require_clr_impl(modulename);
 
 	local res = func(modulename);
 

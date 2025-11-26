@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
-    using System.Linq;
     using System.Reflection;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -138,16 +137,24 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="pi">A ParameterInfo taken from reflection.</param>
         public ParameterDescriptor(ParameterInfo pi)
         {
+            if (pi == null)
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
+
             Name = pi.Name;
             Type = pi.ParameterType;
             HasDefaultValue = !(Framework.Do.IsDbNull(pi.DefaultValue));
             DefaultValue = pi.DefaultValue;
             IsOut = pi.IsOut;
             IsRef = pi.ParameterType.IsByRef;
-            IsVarArgs = (
-                pi.ParameterType.IsArray
-                && pi.GetCustomAttributes(typeof(ParamArrayAttribute), true).Any()
+
+            object[] paramArrayAttributes = pi.GetCustomAttributes(
+                typeof(ParamArrayAttribute),
+                inherit: true
             );
+
+            IsVarArgs = pi.ParameterType.IsArray && paramArrayAttributes.Length > 0;
         }
 
         /// <summary>
@@ -193,33 +200,38 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// The descriptor fills the passed table with all the needed data for hardwire generators to generate the appropriate code.
         /// </summary>
         /// <param name="t">The table to be filled</param>
-        public void PrepareForWiring(Table table)
+        public void PrepareForWiring(Table t)
         {
-            table.Set("name", DynValue.NewString(Name));
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
+            t.Set("name", DynValue.NewString(Name));
 
             if (Type.IsByRef)
             {
-                table.Set("type", DynValue.NewString(Type.GetElementType().FullName));
+                t.Set("type", DynValue.NewString(Type.GetElementType().FullName));
             }
             else
             {
-                table.Set("type", DynValue.NewString(Type.FullName));
+                t.Set("type", DynValue.NewString(Type.FullName));
             }
 
             if (OriginalType.IsByRef)
             {
-                table.Set("origtype", DynValue.NewString(OriginalType.GetElementType().FullName));
+                t.Set("origtype", DynValue.NewString(OriginalType.GetElementType().FullName));
             }
             else
             {
-                table.Set("origtype", DynValue.NewString(OriginalType.FullName));
+                t.Set("origtype", DynValue.NewString(OriginalType.FullName));
             }
 
-            table.Set("default", DynValue.NewBoolean(HasDefaultValue));
-            table.Set("out", DynValue.NewBoolean(IsOut));
-            table.Set("ref", DynValue.NewBoolean(IsRef));
-            table.Set("varargs", DynValue.NewBoolean(IsVarArgs));
-            table.Set("restricted", DynValue.NewBoolean(HasBeenRestricted));
+            t.Set("default", DynValue.NewBoolean(HasDefaultValue));
+            t.Set("out", DynValue.NewBoolean(IsOut));
+            t.Set("ref", DynValue.NewBoolean(IsRef));
+            t.Set("varargs", DynValue.NewBoolean(IsVarArgs));
+            t.Set("restricted", DynValue.NewBoolean(HasBeenRestricted));
         }
     }
 }

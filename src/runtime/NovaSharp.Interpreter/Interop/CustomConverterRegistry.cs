@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Interop
         private readonly Dictionary<Type, Func<DynValue, object>>[] _script2Clr = new Dictionary<
             Type,
             Func<DynValue, object>
-        >[(int)LuaTypeExtensions.MAX_CONVERTIBLE_TYPES + 1];
+        >[(int)LuaTypeExtensions.MaxConvertibleTypes + 1];
         private readonly Dictionary<Type, Func<Script, object, DynValue>> _clr2Script = new();
 
         internal CustomConverterRegistry()
@@ -91,17 +91,17 @@ namespace NovaSharp.Interpreter.Interop
         {
             if ((int)scriptDataType >= _script2Clr.Length)
             {
-                throw new ArgumentException("scriptDataType");
+                throw new ArgumentException(
+                    "Script data type exceeds the registered converter range.",
+                    nameof(scriptDataType)
+                );
             }
 
             Dictionary<Type, Func<DynValue, object>> map = _script2Clr[(int)scriptDataType];
 
             if (converter == null)
             {
-                if (map.ContainsKey(clrDataType))
-                {
-                    map.Remove(clrDataType);
-                }
+                map.Remove(clrDataType);
             }
             else
             {
@@ -141,10 +141,7 @@ namespace NovaSharp.Interpreter.Interop
         {
             if (converter == null)
             {
-                if (_clr2Script.ContainsKey(clrDataType))
-                {
-                    _clr2Script.Remove(clrDataType);
-                }
+                _clr2Script.Remove(clrDataType);
             }
             else
             {
@@ -159,6 +156,12 @@ namespace NovaSharp.Interpreter.Interop
         /// <param name="converter">The converter, or null.</param>
         public void SetClrToScriptCustomConversion<T>(Func<Script, T, DynValue> converter = null)
         {
+            if (converter == null)
+            {
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue>)null);
+                return;
+            }
+
             SetClrToScriptCustomConversion(typeof(T), (s, o) => converter(s, (T)o));
         }
 
@@ -197,6 +200,12 @@ namespace NovaSharp.Interpreter.Interop
         )]
         public void SetClrToScriptCustomConversion<T>(Func<T, DynValue> converter = null)
         {
+            if (converter == null)
+            {
+                SetClrToScriptCustomConversion(typeof(T), (Func<object, DynValue>)null);
+                return;
+            }
+
             SetClrToScriptCustomConversion(typeof(T), o => converter((T)o));
         }
 

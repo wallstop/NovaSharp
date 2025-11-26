@@ -2,6 +2,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using Compatibility;
@@ -14,26 +16,41 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class VtUserDataMethodsTests
     {
-        public struct SomeClassNoRegister : IComparable
+        private static readonly int[] ScriptToClrIntArray = { 43, 78, 126, 14 };
+
+        internal struct SomeClassNoRegister : IComparable
         {
+            private int _instanceTouchCounter;
+            private string _lastConcatResult;
+            private string _lastFormattedString;
+
+            [SuppressMessage(
+                "Globalization",
+                "CA1308:Normalize strings to uppercase",
+                Justification = "The tests intentionally emit lowercase strings to validate Lua's string casing behaviour."
+            )]
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
                 out string lowercase
             )
             {
+                _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
-                lowercase = input.ToLower();
-                return input.ToUpper();
+                lowercase = input.ToLowerInvariant();
+                return input.ToUpperInvariant();
             }
 
             public string ConcatNums(int p1, int p2)
             {
-                return $"{p1}%{p2}";
+                string result = $"{p1}%{p2}";
+                _lastConcatResult = result;
+                return result;
             }
 
             public int SomeMethodWithLongName(int i)
             {
+                _instanceTouchCounter ^= i;
                 return i * 2;
             }
 
@@ -43,8 +60,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 foreach (int[] arr in intList)
                 {
-                    sb.Append(string.Join(",", arr.Select(s => s.ToString()).ToArray()));
-                    sb.Append("|");
+                    sb.Append(JoinInts(arr));
+                    sb.Append('|');
                 }
 
                 return sb;
@@ -62,27 +79,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intlist.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intlist));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", map.Keys.OrderBy(x => x.ToUpperInvariant()).ToArray()));
+                sb.Append(string.Join(",", map.Keys.OrderBy(x => x, StringComparer.Ordinal)));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(
-                    string.Join(",", map.Values.OrderBy(x => x).Select(i => i.ToString()).ToArray())
-                );
+                sb.Append(JoinInts(map.Values.OrderBy(x => x)));
 
-                sb.Append("|");
+                sb.Append('|');
 
                 sb.Append(string.Join(",", strarray));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intarray.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intarray));
 
                 return sb;
             }
@@ -105,31 +120,31 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p3);
                 p7.Append(p4);
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p5)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p6)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
 
                 p7.Append(p9);
                 p7.Append(p10);
@@ -139,7 +154,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return string.Format(s, args);
+                string formatted = FormatUnchecked(s, args);
+                _lastFormattedString = formatted;
+                return formatted;
             }
 
             public StringBuilder ConcatI(
@@ -165,6 +182,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return "!SOMECLASS!";
             }
 
+            private static string JoinInts(IEnumerable<int> values)
+            {
+                return string.Join(
+                    ",",
+                    values.Select(i => i.ToString(CultureInfo.InvariantCulture))
+                );
+            }
+
             public List<int> MkList(int from, int to)
             {
                 List<int> l = new();
@@ -173,6 +198,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     l.Add(i);
                 }
 
+                _instanceTouchCounter += l.Count;
                 return l;
             }
 
@@ -182,26 +208,39 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeClass : IComparable
+        internal struct SomeClass : IComparable
         {
+            private int _instanceTouchCounter;
+            private string _lastConcatResult;
+            private string _lastFormattedString;
+
+            [SuppressMessage(
+                "Globalization",
+                "CA1308:Normalize strings to uppercase",
+                Justification = "The tests intentionally emit lowercase strings to validate Lua's string casing behaviour."
+            )]
             public string ManipulateString(
                 string input,
                 ref string tobeconcat,
                 out string lowercase
             )
             {
+                _instanceTouchCounter += input?.Length ?? 0;
                 tobeconcat = input + tobeconcat;
-                lowercase = input.ToLower();
-                return input.ToUpper();
+                lowercase = input.ToLowerInvariant();
+                return input.ToUpperInvariant();
             }
 
             public string ConcatNums(int p1, int p2)
             {
-                return $"{p1}%{p2}";
+                string result = $"{p1}%{p2}";
+                _lastConcatResult = result;
+                return result;
             }
 
             public int SomeMethodWithLongName(int i)
             {
+                _instanceTouchCounter ^= i;
                 return i * 2;
             }
 
@@ -211,8 +250,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 foreach (int[] arr in intList)
                 {
-                    sb.Append(string.Join(",", arr.Select(s => s.ToString()).ToArray()));
-                    sb.Append("|");
+                    sb.Append(JoinInts(arr));
+                    sb.Append('|');
                 }
 
                 return sb;
@@ -230,27 +269,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 sb.Append(string.Join(",", strlist.ToArray()));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intlist.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intlist));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", map.Keys.OrderBy(x => x.ToUpperInvariant()).ToArray()));
+                sb.Append(string.Join(",", map.Keys.OrderBy(x => x, StringComparer.Ordinal)));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(
-                    string.Join(",", map.Values.OrderBy(x => x).Select(i => i.ToString()).ToArray())
-                );
+                sb.Append(JoinInts(map.Values.OrderBy(x => x)));
 
-                sb.Append("|");
+                sb.Append('|');
 
                 sb.Append(string.Join(",", strarray));
 
-                sb.Append("|");
+                sb.Append('|');
 
-                sb.Append(string.Join(",", intarray.Select(i => i.ToString()).ToArray()));
+                sb.Append(JoinInts(intarray));
 
                 return sb;
             }
@@ -273,31 +310,31 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 p7.Append(p3);
                 p7.Append(p4);
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p5)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p6)
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Keys.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
                 foreach (object o in p8.Values.OrderBy(x => x.ToString().ToUpperInvariant()))
                 {
                     p7.Append(o);
                 }
 
-                p7.Append("|");
+                p7.Append('|');
 
                 p7.Append(p9);
                 p7.Append(p10);
@@ -307,7 +344,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public string Format(string s, params object[] args)
             {
-                return string.Format(s, args);
+                string formatted = FormatUnchecked(s, args);
+                _lastFormattedString = formatted;
+                return formatted;
             }
 
             public StringBuilder ConcatI(
@@ -333,6 +372,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return "!SOMECLASS!";
             }
 
+            private static string JoinInts(IEnumerable<int> values)
+            {
+                return string.Join(
+                    ",",
+                    values.Select(i => i.ToString(CultureInfo.InvariantCulture))
+                );
+            }
+
             public List<int> MkList(int from, int to)
             {
                 List<int> l = new();
@@ -341,6 +388,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     l.Add(i);
                 }
 
+                _instanceTouchCounter += l.Count;
                 return l;
             }
 
@@ -350,32 +398,35 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public interface INterface1
+        internal interface INterface1
         {
             public string Test1();
         }
 
-        public interface INterface2
+        internal interface INterface2
         {
             public string Test2();
         }
 
-        public class SomeOtherClass
+        internal sealed class SomeOtherClass
         {
+            private readonly string _test1Response = "Test1";
+            private readonly string _test2Response = "Test2";
+
             public string Test1()
             {
-                return "Test1";
+                return _test1Response;
             }
 
             public string Test2()
             {
-                return "Test2";
+                return _test2Response;
             }
         }
 
-        public struct SomeOtherClassCustomDescriptor { }
+        internal struct SomeOtherClassCustomDescriptor { }
 
-        public struct CustomDescriptor : IUserDataDescriptor
+        internal struct CustomDescriptor : IUserDataDescriptor
         {
             public string Name
             {
@@ -419,7 +470,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SelfDescribingClass : IUserDataType
+        internal struct SelfDescribingClass : IUserDataType
         {
             public DynValue Index(Script script, DynValue index, bool isNameIndex)
             {
@@ -437,7 +488,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public struct SomeOtherClassWithDualInterfaces : INterface1, INterface2
+        internal struct SomeOtherClassWithDualInterfaces : INterface1, INterface2
         {
             public string Test1()
             {
@@ -450,7 +501,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public void TestVarArgs(InteropAccessMode opt)
+        private static void TestVarArgs(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -473,7 +524,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1.2@ciao:True"));
         }
 
-        public void TestConcatMethodStaticComplexCustomConv(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplexCustomConv(InteropAccessMode opt)
         {
             try
             {
@@ -513,11 +564,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
                     DataType.Table,
                     typeof(int[]),
-                    v => new int[] { 43, 78, 126, 14 }
+                    v => (int[])ScriptToClrIntArray.Clone()
                 );
 
                 Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-                    (s, v) => DynValue.NewString(v.ToString().ToUpper())
+                    (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
                 );
 
                 s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
@@ -539,7 +590,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public void TestConcatMethodStaticComplex(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplex(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -574,7 +625,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodStaticComplexRec(InteropAccessMode opt)
+        private static void TestConcatMethodStaticComplexRec(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -602,7 +653,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1,2,3|11,35,77|16,42,64|99,76,17|"));
         }
 
-        public void TestRefOutParams(InteropAccessMode opt)
+        private static void TestRefOutParams(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -633,7 +684,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[2].String, Is.EqualTo("ciao"));
         }
 
-        public void TestConcatMethodStatic(InteropAccessMode opt)
+        private static void TestConcatMethodStatic(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -664,7 +715,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethod(InteropAccessMode opt)
+        private static void TestConcatMethod(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -694,7 +745,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodSemicolon(InteropAccessMode opt)
+        private static void TestConcatMethodSemicolon(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -724,7 +775,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConstructorAndConcatMethodSemicolon(InteropAccessMode opt)
+        private static void TestConstructorAndConcatMethodSemicolon(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -753,7 +804,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestConcatMethodStaticSimplifiedSyntax(InteropAccessMode opt)
+        private static void TestConcatMethodStaticSimplifiedSyntax(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -784,7 +835,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        public void TestDelegateMethod(InteropAccessMode opt)
+        private static void TestDelegateMethod(InteropAccessMode opt)
         {
             UserData.UnregisterType<SomeClass>();
 
@@ -809,7 +860,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("1%2"));
         }
 
-        public void TestListMethod(InteropAccessMode opt)
+        private static void TestListMethod(InteropAccessMode opt)
         {
             string script =
                 @"    
@@ -1189,6 +1240,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(24));
+        }
+
+        private static string FormatUnchecked(string format, object[] args)
+        {
+            ArgumentNullException.ThrowIfNull(format);
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

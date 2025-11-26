@@ -258,13 +258,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DynValueMemberDescriptorPrepareForWiringHandlesStaticUserData()
         {
-            if (!UserData.IsTypeRegistered(typeof(DummyStaticUserData)))
+            if (!UserData.IsTypeRegistered<DummyStaticUserData>())
             {
                 UserData.RegisterType<DummyStaticUserData>();
             }
             DynValueMemberDescriptor descriptor = new(
                 "userdata",
-                UserData.CreateStatic(typeof(DummyStaticUserData))
+                UserData.CreateStatic<DummyStaticUserData>()
             );
             Table wiring = new(null);
 
@@ -284,7 +284,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void DynValueMemberDescriptorPrepareForWiringHandlesInstanceUserDataError()
         {
-            if (!UserData.IsTypeRegistered(typeof(DummyInstanceUserData)))
+            if (!UserData.IsTypeRegistered<DummyInstanceUserData>())
             {
                 UserData.RegisterType<DummyInstanceUserData>();
             }
@@ -372,13 +372,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public object LastAssignedValue { get; private set; }
 
-            protected override object GetValueImpl(Script script, object obj)
+            protected override object GetValueCore(Script script, object obj)
             {
                 GetCallCount += 1;
                 return $"value-for:{obj}";
             }
 
-            protected override void SetValueImpl(Script script, object obj, object value)
+            protected override void SetValueCore(Script script, object obj, object value)
             {
                 SetCallCount += 1;
                 LastAssignedValue = value;
@@ -456,7 +456,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 : base(name) { }
         }
 
-        internal sealed class DummyStaticUserData { }
+        internal sealed class DummyStaticUserData
+        {
+            internal static readonly DummyStaticUserData Instance = new();
+        }
 
         private sealed class DummyInstanceUserData { }
     }

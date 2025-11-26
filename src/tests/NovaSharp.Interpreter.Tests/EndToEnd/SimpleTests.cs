@@ -30,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void CSharpStaticFunctionCallStatement()
         {
-            IList<DynValue> args = null;
+            DynValue[] args = Array.Empty<DynValue>();
 
             string script = "print(\"hello\", \"world\");";
 
@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue res = s.DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Void));
-            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args.Length, Is.EqualTo(2));
             Assert.That(args[0].Type, Is.EqualTo(DataType.String));
             Assert.That(args[0].String, Is.EqualTo("hello"));
             Assert.That(args[1].Type, Is.EqualTo(DataType.String));
@@ -62,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void CSharpStaticFunctionCallRedef()
         {
-            IList<DynValue> args = null;
+            DynValue[] args = Array.Empty<DynValue>();
 
             string script = "local print = print; print(\"hello\", \"world\");";
 
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args.Length, Is.EqualTo(2));
             Assert.That(args[0].Type, Is.EqualTo(DataType.String));
             Assert.That(args[0].String, Is.EqualTo("hello"));
             Assert.That(args[1].Type, Is.EqualTo(DataType.String));
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void CSharpStaticFunctionCall2()
         {
-            IList<DynValue> args = null;
+            DynValue[] args = Array.Empty<DynValue>();
 
             string script = "return callback 'hello';";
 
@@ -167,7 +167,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Count, Is.EqualTo(1));
+            Assert.That(args.Length, Is.EqualTo(1));
             Assert.That(args[0].Type, Is.EqualTo(DataType.String));
             Assert.That(args[0].String, Is.EqualTo("hello"));
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -177,7 +177,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void CSharpStaticFunctionCall()
         {
-            IList<DynValue> args = null;
+            DynValue[] args = Array.Empty<DynValue>();
 
             string script = "return print(\"hello\", \"world\");";
 
@@ -197,7 +197,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Count, Is.EqualTo(2));
+            Assert.That(args.Length, Is.EqualTo(2));
             Assert.That(args[0].Type, Is.EqualTo(DataType.String));
             Assert.That(args[0].String, Is.EqualTo("hello"));
             Assert.That(args[1].Type, Is.EqualTo(DataType.String));
@@ -394,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                     new CallbackFunction(
                         (x, a) =>
                         {
-                            throw new Exception("FAIL!");
+                            throw new InvalidOperationException("FAIL!");
                         }
                     )
                 )
@@ -1646,7 +1646,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 Assert.Fail(); // ScriptRuntimeException should have been thrown, if it doesn't Assert.Fail should execute
             }
-            catch (ScriptRuntimeException e)
+            catch (ScriptRuntimeException)
             {
                 //Assert.Pass(e.DecoratedMessage);
             }

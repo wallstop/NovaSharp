@@ -3,9 +3,13 @@ namespace NovaSharp.Hardwire.Generators
     using System.CodeDom;
     using NovaSharp.Hardwire.Generators.Base;
 
+    /// <summary>
+    /// Generates descriptors for reflection-backed properties.
+    /// </summary>
     internal sealed class PropertyMemberDescriptorGenerator
         : AssignableMemberDescriptorGeneratorBase
     {
+        /// <inheritdoc />
         public override string ManagedType
         {
             get
@@ -14,6 +18,7 @@ namespace NovaSharp.Hardwire.Generators
             }
         }
 
+        /// <inheritdoc />
         protected override CodeExpression GetMemberAccessExpression(
             CodeExpression thisObj,
             string name
@@ -22,6 +27,7 @@ namespace NovaSharp.Hardwire.Generators
             return new CodePropertyReferenceExpression(thisObj, name);
         }
 
+        /// <inheritdoc />
         protected override string GetPrefix()
         {
             return "PROP";

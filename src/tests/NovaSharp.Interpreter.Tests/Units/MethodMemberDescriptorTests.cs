@@ -3,13 +3,18 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System;
     using System.IO;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reflection;
+    using System.Reflection.Emit;
     using System.Runtime.CompilerServices;
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
@@ -26,12 +31,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_LazyOptimizedInstanceActionUsesCompiledDelegate()
+        public void ExecuteLazyOptimizedInstanceActionUsesCompiledDelegate()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.SetName)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -48,12 +51,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_LazyOptimizedStaticFunctionReturnsDynValue()
+        public void ExecuteLazyOptimizedStaticFunctionReturnsDynValue()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.Sum),
-                BindingFlags.Public | BindingFlags.Static
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -69,12 +69,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ReflectionModeInvokesMethodInfo()
+        public void ExecuteReflectionModeInvokesMethodInfo()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.Multiply)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Multiply;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -90,11 +88,30 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ArrayConstructorCreatesExpectedArray()
+        public void ExecuteReflectionModeInvokesVoidMethodThroughActionBranch()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
-                new[] { typeof(int), typeof(int) }
-            );
+            MethodMemberDescriptorHost host = new();
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
+
+            Script script = new Script();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewString("Reflection"));
+
+            DynValue result = descriptor.Execute(script, host, context, args);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(host.LastName, Is.EqualTo("Reflection"));
+                Assert.That(result.IsVoid(), Is.True);
+            });
+        }
+
+        [Test]
+        public void ExecuteArrayConstructorCreatesExpectedArray()
+        {
+            ConstructorInfo ctor =
+                MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             Assert.That(ctor, Is.Not.Null);
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
@@ -117,15 +134,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_ExtensionMethodBindsInstance()
+        public void ExecuteExtensionMethodBindsInstance()
         {
             MethodMemberDescriptorHost host = new();
             host.SetName("Nova");
 
-            MethodInfo extension = typeof(MethodMemberDescriptorTestExtensions).GetMethod(
-                nameof(MethodMemberDescriptorTestExtensions.Decorate),
-                BindingFlags.Public | BindingFlags.Static
-            );
+            MethodInfo extension = MethodMemberDescriptorTestExtensionsMetadata.Decorate;
             MethodMemberDescriptor descriptor = new(extension, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -138,12 +152,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Execute_OutParametersReturnTuple()
+        public void ExecuteOutParametersReturnTuple()
         {
             MethodMemberDescriptorHost host = new();
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.TryDouble)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -161,16 +173,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_DefaultAccessModeUsesGlobalDefault()
+        public void ConstructorDefaultAccessModeUsesGlobalDefault()
         {
             InteropAccessMode original = UserData.DefaultAccessMode;
             try
             {
                 UserData.DefaultAccessMode = InteropAccessMode.Reflection;
-                MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                    nameof(MethodMemberDescriptorHost.Sum),
-                    BindingFlags.Public | BindingFlags.Static
-                );
+                MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
                 MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Default);
 
@@ -183,11 +192,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_WithByRefParametersEnforcesReflectionAccessMode()
+        public void ConstructorWithByRefParametersEnforcesReflectionAccessMode()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.TryDouble)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
 
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
@@ -195,16 +202,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void Constructor_OnAotPlatformForcesReflectionAccessMode()
+        public void ConstructorOnAotPlatformForcesReflectionAccessMode()
         {
             IPlatformAccessor original = Script.GlobalOptions.Platform;
             try
             {
                 Script.GlobalOptions.Platform = new AotStubPlatformAccessor();
-                MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                    nameof(MethodMemberDescriptorHost.Sum),
-                    BindingFlags.Public | BindingFlags.Static
-                );
+                MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
                 MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
@@ -217,12 +221,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstructorThrowsWhenHideMembersAccessModeRequested()
+        {
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
+
+            IPlatformAccessor original = Script.GlobalOptions.Platform;
+            try
+            {
+                Script.GlobalOptions.Platform = new NonAotStubPlatformAccessor();
+                Assert.That(
+                    () => new MethodMemberDescriptor(method, InteropAccessMode.HideMembers),
+                    Throws.ArgumentException.With.Message.EqualTo("Invalid accessMode")
+                );
+            }
+            finally
+            {
+                Script.GlobalOptions.Platform = original;
+            }
+        }
+
+        [Test]
         public void TryCreateIfVisibleHonorsVisibility()
         {
-            MethodInfo hidden = typeof(MethodMemberDescriptorHost).GetMethod(
-                "HiddenHelper",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            );
+            MethodInfo hidden = MethodMemberDescriptorHostMetadata.HiddenHelper;
             Assert.That(hidden, Is.Not.Null);
 
             MethodMemberDescriptor invisible = MethodMemberDescriptor.TryCreateIfVisible(
@@ -246,9 +267,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckMethodIsCompatibleRejectsOpenGenericDefinitions()
         {
-            MethodInfo method = typeof(GenericMethodHost)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .Single(m => m.Name == nameof(GenericMethodHost.Identity));
+            MethodInfo method = GenericMethodHostMetadata.GenericIdentity;
 
             Assert.Multiple(() =>
             {
@@ -268,24 +287,157 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckMethodIsCompatibleRejectsPointerParameters()
         {
-            MethodInfo pointerMethod = typeof(Buffer)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .First(m =>
-                    m.Name == "MemoryCopy" && m.GetParameters().Any(p => p.ParameterType.IsPointer)
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "PointerParameter",
+                typeof(void),
+                new[] { pointerType },
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(pointerMethod.GetParameters()[0].ParameterType.IsPointer, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                    Is.False
                 );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("pointer parameters")
+                );
+            });
+        }
+
+        [Test]
+        public void CheckMethodIsCompatibleRejectsPointerReturnTypes()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "ReturnPointer",
+                pointerType,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(pointerMethod.ReturnType.IsPointer, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("pointer return type")
+                );
+            });
+        }
+
+        [Test]
+        public void CheckMethodIsCompatibleRejectsUnboundGenericReturnTypes()
+        {
+            Type openGeneric = typeof(System.Collections.Generic.List<>);
+            DynamicMethod openReturnMethod = new(
+                "ReturnOpenGeneric",
+                openGeneric,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(openReturnMethod.ReturnType.IsGenericTypeDefinition, Is.True);
+                Assert.That(
+                    MethodMemberDescriptor.CheckMethodIsCompatible(openReturnMethod, false),
+                    Is.False
+                );
+                Assert.That(
+                    () => MethodMemberDescriptor.CheckMethodIsCompatible(openReturnMethod, true),
+                    Throws.ArgumentException.With.Message.Contains("unresolved generic return type")
+                );
+            });
+        }
+
+        [Test]
+        public void OptimizeThrowsWhenParametersContainByRefArguments()
+        {
+            MethodInfo method = MethodMemberDescriptorHostMetadata.TryDouble;
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
+            MethodMemberDescriptor.TestHooks.ForceAccessMode(
+                descriptor,
+                InteropAccessMode.Preoptimized
+            );
 
             Assert.That(
-                MethodMemberDescriptor.CheckMethodIsCompatible(pointerMethod, false),
-                Is.False
+                () => ((IOptimizableDescriptor)descriptor).Optimize(),
+                Throws
+                    .TypeOf<InternalErrorException>()
+                    .With.Message.Contains("Out/Ref params cannot be precompiled")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsPointerParameterMethods()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "CtorPointerParameter",
+                typeof(void),
+                new[] { pointerType },
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(pointerMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("pointer parameters")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsPointerReturnMethods()
+        {
+            Type pointerType = typeof(int).MakePointerType();
+            DynamicMethod pointerMethod = new(
+                "CtorPointerReturn",
+                pointerType,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(pointerMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("pointer return type")
+            );
+        }
+
+        [Test]
+        public void ConstructorRejectsUnboundGenericReturnMethods()
+        {
+            Type openGeneric = typeof(System.Collections.Generic.List<>);
+            DynamicMethod openReturnMethod = new(
+                "CtorOpenGenericReturn",
+                openGeneric,
+                Type.EmptyTypes,
+                typeof(MethodMemberDescriptorTests).Module,
+                skipVisibility: true
+            );
+
+            Assert.That(
+                () => new MethodMemberDescriptor(openReturnMethod, InteropAccessMode.Reflection),
+                Throws.ArgumentException.With.Message.Contains("unresolved generic return type")
             );
         }
 
         [Test]
         public void PrepareForWiringPopulatesDescriptorMetadata()
         {
-            MethodInfo method = typeof(MethodMemberDescriptorHost).GetMethod(
-                nameof(MethodMemberDescriptorHost.SetName)
-            );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
 
             Script script = new Script();
@@ -312,9 +464,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void PrepareForWiringArrayConstructorIncludesArrayMetadata()
         {
-            ConstructorInfo ctor = typeof(int[,]).GetConstructor(
-                new[] { typeof(int), typeof(int) }
-            );
+            ConstructorInfo ctor =
+                MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
 
             Script script = new Script();
@@ -333,6 +484,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     internal sealed class MethodMemberDescriptorHost
     {
         public string LastName { get; private set; } = string.Empty;
+        public int LastProduct { get; private set; }
+        public int LastInputValue { get; private set; }
+        public bool HiddenHelperCalled { get; private set; }
 
         public MethodMemberDescriptorHost() { }
 
@@ -348,20 +502,31 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         public int Multiply(int left, int right)
         {
-            return left * right;
+            LastProduct = left * right;
+            return LastProduct;
         }
 
         public bool TryDouble(int value, out int doubled)
         {
+            LastInputValue = value;
             doubled = value * 2;
             return true;
         }
 
-        private void HiddenHelper() { }
+        private void HiddenHelper()
+        {
+            HiddenHelperCalled = true;
+        }
 
         public static int Sum(int left, int right)
         {
             return left + right;
+        }
+
+        internal static MethodInfo GetHiddenHelperMethod()
+        {
+            Expression<Action<MethodMemberDescriptorHost>> call = host => host.HiddenHelper();
+            return ((MethodCallExpression)call.Body).Method;
         }
     }
 
@@ -381,11 +546,58 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 
+    internal static class MethodMemberDescriptorHostMetadata
+    {
+        internal static MethodInfo SetName { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.SetName)
+            )!;
+
+        internal static MethodInfo Multiply { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Multiply)
+            )!;
+
+        internal static MethodInfo TryDouble { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.TryDouble)
+            )!;
+
+        internal static MethodInfo Sum { get; } =
+            typeof(MethodMemberDescriptorHost).GetMethod(
+                nameof(MethodMemberDescriptorHost.Sum),
+                new[] { typeof(int), typeof(int) }
+            )!;
+
+        internal static MethodInfo HiddenHelper { get; } =
+            MethodMemberDescriptorHost.GetHiddenHelperMethod();
+    }
+
+    internal static class MethodMemberDescriptorArrayMetadata
+    {
+        internal static ConstructorInfo Int32TwoDimensionalConstructor { get; } =
+            typeof(int[,]).GetConstructor(new[] { typeof(int), typeof(int) })!;
+    }
+
+    internal static class MethodMemberDescriptorTestExtensionsMetadata
+    {
+        internal static MethodInfo Decorate { get; } =
+            typeof(MethodMemberDescriptorTestExtensions).GetMethod(
+                nameof(MethodMemberDescriptorTestExtensions.Decorate)
+            )!;
+    }
+
+    internal static class GenericMethodHostMetadata
+    {
+        internal static MethodInfo GenericIdentity { get; } =
+            typeof(GenericMethodHost).GetMethod(nameof(GenericMethodHost.Identity))!;
+    }
+
     internal sealed class AotStubPlatformAccessor : IPlatformAccessor
     {
-        public CoreModules FilterSupportedCoreModules(CoreModules module)
+        public CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         public string GetEnvironmentVariable(string envvarname)
@@ -401,6 +613,76 @@ namespace NovaSharp.Interpreter.Tests.Units
         public string GetPlatformName()
         {
             return "stub.aot";
+        }
+
+        public void DefaultPrint(string content) { }
+
+        public string DefaultInput(string prompt)
+        {
+            return null;
+        }
+
+        public Stream OpenFile(Script script, string filename, Encoding encoding, string mode)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Stream GetStandardStream(StandardFileType type)
+        {
+            return Stream.Null;
+        }
+
+        public string GetTempFileName()
+        {
+            return Path.GetTempFileName();
+        }
+
+        public void ExitFast(int exitCode)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool FileExists(string file)
+        {
+            return false;
+        }
+
+        public void DeleteFile(string file)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void MoveFile(string src, string dst)
+        {
+            throw new NotSupportedException();
+        }
+
+        public int ExecuteCommand(string cmdline)
+        {
+            return 0;
+        }
+    }
+
+    internal sealed class NonAotStubPlatformAccessor : IPlatformAccessor
+    {
+        public CoreModules FilterSupportedCoreModules(CoreModules coreModules)
+        {
+            return coreModules;
+        }
+
+        public string GetEnvironmentVariable(string envvarname)
+        {
+            return null;
+        }
+
+        public bool IsRunningOnAOT()
+        {
+            return false;
+        }
+
+        public string GetPlatformName()
+        {
+            return "stub.host";
         }
 
         public void DefaultPrint(string content) { }

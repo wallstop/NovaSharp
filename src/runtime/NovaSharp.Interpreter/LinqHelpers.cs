@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter
 {
+    using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
 
@@ -19,6 +20,11 @@ namespace NovaSharp.Interpreter
             DataType type
         )
         {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
             foreach (DynValue value in enumerable)
             {
                 if (value.Type == type)
@@ -38,6 +44,11 @@ namespace NovaSharp.Interpreter
             DataType type
         )
         {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
             foreach (DynValue value in enumerable)
             {
                 if (value.Type == type)
@@ -53,6 +64,11 @@ namespace NovaSharp.Interpreter
         /// <param name="enumerable">The enumerable.</param>
         public static IEnumerable<object> AsObjects(this IEnumerable<DynValue> enumerable)
         {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
             foreach (DynValue value in enumerable)
             {
                 yield return value.ToObject();
@@ -66,6 +82,11 @@ namespace NovaSharp.Interpreter
         /// <param name="enumerable">The enumerable.</param>
         public static IEnumerable<T> AsObjects<T>(this IEnumerable<DynValue> enumerable)
         {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
             foreach (DynValue value in enumerable)
             {
                 yield return value.ToObject<T>();

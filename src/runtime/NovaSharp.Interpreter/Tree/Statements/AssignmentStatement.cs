@@ -4,17 +4,27 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using System.Collections.Generic;
     using Debugging;
     using Expressions;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
+    using Script = NovaSharp.Interpreter.Script;
 
+    /// <summary>
+    /// Represents a Lua assignment statement (`local` declarations and multi-value assignments).
+    /// </summary>
     internal class AssignmentStatement : Statement
     {
         private readonly List<IVariable> _lValues = new();
         private readonly List<Expression> _rValues;
         private readonly SourceRef _ref;
 
+        /// <summary>
+        /// Initializes a new assignment statement for a `local` declaration (with optional `<const>`/`<close>` attributes).
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="startToken">Token that began the declaration, used for diagnostics.</param>
         public AssignmentStatement(ScriptLoadingContext lcontext, Token startToken)
             : base(lcontext)
         {
@@ -28,7 +38,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 SymbolRefAttributes flags = ParseLocalAttributes(lcontext);
                 locals.Add((nameToken, flags));
 
-                if (lcontext.Lexer.Current.type != TokenType.Comma)
+                if (lcontext.Lexer.Current.Type != TokenType.Comma)
                 {
                     break;
                 }
@@ -36,7 +46,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
                 lcontext.Lexer.Next();
             }
 
-            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
+            if (lcontext.Lexer.Current.Type == TokenType.OpAssignment)
             {
                 CheckTokenType(lcontext, TokenType.OpAssignment);
                 _rValues = Expression.ExprList(lcontext);
@@ -58,6 +68,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_ref);
         }
 
+        /// <summary>
+        /// Initializes a new assignment statement targeting arbitrary l-values (e.g., table fields or globals).
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="firstExpression">First left-hand-side expression.</param>
+        /// <param name="first">Token marking the start of the statement, used for diagnostics.</param>
         public AssignmentStatement(
             ScriptLoadingContext lcontext,
             Expression firstExpression,
@@ -67,7 +83,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
         {
             _lValues.Add(CheckVar(lcontext, firstExpression));
 
-            while (lcontext.Lexer.Current.type == TokenType.Comma)
+            while (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Expression e = Expression.PrimaryExp(lcontext);
@@ -83,7 +99,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_ref);
         }
 
-        private IVariable CheckVar(ScriptLoadingContext lcontext, Expression firstExpression)
+        private static IVariable CheckVar(ScriptLoadingContext lcontext, Expression firstExpression)
         {
             if (firstExpression is not IVariable v)
             {
@@ -97,6 +113,10 @@ namespace NovaSharp.Interpreter.Tree.Statements
             return v;
         }
 
+        /// <summary>
+        /// Compiles the assignment by emitting bytecode that evaluates right-hand expressions, assigns them to l-values, and cleans up the stack.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the compiled instructions.</param>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             using (bc.EnterSource(_ref))
@@ -116,23 +136,26 @@ namespace NovaSharp.Interpreter.Tree.Statements
                         ); // index in last tuple
                 }
 
-                bc.Emit_Pop(_rValues.Count);
+                bc.EmitPop(_rValues.Count);
             }
         }
 
         private static SymbolRefAttributes ParseLocalAttributes(ScriptLoadingContext lcontext)
         {
             SymbolRefAttributes flags = default;
+            Script script =
+                lcontext.Script ?? throw new InvalidOperationException("Missing Script instance.");
+            LuaCompatibilityProfile profile = script.CompatibilityProfile;
 
-            while (lcontext.Lexer.Current.type == TokenType.OpLessThan)
+            while (lcontext.Lexer.Current.Type == TokenType.OpLessThan)
             {
                 lcontext.Lexer.Next();
 
                 Token attr = CheckTokenType(lcontext, TokenType.Name);
                 SymbolRefAttributes attrFlag = attr.Text switch
                 {
-                    "const" => SymbolRefAttributes.Const,
-                    "close" => SymbolRefAttributes.ToBeClosed,
+                    "const" => GetConstAttribute(attr, profile),
+                    "close" => GetCloseAttribute(attr, profile),
                     _ => throw new SyntaxErrorException(attr, "unknown attribute '{0}'", attr.Text),
                 };
 
@@ -147,6 +170,51 @@ namespace NovaSharp.Interpreter.Tree.Statements
             }
 
             return flags;
+        }
+
+        private static SymbolRefAttributes GetConstAttribute(
+            Token attributeToken,
+            LuaCompatibilityProfile profile
+        )
+        {
+            EnsureAttributeSupported(
+                attributeToken,
+                profile.SupportsConstLocals,
+                "Lua 5.4 manual §3.3.7"
+            );
+            return SymbolRefAttributes.Const;
+        }
+
+        private static SymbolRefAttributes GetCloseAttribute(
+            Token attributeToken,
+            LuaCompatibilityProfile profile
+        )
+        {
+            EnsureAttributeSupported(
+                attributeToken,
+                profile.SupportsToBeClosedVariables,
+                "Lua 5.4 manual §3.3.8"
+            );
+            return SymbolRefAttributes.ToBeClosed;
+        }
+
+        private static void EnsureAttributeSupported(
+            Token attributeToken,
+            bool isSupported,
+            string manualSection
+        )
+        {
+            if (isSupported)
+            {
+                return;
+            }
+
+            throw new SyntaxErrorException(
+                attributeToken,
+                "'{0}' attribute requires Lua 5.4+ compatibility ({1}). Set Script.Options.CompatibilityVersion accordingly.",
+                attributeToken.Text,
+                manualSection
+            );
         }
     }
 }

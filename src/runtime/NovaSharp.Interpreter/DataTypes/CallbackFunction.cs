@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class CallbackFunction : RefIdObject
     {
-        private static InteropAccessMode _defaultAccessMode = InteropAccessMode.LazyOptimized;
+        private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
 
         /// <summary>
         /// Gets the name of the function
@@ -42,6 +42,11 @@ namespace NovaSharp.Interpreter.DataTypes
             string name = null
         )
         {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
             ClrCallback = callBack;
             Name = name;
         }
@@ -59,11 +64,22 @@ namespace NovaSharp.Interpreter.DataTypes
             bool isMethodCall = false
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (isMethodCall)
             {
                 ColonOperatorBehaviour colon = executionContext
-                    .GetScript()
-                    .Options.ColonOperatorClrCallbackBehaviour;
+                    .Script
+                    .Options
+                    .ColonOperatorClrCallbackBehaviour;
 
                 if (colon == ColonOperatorBehaviour.TreatAsColon)
                 {
@@ -87,7 +103,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Default, HideMembers and BackgroundOptimized are NOT supported.</exception>
         public static InteropAccessMode DefaultAccessMode
         {
-            get { return _defaultAccessMode; }
+            get { return DefaultAccessModeValue; }
             set
             {
                 if (
@@ -99,7 +115,7 @@ namespace NovaSharp.Interpreter.DataTypes
                     throw new ArgumentException("DefaultAccessMode");
                 }
 
-                _defaultAccessMode = value;
+                DefaultAccessModeValue = value;
             }
         }
 
@@ -116,9 +132,19 @@ namespace NovaSharp.Interpreter.DataTypes
             InteropAccessMode accessMode = InteropAccessMode.Default
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (del == null)
+            {
+                throw new ArgumentNullException(nameof(del));
+            }
+
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _defaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
 #if NETFX_CORE
@@ -148,9 +174,19 @@ namespace NovaSharp.Interpreter.DataTypes
             InteropAccessMode accessMode = InteropAccessMode.Default
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _defaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
             MethodMemberDescriptor descr = new(mi, accessMode);
@@ -170,6 +206,11 @@ namespace NovaSharp.Interpreter.DataTypes
             bool requirePublicVisibility
         )
         {
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
             System.Reflection.ParameterInfo[] pi = mi.GetParameters();
 
             return (

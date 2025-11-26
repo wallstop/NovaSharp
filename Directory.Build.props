@@ -8,9 +8,20 @@
         <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
-        <WarningsAsErrors>CS*</WarningsAsErrors>
-        <WarningsNotAsErrors>CA*</WarningsNotAsErrors>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
         <SrcRoot>$(RepoRoot)src/</SrcRoot>
+        <LegacyNamespacePrefix>NovaSharp</LegacyNamespacePrefix>
+        <TargetNamespacePrefix>WallstopStudios.NovaSharp</TargetNamespacePrefix>
+        <NamespacePrefixExcludedNamespaces>NovaSharp.Interpreter.LuaPort</NamespacePrefixExcludedNamespaces>
+        <EnforcedNamespacePrefix Condition="'$(EnforcedNamespacePrefix)' == ''"
+            >$(LegacyNamespacePrefix)</EnforcedNamespacePrefix
+        >
+        <NamespacePrefixDiagnosticSeverity Condition="'$(NamespacePrefixDiagnosticSeverity)' == ''"
+            >suggestion</NamespacePrefixDiagnosticSeverity
+        >
+        <EnableNamespacePrefixRule Condition="'$(EnableNamespacePrefixRule)' == ''"
+            >true</EnableNamespacePrefixRule
+        >
     </PropertyGroup>
 </Project>

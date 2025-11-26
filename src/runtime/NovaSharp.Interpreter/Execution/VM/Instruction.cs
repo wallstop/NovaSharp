@@ -2,27 +2,37 @@ namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using Debugging;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// Represents a single NovaSharp VM instruction with its operands and source reference.
+    /// </summary>
     internal class Instruction
     {
-        internal OpCode OpCode;
-        internal SymbolRef Symbol;
-        internal SymbolRef[] SymbolList;
-        internal string Name;
-        internal DynValue Value;
-        internal int NumVal;
-        internal int NumVal2;
-        internal SourceRef SourceCodeRef;
+        internal OpCode OpCode { get; set; }
+        internal SymbolRef Symbol { get; set; }
+        internal SymbolRef[] SymbolList { get; set; }
+        internal string Name { get; set; }
+        internal DynValue Value { get; set; }
+        internal int NumVal { get; set; }
+        internal int NumVal2 { get; set; }
+        internal SourceRef SourceCodeRef { get; set; }
 
+        /// <summary>
+        /// Initializes an instruction bound to the specified source reference.
+        /// </summary>
         internal Instruction(SourceRef sourceref)
         {
             SourceCodeRef = sourceref;
         }
 
+        /// <summary>
+        /// Returns a human-readable representation of the instruction for dumps/disassembly.
+        /// </summary>
         public override string ToString()
         {
             string append = OpCode.ToString().ToUpperInvariant();
@@ -42,16 +52,16 @@ namespace NovaSharp.Interpreter.Execution.VM
                 )
             )
             {
-                append += " " + NumVal.ToString("X8");
+                append += " " + NumVal.ToString("X8", CultureInfo.InvariantCulture);
             }
             else if ((usage & ((int)InstructionFieldUsage.NumVal)) != 0)
             {
-                append += " " + NumVal.ToString();
+                append += " " + NumVal.ToString(CultureInfo.InvariantCulture);
             }
 
             if ((usage & ((int)InstructionFieldUsage.NumVal2)) != 0)
             {
-                append += " " + NumVal2.ToString();
+                append += " " + NumVal2.ToString(CultureInfo.InvariantCulture);
             }
 
             if ((usage & ((int)InstructionFieldUsage.Name)) != 0)
@@ -71,13 +81,19 @@ namespace NovaSharp.Interpreter.Execution.VM
 
             if (((usage & ((int)InstructionFieldUsage.SymbolList)) != 0) && (SymbolList != null))
             {
-                append += " " + string.Join(",", SymbolList.Select(s => s.ToString()).ToArray());
+                string[] serializedSymbols = new string[SymbolList.Length];
+                for (int i = 0; i < SymbolList.Length; i++)
+                {
+                    serializedSymbols[i] = SymbolList[i].ToString();
+                }
+
+                append += " " + string.Join(",", serializedSymbols);
             }
 
             return append;
         }
 
-        private string PurifyFromNewLines(DynValue value)
+        private static string PurifyFromNewLines(DynValue value)
         {
             if (value == null)
             {
@@ -92,6 +108,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             return new string(' ', 10 - OpCode.ToString().Length);
         }
 
+        /// <summary>
+        /// Writes the instruction to the binary chunk format.
+        /// </summary>
+        /// <param name="wr">Destination writer.</param>
+        /// <param name="baseAddress">Base instruction pointer used for relative jumps.</param>
+        /// <param name="symbolMap">Map linking symbols to indices.</param>
         internal void WriteBinary(
             BinaryWriter wr,
             int baseAddress,
@@ -166,6 +188,15 @@ namespace NovaSharp.Interpreter.Execution.VM
             return deserializedSymbols[id];
         }
 
+        /// <summary>
+        /// Reads a binary chunk instruction and reconstructs metadata required by the VM.
+        /// </summary>
+        /// <param name="chunkRef">Source reference of the chunk.</param>
+        /// <param name="rd">Binary reader.</param>
+        /// <param name="baseAddress">Base instruction pointer.</param>
+        /// <param name="envTable">Environment used for tables inside dumps.</param>
+        /// <param name="deserializedSymbols">Previously deserialized symbol table.</param>
+        /// <returns>The reconstructed instruction.</returns>
         internal static Instruction ReadBinary(
             SourceRef chunkRef,
             BinaryReader rd,
@@ -254,7 +285,7 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private void DumpValue(BinaryWriter wr, DynValue value)
+        private static void DumpValue(BinaryWriter wr, DynValue value)
         {
             if (value == null)
             {
@@ -287,6 +318,11 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        /// <summary>
+        /// Extracts the symbol operands referenced by the instruction (if any).
+        /// </summary>
+        /// <param name="symbolList">List operand, if present.</param>
+        /// <param name="symbol">Single symbol operand, if present.</param>
         internal void GetSymbolReferences(out SymbolRef[] symbolList, out SymbolRef symbol)
         {
             int usage = (int)OpCode.GetFieldUsage();

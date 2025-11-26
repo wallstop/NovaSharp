@@ -2,39 +2,86 @@ namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using System.IO;
+    using NovaSharp.Cli;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
 
+    /// <summary>
+    /// CLI command that compiles a Lua file into a NovaSharp binary chunk.
+    /// </summary>
     internal sealed class CompileCommand : ICommand
     {
+        /// <inheritdoc />
         public string Name
         {
             get { return "compile"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("compile <filename> - Compiles the file in a binary format");
+            Console.WriteLine(CliMessages.CompileCommandShortHelp);
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine(
-                "compile <filename> - Compiles the file in a binary format.\nThe destination filename will be appended with '-compiled'."
-            );
+            Console.WriteLine(CliMessages.CompileCommandLongHelp);
         }
 
-        public void Execute(ShellContext context, string p)
+        /// <inheritdoc />
+        public void Execute(ShellContext context, string argument)
         {
-            string targetFileName = p + "-compiled";
+            ReadOnlySpan<char> trimmedArgument = (argument ?? string.Empty)
+                .AsSpan()
+                .TrimWhitespace();
+
+            if (trimmedArgument.IsEmpty)
+            {
+                Console.WriteLine(CliMessages.ProgramWrongSyntax);
+                return;
+            }
+
+            string sourcePath =
+                trimmedArgument.Length == (argument?.Length ?? 0)
+                    ? argument
+                    : new string(trimmedArgument);
+            string targetFileName = sourcePath + "-compiled";
 
             Script s = new Script(CoreModules.PresetDefault);
+            try
+            {
+                DynValue chunk = s.LoadFile(sourcePath);
 
-            DynValue chunk = s.LoadFile(p);
+                using Stream stream = new FileStream(
+                    targetFileName,
+                    FileMode.Create,
+                    FileAccess.Write
+                );
+                s.Dump(chunk, stream);
+                Console.WriteLine(CliMessages.CompileCommandSuccess(targetFileName));
+            }
+            catch (Exception ex) when (IsRecoverableCompileException(ex))
+            {
+                Console.WriteLine(CliMessages.CompileCommandFailure(sourcePath, ex.Message));
+            }
+        }
 
-            using Stream stream = new FileStream(targetFileName, FileMode.Create, FileAccess.Write);
-            s.Dump(chunk, stream);
+        private static bool IsRecoverableCompileException(Exception ex)
+        {
+            return ex switch
+            {
+                IOException => true,
+                UnauthorizedAccessException => true,
+                ArgumentException => true,
+                NotSupportedException => true,
+                SyntaxErrorException => true,
+                ScriptRuntimeException => true,
+                _ => false,
+            };
         }
     }
 }

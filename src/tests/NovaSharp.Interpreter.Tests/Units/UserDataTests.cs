@@ -23,23 +23,23 @@ namespace NovaSharp.Interpreter.Tests.Units
         [TearDown]
         public void Cleanup()
         {
-            UserData.UnregisterType(typeof(CustomDescriptorHost));
-            UserData.UnregisterType(typeof(HistoricalHost));
-            UserData.UnregisterType(typeof(ProxyTarget));
-            UserData.UnregisterType(typeof(ProxySurface));
-            UserData.UnregisterType(typeof(RegistryHost));
-            UserData.UnregisterType(typeof(AutoPolicyHost));
-            UserData.UnregisterType(typeof(BaseHost));
-            UserData.UnregisterType(typeof(EqualityHost));
-            UserData.UnregisterType(typeof(IMarker));
-            UserData.UnregisterType(typeof(AnnotatedHost));
+            UserData.UnregisterType<CustomDescriptorHost>();
+            UserData.UnregisterType<HistoricalHost>();
+            UserData.UnregisterType<ProxyTarget>();
+            UserData.UnregisterType<ProxySurface>();
+            UserData.UnregisterType<RegistryHost>();
+            UserData.UnregisterType<AutoPolicyHost>();
+            UserData.UnregisterType<BaseHost>();
+            UserData.UnregisterType<EqualityHost>();
+            UserData.UnregisterType<IMarker>();
+            UserData.UnregisterType<AnnotatedHost>();
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
         }
 
         [Test]
         public void CreateReturnsNullForUnregisteredType()
         {
-            UserData.UnregisterType(typeof(UnregisteredHost));
+            UserData.UnregisterType<UnregisteredHost>();
 
             DynValue result = UserData.Create(new UnregisteredHost());
 
@@ -110,10 +110,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             UserData.RegisterExtensionType(typeof(CustomDescriptorHostExtensions));
             int updatedVersion = UserData.GetExtensionMethodsChangeVersion();
 
-            List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
-                nameof(CustomDescriptorHostExtensions.Decorate),
-                typeof(CustomDescriptorHost)
-            );
+            IReadOnlyList<IOverloadableMemberDescriptor> methods =
+                UserData.GetExtensionMethodsByNameAndType(
+                    nameof(CustomDescriptorHostExtensions.Decorate),
+                    typeof(CustomDescriptorHost)
+                );
 
             Assert.Multiple(() =>
             {
@@ -148,9 +149,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CreateStaticReturnsNullWhenDescriptorUnavailable()
         {
-            UserData.UnregisterType(typeof(UnregisteredHost));
+            UserData.UnregisterType<UnregisteredHost>();
 
-            DynValue result = UserData.CreateStatic(typeof(UnregisteredHost));
+            DynValue result = UserData.CreateStatic<UnregisteredHost>();
 
             Assert.That(result, Is.Null);
         }
@@ -168,7 +169,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void AutomaticRegistrationPolicyRegistersTypesOnDemand()
         {
-            UserData.UnregisterType(typeof(AutoPolicyHost));
+            UserData.UnregisterType<AutoPolicyHost>();
 
             UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
             DynValue dynValue = UserData.Create(new AutoPolicyHost());
@@ -212,10 +213,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                 InteropAccessMode.Reflection
             );
             MarkerDescriptor interfaceDescriptor = new();
-            UserData.RegisterType(typeof(IMarker), interfaceDescriptor);
+            UserData.RegisterType<IMarker>(interfaceDescriptor);
 
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
-                typeof(DerivedInterfaceHost),
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<DerivedInterfaceHost>(
                 searchInterfaces: true
             );
 
@@ -236,20 +236,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             CustomWireableDescriptor competing = new("competing");
 
             UserData.RegisterType(initial);
-            IUserDataDescriptor result = UserData.RegisterType(
-                typeof(CustomDescriptorHost),
-                competing
-            );
+            IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(competing);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
 
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.SameAs(competing));
                 Assert.That(
-                    UserData.GetDescriptorForType(
-                        typeof(CustomDescriptorHost),
-                        searchInterfaces: false
-                    ),
+                    UserData.GetDescriptorForType<CustomDescriptorHost>(searchInterfaces: false),
                     Is.SameAs(initial)
                 );
                 Assert.That(dynValue.UserData.Descriptor, Is.SameAs(initial));
@@ -259,7 +253,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void RegisterAssemblyRegistersAnnotatedTypesWhenAssemblyIsNull()
         {
-            UserData.UnregisterType(typeof(AnnotatedHost));
+            UserData.UnregisterType<AnnotatedHost>();
             Assert.That(UserData.IsTypeRegistered<AnnotatedHost>(), Is.False);
 
             try
@@ -354,8 +348,8 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void StaticUserDataWithMatchingDescriptorsAreEqual()
         {
             UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
-            DynValue left = UserData.CreateStatic(typeof(EqualityHost));
-            DynValue right = UserData.CreateStatic(typeof(EqualityHost));
+            DynValue left = UserData.CreateStatic<EqualityHost>();
+            DynValue right = UserData.CreateStatic<EqualityHost>();
 
             Assert.That(left.Equals(right), Is.True);
         }
@@ -400,12 +394,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetDescriptorForTypeSearchInterfacesReturnsInterfaceDescriptor()
         {
-            UserData.RegisterType(typeof(IMarker), InteropAccessMode.Reflection);
+            UserData.RegisterType<IMarker>(InteropAccessMode.Reflection);
 
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForType(
-                typeof(InterfaceHost),
-                true
-            );
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<InterfaceHost>(true);
 
             Assert.Multiple(() =>
             {
@@ -507,89 +498,92 @@ namespace NovaSharp.Interpreter.Tests.Units
     }
 }
 
-internal sealed class CustomDescriptorHost
+namespace NovaSharp.Interpreter.Tests.Units
 {
-    public CustomDescriptorHost(string name)
+    internal sealed class CustomDescriptorHost
     {
-        Name = name;
+        public CustomDescriptorHost(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+
+        public override string ToString()
+        {
+            return $"Host:{Name}";
+        }
     }
 
-    public string Name { get; }
+    public sealed class HistoricalHost { }
 
-    public override string ToString()
+    internal sealed class ProxyTarget
     {
-        return $"Host:{Name}";
+        public ProxyTarget(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
     }
+
+    internal sealed class ProxySurface
+    {
+        public ProxySurface(ProxyTarget target)
+        {
+            Target = target;
+        }
+
+        public ProxyTarget Target { get; }
+    }
+
+    internal sealed class UnregisteredHost { }
+
+    internal static class CustomDescriptorHostExtensions
+    {
+        public static string Decorate(this CustomDescriptorHost host, string suffix)
+        {
+            return (host?.ToString() ?? string.Empty) + suffix;
+        }
+    }
+
+    public sealed class RegistryHost { }
+
+    internal sealed class AutoPolicyHost { }
+
+    public class BaseHost { }
+
+    internal sealed class DerivedHost : BaseHost { }
+
+    public sealed class DerivedInterfaceHost : BaseHost, IMarker { }
+
+    internal interface IMarker { }
+
+    public sealed class InterfaceHost : IMarker { }
+
+    internal sealed class EqualityHost
+    {
+        public EqualityHost(string label)
+        {
+            Label = label;
+        }
+
+        public string Label { get; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is EqualityHost other
+                && string.Equals(Label, other.Label, System.StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode()
+        {
+            return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
+        }
+    }
+
+    [global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
+        AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
+    )]
+    public sealed class AnnotatedHost { }
 }
-
-internal sealed class HistoricalHost { }
-
-internal sealed class ProxyTarget
-{
-    public ProxyTarget(string name)
-    {
-        Name = name;
-    }
-
-    public string Name { get; }
-}
-
-internal sealed class ProxySurface
-{
-    public ProxySurface(ProxyTarget target)
-    {
-        Target = target;
-    }
-
-    public ProxyTarget Target { get; }
-}
-
-internal sealed class UnregisteredHost { }
-
-internal static class CustomDescriptorHostExtensions
-{
-    public static string Decorate(this CustomDescriptorHost host, string suffix)
-    {
-        return (host?.ToString() ?? string.Empty) + suffix;
-    }
-}
-
-internal sealed class RegistryHost { }
-
-internal sealed class AutoPolicyHost { }
-
-internal class BaseHost { }
-
-internal sealed class DerivedHost : BaseHost { }
-
-internal sealed class DerivedInterfaceHost : BaseHost, IMarker { }
-
-internal interface IMarker { }
-
-internal sealed class InterfaceHost : IMarker { }
-
-internal sealed class EqualityHost
-{
-    public EqualityHost(string label)
-    {
-        Label = label;
-    }
-
-    public string Label { get; }
-
-    public override bool Equals(object obj)
-    {
-        return obj is EqualityHost other
-            && string.Equals(Label, other.Label, System.StringComparison.Ordinal);
-    }
-
-    public override int GetHashCode()
-    {
-        return Label?.GetHashCode(System.StringComparison.Ordinal) ?? 0;
-    }
-}
-
-[global::NovaSharp.Interpreter.Interop.Attributes.NovaSharpUserData(
-    AccessMode = global::NovaSharp.Interpreter.Interop.InteropAccessMode.Reflection
-)]
-internal sealed class AnnotatedHost { }

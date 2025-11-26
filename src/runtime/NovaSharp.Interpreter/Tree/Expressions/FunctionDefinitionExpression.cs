@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using Debugging;
     using Execution.Scopes;
     using NovaSharp.Interpreter.DataTypes;
@@ -11,6 +12,14 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Tree.Lexer;
     using Statements;
 
+    /// <summary>
+    /// Represents a parsed Lua function literal (including lambdas) and knows how to emit its body.
+    /// </summary>
+    /// <remarks>
+    /// The expression captures lexical scope information (parameters, varargs, upvalues, and the
+    /// enclosing environment) so compilation can recreate closures with the same behaviour Lua
+    /// expects when evaluating <c>function</c> statements.
+    /// </remarks>
     internal class FunctionDefinitionExpression : Expression, IClosureBuilder
     {
         private readonly SymbolRef[] _paramNames;
@@ -53,7 +62,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer should be at the '(' or at the '|'
             Token openRound = CheckTokenType(
                 lcontext,
-                isLambda ? TokenType.Lambda : TokenType.BrkOpenRound
+                isLambda ? TokenType.Pipe : TokenType.BrkOpenRound
             );
 
             List<string> paramnames = BuildParamList(lcontext, pushSelfParam, openRound, isLambda);
@@ -90,7 +99,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             lcontext.Source.Refs.Add(_end);
         }
 
-        private Statement CreateLambdaBody(ScriptLoadingContext lcontext)
+        private static Statement CreateLambdaBody(ScriptLoadingContext lcontext)
         {
             Token start = lcontext.Lexer.Current;
             Expression e = Expr(lcontext);
@@ -104,7 +113,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         {
             Statement s = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.type != TokenType.End)
+            if (lcontext.Lexer.Current.Type != TokenType.End)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
@@ -112,7 +121,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                     lcontext.Lexer.Current.Text
                 )
                 {
-                    IsPrematureStreamTermination = (lcontext.Lexer.Current.type == TokenType.Eof),
+                    IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
                 };
             }
 
@@ -129,7 +138,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bool isLambda
         )
         {
-            TokenType closeToken = isLambda ? TokenType.Lambda : TokenType.BrkCloseRound;
+            TokenType closeToken = isLambda ? TokenType.Pipe : TokenType.BrkCloseRound;
 
             List<string> paramnames = new();
 
@@ -139,15 +148,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 paramnames.Add("self");
             }
 
-            while (lcontext.Lexer.Current.type != closeToken)
+            while (lcontext.Lexer.Current.Type != closeToken)
             {
                 Token t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Name)
+                if (t.Type == TokenType.Name)
                 {
                     paramnames.Add(t.Text);
                 }
-                else if (t.type == TokenType.VarArgs)
+                else if (t.Type == TokenType.VarArgs)
                 {
                     _hasVarArgs = true;
                     paramnames.Add(WellKnownSymbols.VARARGS);
@@ -161,7 +170,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 t = lcontext.Lexer.Current;
 
-                if (t.type == TokenType.Comma)
+                if (t.Type == TokenType.Comma)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -172,7 +181,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            if (lcontext.Lexer.Current.type == closeToken)
+            if (lcontext.Lexer.Current.Type == closeToken)
             {
                 lcontext.Lexer.Next();
             }
@@ -180,7 +189,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return paramnames;
         }
 
-        private SymbolRef[] DefineArguments(List<string> paramnames, ScriptLoadingContext lcontext)
+        private static SymbolRef[] DefineArguments(
+            List<string> paramnames,
+            ScriptLoadingContext lcontext
+        )
         {
             HashSet<string> names = new();
 
@@ -190,7 +202,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             {
                 if (!names.Add(paramnames[i]))
                 {
-                    paramnames[i] = paramnames[i] + "@" + i.ToString();
+                    paramnames[i] = paramnames[i] + "@" + i.ToString(CultureInfo.InvariantCulture);
                 }
 
                 ret[i] = lcontext.Scope.DefineLocal(paramnames[i]);
@@ -199,13 +211,19 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return ret;
         }
 
-        public SymbolRef CreateUpvalue(BuildTimeScope scope, SymbolRef symbol)
+        /// <summary>
+        /// Creates or reuses a closure entry for the supplied symbol and returns an upvalue reference.
+        /// </summary>
+        /// <param name="scope">Scope that owns the symbol being captured.</param>
+        /// <param name="symbol">Symbol that must remain accessible inside the compiled function.</param>
+        /// <returns>An upvalue pointing to the captured symbol.</returns>
+        public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol)
         {
             for (int i = 0; i < _closure.Count; i++)
             {
-                if (_closure[i].i_Name == symbol.i_Name)
+                if (_closure[i].NameValue == symbol.NameValue)
                 {
-                    return SymbolRef.Upvalue(symbol.i_Name, i);
+                    return SymbolRef.UpValue(symbol.NameValue, i);
                 }
             }
 
@@ -216,9 +234,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 _closureInstruction.SymbolList = _closure.ToArray();
             }
 
-            return SymbolRef.Upvalue(symbol.i_Name, _closure.Count - 1);
+            return SymbolRef.UpValue(symbol.NameValue, _closure.Count - 1);
         }
 
+        /// <summary>
+        /// Dynamic expressions cannot introduce new functions, so evaluation always fails.
+        /// </summary>
+        /// <param name="context">Execution context requesting the function value.</param>
+        /// <returns>Nothing; this method always throws.</returns>
+        /// <exception cref="DynamicExpressionException">Always thrown to signal invalid usage.</exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             throw new DynamicExpressionException(
@@ -226,33 +250,41 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             );
         }
 
+        /// <summary>
+        /// Emits the bytecode for the function body and returns the instruction pointer of the entry.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
+        /// <param name="friendlyName">
+        /// Optional descriptive name used for debugger metadata; falls back to the source location.
+        /// </param>
+        /// <returns>The instruction pointer pointing at the first opcode of the function body.</returns>
         public int CompileBody(ByteCode bc, string friendlyName)
         {
             string funcName = friendlyName ?? ("<" + _begin.FormatLocation(bc.Script, true) + ">");
 
             bc.PushSourceRef(_begin);
 
-            Instruction i = bc.Emit_Jump(OpCode.Jump, -1);
+            Instruction i = bc.EmitJump(OpCode.Jump, -1);
 
-            Instruction meta = bc.Emit_Meta(funcName, OpCodeMetadataType.FunctionEntrypoint);
+            Instruction meta = bc.EmitMeta(funcName, OpCodeMetadataType.FunctionEntrypoint);
             int metaip = bc.GetJumpPointForLastInstruction();
 
-            bc.Emit_BeginFn(_stackFrame);
+            bc.EmitBeginFn(_stackFrame);
 
-            bc.LoopTracker.loops.Push(new LoopBoundary());
+            bc.LoopTracker.Loops.Push(new LoopBoundary());
 
             int entryPoint = bc.GetJumpPointForLastInstruction();
 
             if (_usesGlobalEnv)
             {
-                bc.Emit_Load(SymbolRef.Upvalue(WellKnownSymbols.ENV, 0));
-                bc.Emit_Store(_env, 0, 0);
-                bc.Emit_Pop();
+                bc.EmitLoad(SymbolRef.UpValue(WellKnownSymbols.ENV, 0));
+                bc.EmitStore(_env, 0, 0);
+                bc.EmitPop();
             }
 
             if (_paramNames.Length > 0)
             {
-                bc.Emit_Args(_paramNames);
+                bc.EmitArgs(_paramNames);
             }
 
             _statement.Compile(bc);
@@ -260,9 +292,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             bc.PopSourceRef();
             bc.PushSourceRef(_end);
 
-            bc.Emit_Ret(0);
+            bc.EmitRet(0);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             i.NumVal = bc.GetJumpPointForNextInstruction();
             meta.NumVal = bc.GetJumpPointForLastInstruction() - metaip;
@@ -272,6 +304,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return entryPoint;
         }
 
+        /// <summary>
+        /// Emits the closure wrapper for this function and allows the caller to insert extra opcodes.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
+        /// <param name="afterDecl">
+        /// Callback that emits additional instructions immediately after the closure declaration and
+        /// returns how many opcodes it injected so jump offsets can be adjusted.
+        /// </param>
+        /// <param name="friendlyName">Optional name reported in debugger metadata.</param>
+        /// <returns>The instruction pointer pointing at the start of the compiled function body.</returns>
         public int Compile(ByteCode bc, Func<int> afterDecl, string friendlyName)
         {
             using (bc.EnterSource(_begin))
@@ -280,7 +322,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
                 //.Select((s, idx) => s.CloneLocalAndSetFrame(_ClosureFrames[idx]))
                 .ToArray();
 
-                _closureInstruction = bc.Emit_Closure(symbs, bc.GetJumpPointForNextInstruction());
+                _closureInstruction = bc.EmitClosure(symbs, bc.GetJumpPointForNextInstruction());
                 int ops = afterDecl();
 
                 _closureInstruction.NumVal += 2 + ops;
@@ -289,6 +331,10 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             return CompileBody(bc, friendlyName);
         }
 
+        /// <summary>
+        /// Compiles the function definition and leaves the resulting closure on the stack.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
         public override void Compile(ByteCode bc)
         {
             Compile(bc, () => 0, null);

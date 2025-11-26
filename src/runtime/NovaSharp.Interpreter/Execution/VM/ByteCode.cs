@@ -1,10 +1,11 @@
-#define EMIT_DEBUG_OPS
+#define EmitDebug_OPS
 
 namespace NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using Debugging;
@@ -12,20 +13,46 @@ namespace NovaSharp.Interpreter.Execution.VM
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
 
+    /// <summary>
+    /// Provides the fluent API the parser uses to emit NovaSharp VM instructions for a compiled script.
+    /// </summary>
+    /// <remarks>
+    /// Each method appends an <see cref="Instruction"/> configured for the Lua construct being compiled.
+    /// The resulting buffer is consumed by <see cref="Processor"/> during execution.
+    /// </remarks>
     internal class ByteCode : RefIdObject
     {
-        public List<Instruction> code = new();
+        /// <summary>
+        /// Gets the ordered list of instructions produced for the chunk.
+        /// </summary>
+        public List<Instruction> Code { get; } = new();
+
+        /// <summary>
+        /// Gets the script that owns this bytecode buffer.
+        /// </summary>
         public Script Script { get; private set; }
         private readonly List<SourceRef> _sourceRefStack = new();
         private SourceRef _currentSourceRef;
 
-        internal LoopTracker LoopTracker = new();
+        /// <summary>
+        /// Tracks active loop constructs while emitting so <c>break</c> statements can resolve jump sites.
+        /// </summary>
+        internal LoopTracker LoopTracker { get; } = new();
 
+        /// <summary>
+        /// Initializes the bytecode builder for the given script.
+        /// </summary>
+        /// <param name="script">Script that hosts the emitted code.</param>
         public ByteCode(Script script)
         {
             Script = script;
         }
 
+        /// <summary>
+        /// Enters the specified source reference, returning a guard that automatically pops the reference.
+        /// </summary>
+        /// <param name="sref">Source being compiled.</param>
+        /// <returns>A disposable guard.</returns>
         public IDisposable EnterSource(SourceRef sref)
         {
             return new SourceCodeStackGuard(sref, this);
@@ -35,24 +62,36 @@ namespace NovaSharp.Interpreter.Execution.VM
         {
             private readonly ByteCode _bc;
 
+            /// <summary>
+            /// Initializes the guard and pushes the supplied source reference on the stack.
+            /// </summary>
             public SourceCodeStackGuard(SourceRef sref, ByteCode bc)
             {
                 _bc = bc;
                 _bc.PushSourceRef(sref);
             }
 
+            /// <summary>
+            /// Pops the source reference recorded by the guard.
+            /// </summary>
             public void Dispose()
             {
                 _bc.PopSourceRef();
             }
         }
 
+        /// <summary>
+        /// Pushes a source reference so the next instructions inherit its file/line info.
+        /// </summary>
         public void PushSourceRef(SourceRef sref)
         {
             _sourceRefStack.Add(sref);
             _currentSourceRef = sref;
         }
 
+        /// <summary>
+        /// Pops the most recent source reference, restoring the previous one (if any).
+        /// </summary>
         public void PopSourceRef()
         {
             _sourceRefStack.RemoveAt(_sourceRefStack.Count - 1);
@@ -60,19 +99,26 @@ namespace NovaSharp.Interpreter.Execution.VM
         }
 
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
+        /// <summary>
+        /// Dumps the current instruction stream to disk for debugging purposes.
+        /// </summary>
+        /// <param name="file">Destination file path.</param>
         public void Dump(string file)
         {
             StringBuilder sb = new();
 
-            for (int i = 0; i < code.Count; i++)
+            for (int i = 0; i < Code.Count; i++)
             {
-                if (code[i].OpCode == OpCode.Debug)
+                if (Code[i].OpCode == OpCode.Debug)
                 {
-                    sb.AppendFormat("    {0}\n", code[i]);
+                    sb.Append("    ").Append(Code[i]).Append('\n');
                 }
                 else
                 {
-                    sb.AppendFormat("{0:X8}  {1}\n", i, code[i]);
+                    sb.Append(i.ToString("X8", CultureInfo.InvariantCulture))
+                        .Append("  ")
+                        .Append(Code[i])
+                        .Append('\n');
                 }
             }
 
@@ -80,49 +126,75 @@ namespace NovaSharp.Interpreter.Execution.VM
         }
 #endif
 
+        /// <summary>
+        /// Gets the instruction index where the next emission will land. Useful for jump patching.
+        /// </summary>
         public int GetJumpPointForNextInstruction()
         {
-            return code.Count;
+            return Code.Count;
         }
 
+        /// <summary>
+        /// Gets the index of the last emitted instruction.
+        /// </summary>
         public int GetJumpPointForLastInstruction()
         {
-            return code.Count - 1;
+            return Code.Count - 1;
         }
 
+        /// <summary>
+        /// Gets the most recently appended instruction.
+        /// </summary>
         public Instruction GetLastInstruction()
         {
-            return code[^1];
+            return Code[^1];
         }
 
         private Instruction AppendInstruction(Instruction c)
         {
-            code.Add(c);
+            Code.Add(c);
             return c;
         }
 
-        public Instruction Emit_Nop(string comment)
+        /// <summary>
+        /// Emits a no-op instruction, typically used for breakpoints or placeholders.
+        /// </summary>
+        /// <param name="comment">Friendly name rendered in disassembly.</param>
+        public Instruction EmitNop(string comment)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Nop, Name = comment }
             );
         }
 
-        public Instruction Emit_Invalid(string type)
+        /// <summary>
+        /// Emits the invalid opcode for guard paths that should never execute.
+        /// </summary>
+        /// <param name="type">Reason the code path is invalid.</param>
+        public Instruction EmitInvalid(string type)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Invalid, Name = type }
             );
         }
 
-        public Instruction Emit_Pop(int num = 1)
+        /// <summary>
+        /// Emits a pop instruction that removes the specified number of values from the stack.
+        /// </summary>
+        /// <param name="num">Values to pop.</param>
+        public Instruction EmitPop(int num = 1)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Pop, NumVal = num }
             );
         }
 
-        public void Emit_Call(int argCount, string debugName)
+        /// <summary>
+        /// Emits a function call with the specified argument count.
+        /// </summary>
+        /// <param name="argCount">Argument count passed to the callee.</param>
+        /// <param name="debugName">Name describing the call site for debugging.</param>
+        public void EmitCall(int argCount, string debugName)
         {
             AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -134,7 +206,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public void Emit_ThisCall(int argCount, string debugName)
+        /// <summary>
+        /// Emits a method call that preserves the implicit <c>self</c> receiver.
+        /// </summary>
+        /// <param name="argCount">Argument count, including the receiver.</param>
+        /// <param name="debugName">Name describing the call site.</param>
+        public void EmitThisCall(int argCount, string debugName)
         {
             AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -146,14 +223,23 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Literal(DynValue value)
+        /// <summary>
+        /// Emits a literal value (number/string/table/function/etc.).
+        /// </summary>
+        public Instruction EmitLiteral(DynValue value)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Literal, Value = value }
             );
         }
 
-        public Instruction Emit_Jump(OpCode jumpOpCode, int idx, int optPar = 0)
+        /// <summary>
+        /// Emits a jump instruction with the provided opcode and target.
+        /// </summary>
+        /// <param name="jumpOpCode">The conditional/unconditional jump opcode.</param>
+        /// <param name="idx">Jump destination index.</param>
+        /// <param name="optPar">Optional parameter (e.g., tuple size).</param>
+        public Instruction EmitJump(OpCode jumpOpCode, int idx, int optPar = 0)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -165,14 +251,22 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_MkTuple(int cnt)
+        /// <summary>
+        /// Emits a tuple construction instruction that aggregates multiple stack values.
+        /// </summary>
+        /// <param name="cnt">Number of values in the tuple.</param>
+        public Instruction EmitMkTuple(int cnt)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.MkTuple, NumVal = cnt }
             );
         }
 
-        public Instruction Emit_Operator(OpCode opcode)
+        /// <summary>
+        /// Emits a unary/binary operator opcode and applies the Lua boolean semantics when needed.
+        /// </summary>
+        /// <param name="opcode">Operator opcode.</param>
+        public Instruction EmitOperator(OpCode opcode)
         {
             Instruction i = AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = opcode }
@@ -191,8 +285,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             return i;
         }
 
-        [Conditional("EMIT_DEBUG_OPS")]
-        public void Emit_Debug(string str)
+        [Conditional("EmitDebug_OPS")]
+        /// <summary>
+        /// Emits a debug marker (only when EmitDebug_OPS is defined) that surfaces in disassembly.
+        /// </summary>
+        /// <param name="str">Debug description.</param>
+        public void EmitDebug(string str)
         {
             AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -203,7 +301,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Enter(RuntimeScopeBlock runtimeScopeBlock)
+        /// <summary>
+        /// Emits an <c>Enter</c> instruction to extend the scope to the specified runtime block.
+        /// </summary>
+        public Instruction EmitEnter(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -216,7 +317,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Leave(RuntimeScopeBlock runtimeScopeBlock)
+        /// <summary>
+        /// Emits a <c>Leave</c> instruction to shrink the scope when the block ends.
+        /// </summary>
+        public Instruction EmitLeave(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -229,7 +333,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Exit(RuntimeScopeBlock runtimeScopeBlock)
+        /// <summary>
+        /// Emits an <c>Exit</c> instruction to abort execution and clean the scope (used by <c>return</c>/<c>goto</c>).
+        /// </summary>
+        public Instruction EmitExit(RuntimeScopeBlock runtimeScopeBlock)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -242,7 +349,10 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Clean(RuntimeScopeBlock runtimeScopeBlock)
+        /// <summary>
+        /// Emits a <c>Clean</c> instruction that closes to-be-closed upvalues past the specified threshold.
+        /// </summary>
+        public Instruction EmitClean(RuntimeScopeBlock runtimeScopeBlock)
         {
             SymbolRef[] closers = Array.Empty<SymbolRef>();
 
@@ -253,7 +363,7 @@ namespace NovaSharp.Interpreter.Execution.VM
 
                 foreach (SymbolRef sym in runtimeScopeBlock.ToBeClosed)
                 {
-                    if (sym.i_Index > threshold)
+                    if (sym.IndexValue > threshold)
                     {
                         subset.Add(sym);
                     }
@@ -276,7 +386,12 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Closure(SymbolRef[] symbols, int jmpnum)
+        /// <summary>
+        /// Emits the closure op for the given upvalue list and jump target (function body).
+        /// </summary>
+        /// <param name="symbols">Captured symbols.</param>
+        /// <param name="jmpnum">Index to the function body.</param>
+        public Instruction EmitClosure(SymbolRef[] symbols, int jmpnum)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -288,35 +403,53 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Args(params SymbolRef[] symbols)
+        /// <summary>
+        /// Emits the Args instruction to describe captured symbols or explicit arguments.
+        /// </summary>
+        public Instruction EmitArgs(params SymbolRef[] symbols)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Args, SymbolList = symbols }
             );
         }
 
-        public Instruction Emit_Ret(int retvals)
+        /// <summary>
+        /// Emits a return opcode with the specified number of values.
+        /// </summary>
+        public Instruction EmitRet(int retvals)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Ret, NumVal = retvals }
             );
         }
 
-        public Instruction Emit_ToNum(int stage = 0)
+        /// <summary>
+        /// Emits a number conversion helper used by <c>tonumber</c> and numeric for loops.
+        /// </summary>
+        /// <param name="stage">Stage of the conversion pipeline.</param>
+        public Instruction EmitToNum(int stage = 0)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.ToNum, NumVal = stage }
             );
         }
 
-        public Instruction Emit_Incr(int i)
+        /// <summary>
+        /// Emits the increment opcode used by numeric for loops.
+        /// </summary>
+        /// <param name="i">Step amount.</param>
+        public Instruction EmitIncr(int i)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Incr, NumVal = i }
             );
         }
 
-        public Instruction Emit_NewTable(bool shared)
+        /// <summary>
+        /// Emits a new table allocation instruction.
+        /// </summary>
+        /// <param name="shared">Whether the table is shared with nested closures.</param>
+        public Instruction EmitNewTable(bool shared)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -327,14 +460,21 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_IterPrep()
+        /// <summary>
+        /// Emits the iteration preparation opcode for generic for loops.
+        /// </summary>
+        public Instruction EmitIterPrep()
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.IterPrep }
             );
         }
 
-        public Instruction Emit_ExpTuple(int stackOffset)
+        /// <summary>
+        /// Emits an expression tuple expansion so multi-return functions can be aligned.
+        /// </summary>
+        /// <param name="stackOffset">Offset from the current stack top.</param>
+        public Instruction EmitExpTuple(int stackOffset)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -345,14 +485,23 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_IterUpd()
+        /// <summary>
+        /// Emits the iterator update opcode used within generic for loops.
+        /// </summary>
+        public Instruction EmitIterUpd()
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.IterUpd }
             );
         }
 
-        public Instruction Emit_Meta(
+        /// <summary>
+        /// Emits a metadata instruction describing Lua-friendly names for runtime helpers.
+        /// </summary>
+        /// <param name="funcName">Name of the helper.</param>
+        /// <param name="metaType">Metadata category.</param>
+        /// <param name="value">Optional payload.</param>
+        public Instruction EmitMeta(
             string funcName,
             OpCodeMetadataType metaType,
             DynValue value = null
@@ -369,7 +518,11 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_BeginFn(RuntimeScopeFrame stackFrame)
+        /// <summary>
+        /// Emits the BeginFn opcode, supplying the debug symbols captured for the compiled function.
+        /// </summary>
+        /// <param name="stackFrame">Frame describing locals and to-be-closed vars.</param>
+        public Instruction EmitBeginFn(RuntimeScopeFrame stackFrame)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -382,22 +535,31 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Scalar()
+        /// <summary>
+        /// Emits a scalar marker indicating the stack holds exactly one value (normalizing tuples).
+        /// </summary>
+        public Instruction EmitScalar()
         {
             return AppendInstruction(new Instruction(_currentSourceRef) { OpCode = OpCode.Scalar });
         }
 
-        public int Emit_Load(SymbolRef sym)
+        /// <summary>
+        /// Emits the instructions necessary to load the specified symbol onto the stack.
+        /// </summary>
+        /// <param name="sym">Symbol to read.</param>
+        /// <returns>Number of instructions emitted.</returns>
+        /// <exception cref="InternalErrorException">Thrown when the symbol type is unknown.</exception>
+        public int EmitLoad(SymbolRef sym)
         {
             switch (sym.Type)
             {
                 case SymbolRefType.Global:
-                    Emit_Load(sym.i_Env);
+                    EmitLoad(sym.EnvironmentRef);
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.Index,
-                            Value = DynValue.NewString(sym.i_Name),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -406,9 +568,9 @@ namespace NovaSharp.Interpreter.Execution.VM
                         new Instruction(_currentSourceRef) { OpCode = OpCode.Local, Symbol = sym }
                     );
                     return 1;
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     AppendInstruction(
-                        new Instruction(_currentSourceRef) { OpCode = OpCode.Upvalue, Symbol = sym }
+                        new Instruction(_currentSourceRef) { OpCode = OpCode.UpValue, Symbol = sym }
                     );
                     return 1;
                 default:
@@ -416,12 +578,19 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        public int Emit_Store(SymbolRef sym, int stackofs, int tupleidx)
+        /// <summary>
+        /// Emits the instructions required to store a tuple value into the specified symbol.
+        /// </summary>
+        /// <param name="sym">Symbol to write.</param>
+        /// <param name="stackofs">Stack offset where the tuple starts.</param>
+        /// <param name="tupleidx">Index inside the tuple.</param>
+        /// <returns>Number of instructions emitted.</returns>
+        public int EmitStore(SymbolRef sym, int stackofs, int tupleidx)
         {
             switch (sym.Type)
             {
                 case SymbolRefType.Global:
-                    Emit_Load(sym.i_Env);
+                    EmitLoad(sym.EnvironmentRef);
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {
@@ -429,7 +598,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                             Symbol = sym,
                             NumVal = stackofs,
                             NumVal2 = tupleidx,
-                            Value = DynValue.NewString(sym.i_Name),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -444,7 +613,7 @@ namespace NovaSharp.Interpreter.Execution.VM
                         }
                     );
                     return 1;
-                case SymbolRefType.Upvalue:
+                case SymbolRefType.UpValue:
                     AppendInstruction(
                         new Instruction(_currentSourceRef)
                         {
@@ -460,14 +629,21 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        public Instruction Emit_TblInitN()
+        /// <summary>
+        /// Emits the table-initializer opcode for next-field appends.
+        /// </summary>
+        public Instruction EmitTblInitN()
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.TblInitN }
             );
         }
 
-        public Instruction Emit_TblInitI(bool lastpos)
+        /// <summary>
+        /// Emits the table-initializer opcode for array-style writes.
+        /// </summary>
+        /// <param name="lastpos">True when this is the final array fill, enabling fast path cleanup.</param>
+        public Instruction EmitTblInitI(bool lastpos)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -478,7 +654,13 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Index(
+        /// <summary>
+        /// Emits the appropriate index instruction depending on the access style (name / expr list / regular).
+        /// </summary>
+        /// <param name="index">Optional literal index.</param>
+        /// <param name="isNameIndex">Whether the index is a string literal.</param>
+        /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        public Instruction EmitIndex(
             DynValue index = null,
             bool isNameIndex = false,
             bool isExpList = false
@@ -503,7 +685,15 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_IndexSet(
+        /// <summary>
+        /// Emits the appropriate index set instruction for the access style.
+        /// </summary>
+        /// <param name="stackofs">Stack offset containing the table.</param>
+        /// <param name="tupleidx">Index within the tuple source.</param>
+        /// <param name="index">Optional literal index.</param>
+        /// <param name="isNameIndex">Whether the index is a string literal.</param>
+        /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        public Instruction EmitIndexSet(
             int stackofs,
             int tupleidx,
             DynValue index = null,
@@ -536,14 +726,23 @@ namespace NovaSharp.Interpreter.Execution.VM
             );
         }
 
-        public Instruction Emit_Copy(int numval)
+        /// <summary>
+        /// Emits a copy instruction that duplicates the top n stack slots (used by vararg propagation).
+        /// </summary>
+        /// <param name="numval">Number of values to copy.</param>
+        public Instruction EmitCopy(int numval)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Copy, NumVal = numval }
             );
         }
 
-        public Instruction Emit_Swap(int p1, int p2)
+        /// <summary>
+        /// Emits a swap instruction that exchanges two stack slots.
+        /// </summary>
+        /// <param name="p1">First stack index.</param>
+        /// <param name="p2">Second stack index.</param>
+        public Instruction EmitSwap(int p1, int p2)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)

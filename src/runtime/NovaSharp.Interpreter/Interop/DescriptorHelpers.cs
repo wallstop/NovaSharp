@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.Interop
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter.Compatibility;
@@ -33,12 +32,36 @@ namespace NovaSharp.Interpreter.Interop
                 return false;
             }
 
-            NovaSharpVisibleAttribute va = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpVisibleAttribute>()
-                .SingleOrDefault();
-            NovaSharpHiddenAttribute ha = mi.GetCustomAttributes(true)
-                .OfType<NovaSharpHiddenAttribute>()
-                .SingleOrDefault();
+            object[] attributes = mi.GetCustomAttributes(inherit: true);
+
+            NovaSharpVisibleAttribute va = null;
+            NovaSharpHiddenAttribute ha = null;
+
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                if (attributes[i] is NovaSharpVisibleAttribute visibleAttr)
+                {
+                    if (va != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Member '{mi.Name}' specifies NovaSharpVisibleAttribute multiple times."
+                        );
+                    }
+
+                    va = visibleAttr;
+                }
+                else if (attributes[i] is NovaSharpHiddenAttribute hiddenAttr)
+                {
+                    if (ha != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Member '{mi.Name}' specifies NovaSharpHiddenAttribute multiple times."
+                        );
+                    }
+
+                    ha = hiddenAttr;
+                }
+            }
 
             if (va != null && ha != null && va.Visible)
             {
@@ -60,6 +83,9 @@ namespace NovaSharp.Interpreter.Interop
             }
         }
 
+        /// <summary>
+        /// Determines whether the supplied type derives from <see cref="Delegate"/>.
+        /// </summary>
         public static bool IsDelegateType(this Type t)
         {
             return Framework.Do.IsAssignableFrom(typeof(Delegate), t);
@@ -70,6 +96,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this Type type)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
 #if NETFX_CORE
             var t = type.GetTypeInfo();
 #else
@@ -108,6 +139,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this FieldInfo info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             if (info.IsPublic)
             {
                 return "public";
@@ -141,6 +177,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this PropertyInfo info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             MethodInfo gm = Framework.Do.GetGetMethod(info);
             MethodInfo sm = Framework.Do.GetSetMethod(info);
 
@@ -166,6 +207,11 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         public static string GetClrVisibility(this MethodBase info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             if (info.IsPublic)
             {
                 return "public";
@@ -201,6 +247,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static bool IsPropertyInfoPublic(this PropertyInfo pi)
         {
+            if (pi == null)
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
+
             MethodInfo getter = Framework.Do.GetGetMethod(pi);
             MethodInfo setter = Framework.Do.GetSetMethod(pi);
 
@@ -213,18 +264,40 @@ namespace NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="mi">The mi.</param>
         /// <returns></returns>
-        public static List<string> GetMetaNamesFromAttributes(this MethodInfo mi)
+        public static IReadOnlyList<string> GetMetaNamesFromAttributes(this MethodInfo mi)
         {
-            return mi.GetCustomAttributes(typeof(NovaSharpUserDataMetamethodAttribute), true)
-                .OfType<NovaSharpUserDataMetamethodAttribute>()
-                .Select(a => a.Name)
-                .ToList();
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
+            object[] attributes = mi.GetCustomAttributes(
+                typeof(NovaSharpUserDataMetamethodAttribute),
+                inherit: true
+            );
+
+            if (attributes.Length == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            List<string> names = new(attributes.Length);
+
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                if (attributes[i] is NovaSharpUserDataMetamethodAttribute attr)
+                {
+                    names.Add(attr.Name);
+                }
+            }
+
+            return names.Count == 0 ? Array.Empty<string>() : names;
         }
 
         /// <summary>
         /// Gets the Types implemented in the assembly, catching the ReflectionTypeLoadException just in case..
         /// </summary>
-        /// <param name="asm">The assebly</param>
+        /// <param name="asm">The assembly</param>
         /// <returns></returns>
         public static Type[] SafeGetTypes(this Assembly asm)
         {
@@ -234,7 +307,7 @@ namespace NovaSharp.Interpreter.Interop
             }
             catch (ReflectionTypeLoadException)
             {
-                return new Type[0];
+                return Array.Empty<Type>();
             }
         }
 
@@ -245,6 +318,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string GetConversionMethodName(this Type type)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             StringBuilder sb = new(type.Name);
 
             for (int i = 0; i < sb.Length; i++)
@@ -265,9 +343,9 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static IEnumerable<Type> GetAllImplementedTypes(this Type t)
         {
-            for (Type ot = t; ot != null; ot = Framework.Do.GetBaseType(ot))
+            for (Type current = t; current != null; current = Framework.Do.GetBaseType(current))
             {
-                yield return ot;
+                yield return current;
             }
 
             foreach (Type it in Framework.Do.GetInterfaces(t))
@@ -339,6 +417,11 @@ namespace NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public static string Camelify(string name)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             StringBuilder sb = new(name.Length);
 
             bool first = true;

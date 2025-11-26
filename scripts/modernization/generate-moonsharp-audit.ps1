@@ -320,7 +320,7 @@ $auditData = @(
         Class  = 'Defect'
         Status = 'Needs reproduction'
         Owner  = 'Runtime'
-        Note   = 'lua type on void should yield ''nil'' not error; review TypeValidationFlags handling'
+        Note   = 'lua type on void should yield ''nil'' not error; review TypeValidationOptions handling'
     }
     [pscustomobject]@{
         Number = 257

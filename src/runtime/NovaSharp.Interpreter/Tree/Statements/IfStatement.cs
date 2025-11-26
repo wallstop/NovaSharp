@@ -7,32 +7,38 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a Lua <c>if</c>/<c>elseif</c>/<c>else</c> block.
+    /// </summary>
     internal class IfStatement : Statement
     {
         private class IfBlock
         {
-            public Expression exp;
-            public Statement block;
-            public RuntimeScopeBlock stackFrame;
-            public SourceRef source;
+            public Expression Condition { get; set; }
+            public CompositeStatement Body { get; set; }
+            public RuntimeScopeBlock StackFrame { get; set; }
+            public SourceRef Source { get; set; }
         }
 
         private readonly List<IfBlock> _ifs = new();
         private readonly IfBlock _else;
         private readonly SourceRef _end;
 
+        /// <summary>
+        /// Parses the conditional chain (zero or more <c>elseif</c> blocks plus an optional <c>else</c> block).
+        /// </summary>
         public IfStatement(ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             while (
-                lcontext.Lexer.Current.type != TokenType.Else
-                && lcontext.Lexer.Current.type != TokenType.End
+                lcontext.Lexer.Current.Type != TokenType.Else
+                && lcontext.Lexer.Current.Type != TokenType.End
             )
             {
                 _ifs.Add(CreateIfBlock(lcontext));
             }
 
-            if (lcontext.Lexer.Current.type == TokenType.Else)
+            if (lcontext.Lexer.Current.Type == TokenType.Else)
             {
                 _else = CreateElseBlock(lcontext);
             }
@@ -41,7 +47,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_end);
         }
 
-        private IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
+        private static IfBlock CreateIfBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.If, TokenType.ElseIf);
 
@@ -49,18 +55,18 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             IfBlock ifblock = new()
             {
-                exp = Expression.Expr(lcontext),
-                source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then)),
-                block = new CompositeStatement(lcontext),
-                stackFrame = lcontext.Scope.PopBlock(),
+                Condition = Expression.Expr(lcontext),
+                Source = type.GetSourceRef(CheckTokenType(lcontext, TokenType.Then)),
+                Body = new CompositeStatement(lcontext),
+                StackFrame = lcontext.Scope.PopBlock(),
             };
 
-            lcontext.Source.Refs.Add(ifblock.source);
+            lcontext.Source.Refs.Add(ifblock.Source);
 
             return ifblock;
         }
 
-        private IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
+        private static IfBlock CreateElseBlock(ScriptLoadingContext lcontext)
         {
             Token type = CheckTokenType(lcontext, TokenType.Else);
 
@@ -68,14 +74,17 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             IfBlock ifblock = new()
             {
-                block = new CompositeStatement(lcontext),
-                stackFrame = lcontext.Scope.PopBlock(),
-                source = type.GetSourceRef(),
+                Body = new CompositeStatement(lcontext),
+                StackFrame = lcontext.Scope.PopBlock(),
+                Source = type.GetSourceRef(),
             };
-            lcontext.Source.Refs.Add(ifblock.source);
+            lcontext.Source.Refs.Add(ifblock.Source);
             return ifblock;
         }
 
+        /// <summary>
+        /// Emits the conditional control flow, patching all jump addresses once the block layout is known.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             List<Instruction> endJumps = new();
@@ -84,39 +93,39 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
             foreach (IfBlock ifblock in _ifs)
             {
-                using (bc.EnterSource(ifblock.source))
+                using (bc.EnterSource(ifblock.Source))
                 {
                     if (lastIfJmp != null)
                     {
                         lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
                     }
 
-                    ifblock.exp.Compile(bc);
-                    lastIfJmp = bc.Emit_Jump(OpCode.Jf, -1);
-                    bc.Emit_Enter(ifblock.stackFrame);
-                    ifblock.block.Compile(bc);
+                    ifblock.Condition.Compile(bc);
+                    lastIfJmp = bc.EmitJump(OpCode.Jf, -1);
+                    bc.EmitEnter(ifblock.StackFrame);
+                    ifblock.Body.Compile(bc);
                 }
 
                 using (bc.EnterSource(_end))
                 {
-                    bc.Emit_Leave(ifblock.stackFrame);
+                    bc.EmitLeave(ifblock.StackFrame);
                 }
 
-                endJumps.Add(bc.Emit_Jump(OpCode.Jump, -1));
+                endJumps.Add(bc.EmitJump(OpCode.Jump, -1));
             }
 
             lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
 
             if (_else != null)
             {
-                using (bc.EnterSource(_else.source))
+                using (bc.EnterSource(_else.Source))
                 {
-                    bc.Emit_Enter(_else.stackFrame);
-                    _else.block.Compile(bc);
+                    bc.EmitEnter(_else.StackFrame);
+                    _else.Body.Compile(bc);
                 }
 
                 {
-                    bc.Emit_Leave(_else.stackFrame);
+                    bc.EmitLeave(_else.StackFrame);
                 }
             }
 

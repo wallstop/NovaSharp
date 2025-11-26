@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -12,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class CollectionsRegisteredTests
     {
-        public class RegCollItem
+        private sealed class RegCollItem
         {
             public int value;
 
@@ -22,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        public class RegCollMethods
+        private sealed class RegCollMethods
         {
             private readonly List<RegCollItem> _items = new()
             {
@@ -34,44 +35,71 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             private readonly List<int> _list = new() { 1, 2, 3 };
             private readonly int[] _array = new int[3] { 2, 4, 6 };
 
+            [SuppressMessage(
+                "Performance",
+                "CA1814:Prefer jagged arrays over multidimensional",
+                Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+            )]
             private readonly int[,] _multiArray = new int[2, 3]
             {
                 { 2, 4, 6 },
                 { 7, 8, 9 },
             };
 
+            [SuppressMessage(
+                "Performance",
+                "CA1814:Prefer jagged arrays over multidimensional",
+                Justification = "Lua interop coverage must keep a true multidimensional array to validate rectangular indexing."
+            )]
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+            )]
             public int[,] GetMultiArray()
             {
                 return _multiArray;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+            )]
             public int[] GetArray()
             {
                 return _array;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+            )]
             public List<RegCollItem> GetItems()
             {
                 return _items;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Lua interop tests require method-style getters to exercise colon-call semantics."
+            )]
             public List<int> GetList()
             {
                 return _list;
             }
 
-            public IEnumerator<int> GetEnumerator()
-            {
-                return GetList().GetEnumerator();
-            }
+            public List<int>.Enumerator GetEnumerator() => _list.GetEnumerator();
         }
 
-        private void Do(string code, Action<DynValue> asserts)
+        private static void Do(string code, Action<DynValue> asserts)
         {
             Do(code, (d, o) => asserts(d));
         }
 
-        private void Do(string code, Action<DynValue, RegCollMethods> asserts)
+        private static void Do(string code, Action<DynValue, RegCollMethods> asserts)
         {
             try
             {

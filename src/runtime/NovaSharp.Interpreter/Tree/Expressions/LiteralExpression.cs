@@ -5,10 +5,16 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a literal token (number, string, boolean, or nil) in the AST.
+    /// </summary>
     internal class LiteralExpression : Expression
     {
         private readonly DynValue _value;
 
+        /// <summary>
+        /// Gets the constant value represented by this literal.
+        /// </summary>
         public DynValue Value
         {
             get { return _value; }
@@ -23,7 +29,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
             : base(lcontext)
         {
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:
@@ -55,11 +61,20 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             lcontext.Lexer.Next();
         }
 
+        /// <summary>
+        /// Emits a literal load so the constant value is pushed on the stack.
+        /// </summary>
+        /// <param name="bc">Bytecode builder that receives the literal instruction.</param>
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_Literal(_value);
+            bc.EmitLiteral(_value);
         }
 
+        /// <summary>
+        /// Returns the literal value when executing a dynamic expression.
+        /// </summary>
+        /// <param name="context">Execution context (unused).</param>
+        /// <returns>The constant <see cref="DynValue" /> backing this expression.</returns>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             return _value;

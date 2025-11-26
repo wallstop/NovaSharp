@@ -62,6 +62,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             InteropAccessMode accessMode
         )
         {
+            if (ei == null)
+            {
+                throw new ArgumentNullException(nameof(ei));
+            }
+
             if (!CheckEventIsCompatible(ei, false))
             {
                 return null;
@@ -105,6 +110,11 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </exception>
         public static bool CheckEventIsCompatible(EventInfo ei, bool throwException)
         {
+            if (ei == null)
+            {
+                throw new ArgumentNullException(nameof(ei));
+            }
+
             if (Framework.Do.IsValueType(ei.DeclaringType))
             {
                 if (throwException)
@@ -247,6 +257,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             return UserData.Create(new EventFacade(this, obj));
         }
 
+        /// <summary>
+        /// Wires the supplied Lua closure into the CLR event (called by <see cref="EventFacade"/>).
+        /// </summary>
         internal DynValue AddCallback(
             object o,
             ScriptExecutionContext context,
@@ -271,6 +284,9 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
             }
         }
 
+        /// <summary>
+        /// Removes the specified Lua closure from the CLR event invocation list.
+        /// </summary>
         internal DynValue RemoveCallback(
             object o,
             ScriptExecutionContext context,
@@ -279,16 +295,10 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         {
             lock (_lock)
             {
-                Closure closure = args.AsType(
-                    0,
-                    string.Format(
-                        "userdata<{0}>.{1}.remove",
-                        EventInfo.DeclaringType,
-                        EventInfo.Name
-                    ),
-                    DataType.Function,
-                    false
-                ).Function;
+                string removeLabel = FormattableString.Invariant(
+                    $"userdata<{EventInfo.DeclaringType}>.{EventInfo.Name}.remove"
+                );
+                Closure closure = args.AsType(0, removeLabel, DataType.Function, false).Function;
 
                 if (_callbacks.RemoveValue(o, closure))
                 {
@@ -702,8 +712,8 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
-        /// <param name="v">The v.</param>
-        public void SetValue(Script script, object obj, DynValue v)
+        /// <param name="value">The value to assign.</param>
+        public void SetValue(Script script, object obj, DynValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

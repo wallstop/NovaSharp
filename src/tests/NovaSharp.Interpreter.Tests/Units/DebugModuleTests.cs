@@ -12,6 +12,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebugModuleTests
     {
+        private static readonly string[] PrintThenReturn = { "print('hello')", "return" };
+        private static readonly string[] ErrorThenReturn = { "error('boom')", "return" };
+        private static readonly string[] ReturnValueSequence = { "return 42", "return" };
+        private static readonly string[] CallClrSequence = { "callClr()", "return" };
+        private static readonly string[] WhitespaceReturnSequence = { "   ", "\treturn" };
+        private static readonly string[] SingleReturnSequence = { "RETURN" };
+
         [OneTimeSetUp]
         public void RegisterTypes()
         {
@@ -32,6 +39,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetUserValueDefaultsToNilWhenUnset()
+        {
+            Script script = CreateScript();
+            DynValue userdata = UserData.Create(new SampleUserData());
+            script.Globals["ud"] = userdata;
+
+            DynValue result = script.DoString("return debug.getuservalue(ud)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void GetUserValueReturnsNilWhenNotUserData()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.getuservalue('not-userdata')");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
         public void SetUserValueUpdatesDescriptor()
         {
             Script script = CreateScript();
@@ -44,6 +72,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(userValue.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void SetUserValueAllowsClearingWithNil()
+        {
+            Script script = CreateScript();
+            DynValue userdata = UserData.Create(new SampleUserData());
+            script.Globals["ud"] = userdata;
+
+            script.DoString("debug.setuservalue(ud, { foo = 'value' })");
+            script.DoString("debug.setuservalue(ud, nil)");
+
+            DynValue cleared = script.DoString("return debug.getuservalue(ud)");
+            Assert.That(cleared.IsNil(), Is.True);
         }
 
         [Test]
@@ -85,6 +127,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void SetMetatableAllowsClearingTableMetatable()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                @"
+                return debug.setmetatable({}, nil) ~= nil
+                "
+            );
+
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
         public void GetMetatableForTypeReturnsTypeMetatable()
         {
             Script script = CreateScript();
@@ -107,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueAndSetupvalueRoundtrip()
+        public void GetUpValueAndSetupvalueRoundtrip()
         {
             Script script = CreateScript();
             script.DoString(
@@ -149,10 +204,48 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void GetUpvalueReturnsNilForClrFunctions()
+        public void GetUpValueReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void GetUpValueReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 10
+                    return function(a) return secret + a end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.getupvalue(fn, 99)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void GetUpValueReturnsNilWhenZeroIndexRequested()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 5
+                    return function() return secret end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.getupvalue(fn, 0)");
 
             Assert.That(result.IsNil(), Is.True);
         }
@@ -167,7 +260,26 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueIdAndJoinShareClosures()
+        public void SetupvalueReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local secret = 10
+                    return function(a) return secret + a end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.setupvalue(fn, 99, 20)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void UpValueIdAndJoinShareClosures()
         {
             Script script = CreateScript();
             script.DoString(
@@ -216,7 +328,35 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void UpvalueJoinThrowsOnInvalidIndex()
+        public void UpValueIdReturnsNilForClrFunctions()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return debug.upvalueid(print, 1)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void UpValueIdReturnsNilWhenIndexOutOfRange()
+        {
+            Script script = CreateScript();
+            script.DoString(
+                @"
+                local function factory()
+                    local value = 0
+                    return function() return value end
+                end
+                fn = factory()
+                "
+            );
+
+            DynValue result = script.DoString("return debug.upvalueid(fn, 99)");
+
+            Assert.That(result.IsNil(), Is.True);
+        }
+
+        [Test]
+        public void UpValueJoinThrowsOnInvalidIndex()
         {
             Script script = CreateScript();
 
@@ -230,6 +370,29 @@ namespace NovaSharp.Interpreter.Tests.Units
                         end
                         local fn = factory()
                         debug.upvaluejoin(fn, 5, fn, 1)
+                        "
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("invalid upvalue index")
+            );
+        }
+
+        [Test]
+        public void UpValueJoinThrowsWhenSecondIndexInvalid()
+        {
+            Script script = CreateScript();
+
+            Assert.That(
+                () =>
+                    script.DoString(
+                        @"
+                        local function factory()
+                            local value = 0
+                            return function() return value end
+                        end
+                        local fn = factory()
+                        debug.upvaluejoin(fn, 1, fn, 5)
                         "
                     ),
                 Throws
@@ -263,6 +426,35 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TracebackOmitsMessageWhenNil()
+        {
+            Script script = CreateScript();
+            DynValue trace = script.DoString("return debug.traceback(nil, 0)");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(trace.String, Does.StartWith("stack traceback:"));
+                Assert.That(trace.String, Does.Not.Contain("nil"));
+            });
+        }
+
+        [Test]
+        public void TracebackIncludesFunctionNameWhenAvailable()
+        {
+            Script script = CreateScript();
+            DynValue trace = script.DoString(
+                @"
+                local function inner()
+                    return debug.traceback('from inner', 0)
+                end
+                return inner()
+                "
+            );
+
+            Assert.That(trace.String, Does.Contain("function 'inner"));
+        }
+
+        [Test]
         public void TracebackAcceptsThreadArgument()
         {
             Script script = CreateScript();
@@ -288,7 +480,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopProcessesQueuedCommands()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "print('hello')", "return" });
+            Queue<string> commands = new(PrintThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -308,7 +500,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopReportsErrorsAndRespectsReturnCommand()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "error('boom')", "return" });
+            Queue<string> commands = new(ErrorThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -327,7 +519,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopPrintsReturnedValues()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "return 42", "return" });
+            Queue<string> commands = new(ReturnValueSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -346,7 +538,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHandlesGeneralExceptions()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "callClr()", "return" });
+            Queue<string> commands = new(CallClrSequence);
             List<string> output = new();
 
             script.Globals["callClr"] = DynValue.NewCallback(
@@ -389,7 +581,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopTreatsWhitespaceInputAsNoOp()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "   ", "\treturn" });
+            Queue<string> commands = new(WhitespaceReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -409,7 +601,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebugLoopHonoursReturnCommandWithDifferentCase()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new[] { "RETURN" });
+            Queue<string> commands = new(SingleReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;

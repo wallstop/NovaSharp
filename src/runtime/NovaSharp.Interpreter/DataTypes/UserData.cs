@@ -2,7 +2,7 @@ namespace NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
+    using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -32,8 +32,13 @@ namespace NovaSharp.Interpreter.DataTypes
         public DynValue UserValue { get; set; }
 
         /// <summary>
-        /// Gets the object associated to this userdata (null for statics)
+        /// Gets the object associated to this userdata (null for static members)
         /// </summary>
+        [SuppressMessage(
+            "Naming",
+            "CA1720:Identifier contains type name",
+            Justification = "UserData exposes the underlying CLR object and keeps the historical API surface."
+        )]
         public object Object { get; private set; }
 
         /// <summary>
@@ -64,7 +69,7 @@ namespace NovaSharp.Interpreter.DataTypes
             string friendlyName = null
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 typeof(T),
                 accessMode,
                 friendlyName,
@@ -84,7 +89,12 @@ namespace NovaSharp.Interpreter.DataTypes
             string friendlyName = null
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(type, accessMode, friendlyName, null);
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            return TypeDescriptorRegistry.RegisterTypeImpl(type, accessMode, friendlyName, null);
         }
 
         /// <summary>
@@ -105,7 +115,7 @@ namespace NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(proxyFactory));
             }
 
-            return TypeDescriptorRegistry.RegisterProxyType_Impl(
+            return TypeDescriptorRegistry.RegisterProxyTypeImpl(
                 proxyFactory,
                 accessMode,
                 friendlyName
@@ -143,7 +153,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="customDescriptor">The custom descriptor.</param>
         public static IUserDataDescriptor RegisterType<T>(IUserDataDescriptor customDescriptor)
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            if (customDescriptor == null)
+            {
+                throw new ArgumentNullException(nameof(customDescriptor));
+            }
+
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 typeof(T),
                 InteropAccessMode.Default,
                 null,
@@ -161,7 +176,17 @@ namespace NovaSharp.Interpreter.DataTypes
             IUserDataDescriptor customDescriptor
         )
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            if (customDescriptor == null)
+            {
+                throw new ArgumentNullException(nameof(customDescriptor));
+            }
+
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 type,
                 InteropAccessMode.Default,
                 null,
@@ -175,7 +200,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="customDescriptor">The custom descriptor.</param>
         public static IUserDataDescriptor RegisterType(IUserDataDescriptor customDescriptor)
         {
-            return TypeDescriptorRegistry.RegisterType_Impl(
+            if (customDescriptor == null)
+            {
+                throw new ArgumentNullException(nameof(customDescriptor));
+            }
+
+            return TypeDescriptorRegistry.RegisterTypeImpl(
                 customDescriptor.Type,
                 InteropAccessMode.Default,
                 null,
@@ -306,6 +336,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue CreateStatic(Type t)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
             return CreateStatic(GetDescriptorForType(t, false));
         }
 
@@ -316,7 +351,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue CreateStatic<T>()
         {
-            return CreateStatic(GetDescriptorForType(typeof(T), false));
+            return CreateStatic(GetDescriptorForType<T>(false));
         }
 
         /// <summary>
@@ -360,16 +395,26 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <param name="name">The name.</param>
         /// <param name="extendedType">The extended type.</param>
         /// <returns></returns>
-        public static List<IOverloadableMemberDescriptor> GetExtensionMethodsByNameAndType(
+        public static IReadOnlyList<IOverloadableMemberDescriptor> GetExtensionMethodsByNameAndType(
             string name,
             Type extendedType
         )
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (extendedType == null)
+            {
+                throw new ArgumentNullException(nameof(extendedType));
+            }
+
             return ExtensionMethodsRegistry.GetExtensionMethodsByNameAndType(name, extendedType);
         }
 
         /// <summary>
-        /// Gets a number which gets incremented everytime the extension methods registry changes.
+        /// Gets a number which gets incremented every time the extension methods registry changes.
         /// Use this to invalidate caches based on extension methods
         /// </summary>
         /// <returns></returns>
@@ -397,6 +442,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static IUserDataDescriptor GetDescriptorForType(Type type, bool searchInterfaces)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             return TypeDescriptorRegistry.GetDescriptorForType(type, searchInterfaces);
         }
 
@@ -407,6 +457,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static IUserDataDescriptor GetDescriptorForObject(object o)
         {
+            if (o == null)
+            {
+                throw new ArgumentNullException(nameof(o));
+            }
+
             return TypeDescriptorRegistry.GetDescriptorForType(o.GetType(), true);
         }
 
@@ -443,11 +498,20 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static IEnumerable<Type> GetRegisteredTypes(bool useHistoricalData = false)
         {
+            return GetRegisteredTypesIterator(useHistoricalData);
+        }
+
+        private static IEnumerable<Type> GetRegisteredTypesIterator(bool useHistoricalData)
+        {
             IEnumerable<KeyValuePair<Type, IUserDataDescriptor>> registeredTypesPairs =
                 useHistoricalData
                     ? TypeDescriptorRegistry.RegisteredTypesHistory
                     : TypeDescriptorRegistry.RegisteredTypes;
-            return registeredTypesPairs.Select(p => p.Value.Type);
+
+            foreach (KeyValuePair<Type, IUserDataDescriptor> pair in registeredTypesPairs)
+            {
+                yield return pair.Value.Type;
+            }
         }
     }
 }

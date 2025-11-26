@@ -1,19 +1,19 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
     using Debugging;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Class implementing basic Lua functions (print, type, tostring, etc) as a NovaSharp module.
@@ -26,10 +26,16 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public class BasicModule
     {
-        //type (v)
-        //----------------------------------------------------------------------------------------------------------------
-        //Returns the type of its only argument, coded as a string. The possible results of this function are "nil"
-        //(a string, not the value nil), "number", "string", "boolean", "table", "function", "thread", and "userdata".
+        /// <summary>
+        /// Implements Lua's <c>type</c> function (§6.1), returning the textual Lua type name for the first argument.
+        /// </summary>
+        /// <param name="executionContext">
+        /// Execution context supplied by the runtime (unused but required by the module contract).
+        /// </param>
+        /// <param name="args">Arguments passed to <c>type</c>; the first entry is inspected.</param>
+        /// <returns>
+        /// A string <see cref="DynValue"/> representing the Lua type name (e.g., <c>"nil"</c>, <c>"table"</c>, <c>"function"</c>).
+        /// </returns>
         [NovaSharpModuleMethod(Name = "type")]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -47,16 +53,31 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(v.Type.ToLuaTypeString());
         }
 
-        //assert (v [, message])
-        //----------------------------------------------------------------------------------------------------------------
-        //Issues an error when the value of its argument v is false (i.e., nil or false);
-        //otherwise, returns all its arguments. message is an error message; when absent, it defaults to "assertion failed!"
+        /// <summary>
+        /// Implements Lua's <c>assert</c> helper (§6.1) by throwing when the first argument is falsy.
+        /// </summary>
+        /// <param name="executionContext">Execution context used for diagnostics.</param>
+        /// <param name="args">
+        /// Arguments passed to <c>assert</c>; index <c>0</c> is the test value and index <c>1</c> is the optional error message.
+        /// </param>
+        /// <returns>The original argument tuple when the assertion succeeds.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when the assertion fails.</exception>
         [NovaSharpModuleMethod(Name = "assert")]
         public static DynValue Assert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue v = args[0];
             DynValue message = args[1];
 
@@ -75,11 +96,14 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTupleNested(args.GetArray());
         }
 
-        // collectgarbage  ([opt [, arg]])
-        // ----------------------------------------------------------------------------------------------------------------
-        // This function is mostly a stub towards the CLR GC. If mode is nil, "collect" or "restart", a GC is forced.
+        /// <summary>
+        /// Implements Lua's <c>collectgarbage</c> helper (§6.1) by forwarding the supported modes to the CLR GC.
+        /// </summary>
+        /// <param name="executionContext">Execution context supplied by the runtime.</param>
+        /// <param name="args">Arguments describing the requested mode (nil/<c>"collect"</c>/<c>"restart"</c> trigger a GC).</param>
+        /// <returns><see cref="DynValue.Nil"/> to match Lua's API surface.</returns>
         [NovaSharpModuleMethod(Name = "collectgarbage")]
-        public static DynValue Collectgarbage(
+        public static DynValue CollectGarbage(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -105,24 +129,32 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.Nil;
         }
 
-        // error (message [, level])
-        // ----------------------------------------------------------------------------------------------------------------
-        // Terminates the last protected function called and returns message as the error message. Function error never returns.
-        // Usually, error adds some information about the error position at the beginning of the message.
-        // The level argument specifies how to get the error position.
-        // With level 1 (the default), the error position is where the error function was called.
-        // Level 2 points the error to where the function that called error was called; and so on.
-        // Passing a level 0 avoids the addition of error position information to the message.
+        /// <summary>
+        /// Implements Lua's <c>error</c> function (§6.1), raising a <see cref="ScriptRuntimeException"/> with the optional
+        /// stack-level adjustment requested by the caller.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to resolve coroutines and call frames for decoration.</param>
+        /// <param name="args">
+        /// Argument zero contains the error message; argument one optionally supplies the stack level used during decoration.
+        /// </param>
+        /// <returns>This method never returns because it always throws.</returns>
+        /// <exception cref="ScriptRuntimeException">Always thrown to surface the Lua-visible error.</exception>
         [NovaSharpModuleMethod(Name = "error")]
         public static DynValue Error(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue message = args.AsType(0, "error", DataType.String, false);
             DynValue level = args.AsType(1, "error", DataType.Number, true);
 
-            Coroutine cor = executionContext.GetCallingCoroutine();
+            Coroutine cor = executionContext.CallingCoroutine;
 
             WatchItem[] stacktrace = cor.GetStackTrace(0, executionContext.CallingLocation);
 
@@ -139,7 +171,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 // Probably never will be a problem, just leaving this note here
                 WatchItem wi = stacktrace[(int)level.Number];
 
-                e.DecorateMessage(executionContext.GetScript(), wi.Location);
+                e.DecorateMessage(executionContext.Script, wi.Location);
             }
             else
             {
@@ -149,19 +181,28 @@ namespace NovaSharp.Interpreter.CoreLib
             throw e;
         }
 
-        // tostring (v)
-        // ----------------------------------------------------------------------------------------------------------------
-        // Receives a value of any type and converts it to a string in a reasonable format. (For complete control of how
-        // numbers are converted, use string.format.)
-        //
-        // If the metatable of v has a "__tostring" field, then tostring calls the corresponding value with v as argument,
-        // and uses the result of the call as its result.
+        /// <summary>
+        /// Implements Lua's <c>tostring</c> helper (§6.1) by formatting values or invoking the <c>__tostring</c> metamethod.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to resolve metamethod tail calls.</param>
+        /// <param name="args">Arguments passed to <c>tostring</c>; the first value is converted to a Lua string.</param>
+        /// <returns>A string representation of the supplied value.</returns>
         [NovaSharpModuleMethod(Name = "tostring")]
-        public static DynValue Tostring(
+        public static DynValue ToString(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
@@ -176,18 +217,29 @@ namespace NovaSharp.Interpreter.CoreLib
             }
 
             tail.TailCallData.Continuation = new CallbackFunction(
-                __tostring_continuation,
+                ToStringContinuation,
                 "__tostring"
             );
 
             return tail;
         }
 
-        private static DynValue __tostring_continuation(
+        /// <summary>
+        /// Continuation that validates the result of a <c>__tostring</c> metamethod before returning it to Lua.
+        /// </summary>
+        /// <param name="executionContext">Execution context driving the metamethod invocation.</param>
+        /// <param name="args">Arguments flowing out of the metamethod call.</param>
+        /// <returns>The validated string result.</returns>
+        internal static DynValue ToStringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             DynValue b = args[0].ToScalar();
 
             if (b.IsNil())
@@ -203,17 +255,22 @@ namespace NovaSharp.Interpreter.CoreLib
             return b;
         }
 
-        // select (index, ...)
-        // -----------------------------------------------------------------------------
-        // If index is a number, returns all arguments after argument number index; a negative number indexes from
-        // the end (-1 is the last argument). Otherwise, index must be the string "#", and select returns the total
-        // number of extra arguments it received.
+        /// <summary>
+        /// Implements Lua's <c>select</c> helper (§6.1), returning either the argument count or a slice of the varargs.
+        /// </summary>
+        /// <param name="executionContext">Execution context supplied by the runtime.</param>
+        /// <param name="args">
+        /// Arguments passed to <c>select</c>; index zero is the selector (<c>"#"</c> or a numeric offset), followed by the tuple.
+        /// </param>
+        /// <returns>A tuple containing the requested slice or a number describing the argument count.</returns>
         [NovaSharpModuleMethod(Name = "select")]
         public static DynValue Select(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
                 if (args[^1].Type == DataType.Tuple)
@@ -260,22 +317,28 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTupleNested(values.ToArray());
         }
 
-        // tonumber (e [, base])
-        // ----------------------------------------------------------------------------------------------------------------
-        // When called with no base, tonumber tries to convert its argument to a number. If the argument is already
-        // a number or a string convertible to a number (see §3.4.2), then tonumber returns this number; otherwise,
-        // it returns nil.
-        //
-        // When called with base, then e should be a string to be interpreted as an integer numeral in that base.
-        // The base may be any integer between 2 and 36, inclusive. In bases above 10, the letter 'A' (in either
-        // upper or lower case) represents 10, 'B' represents 11, and so forth, with 'Z' representing 35. If the
-        // string e is not a valid numeral in the given base, the function returns nil.
+        /// <summary>
+        /// Implements Lua's <c>tonumber</c> helper (§6.1), converting values to doubles with optional radix parsing.
+        /// </summary>
+        /// <param name="executionContext">Execution context used for diagnostics.</param>
+        /// <param name="args">
+        /// Arguments describing the value to convert (index zero) and the optional numeric base (index one, 2-36).
+        /// </param>
+        /// <returns>
+        /// A numeric <see cref="DynValue"/> when conversion succeeds; otherwise <see cref="DynValue.Nil"/>.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "tonumber")]
-        public static DynValue Tonumber(
+        public static DynValue ToNumber(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");
@@ -311,59 +374,142 @@ namespace NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                //!COMPAT: tonumber supports only 2,8,10 or 16 as base
-                //UPDATE: added support for 3-9 base numbers
-                DynValue ee;
+                DynValue numeral =
+                    args[0].Type != DataType.Number
+                        ? args.AsType(0, "tonumber", DataType.String, false)
+                        : DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
 
-                if (args[0].Type != DataType.Number)
+                double baseValue = b.Number;
+                if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
                 {
-                    ee = args.AsType(0, "tonumber", DataType.String, false);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else
-                {
-                    ee = DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
-                }
-                ;
 
-                int bb = (int)b.Number;
-
-                uint uiv = 0;
-                if (bb == 2 || bb == 8 || bb == 10 || bb == 16)
+                if (Math.Truncate(baseValue) != baseValue)
                 {
-                    uiv = Convert.ToUInt32(ee.String.Trim(), bb);
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        "integer",
+                        "number",
+                        false
+                    );
                 }
-                else if (bb < 10 && bb > 2) // Support for 3, 4, 5, 6, 7 and 9 based numbers
-                {
-                    foreach (char digit in ee.String.Trim())
-                    {
-                        int value = digit - 48;
-                        if (value < 0 || value >= bb)
-                        {
-                            throw new ScriptRuntimeException(
-                                "bad argument #1 to 'tonumber' (invalid character)"
-                            );
-                        }
 
-                        uiv = (uint)(uiv * bb) + (uint)value;
-                    }
-                }
-                else
+                int bb = (int)baseValue;
+
+                if (bb < 2 || bb > 36)
                 {
                     throw new ScriptRuntimeException(
                         "bad argument #2 to 'tonumber' (base out of range)"
                     );
                 }
 
-                return DynValue.NewNumber(uiv);
+                ReadOnlySpan<char> numeralSpan = numeral.String.AsSpan().TrimWhitespace();
+
+                if (numeralSpan.IsEmpty)
+                {
+                    return DynValue.Nil;
+                }
+
+                if (TryParseIntegerInBase(numeralSpan, bb, out double parsedValue))
+                {
+                    return DynValue.NewNumber(parsedValue);
+                }
+
+                return DynValue.Nil;
             }
         }
 
+        private static bool TryParseIntegerInBase(
+            ReadOnlySpan<char> text,
+            int numberBase,
+            out double value
+        )
+        {
+            value = 0;
+            ReadOnlySpan<char> span = text.TrimWhitespace();
+            if (span.IsEmpty)
+            {
+                return false;
+            }
+
+            int index = 0;
+            bool negative = false;
+
+            if (span[index] == '+' || span[index] == '-')
+            {
+                negative = span[index] == '-';
+                index++;
+            }
+
+            if (index >= span.Length)
+            {
+                return false;
+            }
+
+            double accumulator = 0;
+            for (; index < span.Length; index++)
+            {
+                int digit = GetDigitValue(span[index]);
+
+                if (digit < 0 || digit >= numberBase)
+                {
+                    return false;
+                }
+
+                accumulator = (accumulator * numberBase) + digit;
+            }
+
+            value = negative ? -accumulator : accumulator;
+            return true;
+        }
+
+        private static int GetDigitValue(char candidate)
+        {
+            if (candidate >= '0' && candidate <= '9')
+            {
+                return candidate - '0';
+            }
+
+            if (candidate >= 'A' && candidate <= 'Z')
+            {
+                return candidate - 'A' + 10;
+            }
+
+            if (candidate >= 'a' && candidate <= 'z')
+            {
+                return candidate - 'a' + 10;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Implements Lua's <c>print</c> function (§6.1) by formatting the arguments with tabs and forwarding them to
+        /// the host-provided debug sink.
+        /// </summary>
+        /// <param name="executionContext">Current execution context, used to resolve the script's debug printer.</param>
+        /// <param name="args">Arguments to format and print.</param>
+        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
         [NovaSharpModuleMethod(Name = "print")]
         public static DynValue Print(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             StringBuilder sb = new();
 
             for (int i = 0; i < args.Count; i++)
@@ -381,7 +527,66 @@ namespace NovaSharp.Interpreter.CoreLib
                 sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
             }
 
-            executionContext.GetScript().Options.DebugPrint(sb.ToString());
+            executionContext.Script.Options.DebugPrint(sb.ToString());
+
+            return DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Implements Lua 5.4's <c>warn</c> helper by routing formatted arguments to <c>_WARN</c> or the debug printer.
+        /// </summary>
+        /// <param name="executionContext">Execution context used to access the host script and debug sink.</param>
+        /// <param name="args">Arguments to format before invoking <c>_WARN</c> or printing.</param>
+        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "warn")]
+        public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            StringBuilder sb = new();
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append('\t');
+                }
+
+                sb.Append(args.AsStringUsingMeta(executionContext, i, "warn"));
+            }
+
+            string payload = sb.ToString();
+            Script script = executionContext.Script;
+            DynValue warnHandler = script.Globals.RawGet("_WARN");
+
+            if (
+                warnHandler != null
+                && (
+                    warnHandler.Type == DataType.Function
+                    || warnHandler.Type == DataType.ClrFunction
+                )
+            )
+            {
+                script.Call(warnHandler, DynValue.NewString(payload));
+            }
+            else
+            {
+                Action<string> sink = script.Options.DebugPrint;
+
+                if (sink != null)
+                {
+                    sink(payload);
+                }
+                else
+                {
+                    Console.Error.WriteLine(payload);
+                }
+            }
 
             return DynValue.Nil;
         }

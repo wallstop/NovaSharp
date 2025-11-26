@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Debugging
         /// watches in the debugger.
         /// </summary>
         /// <returns>A list of watches</returns>
-        public List<DynamicExpression> GetWatchItems();
+        public IReadOnlyList<DynamicExpression> GetWatchItems();
 
         /// <summary>
         /// Called by the script engine to refresh the breakpoint list.

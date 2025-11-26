@@ -1,17 +1,23 @@
 namespace NovaSharp.Comparison;
 
+/// <summary>
+/// Supplies Lua scripts used by the comparison benchmarks.
+/// </summary>
 internal static class BenchmarkScripts
 {
+    /// <summary>
+    /// Returns the script associated with <paramref name="scenario"/>.
+    /// </summary>
     public static string GetScript(ScriptScenario scenario) =>
         scenario switch
         {
-            ScriptScenario.TowerOfHanoi => TOWER_OF_HANOI,
-            ScriptScenario.EightQueens => EIGHT_QUEENS,
-            ScriptScenario.CoroutinePingPong => COROUTINE_PING_PONG,
-            _ => TOWER_OF_HANOI,
+            ScriptScenario.TowerOfHanoi => TowerOfHanoi,
+            ScriptScenario.EightQueens => EightQueens,
+            ScriptScenario.CoroutinePingPong => CoroutinePingPong,
+            _ => TowerOfHanoi,
         };
 
-    private const string TOWER_OF_HANOI =
+    private const string TowerOfHanoi =
         @"
         function move(n, src, dst, via)
             if n > 0 then
@@ -25,7 +31,7 @@ internal static class BenchmarkScripts
         end
     ";
 
-    private const string EIGHT_QUEENS =
+    private const string EightQueens =
         @"
         local N = 8
         local board = {}
@@ -61,7 +67,7 @@ internal static class BenchmarkScripts
         solve(1)
     ";
 
-    private const string COROUTINE_PING_PONG =
+    private const string CoroutinePingPong =
         @"
         local function producer(n)
             local value = 0

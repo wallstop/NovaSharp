@@ -53,6 +53,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(xml, Does.Contain("<!--debug 123-->"));
         }
 
+        [Test]
+        public void CommentSkipsNullValues()
+        {
+            string xml = WriteXml(xw =>
+            {
+                using (xw.Element("root"))
+                {
+                    xw.Comment((object)null).Comment("visible");
+                }
+            });
+
+            Assert.That(xml, Does.Contain("<!--visible-->"));
+            Assert.That(xml, Does.Not.Contain("null"));
+        }
+
         private static string WriteXml(Action<XmlWriter> writerAction)
         {
             XmlWriterSettings settings = new()

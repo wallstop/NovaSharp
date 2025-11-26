@@ -121,10 +121,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Assert.That(delegateValue.Type, Is.EqualTo(DataType.ClrFunction));
 
-            MethodInfo method = typeof(ClrToScriptConversionsTests).GetMethod(
-                nameof(StaticClrCallback),
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
-            );
+            MethodInfo method = StaticClrCallbackMethodInfo;
             DynValue methodValue = ClrToScriptConversions.ObjectToDynValue(script, method);
             Assert.That(methodValue.Type, Is.EqualTo(DataType.ClrFunction));
         }
@@ -168,9 +165,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             return DynValue.NewNumber(42);
         }
 
+        private static readonly MethodInfo StaticClrCallbackMethodInfo = (
+            (Func<ScriptExecutionContext, CallbackArguments, DynValue>)StaticClrCallback
+        ).Method;
+
         private static void RegisterSampleUserData()
         {
-            if (!UserData.IsTypeRegistered(typeof(SampleUserData)))
+            if (!UserData.IsTypeRegistered<SampleUserData>())
             {
                 UserData.RegisterType<SampleUserData>();
             }

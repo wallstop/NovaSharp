@@ -6,13 +6,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class HelpCommandTests
+    public sealed class HelpCommandTests : IDisposable
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -26,16 +27,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         [SetUp]
         public void SetUp()
         {
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            Dispose();
         }
 
         [Test]
@@ -43,14 +41,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), string.Empty);
+            ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
+            command.Execute(context, string.Empty);
 
-            string output = _writer.ToString();
+            string output = _consoleScope.Writer.ToString();
+            string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
             Assert.Multiple(() =>
             {
-                Assert.That(output, Does.Contain("Commands:"));
-                Assert.That(output, Does.Contain("!help"));
-                Assert.That(output, Does.Contain("!run"));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCommandListHeading));
+                Assert.That(output, Does.Contain($"{CliMessages.HelpCommandCommandPrefix}help"));
+                Assert.That(output, Does.Contain($"{CliMessages.HelpCommandCommandPrefix}run"));
+                Assert.That(
+                    output,
+                    Does.Contain(CliMessages.ProgramActiveProfile(expectedSummary))
+                );
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCompatibilitySummary));
             });
         }
 
@@ -59,11 +64,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), "run");
+            command.Execute(new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)), "run");
 
             Assert.That(
-                _writer.ToString(),
-                Does.Contain("run <filename> - Executes the specified Lua script.")
+                _consoleScope.Writer.ToString(),
+                Does.Contain(CliMessages.RunCommandLongHelp)
             );
         }
 
@@ -72,9 +77,31 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             HelpCommand command = new();
 
-            command.Execute(new ShellContext(new Interpreter.Script()), "garbage");
+            command.Execute(
+                new ShellContext(CreateScript(LuaCompatibilityVersion.Lua52)),
+                "garbage"
+            );
 
-            Assert.That(_writer.ToString(), Does.Contain("Command 'garbage' not found."));
+            Assert.That(
+                _consoleScope.Writer.ToString(),
+                Does.Contain(CliMessages.HelpCommandCommandNotFound("garbage"))
+            );
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new() { CompatibilityVersion = version };
+
+            return new Script(options);
+        }
+
+        public void Dispose()
+        {
+            if (_consoleScope != null)
+            {
+                _consoleScope.Dispose();
+                _consoleScope = null!;
+            }
         }
     }
 }

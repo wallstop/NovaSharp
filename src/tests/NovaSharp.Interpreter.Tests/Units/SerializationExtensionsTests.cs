@@ -12,6 +12,14 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class SerializationExtensionsTests
     {
+        private static readonly string[] LineSplitSeparator = { Environment.NewLine };
+        private static readonly string[] ExpectedBodyLines =
+        {
+            "\tanswer = 42,",
+            "\tmessage = \"hello\",",
+            "\tflag = true,",
+        };
+
         [Test]
         public void SerializePrimeTableFormatsEntries()
         {
@@ -23,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string serialized = table.Serialize(prefixReturn: true);
 
             string[] split = serialized.Split(
-                new[] { Environment.NewLine },
+                LineSplitSeparator,
                 StringSplitOptions.RemoveEmptyEntries
             );
 
@@ -32,12 +40,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             List<string> bodyLines = new List<string> { split[1], split[2], split[3] };
 
-            Assert.That(
-                bodyLines,
-                Is.EquivalentTo(
-                    new[] { "\tanswer = 42,", "\tmessage = \"hello\",", "\tflag = true," }
-                )
-            );
+            Assert.That(bodyLines, Is.EquivalentTo(ExpectedBodyLines));
 
             Assert.That(split[4], Is.EqualTo("}"));
         }
@@ -122,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SerializeNonPrimeTableThrows()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             Table table = new Table(script);
             table.Set(DynValue.NewNumber(1), DynValue.NewNumber(2));
 
@@ -132,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void SerializeValueTableOwnedByScriptThrows()
         {
-            Script script = new Script(CoreModules.None);
+            Script script = new Script(TestCoreModules.BasicGlobals);
             Table table = new Table(script);
             DynValue tableValue = DynValue.NewTable(table);
 

@@ -2,27 +2,26 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
-    using System.Reflection;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.REPL;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class ProgramTests
     {
-        private TextWriter _originalOut = null!;
-        private TextReader _originalIn = null!;
-        private static readonly MethodInfo InterpreterLoopMethod =
-            typeof(Program).GetMethod(
-                "InterpreterLoop",
-                BindingFlags.NonPublic | BindingFlags.Static
-            ) ?? throw new InvalidOperationException("InterpreterLoop method not found.");
+        private static readonly string[] HelpFlagArguments = { "-H" };
+        private static readonly string[] ExecuteHelpCommandArguments = { "-X", "help" };
+        private static readonly string[] ExecuteCommandMissingArgument = { "-X" };
+        private static readonly string[] ExecuteUnknownCommandArguments = { "-X", "nope" };
+        private static readonly string[] HardwireFlagArguments = { "-W" };
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -31,20 +30,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 CommandManager.Initialize();
             }
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            _originalOut = Console.Out;
-            _originalIn = Console.In;
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Console.SetOut(_originalOut);
-            Console.SetIn(_originalIn);
         }
 
         [Test]
@@ -57,60 +42,65 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void CheckArgsHelpFlagWritesUsageAndReturnsTrue()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-H" }, NewShellContext());
+            bool handled = Program.CheckArgs(HelpFlagArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("usage: NovaSharp"));
+                Assert.That(console.Writer.ToString(), Does.Contain(CliMessages.ProgramUsageLong));
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagRunsRequestedCommand()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X", "help" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteHelpCommandArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Commands:"));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.HelpCommandCommandListHeading)
+                );
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagWithMissingArgumentShowsSyntax()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteCommandMissingArgument, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.ProgramWrongSyntax)
+                );
             });
         }
 
         [Test]
         public void CheckArgsExecuteCommandFlagWithUnknownCommandReportsError()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-X", "nope" }, NewShellContext());
+            bool handled = Program.CheckArgs(ExecuteUnknownCommandArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Invalid command 'nope'."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.CommandManagerInvalidCommand("nope"))
+                );
             });
         }
 
@@ -120,8 +110,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             string scriptPath = Path.Combine(Path.GetTempPath(), $"sample_{Guid.NewGuid():N}.lua");
             File.WriteAllText(scriptPath, "return 42");
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -135,17 +124,102 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CheckArgsRunScriptAppliesManifestCompatibility()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(scriptPath, "if warn ~= nil then error('warn available') end");
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua53\"\n"
+                    + "}"
+            );
+
+            using ConsoleRedirectionScope console = new();
+
+            try
+            {
+                bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(handled, Is.True);
+                    Assert.That(
+                        console.Writer.ToString(),
+                        Does.Contain(
+                            CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile")
+                        )
+                    );
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
+        }
+
+        [Test]
+        public void CheckArgsRunScriptLogsCompatibilitySummary()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(scriptPath, "return 0");
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua52\"\n"
+                    + "}"
+            );
+
+            using ConsoleRedirectionScope console = new();
+
+            try
+            {
+                bool handled = Program.CheckArgs(new[] { scriptPath }, NewShellContext());
+                string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
+                string expectedLine = CliMessages.ProgramRunningScript(scriptPath, expectedSummary);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(handled, Is.True);
+                    Assert.That(console.Writer.ToString(), Does.Contain(expectedLine));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
+        }
+
+        [Test]
         public void CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
         {
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
-            bool handled = Program.CheckArgs(new[] { "-W" }, NewShellContext());
+            bool handled = Program.CheckArgs(HardwireFlagArguments, NewShellContext());
 
             Assert.Multiple(() =>
             {
                 Assert.That(handled, Is.True);
-                Assert.That(writer.ToString(), Does.Contain("Wrong syntax."));
+                Assert.That(
+                    console.Writer.ToString(),
+                    Does.Contain(CliMessages.ProgramWrongSyntax)
+                );
             });
         }
 
@@ -155,15 +229,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
 
-            Func<string, Table> originalLoader = HardWireCommand.DumpLoader;
-            HardWireCommand.DumpLoader = _ =>
+            Func<string, Table> originalLoader = HardwireCommand.DumpLoader;
+            HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
-                return CreateDescriptorTable(script, "internal");
+                return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
             };
 
-            using StringWriter writer = new();
-            Console.SetOut(writer);
+            using ConsoleRedirectionScope console = new();
 
             try
             {
@@ -184,7 +257,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.Multiple(() =>
                 {
                     Assert.That(handled, Is.True);
-                    Assert.That(writer.ToString(), Does.Contain("done: 0 errors, 0 warnings."));
+                    Assert.That(
+                        console.Writer.ToString(),
+                        Does.Contain(CliMessages.HardwireGenerationSummary(0, 0))
+                    );
                     Assert.That(File.Exists(destPath), Is.True);
                     string generated = File.ReadAllText(destPath);
                     Assert.That(generated, Does.Contain("Namespace GeneratedNamespace"));
@@ -193,7 +269,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
             finally
             {
-                HardWireCommand.DumpLoader = originalLoader;
+                HardwireCommand.DumpLoader = originalLoader;
 
                 if (File.Exists(destPath))
                 {
@@ -206,18 +282,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InterpreterLoopExecutesCommandsWhenNoPendingInput()
         {
             StubReplInterpreter interpreter = new();
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("!help" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
                 Assert.That(interpreter.EvaluateCalled, Is.False);
-                Assert.That(output, Does.Contain("Commands:"));
+                Assert.That(output, Does.Contain(CliMessages.HelpCommandCommandListHeading));
             });
         }
 
@@ -229,13 +303,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 PendingCommand = true,
                 ReturnValue = DynValue.NewString("queued"),
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("!help" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("!help" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -249,13 +321,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InterpreterLoopDoesNotPrintVoidResults()
         {
             StubReplInterpreter interpreter = new() { ReturnValue = DynValue.Void };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -274,13 +344,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                     DecoratedMessage = "decorated message",
                 },
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -296,13 +364,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 ExceptionToThrow = new InvalidOperationException("broken"),
             };
-            StringWriter writer = new();
-            Console.SetOut(writer);
-            Console.SetIn(new StringReader("return 1" + Environment.NewLine));
+            using ConsoleRedirectionScope console = new("return 1" + Environment.NewLine);
 
             InvokeInterpreterLoop(interpreter, NewShellContext());
 
-            string output = writer.ToString();
+            string output = console.Writer.ToString();
 
             Assert.Multiple(() =>
             {
@@ -311,27 +377,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void BannerPrintsCompatibilitySummary()
+        {
+            using ConsoleRedirectionScope console = new();
+
+            Script script = new(CoreModules.PresetDefault);
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+
+            Program.ShowBannerForTests(script);
+
+            string output = console.Writer.ToString();
+            string expectedActiveProfile = CliMessages.ProgramActiveProfile(
+                script.CompatibilityProfile.GetFeatureSummary()
+            );
+
+            Assert.That(output, Does.Contain(expectedActiveProfile));
+        }
+
+        private static string GetCompatibilitySummary(LuaCompatibilityVersion version)
+        {
+            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            return script.CompatibilityProfile.GetFeatureSummary();
+        }
+
         private static ShellContext NewShellContext()
         {
             return new ShellContext(new Interpreter.Script());
-        }
-
-        private static Table CreateDescriptorTable(Script script, string visibility)
-        {
-            Table descriptor = new(script);
-            descriptor.Set(
-                "class",
-                DynValue.NewString(
-                    "NovaSharp.Interpreter.Interop.StandardDescriptors.StandardUserDataDescriptor"
-                )
-            );
-            descriptor.Set("visibility", DynValue.NewString(visibility));
-            descriptor.Set("members", DynValue.NewTable(script));
-            descriptor.Set("metamembers", DynValue.NewTable(script));
-
-            Table root = new(script);
-            root.Set("Sample", DynValue.NewTable(descriptor));
-            return root;
         }
 
         private static void InvokeInterpreterLoop(
@@ -339,7 +411,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ShellContext shellContext
         )
         {
-            InterpreterLoopMethod.Invoke(null, new object[] { interpreter, shellContext });
+            Program.RunInterpreterLoopForTests(interpreter, shellContext);
         }
 
         private sealed class StubReplInterpreter : ReplInterpreter

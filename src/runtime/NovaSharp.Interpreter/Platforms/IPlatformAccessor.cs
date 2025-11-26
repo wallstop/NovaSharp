@@ -16,11 +16,11 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Filters the CoreModules enumeration to exclude non-supported operations
         /// </summary>
-        /// <param name="module">The requested modules.</param>
+        /// <param name="coreModules">The requested modules.</param>
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        public CoreModules FilterSupportedCoreModules(CoreModules module);
+        public CoreModules FilterSupportedCoreModules(CoreModules coreModules);
 
         /// <summary>
         /// Gets an environment variable. Must be implemented, but an implementation is allowed

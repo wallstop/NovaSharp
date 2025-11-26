@@ -18,28 +18,16 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileAccess ParseFileAccess(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalized = NormalizeMode(mode);
 
-            if (mode == "r")
+            return normalized switch
             {
-                return FileAccess.Read;
-            }
-            else if (mode == "r+")
-            {
-                return FileAccess.ReadWrite;
-            }
-            else if (mode == "w")
-            {
-                return FileAccess.Write;
-            }
-            else if (mode == "w+")
-            {
-                return FileAccess.ReadWrite;
-            }
-            else
-            {
-                return FileAccess.ReadWrite;
-            }
+                "r" => FileAccess.Read,
+                "r+" => FileAccess.ReadWrite,
+                "w" => FileAccess.Write,
+                "w+" => FileAccess.ReadWrite,
+                _ => FileAccess.ReadWrite,
+            };
         }
 
         /// <summary>
@@ -49,28 +37,16 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public static FileMode ParseFileMode(string mode)
         {
-            mode = mode.Replace("b", "");
+            string normalized = NormalizeMode(mode);
 
-            if (mode == "r")
+            return normalized switch
             {
-                return FileMode.Open;
-            }
-            else if (mode == "r+")
-            {
-                return FileMode.OpenOrCreate;
-            }
-            else if (mode == "w")
-            {
-                return FileMode.Create;
-            }
-            else if (mode == "w+")
-            {
-                return FileMode.Truncate;
-            }
-            else
-            {
-                return FileMode.Append;
-            }
+                "r" => FileMode.Open,
+                "r+" => FileMode.OpenOrCreate,
+                "w" => FileMode.Create,
+                "w+" => FileMode.Truncate,
+                _ => FileMode.Append,
+            };
         }
 
         /// <summary>
@@ -129,7 +105,10 @@ namespace NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException("type");
+                    throw new ArgumentException(
+                        "Unsupported standard stream requested.",
+                        nameof(type)
+                    );
             }
         }
 
@@ -220,13 +199,13 @@ namespace NovaSharp.Interpreter.Platforms
         /// <summary>
         /// Filters the CoreModules enumeration to exclude non-supported operations
         /// </summary>
-        /// <param name="module">The requested modules.</param>
+        /// <param name="coreModules">The requested modules.</param>
         /// <returns>
         /// The requested modules, with unsupported modules filtered out.
         /// </returns>
-        public override CoreModules FilterSupportedCoreModules(CoreModules module)
+        public override CoreModules FilterSupportedCoreModules(CoreModules coreModules)
         {
-            return module;
+            return coreModules;
         }
 
         /// <summary>
@@ -237,6 +216,42 @@ namespace NovaSharp.Interpreter.Platforms
         public override string GetPlatformNamePrefix()
         {
             return "core";
+        }
+
+        private static string NormalizeMode(string mode)
+        {
+            if (mode == null)
+            {
+                throw new ArgumentNullException(nameof(mode));
+            }
+
+            string trimmed = mode.Trim();
+
+            if (trimmed.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            char[] buffer = new char[trimmed.Length];
+            int index = 0;
+
+            foreach (char c in trimmed)
+            {
+                char lowered = char.ToLowerInvariant(c);
+                if (char.IsWhiteSpace(lowered))
+                {
+                    continue;
+                }
+
+                if (lowered == 'b')
+                {
+                    continue;
+                }
+
+                buffer[index++] = lowered;
+            }
+
+            return new string(buffer, 0, index);
         }
     }
 #endif

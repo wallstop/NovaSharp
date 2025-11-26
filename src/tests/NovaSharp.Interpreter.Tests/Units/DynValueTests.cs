@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
     using NUnit.Framework;
 
     [TestFixture]
@@ -50,6 +52,33 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(flattened.Tuple[2].Number, Is.EqualTo(3));
                 Assert.That(flattened.Tuple[3].Number, Is.EqualTo(4));
                 Assert.That(flattened.Tuple[4].String, Is.EqualTo("tail"));
+            });
+        }
+
+        [Test]
+        public void NewTupleNestedReturnsSingleValueUnchanged()
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewString("value"));
+
+            DynValue nested = DynValue.NewTupleNested(tuple);
+
+            Assert.That(nested, Is.SameAs(tuple));
+        }
+
+        [Test]
+        public void NewTableFromArrayInitializesEntriesAndOwner()
+        {
+            Script script = new();
+            DynValue[] values = new[] { DynValue.NewNumber(7), DynValue.NewString("value") };
+
+            DynValue tableValue = DynValue.NewTable(script, values);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tableValue.Table.OwnerScript, Is.SameAs(script));
+                Assert.That(tableValue.Table.Length, Is.EqualTo(2));
+                Assert.That(tableValue.Table.Get(1).Number, Is.EqualTo(7));
+                Assert.That(tableValue.Table.Get(2).String, Is.EqualTo("value"));
             });
         }
 
@@ -150,7 +179,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "func",
                 DataType.String,
                 argNum: 0,
-                flags: TypeValidationFlags.AutoConvert
+                flags: TypeValidationOptions.AutoConvert
             );
 
             Assert.Multiple(() =>
@@ -158,6 +187,111 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(converted.Type, Is.EqualTo(DataType.String));
                 Assert.That(converted.String, Is.EqualTo("12.5"));
             });
+        }
+
+        [Test]
+        public void CheckTypeThrowsWhenConversionNotAllowed()
+        {
+            DynValue number = DynValue.NewNumber(12.5);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                number.CheckType(
+                    "func",
+                    DataType.String,
+                    argNum: 0,
+                    flags: (TypeValidationOptions)0
+                )
+            );
+
+            Assert.That(exception.Message, Does.Contain("bad argument #1"));
+        }
+
+        [Test]
+        public void GetLengthThrowsOnUnsupportedTypes()
+        {
+            Script script = new();
+            CallbackFunction callback = new CallbackFunction((_, _) => DynValue.True);
+            DynValue function = DynValue.NewCallback(callback);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                function.GetLength()
+            );
+
+            Assert.That(exception.Message, Does.Contain("Can't get length"));
+        }
+
+        [Test]
+        public void AssignCopiesObjectReferencesForTables()
+        {
+            Script script = new();
+            Table table = new(script);
+            DynValue destination = DynValue.NewNil();
+
+            destination.Assign(DynValue.NewTable(table));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(destination.Type, Is.EqualTo(DataType.Table));
+                Assert.That(destination.Table, Is.SameAs(table));
+            });
+        }
+
+        [Test]
+        public void AssignPreservesReadOnlyForDestination()
+        {
+            DynValue destination = DynValue.NewNumber(1).AsReadOnly();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                destination.Assign(DynValue.NewNumber(2))
+            );
+
+            Assert.That(exception.Message, Does.Contain("Assigning on r-value"));
+        }
+
+        [Test]
+        public void AssignNumberThrowsWhenDestinationReadOnly()
+        {
+            DynValue destination = DynValue.NewNumber(1).AsReadOnly();
+
+            Assert.Throws<InternalErrorException>(() => destination.AssignNumber(2));
+        }
+
+        [Test]
+        public void AssignNumberThrowsWhenDestinationIsNotNumeric()
+        {
+            DynValue destination = DynValue.NewString("value");
+
+            Assert.Throws<InternalErrorException>(() => destination.AssignNumber(2));
+        }
+
+        [Test]
+        public void GetAsPrivateResourceReturnsNullWhenNotPrivate()
+        {
+            DynValue number = DynValue.NewNumber(5);
+
+            Assert.That(number.ScriptPrivateResource, Is.Null);
+        }
+
+        [Test]
+        public void GetTypeConvertsValueToRequestedType()
+        {
+            DynValue number = DynValue.NewNumber(7);
+
+            double converted = number.ToObject<double>();
+
+            Assert.That(converted, Is.EqualTo(7d));
+        }
+
+        [Test]
+        public void TypeChecksThrowWhenTypeMissing()
+        {
+            DynValue nil = DynValue.Nil;
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                nil.CheckType("func", DataType.Number, argNum: 1)
+            );
+
+            Assert.That(exception.Message, Does.Contain("bad argument #2"));
         }
 
         [Test]
@@ -199,7 +333,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = DynValue.Nil.CheckType(
                 "func",
                 DataType.Table,
-                flags: TypeValidationFlags.AllowNil
+                flags: TypeValidationOptions.AllowNil
             );
 
             Assert.That(result, Is.SameAs(DynValue.Nil));
@@ -228,11 +362,222 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CheckUserDataTypeAllowsNilWhenFlagged()
+        {
+            SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
+                "func",
+                flags: TypeValidationOptions.AllowNil
+            );
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void NewStringFromStringBuilderCopiesSnapshot()
+        {
+            StringBuilder builder = new("seed");
+            DynValue value = DynValue.NewString(builder);
+            builder.Append("mutated");
+
+            Assert.That(value.String, Is.EqualTo("seed"));
+        }
+
+        [Test]
+        public void CloneReflectsReadOnlyPreference()
+        {
+            DynValue number = DynValue.NewNumber(7);
+            DynValue readOnly = number.Clone(true);
+            DynValue writable = readOnly.Clone(false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(readOnly.ReadOnly, Is.True);
+                Assert.That(writable.ReadOnly, Is.False);
+            });
+        }
+
+        [Test]
+        public void CloneAsWritableProducesEditableCopy()
+        {
+            DynValue readOnly = DynValue.NewString("locked").AsReadOnly();
+            DynValue clone = readOnly.CloneAsWritable();
+
+            clone.Assign(DynValue.NewString("unlocked"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(clone.String, Is.EqualTo("unlocked"));
+                Assert.That(readOnly.String, Is.EqualTo("locked"));
+            });
+        }
+
+        [Test]
+        public void AssignUpdatesTargetAndResetsHashCode()
+        {
+            DynValue target = DynValue.NewNumber(1);
+            int oldHash = target.GetHashCode();
+
+            target.Assign(DynValue.NewString("assigned"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(target.Type, Is.EqualTo(DataType.String));
+                Assert.That(target.String, Is.EqualTo("assigned"));
+                Assert.That(target.GetHashCode(), Is.Not.EqualTo(oldHash));
+            });
+        }
+
+        [Test]
+        public void AssignThrowsWhenTargetIsReadOnly()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.True.Assign(DynValue.NewNumber(2))
+            );
+
+            Assert.That(exception.Message, Does.Contain("Assigning on r-value"));
+        }
+
+        [Test]
+        public void NewCoroutineWrapsCoroutineHandles()
+        {
+            Script script = new();
+            DynValue function = script.Call(
+                script.LoadString("return function(x) coroutine.yield(x); return x end")
+            );
+            DynValue coroutineValue = script.CreateCoroutine(function);
+            DynValue wrapped = DynValue.NewCoroutine(coroutineValue.Coroutine);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(wrapped.Type, Is.EqualTo(DataType.Thread));
+                Assert.That(wrapped.Coroutine, Is.SameAs(coroutineValue.Coroutine));
+                Assert.That(wrapped.ToString(), Does.Contain("Coroutine"));
+            });
+        }
+
+        [Test]
+        public void ToStringFormatsClrFunctions()
+        {
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "named");
+            Assert.That(callback.ToString(), Is.EqualTo("(Function CLR)"));
+        }
+
+        [Test]
+        public void ToStringCoversLuaTypeRepresentations()
+        {
+            Script script = new();
+            DynValue chunk = script.LoadString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(chunk);
+            DynValue tableValue = DynValue.NewTable(new Table(script));
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
+            DynValue userData = UserData.Create(new SampleUserData("ignored"));
+            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(DynValue.Void.ToString(), Is.EqualTo("void"));
+                Assert.That(chunk.ToString(), Does.StartWith("(Function "));
+                Assert.That(tableValue.ToString(), Is.EqualTo("(Table)"));
+                Assert.That(tuple.ToString(), Is.EqualTo("1, \"two\""));
+                Assert.That(userData.ToString(), Is.EqualTo("(UserData)"));
+                Assert.That(coroutine.ToString(), Does.StartWith("(Coroutine "));
+                Assert.That(yield.ToString(), Is.EqualTo("(???)"));
+            });
+        }
+
+        [Test]
+        public void CheckTypeAutoConvertsAcrossCoreTypes()
+        {
+            DynValue boolValue = DynValue
+                .NewString("truthy")
+                .CheckType("func", DataType.Boolean, flags: TypeValidationOptions.AutoConvert);
+            DynValue numberValue = DynValue
+                .NewString("42")
+                .CheckType("func", DataType.Number, flags: TypeValidationOptions.AutoConvert);
+            DynValue stringValue = DynValue
+                .NewNumber(3.5)
+                .CheckType("func", DataType.String, flags: TypeValidationOptions.AutoConvert);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(boolValue.Boolean, Is.True);
+                Assert.That(numberValue.Number, Is.EqualTo(42));
+                Assert.That(stringValue.String, Is.EqualTo("3.5"));
+            });
+        }
+
+        [Test]
+        public void CheckTypeComplainsWhenVoidHasNoValue()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                DynValue.Void.CheckType("func", DataType.String)
+            );
+
+            Assert.That(exception.Message, Does.Contain("no value"));
+        }
+
+        [Test]
+        public void CheckTypeAutoConvertFallbacksReturnOriginalWhenConversionFails()
+        {
+            DynValue original = DynValue.NewString("not-number");
+            DynValue result = original.CheckType(
+                "func",
+                DataType.String,
+                flags: TypeValidationOptions.AutoConvert
+            );
+
+            Assert.That(result, Is.SameAs(original));
+        }
+
+        [Test]
+        public void CheckUserDataTypeReturnsDefaultWhenNilAllowed()
+        {
+            SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
+                "func",
+                flags: TypeValidationOptions.AllowNil
+            );
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
         public void ToPrintStringReflectsUserDataDescriptor()
         {
             DynValue userData = UserData.Create(new SampleUserData("Printable"));
 
             Assert.That(userData.ToPrintString(), Is.EqualTo("Printable"));
+        }
+
+        [Test]
+        public void ToPrintStringFormatsCompositeValues()
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewNumber(5));
+            DynValue tail = DynValue.NewTailCallReq(
+                DynValue.NewCallback((_, _) => DynValue.Nil),
+                DynValue.NewNumber(1)
+            );
+            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.ToPrintString(), Is.EqualTo("a\t5"));
+                Assert.That(tail.ToPrintString(), Is.EqualTo("(TailCallRequest -- INTERNAL!)"));
+                Assert.That(yield.ToPrintString(), Is.EqualTo("(YieldRequest -- INTERNAL!)"));
+            });
+        }
+
+        [Test]
+        public void ToPrintStringFallsBackToRefIdForTablesAndUserData()
+        {
+            Script script = new();
+            DynValue tableValue = DynValue.NewTable(new Table(script));
+            DynValue userData = UserData.Create(new object(), new NullStringDescriptor());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tableValue.ToPrintString(), Does.StartWith("table: "));
+                Assert.That(userData.ToPrintString(), Does.StartWith("userdata: "));
+            });
         }
 
         [Test]
@@ -253,11 +598,66 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetHashCodeHandlesNilAndTupleCases()
+        {
+            int nilHash = DynValue.Nil.GetHashCode();
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            int tupleHash = tuple.GetHashCode();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(nilHash, Is.EqualTo(DynValue.Nil.GetHashCode()));
+                Assert.That(tupleHash, Is.EqualTo(tuple.GetHashCode()));
+            });
+        }
+
+        [Test]
+        public void EqualsHandlesNonDynValuesTuplesUserDataAndYieldRequests()
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            DynValue alias = DynValue.NewNil();
+            alias.Assign(tuple);
+            DynValue tupleCopy = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            DynValue nullUserData = DynValue.NewUserData(null);
+            DynValue userData = UserData.Create(new SampleUserData("value"));
+            DynValue forcedYield = DynValue.NewForcedYieldReq();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Equals("value"), Is.False);
+                Assert.That(tuple.Equals(alias), Is.True);
+                Assert.That(tuple.Equals(tupleCopy), Is.False);
+                Assert.That(nullUserData.Equals(userData), Is.False);
+                Assert.That(forcedYield.Equals(forcedYield), Is.True);
+            });
+        }
+
+        [Test]
         public void ToDebugPrintStringFlattensTuples()
         {
             DynValue tuple = DynValue.NewTuple(DynValue.NewString("x"), DynValue.NewNumber(4));
 
             Assert.That(tuple.ToDebugPrintString(), Is.EqualTo("x\t4"));
+        }
+
+        [Test]
+        public void ToDebugPrintStringDisplaysTailYieldAndScalars()
+        {
+            DynValue tail = DynValue.NewTailCallReq(
+                DynValue.NewCallback((_, _) => DynValue.Nil),
+                DynValue.NewNumber(9)
+            );
+            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tail.ToDebugPrintString(), Is.EqualTo("(TailCallRequest)"));
+                Assert.That(yield.ToDebugPrintString(), Is.EqualTo("(YieldRequest)"));
+                Assert.That(
+                    DynValue.True.ToDebugPrintString(),
+                    Is.EqualTo(DynValue.True.ToString())
+                );
+            });
         }
 
         [Test]
@@ -268,13 +668,23 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IsNotVoidDistinguishesVoidValues()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(DynValue.Void.IsNotVoid(), Is.False);
+                Assert.That(DynValue.NewNumber(1).IsNotVoid(), Is.True);
+            });
+        }
+
+        [Test]
         public void GetAsPrivateResourceReturnsUnderlyingResource()
         {
             Script script = new();
             Table table = new(script);
             DynValue tableValue = DynValue.NewTable(table);
 
-            Assert.That(tableValue.GetAsPrivateResource(), Is.SameAs(table));
+            Assert.That(tableValue.ScriptPrivateResource, Is.SameAs(table));
         }
 
         private sealed class SampleUserData
@@ -289,6 +699,49 @@ namespace NovaSharp.Interpreter.Tests.Units
             public override string ToString()
             {
                 return Name;
+            }
+        }
+
+        private sealed class NullStringDescriptor : IUserDataDescriptor
+        {
+            public string Name => "NullPrinter";
+
+            public Type Type => typeof(object);
+
+            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            {
+                return DynValue.Nil;
+            }
+
+            public bool SetIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value,
+                bool isDirectIndexing
+            )
+            {
+                return false;
+            }
+
+            public string AsString(object obj)
+            {
+                return null;
+            }
+
+            public DynValue MetaIndex(Script script, object obj, string metaname)
+            {
+                return null;
+            }
+
+            public bool IsTypeCompatible(Type type, object obj)
+            {
+                if (obj == null)
+                {
+                    return true;
+                }
+
+                return type.IsInstanceOfType(obj);
             }
         }
     }

@@ -15,6 +15,26 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ScriptLoaderBaseTests
     {
+        private static readonly string[] SingleModuleProbe = { "modules/my/module.lua" };
+        private static readonly string[] SampleModulePaths = { "libs/?.lua", "addons/?/init.lua" };
+        private static readonly string[] SampleResolvedProbes =
+        {
+            "libs/sample.lua",
+            "addons/sample/init.lua",
+        };
+        private static readonly string[] TrimmedPathSegments = { "?", "lib/?.lua", "scripts/?" };
+        private static readonly string[] NovaSharpEnvironmentPaths =
+        {
+            "mods/?.lua",
+            "packages/?/init.lua",
+        };
+        private static readonly string[] LuaPathEnvironmentPaths =
+        {
+            "lua/?.lua",
+            "lua/?/init.lua",
+        };
+        private static readonly string[] DefaultFallbackPaths = { "?", "?.lua" };
+
         [Test]
         public void ResolveModuleNameUsesLuaPathGlobal()
         {
@@ -30,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(resolved, Is.EqualTo("modules/my/module.lua"));
-                Assert.That(loader.ProbedPaths, Is.EqualTo(new[] { "modules/my/module.lua" }));
+                Assert.That(loader.ProbedPaths, Is.EqualTo(SingleModuleProbe));
             });
         }
 
@@ -44,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestScriptLoader loader = new()
             {
                 IgnoreLuaPathGlobal = true,
-                ModulePaths = new[] { "libs/?.lua", "addons/?/init.lua" },
+                ModulePaths = SampleModulePaths,
             };
 
             loader.ExistingFiles.Add("addons/sample/init.lua");
@@ -54,10 +74,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(resolved, Is.EqualTo("addons/sample/init.lua"));
-                Assert.That(
-                    loader.ProbedPaths,
-                    Is.EqualTo(new[] { "libs/sample.lua", "addons/sample/init.lua" })
-                );
+                Assert.That(loader.ProbedPaths, Is.EqualTo(SampleResolvedProbes));
             });
         }
 
@@ -78,13 +95,57 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ResolveModuleNameThrowsWhenModuleNameIsNull()
+        {
+            Script script = new Script();
+            Table globals = script.Globals;
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleName(null!, globals),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("modname")
+            );
+        }
+
+        [Test]
+        public void ResolveModuleNameThrowsWhenGlobalsAreNull()
+        {
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleName("module", null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("globalContext")
+            );
+        }
+
+        [Test]
+        public void ResolveModuleNamePathsOverloadThrowsWhenModuleNameIsNull()
+        {
+            TestScriptLoader loader = new();
+
+            Assert.That(
+                () => loader.ResolveModuleNameWithPaths(null!, Array.Empty<string>()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("modname")
+            );
+        }
+
+        [Test]
         public void UnpackStringPathsTrimsAndSkipsEmptySegments()
         {
             IReadOnlyList<string> paths = ScriptLoaderBase.UnpackStringPaths(
                 " ? ; ; lib/?.lua ; scripts/? ;"
             );
 
-            Assert.That(paths, Is.EqualTo(new[] { "?", "lib/?.lua", "scripts/?" }));
+            Assert.That(paths, Is.EqualTo(TrimmedPathSegments));
+        }
+
+        [Test]
+        public void UnpackStringPathsThrowsWhenInputIsNull()
+        {
+            Assert.That(
+                () => ScriptLoaderBase.UnpackStringPaths(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("str")
+            );
         }
 
         [Test]
@@ -92,14 +153,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             IPlatformAccessor original = Script.GlobalOptions.Platform;
             LoaderPlatformStub stub = new();
-            stub.Environment["NovaSharp_PATH"] = "mods/?.lua;packages/?/init.lua";
+            stub.Environment["NOVASHARP_PATH"] = "mods/?.lua;packages/?/init.lua";
 
             Script.GlobalOptions.Platform = stub;
 
             try
             {
                 IReadOnlyList<string> paths = ScriptLoaderBase.GetDefaultEnvironmentPaths();
-                Assert.That(paths, Is.EqualTo(new[] { "mods/?.lua", "packages/?/init.lua" }));
+                Assert.That(paths, Is.EqualTo(NovaSharpEnvironmentPaths));
             }
             finally
             {
@@ -119,7 +180,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 IReadOnlyList<string> paths = ScriptLoaderBase.GetDefaultEnvironmentPaths();
-                Assert.That(paths, Is.EqualTo(new[] { "lua/?.lua", "lua/?/init.lua" }));
+                Assert.That(paths, Is.EqualTo(LuaPathEnvironmentPaths));
             }
             finally
             {
@@ -138,7 +199,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 IReadOnlyList<string> paths = ScriptLoaderBase.GetDefaultEnvironmentPaths();
-                Assert.That(paths, Is.EqualTo(new[] { "?", "?.lua" }));
+                Assert.That(paths, Is.EqualTo(DefaultFallbackPaths));
             }
             finally
             {
@@ -162,14 +223,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 throw new NotSupportedException();
             }
+
+            public string ResolveModuleNameWithPaths(string modname, IEnumerable<string> paths) =>
+                base.ResolveModuleName(modname, paths);
         }
 
         private sealed class LoaderPlatformStub : IPlatformAccessor
         {
-            public Dictionary<string, string> Environment { get; } =
-                new(StringComparer.OrdinalIgnoreCase);
+            public Dictionary<string, string> Environment { get; } = new(StringComparer.Ordinal);
 
-            public CoreModules FilterSupportedCoreModules(CoreModules module) => module;
+            public CoreModules FilterSupportedCoreModules(CoreModules coreModules) => coreModules;
 
             public string GetEnvironmentVariable(string envvarname) =>
                 Environment.TryGetValue(envvarname, out string value) ? value : null;

@@ -25,6 +25,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             _clock = clock ?? SystemHighResolutionClock.Instance;
         }
 
+        /// <inheritdoc/>
         public IDisposable Start()
         {
             if (_reentrant == 0)
@@ -38,6 +39,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             return this;
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             _reentrant -= 1;
@@ -50,6 +52,7 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             }
         }
 
+        /// <inheritdoc/>
         public PerformanceResult GetResult()
         {
             return new PerformanceResult()

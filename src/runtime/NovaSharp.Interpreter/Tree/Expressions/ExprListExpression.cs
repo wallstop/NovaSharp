@@ -5,21 +5,31 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a comma-separated expression list (used for table constructors, argument lists, etc.).
+    /// </summary>
     internal class ExprListExpression : Expression
     {
         private readonly List<Expression> _expressions;
 
+        /// <summary>
+        /// Initializes a new expression list node with the supplied expressions.
+        /// </summary>
         public ExprListExpression(List<Expression> exps, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             _expressions = exps;
         }
 
+        /// <summary>
+        /// Gets the underlying expressions in parsing order.
+        /// </summary>
         public Expression[] GetExpressions()
         {
             return _expressions.ToArray();
         }
 
+        /// <inheritdoc/>
         public override void Compile(Execution.VM.ByteCode bc)
         {
             foreach (Expression exp in _expressions)
@@ -29,10 +39,11 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
             if (_expressions.Count > 1)
             {
-                bc.Emit_MkTuple(_expressions.Count);
+                bc.EmitMkTuple(_expressions.Count);
             }
         }
 
+        /// <inheritdoc/>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             if (_expressions.Count >= 1)

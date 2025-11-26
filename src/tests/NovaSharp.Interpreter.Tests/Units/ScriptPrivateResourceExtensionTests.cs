@@ -64,6 +64,39 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void CheckScriptOwnershipIgnoresNullDynValues()
+        {
+            TestResource container = new(new Script());
+            Assert.DoesNotThrow(() => container.CheckScriptOwnership((DynValue)null));
+        }
+
+        [Test]
+        public void CheckScriptOwnershipAllowsNonPrivateValues()
+        {
+            TestResource container = new(new Script());
+            DynValue constant = DynValue.NewNumber(123);
+
+            Assert.DoesNotThrow(() => container.CheckScriptOwnership(constant));
+        }
+
+        [Test]
+        public void CheckScriptOwnershipGuardsScriptParameter()
+        {
+            Script owner = new();
+            Script other = new();
+            TestResource container = new(owner);
+
+            Assert.DoesNotThrow(() => container.CheckScriptOwnership(owner));
+            Assert.DoesNotThrow(() => container.CheckScriptOwnership(script: null));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                container.CheckScriptOwnership(other)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("another script"));
+        }
+
         private sealed class TestResource : IScriptPrivateResource
         {
             public TestResource(Script owner)

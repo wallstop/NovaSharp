@@ -6,6 +6,9 @@ namespace NovaSharp.Interpreter.Tree.Expressions
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents Lua table constructors (<c>{ ... }</c>) with positional, named, and map fields.
+    /// </summary>
     internal class TableConstructor : Expression
     {
         private readonly bool _shared;
@@ -20,15 +23,15 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             // here lexer is at the '{', go on
             CheckTokenType(lcontext, TokenType.BrkOpenCurly, TokenType.BrkOpenCurlyShared);
 
-            while (lcontext.Lexer.Current.type != TokenType.BrkCloseCurly)
+            while (lcontext.Lexer.Current.Type != TokenType.BrkCloseCurly)
             {
-                switch (lcontext.Lexer.Current.type)
+                switch (lcontext.Lexer.Current.Type)
                 {
                     case TokenType.Name:
                         {
                             Token assign = lcontext.Lexer.PeekNext();
 
-                            if (assign.type == TokenType.OpAssignment)
+                            if (assign.Type == TokenType.OpAssignment)
                             {
                                 StructField(lcontext);
                             }
@@ -48,7 +51,7 @@ namespace NovaSharp.Interpreter.Tree.Expressions
 
                 Token curr = lcontext.Lexer.Current;
 
-                if (curr.type == TokenType.Comma || curr.type == TokenType.SemiColon)
+                if (curr.Type == TokenType.Comma || curr.Type == TokenType.SemiColon)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -97,24 +100,36 @@ namespace NovaSharp.Interpreter.Tree.Expressions
             _positionalValues.Add(e);
         }
 
+        /// <summary>
+        /// Emits bytecode that allocates the table and populates every recorded field.
+        /// </summary>
+        /// <param name="bc">Bytecode builder receiving the emitted instructions.</param>
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            bc.Emit_NewTable(_shared);
+            bc.EmitNewTable(_shared);
 
             foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
                 kvp.Key.Compile(bc);
                 kvp.Value.Compile(bc);
-                bc.Emit_TblInitN();
+                bc.EmitTblInitN();
             }
 
             for (int i = 0; i < _positionalValues.Count; i++)
             {
                 _positionalValues[i].Compile(bc);
-                bc.Emit_TblInitI(i == _positionalValues.Count - 1);
+                bc.EmitTblInitI(i == _positionalValues.Count - 1);
             }
         }
 
+        /// <summary>
+        /// Evaluates the constructor at runtime; only shared (prime) tables can be built dynamically.
+        /// </summary>
+        /// <param name="context">Execution context used to evaluate keys and values.</param>
+        /// <returns>The constructed table literal.</returns>
+        /// <exception cref="DynamicExpressionException">
+        /// Thrown when a dynamic expression attempts to allocate a non-shared table.
+        /// </exception>
         public override DynValue Eval(ScriptExecutionContext context)
         {
             if (!_shared)

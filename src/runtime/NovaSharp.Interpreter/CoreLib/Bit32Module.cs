@@ -1,8 +1,5 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
@@ -12,7 +9,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Class implementing bit32 Lua functions
+    /// Implements Lua 5.2's <c>bit32</c> standard library (§6.7) for compatibility profiles that expose it.
     /// </summary>
     [SuppressMessage(
         "Design",
@@ -22,7 +19,7 @@ namespace NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "bit32")]
     public class Bit32Module
     {
-        private static readonly uint[] Masks = new uint[]
+        private static readonly uint[] Masks =
         {
             0x1,
             0x3,
@@ -87,12 +84,30 @@ namespace NovaSharp.Interpreter.CoreLib
             return Masks[bits - 1];
         }
 
+        /// <summary>
+        /// Applies a bitwise accumulator across the supplied arguments using the provided delegate.
+        /// </summary>
+        /// <param name="funcName">Lua-visible function name (used for diagnostics).</param>
+        /// <param name="args">Arguments passed to the Lua helper.</param>
+        /// <param name="accumFunc">Accumulator that combines the running value with the next operand.</param>
+        /// <returns>The accumulated 32-bit unsigned integer.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="args"/> or <paramref name="accumFunc"/> is null.</exception>
         public static uint Bitwise(
             string funcName,
             CallbackArguments args,
             Func<uint, uint, uint> accumFunc
         )
         {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (accumFunc == null)
+            {
+                throw new ArgumentNullException(nameof(accumFunc));
+            }
+
             uint accum = ToUInt32(args.AsType(0, funcName, DataType.Number, false));
 
             for (int i = 1; i < args.Count; i++)
@@ -104,12 +119,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return accum;
         }
 
+        /// <summary>
+        /// Implements <c>bit32.extract</c>, returning a bit-field slice starting at <c>pos</c> with an optional width.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, position, optional width).</param>
+        /// <returns>A <see cref="DynValue"/> containing the extracted unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "extract")]
         public static DynValue Extract(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "extract", DataType.Number);
             uint v = ToUInt32(vV);
 
@@ -125,12 +152,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(res);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.replace</c>, injecting bits from <c>u</c> into <c>v</c> starting at <c>pos</c> for the specified width.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, insert, position, optional width).</param>
+        /// <returns>A <see cref="DynValue"/> containing the modified unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "replace")]
         public static DynValue Replace(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "replace", DataType.Number);
             uint v = ToUInt32(vV);
 
@@ -178,12 +217,24 @@ namespace NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Implements <c>bit32.arshift</c>, performing an arithmetic right/left shift depending on the sign of the offset.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, shift amount).</param>
+        /// <returns>The shifted integer wrapped in a <see cref="DynValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "arshift")]
-        public static DynValue Arshift(
+        public static DynValue ArithmeticShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "arshift", DataType.Number);
             int v = ToInt32(vV);
 
@@ -203,12 +254,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.rshift</c>, performing a logical right shift (or left shift for negative offsets).
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, shift amount).</param>
+        /// <returns>The shifted unsigned integer as a <see cref="DynValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "rshift")]
-        public static DynValue Rshift(
+        public static DynValue RightShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "rshift", DataType.Number);
             uint v = ToUInt32(vV);
 
@@ -228,12 +291,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.lshift</c>, performing a logical left shift (or right shift for negative offsets).
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, shift amount).</param>
+        /// <returns>The shifted unsigned integer as a <see cref="DynValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "lshift")]
-        public static DynValue Lshift(
+        public static DynValue LeftShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "lshift", DataType.Number);
             uint v = ToUInt32(vV);
 
@@ -253,47 +328,119 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.band</c>, returning the bitwise AND of all arguments.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments to combine.</param>
+        /// <returns>The AND'd result.</returns>
         [NovaSharpModuleMethod(Name = "band")]
         public static DynValue Band(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewNumber(Bitwise("band", args, (x, y) => x & y));
         }
 
+        /// <summary>
+        /// Implements <c>bit32.btest</c>, returning true when the bitwise AND of all operands is non-zero.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments to test.</param>
+        /// <returns><c>true</c> when any bit overlaps; otherwise <c>false</c>.</returns>
         [NovaSharpModuleMethod(Name = "btest")]
-        public static DynValue Btest(
+        public static DynValue BitTest(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewBoolean(0 != Bitwise("btest", args, (x, y) => x & y));
         }
 
+        /// <summary>
+        /// Implements <c>bit32.bor</c>, returning the bitwise OR of all arguments.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments to combine.</param>
+        /// <returns>The OR'd result.</returns>
         [NovaSharpModuleMethod(Name = "bor")]
         public static DynValue Bor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewNumber(Bitwise("bor", args, (x, y) => x | y));
         }
 
+        /// <summary>
+        /// Implements <c>bit32.bnot</c>, inverting every bit of the supplied value.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (single unsigned integer).</param>
+        /// <returns>The ones-complement result.</returns>
         [NovaSharpModuleMethod(Name = "bnot")]
         public static DynValue Bnot(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "bnot", DataType.Number);
             uint v = ToUInt32(vV);
             return DynValue.NewNumber(~v);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.bxor</c>, returning the bitwise XOR of all arguments.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments to combine.</param>
+        /// <returns>The XOR'd result.</returns>
         [NovaSharpModuleMethod(Name = "bxor")]
         public static DynValue Bxor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             return DynValue.NewNumber(Bitwise("bxor", args, (x, y) => x ^ y));
         }
 
+        /// <summary>
+        /// Implements <c>bit32.lrotate</c>, rotating a 32-bit value left by the provided amount.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, rotation amount).</param>
+        /// <returns>The rotated unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "lrotate")]
-        public static DynValue Lrotate(
+        public static DynValue LeftRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "lrotate", DataType.Number);
             uint v = ToUInt32(vV);
 
@@ -313,12 +460,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(v);
         }
 
+        /// <summary>
+        /// Implements <c>bit32.rrotate</c>, rotating a 32-bit value right by the provided amount.
+        /// </summary>
+        /// <param name="executionContext">Current execution context.</param>
+        /// <param name="args">Arguments (value, rotation amount).</param>
+        /// <returns>The rotated unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "rrotate")]
-        public static DynValue Rrotate(
+        public static DynValue RightRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vV = args.AsType(0, "rrotate", DataType.Number);
             uint v = ToUInt32(vV);
 

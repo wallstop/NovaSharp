@@ -7,6 +7,9 @@ namespace NovaSharp.Interpreter.Infrastructure
     /// </summary>
     public interface ITimeProvider
     {
+        /// <summary>
+        /// Gets the current UTC time.
+        /// </summary>
         public DateTimeOffset GetUtcNow();
     }
 }

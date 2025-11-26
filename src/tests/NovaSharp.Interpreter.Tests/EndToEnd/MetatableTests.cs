@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System.Diagnostics.CodeAnalysis;
     using CoreLib;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -72,8 +73,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Script s = new();
             Table globalCtx = s.Globals;
 
-            globalCtx.RegisterModuleType<TableIteratorsModule>();
-            globalCtx.RegisterModuleType<MetaTableModule>();
+            globalCtx.RegisterModuleType(typeof(TableIteratorsModule));
+            globalCtx.RegisterModuleType(typeof(MetaTableModule));
 
             DynValue res = s.DoString(script);
 
@@ -230,11 +231,23 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("abc!bc"));
         }
 
-        public class MyObject
+        internal sealed class MyObject
         {
+            private readonly int _value;
+
+            public MyObject()
+            {
+                _value = 10;
+            }
+
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Metatable sample ensures callable Lua getter semantics."
+            )]
             public int GetSomething()
             {
-                return 10;
+                return _value;
             }
         }
 

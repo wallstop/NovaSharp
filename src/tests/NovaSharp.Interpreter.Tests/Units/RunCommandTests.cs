@@ -5,29 +5,32 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Tests.Utilities;
     using NUnit.Framework;
 
     [TestFixture]
-    public sealed class RunCommandTests
+    public sealed class RunCommandTests : IDisposable
     {
-        private TextWriter _originalOut = null!;
-        private StringWriter _writer = null!;
+        private ConsoleCaptureScope _consoleScope = null!;
 
         [SetUp]
         public void SetUp()
         {
-            _writer = new StringWriter();
-            _originalOut = Console.Out;
-            Console.SetOut(_writer);
+            _consoleScope = new ConsoleCaptureScope(captureError: false);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Console.SetOut(_originalOut);
-            _writer.Dispose();
+            _consoleScope.Dispose();
+        }
+
+        public void Dispose()
+        {
+            _consoleScope?.Dispose();
         }
 
         [Test]
@@ -38,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             command.Execute(context, string.Empty);
 
-            Assert.That(_writer.ToString(), Does.Contain("Syntax : !run <file>"));
+            Assert.That(_consoleScope.Writer.ToString(), Does.Contain("Syntax : !run <file>"));
         }
 
         [Test]
@@ -77,6 +80,80 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => command.Execute(new ShellContext(script), "missing.lua"),
                 Throws.TypeOf<FileNotFoundException>()
             );
+        }
+
+        [Test]
+        public void ExecuteWithoutManifestLogsCompatibilitySummary()
+        {
+            RecordingScriptLoader loader = new();
+            Script script = new()
+            {
+                Options =
+                {
+                    ScriptLoader = loader,
+                    CompatibilityVersion = LuaCompatibilityVersion.Lua54,
+                },
+            };
+
+            RunCommand command = new();
+            ShellContext context = new(script);
+
+            command.Execute(context, "sample.lua");
+
+            Assert.That(
+                _consoleScope.Writer.ToString(),
+                Does.Contain("[compatibility] Running").And.Contain("Lua 5.4")
+            );
+        }
+
+        [Test]
+        public void ExecuteWithManifestRunsScriptInCompatibilityInstance()
+        {
+            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(modDirectory);
+
+            string scriptPath = Path.Combine(modDirectory, "entry.lua");
+            File.WriteAllText(
+                scriptPath,
+                "if warn ~= nil then error('warn available') end\ncontextFlag = true\n"
+            );
+
+            string manifestPath = Path.Combine(modDirectory, "mod.json");
+            File.WriteAllText(
+                manifestPath,
+                "{\n"
+                    + "    \"name\": \"CompatMod\",\n"
+                    + "    \"luaCompatibility\": \"Lua53\"\n"
+                    + "}\n"
+            );
+
+            RunCommand command = new();
+            Script script = new();
+            ShellContext context = new(script);
+
+            try
+            {
+                command.Execute(context, scriptPath);
+
+                Assert.Multiple(() =>
+                {
+                    string consoleOutput = _consoleScope.Writer.ToString();
+                    Assert.That(
+                        consoleOutput,
+                        Does.Contain("[compatibility] Applied Lua 5.3 profile")
+                            .And.Contain("Lua 5.3")
+                            .And.Contain("[compatibility] Running")
+                    );
+                    Assert.That(script.Globals.Get("contextFlag").IsNil());
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(modDirectory))
+                {
+                    Directory.Delete(modDirectory, recursive: true);
+                }
+            }
         }
 
         private sealed class RecordingScriptLoader : IScriptLoader

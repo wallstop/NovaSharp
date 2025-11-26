@@ -33,17 +33,43 @@ namespace NovaSharp.VsCodeDebugger.SDK
     using System.IO;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
 
     // ---- Types -------------------------------------------------------------------------
 
+    /// <summary>
+    /// DAP message payload used for error/info responses originating from the adapter.
+    /// </summary>
     public class Message
     {
+        /// <summary>
+        /// VS Code error identifier.
+        /// </summary>
         public int Id { get; private set; }
+
+        /// <summary>
+        /// Format string describing the error or info message.
+        /// </summary>
         public string Format { get; private set; }
+
+        /// <summary>
+        /// Named variables substituted into the <see cref="Format"/> string.
+        /// </summary>
         public object Variables { get; private set; }
+
+        /// <summary>
+        /// Indicates whether the message should be shown to the user.
+        /// </summary>
         public object ShowUser { get; private set; }
+
+        /// <summary>
+        /// Indicates whether the message should be forwarded as telemetry.
+        /// </summary>
         public object SendTelemetry { get; private set; }
 
+        /// <summary>
+        /// Initializes a new message payload.
+        /// </summary>
         public Message(
             int id,
             string format,
@@ -60,17 +86,49 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Represents an entry on the call stack reported back to VS Code.
+    /// </summary>
     public class StackFrame
     {
+        /// <summary>
+        /// Unique identifier referencing the stack frame inside the adapter.
+        /// </summary>
         public int Id { get; private set; }
+
+        /// <summary>
+        /// Source metadata describing where the frame resides.
+        /// </summary>
         public Source Source { get; private set; }
+
+        /// <summary>
+        /// One-based starting line number in the client coordinate system.
+        /// </summary>
         public int Line { get; private set; }
+
+        /// <summary>
+        /// One-based starting column number in the client coordinate system.
+        /// </summary>
         public int Column { get; private set; }
+
+        /// <summary>
+        /// Human-friendly frame name displayed by VS Code.
+        /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Optional inclusive end line for multi-line frames.
+        /// </summary>
         public int? EndLine { get; private set; }
+
+        /// <summary>
+        /// Optional inclusive end column for multi-line frames.
+        /// </summary>
         public int? EndColumn { get; private set; }
 
+        /// <summary>
+        /// Creates a new stack frame record.
+        /// </summary>
         public StackFrame(
             int id,
             string name,
@@ -91,12 +149,29 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Describes a logical scope (locals, globals, etc.) used by VS Code when enumerating variables.
+    /// </summary>
     public class Scope
     {
+        /// <summary>
+        /// Display name shown in the VS Code scopes pane.
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Adapter-provided reference used to request the variables inside this scope.
+        /// </summary>
         public int VariablesReference { get; private set; }
+
+        /// <summary>
+        /// Indicates whether requesting this scope is expensive (VS Code may lazy-load).
+        /// </summary>
         public bool Expensive { get; private set; }
 
+        /// <summary>
+        /// Initializes a new scope descriptor.
+        /// </summary>
         public Scope(string name, int variablesReference, bool expensive = false)
         {
             Name = name;
@@ -105,12 +180,29 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Represents a single variable entry returned to VS Code.
+    /// </summary>
     public class Variable
     {
+        /// <summary>
+        /// Variable name as rendered in VS Code.
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Stringified value shown to the user.
+        /// </summary>
         public string Value { get; private set; }
+
+        /// <summary>
+        /// Reference used to expand child variables (0 for scalars).
+        /// </summary>
         public int VariablesReference { get; private set; }
 
+        /// <summary>
+        /// Creates a new variable entry.
+        /// </summary>
         public Variable(string name, string value, int variablesReference = 0)
         {
             Name = name;
@@ -119,11 +211,24 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Identifies an execution thread reported back to VS Code.
+    /// </summary>
     public class Thread
     {
+        /// <summary>
+        /// Adapter-specific identifier for the thread or coroutine.
+        /// </summary>
         public int Id { get; private set; }
+
+        /// <summary>
+        /// Name displayed in VS Code's threads view.
+        /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Initializes a thread descriptor.
+        /// </summary>
         public Thread(int id, string name)
         {
             Id = id;
@@ -138,12 +243,29 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Represents the script file associated with a stack frame or breakpoint.
+    /// </summary>
     public class Source
     {
+        /// <summary>
+        /// File name shown in UI (no directory component).
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Full path (or URI) used to locate the file.
+        /// </summary>
         public string Path { get; private set; }
+
+        /// <summary>
+        /// Optional reference used when the file is provided via the adapter instead of disk.
+        /// </summary>
         public int SourceReference { get; private set; }
 
+        /// <summary>
+        /// Creates a source descriptor with explicit name and path.
+        /// </summary>
         public Source(string name, string path, int sourceReference = 0)
         {
             Name = name;
@@ -151,6 +273,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
             SourceReference = sourceReference;
         }
 
+        /// <summary>
+        /// Creates a source descriptor using the file name derived from <paramref name="path"/>.
+        /// </summary>
         public Source(string path, int sourceReference = 0)
         {
             Name = System.IO.Path.GetFileName(path);
@@ -159,11 +284,24 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Represents a breakpoint as acknowledged by the adapter.
+    /// </summary>
     public class Breakpoint
     {
+        /// <summary>
+        /// Indicates whether the breakpoint was successfully registered.
+        /// </summary>
         public bool Verified { get; private set; }
+
+        /// <summary>
+        /// Client-facing line number where the breakpoint is set.
+        /// </summary>
         public int Line { get; private set; }
 
+        /// <summary>
+        /// Initializes a breakpoint response entry.
+        /// </summary>
         public Breakpoint(bool verified, int line)
         {
             Verified = verified;
@@ -173,13 +311,19 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     // ---- Events -------------------------------------------------------------------------
 
-    public class InitializedEvent : Event
+    /// <summary>
+    /// Signals that the adapter is ready to accept configuration requests.
+    /// </summary>
+    public class InitializedEvent : ProtocolEvent
     {
         public InitializedEvent()
             : base("initialized") { }
     }
 
-    public class StoppedEvent : Event
+    /// <summary>
+    /// Notifies VS Code that execution paused (breakpoint, step, exception, etc.).
+    /// </summary>
+    public class StoppedEvent : ProtocolEvent
     {
         public StoppedEvent(int tid, string reasn, string txt = null)
             : base(
@@ -193,25 +337,37 @@ namespace NovaSharp.VsCodeDebugger.SDK
             ) { }
     }
 
-    public class ExitedEvent : Event
+    /// <summary>
+    /// Indicates that the debuggee process terminated with an exit code.
+    /// </summary>
+    public class ExitedEvent : ProtocolEvent
     {
         public ExitedEvent(int exCode)
             : base("exited", new { exitCode = exCode }) { }
     }
 
-    public class TerminatedEvent : Event
+    /// <summary>
+    /// Indicates that the debugging session has ended.
+    /// </summary>
+    public class TerminatedEvent : ProtocolEvent
     {
         public TerminatedEvent()
             : base("terminated") { }
     }
 
-    public class ThreadEvent : Event
+    /// <summary>
+    /// Announces that a thread started or exited.
+    /// </summary>
+    public class ThreadEvent : ProtocolEvent
     {
         public ThreadEvent(string reasn, int tid)
             : base("thread", new { reason = reasn, threadId = tid }) { }
     }
 
-    public class OutputEvent : Event
+    /// <summary>
+    /// Sends console output (stdout/stderr/custom channels) back to VS Code.
+    /// </summary>
+    public class OutputEvent : ProtocolEvent
     {
         public OutputEvent(string cat, string outpt)
             : base("output", new { category = cat, output = outpt }) { }
@@ -219,18 +375,46 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     // ---- Response -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Advertises which DAP features the NovaSharp adapter implements.
+    /// </summary>
     public class Capabilities : ResponseBody
     {
-        public bool supportsConfigurationDoneRequest { get; init; }
-        public bool supportsFunctionBreakpoints { get; init; }
-        public bool supportsConditionalBreakpoints { get; init; }
-        public bool supportsEvaluateForHovers { get; init; }
-        public IReadOnlyList<object> exceptionBreakpointFilters { get; init; } =
+        /// <summary>
+        /// True when the adapter expects a configurationDone request.
+        /// </summary>
+        public bool SupportsConfigurationDoneRequest { get; init; }
+
+        /// <summary>
+        /// True when function breakpoints are supported.
+        /// </summary>
+        public bool SupportsFunctionBreakpoints { get; init; }
+
+        /// <summary>
+        /// True when conditional breakpoints are supported.
+        /// </summary>
+        public bool SupportsConditionalBreakpoints { get; init; }
+
+        /// <summary>
+        /// True when hover evaluations do not cause side-effects.
+        /// </summary>
+        public bool SupportsEvaluateForHovers { get; init; }
+
+        /// <summary>
+        /// Exception filters surfaced to the client (NovaSharp uses an empty list today).
+        /// </summary>
+        public IReadOnlyList<object> ExceptionBreakpointFilters { get; init; } =
             Array.Empty<object>();
     }
 
+    /// <summary>
+    /// Carries detailed error information for failed requests.
+    /// </summary>
     public class ErrorResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Detailed adapter message describing why the request failed.
+        /// </summary>
         public Message Error { get; private set; }
 
         public ErrorResponseBody(Message error)
@@ -239,11 +423,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload that transfers stack frames to VS Code.
+    /// </summary>
     public class StackTraceResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Stack frames returned to the client.
+        /// </summary>
         public IReadOnlyList<StackFrame> StackFrames { get; }
 
-        public StackTraceResponseBody(List<StackFrame> frames = null)
+        public StackTraceResponseBody(IEnumerable<StackFrame> frames = null)
         {
             if (frames == null)
             {
@@ -256,11 +446,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload that lists scopes for the active stack frame.
+    /// </summary>
     public class ScopesResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Scopes available for the selected stack frame.
+        /// </summary>
         public IReadOnlyList<Scope> Scopes { get; }
 
-        public ScopesResponseBody(List<Scope> scps = null)
+        public ScopesResponseBody(IEnumerable<Scope> scps = null)
         {
             if (scps == null)
             {
@@ -273,11 +469,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload that returns the variables for a scope or reference.
+    /// </summary>
     public class VariablesResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Variables expanded for the requested reference.
+        /// </summary>
         public IReadOnlyList<Variable> Variables { get; }
 
-        public VariablesResponseBody(List<Variable> vars = null)
+        public VariablesResponseBody(IEnumerable<Variable> vars = null)
         {
             if (vars == null)
             {
@@ -290,11 +492,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload that enumerates available threads.
+    /// </summary>
     public class ThreadsResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Threads currently being tracked by the adapter.
+        /// </summary>
         public IReadOnlyList<Thread> Threads { get; }
 
-        public ThreadsResponseBody(List<Thread> vars = null)
+        public ThreadsResponseBody(IEnumerable<Thread> vars = null)
         {
             if (vars == null)
             {
@@ -307,10 +515,24 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload for Evaluate requests.
+    /// </summary>
     public class EvaluateResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Stringified evaluation result.
+        /// </summary>
         public string Result { get; private set; }
+
+        /// <summary>
+        /// Friendly type name for the evaluation result.
+        /// </summary>
         public string Type { get; set; }
+
+        /// <summary>
+        /// Reference used to expand any nested values.
+        /// </summary>
         public int VariablesReference { get; private set; }
 
         public EvaluateResponseBody(string value, int reff = 0)
@@ -320,11 +542,17 @@ namespace NovaSharp.VsCodeDebugger.SDK
         }
     }
 
+    /// <summary>
+    /// Response payload that confirms which breakpoints were registered.
+    /// </summary>
     public class SetBreakpointsResponseBody : ResponseBody
     {
+        /// <summary>
+        /// Mirrors the breakpoints acknowledged by the adapter.
+        /// </summary>
         public IReadOnlyList<Breakpoint> Breakpoints { get; }
 
-        public SetBreakpointsResponseBody(List<Breakpoint> bpts = null)
+        public SetBreakpointsResponseBody(IEnumerable<Breakpoint> bpts = null)
         {
             if (bpts == null)
             {
@@ -339,6 +567,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
     // ---- The Session --------------------------------------------------------
 
+    /// <summary>
+    /// Base class that implements the VS Code Debug Adapter Protocol request/response loop.
+    /// </summary>
     public abstract class DebugSession : ProtocolServer
     {
         private readonly bool _debuggerLinesStartAt1;
@@ -346,14 +577,22 @@ namespace NovaSharp.VsCodeDebugger.SDK
         private bool _clientLinesStartAt1 = true;
         private bool _clientPathsAreUri = true;
 
-        public DebugSession(bool debuggerLinesStartAt1, bool debuggerPathsAreUri = false)
+        protected DebugSession(bool debuggerLinesStartAt1, bool debuggerPathsAreUri = false)
         {
             _debuggerLinesStartAt1 = debuggerLinesStartAt1;
             _debuggerPathsAreUri = debuggerPathsAreUri;
         }
 
+        /// <summary>
+        /// Sends a successful response to VS Code, optionally including a body.
+        /// </summary>
         public void SendResponse(Response response, ResponseBody body = null)
         {
+            if (response == null)
+            {
+                throw new ArgumentNullException(nameof(response));
+            }
+
             if (body != null)
             {
                 response.SetBody(body);
@@ -361,6 +600,9 @@ namespace NovaSharp.VsCodeDebugger.SDK
             SendMessage(response);
         }
 
+        /// <summary>
+        /// Sends an error response with a formatted <see cref="Message"/> payload.
+        /// </summary>
         public void SendErrorResponse(
             Response response,
             int id,
@@ -370,13 +612,21 @@ namespace NovaSharp.VsCodeDebugger.SDK
             bool telemetry = false
         )
         {
+            if (response == null)
+            {
+                throw new ArgumentNullException(nameof(response));
+            }
+
             Message msg = new(id, format, arguments, user, telemetry);
             string message = Utilities.ExpandVariables(msg.Format, msg.Variables);
             response.SetErrorBody(message, new ErrorResponseBody(msg));
             SendMessage(response);
         }
 
-        protected override void DispatchRequest(string command, Table args, Response response)
+        /// <summary>
+        /// Routes incoming requests to concrete adapter overrides.
+        /// </summary>
+        protected override void DispatchRequest(string Command, Table args, Response response)
         {
             if (args == null)
             {
@@ -385,7 +635,7 @@ namespace NovaSharp.VsCodeDebugger.SDK
 
             try
             {
-                switch (command)
+                switch (Command)
                 {
                     case "initialize":
 
@@ -431,11 +681,11 @@ namespace NovaSharp.VsCodeDebugger.SDK
                         break;
 
                     case "next":
-                        Next(response, args);
+                        StepOver(response, args);
                         break;
 
                     case "continue":
-                        Continue(response, args);
+                        ContinueExecution(response, args);
                         break;
 
                     case "stepIn":
@@ -491,64 +741,128 @@ namespace NovaSharp.VsCodeDebugger.SDK
                             response,
                             1014,
                             "unrecognized request: {_request}",
-                            new { _request = command }
+                            new { _request = Command }
                         );
                         break;
                 }
             }
-            catch (Exception e)
+            catch (ScriptRuntimeException e)
             {
                 SendErrorResponse(
                     response,
                     1104,
                     "error while processing request '{_request}' (exception: {_exception})",
-                    new { _request = command, _exception = e.Message }
+                    new { _request = Command, _exception = e.DecoratedMessage ?? e.Message }
+                );
+            }
+            catch (InterpreterException e)
+            {
+                string message = e.DecoratedMessage ?? e.Message;
+                SendErrorResponse(
+                    response,
+                    1104,
+                    "error while processing request '{_request}' (exception: {_exception})",
+                    new { _request = Command, _exception = message }
                 );
             }
 
-            if (command == "disconnect")
+            if (Command == "disconnect")
             {
                 Stop();
             }
         }
 
+        /// <summary>
+        /// Handles the <c>initialize</c> request and returns adapter capabilities.
+        /// </summary>
         public abstract void Initialize(Response response, Table args);
 
+        /// <summary>
+        /// Handles launch-style requests (attach-to-process semantics already covered elsewhere).
+        /// </summary>
         public abstract void Launch(Response response, Table arguments);
 
+        /// <summary>
+        /// Handles attach requests from VS Code.
+        /// </summary>
         public abstract void Attach(Response response, Table arguments);
 
+        /// <summary>
+        /// Performs adapter-specific cleanup when VS Code disconnects.
+        /// </summary>
         public abstract void Disconnect(Response response, Table arguments);
 
+        /// <summary>
+        /// Optional override that applies function breakpoints.
+        /// </summary>
         public virtual void SetFunctionBreakpoints(Response response, Table arguments) { }
 
+        /// <summary>
+        /// Optional override that applies exception breakpoints.
+        /// </summary>
         public virtual void SetExceptionBreakpoints(Response response, Table arguments) { }
 
+        /// <summary>
+        /// Applies source line breakpoints for the specified file.
+        /// </summary>
         public abstract void SetBreakpoints(Response response, Table arguments);
 
-        public abstract void Continue(Response response, Table arguments);
+        /// <summary>
+        /// Resumes execution.
+        /// </summary>
+        public abstract void ContinueExecution(Response response, Table arguments);
 
-        public abstract void Next(Response response, Table arguments);
+        /// <summary>
+        /// Executes a step-over.
+        /// </summary>
+        public abstract void StepOver(Response response, Table arguments);
 
+        /// <summary>
+        /// Executes a step-in.
+        /// </summary>
         public abstract void StepIn(Response response, Table arguments);
 
+        /// <summary>
+        /// Executes a step-out.
+        /// </summary>
         public abstract void StepOut(Response response, Table arguments);
 
+        /// <summary>
+        /// Requests that execution pause at the next opportunity.
+        /// </summary>
         public abstract void Pause(Response response, Table arguments);
 
+        /// <summary>
+        /// Returns the current call stack.
+        /// </summary>
         public abstract void StackTrace(Response response, Table arguments);
 
+        /// <summary>
+        /// Returns the scopes for the selected frame.
+        /// </summary>
         public abstract void Scopes(Response response, Table arguments);
 
+        /// <summary>
+        /// Returns the variables for a given scope/reference.
+        /// </summary>
         public abstract void Variables(Response response, Table arguments);
 
+        /// <summary>
+        /// Optionally serves source contents to VS Code when the debugger owns the file.
+        /// </summary>
         public virtual void Source(Response response, Table arguments)
         {
             SendErrorResponse(response, 1020, "Source not supported");
         }
 
+        /// <summary>
+        /// Returns the thread list.
+        /// </summary>
         public abstract void Threads(Response response, Table arguments);
 
+        /// <summary>
+        /// Evaluates an expression (watches, REPL, hover).
+        /// </summary>
         public abstract void Evaluate(Response response, Table arguments);
 
         // protected
@@ -581,35 +895,30 @@ namespace NovaSharp.VsCodeDebugger.SDK
         {
             if (_debuggerPathsAreUri)
             {
-                if (_clientPathsAreUri)
+                if (!_clientPathsAreUri)
                 {
-                    return path;
+                    if (Uri.TryCreate(path, UriKind.Absolute, out Uri uri))
+                    {
+                        return uri.LocalPath;
+                    }
+
+                    return null;
                 }
-                else
-                {
-                    Uri uri = new(path);
-                    return uri.LocalPath;
-                }
+
+                return path;
             }
-            else
+
+            if (_clientPathsAreUri)
             {
-                if (_clientPathsAreUri)
+                if (Uri.TryCreate(path, UriKind.Absolute, out Uri uri))
                 {
-                    try
-                    {
-                        Uri uri = new(path);
-                        return uri.AbsoluteUri;
-                    }
-                    catch
-                    {
-                        return null;
-                    }
+                    return uri.AbsoluteUri;
                 }
-                else
-                {
-                    return path;
-                }
+
+                return null;
             }
+
+            return path;
         }
 
         protected string ConvertClientPathToDebugger(string clientPath)

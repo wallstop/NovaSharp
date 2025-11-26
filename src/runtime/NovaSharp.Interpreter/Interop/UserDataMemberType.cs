@@ -3,6 +3,9 @@ namespace NovaSharp.Interpreter.Interop
     using System;
     using NovaSharp.Interpreter.DataTypes;
 
+    /// <summary>
+    /// Identifies the kind of member exposed to Lua through a descriptor.
+    /// </summary>
     public enum UserDataMemberType
     {
         [Obsolete("Use a specific UserDataMemberType.", false)]

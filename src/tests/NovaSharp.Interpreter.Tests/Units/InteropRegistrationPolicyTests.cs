@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Linq;
+    using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NUnit.Framework;
@@ -33,26 +34,33 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ExplicitReturnsDefaultPolicyAndIsMarkedObsolete()
         {
-            IRegistrationPolicy policy = InteropRegistrationPolicy.Explicit;
+            PropertyInfo property = typeof(InteropRegistrationPolicy).GetProperty("Explicit");
+            Assert.That(property, Is.Not.Null);
+
+            IRegistrationPolicy policy = GetExplicitPolicy(property);
 
             Assert.Multiple(() =>
             {
                 Assert.That(policy, Is.InstanceOf<DefaultRegistrationPolicy>());
-
-#pragma warning disable CS0618
-                System.Reflection.PropertyInfo method =
-                    typeof(InteropRegistrationPolicy).GetProperty(
-                        nameof(InteropRegistrationPolicy.Explicit)
-                    );
-#pragma warning restore CS0618
-                object[] attributes =
-                    method != null
-                        ? method.GetCustomAttributes(typeof(ObsoleteAttribute), false)
-                        : Array.Empty<object>();
-                bool hasObsolete = attributes.OfType<ObsoleteAttribute>().Any();
-
-                Assert.That(hasObsolete, Is.True);
+                Assert.That(IsExplicitPropertyObsolete(property), Is.True);
             });
+        }
+
+        private static IRegistrationPolicy GetExplicitPolicy(PropertyInfo property)
+        {
+#pragma warning disable CS0618
+            object value = property.GetValue(null);
+#pragma warning restore CS0618
+            return (IRegistrationPolicy)value;
+        }
+
+        private static bool IsExplicitPropertyObsolete(PropertyInfo property)
+        {
+            object[] attributes = property.GetCustomAttributes(
+                typeof(ObsoleteAttribute),
+                inherit: false
+            );
+            return attributes.OfType<ObsoleteAttribute>().Any();
         }
     }
 }

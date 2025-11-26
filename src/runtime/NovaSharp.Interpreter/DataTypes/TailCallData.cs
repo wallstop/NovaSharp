@@ -1,5 +1,7 @@
 namespace NovaSharp.Interpreter.DataTypes
 {
+    using System.Diagnostics.CodeAnalysis;
+
     /// <summary>
     /// Class used to support "tail" continuations - a way for C# / Lua interaction which supports
     /// coroutine yielding (at the expense of a LOT of added complexity in calling code).
@@ -14,6 +16,11 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets or sets the arguments to the function
         /// </summary>
+        [SuppressMessage(
+            "Performance",
+            "CA1819:Properties should not return arrays",
+            Justification = "Tail-call argument passing relies on sharing the array backing without copies."
+        )]
         public DynValue[] Args { get; set; }
 
         /// <summary>

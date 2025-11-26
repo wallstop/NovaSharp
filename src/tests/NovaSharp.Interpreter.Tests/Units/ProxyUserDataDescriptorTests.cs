@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class ProxyUserDataDescriptorTests
     {
         private readonly Script _script = new Script();
+        private static readonly string[] ExpectedMetaRequests = { "__tostring" };
         private RecordingProxyFactory _factory = null!;
         private RecordingDescriptor _innerDescriptor = null!;
         private ProxyUserDataDescriptor _descriptor = null!;
@@ -104,7 +105,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(metaResult, Is.SameAs(expectedMeta));
                 Assert.That(asString, Is.EqualTo("proxied-meta"));
-                Assert.That(_innerDescriptor.MetaRequests, Is.EqualTo(new[] { "__tostring" }));
+                Assert.That(_innerDescriptor.MetaRequests, Is.EqualTo(ExpectedMetaRequests));
                 Assert.That(_factory.CreatedProxyCount, Is.GreaterThanOrEqualTo(2));
             });
         }

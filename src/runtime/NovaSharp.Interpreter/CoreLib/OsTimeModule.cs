@@ -1,11 +1,9 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -48,12 +46,23 @@ namespace NovaSharp.Interpreter.CoreLib
             return Epoch + ts;
         }
 
+        /// <summary>
+        /// Implements Lua `os.clock`, returning CPU time in seconds since the script started (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Unused arguments.</param>
+        /// <returns>Elapsed CPU time represented as seconds.</returns>
         [NovaSharpModuleMethod(Name = "clock")]
         public static DynValue Clock(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime now = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
             DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
             if (t.IsNil())
@@ -64,12 +73,23 @@ namespace NovaSharp.Interpreter.CoreLib
             return t;
         }
 
+        /// <summary>
+        /// Implements Lua `os.difftime`, subtracting two time values (t2 - t1) in seconds (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the timestamps.</param>
+        /// <returns>Difference in seconds.</returns>
         [NovaSharpModuleMethod(Name = "difftime")]
-        public static DynValue Difftime(
+        public static DynValue DiffTime(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue t2 = args.AsType(0, "difftime", DataType.Number, false);
             DynValue t1 = args.AsType(1, "difftime", DataType.Number, true);
 
@@ -81,9 +101,21 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewNumber(t2.Number - t1.Number);
         }
 
+        /// <summary>
+        /// Implements Lua `os.time`, returning the current time as Unix seconds or building one from
+        /// a table description (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Optional date table argument.</param>
+        /// <returns>Unix timestamp as a number.</returns>
         [NovaSharpModuleMethod(Name = "time")]
         public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime date = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             if (args.Count > 0)
@@ -138,9 +170,24 @@ namespace NovaSharp.Interpreter.CoreLib
             return null;
         }
 
+        /// <summary>
+        /// Implements Lua `os.date`, formatting the current time (or a supplied timestamp) according
+        /// to the requested format string (§6.9).
+        /// </summary>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Format string (defaults to <c>%c</c>) and optional Unix timestamp. Supports the special
+        /// `*t` structure return and `!` UTC prefix.
+        /// </param>
+        /// <returns>Formatted string or table describing the broken-down date.</returns>
         [NovaSharpModuleMethod(Name = "date")]
         public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
             DynValue vformat = args.AsType(0, "date", DataType.String, true);
@@ -155,7 +202,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             bool isDst = false;
 
-            if (format.StartsWith("!"))
+            if (!string.IsNullOrEmpty(format) && format[0] == '!')
             {
                 format = format.Substring(1);
             }
@@ -178,7 +225,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (format == "*t")
             {
-                Table t = new(executionContext.GetScript());
+                Table t = new(executionContext.Script);
 
                 t.Set("year", DynValue.NewNumber(reference.Year));
                 t.Set("month", DynValue.NewNumber(reference.Month));
@@ -268,13 +315,13 @@ namespace NovaSharp.Interpreter.CoreLib
 
                 isEscapeSequence = false;
 
-                if (standardPatterns.ContainsKey(c))
+                if (standardPatterns.TryGetValue(c, out string pattern))
                 {
-                    sb.Append(d.ToString(standardPatterns[c]));
+                    sb.Append(d.ToString(pattern, CultureInfo.InvariantCulture));
                 }
                 else if (c == 'e')
                 {
-                    string s = d.ToString("%d");
+                    string s = d.ToString("%d", CultureInfo.InvariantCulture);
                     if (s.Length < 2)
                     {
                         s = " " + s;
@@ -296,7 +343,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
                 else if (c == 'j')
                 {
-                    sb.Append(d.DayOfYear.ToString("000"));
+                    sb.Append(d.DayOfYear.ToString("000", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'u')
                 {
@@ -345,9 +392,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return context?.OwnerScript?.TimeProvider ?? SystemTimeProvider.Instance;
         }
 
-        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context)
-        {
-            return context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
-        }
+        private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context) =>
+            context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
     }
 }

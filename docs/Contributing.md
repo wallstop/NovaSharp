@@ -48,6 +48,16 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
   python3 tools/NamespaceAudit/namespace_audit.py
   ```
   Fix mismatches (or update the allowlist intentionally) until the script passes.
+- Confirm PascalCase naming (files/types) matches `.editorconfig` / C# style:
+  ```bash
+  python3 tools/NamingAudit/naming_audit.py
+  ```
+  The script flags non-conforming identifiers with file/line hints. Address the issues or update the allowlist when the names are intentionally generated.
+- Keep comments, docs, and diagnostic strings in plain English:
+  ```bash
+  python3 tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log
+  ```
+  This wraps `codespell` with the repository allowlist so you can fix or intentionally document any new wording before CI runs the audit.
 
 ## Formatting & Pre-commit Hooks
 

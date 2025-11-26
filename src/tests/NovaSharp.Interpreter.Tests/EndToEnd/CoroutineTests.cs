@@ -1,12 +1,13 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
+    using System;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
     [TestFixture]
-    internal sealed class CoroutineTests
+    public sealed class CoroutineTests
     {
         [Test]
         public void CoroutineBasic()
@@ -123,7 +124,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(ret.Tuple[0].Boolean, Is.EqualTo(false));
             Assert.That(ret.Tuple[1].Type, Is.EqualTo(DataType.String));
             Assert.That(
-                ret.Tuple[1].String.EndsWith("attempt to yield across a CLR-call boundary"),
+                ret.Tuple[1]
+                    .String.EndsWith(
+                        "attempt to yield across a CLR-call boundary",
+                        StringComparison.Ordinal
+                    ),
                 Is.True
             );
         }

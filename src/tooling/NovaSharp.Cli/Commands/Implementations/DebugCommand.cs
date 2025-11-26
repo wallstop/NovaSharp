@@ -1,54 +1,66 @@
 namespace NovaSharp.Cli.Commands.Implementations
 {
     using System;
-    using System.Diagnostics;
+    using NovaSharp.Cli;
+    using NovaSharp.Interpreter.Compatibility;
     using RemoteDebugger;
 
+    /// <summary>
+    /// CLI command that attaches the NovaSharp remote debugger to the current REPL script.
+    /// </summary>
     internal sealed class DebugCommand : ICommand
     {
+        /// <summary>
+        /// Factory used to create debugger bridge instances; overridden in tests.
+        /// </summary>
         internal static Func<IRemoteDebuggerBridge> DebuggerFactory { get; set; } =
             () => new RemoteDebuggerServiceBridge();
 
-        internal static Action<string> BrowserLauncher { get; set; } =
-            url =>
-            {
-                if (string.IsNullOrWhiteSpace(url))
-                {
-                    return;
-                }
-
-                Process.Start(url);
-            };
+        /// <summary>
+        /// Browser launcher invoked after the debugger is attached; overridable for tests/hosts.
+        /// </summary>
+        internal static IBrowserLauncher BrowserLauncher { get; set; } =
+            ProcessBrowserLauncher.Instance;
 
         private IRemoteDebuggerBridge _debugger;
 
+        /// <inheritdoc />
         public string Name
         {
             get { return "debug"; }
         }
 
+        /// <inheritdoc />
         public void DisplayShortHelp()
         {
-            Console.WriteLine("debug - Starts the interactive debugger");
+            Console.WriteLine(CliMessages.DebugCommandShortHelp);
         }
 
+        /// <inheritdoc />
         public void DisplayLongHelp()
         {
-            Console.WriteLine(
-                "debug - Starts the interactive debugger. Requires a web browser with Flash installed."
-            );
+            Console.WriteLine(CliMessages.DebugCommandLongHelp);
         }
 
+        /// <inheritdoc />
         public void Execute(ShellContext context, string arguments)
         {
             if (_debugger == null)
             {
+                LuaCompatibilityProfile profile = context?.Script?.CompatibilityProfile;
+                if (profile != null)
+                {
+                    Console.WriteLine(
+                        $"[compatibility] Debugger session running under {profile.GetFeatureSummary()}"
+                    );
+                }
+
                 _debugger = DebuggerFactory();
                 _debugger.Attach(context.Script, "NovaSharp REPL interpreter", false);
-                string url = _debugger.HttpUrlStringLocalHost;
-                if (!string.IsNullOrWhiteSpace(url))
+                Uri url = _debugger.HttpUrlStringLocalHost;
+                if (url != null)
                 {
-                    BrowserLauncher(url);
+                    BrowserLauncher?.Launch(url);
                 }
             }
         }

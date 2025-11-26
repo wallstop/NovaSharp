@@ -4,9 +4,10 @@ namespace NovaSharp.Interpreter.REPL
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
-    /// This class provides a simple REPL intepreter ready to be reused in a simple way.
+    /// This class provides a simple REPL interpreter ready to be reused in a simple way.
     /// </summary>
     public class ReplInterpreter
     {
@@ -67,9 +68,14 @@ namespace NovaSharp.Interpreter.REPL
         /// <returns>This method returns the result of the computation, or null if more input is needed for a computation.</returns>
         public virtual DynValue Evaluate(string input)
         {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
             bool isFirstLine = !HasPendingCommand;
 
-            bool forced = (input == "");
+            bool forced = input.Length == 0;
 
             _currentCommand += input;
 
@@ -80,24 +86,26 @@ namespace NovaSharp.Interpreter.REPL
 
             _currentCommand += "\n";
 
+            bool resetCurrentCommand = true;
             try
             {
                 DynValue result = null;
 
-                if (isFirstLine && HandleClassicExprsSyntax && _currentCommand.StartsWith("="))
+                if (isFirstLine && HandleClassicExprsSyntax && _currentCommand[0] == '=')
                 {
                     _currentCommand = "return " + _currentCommand.Substring(1);
                 }
 
-                if (isFirstLine && HandleDynamicExprs && _currentCommand.StartsWith("?"))
+                if (isFirstLine && HandleDynamicExprs && _currentCommand[0] == '?')
                 {
-                    string code = _currentCommand.Substring(1).Trim();
-                    if (code.Length == 0)
+                    ReadOnlySpan<char> codeSpan = _currentCommand.AsSpan(1).TrimWhitespace();
+                    if (codeSpan.IsEmpty)
                     {
+                        _currentCommand = string.Empty;
                         return DynValue.Void;
                     }
 
-                    DynamicExpression exp = _script.CreateDynamicExpression(code);
+                    DynamicExpression exp = _script.CreateDynamicExpression(new string(codeSpan));
                     result = exp.Evaluate();
                 }
                 else
@@ -106,32 +114,48 @@ namespace NovaSharp.Interpreter.REPL
                     result = _script.Call(v);
                 }
 
-                _currentCommand = "";
+                _currentCommand = string.Empty;
+                resetCurrentCommand = false;
                 return result;
             }
             catch (SyntaxErrorException ex)
             {
                 if (forced || !ex.IsPrematureStreamTermination)
                 {
-                    _currentCommand = "";
                     ex.Rethrow();
                     throw;
                 }
                 else
                 {
+                    resetCurrentCommand = false;
                     return null;
                 }
             }
             catch (ScriptRuntimeException sre)
             {
-                _currentCommand = "";
                 sre.Rethrow();
                 throw;
             }
-            catch (Exception)
+            finally
             {
-                _currentCommand = "";
-                throw;
+                if (resetCurrentCommand)
+                {
+                    _currentCommand = string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Test-only helpers for overriding the backing script.
+        /// </summary>
+        internal static class TestHooks
+        {
+            /// <summary>
+            /// Overrides the interpreter's <see cref="Script"/> so tests can inject custom instances.
+            /// </summary>
+            public static void SetScript(ReplInterpreter interpreter, Script script)
+            {
+                interpreter._script = script;
             }
         }
     }

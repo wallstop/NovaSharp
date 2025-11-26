@@ -54,7 +54,7 @@ namespace Tutorials.Chapters
 
             public void Update(WatchType watchType, IEnumerable<WatchItem> items) { }
 
-            public List<DynamicExpression> GetWatchItems()
+            public IReadOnlyList<DynamicExpression> GetWatchItems()
             {
                 return _Dynamics;
             }

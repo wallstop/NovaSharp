@@ -2,9 +2,14 @@ namespace NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
     using System.Reflection;
+    using System.Security;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// A script loader which can load scripts from assets in Unity3D.
@@ -15,6 +20,9 @@ namespace NovaSharp.Interpreter.Loaders
     /// </summary>
     public class UnityAssetsScriptLoader : ScriptLoaderBase
     {
+        private const string LoaderInitializationErrorFormat =
+            "Error initializing UnityScriptLoader : {0}";
+
         private readonly Dictionary<string, string> _resources = new();
 
         /// <summary>
@@ -67,7 +75,7 @@ namespace NovaSharp.Interpreter.Loaders
                     _Resources.Add(name, text);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableLoaderInitializationException(ex))
             {
                 UnityEngine.Debug.LogErrorFormat("Error initializing UnityScriptLoader : {0}", ex);
             }
@@ -108,27 +116,18 @@ namespace NovaSharp.Interpreter.Loaders
                     _resources.Add(name, text);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsRecoverableLoaderInitializationException(ex))
             {
+                string message = FormatLoaderInitializationError(ex);
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
-                Console.WriteLine("Error initializing UnityScriptLoader : {0}", ex);
+                Console.WriteLine(message);
 #endif
-                System.Diagnostics.Debug.WriteLine($"Error initializing UnityScriptLoader : {ex}");
+                System.Diagnostics.Debug.WriteLine(message);
             }
         }
 #endif
 
-        private string GetFileName(string filename)
-        {
-            int b = Math.Max(filename.LastIndexOf('\\'), filename.LastIndexOf('/'));
-
-            if (b > 0)
-            {
-                filename = filename.Substring(b + 1);
-            }
-
-            return filename;
-        }
+        private static string GetFileName(string filename) => filename.SliceAfterLastSeparator();
 
         /// <summary>
         /// Opens a file for reading the script code.
@@ -144,35 +143,44 @@ namespace NovaSharp.Interpreter.Loaders
         /// <exception cref="System.Exception">UnityAssetsScriptLoader.LoadFile : Cannot load  + file</exception>
         public override object LoadFile(string file, Table globalContext)
         {
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
             file = GetFileName(file);
 
-            if (_resources.ContainsKey(file))
+            if (_resources.TryGetValue(file, out string script))
             {
-                return _resources[file];
+                return script;
             }
-            else
-            {
-                string error = string.Format(
-                    @"Cannot load script '{0}'. By default, scripts should be .txt files placed under a Assets/Resources/{1} directory.
+
+            string error = string.Format(
+                CultureInfo.InvariantCulture,
+                @"Cannot load script '{0}'. By default, scripts should be .txt files placed under a Assets/Resources/{1} directory.
 If you want scripts to be put in another directory or another way, use a custom instance of UnityAssetsScriptLoader or implement
 your own IScriptLoader (possibly extending ScriptLoaderBase).",
-                    file,
-                    DefaultPath
-                );
+                file,
+                DefaultPath
+            );
 
-                throw new Exception(error);
-            }
+            throw new FileNotFoundException(error, file);
         }
 
         /// <summary>
         /// Checks if a given file exists
         /// </summary>
-        /// <param name="file">The file.</param>
+        /// <param name="name">The file.</param>
         /// <returns></returns>
-        public override bool ScriptFileExists(string file)
+        public override bool ScriptFileExists(string name)
         {
-            file = GetFileName(file);
-            return _resources.ContainsKey(file);
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            string normalizedName = GetFileName(name);
+            return _resources.ContainsKey(normalizedName);
         }
 
         /// <summary>
@@ -190,6 +198,37 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).",
             }
 
             return keys;
+        }
+
+        private static string FormatLoaderInitializationError(Exception ex)
+        {
+            return string.Format(CultureInfo.InvariantCulture, LoaderInitializationErrorFormat, ex);
+        }
+
+        private static bool IsRecoverableLoaderInitializationException(Exception exception)
+        {
+            if (exception == null)
+            {
+                return false;
+            }
+
+            if (exception is ScriptRuntimeException)
+            {
+                return true;
+            }
+
+            return exception
+                is FileNotFoundException
+                    or DirectoryNotFoundException
+                    or UnauthorizedAccessException
+                    or IOException
+                    or SecurityException
+                    or InvalidOperationException
+                    or NotSupportedException
+                    or TypeLoadException
+                    or MissingMethodException
+                    or TargetInvocationException
+                    or ArgumentException;
         }
     }
 }

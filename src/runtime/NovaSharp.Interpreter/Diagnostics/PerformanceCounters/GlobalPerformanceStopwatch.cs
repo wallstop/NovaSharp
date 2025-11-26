@@ -4,11 +4,17 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
     using NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
-    /// This class is not *really* IDisposable.. it's just used to have a RAII like pattern.
-    /// You are free to reuse this instance after calling Dispose.
+    /// Stopwatch that aggregates timings across scripts for a given performance counter.
     /// </summary>
+    /// <remarks>
+    /// The stopwatch itself is not disposable; consumers call <see cref="Start"/> to obtain a scope
+    /// that reports elapsed time when disposed, enabling idiomatic RAII usage.
+    /// </remarks>
     internal sealed class GlobalPerformanceStopwatch : IPerformanceStopwatch
     {
+        /// <summary>
+        /// Disposable scope returned by <see cref="GlobalPerformanceStopwatch.Start"/> to capture elapsed time.
+        /// </summary>
         private sealed class Scope : IDisposable
         {
             private readonly GlobalPerformanceStopwatch _owner;
@@ -20,6 +26,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
                 _startedAt = owner._clock.GetTimestamp();
             }
 
+            /// <summary>
+            /// Stops the measurement scope and reports the elapsed duration to the owner.
+            /// </summary>
             public void Dispose()
             {
                 long stop = _owner._clock.GetTimestamp();
@@ -32,6 +41,9 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
         private int _count;
         private long _elapsedMilliseconds;
 
+        /// <summary>
+        /// Initializes a stopwatch bound to the specified performance counter.
+        /// </summary>
         public GlobalPerformanceStopwatch(
             PerformanceCounter perfcounter,
             IHighResolutionClock clock = null
@@ -47,17 +59,19 @@ namespace NovaSharp.Interpreter.Diagnostics.PerformanceCounters
             _count += 1;
         }
 
+        /// <inheritdoc/>
         public IDisposable Start()
         {
             return new Scope(this);
         }
 
+        /// <inheritdoc/>
         public PerformanceResult GetResult()
         {
             return new PerformanceResult()
             {
                 Type = PerformanceCounterType.TimeMilliseconds,
-                Global = false,
+                Global = true,
                 Name = _counter.ToString(),
                 Instances = _count,
                 Counter = _elapsedMilliseconds,

@@ -2,7 +2,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
+    using System.Globalization;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
@@ -74,6 +74,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="friendlyName">A friendly name for the type, or null.</param>
         protected DispatchingUserDataDescriptor(Type type, string friendlyName = null)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             Type = type;
             Name = type.FullName;
             FriendlyName = friendlyName ?? type.Name;
@@ -197,47 +202,39 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             IMemberDescriptor desc
         )
         {
-            if (desc is IOverloadableMemberDescriptor odesc)
+            if (desc is IOverloadableMemberDescriptor overloadable)
             {
-                if (members.ContainsKey(name))
+                if (members.TryGetValue(name, out IMemberDescriptor existing))
                 {
-                    if (members[name] is OverloadedMethodMemberDescriptor overloads)
+                    if (existing is OverloadedMethodMemberDescriptor overloads)
                     {
-                        overloads.AddOverload(odesc);
+                        overloads.AddOverload(overloadable);
+                        return;
                     }
-                    else
-                    {
-                        throw new ArgumentException(
-                            string.Format(
-                                "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
-                                name,
-                                Type.FullName
-                            )
-                        );
-                    }
+
+                    ThrowMemberConflict(name);
                 }
-                else
-                {
-                    members.Add(name, new OverloadedMethodMemberDescriptor(name, Type, odesc));
-                }
+
+                members.Add(name, new OverloadedMethodMemberDescriptor(name, Type, overloadable));
+                return;
             }
-            else
+
+            if (!members.TryAdd(name, desc))
             {
-                if (members.ContainsKey(name))
-                {
-                    throw new ArgumentException(
-                        string.Format(
-                            "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
-                            name,
-                            Type.FullName
-                        )
-                    );
-                }
-                else
-                {
-                    members.Add(name, desc);
-                }
+                ThrowMemberConflict(name);
             }
+        }
+
+        private void ThrowMemberConflict(string name)
+        {
+            throw new ArgumentException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Multiple members named {0} are being added to type {1} and one or more of these members do not support overloads.",
+                    name,
+                    Type.FullName
+                )
+            );
         }
 
         /// <summary>
@@ -255,6 +252,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             bool isDirectIndexing
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
@@ -317,10 +324,18 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <exception cref="System.NotImplementedException"></exception>
         private DynValue TryIndexOnExtMethod(Script script, object obj, string indexName)
         {
-            List<IOverloadableMemberDescriptor> methods = UserData.GetExtensionMethodsByNameAndType(
-                indexName,
-                Type
-            );
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (indexName == null)
+            {
+                throw new ArgumentNullException(nameof(indexName));
+            }
+
+            IReadOnlyList<IOverloadableMemberDescriptor> methods =
+                UserData.GetExtensionMethodsByNameAndType(indexName, Type);
 
             if (methods != null && methods.Count > 0)
             {
@@ -365,6 +380,11 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         protected virtual DynValue TryIndex(Script script, object obj, string indexName)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             if (_members.TryGetValue(indexName, out IMemberDescriptor desc))
             {
                 return desc.GetValue(script, obj);
@@ -390,6 +410,21 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             bool isDirectIndexing
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             if (!isDirectIndexing)
             {
                 IMemberDescriptor mdesc = _members
@@ -441,6 +476,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             DynValue value
         )
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             IMemberDescriptor descr = _members.GetOrDefault(indexName);
 
             if (descr != null)
@@ -454,18 +499,25 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
-        void IOptimizableDescriptor.Optimize()
+        /// <summary>
+        /// Propagates optimization hints to all nested member descriptors (meta + regular) so they can cache reflection state.
+        /// </summary>
+        public virtual void Optimize()
         {
-            foreach (
-                IOptimizableDescriptor m in _metaMembers.Values.OfType<IOptimizableDescriptor>()
-            )
+            foreach (IMemberDescriptor descriptor in _metaMembers.Values)
             {
-                m.Optimize();
+                if (descriptor is IOptimizableDescriptor optimizable)
+                {
+                    optimizable.Optimize();
+                }
             }
 
-            foreach (IOptimizableDescriptor m in _members.Values.OfType<IOptimizableDescriptor>())
+            foreach (IMemberDescriptor descriptor in _members.Values)
             {
-                m.Optimize();
+                if (descriptor is IOptimizableDescriptor optimizable)
+                {
+                    optimizable.Optimize();
+                }
             }
         }
 
@@ -583,6 +635,21 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             DynValue value
         )
         {
+            if (mdesc == null)
+            {
+                throw new ArgumentNullException(nameof(mdesc));
+            }
+
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
             IList<DynValue> values;
 
             if (index.Type == DataType.Tuple)
@@ -651,6 +718,16 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <returns></returns>
         public virtual DynValue MetaIndex(Script script, object obj, string metaname)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            if (metaname == null)
+            {
+                throw new ArgumentNullException(nameof(metaname));
+            }
+
             IMemberDescriptor desc = _metaMembers.GetOrDefault(metaname);
 
             if (desc != null)
@@ -691,10 +768,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
-        #region MetaMethodsDispatching
-
-
-        private int PerformComparison(object obj, object p1, object p2)
+        private static int PerformComparison(object obj, object p1, object p2)
         {
             IComparable comp = (IComparable)obj;
 
@@ -713,7 +787,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             throw new InternalErrorException("unexpected case");
         }
 
-        private DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
+        private static DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -728,7 +802,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue MultiDispatchLessThan(Script script, object obj)
+        private static DynValue MultiDispatchLessThan(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -765,7 +839,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue MultiDispatchEqual(Script script, object obj)
+        private static DynValue MultiDispatchEqual(Script script, object obj)
         {
             return DynValue.NewCallback(
                 (context, args) =>
@@ -773,7 +847,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
             );
         }
 
-        private bool CheckEquality(object obj, object p1, object p2)
+        private static bool CheckEquality(object obj, object p1, object p2)
         {
             if (obj != null)
             {
@@ -787,18 +861,7 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
                 }
             }
 
-            if (p1 != null)
-            {
-                return p1.Equals(p2);
-            }
-            else if (p2 != null)
-            {
-                return p2.Equals(p1);
-            }
-            else
-            {
-                return true;
-            }
+            return Equals(p1, p2);
         }
 
         private DynValue DispatchMetaOnMethod(Script script, object obj, string methodName)
@@ -840,9 +903,6 @@ namespace NovaSharp.Interpreter.Interop.BasicDescriptors
 
             return DispatchMetaOnMethod(script, obj, "op_True");
         }
-
-        #endregion
-
 
         /// <summary>
         /// Determines whether the specified object is compatible with the specified type.

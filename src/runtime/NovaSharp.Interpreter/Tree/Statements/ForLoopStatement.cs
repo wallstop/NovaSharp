@@ -8,11 +8,14 @@ namespace NovaSharp.Interpreter.Tree.Statements
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Represents a numeric Lua <c>for</c> loop.
+    /// </summary>
     internal class ForLoopStatement : Statement
     {
         //for' NAME '=' exp ',' exp (',' exp)? 'do' block 'end'
         private readonly RuntimeScopeBlock _stackFrame;
-        private readonly Statement _innerBlock;
+        private readonly CompositeStatement _innerBlock;
         private readonly SymbolRef _varName;
 
         private readonly Expression _start;
@@ -25,6 +28,12 @@ namespace NovaSharp.Interpreter.Tree.Statements
 
         private readonly SourceRef _refEnd;
 
+        /// <summary>
+        /// Parses the numeric <c>for</c> loop, capturing the range expressions and loop body.
+        /// </summary>
+        /// <param name="lcontext">Parser context providing the lexer/token stream.</param>
+        /// <param name="nameToken">Token containing the loop variable name.</param>
+        /// <param name="forToken">Token for the `for` keyword (used for diagnostics).</param>
         public ForLoopStatement(ScriptLoadingContext lcontext, Token nameToken, Token forToken)
             : base(lcontext)
         {
@@ -37,7 +46,7 @@ namespace NovaSharp.Interpreter.Tree.Statements
             CheckTokenType(lcontext, TokenType.Comma);
             _end = Expression.Expr(lcontext);
 
-            if (lcontext.Lexer.Current.type == TokenType.Comma)
+            if (lcontext.Lexer.Current.Type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 _step = Expression.Expr(lcontext);
@@ -58,49 +67,52 @@ namespace NovaSharp.Interpreter.Tree.Statements
             lcontext.Source.Refs.Add(_refEnd);
         }
 
+        /// <summary>
+        /// Compiles the numeric loop following Lua §3.3.5: evaluates bounds/step, emits the iteration prologue, body, and increment logic.
+        /// </summary>
         public override void Compile(ByteCode bc)
         {
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { scope = _stackFrame };
+            Loop l = new() { Scope = _stackFrame };
 
-            bc.LoopTracker.loops.Push(l);
+            bc.LoopTracker.Loops.Push(l);
 
             _end.Compile(bc);
-            bc.Emit_ToNum(3);
+            bc.EmitToNum(3);
             _step.Compile(bc);
-            bc.Emit_ToNum(2);
+            bc.EmitToNum(2);
             _start.Compile(bc);
-            bc.Emit_ToNum(1);
+            bc.EmitToNum(1);
 
             int start = bc.GetJumpPointForNextInstruction();
-            Instruction jumpend = bc.Emit_Jump(OpCode.JFor, -1);
-            bc.Emit_Enter(_stackFrame);
+            Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);
+            bc.EmitEnter(_stackFrame);
             //bc.Emit_SymStorN(_VarName);
 
-            bc.Emit_Store(_varName, 0, 0);
+            bc.EmitStore(_varName, 0, 0);
 
             _innerBlock.Compile(bc);
 
             bc.PopSourceRef();
             bc.PushSourceRef(_refEnd);
 
-            bc.Emit_Debug("..end");
-            bc.Emit_Leave(_stackFrame);
-            bc.Emit_Incr(1);
-            bc.Emit_Jump(OpCode.Jump, start);
+            bc.EmitDebug("..end");
+            bc.EmitLeave(_stackFrame);
+            bc.EmitIncr(1);
+            bc.EmitJump(OpCode.Jump, start);
 
-            bc.LoopTracker.loops.Pop();
+            bc.LoopTracker.Loops.Pop();
 
             int exitpoint = bc.GetJumpPointForNextInstruction();
 
-            foreach (Instruction i in l.breakJumps)
+            foreach (Instruction i in l.BreakJumps)
             {
                 i.NumVal = exitpoint;
             }
 
             jumpend.NumVal = exitpoint;
-            bc.Emit_Pop(3);
+            bc.EmitPop(3);
 
             bc.PopSourceRef();
         }

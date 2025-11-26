@@ -25,6 +25,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         private string[] _lines = Array.Empty<string>();
 
+        /// <summary>
+        /// Gets the cached lines (including the synthetic header) for quick snippet extraction.
+        /// </summary>
         public IReadOnlyList<string> Lines => _lines;
 
         /// <summary>
@@ -37,6 +40,9 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public int SourceId { get; private set; }
 
+        /// <summary>
+        /// Gets the list of source references produced while parsing this chunk.
+        /// </summary>
         internal List<SourceRef> Refs { get; private set; }
 
         internal SourceCode(string name, string code, int sourceId, Script ownerScript)
@@ -65,11 +71,17 @@ namespace NovaSharp.Interpreter.Debugging
         /// <returns></returns>
         public string GetCodeSnippet(SourceRef sourceCodeRef)
         {
+            if (sourceCodeRef == null)
+            {
+                throw new ArgumentNullException(nameof(sourceCodeRef));
+            }
+
             if (sourceCodeRef.FromLine == sourceCodeRef.ToLine)
             {
-                int from = AdjustStrIndex(Lines[sourceCodeRef.FromLine], sourceCodeRef.FromChar);
-                int to = AdjustStrIndex(Lines[sourceCodeRef.FromLine], sourceCodeRef.ToChar);
-                return Lines[sourceCodeRef.FromLine].Substring(from, to - from);
+                ReadOnlySpan<char> lineSpan = Lines[sourceCodeRef.FromLine].AsSpan();
+                int from = AdjustStrIndex(lineSpan.Length, sourceCodeRef.FromChar);
+                int to = AdjustStrIndex(lineSpan.Length, sourceCodeRef.ToChar);
+                return lineSpan.Slice(from, to - from).ToString();
             }
 
             StringBuilder sb = new();
@@ -78,13 +90,16 @@ namespace NovaSharp.Interpreter.Debugging
             {
                 if (i == sourceCodeRef.FromLine)
                 {
-                    int from = AdjustStrIndex(Lines[i], sourceCodeRef.FromChar);
-                    sb.Append(Lines[i].Substring(from));
+                    ReadOnlySpan<char> lineSpan = Lines[i].AsSpan();
+                    int from = AdjustStrIndex(lineSpan.Length, sourceCodeRef.FromChar);
+                    sb.Append(lineSpan[from..]);
                 }
                 else if (i == sourceCodeRef.ToLine)
                 {
-                    int to = AdjustStrIndex(Lines[i], sourceCodeRef.ToChar);
-                    sb.Append(Lines[i].Substring(0, to + 1));
+                    ReadOnlySpan<char> lineSpan = Lines[i].AsSpan();
+                    int to = AdjustStrIndex(lineSpan.Length, sourceCodeRef.ToChar);
+                    int length = Math.Min(to + 1, lineSpan.Length);
+                    sb.Append(lineSpan[..length]);
                 }
                 else
                 {
@@ -95,9 +110,9 @@ namespace NovaSharp.Interpreter.Debugging
             return sb.ToString();
         }
 
-        private int AdjustStrIndex(string str, int loc)
+        private static int AdjustStrIndex(int length, int loc)
         {
-            return Math.Max(Math.Min(str.Length, loc), 0);
+            return Math.Max(Math.Min(length, loc), 0);
         }
     }
 }

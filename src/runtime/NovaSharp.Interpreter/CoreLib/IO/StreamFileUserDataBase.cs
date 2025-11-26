@@ -12,45 +12,80 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal abstract class StreamFileUserDataBase : FileUserDataBase
     {
-        protected Stream _stream;
-        protected StreamReader _reader;
-        protected StreamWriter _writer;
-        protected bool _closed;
+        /// <summary>Underlying stream instance backing this userdata.</summary>
+        protected Stream _streamInstance;
+
+        /// <summary>Reader used when the file is opened for input.</summary>
+        protected StreamReader _streamReaderInstance;
+
+        /// <summary>Writer used when the file is opened for output.</summary>
+        protected StreamWriter _streamWriterInstance;
+
+        /// <summary>True when the userdata has been closed.</summary>
+        protected bool _isClosed;
+
+        /// <summary>Logical position tracked for buffered readers.</summary>
         protected long _logicalPosition;
 
+        /// <summary>
+        /// Initializes the userdata with the supplied stream, reader, and writer handles.
+        /// </summary>
         protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)
         {
-            _stream = stream;
-            _reader = reader;
-            _writer = writer;
-            _logicalPosition = _stream != null && _stream.CanSeek ? _stream.Position : 0;
+            _streamInstance = stream;
+            _streamReaderInstance = reader;
+            _streamWriterInstance = writer;
+            _logicalPosition =
+                _streamInstance != null && _streamInstance.CanSeek ? _streamInstance.Position : 0;
+        }
+
+        /// <summary>Exposes the backing stream to derived types for inspection.</summary>
+        protected Stream StreamInstance
+        {
+            get => _streamInstance;
+            set => _streamInstance = value;
+        }
+
+        /// <summary>Exposes the backing reader to derived types for inspection.</summary>
+        protected StreamReader StreamReaderInstance
+        {
+            get => _streamReaderInstance;
+            set => _streamReaderInstance = value;
+        }
+
+        /// <summary>Exposes the backing writer to derived types for inspection.</summary>
+        protected StreamWriter StreamWriterInstance
+        {
+            get => _streamWriterInstance;
+            set => _streamWriterInstance = value;
         }
 
         private void CheckFileIsNotClosed()
         {
-            if (_closed)
+            if (_isClosed)
             {
                 throw new ScriptRuntimeException("attempt to use a closed file");
             }
         }
 
+        /// <inheritdoc />
         protected override bool Eof()
         {
             CheckFileIsNotClosed();
 
-            if (_reader != null)
+            if (_streamReaderInstance != null)
             {
-                if (_stream.CanSeek)
+                if (_streamInstance.CanSeek)
                 {
-                    if (!_reader.EndOfStream)
+                    if (!_streamReaderInstance.EndOfStream)
                     {
                         return false;
                     }
 
-                    return _logicalPosition >= _stream.Length;
+                    return _logicalPosition >= _streamInstance.Length;
                 }
 
-                return _reader.EndOfStream;
+                return _streamReaderInstance.EndOfStream;
             }
             else
             {
@@ -58,6 +93,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
+        /// <inheritdoc />
         protected override string ReadLine()
         {
             CheckFileIsNotClosed();
@@ -111,6 +147,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return line.ToString();
         }
 
+        /// <inheritdoc />
         protected override string ReadToEnd()
         {
             CheckFileIsNotClosed();
@@ -131,15 +168,16 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return remainder.ToString();
         }
 
+        /// <inheritdoc />
         protected override string ReadBuffer(int p)
         {
             CheckFileIsNotClosed();
-            long positionBeforeRead = _stream.CanSeek ? _logicalPosition : 0;
+            long positionBeforeRead = _streamInstance.CanSeek ? _logicalPosition : 0;
             char[] buffer = new char[p];
-            int length = _reader.ReadBlock(buffer, 0, p);
-            if (_stream.CanSeek && _reader != null && length > 0)
+            int length = _streamReaderInstance.ReadBlock(buffer, 0, p);
+            if (_streamInstance.CanSeek && _streamReaderInstance != null && length > 0)
             {
-                Encoding encoding = _reader.CurrentEncoding;
+                Encoding encoding = _streamReaderInstance.CurrentEncoding;
                 long bytesRead = encoding.GetByteCount(buffer, 0, length);
                 long expectedPosition = positionBeforeRead + bytesRead;
                 _logicalPosition = expectedPosition;
@@ -149,54 +187,59 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return new string(buffer, 0, length);
         }
 
+        /// <inheritdoc />
         protected override char Peek()
         {
             CheckFileIsNotClosed();
-            return (char)_reader.Peek();
+            return (char)_streamReaderInstance.Peek();
         }
 
+        /// <inheritdoc />
         protected override void Write(string value)
         {
             CheckFileIsNotClosed();
-            _writer.Write(value);
+            _streamWriterInstance.Write(value);
         }
 
+        /// <inheritdoc />
         protected override int PeekRaw()
         {
             CheckFileIsNotClosed();
-            return _reader?.Peek() ?? -1;
+            return _streamReaderInstance?.Peek() ?? -1;
         }
 
+        /// <inheritdoc />
         protected override string Close()
         {
             CheckFileIsNotClosed();
 
-            if (_writer != null)
+            if (_streamWriterInstance != null)
             {
-                _writer.Dispose();
+                _streamWriterInstance.Dispose();
             }
 
-            if (_reader != null)
+            if (_streamReaderInstance != null)
             {
-                _reader.Dispose();
+                _streamReaderInstance.Dispose();
             }
 
-            _stream.Dispose();
+            _streamInstance.Dispose();
 
-            _closed = true;
+            _isClosed = true;
 
             return null;
         }
 
+        /// <inheritdoc />
         public override bool Flush()
         {
             CheckFileIsNotClosed();
 
             try
             {
-                if (_writer != null)
+                if (_streamWriterInstance != null)
                 {
-                    _writer.Flush();
+                    _streamWriterInstance.Flush();
                 }
             }
             catch (ScriptRuntimeException)
@@ -211,6 +254,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return true;
         }
 
+        /// <inheritdoc />
         public override long Seek(string whence, long offset = 0)
         {
             CheckFileIsNotClosed();
@@ -220,15 +264,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 {
                     if (whence == "set")
                     {
-                        _stream.Seek(offset, SeekOrigin.Begin);
+                        _streamInstance.Seek(offset, SeekOrigin.Begin);
                     }
                     else if (whence == "cur")
                     {
-                        _stream.Seek(offset, SeekOrigin.Current);
+                        _streamInstance.Seek(offset, SeekOrigin.Current);
                     }
                     else if (whence == "end")
                     {
-                        _stream.Seek(offset, SeekOrigin.End);
+                        _streamInstance.Seek(offset, SeekOrigin.End);
                     }
                     else
                     {
@@ -240,7 +284,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                     }
                 }
 
-                long position = _stream.Position;
+                long position = _streamInstance.Position;
                 _logicalPosition = position;
                 ResetReaderBuffer(position);
                 return position;
@@ -255,14 +299,15 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
+        /// <inheritdoc />
         public override bool Setvbuf(string mode)
         {
             CheckFileIsNotClosed();
             try
             {
-                if (_writer != null)
+                if (_streamWriterInstance != null)
                 {
-                    _writer.AutoFlush = mode == "no" || mode == "line";
+                    _streamWriterInstance.AutoFlush = mode == "no" || mode == "line";
                 }
             }
             catch (ScriptRuntimeException)
@@ -277,42 +322,46 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             return true;
         }
 
+        /// <inheritdoc />
         protected override bool SupportsRewind
         {
-            get { return _stream != null && _stream.CanSeek; }
+            get { return _streamInstance != null && _streamInstance.CanSeek; }
         }
 
+        /// <inheritdoc />
         protected override long GetCurrentPosition()
         {
             return _logicalPosition;
         }
 
+        /// <inheritdoc />
         protected override void ResetToPosition(long position)
         {
             _logicalPosition = position;
             ResetReaderBuffer(position);
         }
 
+        /// <inheritdoc />
         protected internal override bool IsOpen()
         {
-            return !_closed;
+            return !_isClosed;
         }
 
         protected void ResetReaderBuffer(long targetPosition)
         {
-            if (_reader == null || !_stream.CanSeek)
+            if (_streamReaderInstance == null || !_streamInstance.CanSeek)
             {
                 return;
             }
 
-            long currentPosition = _stream.Position;
+            long currentPosition = _streamInstance.Position;
             if (currentPosition == targetPosition)
             {
                 return;
             }
 
-            _reader.DiscardBufferedData();
-            _stream.Seek(targetPosition, SeekOrigin.Begin);
+            _streamReaderInstance.DiscardBufferedData();
+            _streamInstance.Seek(targetPosition, SeekOrigin.Begin);
             _logicalPosition = targetPosition;
         }
     }

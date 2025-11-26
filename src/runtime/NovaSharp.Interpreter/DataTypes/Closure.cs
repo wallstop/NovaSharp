@@ -13,12 +13,12 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Type of closure based on upvalues
         /// </summary>
-        public enum UpvaluesType
+        public enum UpValuesType
         {
             /// <summary>
             /// The closure has no upvalues (thus, technically, it's a function and not a closure!)
             /// </summary>
-            [Obsolete("Prefer explicit UpvaluesType.", false)]
+            [Obsolete("Prefer explicit UpValuesType.", false)]
             None = 0,
 
             /// <summary>
@@ -51,6 +51,14 @@ namespace NovaSharp.Interpreter.DataTypes
         /// The current closure context
         /// </summary>
         internal ClosureContext ClosureContext { get; private set; }
+
+        /// <summary>
+        /// Gets a read-only view of the captured upvalues for this closure.
+        /// </summary>
+        public IReadOnlyList<DynValue> Context
+        {
+            get { return ClosureContext; }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Closure"/> class.
@@ -116,7 +124,7 @@ namespace NovaSharp.Interpreter.DataTypes
         /// Gets a delegate wrapping calls to this scripted function
         /// </summary>
         /// <returns></returns>
-        public ScriptFunctionDelegate GetDelegate()
+        public ScriptFunctionCallback GetDelegate()
         {
             return args => Call(args).ToObject();
         }
@@ -126,18 +134,17 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <typeparam name="T">The type of return value of the delegate.</typeparam>
         /// <returns></returns>
-        public ScriptFunctionDelegate<T> GetDelegate<T>()
+        public ScriptFunctionCallback<T> GetDelegate<T>()
         {
             return args => Call(args).ToObject<T>();
         }
 
         /// <summary>
-        /// Gets the number of upvalues in this closure
+        /// Gets the number of upvalues in this closure.
         /// </summary>
-        /// <returns>The number of upvalues in this closure</returns>
-        public int GetUpvaluesCount()
+        public int UpValuesCount
         {
-            return ClosureContext.Count;
+            get { return ClosureContext.Count; }
         }
 
         /// <summary>
@@ -145,40 +152,42 @@ namespace NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
         /// <returns>The upvalue name</returns>
-        public string GetUpvalueName(int idx)
+        public string GetUpValueName(int idx)
         {
             return ClosureContext.Symbols[idx];
         }
 
         /// <summary>
-        /// Gets the value of an upvalue. To set the value, use GetUpvalue(idx).Assign(...);
+        /// Gets the value of an upvalue. To set the value, use GetUpValue(idx).Assign(...);
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
         /// <returns>The value of an upvalue </returns>
-        public DynValue GetUpvalue(int idx)
+        public DynValue GetUpValue(int idx)
         {
             return ClosureContext[idx];
         }
 
         /// <summary>
-        /// Gets the type of the upvalues contained in this closure
+        /// Gets the type of the upvalues contained in this closure.
         /// </summary>
-        /// <returns></returns>
-        public UpvaluesType GetUpvaluesType()
+        public UpValuesType CapturedUpValuesType
         {
-            int count = GetUpvaluesCount();
+            get
+            {
+                int count = UpValuesCount;
 
-            if (count == 0)
-            {
-                return default;
-            }
-            else if (count == 1 && GetUpvalueName(0) == WellKnownSymbols.ENV)
-            {
-                return UpvaluesType.Environment;
-            }
-            else
-            {
-                return UpvaluesType.Closure;
+                if (count == 0)
+                {
+                    return default;
+                }
+                else if (count == 1 && GetUpValueName(0) == WellKnownSymbols.ENV)
+                {
+                    return UpValuesType.Environment;
+                }
+                else
+                {
+                    return UpValuesType.Closure;
+                }
             }
         }
     }

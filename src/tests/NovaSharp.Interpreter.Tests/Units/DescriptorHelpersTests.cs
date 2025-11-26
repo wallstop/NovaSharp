@@ -2,8 +2,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
@@ -12,23 +14,34 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DescriptorHelpersTests
     {
+        private static readonly string[] ExpectedMetaNames = { "__index", "__len" };
+
+        static DescriptorHelpersTests()
+        {
+            _ = new VisibilityTargets();
+            _ = new DescriptorHelpersPublicType();
+            _ = new VisibilityFixtures.PublicNested();
+            _ = new VisibilityFixtures.ProtectedInternalNested();
+            _ = Activator.CreateInstance(
+                VisibilityFixtures.Metadata.ProtectedType,
+                nonPublic: true
+            );
+            _ = new VisibilityFixtures.GenericHost<string>();
+            _ = new VisibilityFixtures.GenericHost<string>.InnerType();
+            _ = new MemberVisibilityFixtures();
+            _ = new PropertyFixtures();
+            _ = new MetaFixtures();
+            _ = new DerivedSample();
+        }
+
         [Test]
         public void GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
         {
             Assert.That(DescriptorHelpers.GetVisibilityFromAttributes(null), Is.False);
 
-            MemberInfo visible = typeof(VisibilityTargets).GetMethod(
-                nameof(VisibilityTargets.VisibleMember),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            MemberInfo hidden = typeof(VisibilityTargets).GetMethod(
-                nameof(VisibilityTargets.HiddenMember),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            MemberInfo overridden = typeof(VisibilityTargets).GetMethod(
-                nameof(VisibilityTargets.ForcedHidden),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            MemberInfo visible = VisibilityTargets.Metadata.VisibleMember;
+            MemberInfo hidden = VisibilityTargets.Metadata.HiddenMember;
+            MemberInfo overridden = VisibilityTargets.Metadata.ForcedHiddenMember;
 
             Assert.That(visible.GetVisibilityFromAttributes(), Is.True);
             Assert.That(hidden.GetVisibilityFromAttributes(), Is.False);
@@ -38,10 +51,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetVisibilityFromAttributesThrowsWhenAttributesConflict()
         {
-            MemberInfo conflicting = typeof(VisibilityTargets).GetMethod(
-                nameof(VisibilityTargets.ConflictingMember),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            MemberInfo conflicting = VisibilityTargets.Metadata.ConflictingMember;
 
             Assert.That(
                 () => conflicting.GetVisibilityFromAttributes(),
@@ -52,24 +62,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetClrVisibilityReturnsExpectedValuesForTypes()
         {
-            Type protectedInternal = typeof(VisibilityFixtures).GetNestedType(
-                "ProtectedInternalNested",
-                BindingFlags.NonPublic | BindingFlags.Public
-            );
-            Type protectedNested = typeof(VisibilityFixtures).GetNestedType(
-                "ProtectedNested",
-                BindingFlags.NonPublic | BindingFlags.Public
-            );
-            Type privateNested = typeof(VisibilityFixtures).GetNestedType(
-                "PrivateNested",
-                BindingFlags.NonPublic | BindingFlags.Public
-            );
+            Type protectedInternal = VisibilityFixtures.Metadata.ProtectedInternalType;
+            Type protectedNested = VisibilityFixtures.Metadata.ProtectedType;
+            Type privateNested = VisibilityFixtures.Metadata.PrivateType;
 
             Assert.Multiple(() =>
             {
-                Assert.That(typeof(PublicType).GetClrVisibility(), Is.EqualTo("public"));
                 Assert.That(
-                    typeof(DescriptorHelpersTests_InternalTopLevel).GetClrVisibility(),
+                    typeof(DescriptorHelpersPublicType).GetClrVisibility(),
+                    Is.EqualTo("public")
+                );
+                Assert.That(
+                    typeof(DescriptorHelpersTestsInternalTopLevel).GetClrVisibility(),
                     Is.EqualTo("internal")
                 );
                 Assert.That(
@@ -84,34 +88,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetClrVisibilityReturnsExpectedValuesForMembers()
         {
-            FieldInfo publicField = typeof(MemberVisibilityFixtures).GetField(
-                nameof(MemberVisibilityFixtures.PublicField),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            FieldInfo internalField = typeof(MemberVisibilityFixtures).GetField(
-                MemberVisibilityFixtures.InternalFieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
-            FieldInfo protectedField = typeof(MemberVisibilityFixtures).GetField(
-                MemberVisibilityFixtures.ProtectedFieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
-            FieldInfo protectedInternalField = typeof(MemberVisibilityFixtures).GetField(
-                nameof(MemberVisibilityFixtures.ProtectedInternalField),
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
-            MethodBase privateMethod = typeof(MemberVisibilityFixtures).GetMethod(
-                MemberVisibilityFixtures.PrivateMethodName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
-            MethodBase publicMethod = typeof(MemberVisibilityFixtures).GetMethod(
-                nameof(MemberVisibilityFixtures.PublicMethod),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            MethodBase protectedInternalMethod = typeof(MemberVisibilityFixtures).GetMethod(
-                nameof(MemberVisibilityFixtures.ProtectedInternalMethod),
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
+            FieldInfo publicField = MemberVisibilityFixtures.Metadata.PublicField;
+            FieldInfo internalField = MemberVisibilityFixtures.Metadata.InternalField;
+            FieldInfo protectedField = MemberVisibilityFixtures.Metadata.ProtectedField;
+            FieldInfo protectedInternalField = MemberVisibilityFixtures
+                .Metadata
+                .ProtectedInternalField;
+            MethodInfo privateMethod = MemberVisibilityFixtures.Metadata.PrivateMethod;
+            MethodInfo publicMethod = MemberVisibilityFixtures.Metadata.PublicMethod;
+            MethodInfo protectedInternalMethod = MemberVisibilityFixtures
+                .Metadata
+                .ProtectedInternalMethod;
 
             Assert.Multiple(() =>
             {
@@ -134,18 +121,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetClrVisibilityReturnsExpectedValuesForProperties()
         {
-            PropertyInfo publicProperty = typeof(PropertyFixtures).GetProperty(
-                nameof(PropertyFixtures.GetterOnly),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            PropertyInfo internalProperty = typeof(PropertyFixtures).GetProperty(
-                nameof(PropertyFixtures.InternalAccessors),
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
-            PropertyInfo protectedProperty = typeof(PropertyFixtures).GetProperty(
-                "ProtectedGetterOnly",
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
+            PropertyInfo publicProperty = PropertyFixtures.Metadata.GetterOnly;
+            PropertyInfo internalProperty = PropertyFixtures.Metadata.InternalAccessors;
+            PropertyInfo protectedProperty = PropertyFixtures.Metadata.ProtectedGetterOnly;
 
             Assert.Multiple(() =>
             {
@@ -158,18 +136,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void IsPropertyInfoPublicConsidersGetterOrSetter()
         {
-            PropertyInfo getterOnly = typeof(PropertyFixtures).GetProperty(
-                nameof(PropertyFixtures.GetterOnly),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            PropertyInfo setterOnly = typeof(PropertyFixtures).GetProperty(
-                nameof(PropertyFixtures.SetterOnly),
-                BindingFlags.Instance | BindingFlags.Public
-            );
-            PropertyInfo privateProperty = typeof(PropertyFixtures).GetProperty(
-                PropertyFixtures.PrivatePropertyName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-            );
+            PropertyInfo getterOnly = PropertyFixtures.Metadata.GetterOnly;
+            PropertyInfo setterOnly = PropertyFixtures.Metadata.SetterOnly;
+            PropertyInfo privateProperty = PropertyFixtures.Metadata.PrivateBoth;
 
             Assert.Multiple(() =>
             {
@@ -182,14 +151,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetMetaNamesFromAttributesReturnsDeclaredNames()
         {
-            MethodInfo method = typeof(MetaFixtures).GetMethod(
-                nameof(MetaFixtures.Metamethods),
-                BindingFlags.Instance | BindingFlags.Public
-            );
+            MethodInfo method = MetaFixtures.Metadata.Metamethods;
 
-            List<string> names = method.GetMetaNamesFromAttributes();
+            IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
-            Assert.That(names, Is.EquivalentTo(new[] { "__index", "__len" }));
+            Assert.That(names, Is.EquivalentTo(ExpectedMetaNames));
         }
 
         [Test]
@@ -288,62 +254,237 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class VisibilityTargets
         {
+            private int _invocationCount;
+
+            private void TouchInstance()
+            {
+                _invocationCount++;
+            }
+
             [NovaSharpVisible(true)]
-            public void VisibleMember() { }
+            public void VisibleMember()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpHidden]
-            public void HiddenMember() { }
+            public void HiddenMember()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpVisible(false)]
-            public void ForcedHidden() { }
+            public void ForcedHidden()
+            {
+                TouchInstance();
+            }
 
             [NovaSharpVisible(true)]
             [NovaSharpHidden]
-            public void ConflictingMember() { }
-        }
-
-        public class PublicType { }
-
-        internal sealed class DescriptorHelpersTests_InternalTopLevel { }
-
-        public class VisibilityFixtures
-        {
-            public class PublicNested { }
-
-            protected internal class ProtectedInternalNested { }
-
-            protected class ProtectedNested { }
-
-            private sealed class PrivateNested { }
-
-            public class GenericHost<T>
+            public void ConflictingMember()
             {
-                public class InnerType { }
+                TouchInstance();
+            }
+
+            internal static class Metadata
+            {
+                internal static MethodInfo VisibleMember { get; } =
+                    typeof(VisibilityTargets).GetMethod(nameof(VisibleMember))!;
+
+                internal static MethodInfo HiddenMember { get; } =
+                    typeof(VisibilityTargets).GetMethod(nameof(HiddenMember))!;
+
+                internal static MethodInfo ForcedHiddenMember { get; } =
+                    typeof(VisibilityTargets).GetMethod(nameof(ForcedHidden))!;
+
+                internal static MethodInfo ConflictingMember { get; } =
+                    typeof(VisibilityTargets).GetMethod(nameof(ConflictingMember))!;
             }
         }
 
-        public sealed class MemberVisibilityFixtures
+        private static class VisibilityFixtures
         {
-            public const string InternalFieldName = nameof(InternalField);
-            public const string ProtectedFieldName = nameof(ProtectedField);
-            public const string PrivateMethodName = nameof(PrivateMethod);
+            [SuppressMessage(
+                "Performance",
+                "CA1823:Avoid unused fields",
+                Justification = "Anchor ensures the private nested type is instantiated for visibility tests."
+            )]
+            private static readonly object PrivateNestedAnchor = new PrivateNested();
 
-            public int PublicField = 0;
+            public sealed class PublicNested { }
 
-            internal int InternalField = 0;
+            protected internal sealed class ProtectedInternalNested { }
 
-            protected int ProtectedField = 0;
+            [SuppressMessage(
+                "Performance",
+                "CA1812",
+                Justification = "Instantiated via reflection to validate protected type visibility."
+            )]
+            protected sealed class ProtectedNested { }
 
-            protected internal int ProtectedInternalField = 0;
+            private sealed class PrivateNested { }
 
-            public void PublicMethod() { }
+            public sealed class GenericHost<T>
+            {
+                private readonly string _instanceLabel;
 
-            private void PrivateMethod() { }
+                public GenericHost()
+                {
+                    _instanceLabel = typeof(T).Name;
+                }
 
-            protected internal void ProtectedInternalMethod() { }
+                internal string InstanceLabel => _instanceLabel;
+
+                public sealed class InnerType { }
+            }
+
+            internal static class Metadata
+            {
+                internal static Type ProtectedInternalType => typeof(ProtectedInternalNested);
+
+                internal static Type ProtectedType => typeof(ProtectedNested);
+
+                internal static Type PrivateType => typeof(PrivateNested);
+            }
         }
 
-        public sealed class PropertyFixtures
+        [SuppressMessage(
+            "Performance",
+            "CA1852:Seal internal types",
+            Justification = "Protected members must remain available for visibility reflection tests without triggering CS0628 warnings."
+        )]
+        private class MemberVisibilityFixtures
+        {
+            public const string InternalFieldName = nameof(_internalField);
+            public const string ProtectedFieldName = nameof(_protectedField);
+            public const string PrivateMethodName = nameof(PrivateMethod);
+
+            private int _invocationCount;
+
+            private void TouchInstance()
+            {
+                _invocationCount++;
+            }
+
+#pragma warning disable CS0649
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            public int publicField;
+
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            internal int _internalField;
+
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            protected int _protectedField;
+
+            [SuppressMessage(
+                "Design",
+                "CA1051:DoNotDeclareVisibleInstanceFields",
+                Justification = "Fixtures expose field visibilities for descriptor tests."
+            )]
+            protected internal int _protectedInternalField;
+#pragma warning restore CS0649
+
+            public MemberVisibilityFixtures()
+            {
+                publicField = 0;
+                _internalField = 0;
+                _protectedField = 0;
+                _protectedInternalField = 0;
+            }
+
+            public void PublicMethod()
+            {
+                TouchInstance();
+            }
+
+            private void PrivateMethod()
+            {
+                TouchInstance();
+            }
+
+            protected internal void ProtectedInternalMethod()
+            {
+                TouchInstance();
+            }
+
+            internal static class Metadata
+            {
+                internal static FieldInfo PublicField { get; } =
+                    typeof(MemberVisibilityFixtures).GetField(
+                        nameof(MemberVisibilityFixtures.publicField)
+                    )!;
+
+                internal static FieldInfo InternalField { get; } =
+                    GetInstanceField(f => f._internalField);
+
+                internal static FieldInfo ProtectedField { get; } =
+                    GetInstanceField(f => f._protectedField);
+
+                internal static FieldInfo ProtectedInternalField { get; } =
+                    GetInstanceField(f => f._protectedInternalField);
+
+                internal static MethodInfo PrivateMethod { get; } =
+                    GetInstanceMethod(f => f.PrivateMethod());
+
+                internal static MethodInfo PublicMethod { get; } =
+                    typeof(MemberVisibilityFixtures).GetMethod(nameof(PublicMethod))!;
+
+                internal static MethodInfo ProtectedInternalMethod { get; } =
+                    GetInstanceMethod(f => f.ProtectedInternalMethod());
+
+                private static FieldInfo GetInstanceField<TValue>(
+                    Expression<Func<MemberVisibilityFixtures, TValue>> accessor
+                )
+                {
+                    return (FieldInfo)GetMemberExpression(accessor.Body).Member;
+                }
+
+                private static MethodInfo GetInstanceMethod(
+                    Expression<Action<MemberVisibilityFixtures>> call
+                )
+                {
+                    return ((MethodCallExpression)call.Body).Method;
+                }
+
+                private static MemberExpression GetMemberExpression(Expression expression)
+                {
+                    if (expression is MemberExpression member)
+                    {
+                        return member;
+                    }
+
+                    if (
+                        expression is UnaryExpression unary
+                        && unary.NodeType == ExpressionType.Convert
+                        && unary.Operand is MemberExpression unaryMember
+                    )
+                    {
+                        return unaryMember;
+                    }
+
+                    throw new InvalidOperationException("Expected member expression.");
+                }
+            }
+        }
+
+        [SuppressMessage(
+            "Performance",
+            "CA1852:Seal internal types",
+            Justification = "Provides protected members for visibility tests; sealing would trigger compiler warnings."
+        )]
+        private class PropertyFixtures
         {
             public const string PrivatePropertyName = nameof(PrivateBoth);
 
@@ -356,20 +497,75 @@ namespace NovaSharp.Interpreter.Tests.Units
             protected int ProtectedGetterOnly { get; private set; }
 
             private int PrivateBoth { get; set; }
+
+            internal static class Metadata
+            {
+                internal static PropertyInfo GetterOnly { get; } =
+                    typeof(PropertyFixtures).GetProperty(nameof(PropertyFixtures.GetterOnly))!;
+
+                internal static PropertyInfo SetterOnly { get; } =
+                    typeof(PropertyFixtures).GetProperty(nameof(PropertyFixtures.SetterOnly))!;
+
+                internal static PropertyInfo InternalAccessors { get; } =
+                    GetInstanceProperty(p => p.InternalAccessors);
+
+                internal static PropertyInfo ProtectedGetterOnly { get; } =
+                    GetInstanceProperty(p => p.ProtectedGetterOnly);
+
+                internal static PropertyInfo PrivateBoth { get; } =
+                    GetInstanceProperty(p => p.PrivateBoth);
+
+                private static PropertyInfo GetInstanceProperty<TValue>(
+                    Expression<Func<PropertyFixtures, TValue>> accessor
+                )
+                {
+                    return (PropertyInfo)GetMemberExpression(accessor.Body).Member;
+                }
+
+                private static MemberExpression GetMemberExpression(Expression expression)
+                {
+                    if (expression is MemberExpression member)
+                    {
+                        return member;
+                    }
+
+                    if (
+                        expression is UnaryExpression unary
+                        && unary.NodeType == ExpressionType.Convert
+                        && unary.Operand is MemberExpression unaryMember
+                    )
+                    {
+                        return unaryMember;
+                    }
+
+                    throw new InvalidOperationException("Expected member expression.");
+                }
+            }
         }
 
         private sealed class MetaFixtures
         {
+            private int _invocationCount;
+
             [NovaSharpUserDataMetamethod("__index")]
             [NovaSharpUserDataMetamethod("__len")]
-            public void Metamethods() { }
+            public void Metamethods()
+            {
+                _invocationCount++;
+            }
+
+            internal static class Metadata
+            {
+                internal static MethodInfo Metamethods { get; } =
+                    typeof(MetaFixtures).GetMethod(nameof(Metamethods))!;
+            }
         }
 
-        public interface ISampleInterface { }
+        private interface ISampleInterface { }
 
-        public class BaseSample : ISampleInterface { }
+        private class BaseSample : ISampleInterface { }
 
-        public sealed class DerivedSample : BaseSample { }
+        private sealed class DerivedSample : BaseSample { }
 
         private sealed class ThrowingAssembly : Assembly
         {
@@ -458,5 +654,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return null;
             }
         }
+    }
+
+    public sealed class DescriptorHelpersPublicType { }
+
+    internal sealed class DescriptorHelpersTestsInternalTopLevel
+    {
+        internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
     }
 }

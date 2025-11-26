@@ -12,12 +12,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class UserDataEventsTests
     {
-        public class SomeClass
+        internal sealed class SomeClass
         {
             public event EventHandler OnMyEvent;
             public static event EventHandler OnMySEvent;
 
-            public bool Trigger_MyEvent()
+            public bool TriggerMyEvent()
             {
                 if (OnMyEvent != null)
                 {
@@ -27,7 +27,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return false;
             }
 
-            public static bool Trigger_MySEvent()
+            public static bool TriggerMySEvent()
             {
                 if (OnMySEvent != null)
                 {
@@ -67,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            obj.Trigger_MyEvent();
+            obj.TriggerMyEvent();
 
             Assert.That(invocationCount, Is.EqualTo(1));
         }
@@ -103,8 +103,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            obj.Trigger_MyEvent();
-            obj2.Trigger_MyEvent();
+            obj.TriggerMyEvent();
+            obj2.TriggerMyEvent();
 
             Assert.That(invocationCount, Is.EqualTo(1));
         }
@@ -139,7 +139,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				"
             );
 
-            obj.Trigger_MyEvent();
+            obj.TriggerMyEvent();
 
             Assert.That(invocationCount, Is.EqualTo(2));
         }
@@ -171,9 +171,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				myobj.MyEvent.add(handler);
 				myobj.MyEvent.add(handler);
-				myobj.Trigger_MyEvent();
+				myobj.TriggerMyEvent();
 				myobj.MyEvent.remove(handler);
-				myobj.Trigger_MyEvent();
+				myobj.TriggerMyEvent();
 				"
             );
 
@@ -207,14 +207,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				myobj.MyEvent.add(handler);
 				myobj.MyEvent.add(handler);
-				myobj.Trigger_MyEvent();
+				myobj.TriggerMyEvent();
 				myobj.MyEvent.remove(handler);
-				myobj.Trigger_MyEvent();
+				myobj.TriggerMyEvent();
 				myobj.MyEvent.remove(handler);
 				"
             );
 
-            Assert.That(obj.Trigger_MyEvent(), Is.False, "deregistration");
+            Assert.That(obj.TriggerMyEvent(), Is.False, "deregistration");
             Assert.That(invocationCount, Is.EqualTo(3));
         }
 
@@ -248,14 +248,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
 				myobj.MySEvent.add(handler);
 				myobj.MySEvent.add(handler);
-				myobj.Trigger_MySEvent();
+				myobj.TriggerMySEvent();
 				myobj.MySEvent.remove(handler);
-				myobj.Trigger_MySEvent();
+				myobj.TriggerMySEvent();
 				myobj.MySEvent.remove(handler);
 				"
             );
 
-            Assert.That(SomeClass.Trigger_MySEvent(), Is.False, "deregistration");
+            Assert.That(SomeClass.TriggerMySEvent(), Is.False, "deregistration");
             Assert.That(invocationCount, Is.EqualTo(3));
         }
 
@@ -288,16 +288,16 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 
 				myobj.MySEvent.add(handler);
-				myobj.Trigger_MySEvent();
+				myobj.TriggerMySEvent();
 				myobj.MySEvent.remove(handler);
-				myobj.Trigger_MySEvent();
+				myobj.TriggerMySEvent();
 				myobj.MySEvent.add(handler);
-				myobj.Trigger_MySEvent();
+				myobj.TriggerMySEvent();
 			"
             );
 
             Assert.That(invocationCount, Is.EqualTo(2));
-            Assert.That(SomeClass.Trigger_MySEvent(), Is.True, "deregistration");
+            Assert.That(SomeClass.TriggerMySEvent(), Is.True, "deregistration");
         }
     }
 }

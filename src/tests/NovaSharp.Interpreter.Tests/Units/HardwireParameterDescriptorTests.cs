@@ -52,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             list.Append(DynValue.NewTable(CreateParameterTable("first", isRef: true)));
             list.Append(DynValue.NewTable(CreateParameterTable("second", isOut: true)));
 
-            List<HardwireParameterDescriptor> descriptors =
+            IReadOnlyList<HardwireParameterDescriptor> descriptors =
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(list);
 
             Assert.That(descriptors, Has.Count.EqualTo(2));

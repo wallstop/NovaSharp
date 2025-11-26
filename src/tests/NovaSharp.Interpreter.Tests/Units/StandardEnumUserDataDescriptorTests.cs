@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -61,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue left = UserData.Create(SampleFlags.Fast, descriptor);
             DynValue right = UserData.Create(SampleFlags.Safe, descriptor);
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(left, right)
             );
@@ -71,13 +72,44 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CallbackXorComputesExclusiveBits()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackXor(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
+                    UserData.Create(SampleFlags.Safe, descriptor)
+                )
+            );
+
+            Assert.That((SampleFlags)result.UserData.Object, Is.EqualTo(SampleFlags.Fast));
+        }
+
+        [Test]
+        public void CallbackNotOnUnsignedFlagsReturnsComplement()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackBwNot(
+                context,
+                TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
+            );
+
+            Assert.That((SampleFlags)result.UserData.Object, Is.EqualTo(~SampleFlags.Safe));
+        }
+
+        [Test]
         public void CallbackOrAcceptsNumericArguments()
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(4))
             );
@@ -95,13 +127,130 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor);
             DynValue mask = UserData.Create(SampleFlags.Safe, descriptor);
 
-            DynValue hasAll = descriptor.Callback_HasAll(
+            DynValue hasAll = descriptor.CallbackHasAll(
                 context,
                 TestHelpers.CreateArguments(value, mask)
             );
 
             Assert.That(hasAll.Type, Is.EqualTo(DataType.Boolean));
             Assert.That(hasAll.Boolean, Is.True);
+        }
+
+        [Test]
+        public void CallbackHasAnyReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue value = UserData.Create(SampleFlags.Fast, descriptor);
+            DynValue hasAny = descriptor.CallbackHasAny(
+                context,
+                TestHelpers.CreateArguments(value, UserData.Create(SampleFlags.Safe, descriptor))
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(hasAny.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(hasAny.Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void CallbackAndUsesSignedArithmeticWhenEnumIsSigned()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            SignedIntFlags leftValue = SignedIntFlags.Left | SignedIntFlags.Right;
+            SignedIntFlags rightValue = SignedIntFlags.Left;
+
+            DynValue result = descriptor.CallbackAnd(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(leftValue, descriptor),
+                    UserData.Create(rightValue, descriptor)
+                )
+            );
+
+            Assert.That((SignedIntFlags)result.UserData.Object, Is.EqualTo(SignedIntFlags.Left));
+        }
+
+        [Test]
+        public void CallbackXorUsesSignedArithmeticWhenEnumIsSigned()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackXor(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
+                    UserData.Create(SignedIntFlags.Right, descriptor)
+                )
+            );
+
+            Assert.That((SignedIntFlags)result.UserData.Object, Is.EqualTo(SignedIntFlags.Left));
+        }
+
+        [Test]
+        public void SignedFlagsHasAllReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAll = descriptor.CallbackHasAll(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
+                    UserData.Create(SignedIntFlags.Left, descriptor)
+                )
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(hasAll.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(hasAll.Boolean, Is.True);
+            });
+        }
+
+        [Test]
+        public void SignedFlagsHasAnyReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAny = descriptor.CallbackHasAny(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left, descriptor),
+                    UserData.Create(SignedIntFlags.Right, descriptor)
+                )
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(hasAny.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(hasAny.Boolean, Is.False);
+            });
+        }
+
+        [Test]
+        public void SignedBinaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            Assert.That(
+                () =>
+                    descriptor.CallbackAnd(
+                        context,
+                        TestHelpers.CreateArguments(
+                            UserData.Create(SignedIntFlags.Left, descriptor)
+                        )
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("expects two arguments")
+            );
         }
 
         [Test]
@@ -112,10 +261,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = UserData.Create(SampleSignedEnum.NegativeOne, descriptor);
 
-            DynValue result = descriptor.Callback_BwNot(
-                context,
-                TestHelpers.CreateArguments(value)
-            );
+            DynValue result = descriptor.CallbackBwNot(context, TestHelpers.CreateArguments(value));
 
             SampleSignedEnum negated = (SampleSignedEnum)result.UserData.Object;
             Assert.That((int)negated, Is.EqualTo(0));
@@ -129,7 +275,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             DynValue left = UserData.Create(flagValue, descriptor);
-            DynValue result = descriptor.Callback_And(
+            DynValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(left, left)
             );
@@ -137,10 +283,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.False);
-                Assert.That(
-                    Convert.ToInt64(result.UserData.Object),
-                    Is.EqualTo(Convert.ToInt64(flagValue))
-                );
+                long expected = Convert.ToInt64(flagValue, CultureInfo.InvariantCulture);
+                long actual = Convert.ToInt64(result.UserData.Object, CultureInfo.InvariantCulture);
+                Assert.That(actual, Is.EqualTo(expected));
             });
         }
 
@@ -151,7 +296,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             DynValue left = UserData.Create(flagValue, descriptor);
-            DynValue result = descriptor.Callback_And(
+            DynValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(left, left)
             );
@@ -159,10 +304,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.IsUnsigned, Is.True);
-                Assert.That(
-                    Convert.ToUInt64(result.UserData.Object),
-                    Is.EqualTo(Convert.ToUInt64(flagValue))
+                ulong expected = Convert.ToUInt64(flagValue, CultureInfo.InvariantCulture);
+                ulong actual = Convert.ToUInt64(
+                    result.UserData.Object,
+                    CultureInfo.InvariantCulture
                 );
+                Assert.That(actual, Is.EqualTo(expected));
             });
         }
 
@@ -172,7 +319,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
-            DynValue result = descriptor.Callback_Or(
+            DynValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
             );
@@ -188,11 +335,56 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.That(
                 () =>
-                    descriptor.Callback_Or(
+                    descriptor.CallbackOr(
                         context,
                         TestHelpers.CreateArguments(
                             DynValue.NewString("bad"),
                             DynValue.NewNumber(1)
+                        )
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("Enum userdata or number expected")
+            );
+        }
+
+        [Test]
+        public void BinaryOperationRejectsForeignDescriptor()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleEnum));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue foreignValue = UserData.Create(SampleEnum.One, foreignDescriptor);
+
+            Assert.That(
+                () =>
+                    descriptor.CallbackOr(
+                        context,
+                        TestHelpers.CreateArguments(foreignValue, DynValue.NewNumber(1))
+                    ),
+                Throws
+                    .TypeOf<ScriptRuntimeException>()
+                    .With.Message.Contains("Enum userdata or number expected")
+            );
+        }
+
+        [Test]
+        public void SignedBinaryOperationRejectsForeignDescriptor()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue foreignValue = UserData.Create(SampleFlags.Fast, foreignDescriptor);
+
+            Assert.That(
+                () =>
+                    descriptor.CallbackOr(
+                        context,
+                        TestHelpers.CreateArguments(
+                            foreignValue,
+                            UserData.Create(SignedIntFlags.Left, descriptor)
                         )
                     ),
                 Throws
@@ -209,7 +401,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue value = UserData.Create(SampleFlags.Fast, descriptor);
 
             Assert.That(
-                () => descriptor.Callback_Or(context, TestHelpers.CreateArguments(value)),
+                () => descriptor.CallbackOr(context, TestHelpers.CreateArguments(value)),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("expects two arguments")
@@ -223,7 +415,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
 
             Assert.That(
-                () => descriptor.Callback_BwNot(context, TestHelpers.CreateArguments()),
+                () => descriptor.CallbackBwNot(context, TestHelpers.CreateArguments()),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
                     .With.Message.Contains("expects one argument")
@@ -293,6 +485,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             Fast = 1,
             Safe = 2,
             Light = 4,
+        }
+
+        [Flags]
+        private enum SignedIntFlags : int
+        {
+            None = 0,
+            Left = 1 << 30,
+            Right = 1 << 29,
         }
 
         private enum SampleSignedEnum : int

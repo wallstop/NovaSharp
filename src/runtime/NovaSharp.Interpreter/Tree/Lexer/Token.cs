@@ -2,21 +2,27 @@ namespace NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
 
+    /// <summary>
+    /// Represents a single token produced by the lexer, including location metadata.
+    /// </summary>
     internal class Token
     {
-        public readonly int sourceId;
-        public readonly int fromCol,
-            toCol,
-            fromLine,
-            toLine,
-            prevCol,
-            prevLine;
-        public readonly TokenType type;
+        public int SourceId { get; }
+        public int FromCol { get; }
+        public int ToCol { get; }
+        public int FromLine { get; }
+        public int ToLine { get; }
+        public int PrevCol { get; }
+        public int PrevLine { get; }
+        public TokenType Type { get; }
 
+        /// <summary>
+        /// Gets or sets the textual payload associated with the token.
+        /// </summary>
         public string Text { get; set; }
 
         public Token(
-            TokenType type,
+            TokenType tokenType,
             int sourceId,
             int fromLine,
             int fromCol,
@@ -26,24 +32,28 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             int prevCol
         )
         {
-            this.type = type;
+            Type = tokenType;
 
-            this.sourceId = sourceId;
-            this.fromLine = fromLine;
-            this.fromCol = fromCol;
-            this.toCol = toCol;
-            this.toLine = toLine;
-            this.prevCol = prevCol;
-            this.prevLine = prevLine;
+            SourceId = sourceId;
+            FromLine = fromLine;
+            FromCol = fromCol;
+            ToCol = toCol;
+            ToLine = toLine;
+            PrevCol = prevCol;
+            PrevLine = prevLine;
         }
 
+        /// <summary>
+        /// Formats the token for debugging by printing its type, range, and text.
+        /// </summary>
+        /// <returns>Human-friendly representation of the token.</returns>
         public override string ToString()
         {
             string tokenTypeString = (
-                type.ToString() + "                                                      "
+                Type.ToString() + "                                                      "
             ).Substring(0, 16);
 
-            string location = $"{fromLine}:{fromCol}-{toLine}:{toCol}";
+            string location = $"{FromLine}:{FromCol}-{ToLine}:{ToCol}";
 
             location = (
                 location + "                                                      "
@@ -52,6 +62,11 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             return $"{tokenTypeString}  - {location} - '{Text ?? ""}'";
         }
 
+        /// <summary>
+        /// Maps a reserved word to the corresponding <see cref="TokenType" />, if any.
+        /// </summary>
+        /// <param name="reservedWord">Identifier text encountered by the lexer.</param>
+        /// <returns>The matched token type, or <c>null</c> when the word is not reserved.</returns>
         public static TokenType? GetReservedTokenType(string reservedWord)
         {
             switch (reservedWord)
@@ -105,17 +120,24 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Parses the numeric literal carried by this token.
+        /// </summary>
+        /// <returns>The literal value as a <see cref="double" />.</returns>
+        /// <exception cref="NotSupportedException">
+        /// Thrown when the token is not numeric (decimal, hexadecimal integer, or hexadecimal float).
+        /// </exception>
         public double GetNumberValue()
         {
-            if (type == TokenType.Number)
+            if (Type == TokenType.Number)
             {
                 return LexerUtils.ParseNumber(this);
             }
-            else if (type == TokenType.NumberHex)
+            else if (Type == TokenType.NumberHex)
             {
                 return LexerUtils.ParseHexInteger(this);
             }
-            else if (type == TokenType.NumberHexFloat)
+            else if (Type == TokenType.NumberHexFloat)
             {
                 return LexerUtils.ParseHexFloat(this);
             }
@@ -127,9 +149,13 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Determines whether the token closes the current block during parsing.
+        /// </summary>
+        /// <returns><c>true</c> when the token is a block terminator.</returns>
         public bool IsEndOfBlock()
         {
-            switch (type)
+            switch (Type)
             {
                 case TokenType.Else:
                 case TokenType.ElseIf:
@@ -142,16 +168,25 @@ namespace NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
+        /// <summary>
+        /// Determines whether the token can be used as a unary operator.
+        /// </summary>
+        /// <returns><c>true</c> when the token starts a unary operation.</returns>
         public bool IsUnaryOperator()
         {
-            return type == TokenType.OpMinusOrSub
-                || type == TokenType.Not
-                || type == TokenType.OpLen;
+            return Type == TokenType.OpMinusOrSub
+                || Type == TokenType.Not
+                || Type == TokenType.OpLen
+                || Type == TokenType.OpBitNotOrXor;
         }
 
+        /// <summary>
+        /// Determines whether the token can be used as a binary operator.
+        /// </summary>
+        /// <returns><c>true</c> when the token represents a binary operator.</returns>
         public bool IsBinaryOperator()
         {
-            switch (type)
+            switch (Type)
             {
                 case TokenType.And:
                 case TokenType.Or:
@@ -165,40 +200,78 @@ namespace NovaSharp.Interpreter.Tree.Lexer
                 case TokenType.OpPwr:
                 case TokenType.OpMod:
                 case TokenType.OpDiv:
+                case TokenType.OpFloorDiv:
                 case TokenType.OpMul:
                 case TokenType.OpMinusOrSub:
                 case TokenType.OpAdd:
+                case TokenType.OpBitAnd:
+                case TokenType.OpBitNotOrXor:
+                case TokenType.OpShiftLeft:
+                case TokenType.OpShiftRight:
+                case TokenType.Pipe:
                     return true;
                 default:
                     return false;
             }
         }
 
-        internal Debugging.SourceRef GetSourceRef(bool isStepStop = true)
+        /// <summary>
+        /// Builds a <see cref="NovaSharp.Interpreter.Debugging.SourceRef" /> for this token.
+        /// </summary>
+        /// <param name="isStepStop">Whether the debugger should pause on the produced span.</param>
+        /// <returns>A source reference covering just this token.</returns>
+        internal NovaSharp.Interpreter.Debugging.SourceRef GetSourceRef(bool isStepStop = true)
         {
-            return new Debugging.SourceRef(sourceId, fromCol, toCol, fromLine, toLine, isStepStop);
-        }
-
-        internal Debugging.SourceRef GetSourceRef(Token to, bool isStepStop = true)
-        {
-            return new Debugging.SourceRef(
-                sourceId,
-                fromCol,
-                to.toCol,
-                fromLine,
-                to.toLine,
+            return new NovaSharp.Interpreter.Debugging.SourceRef(
+                SourceId,
+                FromCol,
+                ToCol,
+                FromLine,
+                ToLine,
                 isStepStop
             );
         }
 
-        internal Debugging.SourceRef GetSourceRefUpTo(Token to, bool isStepStop = true)
+        /// <summary>
+        /// Builds a <see cref="NovaSharp.Interpreter.Debugging.SourceRef" /> spanning the start of
+        /// this token through the end of <paramref name="to" />.
+        /// </summary>
+        /// <param name="to">Token that marks the end of the reference.</param>
+        /// <param name="isStepStop">Whether the debugger should pause on the produced span.</param>
+        /// <returns>A combined source reference covering the token range.</returns>
+        internal NovaSharp.Interpreter.Debugging.SourceRef GetSourceRef(
+            Token to,
+            bool isStepStop = true
+        )
         {
-            return new Debugging.SourceRef(
-                sourceId,
-                fromCol,
-                to.prevCol,
-                fromLine,
-                to.prevLine,
+            return new NovaSharp.Interpreter.Debugging.SourceRef(
+                SourceId,
+                FromCol,
+                to.ToCol,
+                FromLine,
+                to.ToLine,
+                isStepStop
+            );
+        }
+
+        /// <summary>
+        /// Builds a <see cref="NovaSharp.Interpreter.Debugging.SourceRef" /> that ends before
+        /// <paramref name="to" /> by using its previous column/line information.
+        /// </summary>
+        /// <param name="to">Token that supplies the exclusive end position.</param>
+        /// <param name="isStepStop">Whether the debugger should pause on the produced span.</param>
+        /// <returns>A source reference useful for ranges such as <c>function ... end</c>.</returns>
+        internal NovaSharp.Interpreter.Debugging.SourceRef GetSourceRefUpTo(
+            Token to,
+            bool isStepStop = true
+        )
+        {
+            return new NovaSharp.Interpreter.Debugging.SourceRef(
+                SourceId,
+                FromCol,
+                to.PrevCol,
+                FromLine,
+                to.PrevLine,
                 isStepStop
             );
         }

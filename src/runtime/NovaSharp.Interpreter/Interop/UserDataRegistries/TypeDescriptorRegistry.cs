@@ -15,14 +15,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
 
     /// <summary>
-    /// Registry of all type descriptors. Use UserData statics to access these.
+    /// Registry of all type descriptors. Use the UserData static helpers to access these.
     /// </summary>
     internal static class TypeDescriptorRegistry
     {
         private static readonly object SLock = new();
         private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistry = new();
         private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistryHistory = new();
-        private static InteropAccessMode _sDefaultAccessMode;
+        private static InteropAccessMode DefaultAccessModeValue;
 
         /// <summary>
         /// Registers all types marked with a NovaSharpUserDataAttribute that ar contained in an assembly.
@@ -108,9 +108,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             lock (SLock)
             {
-                if (STypeRegistry.ContainsKey(t))
+                if (STypeRegistry.TryGetValue(t, out IUserDataDescriptor descriptor))
                 {
-                    PerformRegistration(t, null, STypeRegistry[t]);
+                    PerformRegistration(t, null, descriptor);
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <exception cref="System.ArgumentException">InteropAccessMode is InteropAccessMode.Default</exception>
         internal static InteropAccessMode DefaultAccessMode
         {
-            get { return _sDefaultAccessMode; }
+            get { return DefaultAccessModeValue; }
             set
             {
                 if (value == InteropAccessMode.Default)
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     throw new ArgumentException("InteropAccessMode is InteropAccessMode.Default");
                 }
 
-                _sDefaultAccessMode = value;
+                DefaultAccessModeValue = value;
             }
         }
 
@@ -143,19 +143,19 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="accessMode">The access mode.</param>
         /// <param name="friendlyName">Name of the friendly.</param>
         /// <returns></returns>
-        internal static IUserDataDescriptor RegisterProxyType_Impl(
+        internal static IUserDataDescriptor RegisterProxyTypeImpl(
             IProxyFactory proxyFactory,
             InteropAccessMode accessMode,
             string friendlyName
         )
         {
-            IUserDataDescriptor proxyDescriptor = RegisterType_Impl(
+            IUserDataDescriptor proxyDescriptor = RegisterTypeImpl(
                 proxyFactory.ProxyType,
                 accessMode,
                 friendlyName,
                 null
             );
-            return RegisterType_Impl(
+            return RegisterTypeImpl(
                 proxyFactory.TargetType,
                 accessMode,
                 friendlyName,
@@ -171,7 +171,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="friendlyName">Friendly name of the descriptor.</param>
         /// <param name="descriptor">The descriptor, or null to use a default one.</param>
         /// <returns></returns>
-        internal static IUserDataDescriptor RegisterType_Impl(
+        internal static IUserDataDescriptor RegisterTypeImpl(
             Type type,
             InteropAccessMode accessMode,
             string friendlyName,
@@ -287,7 +287,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = _sDefaultAccessMode;
+                accessMode = DefaultAccessModeValue;
             }
 
             return accessMode;
@@ -306,9 +306,9 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 IUserDataDescriptor typeDescriptor = null;
 
                 // if the type has been explicitly registered, return its descriptor as it's complete
-                if (STypeRegistry.ContainsKey(type))
+                if (STypeRegistry.TryGetValue(type, out IUserDataDescriptor descriptorForType))
                 {
-                    return STypeRegistry[type];
+                    return descriptorForType;
                 }
 
                 if (RegistrationPolicy.AllowTypeAutoRegistration(type))
@@ -316,7 +316,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     // no autoreg of delegates
                     if (!Framework.Do.IsAssignableFrom((typeof(Delegate)), type))
                     {
-                        return RegisterType_Impl(type, DefaultAccessMode, type.FullName, null);
+                        return RegisterTypeImpl(type, DefaultAccessMode, type.FullName, null);
                     }
                 }
 
@@ -343,7 +343,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     typeDescriptor = descriptor.Generate(type);
                 }
 
-                // we should not search interfaces (for example, it's just for statics..), no need to look further
+                // we should not search interfaces (for example, it's just for static members..), no need to look further
                 if (!searchInterfaces)
                 {
                     return typeDescriptor;

@@ -16,8 +16,14 @@ namespace NovaSharp.Interpreter.DataTypes
         public Script OwnerScript { get; }
     }
 
+    /// <summary>
+    /// Helper methods enforcing that script-private resources (tables, coroutines, etc.) do not cross script boundaries.
+    /// </summary>
     internal static class ScriptPrivateResourceExtension
     {
+        /// <summary>
+        /// Ensures every DynValue in the array belongs to the same script as the containing resource.
+        /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
             DynValue[] values
@@ -29,6 +35,9 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Ensures the provided DynValue is safe to use within the containing resource's script.
+        /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
             DynValue value
@@ -36,7 +45,7 @@ namespace NovaSharp.Interpreter.DataTypes
         {
             if (value != null)
             {
-                IScriptPrivateResource otherResource = value.GetAsPrivateResource();
+                IScriptPrivateResource otherResource = value.ScriptPrivateResource;
 
                 if (otherResource != null)
                 {
@@ -45,6 +54,9 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Validates that the given script matches the resource's owner when crossing API boundaries.
+        /// </summary>
         public static void CheckScriptOwnership(this IScriptPrivateResource resource, Script script)
         {
             if (resource.OwnerScript != null && resource.OwnerScript != script && script != null)
@@ -55,6 +67,9 @@ namespace NovaSharp.Interpreter.DataTypes
             }
         }
 
+        /// <summary>
+        /// Compares two resources and throws when they belong to different scripts or when a script-bound item is used by a shared resource.
+        /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
             IScriptPrivateResource itemResource

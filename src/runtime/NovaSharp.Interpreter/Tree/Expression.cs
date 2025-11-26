@@ -7,23 +7,39 @@ namespace NovaSharp.Interpreter.Tree
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tree.Lexer;
 
+    /// <summary>
+    /// Base type for every AST expression node parsed from Lua source.
+    /// Provides helper factories for recursive-descent parsing and evaluation hooks used by the VM.
+    /// </summary>
     internal abstract class Expression : NodeBase
     {
         public Expression(ScriptLoadingContext lcontext)
             : base(lcontext) { }
 
+        /// <summary>
+        /// Returns a human-friendly node name used by debuggers when rendering the expression tree.
+        /// </summary>
         public virtual string GetFriendlyDebugName()
         {
             return null;
         }
 
+        /// <summary>
+        /// Evaluates the expression within the supplied execution context and produces a Lua value.
+        /// </summary>
         public abstract DynValue Eval(ScriptExecutionContext context);
 
+        /// <summary>
+        /// Resolves the symbol reference for dynamic expressions that defer lookup until runtime.
+        /// </summary>
         public virtual SymbolRef FindDynamic(ScriptExecutionContext context)
         {
             return null;
         }
 
+        /// <summary>
+        /// Parses the remainder of a comma-separated expression list once the first expression is already known.
+        /// </summary>
         internal static List<Expression> ExprListAfterFirstExpr(
             ScriptLoadingContext lcontext,
             Expression expr1
@@ -33,7 +49,7 @@ namespace NovaSharp.Interpreter.Tree
 
             exps.Add(expr1);
 
-            while ((lcontext.Lexer.Current.type == TokenType.Comma))
+            while ((lcontext.Lexer.Current.Type == TokenType.Comma))
             {
                 lcontext.Lexer.Next();
                 exps.Add(Expr(lcontext));
@@ -42,6 +58,9 @@ namespace NovaSharp.Interpreter.Tree
             return exps;
         }
 
+        /// <summary>
+        /// Parses a comma-separated list of expressions.
+        /// </summary>
         internal static List<Expression> ExprList(ScriptLoadingContext lcontext)
         {
             List<Expression> exps = new();
@@ -50,7 +69,7 @@ namespace NovaSharp.Interpreter.Tree
             {
                 exps.Add(Expr(lcontext));
 
-                if (lcontext.Lexer.Current.type != TokenType.Comma)
+                if (lcontext.Lexer.Current.Type != TokenType.Comma)
                 {
                     break;
                 }
@@ -61,11 +80,17 @@ namespace NovaSharp.Interpreter.Tree
             return exps;
         }
 
+        /// <summary>
+        /// Parses a complete expression honoring precedence rules.
+        /// </summary>
         internal static Expression Expr(ScriptLoadingContext lcontext)
         {
             return SubExpr(lcontext, true);
         }
 
+        /// <summary>
+        /// Parses a sub-expression, optionally treating binary operators as part of the primary expression.
+        /// </summary>
         internal static Expression SubExpr(ScriptLoadingContext lcontext, bool isPrimary)
         {
             Expression e = null;
@@ -74,6 +99,7 @@ namespace NovaSharp.Interpreter.Tree
 
             if (t.IsUnaryOperator())
             {
+                EnsureUnaryOperatorSupported(lcontext, t);
                 lcontext.Lexer.Next();
                 e = SubExpr(lcontext, false);
 
@@ -81,12 +107,12 @@ namespace NovaSharp.Interpreter.Tree
                 Token unaryOp = t;
                 t = lcontext.Lexer.Current;
 
-                if (isPrimary && t.type == TokenType.OpPwr)
+                if (isPrimary && t.Type == TokenType.OpPwr)
                 {
                     List<Expression> powerChain = new();
                     powerChain.Add(e);
 
-                    while (isPrimary && t.type == TokenType.OpPwr)
+                    while (isPrimary && t.Type == TokenType.OpPwr)
                     {
                         lcontext.Lexer.Next();
                         powerChain.Add(SubExpr(lcontext, false));
@@ -122,6 +148,7 @@ namespace NovaSharp.Interpreter.Tree
 
                 while (t.IsBinaryOperator())
                 {
+                    EnsureBinaryOperatorSupported(lcontext, t);
                     BinaryOperatorExpression.AddOperatorToChain(chain, t);
                     lcontext.Lexer.Next();
                     Expression right = SubExpr(lcontext, false);
@@ -135,11 +162,14 @@ namespace NovaSharp.Interpreter.Tree
             return e;
         }
 
+        /// <summary>
+        /// Parses literals, table constructors, anonymous functions, or primary expressions (identifier, parenthesized expressions).
+        /// </summary>
         internal static Expression SimpleExp(ScriptLoadingContext lcontext)
         {
             Token t = lcontext.Lexer.Current;
 
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:
@@ -154,11 +184,11 @@ namespace NovaSharp.Interpreter.Tree
                     return new SymbolRefExpression(t, lcontext);
                 case TokenType.BrkOpenCurly:
                 case TokenType.BrkOpenCurlyShared:
-                    return new TableConstructor(lcontext, t.type == TokenType.BrkOpenCurlyShared);
+                    return new TableConstructor(lcontext, t.Type == TokenType.BrkOpenCurlyShared);
                 case TokenType.Function:
                     lcontext.Lexer.Next();
                     return new FunctionDefinitionExpression(lcontext, false, false);
-                case TokenType.Lambda:
+                case TokenType.Pipe:
                     return new FunctionDefinitionExpression(lcontext, false, true);
                 default:
                     return PrimaryExp(lcontext);
@@ -166,10 +196,8 @@ namespace NovaSharp.Interpreter.Tree
         }
 
         /// <summary>
-        /// Primaries the exp.
+        /// Parses a primary expression (prefix expression plus chained field/index/function calls).
         /// </summary>
-        /// <param name="lcontext">The lcontext.</param>
-        /// <returns></returns>
         internal static Expression PrimaryExp(ScriptLoadingContext lcontext)
         {
             Expression e = PrefixExp(lcontext);
@@ -179,7 +207,7 @@ namespace NovaSharp.Interpreter.Tree
                 Token t = lcontext.Lexer.Current;
                 Token thisCallName = null;
 
-                switch (t.type)
+                switch (t.Type)
                 {
                     case TokenType.Dot:
                         {
@@ -195,7 +223,7 @@ namespace NovaSharp.Interpreter.Tree
                             Expression index = Expr(lcontext);
 
                             // support NovaSharp multiple indexers for userdata
-                            if (lcontext.Lexer.Current.type == TokenType.Comma)
+                            if (lcontext.Lexer.Current.Type == TokenType.Comma)
                             {
                                 List<Expression> explist = ExprListAfterFirstExpr(lcontext, index);
                                 index = new ExprListExpression(explist, lcontext);
@@ -222,10 +250,67 @@ namespace NovaSharp.Interpreter.Tree
             }
         }
 
+        private static void EnsureUnaryOperatorSupported(ScriptLoadingContext lcontext, Token token)
+        {
+            if (token.Type == TokenType.OpBitNotOrXor)
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
+            }
+        }
+
+        private static void EnsureBinaryOperatorSupported(
+            ScriptLoadingContext lcontext,
+            Token token
+        )
+        {
+            if (token.Type == TokenType.OpFloorDiv)
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.1");
+            }
+            else if (IsBitwiseToken(token.Type))
+            {
+                EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
+            }
+        }
+
+        private static void EnsureLua53ExpressionFeature(
+            ScriptLoadingContext lcontext,
+            Token token,
+            string manualReference
+        )
+        {
+            Script script = lcontext.Script;
+            if (script == null)
+            {
+                return;
+            }
+
+            if (script.CompatibilityProfile.SupportsBitwiseOperators)
+            {
+                return;
+            }
+
+            throw new SyntaxErrorException(
+                token,
+                "'{0}' operator requires Lua 5.3+ compatibility ({1}). Set Script.Options.CompatibilityVersion accordingly.",
+                token.Text,
+                manualReference
+            );
+        }
+
+        private static bool IsBitwiseToken(TokenType type)
+        {
+            return type == TokenType.OpBitAnd
+                || type == TokenType.OpBitNotOrXor
+                || type == TokenType.OpShiftLeft
+                || type == TokenType.OpShiftRight
+                || type == TokenType.Pipe;
+        }
+
         private static Expression PrefixExp(ScriptLoadingContext lcontext)
         {
             Token t = lcontext.Lexer.Current;
-            switch (t.type)
+            switch (t.Type)
             {
                 case TokenType.BrkOpenRound:
                     lcontext.Lexer.Next();
@@ -238,7 +323,7 @@ namespace NovaSharp.Interpreter.Tree
                 default:
                     throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
                     {
-                        IsPrematureStreamTermination = (t.type == TokenType.Eof),
+                        IsPrematureStreamTermination = (t.Type == TokenType.Eof),
                     };
             }
         }

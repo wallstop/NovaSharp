@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests
 {
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
@@ -213,7 +214,7 @@ namespace NovaSharp.Interpreter.Tests
         [Test]
         public void TestMore307Bit()
         {
-            TapRunner.Run(@"TestMore/307-bit.t");
+            TapRunner.Run(@"TestMore/307-bit.t", LuaCompatibilityVersion.Lua52);
         }
 
         [Test]
@@ -222,7 +223,7 @@ namespace NovaSharp.Interpreter.Tests
             TapRunner.Run(@"TestMore/310-close-var.t");
         }
 
-        private bool AreCoreModulesFullySupported(CoreModules modules)
+        private static bool AreCoreModulesFullySupported(CoreModules modules)
         {
             CoreModules supp = Script.GlobalOptions.Platform.FilterSupportedCoreModules(modules);
             return supp == modules;

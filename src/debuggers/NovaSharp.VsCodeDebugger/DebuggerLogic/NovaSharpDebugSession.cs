@@ -4,25 +4,34 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Utilities;
     using SDK;
 
+    /// <summary>
+    /// Full-featured VS Code debug adapter session that proxies runtime state via <see cref="AsyncDebugger"/>.
+    /// </summary>
     internal sealed class NovaSharpDebugSession : DebugSession, IAsyncDebuggerClient
     {
         private readonly AsyncDebugger _debug;
         private readonly NovaSharpVsCodeDebugServer _server;
         private readonly List<DynValue> _variables = new();
-        private bool _notifyExecutionEnd = false;
+        private bool _notifyExecutionEnd;
 
-        private const int SCOPE_LOCALS = 65536;
-        private const int SCOPE_SELF = 65537;
+        private const int ScopeLocals = 65536;
+        private const int ScopeSelf = 65537;
 
+        /// <summary>
+        /// Initializes a new VS Code session bound to the specified debugger instance.
+        /// </summary>
         internal NovaSharpDebugSession(NovaSharpVsCodeDebugServer server, AsyncDebugger debugger)
             : base(true, false)
         {
@@ -30,6 +39,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             _debug = debugger;
         }
 
+        /// <summary>
+        /// Sends handshake messages, reports platform information, and binds this session to the async debugger.
+        /// </summary>
         public override void Initialize(Response response, Table args)
         {
 #if DOTNET_CORE
@@ -53,26 +65,35 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 _debug.Name
             );
 
-            SendText("Type '!help' in the Debug Console for available commands.");
+            SendText("Type '!help' in the Debug Console for available Commands.");
+
+            LuaCompatibilityProfile profile = _debug.Script?.CompatibilityProfile;
+            if (profile != null)
+            {
+                SendText(
+                    "[compatibility] Debugger session running under {0}",
+                    profile.GetFeatureSummary()
+                );
+            }
 
             SendResponse(
                 response,
                 new Capabilities()
                 {
                     // This debug adapter does not need the configurationDoneRequest.
-                    supportsConfigurationDoneRequest = false,
+                    SupportsConfigurationDoneRequest = false,
 
                     // This debug adapter does not support function breakpoints.
-                    supportsFunctionBreakpoints = false,
+                    SupportsFunctionBreakpoints = false,
 
                     // This debug adapter doesn't support conditional breakpoints.
-                    supportsConditionalBreakpoints = false,
+                    SupportsConditionalBreakpoints = false,
 
                     // This debug adapter does not support a side effect free evaluate request for data hovers.
-                    supportsEvaluateForHovers = false,
+                    SupportsEvaluateForHovers = false,
 
                     // This debug adapter does not support exception breakpoint filters
-                    exceptionBreakpointFilters = Array.Empty<object>(),
+                    ExceptionBreakpointFilters = Array.Empty<object>(),
                 }
             );
 
@@ -82,12 +103,18 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             _debug.Client = this;
         }
 
-        public override void Attach(Response response, Table arguments)
+        /// <summary>
+        /// Acknowledges attach requests (session is already wired by the server).
+        /// </summary>
+        public override void Attach(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
-        public override void Continue(Response response, Table arguments)
+        /// <summary>
+        /// Resumes script execution when VS Code issues a Continue request.
+        /// </summary>
+        public override void ContinueExecution(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -98,7 +125,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void Disconnect(Response response, Table arguments)
+        /// <summary>
+        /// Detaches the session from the async debugger without tearing down the server.
+        /// </summary>
+        public override void Disconnect(Response response, Table Arguments)
         {
             _debug.Client = null;
             SendResponse(response);
@@ -119,6 +149,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             return s;
         }
 
+        /// <summary>
+        /// Handles watch/hover/repl evaluations issued by VS Code.
+        /// </summary>
         public override void Evaluate(Response response, Table args)
         {
             string expression = GetString(args, "expression");
@@ -132,7 +165,11 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 );
             }
 
-            if (context == "repl" && expression.StartsWith("!"))
+            if (
+                context == "repl"
+                && !string.IsNullOrEmpty(expression)
+                && expression.StartsWith('!')
+            )
             {
                 ExecuteRepl(expression.Substring(1));
                 SendResponse(response);
@@ -153,19 +190,24 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void ExecuteRepl(string cmd)
         {
+            ReadOnlySpan<char> commandSpan = cmd.AsSpan().TrimWhitespace();
+            string commandText = commandSpan.Length == cmd.Length ? cmd : new string(commandSpan);
             bool showHelp = false;
-            cmd = cmd.Trim();
-            if (cmd == "help")
+
+            if (commandSpan.Equals("help".AsSpan(), StringComparison.Ordinal))
             {
                 showHelp = true;
             }
-            else if (cmd.StartsWith("geterror"))
+            else if (commandSpan.StartsWith("geterror".AsSpan(), StringComparison.Ordinal))
             {
                 SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
             }
-            else if (cmd.StartsWith("seterror"))
+            else if (commandSpan.StartsWith("seterror".AsSpan(), StringComparison.Ordinal))
             {
-                string regex = cmd.Substring("seterror".Length).Trim();
+                ReadOnlySpan<char> regexSpan = commandSpan
+                    .Slice("seterror".Length)
+                    .TrimWhitespace();
+                string regex = regexSpan.Length == 0 ? string.Empty : new string(regexSpan);
 
                 try
                 {
@@ -173,26 +215,31 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     _debug.ErrorRegex = rx;
                     SendText("Current error regex : {0}", _debug.ErrorRegex.ToString());
                 }
-                catch (Exception ex)
+                catch (ArgumentException ex)
                 {
                     SendText("Error setting regex: {0}", ex.Message);
                 }
             }
-            else if (cmd.StartsWith("execendnotify"))
+            else if (commandSpan.StartsWith("execendnotify".AsSpan(), StringComparison.Ordinal))
             {
-                string val = cmd.Substring("execendnotify".Length).Trim();
+                ReadOnlySpan<char> valueSpan = commandSpan
+                    .Slice("execendnotify".Length)
+                    .TrimWhitespace();
 
-                if (val == "off")
+                if (!valueSpan.IsEmpty)
                 {
-                    _notifyExecutionEnd = false;
-                }
-                else if (val == "on")
-                {
-                    _notifyExecutionEnd = true;
-                }
-                else if (val.Length > 0)
-                {
-                    SendText("Error : expected 'on' or 'off'");
+                    if (valueSpan.Equals("off".AsSpan(), StringComparison.Ordinal))
+                    {
+                        _notifyExecutionEnd = false;
+                    }
+                    else if (valueSpan.Equals("on".AsSpan(), StringComparison.Ordinal))
+                    {
+                        _notifyExecutionEnd = true;
+                    }
+                    else
+                    {
+                        SendText("Error : expected 'on' or 'off'");
+                    }
                 }
 
                 SendText(
@@ -200,7 +247,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     _notifyExecutionEnd ? "enabled" : "disabled"
                 );
             }
-            else if (cmd == "list")
+            else if (commandSpan.Equals("list".AsSpan(), StringComparison.Ordinal))
             {
                 int currId = _server.CurrentId ?? -1000;
 
@@ -208,28 +255,33 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     KeyValuePair<int, string> pair in _server.GetAttachedDebuggersByIdAndName()
                 )
                 {
-                    string isthis = (pair.Key == _debug.Id) ? " (this)" : "";
-                    string isdef = (pair.Key == currId) ? " (default)" : "";
+                    string isthis = (pair.Key == _debug.Id) ? " (this)" : string.Empty;
+                    string isdef = (pair.Key == currId) ? " (default)" : string.Empty;
 
                     SendText(
                         "{0} : {1}{2}{3}",
-                        pair.Key.ToString().PadLeft(9),
+                        pair.Key.ToString(CultureInfo.InvariantCulture).PadLeft(9),
                         pair.Value,
                         isdef,
                         isthis
                     );
                 }
             }
-            else if (cmd.StartsWith("select") || cmd.StartsWith("switch"))
+            else if (
+                commandSpan.StartsWith("select".AsSpan(), StringComparison.Ordinal)
+                || commandSpan.StartsWith("switch".AsSpan(), StringComparison.Ordinal)
+            )
             {
-                string arg = cmd.Substring("switch".Length).Trim();
+                bool isSwitch = commandSpan.StartsWith("switch".AsSpan(), StringComparison.Ordinal);
+                ReadOnlySpan<char> idSpan = commandSpan.Slice("switch".Length).TrimWhitespace();
+                string idText = idSpan.Length == 0 ? string.Empty : new string(idSpan);
 
                 try
                 {
-                    int id = int.Parse(arg);
+                    int id = int.Parse(idText, CultureInfo.InvariantCulture);
                     _server.CurrentId = id;
 
-                    if (cmd.StartsWith("switch"))
+                    if (isSwitch)
                     {
                         Unbind();
                     }
@@ -241,20 +293,24 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                         );
                     }
                 }
-                catch (Exception ex)
+                catch (FormatException ex)
                 {
-                    SendText("Error setting regex: {0}", ex.Message);
+                    SendText("Error selecting debugger: {0}", ex.Message);
+                }
+                catch (OverflowException ex)
+                {
+                    SendText("Error selecting debugger: {0}", ex.Message);
                 }
             }
             else
             {
-                SendText("Syntax error : {0}\n", cmd);
+                SendText("Syntax error : {0}\n", commandText);
                 showHelp = true;
             }
 
             if (showHelp)
             {
-                SendText("Available commands : ");
+                SendText("Available Commands : ");
                 SendText("    !help - gets this help");
                 SendText("    !list - lists the other scripts which can be debugged");
                 SendText("    !select <id> - select another script for future sessions");
@@ -272,12 +328,18 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        public override void Launch(Response response, Table arguments)
+        /// <summary>
+        /// Launch is a no-op because scripts are already running; VS Code expects an acknowledgement.
+        /// </summary>
+        public override void Launch(Response response, Table Arguments)
         {
             SendResponse(response);
         }
 
-        public override void Next(Response response, Table arguments)
+        /// <summary>
+        /// Performs a step-over action in response to a Next request.
+        /// </summary>
+        public override void StepOver(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -288,28 +350,37 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        private StoppedEvent CreateStoppedEvent(string reason, string text = null)
+        private static StoppedEvent CreateStoppedEvent(string reason, string text = null)
         {
             return new StoppedEvent(0, reason, text);
         }
 
-        public override void Pause(Response response, Table arguments)
+        /// <summary>
+        /// Requests a pause so the runtime stops on the next statement.
+        /// </summary>
+        public override void Pause(Response response, Table Arguments)
         {
             _debug.PauseRequested = true;
             SendResponse(response);
             SendText("Pause pending -- will pause at first script statement.");
         }
 
-        public override void Scopes(Response response, Table arguments)
+        /// <summary>
+        /// Returns the logical scopes (locals/self) for the paused stack frame.
+        /// </summary>
+        public override void Scopes(Response response, Table Arguments)
         {
             List<Scope> scopes = new();
 
-            scopes.Add(new Scope("Locals", SCOPE_LOCALS));
-            scopes.Add(new Scope("Self", SCOPE_SELF));
+            scopes.Add(new Scope("Locals", ScopeLocals));
+            scopes.Add(new Scope("Self", ScopeSelf));
 
             SendResponse(response, new ScopesResponseBody(scopes));
         }
 
+        /// <summary>
+        /// Applies breakpoints for the specified source file.
+        /// </summary>
         public override void SetBreakpoints(Response response, Table args)
         {
             string path = null;
@@ -328,7 +399,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                 SendErrorResponse(
                     response,
                     3010,
-                    "setBreakpoints: property 'source' is empty or misformed",
+                    "setBreakpoints: property 'source' is empty or malformed",
                     null,
                     false,
                     true
@@ -355,7 +426,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
                     .ToArray()
             );
 
-            HashSet<int> lin2 = _debug.DebugService.ResetBreakPoints(src, lin);
+            HashSet<int> lin2 = _debug.DebugService.ResetBreakpoints(src, lin);
 
             List<Breakpoint> breakpoints = new();
             foreach (int l in lin)
@@ -367,6 +438,9 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
+        /// <summary>
+        /// Converts the runtime call stack into VS Code stack frames.
+        /// </summary>
         public override void StackTrace(Response response, Table args)
         {
             int maxLevels = GetInt(args, "levels", 10);
@@ -431,7 +505,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private readonly SourceRef _defaultSourceRef = new(-1, 0, 0, 0, 0, false);
 
-        private int GetInt(Table args, string propName, int defaultValue)
+        private static int GetInt(Table args, string propName, int defaultValue)
         {
             DynValue jo = args.Get(propName);
 
@@ -445,7 +519,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        public override void StepIn(Response response, Table arguments)
+        /// <summary>
+        /// Steps into the next function call.
+        /// </summary>
+        public override void StepIn(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -456,7 +533,10 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void StepOut(Response response, Table arguments)
+        /// <summary>
+        /// Steps out of the current function.
+        /// </summary>
+        public override void StepOut(Response response, Table Arguments)
         {
             _debug.QueueAction(
                 new DebuggerAction(_debug.Script?.TimeProvider)
@@ -467,24 +547,30 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response);
         }
 
-        public override void Threads(Response response, Table arguments)
+        /// <summary>
+        /// Reports the logical thread list (single main thread today).
+        /// </summary>
+        public override void Threads(Response response, Table Arguments)
         {
             List<Thread> threads = new() { new Thread(0, "Main Thread") };
             SendResponse(response, new ThreadsResponseBody(threads));
         }
 
-        public override void Variables(Response response, Table arguments)
+        /// <summary>
+        /// Returns locals/self/expanded variable content for the identifiers requested by VS Code.
+        /// </summary>
+        public override void Variables(Response response, Table Arguments)
         {
-            int index = GetInt(arguments, "variablesReference", -1);
+            int index = GetInt(Arguments, "variablesReference", -1);
 
             List<Variable> variables = new();
 
-            if (index == SCOPE_SELF)
+            if (index == ScopeSelf)
             {
                 DynValue v = _debug.Evaluate("self");
                 VariableInspector.InspectVariable(v, variables);
             }
-            else if (index == SCOPE_LOCALS)
+            else if (index == ScopeLocals)
             {
                 foreach (WatchItem w in _debug.GetWatches(WatchType.Locals))
                 {
@@ -505,11 +591,13 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             SendResponse(response, new VariablesResponseBody(variables));
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.SendStopEvent()
         {
             SendEvent(CreateStoppedEvent("step"));
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.OnWatchesUpdated(WatchType watchType)
         {
             if (watchType == WatchType.CallStack)
@@ -518,6 +606,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <inheritdoc />
         void IAsyncDebuggerClient.OnSourceCodeChanged(int sourceId)
         {
             if (_debug.IsSourceOverride(sourceId))
@@ -534,6 +623,7 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
+        /// <inheritdoc cref="IAsyncDebuggerClient.OnExecutionEnded" />
         public void OnExecutionEnded()
         {
             if (_notifyExecutionEnd)
@@ -544,21 +634,38 @@ namespace NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private void SendText(string msg, params object[] args)
         {
-            msg = string.Format(msg, args);
+            msg = FormatString(msg, args);
             // SendEvent(new OutputEvent("console", DateTime.Now.ToString("u") + ": " + msg + "\n"));
             SendEvent(new OutputEvent("console", msg + "\n"));
         }
 
+        /// <inheritdoc />
         public void OnException(ScriptRuntimeException ex)
         {
             SendText("runtime error : {0}", ex.DecoratedMessage);
         }
 
+        /// <inheritdoc />
         public void Unbind()
         {
             SendText("Debug session has been closed by the hosting process.");
             SendText("Bye.");
             SendEvent(new TerminatedEvent());
+        }
+
+        private static string FormatString(string format, object[] args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                return format;
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, format, args);
         }
     }
 }

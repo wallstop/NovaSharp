@@ -12,10 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TestUtilities
             int sleepMilliseconds = 5
         )
         {
-            if (condition == null)
-            {
-                throw new ArgumentNullException(nameof(condition));
-            }
+            ArgumentNullException.ThrowIfNull(condition);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             while (stopwatch.Elapsed < timeout)

@@ -1,29 +1,41 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using DataTypes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NUnit.Framework;
 
+#pragma warning disable CA5394 // Random is not used for security; tests just proxy System.Random instances.
     [TestFixture]
     public class ProxyObjectsTests
     {
-        public class Proxy
+        private sealed class Proxy
         {
             [NovaSharpVisible(false)]
-            public Random random;
+            [SuppressMessage(
+                "Security",
+                "CA5394:Random is an insecure random number generator",
+                Justification = "Tests intentionally proxy System.Random instances; security is not in scope."
+            )]
+            public Random randomSource;
 
             [NovaSharpVisible(false)]
             public Proxy(Random r)
             {
-                random = r;
+                randomSource = r;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1024:UsePropertiesWhereAppropriate",
+                Justification = "Proxy tests validate callable getters exposed to Lua."
+            )]
             public int GetValue()
             {
-                return 3;
+                return randomSource != null ? randomSource.Next(3, 4) : 3;
             }
         }
 
@@ -58,4 +70,5 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(s.Globals.Get("x").Number, Is.EqualTo(3.0));
         }
     }
+#pragma warning restore CA5394
 }

@@ -4,13 +4,23 @@ namespace NovaSharp.Cli.Commands
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
 
-    public static class CommandManager
+    /// <summary>
+    /// Discovers CLI commands via reflection and routes REPL invocations to the appropriate handlers.
+    /// </summary>
+    internal static class CommandManager
     {
+        /// <summary>
+        /// Backing store mapping command names to their handlers.
+        /// </summary>
         private static readonly Dictionary<string, ICommand> Registry = new();
 
-        public static void Initialize()
+        /// <summary>
+        /// Scans the current assembly for <see cref="ICommand"/> implementations and populates the registry.
+        /// </summary>
+        internal static void Initialize()
         {
             foreach (
                 Type t in Assembly
@@ -26,7 +36,12 @@ namespace NovaSharp.Cli.Commands
             }
         }
 
-        public static void Execute(ShellContext context, string commandLine)
+        /// <summary>
+        /// Parses the REPL input line and executes the matching command.
+        /// </summary>
+        /// <param name="context">Active REPL context.</param>
+        /// <param name="commandLine">Full command line entered by the user.</param>
+        internal static void Execute(ShellContext context, string commandLine)
         {
             if (context == null)
             {
@@ -42,7 +57,7 @@ namespace NovaSharp.Cli.Commands
 
             if (trimmed.Length == 0)
             {
-                Console.WriteLine("Invalid command ''.");
+                Console.WriteLine(CliMessages.CommandManagerEmptyCommand);
                 return;
             }
 
@@ -63,14 +78,17 @@ namespace NovaSharp.Cli.Commands
 
             if (cmd == null)
             {
-                Console.WriteLine("Invalid command '{0}'.", command);
+                Console.WriteLine(CliMessages.CommandManagerInvalidCommand(command));
                 return;
             }
 
             cmd.Execute(context, arguments);
         }
 
-        public static IEnumerable<ICommand> GetCommands()
+        /// <summary>
+        /// Returns the registered commands ordered as expected by <c>!help</c> (help command first).
+        /// </summary>
+        internal static IEnumerable<ICommand> GetCommands()
         {
             yield return Registry["help"];
 
@@ -82,14 +100,14 @@ namespace NovaSharp.Cli.Commands
             }
         }
 
-        public static ICommand Find(string cmd)
+        /// <summary>
+        /// Looks up a command implementation by its name.
+        /// </summary>
+        /// <param name="cmd">Command token (e.g., <c>help</c>).</param>
+        /// <returns>The registered command or <c>null</c> when no match exists.</returns>
+        internal static ICommand Find(string cmd)
         {
-            if (Registry.ContainsKey(cmd))
-            {
-                return Registry[cmd];
-            }
-
-            return null;
+            return Registry.TryGetValue(cmd, out ICommand command) ? command : null;
         }
     }
 }

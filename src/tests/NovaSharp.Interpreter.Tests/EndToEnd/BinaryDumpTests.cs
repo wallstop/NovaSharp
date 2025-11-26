@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     [TestFixture]
     public class BinaryDumpTests
     {
-        private DynValue Script_RunString(string script)
+        private static DynValue ScriptRunString(string script)
         {
             Script s1 = new();
             DynValue v1 = s1.LoadString(script);
@@ -25,11 +25,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             return func.Function.Call();
         }
 
-        private DynValue Script_LoadFunc(string script, string funcname)
+        private static DynValue ScriptLoadFunc(string script, string functionName)
         {
             Script s1 = new();
             DynValue v1 = s1.DoString(script);
-            DynValue func = s1.Globals.Get(funcname);
+            DynValue func = s1.Globals.Get(functionName);
 
             using MemoryStream ms = new();
             s1.Dump(func, ms);
@@ -85,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             DynValue res = fact.Function.Call(5);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
@@ -103,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             DynValue res = fact.Function.Call(5);
 
@@ -124,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
@@ -135,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public void BinDumpFactorialDumpFuncUpvalue()
+        public void BinDumpFactorialDumpFuncUpValue()
         {
             string script =
                 @"
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = Script_LoadFunc(script, "fact");
+            DynValue fact = ScriptLoadFunc(script, "fact");
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue res = fact.Function.Call(5);
@@ -179,7 +179,7 @@ y = y + fact(5);
 return y;
 ";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(140));
@@ -199,14 +199,14 @@ return y;
 
 				return (g(3)(2));";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(5));
         }
 
         [Test]
-        public void BinDumpNestedUpvalues()
+        public void BinDumpNestedUpValues()
         {
             string script =
                 @"
@@ -228,14 +228,14 @@ return y;
 	return 10 * m.t.dojob();
 								";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
-        public void BinDumpNestedOutOfScopeUpvalues()
+        public void BinDumpNestedOutOfScopeUpValues()
         {
             string script =
                 @"
@@ -264,14 +264,14 @@ return y;
 	return 10 * Q.t.dojob();
 								";
 
-            DynValue res = Script_RunString(script);
+            DynValue res = ScriptRunString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
         [Test]
-        public void LoadChangeEnvWithDebugSetUpvalue()
+        public void LoadChangeEnvWithDebugSetUpValue()
         {
             List<Table> list = new();
 

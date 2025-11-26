@@ -1,6 +1,9 @@
 namespace NovaSharp.Interpreter.Errors
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Globalization;
     using Interop.BasicDescriptors;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
@@ -8,45 +11,59 @@ namespace NovaSharp.Interpreter.Errors
     using System.Runtime.Serialization;
 #endif
 
-    /// <summary>
-    /// Exception for all runtime errors. In addition to constructors, it offers a lot of static methods
-    /// generating more "standard" Lua errors.
-    /// </summary>
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
 #endif
+    /// <summary>
+    /// Exception for all runtime errors. In addition to constructors, it offers a lot of static helpers
+    /// that mirror canonical Lua error text.
+    /// </summary>
     public class ScriptRuntimeException : InterpreterException
     {
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> without a message; primarily used by serializers/reflection.
+        /// </summary>
         public ScriptRuntimeException() { }
 
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> using the provided <paramref name="message"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the runtime failure.</param>
         public ScriptRuntimeException(string message)
             : base(message) { }
 
+        /// <summary>
+        /// Initializes a new <see cref="ScriptRuntimeException"/> wrapping an underlying CLR <paramref name="innerException"/>.
+        /// </summary>
+        /// <param name="message">Human-readable detail describing the runtime failure.</param>
+        /// <param name="innerException">CLR exception captured while executing script code.</param>
         public ScriptRuntimeException(string message, Exception innerException)
             : base(message, innerException) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> that mirrors the supplied interpreter/CLR exception.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">Exception raised by the interpreter or a CLR callback.</param>
         public ScriptRuntimeException(Exception ex)
-            : base(ex) { }
+            : base(EnsureException(ex)) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> by cloning another runtime exception instance, preserving decoration.
         /// </summary>
-        /// <param name="ex">The ex.</param>
+        /// <param name="ex">Existing runtime exception whose decorated message should be preserved.</param>
         public ScriptRuntimeException(ScriptRuntimeException ex)
-            : base(ex, ex.DecoratedMessage)
+            : base(EnsureScriptRuntimeException(ex, out string decoratedMessage), decoratedMessage)
         {
             DecoratedMessage = Message;
             DoNotDecorateMessage = true;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptRuntimeException"/> class.
+        /// Initializes a new <see cref="ScriptRuntimeException"/> using a composite message built from <paramref name="format"/>
+        /// and <paramref name="args"/> with invariant culture semantics.
         /// </summary>
-        /// <param name="message">The message that describes the error.</param>
+        /// <param name="format">Composite format string interpreted with <see cref="CultureInfo.InvariantCulture"/>.</param>
+        /// <param name="args">Arguments applied to the composite format string.</param>
         public ScriptRuntimeException(string format, params object[] args)
             : base(format, args) { }
 
@@ -54,6 +71,8 @@ namespace NovaSharp.Interpreter.Errors
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptRuntimeException" /> class with serialized data.
         /// </summary>
+        /// <param name="info">Serialized data describing the exception.</param>
+        /// <param name="context">Streaming context describing the serialization target/source.</param>
         protected ScriptRuntimeException(SerializationInfo info, StreamingContext context)
             : base(info, context) { }
 #endif
@@ -68,6 +87,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers</exception>
         public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r = null)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -95,6 +119,29 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
+        /// Creates a ScriptRuntimeException specifying that a bitwise operation received a non-integer operand.
+        /// </summary>
+        public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            string descriptor = value.Type switch
+            {
+                DataType.Number => "float",
+                DataType.String => "string",
+                _ => value.Type.ToLuaTypeString(),
+            };
+
+            return new ScriptRuntimeException(
+                "attempt to perform bitwise operation on a {0} value",
+                descriptor
+            );
+        }
+
+        /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a concat operation was attempted on non-strings
         /// </summary>
@@ -104,6 +151,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers or strings</exception>
         public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -132,6 +184,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException LenOnInvalidType(DynValue r)
         {
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to get length of a {0} value",
                 r.Type.ToLuaTypeString()
@@ -147,6 +204,16 @@ namespace NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
         {
+            if (l == null)
+            {
+                throw new ArgumentNullException(nameof(l));
+            }
+
+            if (r == null)
+            {
+                throw new ArgumentNullException(nameof(r));
+            }
+
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
             {
                 return new ScriptRuntimeException(
@@ -206,6 +273,11 @@ namespace NovaSharp.Interpreter.Errors
             bool allowNil
         )
         {
+            if (expected == null)
+            {
+                throw new ArgumentNullException(nameof(expected));
+            }
+
             return new ScriptRuntimeException(
                 "bad argument #{0} to '{1}' (userdata<{2}>{3} expected, got {4})",
                 argNum + 1,
@@ -371,6 +443,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException IndexType(DynValue obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to index a {0} value",
                 obj.Type.ToLuaTypeString()
@@ -413,6 +490,12 @@ namespace NovaSharp.Interpreter.Errors
             return new ScriptRuntimeException("loop in call");
         }
 
+        /// <summary>
+        /// Creates the Lua 5.4 "__close" error raised when a variable marked with &lt;close&gt; resolves to a value
+        /// without a callable <c>__close</c> metamethod (§3.3.8).
+        /// </summary>
+        /// <param name="value">Value associated with the <c>__close</c> lookup.</param>
+        /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
         {
             string typeName = value?.Type.ToLuaTypeString() ?? DataType.Nil.ToLuaTypeString();
@@ -482,6 +565,11 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(object obj)
         {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return new ScriptRuntimeException("cannot convert clr type {0}", obj.GetType());
         }
 
@@ -495,10 +583,9 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t)
         {
-            return new ScriptRuntimeException(
-                "cannot convert a {0} to a clr type",
-                t.ToString().ToLowerInvariant()
-            );
+            string luaType = t.ToLuaDebuggerString();
+
+            return new ScriptRuntimeException("cannot convert a {0} to a clr type", luaType);
         }
 
         /// <summary>
@@ -512,9 +599,16 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException ConvertObjectFailed(DataType t, Type t2)
         {
+            if (t2 == null)
+            {
+                throw new ArgumentNullException(nameof(t2));
+            }
+
+            string luaType = t.ToLuaDebuggerString();
+
             return new ScriptRuntimeException(
                 "cannot convert a {0} to a clr type {1}",
-                t.ToString().ToLowerInvariant(),
+                luaType,
                 t2.FullName
             );
         }
@@ -530,9 +624,14 @@ namespace NovaSharp.Interpreter.Errors
         /// </returns>
         public static ScriptRuntimeException UserDataArgumentTypeMismatch(DataType t, Type clrType)
         {
+            if (clrType == null)
+            {
+                throw new ArgumentNullException(nameof(clrType));
+            }
+
             return new ScriptRuntimeException(
                 "cannot find a conversion from a NovaSharp {0} to a clr {1}",
-                t.ToString().ToLowerInvariant(),
+                t.ToLuaDebuggerString(),
                 clrType.FullName
             );
         }
@@ -575,6 +674,9 @@ namespace NovaSharp.Interpreter.Errors
             }
         }
 
+        /// <summary>
+        /// Creates the standard Lua error raised when closing a coroutine in an invalid state (§3.10).
+        /// </summary>
         public static ScriptRuntimeException CannotCloseCoroutine(CoroutineState state)
         {
             return state switch
@@ -587,9 +689,37 @@ namespace NovaSharp.Interpreter.Errors
                 ),
                 _ => new ScriptRuntimeException(
                     "cannot close coroutine in state {0}",
-                    state.ToString().ToLowerInvariant()
+                    GetCoroutineStateName(state)
                 ),
             };
+        }
+
+        private static readonly Dictionary<CoroutineState, string> KnownCoroutineStateNames = new()
+        {
+            { CoroutineState.Main, "main" },
+            { CoroutineState.NotStarted, "notstarted" },
+            { CoroutineState.Suspended, "suspended" },
+            { CoroutineState.ForceSuspended, "forcesuspended" },
+            { CoroutineState.Running, "running" },
+            { CoroutineState.Dead, "dead" },
+        };
+
+        private static readonly ConcurrentDictionary<
+            CoroutineState,
+            string
+        > CoroutineStateNameCache = new();
+
+        private static string GetCoroutineStateName(CoroutineState state)
+        {
+            if (KnownCoroutineStateNames.TryGetValue(state, out string known))
+            {
+                return known;
+            }
+
+            return CoroutineStateNameCache.GetOrAdd(
+                state,
+                static s => InvariantString.ToLowerInvariantIfNeeded(s.ToString())
+            );
         }
 
         /// <summary>
@@ -622,7 +752,7 @@ namespace NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="type">The lua non-function data type.</param>
         /// <param name="debugText">The debug text to aid location (appears as "near 'xxx'").</param>
-        /// <returns></returns>
+        /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException AttemptToCallNonFunc(
             DataType type,
             string debugText = null
@@ -651,6 +781,11 @@ namespace NovaSharp.Interpreter.Errors
         /// <param name="desc">The member descriptor.</param>
         public static ScriptRuntimeException AccessInstanceMemberOnStatics(IMemberDescriptor desc)
         {
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0} from a static userdata",
                 desc.Name
@@ -669,6 +804,16 @@ namespace NovaSharp.Interpreter.Errors
             IMemberDescriptor desc
         )
         {
+            if (typeDescr == null)
+            {
+                throw new ArgumentNullException(nameof(typeDescr));
+            }
+
+            if (desc == null)
+            {
+                throw new ArgumentNullException(nameof(desc));
+            }
+
             return new ScriptRuntimeException(
                 "attempt to access instance member {0}.{1} from a static userdata",
                 typeDescr.Name,
@@ -677,15 +822,38 @@ namespace NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Rethrows this instance if
+        /// Rethrows this instance when <see cref="Script.GlobalOptions.RethrowExceptionNested"/> requests nested propagation.
         /// </summary>
-        /// <returns></returns>
         public override void Rethrow()
         {
             if (Script.GlobalOptions.RethrowExceptionNested)
             {
                 throw new ScriptRuntimeException(this);
             }
+        }
+
+        private static Exception EnsureException(Exception ex)
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            return ex;
+        }
+
+        private static ScriptRuntimeException EnsureScriptRuntimeException(
+            ScriptRuntimeException ex,
+            out string decoratedMessage
+        )
+        {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            decoratedMessage = ex.DecoratedMessage;
+            return ex;
         }
     }
 }

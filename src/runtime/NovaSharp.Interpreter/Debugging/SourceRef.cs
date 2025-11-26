@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Debugging
 {
     using System;
+    using System.Globalization;
 
     /// <summary>
     /// Class representing a reference to source code interval
@@ -52,6 +53,11 @@ namespace NovaSharp.Interpreter.Debugging
         /// </summary>
         public bool CannotBreakpoint { get; private set; }
 
+        /// <summary>
+        /// Creates a sentinel <see cref="SourceRef" /> that represents a CLR frame where no Lua code
+        /// is available (useful for debugger call stacks).
+        /// </summary>
+        /// <returns>A <see cref="SourceRef" /> flagged as a CLR location.</returns>
         internal static SourceRef GetClrLocation()
         {
             return new SourceRef(0, 0, 0, 0, 0, false) { IsClrLocation = true };
@@ -59,6 +65,11 @@ namespace NovaSharp.Interpreter.Debugging
 
         public SourceRef(SourceRef src, bool isStepStop)
         {
+            if (src == null)
+            {
+                throw new ArgumentNullException(nameof(src));
+            }
+
             SourceIdx = src.SourceIdx;
             FromChar = src.FromChar;
             ToChar = src.ToChar;
@@ -86,6 +97,7 @@ namespace NovaSharp.Interpreter.Debugging
         public override string ToString()
         {
             return string.Format(
+                CultureInfo.InvariantCulture,
                 "[{0}]{1} ({2}, {3}) -> ({4}, {5})",
                 SourceIdx,
                 IsStepStop ? "*" : " ",
@@ -96,6 +108,16 @@ namespace NovaSharp.Interpreter.Debugging
             );
         }
 
+        /// <summary>
+        /// Computes a heuristic distance between this span and the supplied source location.
+        /// </summary>
+        /// <param name="sourceIdx">Source identifier to compare.</param>
+        /// <param name="line">Line number being probed.</param>
+        /// <param name="col">Column being probed.</param>
+        /// <returns>
+        /// <c>0</c> when the location is inside this span; otherwise a positive value where smaller
+        /// numbers mean “closer.” Returns <see cref="int.MaxValue" /> for different sources.
+        /// </returns>
         internal int GetLocationDistance(int sourceIdx, int line, int col)
         {
             const int PerLineFactor = 1600; // we avoid computing real lines length and approximate with heuristics..
@@ -213,6 +235,11 @@ namespace NovaSharp.Interpreter.Debugging
         /// <returns></returns>
         public string FormatLocation(Script script, bool forceClassicFormat = false)
         {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             SourceCode sc = script.GetSourceCode(SourceIdx);
 
             if (IsClrLocation)
@@ -222,29 +249,28 @@ namespace NovaSharp.Interpreter.Debugging
 
             if (script.Options.UseLuaErrorLocations || forceClassicFormat)
             {
-                return $"{sc.Name}:{FromLine}";
+                return string.Format(CultureInfo.InvariantCulture, "{0}:{1}", sc.Name, FromLine);
             }
             else if (FromLine == ToLine)
             {
                 if (FromChar == ToChar)
                 {
                     return string.Format(
+                        CultureInfo.InvariantCulture,
                         "{0}:({1},{2})",
                         sc.Name,
                         FromLine,
-                        FromChar,
-                        ToLine,
-                        ToChar
+                        FromChar
                     );
                 }
                 else
                 {
                     return string.Format(
-                        "{0}:({1},{2}-{4})",
+                        CultureInfo.InvariantCulture,
+                        "{0}:({1},{2}-{3})",
                         sc.Name,
                         FromLine,
                         FromChar,
-                        ToLine,
                         ToChar
                     );
                 }
@@ -252,6 +278,7 @@ namespace NovaSharp.Interpreter.Debugging
             else
             {
                 return string.Format(
+                    CultureInfo.InvariantCulture,
                     "{0}:({1},{2}-{3},{4})",
                     sc.Name,
                     FromLine,

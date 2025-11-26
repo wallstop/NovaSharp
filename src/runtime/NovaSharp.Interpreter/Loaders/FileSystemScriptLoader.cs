@@ -1,7 +1,9 @@
 namespace NovaSharp.Interpreter.Loaders
 {
 #if DOTNET_CORE || (!(PCL || ENABLE_DOTNET || NETFX_CORE))
+    using System;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Utilities;
     using System.IO;
 
     /// <summary>
@@ -14,10 +16,8 @@ namespace NovaSharp.Interpreter.Loaders
         /// </summary>
         /// <param name="name">The script filename.</param>
         /// <returns></returns>
-        public override bool ScriptFileExists(string name)
-        {
-            return File.Exists(name);
-        }
+        public override bool ScriptFileExists(string name) =>
+            File.Exists(NormalizePath(name, nameof(name)));
 
         /// <summary>
         /// Opens a file for reading the script code.
@@ -30,9 +30,24 @@ namespace NovaSharp.Interpreter.Loaders
         /// <returns>
         /// A string, a byte[] or a Stream.
         /// </returns>
-        public override object LoadFile(string file, Table globalContext)
+        public override object LoadFile(string file, Table globalContext) =>
+            new FileStream(
+                NormalizePath(file, nameof(file)),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite
+            );
+
+        private static string NormalizePath(string path, string paramName)
         {
-            return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (path == null)
+            {
+                throw new ArgumentNullException(paramName);
+            }
+
+            ReadOnlySpan<char> trimmed = path.AsSpan().TrimWhitespace();
+            string candidate = trimmed.Length == path.Length ? path : new string(trimmed);
+            return candidate.NormalizeDirectorySeparators(Path.DirectorySeparatorChar);
         }
     }
 }

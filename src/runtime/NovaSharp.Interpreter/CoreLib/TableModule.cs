@@ -1,11 +1,9 @@
-// Disable warnings about XML documentation
 namespace NovaSharp.Interpreter.CoreLib
 {
-#pragma warning disable 1591
-
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -16,14 +14,23 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "table")]
-    public class TableModule
+    public static class TableModule
     {
+        /// <summary>
+        /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue s = args.AsType(0, "unpack", DataType.Table, false);
             DynValue vi = args.AsType(1, "unpack", DataType.Number, true);
             DynValue vj = args.AsType(2, "unpack", DataType.Number, true);
@@ -44,10 +51,19 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(v);
         }
 
+        /// <summary>
+        /// Implements Lua `table.pack`, wrapping arbitrary arguments into a table with field `n` (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            Table t = new(executionContext.GetScript());
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            Table t = new(executionContext.Script);
             DynValue v = DynValue.NewTable(t);
 
             for (int i = 0; i < args.Count; i++)
@@ -60,9 +76,18 @@ namespace NovaSharp.Interpreter.CoreLib
             return v;
         }
 
+        /// <summary>
+        /// Implements Lua `table.sort`, sorting the array portion with an optional comparator (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "sort")]
         public static DynValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "sort", DataType.Table, false);
             DynValue lt = args[1];
 
@@ -120,7 +145,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
                     if (a.Type == DataType.String && b.Type == DataType.String)
                     {
-                        return a.String.CompareTo(b.String);
+                        return string.Compare(a.String, b.String, StringComparison.Ordinal);
                     }
 
                     throw ScriptRuntimeException.CompareInvalidType(a, b);
@@ -128,16 +153,16 @@ namespace NovaSharp.Interpreter.CoreLib
                 else
                 {
                     return LuaComparerToClrComparer(
-                        executionContext.GetScript().Call(lt, a, b),
-                        executionContext.GetScript().Call(lt, b, a)
+                        executionContext.Script.Call(lt, a, b),
+                        executionContext.Script.Call(lt, b, a)
                     );
                 }
             }
             else
             {
                 return LuaComparerToClrComparer(
-                    executionContext.GetScript().Call(lt, a, b),
-                    executionContext.GetScript().Call(lt, b, a)
+                    executionContext.Script.Call(lt, a, b),
+                    executionContext.Script.Call(lt, b, a)
                 );
             }
         }
@@ -165,12 +190,21 @@ namespace NovaSharp.Interpreter.CoreLib
             return 0;
         }
 
+        /// <summary>
+        /// Implements Lua `table.insert`, inserting a value at the specified position (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "insert")]
         public static DynValue Insert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
             DynValue vpos = args[1];
             DynValue vvalue = args[2];
@@ -219,12 +253,21 @@ namespace NovaSharp.Interpreter.CoreLib
             return vlist;
         }
 
+        /// <summary>
+        /// Implements Lua `table.remove`, removing and returning a value at the given position (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "remove")]
         public static DynValue Remove(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
             DynValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
             DynValue ret = DynValue.Nil;
@@ -263,12 +306,21 @@ namespace NovaSharp.Interpreter.CoreLib
         //Given a list where all elements are strings or numbers, returns the string list[i]..sep..list[i+1] (...) sep..list[j].
         //The default value for sep is the empty string, the default for i is 1, and the default for j is #list. If i is greater
         //than j, returns the empty string.
+        /// <summary>
+        /// Implements Lua `table.concat`, concatenating array elements with an optional separator (§6.6).
+        /// </summary>
         [NovaSharpModuleMethod(Name = "concat")]
         public static DynValue Concat(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
             DynValue vlist = args.AsType(0, "concat", DataType.Table, false);
             DynValue vsep = args.AsType(1, "concat", DataType.String, true);
             DynValue vstart = args.AsType(2, "concat", DataType.Number, true);
@@ -321,13 +373,68 @@ namespace NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(sb.ToString());
         }
 
+        /// <summary>
+        /// Implements Lua 5.3 `table.move`, copying values between tables with overlap handling (§6.6).
+        /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        [NovaSharpModuleMethod(Name = "move")]
+        public static DynValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            const string func = "move";
+
+            Table source = args.AsType(0, func, DataType.Table, false).Table;
+            int from = args.AsInt(1, func);
+            int to = args.AsInt(2, func);
+            int target = args.AsInt(3, func);
+            Table destination =
+                (args.Count >= 5 && !args[4].IsNil())
+                    ? args.AsType(4, func, DataType.Table, false).Table
+                    : source;
+
+            int elementsToCopy = to - from;
+
+            if (elementsToCopy >= 0)
+            {
+                int offset = target - from;
+
+                if (destination == source && offset > 0 && target <= to)
+                {
+                    for (int i = elementsToCopy; i >= 0; i--)
+                    {
+                        int srcIndex = from + i;
+                        int destIndex = srcIndex + offset;
+                        DynValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value ?? DynValue.Nil);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i <= elementsToCopy; i++)
+                    {
+                        int srcIndex = from + i;
+                        int destIndex = srcIndex + offset;
+                        DynValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value ?? DynValue.Nil);
+                    }
+                }
+            }
+
+            return DynValue.NewTable(destination);
+        }
+
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
         {
             DynValue len = executionContext.GetMetamethod(vlist, "__len");
 
             if (len != null)
             {
-                DynValue lenv = executionContext.GetScript().Call(len, vlist);
+                DynValue lenv = executionContext.Script.Call(len, vlist);
 
                 double? lengthValue = lenv.CastToNumber();
 
@@ -349,8 +456,11 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Class exposing table.unpack and table.pack in the global namespace (to work around the most common Lua 5.1 compatibility issue).
     /// </summary>
     [NovaSharpModule]
-    public class TableModuleGlobals
+    public static class TableModuleGlobals
     {
+        /// <summary>
+        /// Global alias for `table.unpack` to maintain Lua 5.1 compatibility.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -360,6 +470,9 @@ namespace NovaSharp.Interpreter.CoreLib
             return TableModule.Unpack(executionContext, args);
         }
 
+        /// <summary>
+        /// Global alias for `table.pack` to maintain Lua 5.1 compatibility.
+        /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {

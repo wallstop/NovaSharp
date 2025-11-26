@@ -27,19 +27,21 @@ namespace NovaSharp.Interpreter.DataStructs
         /// Finds the node indexed by the specified key, or null.
         /// </summary>
         /// <param name="key">The key.</param>
-        public LinkedListNode<TValue> Find(TKey key)
+        public LinkedListNode<TValue> Find(TKey key) =>
+            _map != null && _map.TryGetValue(key, out LinkedListNode<TValue> node) ? node : null;
+
+        /// <summary>
+        /// Attempts to retrieve the node associated with the specified key without throwing when the key is missing.
+        /// </summary>
+        public bool TryGetValue(TKey key, out LinkedListNode<TValue> value)
         {
             if (_map == null)
             {
-                return null;
+                value = default;
+                return false;
             }
 
-            if (_map.TryGetValue(key, out LinkedListNode<TValue> node))
-            {
-                return node;
-            }
-
-            return null;
+            return _map.TryGetValue(key, out value);
         }
 
         /// <summary>
@@ -50,19 +52,15 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <returns>The previous value of the element</returns>
         public TValue Set(TKey key, TValue value)
         {
-            LinkedListNode<TValue> node = Find(key);
+            if (_map != null && _map.TryGetValue(key, out LinkedListNode<TValue> existingNode))
+            {
+                TValue previous = existingNode.Value;
+                existingNode.Value = value;
+                return previous;
+            }
 
-            if (node == null)
-            {
-                Add(key, value);
-                return default(TValue);
-            }
-            else
-            {
-                TValue val = node.Value;
-                node.Value = value;
-                return val;
-            }
+            Add(key, value);
+            return default;
         }
 
         /// <summary>
@@ -73,13 +71,7 @@ namespace NovaSharp.Interpreter.DataStructs
         public void Add(TKey key, TValue value)
         {
             LinkedListNode<TValue> node = _linkedList.AddLast(value);
-
-            if (_map == null)
-            {
-                _map = new Dictionary<TKey, LinkedListNode<TValue>>();
-            }
-
-            _map.Add(key, node);
+            (_map ??= new Dictionary<TKey, LinkedListNode<TValue>>()).Add(key, node);
         }
 
         /// <summary>
@@ -88,15 +80,18 @@ namespace NovaSharp.Interpreter.DataStructs
         /// <param name="key">The key.</param>
         public bool Remove(TKey key)
         {
-            LinkedListNode<TValue> node = Find(key);
-
-            if (node != null)
+            if (_map == null)
             {
-                _linkedList.Remove(node);
-                return _map.Remove(key);
+                return false;
             }
 
-            return false;
+            if (!_map.Remove(key, out LinkedListNode<TValue> node))
+            {
+                return false;
+            }
+
+            _linkedList.Remove(node);
+            return true;
         }
 
         /// <summary>
