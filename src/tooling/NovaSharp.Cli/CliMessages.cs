@@ -13,6 +13,12 @@ namespace NovaSharp.Cli
         internal static string CompileCommandLongHelp =>
             "compile <filename> - Compiles the file in a binary format. The destination filename will be appended with '-compiled'.";
 
+        internal static string CompileCommandSuccess(string targetPath) =>
+            $"[compile] Wrote binary chunk to '{targetPath}'.";
+
+        internal static string CompileCommandFailure(string sourcePath, string errorMessage) =>
+            $"[compile] Failed to compile '{sourcePath}': {errorMessage}";
+
         internal static string HelpCommandShortHelp =>
             "help [command] - gets the list of possible commands or help about the specified command";
         internal static string HelpCommandCommandListHeading => "Commands:";

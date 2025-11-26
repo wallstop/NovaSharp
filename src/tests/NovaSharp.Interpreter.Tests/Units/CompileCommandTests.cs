@@ -80,12 +80,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             CompileCommand command = new();
             ShellContext context = new(new Script());
 
-            Assert.That(
-                () => command.Execute(context, _sourcePath),
-                Throws.TypeOf<FileNotFoundException>()
-            );
+            using StringWriter writer = new();
+            TextWriter originalOut = Console.Out;
+            Console.SetOut(writer);
+            try
+            {
+                command.Execute(context, _sourcePath);
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
 
-            Assert.That(File.Exists(_targetPath), Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(File.Exists(_targetPath), Is.False);
+                Assert.That(writer.ToString(), Does.Contain($"Failed to compile '{_sourcePath}'"));
+            });
         }
 
         private sealed class RecordingScriptLoader : IScriptLoader

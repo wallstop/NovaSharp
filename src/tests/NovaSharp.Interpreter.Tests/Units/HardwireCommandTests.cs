@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
-                return CreateDescriptorTable(script, "public");
+                return HardwireTestUtilities.CreateDescriptorTable(script, "public");
             };
 
             using StringWriter writer = new();
@@ -191,7 +191,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
-                return CreateDescriptorTable(script, "internal");
+                return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
             };
 
             using StringWriter writer = new();
@@ -248,7 +248,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
-                return CreateDescriptorTable(script, "public");
+                return HardwireTestUtilities.CreateDescriptorTable(script, "public");
             };
 
             using StringWriter writer = new();
@@ -307,7 +307,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             HardwireCommand.DumpLoader = _ =>
             {
                 Script script = new(default(CoreModules));
-                return CreateDescriptorTable(script, "internal");
+                return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
             };
 
             using StringWriter writer = new();
@@ -353,24 +353,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                     File.Delete(destPath);
                 }
             }
-        }
-
-        private static Table CreateDescriptorTable(Script script, string visibility)
-        {
-            Table descriptor = new(script);
-            descriptor.Set(
-                "class",
-                DynValue.NewString(
-                    "NovaSharp.Interpreter.Interop.StandardDescriptors.StandardUserDataDescriptor"
-                )
-            );
-            descriptor.Set("visibility", DynValue.NewString(visibility));
-            descriptor.Set("members", DynValue.NewTable(script));
-            descriptor.Set("metamembers", DynValue.NewTable(script));
-
-            Table root = new(script);
-            root.Set("Sample", DynValue.NewTable(descriptor));
-            return root;
         }
     }
 }

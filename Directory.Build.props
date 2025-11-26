@@ -8,8 +8,7 @@
         <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
-        <WarningsAsErrors>CS*</WarningsAsErrors>
-        <WarningsNotAsErrors>CA*</WarningsNotAsErrors>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
         <SrcRoot>$(RepoRoot)src/</SrcRoot>
         <LegacyNamespacePrefix>NovaSharp</LegacyNamespacePrefix>

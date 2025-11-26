@@ -104,6 +104,8 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 ## Analyzer & Warning Policy
 
+- **Solution baseline (2025-12-07)**: `Directory.Build.props` now sets `<TreatWarningsAsErrors>true>`, so `dotnet build src/NovaSharp.sln -c Release -nologo` fails on any compiler or analyzer warning. Run that command before every push and note it in your PR (the template now calls out analyzer commands explicitly). If a warning is unavoidable, add a targeted suppression plus a `PLAN.md` entry before merging.
+
 - `src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>`. Any new warning in the VS Code debugger project fails the build locally and in CI, so always run:
 
   ```bash
@@ -116,7 +118,9 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 - `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests live inside `src/tests/NovaSharp.Interpreter.Tests`—notably `Units/RemoteDebuggerServiceTests.cs`, `Units/RemoteDebuggerTests.cs`, and `Units/DebugCommandTests.cs`—so `scripts/coverage/coverage.ps1` and `dotnet test` already execute them; add new coverage there when touching RemoteDebugger code.
 
-- Other projects still surface warnings but do not yet gate builds; as we zero remaining analyzer debt, treat-warnings-as-errors will expand solution-wide. Track the rollout status in `PLAN.md`.
+- Record every analyzer command you run when filling out `.github/pull_request_template.md`. Reviewers expect to see the solution build plus any scoped project builds/tests for the areas you touched.
+
+- Because the solution-wide warning gate is now on, suppressions must remain surgical. Any new `[SuppressMessage]` or ruleset tweak requires a `PLAN.md` entry (rule, justification, follow-up owner) before merging.
 
 ### Debugger Analyzer Guardrails
 

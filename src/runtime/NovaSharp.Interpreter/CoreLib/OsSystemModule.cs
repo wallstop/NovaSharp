@@ -22,7 +22,7 @@ namespace NovaSharp.Interpreter.CoreLib
     {
         /// <summary>
         /// Implements Lua `os.execute`, delegating to the host platform to run a shell command and
-        /// returning the POSIX-style `(nil, "exit", code)` tuple on success (§6.9).
+        /// returning the Lua 5.4 status tuple `(true|nil, "exit"|"signal", code)` (§6.9).
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing an optional command string.</param>
@@ -46,28 +46,31 @@ namespace NovaSharp.Interpreter.CoreLib
 
             if (v.IsNil())
             {
+                // Lua returns true when the command processor exists; NovaSharp assumes success.
                 return DynValue.NewBoolean(true);
             }
-            else
-            {
-                try
-                {
-                    int exitCode = Script.GlobalOptions.Platform.ExecuteCommand(v.String);
 
-                    return DynValue.NewTuple(
-                        DynValue.Nil,
-                        DynValue.NewString("exit"),
-                        DynValue.NewNumber(exitCode)
-                    );
-                }
-                catch (PlatformNotSupportedException)
-                {
-                    return DynValue.Nil;
-                }
-                catch (InvalidOperationException)
-                {
-                    return DynValue.Nil;
-                }
+            try
+            {
+                int exitCode = Script.GlobalOptions.Platform.ExecuteCommand(v.String);
+                bool exitedViaSignal = exitCode < 0;
+                string terminationType = exitedViaSignal ? "signal" : "exit";
+                int normalizedCode = exitedViaSignal ? -exitCode : exitCode;
+                bool success = normalizedCode == 0 && !exitedViaSignal;
+
+                return DynValue.NewTuple(
+                    success ? DynValue.True : DynValue.Nil,
+                    DynValue.NewString(terminationType),
+                    DynValue.NewNumber(normalizedCode)
+                );
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
             }
         }
 

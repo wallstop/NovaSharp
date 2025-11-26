@@ -248,6 +248,58 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LinesWithoutArgumentsReadFromDefaultInput()
+        {
+            Script script = CreateScript();
+            using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("alpha\nbeta\n"));
+
+            IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
+
+            DynValue tuple = script.DoString(
+                @"
+                local results = {}
+                for line in io.lines() do
+                    table.insert(results, line)
+                    if #results == 3 then break end
+                end
+                return results[1], results[2], results[3]
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("alpha"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("beta"));
+                Assert.That(tuple.Tuple[2].IsNil(), Is.True);
+            });
+        }
+
+        [Test]
+        public void IoReadUsesDefaultInputWhenNoFileProvided()
+        {
+            Script script = CreateScript();
+            using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("alpha\nbeta\n"));
+
+            IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
+
+            DynValue tuple = script.DoString(
+                @"
+                local first = io.read('*l')
+                local second = io.read('*l')
+                local eof = io.read('*l')
+                return first, second, eof
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("alpha"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("beta"));
+                Assert.That(tuple.Tuple[2].IsNil(), Is.True);
+            });
+        }
+
+        [Test]
         public void OpenSupportsBinaryEncodingParameter()
         {
             Script script = CreateScript();
@@ -594,6 +646,35 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void StdErrFlushReturnsTrue()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return io.stderr:flush()");
+            Assert.That(result.Boolean, Is.True);
+        }
+
+        [Test]
+        public void PopenIsUnsupportedAndProvidesErrorMessage()
+        {
+            Script script = CreateScript();
+            DynValue typeValue = script.DoString("return type(io.popen)");
+            Assert.That(typeValue.String, Is.EqualTo("function"));
+
+            DynValue tuple = script.DoString(
+                @"
+                local ok, err = pcall(function() return io.popen('echo hello') end)
+                return ok, err
+                "
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].Boolean, Is.False);
+                Assert.That(tuple.Tuple[1].String, Does.Contain("io.popen is not supported"));
+            });
+        }
+
+        [Test]
         public void LinesMethodIteratesOverHandle()
         {
             string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
@@ -667,6 +748,253 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     File.Delete(path);
                 }
+            }
+        }
+
+        [Test]
+        public void ReadLineWithStarLIncludesTrailingNewline()
+        {
+            string path = CreateTempTextFile("file with text\nsecond line\n");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local first = f:read('*L')
+                    local second = f:read('*L')
+                    f:close()
+                    return first, second
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("file with text\n"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("second line\n"));
+                });
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void ReadZeroBytesDoesNotAdvanceStream()
+        {
+            string path = CreateTempTextFile("abcdef");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local zero = f:read(0)
+                    local chunk = f:read(3)
+                    local remainder = f:read('*a')
+                    f:close()
+                    return zero, chunk, remainder
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo(string.Empty));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("abc"));
+                    Assert.That(tuple.Tuple[2].String, Is.EqualTo("def"));
+                });
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void ReadMultipleFixedLengthsReturnsExpectedChunks()
+        {
+            string path = CreateTempTextFile("abcdefghijklmnop");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local first, second, third = f:read(4, 4, 4)
+                    f:close()
+                    return first, second, third
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].String, Is.EqualTo("abcd"));
+                    Assert.That(tuple.Tuple[1].String, Is.EqualTo("efgh"));
+                    Assert.That(tuple.Tuple[2].String, Is.EqualTo("ijkl"));
+                });
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void ReadOnClosedHandleThrows()
+        {
+            string path = CreateTempTextFile("content");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                Assert.That(
+                    () =>
+                        script.DoString(
+                            $@"
+                        local f = assert(io.open('{escapedPath}', 'r'))
+                        f:close()
+                        f:read('*l')
+                        "
+                        ),
+                    Throws
+                        .InstanceOf<ScriptRuntimeException>()
+                        .With.Message.Contains("attempt to use a closed file")
+                );
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void SeekInvalidOptionRaisesError()
+        {
+            string path = CreateTempTextFile("content");
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                Assert.That(
+                    () =>
+                        script.DoString(
+                            $@"
+                        local f = assert(io.open('{escapedPath}', 'r'))
+                        f:seek('bad', 0)
+                        "
+                        ),
+                    Throws
+                        .InstanceOf<ScriptRuntimeException>()
+                        .With.Message.Contains("invalid option 'bad'")
+                );
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void SeekReturnsFileLength()
+        {
+            const string content = "file with text\n";
+            string path = CreateTempTextFile(content);
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue result = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'r'))
+                    local size = f:seek('end', 0)
+                    f:close()
+                    return size
+                    "
+                );
+
+                Assert.That(result.Number, Is.EqualTo(content.Length));
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void SetBufferingModesReturnTrue()
+        {
+            string path = CreateTempTextFile(string.Empty);
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'w'))
+                    local noop = f:setvbuf('no')
+                    local full = f:setvbuf('full', 128)
+                    local line = f:setvbuf('line', 64)
+                    f:close()
+                    return noop, full, line
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                    Assert.That(tuple.Tuple[1].Boolean, Is.True);
+                    Assert.That(tuple.Tuple[2].Boolean, Is.True);
+                });
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
+            }
+        }
+
+        [Test]
+        public void WriteReturnsHandleAndClosedHandleWriteThrows()
+        {
+            string path = CreateTempTextFile(string.Empty);
+            string escapedPath = EscapePath(path);
+
+            try
+            {
+                Script script = CreateScript();
+                DynValue tuple = script.DoString(
+                    $@"
+                    local f = assert(io.open('{escapedPath}', 'w'))
+                    local returned = f:write('payload')
+                    f:close()
+                    local ok, err = pcall(function() f:write('more') end)
+                    return returned == f, ok, err
+                    "
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(tuple.Tuple[0].Boolean, Is.True);
+                    Assert.That(tuple.Tuple[1].Boolean, Is.False);
+                    Assert.That(
+                        tuple.Tuple[2].String,
+                        Does.Contain("attempt to use a closed file")
+                    );
+                });
+            }
+            finally
+            {
+                DeleteFileIfExists(path);
             }
         }
 
@@ -851,6 +1179,21 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     File.Delete(path);
                 }
+            }
+        }
+
+        private static string CreateTempTextFile(string content)
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
+            File.WriteAllText(path, content);
+            return path;
+        }
+
+        private static void DeleteFileIfExists(string path)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                File.Delete(path);
             }
         }
 

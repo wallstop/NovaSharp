@@ -362,6 +362,15 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            if (args.Count == 0)
+            {
+                FileUserDataBase defaultInput = GetDefaultFile(
+                    executionContext,
+                    StandardFileType.StdIn
+                );
+                return defaultInput.Lines(executionContext, args);
+            }
+
             string filename = args.AsType(0, "lines", DataType.String, false).String;
 
             try
@@ -590,6 +599,29 @@ namespace NovaSharp.Interpreter.CoreLib
             string tmpfilename = Script.GlobalOptions.Platform.GetTempFileName();
             FileUserDataBase file = Open(executionContext, tmpfilename, GetUtf8Encoding(), "w");
             return UserData.Create(file);
+        }
+
+        /// <summary>
+        /// Lua `io.popen` is intentionally unsupported for security/sandboxing reasons. Calling this
+        /// helper mirrors the behaviour of the TAP suites by raising a descriptive error so callers
+        /// can fall back to other mechanisms (§6.8).
+        /// </summary>
+        /// <param name="executionContext">Runtime context (unused).</param>
+        /// <param name="args">Command/mode arguments (validated for signature compatibility).</param>
+        /// <returns>Never returns—always throws.</returns>
+        [NovaSharpModuleMethod(Name = "popen")]
+        public static DynValue Popen(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            throw new ScriptRuntimeException("io.popen is not supported on this platform.");
         }
 
         private static FileUserData Open(

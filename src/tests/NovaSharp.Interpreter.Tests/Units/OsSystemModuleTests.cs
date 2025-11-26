@@ -38,25 +38,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
-        public void ExecuteCommandReturnsExitTuple()
+        public void ExecuteCommandReturnsSuccessTuple()
         {
-            _stub.NextExecuteExitCode = 42;
+            _stub.NextExecuteExitCode = 0;
             Script script = CreateScript();
 
             DynValue result = script.DoString("return os.execute('build')");
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(result.Tuple[0].IsNil(), Is.True);
+                Assert.That(result.Tuple[0].Boolean, Is.True);
                 Assert.That(result.Tuple[1].String, Is.EqualTo("exit"));
-                Assert.That(result.Tuple[2].Number, Is.EqualTo(42));
+                Assert.That(result.Tuple[2].Number, Is.EqualTo(0));
                 Assert.That(_stub.ExecutedCommands, Is.EqualTo(BuildCommand));
             });
         }
 
         [Test]
-        public void ExecuteCommandReturnsNilOnFailure()
+        public void ExecuteCommandReturnsNilTupleOnFailure()
         {
             _stub.ExecuteThrows = true;
             Script script = CreateScript();
@@ -65,8 +64,56 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.IsNil(), Is.True);
+                Assert.That(result.Tuple[0].IsNil(), Is.True);
+                Assert.That(result.Tuple[1].String, Does.Contain("Command failed"));
                 Assert.That(_stub.ExecutedCommands, Is.EqualTo(FailCommand));
+            });
+        }
+
+        [Test]
+        public void ExecuteCommandReturnsNilTupleOnNonZeroExit()
+        {
+            _stub.NextExecuteExitCode = 7;
+            Script script = CreateScript();
+
+            DynValue result = script.DoString("return os.execute('fail')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].IsNil(), Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("exit"));
+                Assert.That(result.Tuple[2].Number, Is.EqualTo(7));
+            });
+        }
+
+        [Test]
+        public void ExecuteCommandReportsSignalWhenExitCodeNegative()
+        {
+            _stub.NextExecuteExitCode = -9;
+            Script script = CreateScript();
+
+            DynValue result = script.DoString("return os.execute('terminate')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].IsNil(), Is.True);
+                Assert.That(result.Tuple[1].String, Is.EqualTo("signal"));
+                Assert.That(result.Tuple[2].Number, Is.EqualTo(9));
+            });
+        }
+
+        [Test]
+        public void ExecuteCommandReportsNotSupportedMessage()
+        {
+            _stub.ExecuteNotSupported = true;
+            Script script = CreateScript();
+
+            DynValue result = script.DoString("return os.execute('build')");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Tuple[0].IsNil(), Is.True);
+                Assert.That(result.Tuple[1].String, Does.Contain("not supported"));
             });
         }
 
@@ -376,6 +423,36 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void TmpNameReturnsQueuedPlatformValuesThenFallsBack()
+        {
+            _stub.TempFileSequence.Enqueue("queued-one");
+            _stub.TempFileSequence.Enqueue("queued-two");
+            _stub.TempFileName = "fallback-temp";
+
+            Script script = CreateScript();
+            DynValue tuple = script.DoString("return os.tmpname(), os.tmpname(), os.tmpname()");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(tuple.Tuple[0].String, Is.EqualTo("queued-one"));
+                Assert.That(tuple.Tuple[1].String, Is.EqualTo("queued-two"));
+                Assert.That(tuple.Tuple[2].String, Is.EqualTo("fallback-temp"));
+            });
+        }
+
+        [Test]
+        public void TmpNamePropagatesPlatformExceptions()
+        {
+            _stub.TempFileThrows = true;
+            Script script = CreateScript();
+
+            Assert.That(
+                () => script.DoString("return os.tmpname()"),
+                Throws.InstanceOf<IOException>().With.Message.Contains("temp name failure")
+            );
+        }
+
+        [Test]
         public void SetLocaleReturnsPlaceholderString()
         {
             Script script = CreateScript();
@@ -400,9 +477,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             public List<string> ExecutedCommands { get; } = new();
             public int NextExecuteExitCode { get; set; }
             public bool ExecuteThrows { get; set; }
+            public bool ExecuteNotSupported { get; set; }
             public bool DeleteThrows { get; set; }
             public bool MoveThrows { get; set; }
             public string TempFileName { get; set; } = "temp-file";
+            public Queue<string> TempFileSequence { get; } = new();
+            public bool TempFileThrows { get; set; }
 
             public CoreModules FilterSupportedCoreModules(CoreModules coreModules) => coreModules;
 
@@ -426,7 +506,20 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public Stream GetStandardStream(StandardFileType type) => Stream.Null;
 
-            public string GetTempFileName() => TempFileName;
+            public string GetTempFileName()
+            {
+                if (TempFileThrows)
+                {
+                    throw new IOException("temp name failure");
+                }
+
+                if (TempFileSequence.Count > 0)
+                {
+                    return TempFileSequence.Dequeue();
+                }
+
+                return TempFileName;
+            }
 
             public void ExitFast(int exitCode) => throw new ExitFastException(exitCode);
 
@@ -460,6 +553,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             public int ExecuteCommand(string cmdline)
             {
                 ExecutedCommands.Add(cmdline);
+
+                if (ExecuteNotSupported)
+                {
+                    throw new PlatformNotSupportedException("Command execution is not supported.");
+                }
 
                 if (ExecuteThrows)
                 {
