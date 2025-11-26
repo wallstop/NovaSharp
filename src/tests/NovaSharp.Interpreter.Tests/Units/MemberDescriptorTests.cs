@@ -32,6 +32,26 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CanReadWriteExecuteThrowWhenDescriptorNull()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => MemberDescriptor.CanRead(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
+                );
+                Assert.That(
+                    () => MemberDescriptor.CanWrite(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
+                );
+                Assert.That(
+                    () => MemberDescriptor.CanExecute(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
+                );
+            });
+        }
+
+        [Test]
         public void CanReadWriteExecuteReflectDescriptorAccess()
         {
             StubDescriptor descriptor = new(
@@ -98,6 +118,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void WithAccessOrNullReturnsNullWhenDescriptorNull()
+        {
+            Assert.That(
+                MemberDescriptor.WithAccessOrNull(null, MemberDescriptorAccess.CanRead),
+                Is.Null
+            );
+        }
+
+        [Test]
         public void CheckAccessThrowsWhenInstanceMemberAccessedStatically()
         {
             StubDescriptor descriptor = new(
@@ -148,6 +177,30 @@ namespace NovaSharp.Interpreter.Tests.Units
                     MemberDescriptorAccess.CanExecute | MemberDescriptorAccess.CanRead,
                     new object()
                 )
+            );
+        }
+
+        [Test]
+        public void GetGetterCallbackThrowsWhenDescriptorNull()
+        {
+            Script script = new();
+            Assert.That(
+                () => MemberDescriptor.GetGetterCallbackAsDynValue(null, script, new object()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
+            );
+        }
+
+        [Test]
+        public void CheckAccessThrowsWhenDescriptorNull()
+        {
+            Assert.That(
+                () =>
+                    MemberDescriptor.CheckAccess(
+                        null,
+                        MemberDescriptorAccess.CanRead,
+                        new object()
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
             );
         }
 

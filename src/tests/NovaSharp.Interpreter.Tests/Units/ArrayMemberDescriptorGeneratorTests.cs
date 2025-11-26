@@ -82,6 +82,29 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void GenerateThrowsWhenDescriptorTableNull()
+        {
+            ArrayMemberDescriptorGenerator generator = new();
+
+            Assert.That(
+                () => generator.Generate(null, HardwireTestUtilities.CreateContext(), new()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("table")
+            );
+        }
+
+        [Test]
+        public void GenerateThrowsWhenContextNull()
+        {
+            ArrayMemberDescriptorGenerator generator = new();
+            Table descriptorTable = new(owner: null);
+
+            Assert.That(
+                () => generator.Generate(descriptorTable, null, new()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("generatorContext")
+            );
+        }
+
         private static Table CreateParameterList()
         {
             Table list = new(owner: null);

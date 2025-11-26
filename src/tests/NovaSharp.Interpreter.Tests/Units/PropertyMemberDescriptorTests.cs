@@ -127,6 +127,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstructorThrowsWhenPropertyNull()
+        {
+            Assert.That(
+                () => new PropertyMemberDescriptor(null, InteropAccessMode.Reflection, null, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("pi")
+            );
+        }
+
+        [Test]
         public void ConstructorFallsBackToReflectionWhenPlatformIsAot()
         {
             IPlatformAccessor original = Script.GlobalOptions.Platform;
@@ -218,6 +227,45 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(exception.Message, Does.Contain("cannot be assigned"));
+        }
+
+        [Test]
+        public void SetValueThrowsWhenDynValueNull()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.InstanceValue,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(
+                () => descriptor.SetValue(_script, new SampleProperties(), null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            );
+        }
+
+        [Test]
+        public void GetValueThrowsWhenScriptMissing()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.InstanceValue,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(() => descriptor.GetValue(null, new SampleProperties()), Throws.Nothing);
+        }
+
+        [Test]
+        public void SetValueThrowsWhenScriptMissing()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.InstanceValue,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(
+                () => descriptor.SetValue(null, new SampleProperties(), DynValue.NewNumber(1)),
+                Throws.Nothing
+            );
         }
 
         [Test]
@@ -355,6 +403,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(metadata.Get("write").Boolean, Is.True);
                 Assert.That(metadata.Get("declvtype").Boolean, Is.False);
             });
+        }
+
+        [Test]
+        public void PrepareForWiringThrowsWhenTableNull()
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.InstanceValue,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
         }
 
         private static void OverrideOptimizedSetter(

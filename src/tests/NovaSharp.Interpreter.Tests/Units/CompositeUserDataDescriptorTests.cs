@@ -35,6 +35,29 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void IndexStopsIteratingAfterMatch()
+        {
+            DynValue expected = DynValue.NewString("first");
+            StubDescriptor first = new(indexResult: expected);
+            StubDescriptor second = new(indexResult: DynValue.Nil);
+            CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
+
+            DynValue value = descriptor.Index(
+                new Script(),
+                new object(),
+                DynValue.NewString("name"),
+                isDirectIndexing: true
+            );
+
+            Assert.That(value, Is.SameAs(expected));
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.IndexCallCount, Is.EqualTo(1));
+                Assert.That(second.IndexCallCount, Is.EqualTo(0));
+            });
+        }
+
+        [Test]
         public void IndexReturnsNullWhenDescriptorsReturnNull()
         {
             CompositeUserDataDescriptor descriptor = CreateComposite(
@@ -113,6 +136,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void MetaIndexReturnsNullWhenNoDescriptorProvidesMeta()
+        {
+            CompositeUserDataDescriptor descriptor = CreateComposite(
+                new StubDescriptor(indexResult: null, metaResult: null),
+                new StubDescriptor(indexResult: null, metaResult: null)
+            );
+
+            DynValue value = descriptor.MetaIndex(new Script(), new object(), "__add");
+
+            Assert.That(value, Is.Null);
+        }
+
+        [Test]
         public void DescriptorsPropertyIsMutable()
         {
             CompositeUserDataDescriptor descriptor = CreateComposite();
@@ -143,6 +179,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void NameAndTypeExposeWrappedType()
+        {
+            CompositeUserDataDescriptor descriptor = CreateComposite(type: typeof(List<int>));
+
+            Assert.That(descriptor.Name, Does.StartWith("^"));
+            Assert.That(descriptor.Name, Does.Contain(typeof(List<int>).FullName));
+            Assert.That(descriptor.Type, Is.EqualTo(typeof(List<int>)));
+        }
+
+        [Test]
         public void IsTypeCompatibleFollowsClrRules()
         {
             CompositeUserDataDescriptor descriptor = CreateComposite();
@@ -154,13 +200,36 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void ConstructorThrowsWhenDescriptorsNull()
+        {
+            Assert.That(
+                () => new CompositeUserDataDescriptor(null, typeof(object)),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("descriptors")
+            );
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenTypeNull()
+        {
+            Assert.That(
+                () => new CompositeUserDataDescriptor(new List<IUserDataDescriptor>(), null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+            );
+        }
+
         private static CompositeUserDataDescriptor CreateComposite(
+            params StubDescriptor[] descriptors
+        ) => CreateComposite(typeof(object), descriptors);
+
+        private static CompositeUserDataDescriptor CreateComposite(
+            Type type,
             params StubDescriptor[] descriptors
         )
         {
             List<IUserDataDescriptor> list = new();
             list.AddRange(descriptors);
-            return new CompositeUserDataDescriptor(list, typeof(object));
+            return new CompositeUserDataDescriptor(list, type);
         }
 
         private sealed class StubDescriptor : IUserDataDescriptor

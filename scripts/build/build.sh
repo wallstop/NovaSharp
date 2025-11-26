@@ -7,6 +7,8 @@ solution="src/NovaSharp.sln"
 test_project="src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
 run_tests=1
 restore_tools=1
+test_results_dir=""
+test_results_placeholder=""
 
 usage() {
     cat <<'EOF'
@@ -62,10 +64,24 @@ if [[ -z "$repo_root" ]]; then
     repo_root="$(dirname "$(dirname "$script_dir")")"
 fi
 cd "$repo_root"
+test_results_dir="$repo_root/artifacts/test-results"
+test_results_placeholder="$test_results_dir/.placeholder"
+
+prepare_test_results_directory() {
+    rm -rf "$test_results_dir"
+    mkdir -p "$test_results_dir"
+    cat <<'EOF' > "$test_results_placeholder"
+NovaSharp test results were not generated. This placeholder file ensures CI artifact uploads succeed even when the test runner fails before emitting TRX output. Inspect the workflow logs for the full dotnet test failure details.
+EOF
+}
 
 if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD="Major"
     echo "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
+fi
+
+if (( run_tests )); then
+    prepare_test_results_directory
 fi
 
 if (( restore_tools )); then
@@ -78,10 +94,10 @@ dotnet build "$solution" -c "$configuration"
 
 if (( run_tests )); then
     echo "Running tests for $test_project..."
-    mkdir -p artifacts/test-results
     dotnet test "$test_project" -c "$configuration" --no-build \
         --logger "trx;LogFileName=NovaSharpTests.trx" \
-        --results-directory artifacts/test-results
+        --results-directory "$test_results_dir"
+    rm -f "$test_results_placeholder"
 fi
 
 echo

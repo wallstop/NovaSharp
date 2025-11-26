@@ -268,7 +268,7 @@ namespace NovaSharp.Interpreter.Platforms
                     IsUnityIl2Cpp,
                     RunningOnAotCache,
                     AutoDetectionsDone,
-                    _aotProbeOverride
+                    AotProbeOverride
                 );
             }
 
@@ -355,6 +355,9 @@ namespace NovaSharp.Interpreter.Platforms
                 AotProbeOverride = probe;
             }
 
+            /// <summary>
+            /// Returns the delegate currently overriding the default AOT probe, if any.
+            /// </summary>
             internal static Func<bool> GetAotProbeOverride()
             {
                 return AotProbeOverride;

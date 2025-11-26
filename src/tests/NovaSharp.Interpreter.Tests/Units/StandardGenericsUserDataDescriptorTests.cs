@@ -32,6 +32,15 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ConstructorThrowsWhenTypeNull()
+        {
+            Assert.That(
+                () => new StandardGenericsUserDataDescriptor(null, InteropAccessMode.Default),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+            );
+        }
+
+        [Test]
         public void PropertiesReflectInputs()
         {
             StandardGenericsUserDataDescriptor descriptor = new(
@@ -169,6 +178,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.Multiple(() =>
                 {
                     Assert.That(generated, Is.Not.Null);
+                    Assert.That(generated.Type, Is.EqualTo(concreteType));
                     Assert.That(UserData.IsTypeRegistered(concreteType), Is.True);
                 });
             }

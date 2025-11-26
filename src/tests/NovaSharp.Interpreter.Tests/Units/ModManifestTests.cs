@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.IO;
+    using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
@@ -149,6 +150,110 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => ModManifest.Parse("{ \"luaCompatibility\": \"???\" }"),
                 Throws.TypeOf<InvalidDataException>()
             );
+        }
+
+        [Test]
+        public void LoadParsesManifestFromStream()
+        {
+            using MemoryStream stream = new MemoryStream(
+                System.Text.Encoding.UTF8.GetBytes(
+                    "{ \"name\": \"streamed\", \"version\": \"2.0\", \"luaCompatibility\": \"Lua52\" }"
+                )
+            );
+
+            ModManifest manifest = ModManifest.Load(stream);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(manifest.Name, Is.EqualTo("streamed"));
+                Assert.That(manifest.Version, Is.EqualTo("2.0"));
+                Assert.That(manifest.LuaCompatibility, Is.EqualTo(LuaCompatibilityVersion.Lua52));
+            });
+        }
+
+        [Test]
+        public void TryParseReturnsFalseWhenJsonWhitespace()
+        {
+            bool parsed = ModManifest.TryParse("  ", out ModManifest manifest, out string error);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(manifest, Is.Null);
+                Assert.That(error, Does.Contain("cannot be empty"));
+            });
+        }
+
+        [Test]
+        public void TryParseReturnsFalseWhenJsonMalformed()
+        {
+            bool parsed = ModManifest.TryParse(
+                "{ invalid",
+                out ModManifest manifest,
+                out string error
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed, Is.False);
+                Assert.That(manifest, Is.Null);
+                Assert.That(error, Is.Not.Null.And.Not.Empty);
+            });
+        }
+
+        [Test]
+        public void ApplyCompatibilityUsesGenericLabelWhenNameMissing()
+        {
+            ModManifest manifest = new(null, "1.0", LuaCompatibilityVersion.Latest);
+            ScriptOptions options = new(Script.DefaultOptions);
+            string warning = null;
+
+            manifest.ApplyCompatibility(
+                options,
+                hostCompatibility: LuaCompatibilityVersion.Lua54,
+                warningSink: message => warning = message
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    options.CompatibilityVersion,
+                    Is.EqualTo(LuaCompatibilityVersion.Latest)
+                );
+                Assert.That(warning, Does.StartWith("mod targets").IgnoreCase);
+            });
+        }
+
+        [Test]
+        public void ApplyCompatibilityFallsBackToGlobalOptionsWhenHostOmitted()
+        {
+            ModManifest manifest = new("Compat", "1.0", LuaCompatibilityVersion.Lua54);
+            ScriptOptions options = new(Script.DefaultOptions);
+            LuaCompatibilityVersion original = Script.GlobalOptions.CompatibilityVersion;
+            Script.GlobalOptions.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+
+            try
+            {
+                string warning = null;
+                manifest.ApplyCompatibility(
+                    options,
+                    hostCompatibility: null,
+                    warningSink: message => warning = message
+                );
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(
+                        options.CompatibilityVersion,
+                        Is.EqualTo(LuaCompatibilityVersion.Lua54)
+                    );
+                    Assert.That(warning, Does.Contain("Lua 5.3"));
+                });
+            }
+            finally
+            {
+                Script.GlobalOptions.CompatibilityVersion = original;
+            }
         }
     }
 }

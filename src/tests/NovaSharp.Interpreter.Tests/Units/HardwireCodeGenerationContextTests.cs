@@ -136,6 +136,109 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(invocation.Parameters, Has.Count.EqualTo(1));
         }
 
+        [Test]
+        public void DispatchTablePairsThrowsWhenTableNull()
+        {
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
+
+            Assert.That(
+                () => context.DispatchTablePairs(null, new CodeTypeMemberCollection()),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("table")
+            );
+        }
+
+        [Test]
+        public void DispatchTablePairsThrowsWhenMembersNull()
+        {
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
+            Table table = new(new Script());
+
+            Assert.That(
+                () => context.DispatchTablePairs(table, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("members")
+            );
+        }
+
+        [Test]
+        public void DispatchTablePairsThrowsWhenActionNullForExpressionOverload()
+        {
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
+            Table table = new(new Script());
+
+            Assert.That(
+                () =>
+                    context.DispatchTablePairs(
+                        table,
+                        new CodeTypeMemberCollection(),
+                        (Action<CodeExpression>)null
+                    ),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("action")
+            );
+        }
+
+        [Test]
+        public void DispatchTablePairsSkipsEntriesMarkedForSkip()
+        {
+            string managedType = "Hardwire.Tests.Skip." + Guid.NewGuid().ToString("N");
+            RecordingHardwireGenerator generator = new(managedType);
+            HardwireGeneratorRegistry.Register(generator);
+
+            Script script = new();
+            Table descriptor = new(script);
+            descriptor.Set("class", DynValue.NewString(managedType));
+            descriptor.Set("skip", DynValue.True);
+
+            Table root = new(script);
+            root.Set("SkipMe", DynValue.NewTable(descriptor));
+
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
+            context.DispatchTablePairs(root, new CodeTypeMemberCollection());
+
+            Assert.That(generator.InvocationCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void DispatchTablePairsLogsWarningWhenVisibilityRejected()
+        {
+            CapturingCodeGenerationLogger logger = new();
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
+            string managedType = "Hardwire.Tests.Visibility." + Guid.NewGuid().ToString("N");
+            RecordingHardwireGenerator generator = new(managedType);
+            HardwireGeneratorRegistry.Register(generator);
+
+            Script script = new();
+            Table descriptor = new(script);
+            descriptor.Set("class", DynValue.NewString(managedType));
+            descriptor.Set("visibility", DynValue.NewString("private"));
+
+            Table root = new(script);
+            root.Set("Hidden", DynValue.NewTable(descriptor));
+
+            context.DispatchTablePairs(root, new CodeTypeMemberCollection());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(generator.InvocationCount, Is.EqualTo(0));
+                Assert.That(logger.Warnings, Is.Not.Empty);
+                Assert.That(logger.Warnings[0], Does.Contain("Hidden"));
+            });
+        }
+
+        [Test]
+        public void DispatchTablePairsLogsErrorWhenEntryNotTable()
+        {
+            CapturingCodeGenerationLogger logger = new();
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
+
+            Table root = new(new Script());
+            root.Set("Broken", DynValue.NewString("failure detected"));
+
+            context.DispatchTablePairs(root, new CodeTypeMemberCollection());
+
+            Assert.That(logger.Errors, Has.Count.EqualTo(1));
+            Assert.That(logger.Errors[0], Does.Contain("Broken"));
+        }
+
         private sealed class RecordingHardwireGenerator : IHardwireGenerator
         {
             private readonly string _managedType;

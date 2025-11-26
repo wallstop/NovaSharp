@@ -64,6 +64,42 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RegisterThrowsWhenGeneratorNull()
+        {
+            Assert.That(
+                () => HardwireGeneratorRegistry.Register(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("generator")
+            );
+        }
+
+        [Test]
+        public void RegisterThrowsWhenManagedTypeMissing()
+        {
+            RecordingGenerator generator = new(managedType: "   ");
+
+            Assert.That(
+                () => HardwireGeneratorRegistry.Register(generator),
+                Throws.ArgumentException.With.Property("ParamName").EqualTo("generator")
+            );
+        }
+
+        [Test]
+        public void GetGeneratorThrowsWhenTypeNullOrWhitespace()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => HardwireGeneratorRegistry.GetGenerator(null),
+                    Throws.ArgumentException.With.Property("ParamName").EqualTo("type")
+                );
+                Assert.That(
+                    () => HardwireGeneratorRegistry.GetGenerator("  "),
+                    Throws.ArgumentException.With.Property("ParamName").EqualTo("type")
+                );
+            });
+        }
+
+        [Test]
         public void DiscoverFromAssemblyRegistersGenerators()
         {
             const string managedType =

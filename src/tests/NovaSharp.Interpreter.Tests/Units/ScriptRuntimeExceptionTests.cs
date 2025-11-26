@@ -278,6 +278,19 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ArithmeticOnNonNumberReportsLeftOperandTypeWhenInvalid()
+        {
+            DynValue left = DynValue.NewTable(new Table(new Script()));
+
+            ScriptRuntimeException exception = ScriptRuntimeException.ArithmeticOnNonNumber(left);
+
+            Assert.That(
+                exception.Message,
+                Is.EqualTo("attempt to perform arithmetic on a table value")
+            );
+        }
+
+        [Test]
         public void ConcatOnNonStringRejectsRightOperand()
         {
             DynValue left = DynValue.NewNumber(1);
@@ -509,6 +522,18 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CannotCloseCoroutineUsesLowercaseNamesForUnknownStates()
+        {
+            CoroutineState unknownState = Enum.Parse<CoroutineState>("Unknown");
+
+            ScriptRuntimeException exception = ScriptRuntimeException.CannotCloseCoroutine(
+                unknownState
+            );
+
+            Assert.That(exception.Message, Is.EqualTo("cannot close coroutine in state unknown"));
+        }
+
+        [Test]
         public void AccessInstanceMemberOnStaticsFormatsMemberOnly()
         {
             IMemberDescriptor descriptor = new StubMemberDescriptor("Length", isStatic: false);
@@ -539,6 +564,37 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Is.EqualTo(
                     "attempt to access instance member Vector3.Length from a static userdata"
                 )
+            );
+        }
+
+        [Test]
+        public void AccessInstanceMemberOnStaticsThrowsWhenDescriptorNull()
+        {
+            Assert.That(
+                () => ScriptRuntimeException.AccessInstanceMemberOnStatics((IMemberDescriptor)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
+            );
+        }
+
+        [Test]
+        public void AccessInstanceMemberOnStaticsThrowsWhenTypeDescriptorNull()
+        {
+            IMemberDescriptor descriptor = new StubMemberDescriptor("Length", isStatic: false);
+
+            Assert.That(
+                () => ScriptRuntimeException.AccessInstanceMemberOnStatics(null, descriptor),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("typeDescr")
+            );
+        }
+
+        [Test]
+        public void AccessInstanceMemberOnStaticsThrowsWhenMemberDescriptorNull()
+        {
+            IUserDataDescriptor typeDescriptor = new StubUserDataDescriptor("Vector3");
+
+            Assert.That(
+                () => ScriptRuntimeException.AccessInstanceMemberOnStatics(typeDescriptor, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("desc")
             );
         }
 
@@ -583,6 +639,23 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => new ScriptRuntimeException((ScriptRuntimeException)null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("ex")
             );
+        }
+
+        [Test]
+        public void ScriptRuntimeExceptionCopyCtorPreservesDecoratedMessageAndInnerException()
+        {
+            ScriptRuntimeException original = new("boom");
+            original.DecoratedMessage = "chunk:7: boom";
+
+            ScriptRuntimeException copy = new(original);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(copy.Message, Is.EqualTo("chunk:7: boom"));
+                Assert.That(copy.DecoratedMessage, Is.EqualTo("chunk:7: boom"));
+                Assert.That(copy.DoNotDecorateMessage, Is.True);
+                Assert.That(copy.InnerException, Is.SameAs(original));
+            });
         }
 
         [Test]

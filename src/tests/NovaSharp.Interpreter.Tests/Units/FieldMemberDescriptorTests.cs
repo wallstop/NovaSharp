@@ -1,12 +1,14 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Platforms;
@@ -46,6 +48,38 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Assert.That(descriptor, Is.Null);
+        }
+
+        [Test]
+        public void TryCreateIfVisibleHonorsVisibilityAttribute()
+        {
+            FieldInfo fieldInfo = SampleFieldsMetadata.AttributeValue;
+
+            FieldMemberDescriptor descriptor = FieldMemberDescriptor.TryCreateIfVisible(
+                fieldInfo,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(descriptor, Is.Not.Null);
+            Assert.That(descriptor.Name, Is.EqualTo("_attributeValue"));
+        }
+
+        [Test]
+        public void TryCreateIfVisibleThrowsWhenFieldNull()
+        {
+            Assert.That(
+                () => FieldMemberDescriptor.TryCreateIfVisible(null, InteropAccessMode.Reflection),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("fi")
+            );
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenFieldNull()
+        {
+            Assert.That(
+                () => new FieldMemberDescriptor(null, InteropAccessMode.Reflection),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("fi")
+            );
         }
 
         [Test]
@@ -361,6 +395,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void PrepareForWiringThrowsWhenTableNull()
+        {
+            FieldMemberDescriptor descriptor = new(
+                SampleFieldsMetadata.StaticValue,
+                InteropAccessMode.Reflection
+            );
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
         private sealed class SampleFields
         {
             public const int ConstValue = 7;
@@ -370,7 +418,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static int StaticValue = 1;
             public int instanceValue;
             public double doubleValue;
+
+            [SuppressMessage(
+                "Performance",
+                "CA1823:Avoid unused fields",
+                Justification = "Accessed via reflection to verify attribute-driven visibility."
+            )]
+            [NovaSharpVisible(true)]
+            private int _attributeValue;
             private int _privateValue;
+
+            public int AttributeValue
+            {
+                get => _attributeValue;
+                set => _attributeValue = value;
+            }
 
             public SampleFields()
             {
@@ -427,6 +489,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 typeof(SampleFields).GetField(nameof(SampleFields.doubleValue))!;
 
             internal static FieldInfo PrivateValue { get; } = SampleFields.PrivateValueField;
+
+            internal static FieldInfo AttributeValue { get; } =
+                typeof(SampleFields).GetField(
+                    "_attributeValue",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!;
         }
     }
 }

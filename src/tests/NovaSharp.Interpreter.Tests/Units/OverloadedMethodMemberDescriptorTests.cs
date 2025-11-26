@@ -610,6 +610,45 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void PrepareForWiringThrowsWhenTableNull()
+        {
+            MethodInfo overload = OverloadedMethodHostMetadata.JoinSingle;
+            OverloadedMethodMemberDescriptor descriptor = CreateDescriptor(overload);
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
+        public void GetCallbackRefreshesExtensionSnapshotWhenVersionChanges()
+        {
+            MethodInfo joinSingle = OverloadedMethodHostMetadata.JoinSingle;
+            OverloadedMethodMemberDescriptor descriptor = CreateDescriptor(joinSingle);
+
+            descriptor.SetExtensionMethodsSnapshot(
+                UserData.GetExtensionMethodsChangeVersion(),
+                Array.Empty<IOverloadableMemberDescriptor>()
+            );
+
+            UserData.RegisterExtensionType(typeof(OverloadedMethodHostExtensionsAlt));
+
+            Script script = new Script();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            OverloadedMethodHost host = new() { Label = "refresh" };
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+                descriptor.GetCallback(script, host);
+
+            DynValue result = callback(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewString("!"), DynValue.True)
+            );
+
+            Assert.That(result.String, Is.EqualTo("refresh!"));
+        }
+
+        [Test]
         public void IsStaticReflectsContainedOverloads()
         {
             MethodInfo instanceMethod = OverloadedMethodHostMetadata.DescribeNumber;

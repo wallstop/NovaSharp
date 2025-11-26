@@ -61,6 +61,36 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadDescriptorsFromTableThrowsWhenTableNull()
+        {
+            Assert.That(
+                () => HardwireParameterDescriptor.LoadDescriptorsFromTable(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
+        public void LoadDescriptorsFromTableThrowsWhenEntryNotTable()
+        {
+            Table list = new(owner: null);
+            list.Append(DynValue.NewNumber(1));
+
+            Assert.That(
+                () => HardwireParameterDescriptor.LoadDescriptorsFromTable(list),
+                Throws.ArgumentException.With.Property("ParamName").EqualTo("t")
+            );
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenTableNull()
+        {
+            Assert.That(
+                () => new HardwireParameterDescriptor(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("tpar")
+            );
+        }
+
+        [Test]
         public void DefaultValueParameterCreatesDefaultValuePlaceholder()
         {
             HardwireParameterDescriptor descriptor = CreateDescriptor(hasDefault: true);

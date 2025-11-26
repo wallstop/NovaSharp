@@ -88,6 +88,25 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ExecuteThrowsWhenInstanceTargetMissing()
+        {
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Multiply;
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
+
+            Script script = new Script();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackArguments args = TestHelpers.CreateArguments(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2)
+            );
+
+            Assert.That(
+                () => descriptor.Execute(script, null, context, args),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contain("instance member")
+            );
+        }
+
+        [Test]
         public void ExecuteReflectionModeInvokesVoidMethodThroughActionBranch()
         {
             MethodMemberDescriptorHost host = new();
@@ -264,7 +283,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Performance",
+            "CA1822:Mark members as static",
+            Justification = "NUnit test instances intentionally non-static for fixture extensibility."
+        )]
         public void CheckMethodIsCompatibleRejectsOpenGenericDefinitions()
         {
             MethodInfo method = GenericMethodHostMetadata.GenericIdentity;
@@ -478,6 +501,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(table.Get("ctor").Boolean, Is.True);
                 Assert.That(table.Get("arraytype").String, Is.EqualTo(typeof(int).FullName));
             });
+        }
+
+        [Test]
+        public void PrepareForWiringThrowsWhenTableNull()
+        {
+            MethodInfo method = MethodMemberDescriptorHostMetadata.SetName;
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Reflection);
+
+            Assert.That(
+                () => descriptor.PrepareForWiring(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("t")
+            );
         }
     }
 

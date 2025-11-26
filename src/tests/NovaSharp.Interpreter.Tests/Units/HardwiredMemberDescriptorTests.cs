@@ -49,6 +49,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void WriteOnlyDescriptorThrowsOnGet()
+        {
+            Script script = new Script(MinimalScriptModules);
+            SampleTarget target = new SampleTarget();
+            SampleWriteOnlyDescriptor descriptor = new SampleWriteOnlyDescriptor();
+
+            descriptor.SetValue(script, target, DynValue.NewNumber(5));
+
+            Assert.That(
+                () => descriptor.GetValue(script, target),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contain("writeOnly")
+            );
+        }
+
+        [Test]
         public void AccessingInstanceMemberWithoutObjectThrows()
         {
             Script script = new Script(MinimalScriptModules);
@@ -57,6 +72,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 () => descriptor.GetValue(script, null),
                 Throws.TypeOf<ScriptRuntimeException>()
+            );
+        }
+
+        [Test]
+        public void SetValueThrowsWhenDynValueNull()
+        {
+            Script script = new Script(MinimalScriptModules);
+            SampleTarget target = new SampleTarget();
+            SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
+
+            Assert.That(
+                () => descriptor.SetValue(script, target, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
             );
         }
 
@@ -123,6 +151,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             protected override object GetValueCore(Script script, object obj)
             {
                 return _value;
+            }
+        }
+
+        private sealed class SampleWriteOnlyDescriptor : HardwiredMemberDescriptor
+        {
+            public SampleWriteOnlyDescriptor()
+                : base(typeof(int), "writeOnly", isStatic: false, MemberDescriptorAccess.CanWrite)
+            { }
+
+            protected override void SetValueCore(Script script, object obj, object value)
+            {
+                SampleTarget target = (SampleTarget)obj;
+                target.Value = (int)value;
             }
         }
 

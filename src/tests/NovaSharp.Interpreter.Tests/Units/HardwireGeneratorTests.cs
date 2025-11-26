@@ -151,6 +151,73 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [Test]
+        public void BuildCodeModelThrowsWhenTableNull()
+        {
+            HardwireGenerator generator = CreateGenerator();
+
+            Assert.That(
+                () => generator.BuildCodeModel(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("table")
+            );
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenNamespaceMissing()
+        {
+            CapturingCodeGenerationLogger logger = new();
+
+            Assert.That(
+                () => new HardwireGenerator(null, "EntryPoint", logger),
+                Throws.ArgumentException.With.Property("ParamName").EqualTo("namespaceName")
+            );
+
+            Assert.That(
+                () => new HardwireGenerator("   ", "EntryPoint", logger),
+                Throws.ArgumentException.With.Property("ParamName").EqualTo("namespaceName")
+            );
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenEntryClassMissing()
+        {
+            CapturingCodeGenerationLogger logger = new();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => new HardwireGenerator("Namespace", null, logger),
+                    Throws.ArgumentException.With.Property("ParamName").EqualTo("entryClassName")
+                );
+                Assert.That(
+                    () => new HardwireGenerator("Namespace", "   ", logger),
+                    Throws.ArgumentException.With.Property("ParamName").EqualTo("entryClassName")
+                );
+            });
+        }
+
+        [Test]
+        public void ConstructorThrowsWhenLoggerNull()
+        {
+            Assert.That(
+                () => new HardwireGenerator("Namespace", "EntryPoint", null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("logger")
+            );
+        }
+
+        [Test]
+        public void GenerateSourceThrowsWhenLanguageMissingProvider()
+        {
+            HardwireCodeGenerationLanguage stubLanguage = new StubLanguageWithoutProvider();
+            HardwireGenerator generator = CreateGenerator(language: stubLanguage);
+            BuildCodeModel(generator, StubManagedTypeValue);
+
+            Assert.That(
+                () => generator.GenerateSourceCode(),
+                Throws.InvalidOperationException.With.Message.Contain("CodeDom provider")
+            );
+        }
+
         private static string GenerateSourceFor(string managedType)
         {
             HardwireGenerator generator = CreateGenerator();
@@ -158,13 +225,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             return generator.GenerateSourceCode();
         }
 
-        private static HardwireGenerator CreateGenerator()
+        private static HardwireGenerator CreateGenerator(
+            ICodeGenerationLogger logger = null,
+            HardwireCodeGenerationLanguage language = null
+        )
         {
             return new HardwireGenerator(
                 "NovaSharp.Tests.Generated",
                 "EntryPoint",
-                new CapturingCodeGenerationLogger(),
-                HardwireCodeGenerationLanguage.CSharp
+                logger ?? new CapturingCodeGenerationLogger(),
+                language ?? HardwireCodeGenerationLanguage.CSharp
             );
         }
 
@@ -177,6 +247,36 @@ namespace NovaSharp.Interpreter.Tests.Units
             root.Set("SampleType", DynValue.NewTable(descriptor));
 
             generator.BuildCodeModel(root);
+        }
+
+        private sealed class StubLanguageWithoutProvider : HardwireCodeGenerationLanguage
+        {
+            public override string Name => "Stub";
+
+            public override System.CodeDom.Compiler.CodeDomProvider CodeDomProvider => null;
+
+            public override string[] GetInitialComment() => Array.Empty<string>();
+
+            public override CodeExpression UnaryPlus(CodeExpression expression) => expression;
+
+            public override CodeExpression UnaryNegation(CodeExpression expression) => expression;
+
+            public override CodeExpression UnaryLogicalNot(CodeExpression expression) => expression;
+
+            public override CodeExpression UnaryOneComplement(CodeExpression expression) =>
+                expression;
+
+            public override CodeExpression UnaryIncrement(CodeExpression expression) => expression;
+
+            public override CodeExpression UnaryDecrement(CodeExpression expression) => expression;
+
+            public override CodeExpression BinaryXor(CodeExpression left, CodeExpression right) =>
+                left;
+
+            public override CodeExpression CreateMultidimensionalArray(
+                string elementType,
+                params CodeExpression[] lengths
+            ) => null;
         }
 
         private static Table CreateMethodDescriptor(
@@ -232,6 +332,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set("restricted", DynValue.NewBoolean(false));
             return table;
         }
+
+        private const string StubManagedTypeValue =
+            "NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMemberDescriptor";
 
         private sealed class RegisteringGenerator : IHardwireGenerator
         {

@@ -49,6 +49,34 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetVisibilityFromAttributesThrowsWhenVisibleAttributeDuplicated()
+        {
+            MemberInfo member = new FakeMemberInfo(
+                new NovaSharpVisibleAttribute(true),
+                new NovaSharpVisibleAttribute(true)
+            );
+
+            Assert.That(
+                () => member.GetVisibilityFromAttributes(),
+                Throws.InvalidOperationException.With.Message.Contains("VisibleAttribute")
+            );
+        }
+
+        [Test]
+        public void GetVisibilityFromAttributesThrowsWhenHiddenAttributeDuplicated()
+        {
+            MemberInfo member = new FakeMemberInfo(
+                new NovaSharpHiddenAttribute(),
+                new NovaSharpHiddenAttribute()
+            );
+
+            Assert.That(
+                () => member.GetVisibilityFromAttributes(),
+                Throws.InvalidOperationException.With.Message.Contains("HiddenAttribute")
+            );
+        }
+
+        [Test]
         public void GetVisibilityFromAttributesThrowsWhenAttributesConflict()
         {
             MemberInfo conflicting = VisibilityTargets.Metadata.ConflictingMember;
@@ -57,6 +85,54 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => conflicting.GetVisibilityFromAttributes(),
                 Throws.InvalidOperationException.With.Message.Contains("discording")
             );
+        }
+
+        [Test]
+        public void DescriptorVisibilityHelpersValidateNullArguments()
+        {
+            FieldInfo field = MemberVisibilityFixtures.Metadata.PublicField;
+            PropertyInfo property = PropertyFixtures.Metadata.GetterOnly;
+            MethodInfo method = MemberVisibilityFixtures.Metadata.PublicMethod;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    () => DescriptorHelpers.GetClrVisibility((Type)null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.GetClrVisibility((FieldInfo)null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.GetClrVisibility((PropertyInfo)null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.GetClrVisibility((MethodBase)null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.IsPropertyInfoPublic(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("pi")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.GetMetaNamesFromAttributes(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mi")
+                );
+                Assert.That(
+                    () => DescriptorHelpers.GetConversionMethodName(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
+                );
+            });
+
+            // Sanity-check that the original helpers still work with valid inputs.
+            Assert.Multiple(() =>
+            {
+                Assert.That(field.GetClrVisibility(), Is.EqualTo("public"));
+                Assert.That(property.IsPropertyInfoPublic(), Is.True);
+                Assert.That(method.GetClrVisibility(), Is.EqualTo("public"));
+            });
         }
 
         [Test]
@@ -159,12 +235,32 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void GetMetaNamesFromAttributesReturnsEmptyWhenNoAttributesPresent()
+        {
+            MethodInfo method = MetaFixtures.Metadata.PlainMethod;
+
+            IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
+
+            Assert.That(names, Is.Empty);
+        }
+
+        [Test]
         public void GetConversionMethodNameSanitizesNonAlphaNumericCharacters()
         {
             string name =
                 typeof(VisibilityFixtures.GenericHost<string>.InnerType).GetConversionMethodName();
 
             Assert.That(name, Is.EqualTo("__toInnerType"));
+        }
+
+        [Test]
+        public void IsDelegateTypeIdentifiesDelegates()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(typeof(Action).IsDelegateType(), Is.True);
+                Assert.That(typeof(string).IsDelegateType(), Is.False);
+            });
         }
 
         [Test]
@@ -248,6 +344,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(
                     DescriptorHelpers.NormalizeUppercaseRuns(string.Empty),
                     Is.EqualTo(string.Empty)
+                );
+                Assert.That(DescriptorHelpers.NormalizeUppercaseRuns(null), Is.Null);
+                Assert.That(DescriptorHelpers.ToUpperUnderscore(null), Is.Null);
+                Assert.That(
+                    () => DescriptorHelpers.Camelify(null),
+                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("name")
                 );
             });
         }
@@ -554,11 +656,72 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
+            public void PlainMethod()
+            {
+                _invocationCount++;
+            }
+
             internal static class Metadata
             {
                 internal static MethodInfo Metamethods { get; } =
                     typeof(MetaFixtures).GetMethod(nameof(Metamethods))!;
+
+                internal static MethodInfo PlainMethod { get; } =
+                    typeof(MetaFixtures).GetMethod(nameof(PlainMethod))!;
             }
+        }
+
+        private sealed class FakeMemberInfo : MemberInfo
+        {
+            private readonly object[] _attributes;
+
+            internal FakeMemberInfo(params object[] attributes)
+            {
+                _attributes = attributes ?? Array.Empty<object>();
+            }
+
+            public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+            {
+                ArgumentNullException.ThrowIfNull(attributeType);
+
+                if (_attributes.Length == 0)
+                {
+                    return Array.Empty<object>();
+                }
+
+                List<object> matches = new();
+
+                for (int i = 0; i < _attributes.Length; i++)
+                {
+                    object attribute = _attributes[i];
+                    if (attributeType.IsInstanceOfType(attribute))
+                    {
+                        matches.Add(attribute);
+                    }
+                }
+
+                return matches.ToArray();
+            }
+
+            public override object[] GetCustomAttributes(bool inherit)
+            {
+                return (object[])_attributes.Clone();
+            }
+
+            public override bool IsDefined(Type attributeType, bool inherit)
+            {
+                return GetCustomAttributes(attributeType, inherit).Length > 0;
+            }
+
+            public override MemberTypes MemberType => MemberTypes.Method;
+
+            public override string Name => "FakeMember";
+
+            public override Type DeclaringType => typeof(FakeMemberInfo);
+
+            public override Type ReflectedType => typeof(FakeMemberInfo);
+
+            public override Module Module => typeof(FakeMemberInfo).Module;
         }
 
         private interface ISampleInterface { }
