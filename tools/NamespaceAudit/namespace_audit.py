@@ -25,6 +25,7 @@ PATH_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
     Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
     Path("src/debuggers/NovaSharp.VsCodeDebugger/SDK/IsExternalInit.cs"),
+    Path("src/debuggers/NovaSharp.VsCodeDebugger/System/Runtime/CompilerServices/IsExternalInit.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
 }
@@ -97,7 +98,7 @@ def audit() -> int:
             mismatches.append((rel_path, expected, actual))
 
     if not mismatches:
-        print("✓ All namespaces align with directory layout.")
+        print("All namespaces align with directory layout.")
         return 0
 
     print("Namespace mismatches detected:")
