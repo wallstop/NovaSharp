@@ -2,6 +2,7 @@ namespace NovaSharp.RemoteDebugger.Threading
 {
     using System.Collections.Generic;
     using System.Threading;
+
     /// <summary>
     /// Thread-safe channel that blocks dequeuers until items arrive and supports cooperative shutdown.
     /// </summary>

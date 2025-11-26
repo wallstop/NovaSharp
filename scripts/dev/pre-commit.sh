@@ -44,14 +44,18 @@ staged_files_for_pattern() {
   git diff --cached --name-only --diff-filter=ACM -- "$pattern"
 }
 
-format_csharp_files() {
+format_all_csharp_files() {
+  log "[pre-commit] Running CSharpier across the entire repository..."
+  dotnet tool run csharpier format . >/dev/null
+  log "[pre-commit] CSharpier formatting complete."
+
   cs_output="$(staged_files_for_pattern '*.cs' || printf '')"
   if [ -z "$cs_output" ]; then
-    log "[pre-commit] No staged C# files detected; skipping CSharpier."
+    log "[pre-commit] No staged C# files detected; nothing to restage."
     return
   fi
 
-  log "[pre-commit] Running CSharpier on staged C# files..."
+  log "[pre-commit] Restaging previously staged C# files..."
   (
     set -f
     old_ifs=$IFS
@@ -65,8 +69,6 @@ format_csharp_files() {
     shift
     IFS=$old_ifs
 
-    dotnet tool run csharpier format "$@" >/dev/null
-    log "[pre-commit] Restaging formatted C# files..."
     git add -- "$@"
   )
 }
@@ -116,7 +118,7 @@ ensure_tool_on_path "dotnet" ".NET SDK"
 log "[pre-commit] Restoring dotnet tools (CSharpier)..."
 dotnet tool restore >/dev/null
 
-format_csharp_files
+format_all_csharp_files
 format_markdown_files
 
 log "[pre-commit] Completed successfully."

@@ -23,6 +23,7 @@ readarray -t allowlist <<'EOF'
 :(exclude)AGENTS.md
 :(exclude)src/tooling/NovaSharp.Comparison
 :(exclude)src/tooling/NovaSharp.Comparison/**
+:(exclude)PLAN.md
 EOF
 
 if git grep -n --color=never "${pattern}" -- . "${allowlist[@]}"; then
