@@ -5,12 +5,7 @@ namespace NovaSharp.Benchmarks
     /// <summary>
     /// High-level scenarios exercised by the NovaSharp runtime benchmarks.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "Usage",
-        "CA1515:Consider making public types internal",
-        Justification = "BenchmarkDotNet requires public enums for [Params] discovery."
-    )]
-    public enum RuntimeScenario
+    internal enum RuntimeScenario
     {
         [Obsolete("Use a specific RuntimeScenario.", false)]
         Unknown = 0,

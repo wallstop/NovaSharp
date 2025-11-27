@@ -144,6 +144,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(PlatformAutoDetector.IsPortableFramework, Is.True);
         }
 
+        [Test]
+        public void DetectorScopeDisposalRestoresCapturedState()
+        {
+            using (PlatformDetectorScope.ResetForDetection()) { }
+
+            PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: true);
+            try
+            {
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
+            }
+            finally
+            {
+                scope.Dispose();
+            }
+
+            Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.False);
+        }
+
         private sealed class PlatformDetectorScope : IDisposable
         {
             private readonly PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;

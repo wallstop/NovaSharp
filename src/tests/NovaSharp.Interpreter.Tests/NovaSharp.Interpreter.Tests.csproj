@@ -48,4 +48,24 @@
     <ItemGroup>
         <EmbeddedResource Include="Resources/embedded.lua" />
     </ItemGroup>
+    <PropertyGroup>
+        <FixtureCatalogScript>$(RepoRoot)scripts/tests/update-fixture-catalog.ps1</FixtureCatalogScript>
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' == 'Windows_NT'"
+            >powershell</FixtureCatalogShell
+        >
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' != 'Windows_NT'"
+            >pwsh</FixtureCatalogShell
+        >
+        <FixtureCatalogCommand Condition="'$(OS)' == 'Windows_NT'"
+            >$(FixtureCatalogShell) -NoProfile -ExecutionPolicy Bypass -File "&quot;$(FixtureCatalogScript)&quot;"</FixtureCatalogCommand
+        >
+        <FixtureCatalogCommand Condition="'$(OS)' != 'Windows_NT'"
+            >$(FixtureCatalogShell) -NoProfile -File "&quot;$(FixtureCatalogScript)&quot;"</FixtureCatalogCommand
+        >
+    </PropertyGroup>
+    <Target Name="GenerateFixtureCatalog" BeforeTargets="BeforeCompile">
+        <Message Text="Ensuring FixtureCatalogGenerated.cs is current..." Importance="Low" />
+        <Exec Command="$(FixtureCatalogCommand)" WorkingDirectory="$(RepoRoot)" />
+    </Target>
 </Project>
+

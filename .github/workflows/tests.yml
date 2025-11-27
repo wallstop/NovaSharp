@@ -66,6 +66,9 @@ jobs:
         shell: bash
         env:
           NOVASHARP_BASE_REF: ${{ steps.doc_diff_base.outputs.merge_base }}
+      - name: Verify fixture catalog is current
+        shell: pwsh
+        run: ./scripts/ci/check-fixture-catalog.ps1
 
       - name: Markdown formatting + links
         env:
@@ -120,6 +123,9 @@ jobs:
             git --no-pager diff -- documentation_audit.log
             exit 1
           fi
+      - name: Verify fixture catalog is current
+        shell: pwsh
+        run: ./scripts/ci/check-fixture-catalog.ps1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5

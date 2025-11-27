@@ -18,7 +18,7 @@ using NovaSharp.Interpreter.Modules;
 [SuppressMessage(
     "Usage",
     "CA1515:Consider making public types internal",
-    Justification = "BenchmarkDotNet requires benchmark classes to remain public for discovery."
+    Justification = "BenchmarkDotNet comparison benchmarks must remain public and unsealed."
 )]
 public class LuaPerformanceBenchmarks : IDisposable
 {
@@ -33,11 +33,20 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// Scenario executed for each benchmark iteration.
     /// </summary>
     [Params(
-        ScriptScenario.TowerOfHanoi,
-        ScriptScenario.EightQueens,
-        ScriptScenario.CoroutinePingPong
+        nameof(ScriptScenario.TowerOfHanoi),
+        nameof(ScriptScenario.EightQueens),
+        nameof(ScriptScenario.CoroutinePingPong)
     )]
-    public ScriptScenario Scenario { get; set; }
+    public string ScenarioName { get; set; } = nameof(ScriptScenario.TowerOfHanoi);
+
+    private ScriptScenario CurrentScenario
+    {
+        get
+        {
+            ArgumentException.ThrowIfNullOrEmpty(ScenarioName);
+            return Enum.Parse<ScriptScenario>(ScenarioName, ignoreCase: false);
+        }
+    }
 
     [GlobalSetup]
     /// <summary>
@@ -47,13 +56,17 @@ public class LuaPerformanceBenchmarks : IDisposable
     {
         Script.WarmUp();
 
-        _source = BenchmarkScripts.GetScript(Scenario);
+        _source = BenchmarkScripts.GetScript(CurrentScenario);
 
         _novaSharpScript = new Script(CoreModules.PresetComplete);
-        _novaSharpFunction = _novaSharpScript.LoadString(_source, null, $"precompiled_{Scenario}");
+        _novaSharpFunction = _novaSharpScript.LoadString(
+            _source,
+            null,
+            $"precompiled_{CurrentScenario}"
+        );
 
         _nLua = new Lua();
-        _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{Scenario}") as LuaFunction;
+        _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{CurrentScenario}") as LuaFunction;
     }
 
     [GlobalCleanup]
@@ -69,7 +82,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     public DynValue NovaSharpCompile()
     {
         Script script = new(CoreModules.PresetComplete);
-        return script.LoadString(_source, null, $"compile_{Scenario}");
+        return script.LoadString(_source, null, $"compile_{CurrentScenario}");
     }
 
     [Benchmark(Description = "NovaSharp Execute")]
@@ -84,7 +97,8 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// </summary>
     public LuaFunction NLuaCompile()
     {
-        LuaFunction? compiled = _nLua.LoadString(_source, $"compile_{Scenario}") as LuaFunction;
+        LuaFunction? compiled =
+            _nLua.LoadString(_source, $"compile_{CurrentScenario}") as LuaFunction;
         if (compiled == null)
         {
             throw new InvalidOperationException("NLua failed to compile the benchmark script.");

@@ -39,7 +39,7 @@ When capturing new data, replace the entire `### NovaSharp Latest` section inste
 
 ## Windows
 
-### NovaSharp Latest (captured 2025-11-26 15:28:25 -08:00)
+### NovaSharp Latest (captured 2025-11-26 20:53:52 -08:00)
 
 **Environment**
 
@@ -50,89 +50,29 @@ When capturing new data, replace the entire `### NovaSharp Latest` section inste
 - Approx. RAM: 195,968 MB
 - Suite: NovaSharp Benchmarks
 
-**Delta vs MoonSharp baseline**
-
-| Summary                                      | Method              | Parameters                 | Nova Mean | MoonSharp Mean |    Mean Δ | Mean Δ % | Nova Alloc | MoonSharp Alloc |  Alloc Δ | Alloc Δ % |
-| -------------------------------------------- | ------------------- | -------------------------- | --------: | -------------: | --------: | -------: | ---------: | --------------: | -------: | --------: |
-| NovaSharp.Benchmarks.RuntimeBenchmarks       | Scenario Execution  | Scenario=CoroutinePipeline |    228 ns |         247 ns |  -18.8 ns |   -7.59% |    1.22 KB |         1.10 KB |   +120 B |   +10.64% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks       | Scenario Execution  | Scenario=NumericLoops      |    160 ns |         195 ns |  -35.4 ns |  -18.12% |      976 B |           928 B |  +48.0 B |    +5.17% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks       | Scenario Execution  | Scenario=TableMutation     |  3.521 us |       4.205 us |   -685 ns |  -16.28% |    30.4 KB |         30.2 KB |   +120 B |    +0.39% |
-| NovaSharp.Benchmarks.RuntimeBenchmarks       | Scenario Execution  | Scenario=UserDataInterop   |    369 ns |         295 ns |  +73.2 ns |   +24.8% |    1.45 KB |         1.33 KB |   +120 B |    +8.82% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute   | Complexity=Large           |   1.094 s |         779 ms |   +314 ms |  +40.37% |    3.29 GB |         2.86 GB |  +440 MB |      +15% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute   | Complexity=Medium          |   49.3 ms |        46.7 ms | +2.586 ms |   +5.54% |     165 MB |          143 MB | +21.4 MB |   +14.95% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute   | Complexity=Small           |  2.334 ms |       1.693 ms |   +640 us |  +37.79% |    2.58 MB |         2.36 MB |  +225 KB |     +9.3% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile + Execute   | Complexity=Tiny            |  2.329 ms |       1.478 ms |   +850 us |  +57.53% |    2.55 MB |         2.33 MB |  +222 KB |    +9.29% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only        | Complexity=Large           |  4.269 ms |       3.062 ms | +1.207 ms |  +39.41% |    3.02 MB |         2.80 MB |  +228 KB |    +7.94% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only        | Complexity=Medium          |  3.692 ms |       2.161 ms | +1.532 ms |  +70.89% |    2.71 MB |         2.48 MB |  +229 KB |    +9.02% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only        | Complexity=Small           |  2.223 ms |       1.614 ms |   +609 us |  +37.74% |    2.56 MB |         2.34 MB |  +222 KB |    +9.26% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Compile Only        | Complexity=Tiny            |  2.099 ms |       1.522 ms |   +578 us |  +37.95% |    2.55 MB |         2.33 MB |  +223 KB |    +9.34% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Large           |   1.040 s |         746 ms |   +293 ms |  +39.31% |    3.29 GB |         2.86 GB |  +439 MB |   +15.01% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Medium          |   48.3 ms |        35.6 ms |  +12.8 ms |     +36% |     162 MB |          141 MB | +21.2 MB |   +15.06% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Small           |  9.664 us |       6.778 us | +2.885 us |  +42.57% |    21.1 KB |         18.7 KB | +2.35 KB |   +12.56% |
-| NovaSharp.Benchmarks.ScriptLoadingBenchmarks | Execute Precompiled | Complexity=Tiny            |    160 ns |        96.6 ns |  +63.0 ns |  +65.18% |      744 B |           536 B |   +208 B |   +38.81% |
-
-#### NovaSharp.Benchmarks.RuntimeBenchmarks-20251126-152521
+#### BenchmarkRun-20251126-205351
 
 ```
 
 BenchmarkDotNet v0.15.6, Windows 11 (10.0.26200.7171)
 Intel Core Ultra 9 285K 3.70GHz, 1 CPU, 24 logical and 24 physical cores
 .NET SDK 10.0.100
-  [Host]   : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
-  ShortRun : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
+  [Host] : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
 
-Job=ShortRun  IterationCount=10  LaunchCount=1  
-WarmupCount=2  
-
-```
-
-| Method                   | Scenario              |           Mean |         Error |        StdDev |            P95 |  Rank |       Gen0 |       Gen1 |   Allocated |
-| ------------------------ | --------------------- | -------------: | ------------: | ------------: | -------------: | ----: | ---------: | ---------: | ----------: |
-| **'Scenario Execution'** | **NumericLoops**      |   **159.9 ns** |  **20.11 ns** |  **13.30 ns** |   **181.2 ns** | **1** | **0.0517** |      **-** |   **976 B** |
-| **'Scenario Execution'** | **TableMutation**     | **3,520.7 ns** | **362.50 ns** | **189.60 ns** | **3,814.9 ns** | **4** | **1.6479** | **0.1450** | **31088 B** |
-| **'Scenario Execution'** | **CoroutinePipeline** |   **228.4 ns** |  **30.79 ns** |  **20.37 ns** |   **252.8 ns** | **2** | **0.0663** |      **-** |  **1248 B** |
-| **'Scenario Execution'** | **UserDataInterop**   |   **368.5 ns** |  **32.11 ns** |  **21.24 ns** |   **395.3 ns** | **3** | **0.0782** |      **-** |  **1480 B** |
-
-#### NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251126-152608
-
-```
-
-BenchmarkDotNet v0.15.6, Windows 11 (10.0.26200.7171)
-Intel Core Ultra 9 285K 3.70GHz, 1 CPU, 24 logical and 24 physical cores
-.NET SDK 10.0.100
-  [Host]   : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
-  ShortRun : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
-
-Job=ShortRun  IterationCount=10  LaunchCount=1  
-WarmupCount=2  
-
-```
-
-| Method                  | Complexity |                   Mean |                 Error |                StdDev |                    P95 |  Rank |            Gen0 |          Gen1 |         Gen2 |        Allocated |
-| ----------------------- | ---------- | ---------------------: | --------------------: | --------------------: | ---------------------: | ----: | --------------: | ------------: | -----------: | ---------------: |
-| **'Compile + Execute'** | **Tiny**   |     **2,328,502.8 ns** |     **404,421.49 ns** |     **267,499.77 ns** |     **2,664,318.4 ns** | **3** |    **281.2500** |  **269.5313** | **257.8125** |    **2674611 B** |
-| 'Compile Only'          | Tiny       |         2,099,041.5 ns |         377,275.47 ns |         249,544.37 ns |         2,453,128.1 ns |     3 |        277.3438 |      265.6250 |     253.9063 |        2673342 B |
-| 'Execute Precompiled'   | Tiny       |               159.6 ns |              18.89 ns |              12.49 ns |               174.8 ns |     1 |          0.0393 |             - |            - |            744 B |
-| **'Compile + Execute'** | **Small**  |     **2,333,514.8 ns** |     **396,289.14 ns** |     **235,825.31 ns** |     **2,603,583.8 ns** | **3** |    **277.3438** |  **261.7188** | **253.9063** |    **2703872 B** |
-| 'Compile Only'          | Small      |         2,222,961.7 ns |         349,592.99 ns |         231,234.12 ns |         2,565,773.9 ns |     3 |        292.9688 |      289.0625 |     269.5313 |        2683577 B |
-| 'Execute Precompiled'   | Small      |             9,663.7 ns |             712.39 ns |             471.20 ns |            10,322.7 ns |     2 |          1.1444 |             - |            - |          21584 B |
-| **'Compile + Execute'** | **Medium** |    **49,259,122.7 ns** |   **7,579,564.10 ns** |   **5,013,412.35 ns** |    **55,738,240.9 ns** | **5** |   **9363.6364** |  **818.1818** | **363.6364** |  **172888074 B** |
-| 'Compile Only'          | Medium     |         3,692,173.8 ns |         904,859.48 ns |         538,467.37 ns |         4,156,467.8 ns |     4 |        320.3125 |      312.5000 |     289.0625 |        2836412 B |
-| 'Execute Precompiled'   | Medium     |        48,347,752.2 ns |       1,232,163.72 ns |         815,000.01 ns |        49,228,820.6 ns |     5 |       9000.0000 |             - |            - |      169958368 B |
-| **'Compile + Execute'** | **Large**  | **1,093,588,330.0 ns** | **159,670,333.34 ns** | **105,612,039.37 ns** | **1,249,733,440.0 ns** | **6** | **187000.0000** | **1000.0000** |        **-** | **3532961296 B** |
-| 'Compile Only'          | Large      |         4,269,452.5 ns |       1,238,488.97 ns |         819,183.77 ns |         5,396,037.2 ns |     4 |        328.1250 |      312.5000 |     281.2500 |        3170784 B |
-| 'Execute Precompiled'   | Large      |     1,039,907,190.0 ns |      81,609,974.95 ns |      53,979,945.47 ns |     1,124,540,740.0 ns |     6 |     187000.0000 |             - |            - |     3529692384 B |
+There are no benchmarks found
 
 To refresh this section, run:
 
 ```
+
 dotnet run -c Release --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj
 dotnet run -c Release --framework net8.0 --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj
+
 ```
 
 Then replace everything under `### NovaSharp Latest` with the new results.
 
-______________________________________________________________________
+---
 
 ### MoonSharp Baseline (captured 2025-11-08 16:54:46 -08:00)
 
@@ -145,11 +85,11 @@ _MoonSharp baseline cloned from the NovaSharp measurements executed on 2025-11-0
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-  [Host]     : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
-  Comparison : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+\[Host\]     : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+Comparison : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=Comparison  IterationCount=10  LaunchCount=1  
-WarmupCount=2  
+Job=Comparison  IterationCount=10  LaunchCount=1\
+WarmupCount=2
 
 ```
 
@@ -175,11 +115,11 @@ WarmupCount=2
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-  [Host]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
-  ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+\[Host\]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=ShortRun  IterationCount=10  LaunchCount=1  
-WarmupCount=2  
+Job=ShortRun  IterationCount=10  LaunchCount=1\
+WarmupCount=2
 
 ```
 
@@ -197,11 +137,11 @@ WarmupCount=2
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-  [Host]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
-  ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+\[Host\]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=ShortRun  IterationCount=10  LaunchCount=1  
-WarmupCount=2  
+Job=ShortRun  IterationCount=10  LaunchCount=1\
+WarmupCount=2
 
 ```
 
@@ -223,8 +163,10 @@ WarmupCount=2
 To refresh this section, run:
 
 ```
+
 dotnet run -c Release --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj
 dotnet run -c Release --framework net8.0 --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj
+
 ```
 
 Then replace everything under `### NovaSharp Latest` with the new results.
@@ -235,8 +177,12 @@ ______________________________________________________________________
 
 _No benchmark data recorded yet._
 
+
+
 ## macOS
 
 _No benchmark data recorded yet._
 
 ______________________________________________________________________
+
+```

@@ -10,6 +10,7 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `apply-formatters.sh` — Applies repository-wide fixes (`dotnet csharpier .` + Python-based `format_markdown.py`) and is used by automation to prepare auto-fix branches when linting fails on pull requests.
 - `format_markdown.py` — Uses `mdformat` (via `mdformat-gfm`) to format Markdown deterministically. Supports `--check` and `--fix` modes plus file-scoped or repo-wide execution.
 - `check_markdown_links.py` — Parses Markdown via `markdown-it-py` and validates both HTTP(S) and relative links with deterministic timeouts/retries defined in `.markdown-link-check.json`.
+- `check-fixture-catalog.ps1` — Regenerates the NUnit fixture catalog (via `scripts/tests/update-fixture-catalog.ps1`) and fails if `FixtureCatalogGenerated.cs` changes, ensuring contributors rerun the generator when fixtures move.
 
 ## Usage
 

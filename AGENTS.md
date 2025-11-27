@@ -15,8 +15,6 @@
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
 - Generate coverage locally with `./scripts/coverage/coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`). When running on macOS/Linux without PowerShell, detect the absence of `pwsh`/`powershell` and fall back to `bash ./scripts/coverage/coverage.sh` (supports the same flags).
 - Codex is allowed to run the coverage helpers (`./scripts/coverage/coverage.ps1` or `.sh`) without additional approval, so feel free to self-drive coverage refreshes while iterating.
-- Run spelling and naming audits after every major change and fix any errors they report before proceeding.
-- **After every change**, rerun all audits and keep their logs up to date: `python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log`, `python tools/NamingAudit/naming_audit.py --write-log naming_audit.log`, and `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log`. Fix any reported findings before pushing so CI stays green.
 
 ## Coding Style & Naming Conventions
 - C# uses four-space indentation, braces on new lines, and PascalCase for types and methods.
@@ -27,6 +25,8 @@
 - Ensure comments, docs, and diagnostic strings use clear English. Run `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log` when touching text-heavy areas so the spelling audit stays green and `spelling_audit.log` remains up to date.
 - Prefer explicit types instead of `var`; only fall back to implicit typing when the language requires it (e.g., anonymous types).
 - Prefer exposing internal implementation details via proper `internal` APIs and `InternalsVisibleTo` (amend or create `AssemblyInfo.cs` as needed) for NovaSharp tests, benchmarks, and tooling rather than relying on reflection hacks. Encapsulation still matters, but leaking internals is acceptable when it replaces reflection within this repository.
+- BenchmarkDotNet discovery requires benchmark classes to remain `public` and unsealed; when CA1515 warns on those types, add a targeted suppression that explains the BenchmarkDotNet requirement instead of making the classes internal/sealed.
+- NUnit 2.6 discovers `[TestFixture]` classes through reflection, so keep interpreter test fixtures (and their supporting adapters like `TestRunner`, `TapRunner`, and the custom `ExpectedExceptionAttribute`) `public`. Until we auto-instantiate internal fixtures, leave the CA1515 module suppression in place rather than flipping fixtures to `internal`.
 - Before introducing new reflection or dynamic type discovery, consult `docs/modernization/reflection-audit.md` and document any additions so the modernization plan stays accurate.
 - **Never** add or preserve `#region` / `#endregion` directives anywhere (runtime, tooling, tests, generated scaffolding, docs). If you encounter one, delete it immediately and rely on clear code or brief summary comments instead. Before submitting work, run `rg -n '#region'` to confirm zero matches; if a generator emits regions, update it or post-process the output so no regions make it into the repo.
 
@@ -35,6 +35,7 @@
 - Arrange new tests in the most descriptive folder (`Units`, `EndToEnd`, or feature-specific subfolders) and ensure class names follow `<Feature>Tests.cs` with colocated Lua fixtures where needed.
 - When adding Lua fixtures, provide a mix of small-scoped, mixed-mode, and highly complex scenarios; name the `.lua`/`.t` files descriptively so their focus is obvious at a glance.
 - Extend `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes to keep builds in sync.
+- After adding or renaming `[TestFixture]` classes, run `pwsh ./scripts/tests/update-fixture-catalog.ps1` so `FixtureCatalogGenerated.cs` stays in sync and analyzers continue to see every test type.
 - Write test method names in PascalCase (no underscores); rename legacy cases when you touch them.
 - When a test needs access to runtime internals, expose a dedicated `internal` helper (or widen the existing member) and rely on the repo-wide `InternalsVisibleTo` rather than reflection hacks (`BindingFlags`, `MethodInfo.Invoke`, etc.). Only fall back to reflection when the target type lives outside the NovaSharp assemblies or an analyzer explicitly disallows making the member internal.
 - Use `Assert.Ignore` only with a linked tracking issue and add coverage for new opcodes, metatables, and debugger paths.
@@ -49,3 +50,5 @@
 - Reference tracking issues using `Fixes #ID` so automation closes them when merged.
 - Provide PR descriptions summarizing the change, listing executed build/test commands, and attaching UI captures for debugger work.
 - Call out breaking API updates prominently and coordinate release notes before merging impactful changes.
+
+

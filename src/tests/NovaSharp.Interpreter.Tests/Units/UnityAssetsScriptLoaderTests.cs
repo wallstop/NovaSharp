@@ -158,6 +158,27 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
+        [Test]
+        public void ReflectionConstructorPropagatesNonRecoverableExceptions()
+        {
+            UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
+            UnityEngineReflectionHarness.SetThrowOnLoad(() =>
+                new UnityHarnessFatalException("fatal")
+            );
+
+            try
+            {
+                Assert.That(
+                    () => new UnityAssetsScriptLoader("Fatal/Scripts"),
+                    Throws.TypeOf<UnityHarnessFatalException>()
+                );
+            }
+            finally
+            {
+                UnityEngineReflectionHarness.SetThrowOnLoad(false);
+            }
+        }
+
         private static Exception CreateExceptionInstance(System.Type exceptionType)
         {
             ConstructorInfo ctor = exceptionType.GetConstructor(
@@ -195,6 +216,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => loader.ScriptFileExists(null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("name")
             );
+        }
+
+        private sealed class UnityHarnessFatalException : Exception
+        {
+            public UnityHarnessFatalException() { }
+
+            public UnityHarnessFatalException(string message)
+                : base(message) { }
+
+            public UnityHarnessFatalException(string message, Exception innerException)
+                : base(message, innerException) { }
         }
     }
 

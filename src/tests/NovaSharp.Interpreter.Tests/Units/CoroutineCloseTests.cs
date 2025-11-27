@@ -66,6 +66,43 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CloseForceSuspendedCoroutineDrainsStack()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function slow()
+                    for i = 1, 200 do end
+                    return 'done'
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("slow"));
+            coroutineValue.Coroutine.AutoYieldCounter = 1;
+
+            DynValue first = coroutineValue.Coroutine.Resume();
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(first.YieldRequest.Forced, Is.True);
+                Assert.That(
+                    coroutineValue.Coroutine.State,
+                    Is.EqualTo(CoroutineState.ForceSuspended)
+                );
+            });
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
         public void CloseAfterExceptionReturnsFalseTuple()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -93,6 +130,39 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(closeResult.Tuple.Length, Is.EqualTo(2));
                 Assert.That(closeResult.Tuple[0].Boolean, Is.False);
                 Assert.That(closeResult.Tuple[1].String, Does.Contain("boom"));
+            });
+        }
+
+        [Test]
+        public void CloseDeadCoroutineWithStoredErrorReturnsFalseTuple()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function explode()
+                    error('kaboom')
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("explode"));
+
+            Assert.That(
+                () => coroutineValue.Coroutine.Resume(),
+                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("kaboom")
+            );
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+
+            DynValue initialClose = coroutineValue.Coroutine.Close();
+            Assert.That(initialClose.Tuple[0].Boolean, Is.False);
+
+            DynValue subsequentClose = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(subsequentClose.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(subsequentClose.Tuple[0].Boolean, Is.False);
+                Assert.That(subsequentClose.Tuple[1].String, Does.Contain("kaboom"));
             });
         }
 
