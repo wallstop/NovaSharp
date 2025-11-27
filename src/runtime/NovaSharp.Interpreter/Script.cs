@@ -253,6 +253,11 @@ namespace NovaSharp.Interpreter
         {
             return ExecuteWithCompatibilityGuard(() =>
             {
+                if (code == null)
+                {
+                    throw new ArgumentNullException(nameof(code));
+                }
+
                 this.CheckScriptOwnership(globalTable);
 
                 if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
@@ -296,6 +301,11 @@ namespace NovaSharp.Interpreter
         {
             return ExecuteWithCompatibilityGuard(() =>
             {
+                if (stream == null)
+                {
+                    throw new ArgumentNullException(nameof(stream));
+                }
+
                 this.CheckScriptOwnership(globalTable);
 
                 Stream codeStream = new UndisposableStream(stream);
@@ -410,6 +420,11 @@ namespace NovaSharp.Interpreter
             string friendlyFilename = null
         )
         {
+            if (filename == null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
             this.CheckScriptOwnership(globalContext);
 
             Table globals = globalContext ?? _globalTable;

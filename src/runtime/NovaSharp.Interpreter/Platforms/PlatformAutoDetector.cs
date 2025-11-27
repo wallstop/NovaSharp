@@ -98,53 +98,57 @@ namespace NovaSharp.Interpreter.Platforms
             {
                 return;
             }
+
+            try
+            {
 #if PCL
-            IsPortableFramework = true;
+                IsPortableFramework = true;
 #if ENABLE_DOTNET
-            IsRunningOnUnity = true;
-            IsUnityNative = true;
+                IsRunningOnUnity = true;
+                IsUnityNative = true;
 #endif
 #else
 #if UNITY_5
-            IsRunningOnUnity = true;
-            IsUnityNative = true;
+                IsRunningOnUnity = true;
+                IsUnityNative = true;
 
 #if ENABLE_IL2CPP
-            IsUnityIL2CPP = true;
+                IsUnityIL2CPP = true;
 #endif
 #elif !(NETFX_CORE)
-            Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            bool unityTypeFound = false;
+                Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                bool unityTypeFound = false;
 
-            for (
-                int asmIndex = 0;
-                asmIndex < loadedAssemblies.Length && !unityTypeFound;
-                asmIndex++
-            )
-            {
-                Type[] assemblyTypes = loadedAssemblies[asmIndex].SafeGetTypes();
-                for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
+                for (
+                    int asmIndex = 0;
+                    asmIndex < loadedAssemblies.Length && !unityTypeFound;
+                    asmIndex++
+                )
                 {
-                    if (
-                        assemblyTypes[typeIndex]
-                            .FullName.StartsWith("UnityEngine.", StringComparison.Ordinal)
-                    )
+                    Type[] assemblyTypes = loadedAssemblies[asmIndex].SafeGetTypes();
+                    for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
                     {
-                        unityTypeFound = true;
-                        break;
+                        if (
+                            assemblyTypes[typeIndex]
+                                .FullName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                        )
+                        {
+                            unityTypeFound = true;
+                            break;
+                        }
                     }
                 }
+
+                IsRunningOnUnity = unityTypeFound;
+#endif
+#endif
             }
-
-            IsRunningOnUnity = unityTypeFound;
-#endif
-#endif
-
-            IsRunningOnMono = (Type.GetType("Mono.Runtime") != null);
-
-            IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
-
-            AutoDetectionsDone = true;
+            finally
+            {
+                IsRunningOnMono = (Type.GetType("Mono.Runtime") != null);
+                IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
+                AutoDetectionsDone = true;
+            }
         }
 
         /// <summary>

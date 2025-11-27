@@ -104,6 +104,39 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadStreamThrowsWhenStreamNull()
+        {
+            Script script = new();
+
+            Assert.That(
+                () => script.LoadStream(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("stream")
+            );
+        }
+
+        [Test]
+        public void LoadStringThrowsWhenCodeNull()
+        {
+            Script script = new();
+
+            Assert.That(
+                () => script.LoadString(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("code")
+            );
+        }
+
+        [Test]
+        public void LoadFileThrowsWhenFilenameNull()
+        {
+            Script script = new();
+
+            Assert.That(
+                () => script.LoadFile(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("filename")
+            );
+        }
+
+        [Test]
         public void DumpRejectsNonFunctionValues()
         {
             Script script = new();

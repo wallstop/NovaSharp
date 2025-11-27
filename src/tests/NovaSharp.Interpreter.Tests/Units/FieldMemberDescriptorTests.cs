@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.Linq.Expressions;
     using System.Reflection;
     using NovaSharp.Interpreter;
@@ -174,7 +173,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void GetValueReturnsInstanceFieldViaReflection()
         {
-            SampleFields instance = new() { instanceValue = 42 };
+            SampleFields instance = new() { _instanceValue = 42 };
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
@@ -186,14 +185,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Null);
                 Assert.That(result.Type, Is.EqualTo(DataType.Number));
-                Assert.That(result.Number, Is.EqualTo(instance.instanceValue));
+                Assert.That(result.Number, Is.EqualTo(instance._instanceValue));
             });
         }
 
         [Test]
         public void PreoptimizedGetterCompilesForInstanceField()
         {
-            SampleFields instance = new() { instanceValue = 99 };
+            SampleFields instance = new() { _instanceValue = 99 };
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Preoptimized
@@ -204,7 +203,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
-                Assert.That(result.Number, Is.EqualTo(instance.instanceValue));
+                Assert.That(result.Number, Is.EqualTo(instance._instanceValue));
             });
         }
 
@@ -257,7 +256,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 SampleFieldsMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
-            SampleFields instance = new() { instanceValue = 64 };
+            SampleFields instance = new() { _instanceValue = 64 };
 
             Assert.That(descriptor.OptimizedGetter, Is.Null);
 
@@ -268,7 +267,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor.OptimizedGetter, Is.Not.Null);
-                Assert.That(value.Number, Is.EqualTo(instance.instanceValue));
+                Assert.That(value.Number, Is.EqualTo(instance._instanceValue));
             });
         }
 
@@ -312,7 +311,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             descriptor.SetValue(_script, instance, DynValue.NewNumber(5.0));
 
-            Assert.That(instance.instanceValue, Is.EqualTo(5));
+            Assert.That(instance._instanceValue, Is.EqualTo(5));
         }
 
         [Test]
@@ -342,7 +341,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 () => descriptor.SetValue(_script, null, DynValue.NewNumber(1)),
                 Throws
                     .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("attempt to access instance member instanceValue")
+                    .With.Message.Contains("attempt to access instance member _instanceValue")
             );
         }
 
@@ -372,7 +371,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             descriptor.SetValue(_script, instance, DynValue.NewNumber(2.5));
 
-            Assert.That(instance.doubleValue, Is.EqualTo(2.5));
+            Assert.That(instance._doubleValue, Is.EqualTo(2.5));
         }
 
         [Test]
@@ -409,11 +408,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        [SuppressMessage(
-            "Design",
-            "CA1051:Do not declare visible instance fields",
-            Justification = "Public instance fields intentionally exercise FieldMemberDescriptor visibility behaviours."
-        )]
         private sealed class SampleFields
         {
             public const int ConstValue = 7;
@@ -421,8 +415,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new[] { 'f', 'i', 'x', 'e', 'd' }
             );
             public static int StaticValue = 1;
-            public int instanceValue;
-            public double doubleValue;
+            internal int _instanceValue;
+            internal double _doubleValue;
 
             [NovaSharpVisible(true)]
             private int _attributeValue;
@@ -436,8 +430,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public SampleFields()
             {
-                instanceValue = 0;
-                doubleValue = 0;
+                _instanceValue = 0;
+                _doubleValue = 0;
                 _privateValue = 0;
                 AnchorAttributeValueUsage();
             }
@@ -489,10 +483,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 typeof(SampleFields).GetField(nameof(SampleFields.StaticValue))!;
 
             internal static FieldInfo InstanceValue { get; } =
-                typeof(SampleFields).GetField(nameof(SampleFields.instanceValue))!;
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields._instanceValue),
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!;
 
             internal static FieldInfo DoubleValue { get; } =
-                typeof(SampleFields).GetField(nameof(SampleFields.doubleValue))!;
+                typeof(SampleFields).GetField(
+                    nameof(SampleFields._doubleValue),
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!;
 
             internal static FieldInfo PrivateValue { get; } = SampleFields.PrivateValueField;
 

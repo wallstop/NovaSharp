@@ -70,6 +70,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
+        [Test]
+        public void AutoDetectionDoesNothingWhenAlreadyInitialized()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            // First pass: perform detection and flip some flags away from defaults.
+            PlatformDetectorScope.SetFlags(
+                isRunningOnMono: true,
+                isRunningOnClr4: true,
+                isRunningOnUnity: true
+            );
+            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
+
+            bool monoBefore = PlatformAutoDetector.IsRunningOnMono;
+            bool unityBefore = PlatformAutoDetector.IsRunningOnUnity;
+
+            // Second call should be a no-op because AutoDetectionsDone is already true.
+            IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader, Is.InstanceOf<UnityAssetsScriptLoader>());
+                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.EqualTo(monoBefore));
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.EqualTo(unityBefore));
+            });
+        }
+
         [Test, Order(3)]
         public void AutoDetectionMarksUnityWhenUnityTypesPresent()
         {

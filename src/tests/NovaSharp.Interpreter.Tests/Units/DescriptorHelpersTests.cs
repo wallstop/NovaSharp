@@ -29,8 +29,6 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             _ = new VisibilityFixtures.GenericHost<string>();
             _ = new VisibilityFixtures.GenericHost<string>.InnerType();
-            _ = new MemberVisibilityFixtures();
-            _ = new PropertyFixtures();
             _ = new MetaFixtures();
             _ = new DerivedSample();
         }
@@ -462,12 +460,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [SuppressMessage(
-            "Performance",
-            "CA1852:Seal internal types",
-            Justification = "Protected members must remain available for visibility reflection tests without triggering CS0628 warnings."
-        )]
-        private class MemberVisibilityFixtures
+        private abstract class MemberVisibilityFixtures
         {
             private int _invocationCount;
 
@@ -605,12 +598,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [SuppressMessage(
-            "Performance",
-            "CA1852:Seal internal types",
-            Justification = "Provides protected members for visibility tests; sealing would trigger compiler warnings."
-        )]
-        private class PropertyFixtures
+        private abstract class PropertyFixtures
         {
             public const string PrivatePropertyName = nameof(PrivateBoth);
 
