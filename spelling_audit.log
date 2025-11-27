@@ -6,8 +6,4 @@ Scan targets: .claudeignore, .codexignore, .config, .editorconfig, .gitattribute
 Skip globs: .git, .git/*, .git\*, .vs, .vs/*, .vs\*, src/.vs, src/.vs/*, src\.vs\*, artifacts, artifacts/*, artifacts\*, docs/coverage, docs/coverage/*, docs\coverage, docs\coverage\*, build, coverage-html.tgz, *.dll, *.exe, *.bin, *.pdb, *.obj, *.lock, *.log, *.vsidx, *.png, *.jpg, *.jpeg, *.gif, *.bmp, *.ico, *.svg, *.ttf, *.woff, *.woff2, *.eot, *.pdf, *.zip, *.tar, *.tar.gz, *.tgz, *.gz, *.7z, *.nupkg, *.luac, *.snap, src/debuggers/NovaSharp.RemoteDebugger/Resources/theme.css, src\debuggers\NovaSharp.RemoteDebugger\Resources\theme.css, */bin/*, *\bin\*, */obj/*, *\obj\*, */packages/*, *\packages\*
 Allowlisted words: Lua, LuaJIT, NovaSharp, userdata, metatable, metatables, NuGet, Interop, interop, alo, isnt, aNumber, aString, anObject, anArray, aNegativeNumber
 
-Found 1 potential spelling issue(s).
-
-## Outstanding Findings
-
-- src\tests\NovaSharp.Interpreter.Tests\Units\InterpreterExceptionTests.cs:42: donot ==> do not, donut
+All inspected files passed the spelling audit.

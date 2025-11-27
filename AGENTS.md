@@ -15,6 +15,7 @@
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
 - Generate coverage locally with `./scripts/coverage/coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`). When running on macOS/Linux without PowerShell, detect the absence of `pwsh`/`powershell` and fall back to `bash ./scripts/coverage/coverage.sh` (supports the same flags).
 - Codex is allowed to run the coverage helpers (`./scripts/coverage/coverage.ps1` or `.sh`) without additional approval, so feel free to self-drive coverage refreshes while iterating.
+- Run spelling and naming audits after every major change and fix any errors they report before proceeding.
 - **After every change**, rerun all audits and keep their logs up to date: `python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log`, `python tools/NamingAudit/naming_audit.py --write-log naming_audit.log`, and `python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log`. Fix any reported findings before pushing so CI stays green.
 
 ## Coding Style & Naming Conventions

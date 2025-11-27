@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DecorateMessageRespectsDoNotDecorateFlag()
         {
             Script script = new();
-            SourceRef location = CreateSourceRef(script, "units/interpreter/donot");
+            SourceRef location = CreateSourceRef(script, "units/interpreter/do-not");
             InterpreterException exception = new("boom") { DoNotDecorateMessage = true };
 
             exception.DecorateMessage(script, location);
