@@ -117,6 +117,28 @@ namespace NovaSharp.Interpreter.Tests.Units
                 UnityEngineReflectionHarness.SetThrowOnLoad(false);
             }
         }
+
+        [Test]
+        public void LoadFileThrowsArgumentNullWhenNameMissing()
+        {
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
+
+            Assert.That(
+                () => loader.LoadFile(null, null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("file")
+            );
+        }
+
+        [Test]
+        public void ScriptFileExistsThrowsArgumentNullWhenNameMissing()
+        {
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
+
+            Assert.That(
+                () => loader.ScriptFileExists(null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("name")
+            );
+        }
     }
 
     public static class UnityEngineReflectionHarness

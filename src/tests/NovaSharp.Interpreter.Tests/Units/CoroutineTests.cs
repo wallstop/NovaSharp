@@ -93,6 +93,28 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void AsUnityCoroutineYieldsNullPerIteration()
+        {
+            Script script = new();
+            DynValue function = script.DoString(
+                "return function() coroutine.yield('a') coroutine.yield('b') return 'c' end"
+            );
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            System.Collections.IEnumerator unityCoroutine = coroutine.Coroutine.AsUnityCoroutine();
+            List<object> yielded = new();
+
+            while (unityCoroutine.MoveNext())
+            {
+                yielded.Add(unityCoroutine.Current);
+            }
+
+            Assert.That(yielded, Has.Count.EqualTo(3));
+            Assert.That(yielded.TrueForAll(value => value == null), Is.True);
+            Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+        }
+
+        [Test]
         public void MarkClrCallbackAsDeadTransitionsType()
         {
             Script script = new();
@@ -189,6 +211,20 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = coroutine.Coroutine.Resume(40, 2);
 
             Assert.That(result.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void ResumeWithContextObjectArgumentsConvertsValues()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function(a, b) return a + b end");
+            DynValue coroutine = script.CreateCoroutine(function);
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            DynValue result = coroutine.Coroutine.Resume(context, 30, 12);
+
+            Assert.That(result.Number, Is.EqualTo(42));
+            Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
         }
 
         [Test]

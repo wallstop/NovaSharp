@@ -1,12 +1,14 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Text;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
@@ -62,6 +64,45 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadFunctionBindsProvidedEnvironment()
+        {
+            Script script = new();
+            Table env = new(script);
+            env.Set("value", DynValue.NewNumber(7));
+
+            DynValue closure = script.LoadFunction("return value", env, "bound");
+            DynValue result = script.Call(closure);
+
+            Assert.That(result.Number, Is.EqualTo(7));
+            Assert.That(script.Globals.Get("value").IsNil(), Is.True);
+        }
+
+        [Test]
+        public void LoadStreamUndumpPreservesEnvironmentUpValues()
+        {
+            Script producer = new();
+            producer.Globals.Set("shared", DynValue.NewNumber(5));
+            DynValue chunk = producer.LoadString(
+                @"
+                return function()
+                    return shared
+                end
+            "
+            );
+            byte[] dump = DumpToBytes(producer, chunk);
+
+            Script consumer = new();
+            consumer.Globals.Set("shared", DynValue.NewNumber(10));
+
+            using MemoryStream stream = new(dump, writable: false);
+            DynValue chunkResult = consumer.LoadStream(stream);
+            DynValue restoredFunction = consumer.Call(chunkResult);
+            DynValue result = consumer.Call(restoredFunction);
+
+            Assert.That(result.Number, Is.EqualTo(10));
+        }
+
+        [Test]
         public void DumpRejectsNonFunctionValues()
         {
             Script script = new();
@@ -106,6 +147,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             )!;
 
             Assert.That(exception.Message, Does.Contain("upvalues other than _ENV"));
+        }
+
+        [Test]
+        public void DumpThrowsWhenFunctionIsNull()
+        {
+            Script script = new();
+            using MemoryStream stream = new();
+
+            Assert.That(
+                () => script.Dump(null, stream),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("function")
+            );
+        }
+
+        [Test]
+        public void DumpThrowsWhenStreamIsNull()
+        {
+            Script script = new();
+            DynValue chunk = script.LoadString("return 1");
+
+            Assert.That(
+                () => script.Dump(chunk, null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("stream")
+            );
         }
 
         [Test]
@@ -319,6 +384,39 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Number, Is.EqualTo(123));
         }
 
+        private static readonly string[] AnswerModuleName = { "answer" };
+        private static readonly string[] AnswerModuleFile = { "answer.lua" };
+
+        [Test]
+        public void RequireModuleLoadsChunkViaScriptLoader()
+        {
+            ModuleScriptLoader loader = new() { ModuleCode = "return 42" };
+            Script script = new(new ScriptOptions { ScriptLoader = loader });
+
+            DynValue module = script.RequireModule("answer");
+            DynValue result = script.Call(module);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader.ResolvedModuleNames, Is.EqualTo(AnswerModuleName));
+                Assert.That(loader.LoadedFiles, Is.EqualTo(AnswerModuleFile));
+                Assert.That(result.Number, Is.EqualTo(42));
+            });
+        }
+
+        [Test]
+        public void RequireModuleThrowsWhenLoaderCannotResolveName()
+        {
+            ModuleScriptLoader loader = new() { ModuleExists = false };
+            Script script = new(new ScriptOptions { ScriptLoader = loader });
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.RequireModule("missing")
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("module 'missing' not found"));
+        }
+
         private static DynValue CompileFunction(Script script, string luaFunctionSource)
         {
             DynValue chunk = script.LoadString($"return {luaFunctionSource}");
@@ -416,6 +514,37 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                     base.Dispose(disposing);
                 }
+            }
+        }
+
+        private sealed class ModuleScriptLoader : IScriptLoader
+        {
+            private readonly List<string> _resolved = new();
+            private readonly List<string> _loaded = new();
+
+            public bool ModuleExists { get; set; } = true;
+
+            public string ModuleCode { get; set; } = "return function() return 0 end";
+
+            public IReadOnlyList<string> ResolvedModuleNames => _resolved;
+
+            public IReadOnlyList<string> LoadedFiles => _loaded;
+
+            public object LoadFile(string file, Table globalContext)
+            {
+                _loaded.Add(file);
+                return ModuleCode;
+            }
+
+            public string ResolveFileName(string filename, Table globalContext)
+            {
+                return filename;
+            }
+
+            public string ResolveModuleName(string modname, Table globalContext)
+            {
+                _resolved.Add(modname);
+                return ModuleExists ? $"{modname}.lua" : null;
             }
         }
     }

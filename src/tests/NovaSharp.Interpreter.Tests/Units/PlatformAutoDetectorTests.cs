@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Security;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
@@ -54,6 +55,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void AutoDetectionWithoutUnityAssembliesPrefersFileSystemLoader()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader, Is.TypeOf<FileSystemScriptLoader>());
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.False);
+                Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
+            });
+        }
+
+        [Test]
         public void IsRunningOnAotUsesCachedValueAfterProbe()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
@@ -100,13 +116,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
         }
 
-        [Test]
-        public void IsRunningOnAotTreatsProbeExceptionsAsAotHosts()
+        [TestCase(typeof(PlatformNotSupportedException))]
+        [TestCase(typeof(System.Security.SecurityException))]
+        public void IsRunningOnAotTreatsProbeExceptionsAsAotHosts(Type exceptionType)
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
-                throw new PlatformNotSupportedException()
-            );
+            {
+                Exception instance = (Exception)Activator.CreateInstance(exceptionType);
+                throw instance;
+            });
 
             Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
         }

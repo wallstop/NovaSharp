@@ -147,5 +147,45 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .With.Message.Contains("Attempt to perform arithmetic")
             );
         }
+
+        [Test]
+        public void EvalBitNotReturnsOnIntegerOperand()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewNumber(0b1010));
+            Token bitNotToken = new Token(TokenType.OpBitNotOrXor, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "~",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, bitNotToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+            DynValue result = expression.Eval(executionContext);
+
+            Assert.That(result.Number, Is.EqualTo(~0b1010));
+        }
+
+        [Test]
+        public void EvalBitNotThrowsOnNonInteger()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewNumber(3.14));
+            Token bitNotToken = new Token(TokenType.OpBitNotOrXor, 0, 0, 0, 0, 0, 0, 0)
+            {
+                Text = "~",
+            };
+            UnaryOperatorExpression expression = new(ctx, literal, bitNotToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => expression.Eval(executionContext),
+                Throws
+                    .TypeOf<NovaSharp.Interpreter.Errors.DynamicExpressionException>()
+                    .With.Message.Contains("bitwise operation on non-integers")
+            );
+        }
     }
 }
