@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Reflection;
     using System.Reflection.Emit;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
 
@@ -16,6 +17,21 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             "from_unity.lua",
             "extra.lua",
+        };
+        private static readonly System.Type[] RecoverableExceptionTypes =
+        {
+            typeof(ScriptRuntimeException),
+            typeof(FileNotFoundException),
+            typeof(DirectoryNotFoundException),
+            typeof(UnauthorizedAccessException),
+            typeof(IOException),
+            typeof(System.Security.SecurityException),
+            typeof(InvalidOperationException),
+            typeof(NotSupportedException),
+            typeof(TypeLoadException),
+            typeof(MissingMethodException),
+            typeof(TargetInvocationException),
+            typeof(ArgumentException),
         };
 
         [Test]
@@ -118,6 +134,47 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
+        [TestCaseSource(nameof(RecoverableExceptionTypes))]
+        public void ReflectionConstructorHandlesRecoverableExceptions(System.Type exceptionType)
+        {
+            UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
+            UnityEngineReflectionHarness.SetThrowOnLoad(() =>
+            {
+                return CreateExceptionInstance(exceptionType);
+            });
+
+            try
+            {
+                UnityAssetsScriptLoader loader = new("Fallback/Scripts");
+                Assert.Multiple(() =>
+                {
+                    Assert.That(loader.ScriptFileExists("any.lua"), Is.False);
+                    Assert.That(loader.GetLoadedScripts(), Is.Empty);
+                });
+            }
+            finally
+            {
+                UnityEngineReflectionHarness.SetThrowOnLoad(false);
+            }
+        }
+
+        private static Exception CreateExceptionInstance(System.Type exceptionType)
+        {
+            ConstructorInfo ctor = exceptionType.GetConstructor(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                binder: null,
+                types: Type.EmptyTypes,
+                modifiers: null
+            );
+
+            if (ctor != null)
+            {
+                return (Exception)ctor.Invoke(null);
+            }
+
+            return (Exception)Activator.CreateInstance(exceptionType)!;
+        }
+
         [Test]
         public void LoadFileThrowsArgumentNullWhenNameMissing()
         {
@@ -145,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private static readonly object SyncRoot = new();
         private static bool AssemblyBuilt;
-        private static bool ThrowOnLoad;
+        private static Func<Exception> ThrowOnLoadFactory;
         private static Assembly UnityAssembly;
         private static Dictionary<string, string> Scripts = new(StringComparer.OrdinalIgnoreCase);
 
@@ -168,16 +225,24 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         internal static void SetThrowOnLoad(bool shouldThrow)
         {
-            ThrowOnLoad = shouldThrow;
+            ThrowOnLoadFactory = shouldThrow
+                ? () => new InvalidOperationException("Simulated Unity failure.")
+                : null;
+        }
+
+        internal static void SetThrowOnLoad(Func<Exception> exceptionFactory)
+        {
+            ThrowOnLoadFactory = exceptionFactory;
         }
 
         public static Array BuildAssetArray(string assetsPath, Type textAssetType)
         {
             LastRequestedPath = assetsPath;
 
-            if (ThrowOnLoad)
+            Func<Exception> exceptionFactory = ThrowOnLoadFactory;
+            if (exceptionFactory != null)
             {
-                throw new InvalidOperationException("Simulated Unity failure.");
+                throw exceptionFactory();
             }
 
             Array array = Array.CreateInstance(textAssetType, Scripts.Count);

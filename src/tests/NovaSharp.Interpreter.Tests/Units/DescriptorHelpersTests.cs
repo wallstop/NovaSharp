@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Reflection.Emit;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NUnit.Framework;
@@ -475,28 +476,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
-            [SuppressMessage(
-                "Design",
-                "CA1051:Do not declare visible instance fields",
-                Justification = "Tests require concrete public fields to validate DescriptorHelpers visibility logic."
-            )]
-            public static int PublicFieldValue;
-
-            internal static int InternalFieldValue;
-
-            protected static int ProtectedFieldValue;
-
-            protected internal static int ProtectedInternalFieldValue;
-
-            public MemberVisibilityFixtures()
-            {
-                PublicFieldValue = 0;
-                InternalFieldValue = 0;
-                ProtectedFieldValue = 0;
-                ProtectedInternalFieldValue = 0;
-                AnchorFieldUsage();
-            }
-
             public void PublicMethod()
             {
                 TouchInstance();
@@ -512,39 +491,19 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TouchInstance();
             }
 
-            private void AnchorFieldUsage()
-            {
-                _invocationCount += PublicFieldValue;
-                _invocationCount += InternalFieldValue;
-                _invocationCount += ProtectedFieldValue;
-                _invocationCount += ProtectedInternalFieldValue;
-            }
-
             internal static class Metadata
             {
                 internal static FieldInfo PublicField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(MemberVisibilityFixtures.PublicFieldValue),
-                        BindingFlags.Public | BindingFlags.Static
-                    )!;
+                    FieldVisibilityFixtures.PublicField;
 
                 internal static FieldInfo InternalField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(MemberVisibilityFixtures.InternalFieldValue),
-                        BindingFlags.NonPublic | BindingFlags.Static
-                    )!;
+                    FieldVisibilityFixtures.InternalField;
 
                 internal static FieldInfo ProtectedField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(MemberVisibilityFixtures.ProtectedFieldValue),
-                        BindingFlags.NonPublic | BindingFlags.Static
-                    )!;
+                    FieldVisibilityFixtures.ProtectedField;
 
                 internal static FieldInfo ProtectedInternalField { get; } =
-                    typeof(MemberVisibilityFixtures).GetField(
-                        nameof(MemberVisibilityFixtures.ProtectedInternalFieldValue),
-                        BindingFlags.NonPublic | BindingFlags.Static
-                    )!;
+                    FieldVisibilityFixtures.ProtectedInternalField;
 
                 internal static MethodInfo PrivateMethod { get; } =
                     GetInstanceMethod(f => f.PrivateMethod());
@@ -580,6 +539,69 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                     throw new InvalidOperationException("Expected member expression.");
                 }
+            }
+        }
+
+        private static class FieldVisibilityFixtures
+        {
+            private const string AssemblyNameValue = "DescriptorHelpersFieldFixtures";
+            private const string ModuleName = "FieldVisibilityFixtures";
+            private const string TypeName = "DescriptorHelpers.FieldVisibilityHost";
+            private const string PublicFieldName = "PublicField";
+            private const string InternalFieldName = "InternalField";
+            private const string ProtectedFieldName = "ProtectedField";
+            private const string ProtectedInternalFieldName = "ProtectedInternalField";
+
+            private static readonly Type FieldHostType = CreateFieldHostType();
+
+            internal static readonly FieldInfo PublicField = FieldHostType.GetField(
+                PublicFieldName,
+                BindingFlags.Public | BindingFlags.Static
+            )!;
+
+            internal static readonly FieldInfo InternalField = FieldHostType.GetField(
+                InternalFieldName,
+                BindingFlags.NonPublic | BindingFlags.Static
+            )!;
+
+            internal static readonly FieldInfo ProtectedField = FieldHostType.GetField(
+                ProtectedFieldName,
+                BindingFlags.NonPublic | BindingFlags.Static
+            )!;
+
+            internal static readonly FieldInfo ProtectedInternalField = FieldHostType.GetField(
+                ProtectedInternalFieldName,
+                BindingFlags.NonPublic | BindingFlags.Static
+            )!;
+
+            private static Type CreateFieldHostType()
+            {
+                AssemblyName name = new(AssemblyNameValue);
+                AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(
+                    name,
+                    AssemblyBuilderAccess.Run
+                );
+                ModuleBuilder module = assembly.DefineDynamicModule(ModuleName);
+                TypeBuilder builder = module.DefineType(
+                    TypeName,
+                    TypeAttributes.Class | TypeAttributes.NotPublic
+                );
+
+                DefineField(builder, PublicFieldName, FieldAttributes.Public);
+                DefineField(builder, InternalFieldName, FieldAttributes.Assembly);
+                DefineField(builder, ProtectedFieldName, FieldAttributes.Family);
+                DefineField(builder, ProtectedInternalFieldName, FieldAttributes.FamORAssem);
+
+                return builder.CreateTypeInfo()!.AsType();
+            }
+
+            private static void DefineField(
+                TypeBuilder builder,
+                string fieldName,
+                FieldAttributes visibility
+            )
+            {
+                builder.DefineField(fieldName, typeof(int), visibility | FieldAttributes.Static);
             }
         }
 

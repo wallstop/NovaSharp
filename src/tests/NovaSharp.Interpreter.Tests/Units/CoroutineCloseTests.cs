@@ -183,6 +183,63 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CloseClrCallbackCoroutineReturnsTrue()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewNumber(1));
+            DynValue coroutineValue = script.CreateCoroutine(callback);
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.NotStarted));
+            });
+        }
+
+        [Test]
+        public void CloseForceSuspendedCoroutineUnwindsSuccessfully()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function heavy_close()
+                    local total = 0
+                    for i = 1, 500 do
+                        total = total + i
+                    end
+                    return total
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavy_close"));
+            coroutineValue.Coroutine.AutoYieldCounter = 1;
+
+            DynValue forcedYield = coroutineValue.Coroutine.Resume();
+            Assert.Multiple(() =>
+            {
+                Assert.That(forcedYield.Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(forcedYield.YieldRequest.Forced, Is.True);
+                Assert.That(
+                    coroutineValue.Coroutine.State,
+                    Is.EqualTo(CoroutineState.ForceSuspended)
+                );
+            });
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
         public void ClosePropagatesErrorsFromCloseMetamethod()
         {
             Script script = new(CoreModules.PresetComplete);

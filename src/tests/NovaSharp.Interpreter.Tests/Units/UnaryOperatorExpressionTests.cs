@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree.Expressions;
     using NovaSharp.Interpreter.Tree.Lexer;
     using NUnit.Framework;
@@ -186,6 +187,51 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .TypeOf<NovaSharp.Interpreter.Errors.DynamicExpressionException>()
                     .With.Message.Contains("bitwise operation on non-integers")
             );
+        }
+
+        [Test]
+        public void CompileEmitsExpectedOpcodeForSupportedOperators()
+        {
+            (string Text, TokenType TokenType, OpCode Expected)[] scenarios =
+            {
+                ("not", TokenType.Not, OpCode.Not),
+                ("#", TokenType.OpLen, OpCode.Len),
+                ("-", TokenType.OpMinusOrSub, OpCode.Neg),
+                ("~", TokenType.OpBitNotOrXor, OpCode.BitNot),
+            };
+
+            foreach ((string text, TokenType tokenType, OpCode expected) in scenarios)
+            {
+                Script script = new Script();
+                Execution.ScriptLoadingContext ctx = new(script);
+                LiteralExpression literal = new(ctx, DynValue.NewNumber(1));
+                Token token = CreateToken(tokenType, text);
+
+                UnaryOperatorExpression expression = new(ctx, literal, token);
+                ByteCode byteCode = new(script);
+
+                expression.Compile(byteCode);
+
+                Instruction emitted = byteCode.Code[^1];
+                Assert.That(emitted.OpCode, Is.EqualTo(expected));
+            }
+        }
+
+        private static Token CreateToken(TokenType type, string text)
+        {
+            return new Token(
+                type,
+                sourceId: 0,
+                fromLine: 1,
+                fromCol: 1,
+                toLine: 1,
+                toCol: 1,
+                prevLine: 1,
+                prevCol: 1
+            )
+            {
+                Text = text,
+            };
         }
     }
 }

@@ -409,6 +409,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
+        [SuppressMessage(
+            "Design",
+            "CA1051:Do not declare visible instance fields",
+            Justification = "Public instance fields intentionally exercise FieldMemberDescriptor visibility behaviours."
+        )]
         private sealed class SampleFields
         {
             public const int ConstValue = 7;

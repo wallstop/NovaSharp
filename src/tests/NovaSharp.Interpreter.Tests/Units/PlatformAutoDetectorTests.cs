@@ -117,6 +117,10 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [TestCase(typeof(PlatformNotSupportedException))]
+        [TestCase(typeof(MemberAccessException))]
+        [TestCase(typeof(NotSupportedException))]
+        [TestCase(typeof(InvalidOperationException))]
+        [TestCase(typeof(TypeLoadException))]
         [TestCase(typeof(System.Security.SecurityException))]
         public void IsRunningOnAotTreatsProbeExceptionsAsAotHosts(Type exceptionType)
         {
@@ -128,6 +132,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
 
             Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
+        }
+
+        [Test]
+        public void SetFlagsUpdatesPortableFrameworkIndicator()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            PlatformDetectorScope.SetFlags(isPortableFramework: true);
+
+            Assert.That(PlatformAutoDetector.IsPortableFramework, Is.True);
         }
 
         private sealed class PlatformDetectorScope : IDisposable
