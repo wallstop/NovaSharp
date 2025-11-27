@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.Units
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using NovaSharp.Interpreter;
@@ -8,6 +9,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tree;
+    using NovaSharp.Interpreter.Tree.Expressions;
     using NUnit.Framework;
 
     [TestFixture]
@@ -1209,6 +1212,47 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void RefreshDebuggerCapturesClrWatchExceptions()
+        {
+            Script script = new();
+            script.LoadString("return 16");
+
+            Processor processor = script.GetMainProcessorForTests();
+            PrepareCallStack(processor);
+
+            const string message = "watch exploded";
+            ScriptLoadingContext loadingContext = new(script);
+            Expression throwingExpression = new ThrowingExpression(loadingContext, message);
+            DynamicExprExpression dynamicExpression = new(throwingExpression, loadingContext);
+            DynamicExpression failingWatch = new(script, "clrThrow", dynamicExpression);
+
+            StubDebugger debugger = new() { PauseRequested = true };
+            debugger.WatchItems.Add(failingWatch);
+            debugger.EnqueueAction(DebuggerAction.ActionType.Run);
+            processor.AttachDebuggerForTests(debugger, lineBasedBreakpoints: false);
+
+            processor.ConfigureDebuggerActionForTests(
+                DebuggerAction.ActionType.None,
+                actionTarget: -1,
+                executionStackDepth: 0,
+                lastHighlight: SourceRef.GetClrLocation()
+            );
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { OpCode = OpCode.Debug };
+
+            processor.ListenDebuggerForTests(instruction, instructionPtr: 5);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(debugger.LastWatchUpdates.ContainsKey(WatchType.Watches), Is.True);
+                WatchItem watch = debugger.LastWatchUpdates[WatchType.Watches].Single();
+                Assert.That(watch.IsError, Is.True);
+                Assert.That(watch.Value.Type, Is.EqualTo(DataType.String));
+                Assert.That(watch.Value.String, Does.Contain(message));
+            });
+        }
+
+        [Test]
         public void RefreshDebuggerHandlesEmptyWatchList()
         {
             Script script = new();
@@ -1327,6 +1371,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             SourceCode source = script.GetSourceCode(0);
             return source.Refs.First(r => !r.CannotBreakpoint);
+        }
+
+        private sealed class ThrowingExpression : Expression
+        {
+            private readonly string _message;
+
+            public ThrowingExpression(ScriptLoadingContext context, string message)
+                : base(context)
+            {
+                _message = message;
+            }
+
+            public override DynValue Eval(ScriptExecutionContext context)
+            {
+                throw new InvalidOperationException(_message);
+            }
+
+            public override void Compile(ByteCode bc)
+            {
+                throw new NotSupportedException("ThrowingExpression cannot compile.");
+            }
         }
 
         private sealed class StubDebugger : IDebugger

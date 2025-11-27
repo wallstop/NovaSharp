@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.IO;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Security;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
@@ -150,6 +151,33 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     Assert.That(loader.ScriptFileExists("any.lua"), Is.False);
                     Assert.That(loader.GetLoadedScripts(), Is.Empty);
+                });
+            }
+            finally
+            {
+                UnityEngineReflectionHarness.SetThrowOnLoad(false);
+            }
+        }
+
+        [Test]
+        public void ReflectionConstructorUnwrapsTargetInvocationExceptions()
+        {
+            UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
+            UnityEngineReflectionHarness.SetThrowOnLoad(() =>
+                new TargetInvocationException(new SecurityException("denied"))
+            );
+
+            try
+            {
+                UnityAssetsScriptLoader loader = new("Secure/Scripts");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(loader.GetLoadedScripts(), Is.Empty);
+                    Assert.That(
+                        UnityEngineReflectionHarness.LastRequestedPath,
+                        Is.EqualTo("Secure/Scripts")
+                    );
                 });
             }
             finally

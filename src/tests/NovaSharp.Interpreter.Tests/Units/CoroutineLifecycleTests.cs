@@ -239,5 +239,118 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
             });
         }
+
+        [Test]
+        public void CloseSuspendedCoroutineReturnsTrue()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function closable_success()
+                    local handle <close> = setmetatable({}, { __close = function() end })
+                    coroutine.yield('pause')
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("closable_success")
+            );
+            coroutineValue.Coroutine.Resume();
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
+        public void CloseSuspendedCoroutinePropagatesErrors()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function closable_failure()
+                    local handle <close> = setmetatable({}, {
+                        __close = function() error('close-fail') end
+                    })
+                    coroutine.yield('pause')
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("closable_failure")
+            );
+            coroutineValue.Coroutine.Resume();
+            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(closeResult.Tuple[0].Boolean, Is.False);
+                Assert.That(closeResult.Tuple[1].String, Does.Contain("close-fail"));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
+        public void CloseNotStartedCoroutineReturnsTrue()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString("function never_started() return 5 end");
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("never_started"));
+
+            DynValue closeResult = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(closeResult.Type, Is.EqualTo(DataType.Boolean));
+                Assert.That(closeResult.Boolean, Is.True);
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
+        public void CloseDeadCoroutineReturnsLastErrorTuple()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function closable_failure()
+                    local handle <close> = setmetatable({}, {
+                        __close = function() error('close-dead') end
+                    })
+                    coroutine.yield()
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(
+                script.Globals.Get("closable_failure")
+            );
+            coroutineValue.Coroutine.Resume();
+
+            DynValue firstClose = coroutineValue.Coroutine.Close();
+            Assert.That(firstClose.Tuple[0].Boolean, Is.False);
+
+            DynValue secondClose = coroutineValue.Coroutine.Close();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(secondClose.Type, Is.EqualTo(DataType.Tuple));
+                Assert.That(secondClose.Tuple[0].Boolean, Is.False);
+                Assert.That(secondClose.Tuple[1].String, Does.Contain("close-dead"));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
     }
 }

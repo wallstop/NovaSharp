@@ -128,6 +128,25 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void EvalLengthThrowsWhenOperandHasNoLength()
+        {
+            Script script = new Script();
+            Execution.ScriptLoadingContext ctx = new(script);
+            LiteralExpression literal = new(ctx, DynValue.NewNumber(5));
+            Token lenToken = new Token(TokenType.OpLen, 0, 0, 0, 0, 0, 0, 0) { Text = "#" };
+            UnaryOperatorExpression expression = new(ctx, literal, lenToken);
+
+            ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
+
+            Assert.That(
+                () => expression.Eval(executionContext),
+                Throws
+                    .TypeOf<NovaSharp.Interpreter.Errors.ScriptRuntimeException>()
+                    .With.Message.Contains("Can't get length of type Number")
+            );
+        }
+
+        [Test]
         public void EvalThrowsWhenNegatingNonNumberLiteral()
         {
             Script script = new Script();

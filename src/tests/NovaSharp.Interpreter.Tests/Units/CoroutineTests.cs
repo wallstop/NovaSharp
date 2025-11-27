@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Linq;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
@@ -124,6 +125,21 @@ namespace NovaSharp.Interpreter.Tests.Units
             coroutine.Coroutine.MarkClrCallbackAsDead();
 
             Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+        }
+
+        [Test]
+        public void MarkClrCallbackAsDeadThrowsWhenCoroutineNotCallback()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+
+            Assert.That(
+                () => coroutine.Coroutine.MarkClrCallbackAsDead(),
+                Throws
+                    .TypeOf<InvalidOperationException>()
+                    .With.Message.Contains("CoroutineType.ClrCallback")
+            );
         }
 
         [Test]
@@ -322,6 +338,42 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void ResumeWithContextFromDifferentScriptThrows()
+        {
+            Script owningScript = new();
+            DynValue function = owningScript.DoString("return function() return 1 end");
+            DynValue coroutine = owningScript.CreateCoroutine(function);
+
+            Script foreignScript = new();
+            ScriptExecutionContext foreignContext = TestHelpers.CreateExecutionContext(
+                foreignScript
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.Resume(foreignContext)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("different scripts"));
+        }
+
+        [Test]
+        public void ResumeWithArgumentsFromDifferentScriptThrows()
+        {
+            Script owningScript = new();
+            DynValue function = owningScript.DoString("return function(value) return value end");
+            DynValue coroutine = owningScript.CreateCoroutine(function);
+
+            Script foreignScript = new();
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.Resume(foreignResource)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("different scripts"));
+        }
+
+        [Test]
         public void AutoYieldCounterProxiesProcessorValue()
         {
             Script script = new();
@@ -371,6 +423,32 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(result.Type, Is.EqualTo(DataType.Boolean));
             Assert.That(result.Boolean, Is.True);
             Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.NotStarted));
+        }
+
+        [Test]
+        public void GetStackTraceUsesSuspendedLocationWhenNotRunning()
+        {
+            Script script = new();
+            script.Options.DebugPrint = _ => { };
+            DynValue function = script.DoString(
+                @"
+                return function()
+                    local function inner()
+                        coroutine.yield('pause')
+                    end
+
+                    inner()
+                end
+            "
+            );
+
+            DynValue coroutine = script.CreateCoroutine(function);
+            DynValue yielded = coroutine.Coroutine.Resume();
+            Assert.That(yielded.ToScalar().ToObject<string>(), Is.EqualTo("pause"));
+
+            WatchItem[] stack = coroutine.Coroutine.GetStackTrace(0, SourceRef.GetClrLocation());
+
+            Assert.That(stack, Is.Not.Empty);
         }
     }
 }

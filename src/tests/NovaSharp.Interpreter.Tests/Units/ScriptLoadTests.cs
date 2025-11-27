@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Loaders;
     using NUnit.Framework;
@@ -316,6 +317,42 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 File.Delete(path);
             }
+        }
+
+        [Test]
+        public void CreateDynamicExpressionRegistersSourceAndEvaluates()
+        {
+            Script script = new();
+            int initialCount = script.SourceCodeCount;
+
+            DynamicExpression expression = script.CreateDynamicExpression("value * 2");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(script.SourceCodeCount, Is.EqualTo(initialCount + 1));
+                Assert.That(script.GetSourceCode(initialCount).Name, Does.Contain("__dynamic_"));
+            });
+
+            script.Globals.Set("value", DynValue.NewNumber(8));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            Assert.That(expression.Evaluate(context).Number, Is.EqualTo(16));
+        }
+
+        [Test]
+        public void CreateDynamicExpressionRemovesSourceOnFailure()
+        {
+            Script script = new();
+            int initialCount = script.SourceCodeCount;
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.CreateDynamicExpression("value +")
+            )!;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(exception.DecoratedMessage, Does.Contain("unexpected symbol"));
+                Assert.That(script.SourceCodeCount, Is.EqualTo(initialCount));
+            });
         }
 
         [Test]

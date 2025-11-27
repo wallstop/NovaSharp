@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.EndToEnd
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -66,26 +65,22 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 return b ? "T" : "F";
             }
 
-            [SuppressMessage(
-                "Design",
-                "CA1024:UsePropertiesWhereAppropriate",
-                Justification = "Enum interop coverage uses callable getters to validate overload resolution."
-            )]
-            public SampleRating Get()
+            public SampleRating DefaultRating
             {
-                RecordCall();
-                return SampleRating.Quattro;
+                get
+                {
+                    RecordCall();
+                    return SampleRating.Quattro;
+                }
             }
 
-            [SuppressMessage(
-                "Design",
-                "CA1024:UsePropertiesWhereAppropriate",
-                Justification = "Enum interop coverage uses callable getters to validate overload resolution."
-            )]
-            public SampleFlagSet GetF()
+            public SampleFlagSet DefaultFlagSet
             {
-                RecordCall();
-                return SampleFlagSet.Quattro;
+                get
+                {
+                    RecordCall();
+                    return SampleFlagSet.Quattro;
+                }
             }
         }
 
@@ -227,13 +222,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         [Test]
         public void InteropEnumRead()
         {
-            RunTestOverload("o:MyMethod(o:get())", "[Quattro]");
+            RunTestOverload("o:MyMethod(o.DefaultRating)", "[Quattro]");
         }
 
         [Test]
         public void InteropEnumFlagsOrMetaRead()
         {
-            RunTestOverload("o:MyMethod(o:getF() .. SampleFlagSet.Due)", "6");
+            RunTestOverload("o:MyMethod(o.DefaultFlagSet .. SampleFlagSet.Due)", "6");
         }
     }
 }

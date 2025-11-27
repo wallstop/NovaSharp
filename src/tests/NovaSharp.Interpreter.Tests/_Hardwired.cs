@@ -8809,10 +8809,10 @@ namespace MyNamespace
                                 new MTHD_7b96764fa73d45298794c41419accd97()}));
 				this.AddMember("MyMethodB", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("MyMethodB", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
                                 new MTHD_b388f2bcd57a4d8384be0f3078d4f5d5()}));
-				this.AddMember("Get", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("Get", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
-                                new MTHD_e4f8c8c532f143f9be3ca5232126b110()}));
-				this.AddMember("GetF", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("GetF", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
-                                new MTHD_e8c7f0e12dfa448db2f2cd8fb92e53f1()}));
+				this.AddMember("get_DefaultRating", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("get_DefaultRating", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
+                                new MTHD_d7e8f1a2ab0f4700bedc8a61f12d9d6a()}));
+				this.AddMember("get_DefaultFlagSet", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("get_DefaultFlagSet", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
+                                new MTHD_5d0b0dfc1e0b4d1d8a982ec32a52c4a6()}));
 				this.AddMember("ToString", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("ToString", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
                                 new MTHD_f98e618550a041e38cc7ee5275190c7f()}));
 				this.AddMember("Equals", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("Equals", typeof(NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
@@ -8897,31 +8897,31 @@ namespace MyNamespace
 				}
 			}
 
-			private sealed class MTHD_e4f8c8c532f143f9be3ca5232126b110 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
+			private sealed class MTHD_d7e8f1a2ab0f4700bedc8a61f12d9d6a : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
 			{
 
-				internal MTHD_e4f8c8c532f143f9be3ca5232126b110()
+				internal MTHD_d7e8f1a2ab0f4700bedc8a61f12d9d6a()
 				{
-					this.Initialize("Get", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
+					this.Initialize("get_DefaultRating", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
 				}
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass)(obj)).Get();
+					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass)(obj)).DefaultRating;
 				}
 			}
 
-			private sealed class MTHD_e8c7f0e12dfa448db2f2cd8fb92e53f1 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
+			private sealed class MTHD_5d0b0dfc1e0b4d1d8a982ec32a52c4a6 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
 			{
 
-				internal MTHD_e8c7f0e12dfa448db2f2cd8fb92e53f1()
+				internal MTHD_5d0b0dfc1e0b4d1d8a982ec32a52c4a6()
 				{
-					this.Initialize("GetF", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
+					this.Initialize("get_DefaultFlagSet", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
 				}
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass)(obj)).GetF();
+					return ((NovaSharp.Interpreter.Tests.EndToEnd.UserDataEnumsTests.EnumOverloadsTestClass)(obj)).DefaultFlagSet;
 				}
 			}
 
@@ -9482,8 +9482,8 @@ namespace MyNamespace
                                 new MTHD_c84f41c452134c5b949738dd9ace1f0a()}));
 				this.AddMember("set_WoIntProp2", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("set_WoIntProp2", typeof(NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
                                 new MTHD_842287ae93674dc9977e8915fa26a3ab()}));
-				this.AddMember("GetWoIntProp2", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("GetWoIntProp2", typeof(NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
-                                new MTHD_ed6a5e1607aa4996a2508e1d7cbf5236()}));
+				this.AddMember("get_WoIntProp2Value", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("get_WoIntProp2Value", typeof(NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
+                                new MTHD_98b7e6ca9d5a4cef8bb63a396ba60615()}));
 				this.AddMember("set_AccessOverrProp", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("set_AccessOverrProp", typeof(NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
                                 new MTHD_5e7a11a025c248599df3ea5681a3bfe1()}));
 				this.AddMember("get_Numbers", new NovaSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor("get_Numbers", typeof(NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass), new NovaSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor[] {
@@ -9707,17 +9707,17 @@ namespace MyNamespace
 				}
 			}
 
-			private sealed class MTHD_ed6a5e1607aa4996a2508e1d7cbf5236 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
+			private sealed class MTHD_98b7e6ca9d5a4cef8bb63a396ba60615 : NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor
 			{
 
-				internal MTHD_ed6a5e1607aa4996a2508e1d7cbf5236()
+				internal MTHD_98b7e6ca9d5a4cef8bb63a396ba60615()
 				{
-					this.Initialize("GetWoIntProp2", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
+					this.Initialize("get_WoIntProp2Value", false, new NovaSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[0], false);
 				}
 
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
-					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).GetWoIntProp2();
+					return ((NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataPropertiesTests.SomeClass)(obj)).WoIntProp2Value;
 				}
 			}
 

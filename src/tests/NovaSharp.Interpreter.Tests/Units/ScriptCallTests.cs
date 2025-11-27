@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
@@ -36,6 +37,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 () => script.Call(function, (object[])null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("args")
+            );
+        }
+
+        [Test]
+        public void CallWithNullFunctionThrows()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.Call((DynValue)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("function")
             );
         }
 
@@ -96,6 +108,52 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CallObjectOverloadInvokesClosureAndConvertsArguments()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString("function mul(a, b) return a * b end");
+            object closure = script.Globals.Get("mul").Function;
+
+            DynValue result = script.Call(closure, 6, 7);
+
+            Assert.That(result.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void CallObjectOverloadInvokesDelegateCallback()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, args) =>
+                DynValue.NewNumber(args[0].Number * 2);
+
+            DynValue result = script.Call(callback, 21);
+
+            Assert.That(result.Number, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void CallObjectOverloadRejectsNonCallableValues()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.Call((object)"not callable"),
+                Throws.TypeOf<ArgumentException>().With.Message.Contains("__call metamethod")
+            );
+        }
+
+        [Test]
+        public void CallObjectOverloadThrowsWhenFunctionNull()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.Call((object)null),
+                Throws.TypeOf<ArgumentException>().With.Message.Contains("__call metamethod")
+            );
+        }
+
+        [Test]
         public void CreateCoroutineValidatesInputs()
         {
             Script script = new(CoreModules.PresetComplete);
@@ -107,6 +165,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 () => script.CreateCoroutine(DynValue.NewNumber(1)),
                 Throws.ArgumentException.With.Message.Contains("DataType.Function")
+            );
+        }
+
+        [Test]
+        public void CreateCoroutineThrowsWhenFunctionNull()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.CreateCoroutine((DynValue)null),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("function")
             );
         }
 
@@ -247,6 +316,22 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void CallObjectOverloadRejectsForeignClosure()
+        {
+            Script scriptA = new(CoreModules.PresetComplete);
+            scriptA.DoString("function noop() return 1 end");
+            object foreignClosure = scriptA.Globals.Get("noop").Function;
+
+            Script scriptB = new(CoreModules.PresetComplete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                scriptB.Call(foreignClosure)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("different scripts"));
+        }
+
+        [Test]
         public void CreateCoroutineRejectsFunctionsOwnedByDifferentScripts()
         {
             Script scriptA = new(CoreModules.PresetComplete);
@@ -255,6 +340,79 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptB.CreateCoroutine(foreignFunction)
+            )!;
+
+            Assert.That(exception.Message, Does.Contain("different scripts"));
+        }
+
+        [Test]
+        public void CreateCoroutineObjectOverloadUsesClosure()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function generator()
+                    coroutine.yield(5)
+                    return 6
+                end
+            "
+            );
+
+            object closure = script.Globals.Get("generator").Function;
+            DynValue coroutine = script.CreateCoroutine(closure);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            DynValue second = coroutine.Coroutine.Resume();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Number, Is.EqualTo(5));
+                Assert.That(second.Number, Is.EqualTo(6));
+            });
+        }
+
+        [Test]
+        public void CreateCoroutineObjectOverloadSupportsDelegates()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, _) =>
+                DynValue.NewNumber(99);
+
+            DynValue coroutineValue = script.CreateCoroutine(callback);
+            coroutineValue.Coroutine.OwnerScript = script;
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            DynValue result = coroutineValue.Coroutine.Resume(context);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Number, Is.EqualTo(99));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
+        public void CreateCoroutineObjectOverloadRejectsNonCallable()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            Assert.That(
+                () => script.CreateCoroutine((object)"invalid"),
+                Throws.ArgumentException.With.Message.Contains("DataType.Function")
+            );
+        }
+
+        [Test]
+        public void CreateCoroutineObjectOverloadRejectsForeignClosure()
+        {
+            Script scriptA = new(CoreModules.PresetComplete);
+            scriptA.DoString("function noop() return 0 end");
+            object foreignClosure = scriptA.Globals.Get("noop").Function;
+
+            Script scriptB = new(CoreModules.PresetComplete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                scriptB.CreateCoroutine(foreignClosure)
             )!;
 
             Assert.That(exception.Message, Does.Contain("different scripts"));

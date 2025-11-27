@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [NonParallelizable]
     public sealed class PlatformAutoDetectorTests
     {
         [Test]
@@ -22,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(platform, Is.TypeOf<LimitedPlatformAccessor>());
         }
 
-        [Test]
+        [Test, Order(2)]
         public void GetDefaultScriptLoaderDetectsUnityAssemblies()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
@@ -54,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(loader, Is.TypeOf<FileSystemScriptLoader>());
         }
 
-        [Test]
+        [Test, Order(1)]
         public void AutoDetectionWithoutUnityAssembliesPrefersFileSystemLoader()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
@@ -66,6 +67,21 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(loader, Is.TypeOf<FileSystemScriptLoader>());
                 Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.False);
                 Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
+            });
+        }
+
+        [Test, Order(3)]
+        public void AutoDetectionMarksUnityWhenUnityTypesPresent()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            UnityTypeProbe.EnsureTypeLoaded();
+
+            IPlatformAccessor platform = PlatformAutoDetector.GetDefaultPlatform();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(platform, Is.TypeOf<LimitedPlatformAccessor>());
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
             });
         }
 
@@ -268,6 +284,33 @@ namespace NovaSharp.Interpreter.Tests.Units
                     .CreateTypeInfo();
 
                 IsLoaded = true;
+            }
+        }
+
+        private static class UnityTypeProbe
+        {
+            private static bool IsInjected;
+
+            public static void EnsureTypeLoaded()
+            {
+                if (IsInjected)
+                {
+                    return;
+                }
+
+                AssemblyBuilder assembly = AssemblyBuilder.DefineDynamicAssembly(
+                    new AssemblyName("UnityEngine.PlatformProbe"),
+                    AssemblyBuilderAccess.Run
+                );
+                ModuleBuilder module = assembly.DefineDynamicModule("UnityPlatformProbe");
+                module
+                    .DefineType(
+                        "UnityEngine.PlatformProbe",
+                        TypeAttributes.Public | TypeAttributes.Class
+                    )
+                    .CreateTypeInfo();
+
+                IsInjected = true;
             }
         }
     }
