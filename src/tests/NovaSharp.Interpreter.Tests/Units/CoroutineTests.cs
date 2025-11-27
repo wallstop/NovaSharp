@@ -338,6 +338,33 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void AutoYieldCounterForcesSuspendUntilResumed()
+        {
+            Script script = new();
+            DynValue function = script.DoString("return function() return 42 end");
+            DynValue coroutine = script.CreateCoroutine(function);
+            coroutine.Coroutine.AutoYieldCounter = 1;
+
+            DynValue forced = coroutine.Coroutine.Resume();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(forced.Type, Is.EqualTo(DataType.YieldRequest));
+                Assert.That(forced.YieldRequest.Forced, Is.True);
+                Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.ForceSuspended));
+            });
+
+            coroutine.Coroutine.AutoYieldCounter = 0;
+            DynValue finalResult = coroutine.Coroutine.Resume();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(finalResult.Number, Is.EqualTo(42));
+                Assert.That(coroutine.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
+
+        [Test]
         public void ResumeWithContextFromDifferentScriptThrows()
         {
             Script owningScript = new();

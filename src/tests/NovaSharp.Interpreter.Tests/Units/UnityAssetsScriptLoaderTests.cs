@@ -118,6 +118,27 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void DefaultConstructorUsesDefaultPath()
+        {
+            Dictionary<string, string> resources = new() { ["alpha.lua"] = "return 1" };
+
+            UnityEngineReflectionHarness.EnsureUnityAssemblies(resources);
+            UnityEngineReflectionHarness.SetThrowOnLoad(false);
+
+            UnityAssetsScriptLoader loader = new();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader.ScriptFileExists("alpha.lua"), Is.True);
+                Assert.That(
+                    UnityEngineReflectionHarness.LastRequestedPath,
+                    Is.EqualTo(UnityAssetsScriptLoader.DefaultPath)
+                );
+                Assert.That(loader.LoadFile("alpha.lua", null!), Is.EqualTo("return 1"));
+            });
+        }
+
+        [Test]
         public void ReflectionConstructorHandlesFailuresGracefully()
         {
             UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());

@@ -137,6 +137,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
 
         [Test]
+        public void LoadFileInvokesLegacyResolveFileNameFallback()
+        {
+            LegacyScriptLoader loader = new();
+            Script script = new(new ScriptOptions { ScriptLoader = loader });
+
+            DynValue chunk = script.LoadFile("   legacy.lua  ");
+            DynValue result = script.Call(chunk);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(loader.WasResolveFileNameCalled, Is.True);
+                Assert.That(loader.LastResolvedFilename, Is.EqualTo("   legacy.lua  "));
+                Assert.That(loader.LastLoadedFile, Is.EqualTo("legacy.lua"));
+                Assert.That(result.Number, Is.EqualTo(77));
+            });
+        }
+
+        [Test]
         public void DumpRejectsNonFunctionValues()
         {
             Script script = new();
@@ -615,6 +633,41 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 _resolved.Add(modname);
                 return ModuleExists ? $"{modname}.lua" : null;
+            }
+        }
+
+        private sealed class LegacyScriptLoader : IScriptLoader
+        {
+            public bool WasResolveFileNameCalled { get; private set; }
+
+            public string LastResolvedFilename { get; private set; }
+
+            public string LastLoadedFile { get; private set; }
+
+            public bool ScriptFileExistsCalled { get; private set; }
+
+            public object LoadFile(string file, Table globalContext)
+            {
+                LastLoadedFile = file;
+                return "return 77";
+            }
+
+            public string ResolveFileName(string filename, Table globalContext)
+            {
+                WasResolveFileNameCalled = true;
+                LastResolvedFilename = filename;
+                return filename?.Trim();
+            }
+
+            public string ResolveModuleName(string modname, Table globalContext)
+            {
+                return modname;
+            }
+
+            public bool ScriptFileExists(string name)
+            {
+                ScriptFileExistsCalled = true;
+                return true;
             }
         }
     }
