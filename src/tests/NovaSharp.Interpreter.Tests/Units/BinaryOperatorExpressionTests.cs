@@ -19,7 +19,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OrShortCircuitsWhenFirstOperandIsTruthy()
         {
             Script script = new Script();
-            StubExpression rhsStub = null!;
+            StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -47,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void OrEvaluatesSecondOperandWhenFirstIsFalsey()
         {
             Script script = new Script();
-            StubExpression rhsStub = null!;
+            StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AndShortCircuitsWhenFirstOperandIsFalsey()
         {
             Script script = new Script();
-            StubExpression rhsStub = null!;
+            StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -103,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AndEvaluatesSecondOperandWhenFirstIsTruthy()
         {
             Script script = new Script();
-            StubExpression rhsStub = null!;
+            StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
                 script,

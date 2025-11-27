@@ -11,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ExitCommandTests : IDisposable
     {
-        private ConsoleCaptureScope _consoleScope = null!;
+        private ConsoleCaptureScope _consoleScope;
 
         [SetUp]
         public void SetUp()
@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             ExitCommand command = new();
 
-            Assert.That(() => command.Execute(null!, string.Empty), Throws.ArgumentNullException);
+            Assert.That(() => command.Execute(null, string.Empty), Throws.ArgumentNullException);
         }
 
         public void Dispose()
@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             if (_consoleScope != null)
             {
                 _consoleScope.Dispose();
-                _consoleScope = null!;
+                _consoleScope = null;
             }
         }
     }

@@ -241,6 +241,7 @@ namespace NovaSharp.Interpreter.Tests
             typeof(global::NovaSharp.Interpreter.Tests.Units.UnaryOperatorExpressionTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.UndisposableStreamTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.UnityAssetsScriptLoaderTests),
+            typeof(global::NovaSharp.Interpreter.Tests.Units.UserDataIsolationTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.UserDataTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.Utf8ModuleTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.Utf8TcpServerTests),

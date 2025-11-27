@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             FileSystemScriptLoader loader = new();
 
             Assert.That(
-                () => loader.ScriptFileExists(null!),
+                () => loader.ScriptFileExists(null),
                 Throws.TypeOf<ArgumentNullException>()
             );
         }

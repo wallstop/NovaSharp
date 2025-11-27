@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class GotoTests
     {
         [Test]
@@ -58,7 +59,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void GotoUndefinedLabel()
         {
             string script =
@@ -66,11 +66,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				goto there
 				";
 
-            Script.RunString(script);
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void GotoDoubleDefinedLabel()
         {
             string script =
@@ -79,7 +78,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				::label::
 				";
 
-            Script.RunString(script);
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]
@@ -117,7 +116,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void GotoUndefinedLabel2()
         {
             string script =
@@ -130,14 +128,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 				";
 
-            DynValue res = Script.RunString(script);
-
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void GotoVarInScope()
         {
             string script =
@@ -147,10 +141,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				::f::
 				";
 
-            DynValue res = Script.RunString(script);
-
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]

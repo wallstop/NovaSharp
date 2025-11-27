@@ -9,6 +9,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class MetatableTests
     {
         [Test]

@@ -11,8 +11,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ShellCommandManagerTests : IDisposable
     {
-        private ConsoleCaptureScope _consoleScope = null!;
-        private ShellContext _context = null!;
+        private ConsoleCaptureScope _consoleScope;
+        private ShellContext _context;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -86,7 +86,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void NullContextThrowsArgumentNullException()
         {
             Assert.That(
-                () => CommandManager.Execute(null!, "help"),
+                () => CommandManager.Execute(null, "help"),
                 Throws
                     .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
                     .EqualTo("context")
@@ -97,7 +97,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void NullCommandLineThrowsArgumentNullException()
         {
             Assert.That(
-                () => CommandManager.Execute(_context, null!),
+                () => CommandManager.Execute(_context, null),
                 Throws
                     .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
                     .EqualTo("commandLine")

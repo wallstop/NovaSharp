@@ -12,9 +12,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HardwireCommandTests
     {
-        private TextWriter _originalOut = null!;
-        private TextReader _originalIn = null!;
-        private Func<string, Table> _originalDumpLoader = null!;
+        private TextWriter _originalOut;
+        private TextReader _originalIn;
+        private Func<string, Table> _originalDumpLoader;
 
         [SetUp]
         public void SetUp()

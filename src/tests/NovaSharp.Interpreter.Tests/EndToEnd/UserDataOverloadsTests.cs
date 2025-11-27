@@ -40,6 +40,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     }
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class UserDataOverloadsTests
     {
         private int _helperCallCount;
@@ -259,21 +261,19 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropOverloadsExtMethods2()
         {
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
-            RunTestOverload("s:method3()", "X3");
+            Assert.Throws<ScriptRuntimeException>(() => RunTestOverload("s:method3()", "X3"));
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropOverloadsStatic2()
         {
             // pollute cache
             RunTestOverload("o:method1(5)", "3");
             // exec non static on static
-            RunTestOverload("s:method1(5)", "s");
+            Assert.Throws<ScriptRuntimeException>(() => RunTestOverload("s:method1(5)", "s"));
         }
 
         [Test]

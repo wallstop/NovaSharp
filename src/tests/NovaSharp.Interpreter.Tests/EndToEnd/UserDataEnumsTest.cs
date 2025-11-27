@@ -30,6 +30,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     }
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class UserDataEnumsTests
     {
         internal sealed class EnumOverloadsTestClass

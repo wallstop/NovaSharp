@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class BinaryDumpTests
     {
         private static DynValue ScriptRunString(string script)
@@ -134,7 +135,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void BinDumpFactorialDumpFuncUpValue()
         {
             string script =
@@ -147,13 +147,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				end
 			";
 
-            DynValue fact = ScriptLoadFunc(script, "fact");
-            fact.Function.OwnerScript.Globals.Set("fact", fact);
-            fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
-            DynValue res = fact.Function.Call(5);
-
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120));
+            Assert.Throws<ArgumentException>(() =>
+            {
+                DynValue fact = ScriptLoadFunc(script, "fact");
+                fact.Function.OwnerScript.Globals.Set("fact", fact);
+                fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
+                _ = fact.Function.Call(5);
+            });
         }
 
         [Test]

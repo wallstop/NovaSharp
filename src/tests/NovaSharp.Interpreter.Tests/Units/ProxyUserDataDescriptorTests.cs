@@ -14,9 +14,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     {
         private readonly Script _script = new Script();
         private static readonly string[] ExpectedMetaRequests = { "__tostring" };
-        private RecordingProxyFactory _factory = null!;
-        private RecordingDescriptor _innerDescriptor = null!;
-        private ProxyUserDataDescriptor _descriptor = null!;
+        private RecordingProxyFactory _factory;
+        private RecordingDescriptor _innerDescriptor;
+        private ProxyUserDataDescriptor _descriptor;
 
         [SetUp]
         public void SetUp()

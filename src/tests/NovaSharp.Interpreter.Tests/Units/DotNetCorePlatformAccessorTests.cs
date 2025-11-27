@@ -10,8 +10,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DotNetCorePlatformAccessorTests
     {
-        private DotNetCorePlatformAccessor _accessor = null!;
-        private TextWriter _originalOut = null!;
+        private DotNetCorePlatformAccessor _accessor;
+        private TextWriter _originalOut;
 
         [SetUp]
         public void SetUp()
@@ -66,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ParseFileAccessThrowsWhenModeIsNull()
         {
             Assert.That(
-                () => DotNetCorePlatformAccessor.ParseFileAccess(null!),
+                () => DotNetCorePlatformAccessor.ParseFileAccess(null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mode")
             );
         }
@@ -75,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ParseFileModeThrowsWhenModeIsNull()
         {
             Assert.That(
-                () => DotNetCorePlatformAccessor.ParseFileMode(null!),
+                () => DotNetCorePlatformAccessor.ParseFileMode(null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mode")
             );
         }
@@ -87,7 +87,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             try
             {
                 using Stream stream = _accessor.OpenFile(
-                    script: null!,
+                    script: null,
                     filename: path,
                     encoding: Encoding.UTF8,
                     mode: "w+"

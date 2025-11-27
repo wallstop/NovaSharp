@@ -18,8 +18,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     public sealed class CliIntegrationTests
     {
         private static readonly string[] ExecuteHelpCommandArgs = { "-X", "help" };
-        private Func<IRemoteDebuggerBridge> _originalDebuggerFactory = null!;
-        private IBrowserLauncher _originalBrowserLauncher = null!;
+        private Func<IRemoteDebuggerBridge> _originalDebuggerFactory;
+        private IBrowserLauncher _originalBrowserLauncher;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -429,7 +429,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             public int AttachCount { get; private set; }
 
-            public Script LastScript { get; private set; } = null!;
+            public Script LastScript { get; private set; }
 
             public string LastName { get; private set; } = string.Empty;
 
@@ -450,7 +450,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             public int LaunchCount { get; private set; }
 
-            public Uri LastUrl { get; private set; } = null!;
+            public Uri LastUrl { get; private set; }
 
             public Uri UrlToReturn { get; set; } = new Uri("http://localhost/");
 

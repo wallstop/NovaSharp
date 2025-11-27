@@ -12,29 +12,19 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    [NonParallelizable]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public sealed class OsSystemModuleTests
     {
         private static readonly string[] BuildCommand = { "build" };
         private static readonly string[] FailCommand = { "fail" };
-        private IPlatformAccessor _originalPlatform;
         private StubPlatformAccessor _stub;
 
         [SetUp]
         public void SetUp()
         {
-            _originalPlatform = Script.GlobalOptions.Platform;
             _stub = new StubPlatformAccessor();
             Script.GlobalOptions.Platform = _stub;
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            if (_originalPlatform != null)
-            {
-                Script.GlobalOptions.Platform = _originalPlatform;
-            }
         }
 
         [Test]

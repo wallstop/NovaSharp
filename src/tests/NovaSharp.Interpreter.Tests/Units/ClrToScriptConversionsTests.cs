@@ -14,6 +14,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [ScriptGlobalOptionsIsolation]
     public sealed class ClrToScriptConversionsTests
     {
         [SetUp]

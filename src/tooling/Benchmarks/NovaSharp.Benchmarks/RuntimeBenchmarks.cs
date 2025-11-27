@@ -18,7 +18,7 @@ namespace NovaSharp.Benchmarks
     )]
     public class RuntimeBenchmarks
     {
-        private Script _script = null!;
+        private Script _script;
         private DynValue _compiledEntry = DynValue.Nil;
         private Func<double> _scenarioRunner;
         private BenchmarkHost _host = new();

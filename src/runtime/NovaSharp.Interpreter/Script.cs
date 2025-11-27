@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter
     using System.IO;
     using System.Reflection;
     using System.Text;
+    using System.Threading;
     using CoreLib;
     using Debugging;
     using Diagnostics;
@@ -48,6 +49,8 @@ namespace NovaSharp.Interpreter
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
         private bool _bit32CompatibilityWarningEmitted;
+        private static ScriptGlobalOptions GlobalOptionsSnapshot;
+        private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
         private static readonly ConcurrentDictionary<
             Type,
             MethodInfo
@@ -135,7 +138,22 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets the global options, that is options which cannot be customized per-script.
         /// </summary>
-        public static ScriptGlobalOptions GlobalOptions { get; private set; }
+        public static ScriptGlobalOptions GlobalOptions
+        {
+            get { return ScopedGlobalOptions.Value?.Options ?? GlobalOptionsSnapshot; }
+            internal set
+            {
+                if (ScopedGlobalOptions.Value != null)
+                {
+                    ScopedGlobalOptions.Value.Options =
+                        value ?? throw new ArgumentNullException(nameof(value));
+                }
+                else
+                {
+                    GlobalOptionsSnapshot = value ?? throw new ArgumentNullException(nameof(value));
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the effective Lua compatibility version for this script.
@@ -150,6 +168,17 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public LuaCompatibilityProfile CompatibilityProfile =>
             LuaCompatibilityProfile.ForVersion(CompatibilityVersion);
+
+        /// <summary>
+        /// Captures the current global options and returns a scope that restores them when disposed.
+        /// </summary>
+        /// <returns>An <see cref="IDisposable"/> that reverts <see cref="GlobalOptions"/> to its previous value.</returns>
+        internal static IDisposable BeginGlobalOptionsScope()
+        {
+            GlobalOptionsScope scope = new(GlobalOptions.Clone(), ScopedGlobalOptions.Value);
+            ScopedGlobalOptions.Value = scope;
+            return scope;
+        }
 
         /// <summary>
         /// Gets access to performance statistics.
@@ -1134,6 +1163,30 @@ namespace NovaSharp.Interpreter
 
             return (string)
                 resolveFileName.Invoke(scriptLoader, new object[] { filename, globalContext });
+        }
+
+        private sealed class GlobalOptionsScope : IDisposable
+        {
+            public GlobalOptionsScope(ScriptGlobalOptions options, GlobalOptionsScope previousScope)
+            {
+                Options = options ?? throw new ArgumentNullException(nameof(options));
+                PreviousScope = previousScope;
+            }
+
+            /// <summary>
+            /// Gets or sets the options snapshot managed by this scope.
+            /// </summary>
+            public ScriptGlobalOptions Options { get; set; }
+
+            private GlobalOptionsScope PreviousScope { get; }
+
+            /// <summary>
+            /// Restores the previously active scope when the current scope is disposed.
+            /// </summary>
+            public void Dispose()
+            {
+                ScopedGlobalOptions.Value = PreviousScope;
+            }
         }
     }
 }

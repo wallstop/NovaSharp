@@ -84,11 +84,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void ConfigPropThrowsOnInvalid()
         {
-            MyClass x = Test(
-                @"
+            Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                _ = Test(
+                    @"
 				{
 				class = 'oohoh',
 				myString = 'ciao',
@@ -97,12 +98,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				invalid = 3,
 				nativeValue = function() end,
 				}"
-            );
-
-            Assert.That(3, Is.EqualTo(x.MyNumber));
-            Assert.That("ciao", Is.EqualTo(x.MyString));
-            Assert.That(DataType.Function, Is.EqualTo(x.NativeValue.Type));
-            Assert.That(x.SomeTable, Is.Not.Null);
+                );
+            });
         }
     }
 }

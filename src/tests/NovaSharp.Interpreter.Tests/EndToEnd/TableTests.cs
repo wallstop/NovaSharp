@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class TableTests
     {
         [Test]
@@ -517,7 +518,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void PrimeTable2()
         {
             string script =
@@ -528,9 +528,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 		";
 
             Script s = new();
-            s.DoString(script);
-
-            Assert.Fail();
+            Assert.Throws<ScriptRuntimeException>(() => s.DoString(script));
         }
 
         [Test]

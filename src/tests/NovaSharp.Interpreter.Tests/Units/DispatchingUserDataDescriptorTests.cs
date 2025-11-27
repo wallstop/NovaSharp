@@ -29,11 +29,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static readonly int[] HostOtherSequence = { 3 };
         private static readonly int[] HostCopySequence = { 2 };
         private static readonly int[] HostZeroSequence = { 0 };
-        private Script _script = null!;
-        private DispatchHost _hostAdd = null!;
-        private DispatchHost _hostOther = null!;
-        private DispatchHost _hostCopy = null!;
-        private DispatchHost _hostZero = null!;
+        private Script _script;
+        private DispatchHost _hostAdd;
+        private DispatchHost _hostOther;
+        private DispatchHost _hostCopy;
+        private DispatchHost _hostZero;
 
         [OneTimeSetUp]
         public void RegisterType()
@@ -524,7 +524,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(
                 () =>
                     descriptor.Index(
-                        script: null!,
+                        script: null,
                         obj: new DescriptorHost(),
                         index: DynValue.NewString("Value"),
                         isDirectIndexing: true
@@ -543,7 +543,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     descriptor.Index(
                         script: _script,
                         obj: new DescriptorHost(),
-                        index: null!,
+                        index: null,
                         isDirectIndexing: true
                     ),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("index")
@@ -561,7 +561,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                         script: _script,
                         obj: new DescriptorHost(),
                         index: DynValue.NewString("Value"),
-                        value: null!,
+                        value: null,
                         isDirectIndexing: true
                     ),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
@@ -574,7 +574,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
             Assert.That(
-                () => descriptor.MetaIndex(_script, new DescriptorHost(), null!),
+                () => descriptor.MetaIndex(_script, new DescriptorHost(), null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("metaname")
             );
         }

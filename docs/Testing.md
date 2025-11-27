@@ -91,6 +91,8 @@ pwsh ./scripts/coverage/coverage.ps1
 ## Naming & Conventions
 
 - NUnit test methods (`[Test]`, `[TestCase]`, etc.) must use PascalCase without underscores. The solution-wide `.editorconfig` enforces this as an error, so stray underscore names will fail analyzers and builds.
+- Author all new failure expectations with `Assert.Throws<TException>(...)`/`Assert.That(async () => ..., Throws.TypeOf<TException>())` rather than `[ExpectedException]`. The NUnit 3 runner no longer honors the legacy attribute, and the explicit assertion keeps error paths local to the test body.
+- When a test fixture touches shared static registries (e.g., `UserData.RegisterType`, global caches, or other mutable singletons), decorate the class with `[UserDataIsolation]` so the registry is sandboxed per test and keep the fixture `[Parallelizable(ParallelScope.Self)]`. Suites that tweak `Script.GlobalOptions` should also open a scope in `[SetUp]` via `Script.BeginGlobalOptionsScope()` (and dispose it in `[TearDown]`) so converters/platform overrides don’t leak across tests. Only drop back to `[NonParallelizable]` when a given suite still depends on mutable globals you can’t isolate yet.
 - Multi-word Lua concepts keep their canonical casing when surfaced through C# APIs. In particular, treat “upvalue” as `UpValue`/`UpValues` so helpers such as `GetUpValue`, `UpValuesType`, and `SymbolRef.UpValue` remain consistent with the runtime surface. Do **not** collapse these identifiers to `Upvalue` or `Upvalues`, and document any additional Lua-specific casing decisions in `PLAN.md` before introducing new APIs.
 
 ## Expanding Coverage

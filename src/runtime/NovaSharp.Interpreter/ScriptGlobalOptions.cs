@@ -52,5 +52,23 @@ namespace NovaSharp.Interpreter
         /// Gets or sets the interpreter-wide compatibility target. Defaults to the latest supported version.
         /// </summary>
         public LuaCompatibilityVersion CompatibilityVersion { get; set; }
+
+        /// <summary>
+        /// Creates a copy of the current global options so callers can apply changes without affecting the original instance.
+        /// </summary>
+        /// <returns>A new <see cref="ScriptGlobalOptions"/> with the same option values.</returns>
+        internal ScriptGlobalOptions Clone()
+        {
+            ScriptGlobalOptions clone = new()
+            {
+                Platform = Platform,
+                CustomConverters = CustomConverters?.Clone() ?? new CustomConverterRegistry(),
+                RethrowExceptionNested = RethrowExceptionNested,
+                FuzzySymbolMatching = FuzzySymbolMatching,
+                CompatibilityVersion = CompatibilityVersion,
+            };
+
+            return clone;
+        }
     }
 }

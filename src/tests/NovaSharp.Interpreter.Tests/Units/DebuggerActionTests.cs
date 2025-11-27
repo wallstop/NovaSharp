@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             source[0] = 999;
             Assert.That(action.Lines[0], Is.Not.EqualTo(source[0]), "Lines should be copied");
 
-            action.Lines = null!;
+            action.Lines = null;
             Assert.That(action.Lines, Is.Not.Null);
             Assert.That(action.Lines, Is.Empty);
         }

@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             UnityAssetsScriptLoader loader = new(resources);
 
-            object script = loader.LoadFile("scripts/init.lua", null!);
+            object script = loader.LoadFile("scripts/init.lua", null);
 
             Assert.That(script, Is.EqualTo("print('hi')"));
         }
@@ -56,7 +56,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
             FileNotFoundException ex = Assert.Throws<FileNotFoundException>(() =>
-                loader.LoadFile("missing.lua", null!)
+                loader.LoadFile("missing.lua", null)
             );
             Assert.That(ex, Is.Not.Null);
             Assert.That(ex.Message, Does.Contain(UnityAssetsScriptLoader.DefaultPath));
@@ -106,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assert.That(loader.ScriptFileExists("from_unity.lua"), Is.True);
                 Assert.That(
-                    loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null!),
+                    loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null),
                     Is.EqualTo("print('unity')")
                 );
                 Assert.That(loader.GetLoadedScripts(), Is.EquivalentTo(ReflectionLoadedScripts));
@@ -134,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                     UnityEngineReflectionHarness.LastRequestedPath,
                     Is.EqualTo(UnityAssetsScriptLoader.DefaultPath)
                 );
-                Assert.That(loader.LoadFile("alpha.lua", null!), Is.EqualTo("return 1"));
+                Assert.That(loader.LoadFile("alpha.lua", null), Is.EqualTo("return 1"));
             });
         }
 
@@ -251,7 +251,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
             Assert.That(
-                () => loader.LoadFile(null, null!),
+                () => loader.LoadFile(null, null),
                 Throws.ArgumentNullException.With.Property("ParamName").EqualTo("file")
             );
         }

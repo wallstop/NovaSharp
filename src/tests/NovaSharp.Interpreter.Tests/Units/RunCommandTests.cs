@@ -14,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RunCommandTests : IDisposable
     {
-        private ConsoleCaptureScope _consoleScope = null!;
+        private ConsoleCaptureScope _consoleScope;
 
         [SetUp]
         public void SetUp()

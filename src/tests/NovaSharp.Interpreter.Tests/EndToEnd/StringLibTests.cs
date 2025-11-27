@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class StringLibTests
     {
         [Test]
@@ -227,14 +228,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void StringGSub2()
         {
             string script =
                 @"
 				string.gsub('hello world', '%w+', '%e')
 			";
-            DynValue res = Script.RunString(script);
+            Assert.Throws<ScriptRuntimeException>(() => Script.RunString(script));
         }
 
         [Test]

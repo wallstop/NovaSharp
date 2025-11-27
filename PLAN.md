@@ -1,17 +1,17 @@
 # Modern Testing & Coverage Plan
 
--## Repository Snapshot — 2025-11-26 (UTC)
-- Build: `dotnet build src/NovaSharp.sln -c Release -nologo` is warning-free; keep the zero-warning bar enforced by rerunning the build after every analyzer touchpoint.
-- Tests: `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build` now executes 3,010 Release tests in ~48 seconds (TAP IO/OS fixtures remain skipped).
-- Coverage: `docs/coverage/latest/Summary.md` (2025-11-27 11:26 UTC) reports 87.79 % line / 87.75 % branch / 89.79 % method overall.
-  - NovaSharp.Interpreter: 96.99 % line / 94.76 % branch / 98.4 % method (branch coverage still <95 %, so `COVERAGE_GATING_MODE` stays in monitor mode but the new tests moved the needle).
-  - NovaSharp.Cli: 83.4 % line / 80.5 % branch.
-  - NovaSharp.Hardwire: 52.7 % line / 40.7 % branch.
-  - NovaSharp.RemoteDebugger: 88.2 % line / 81.2 % branch.
-  - NovaSharp.VsCodeDebugger: 1.8 % line / 2.1 % branch (no automated debugger tests yet).
-- Coverage collateral: `docs/coverage/coverage-hotspots.md` now reflects the 2025-11-24 run (2,779 tests) and highlights the remaining interpreter branch debt.
-- Audits: `documentation_audit.log` now lists 85 missing XML-doc entries (mostly `CliMessages`, interpreter instruction metadata, debugger protocol DTOs, and lexer tokens); prioritize filling those gaps before shipping any new public APIs. `spelling_audit.log` remains clean, and `naming_audit.log` mirrors the latest repo-wide sweep. CI runs all three scripts.
-- Regions: `rg -n '#region'` only finds references inside contributor docs (AGENTS.md and this file), so runtime/tooling/tests stay region-free.
+-## Repository Snapshot — 2025-11-27 (UTC)
+- Build: `dotnet build src/NovaSharp.sln -c Release -nologo` (2025-11-27) finished with zero warnings while `<TreatWarningsAsErrors>true>` stays enforced across the solution.
+- Tests: `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build` exercises 3,155 Release tests in ~46 seconds (no skips/failures) and keeps the generated fixture catalog in sync.
+- Coverage: `docs/coverage/latest/Summary.md` (2025-11-27 13:58 UTC) reports 87.6 % line / 87.5 % branch overall.
+  - NovaSharp.Interpreter: 96.7 % line / 94.5 % branch (still <95 % branch, so `COVERAGE_GATING_MODE` remains in monitor mode until the next run holds ≥95 %).
+  - NovaSharp.Cli: 82.8 % line / 76 % branch.
+  - NovaSharp.Hardwire: 55.7 % line / 46.5 % branch.
+  - NovaSharp.RemoteDebugger: 88.1 % line / 81.1 % branch.
+  - NovaSharp.VsCodeDebugger: 1.8 % line / 2 % branch (still awaiting automated debugger smoke tests).
+- Coverage collateral: rerun `./scripts/coverage/coverage.ps1` and refresh `docs/coverage/coverage-hotspots.md` so the hotspot backlog reflects these numbers instead of the older 2025-11-24 snapshot.
+- Audits: `documentation_audit.log`, `naming_audit.log`, and `spelling_audit.log` are green (0 missing XML docs, no naming/spelling findings). Re-run the trio whenever APIs or text-heavy docs change.
+- Regions: `rg -n '#region'` only returns AGENTS.md/PLAN.md, so runtime/tooling/tests remain region-free.
 
 ## Baseline Controls (must stay green)
 - Keep the documentation audit checked in. Re-run `python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log` whenever public/internal APIs change.
@@ -34,6 +34,7 @@
 - CA1051 follow-up: the previously flagged test fixtures (`TestRunner` counters plus descriptor/userdata helpers) are clean, but keep auditing new test infrastructure so any future public-field regressions are either converted to properties or annotated with tightly scoped suppressions.
 - CA1515 plan: fixture catalog automation (MSBuild, pre-commit, CI) now ensures every `[TestFixture]` has a `typeof(...)` reference in `FixtureCatalogGenerated.cs`. Next steps are (a) convert non-reflection fixtures/helpers to `internal` where possible and (b) scope the remaining CA1515 suppressions to the handful of helper types that must stay public for NUnit/BenchmarkDotNet.
 - BenchmarkDotNet benchmark classes (`RuntimeBenchmarks`, `ScriptLoadingBenchmarks`, `LuaPerformanceBenchmarks`) must remain `public` and unsealed for discovery; keep the targeted CA1515 suppressions plus the AGENTS.md guidance so new benchmarks follow the same pattern.
+- Policy reminder: AGENTS.md forbids nullable reference-type syntax (no `#nullable`, `string?`, `?.` targeting reference members, or `null!`). Keep running `artifacts/NrtScanner` (or a simple `rg`) before opening analyzer-heavy PRs so the ban stays enforced and CA1805 continues to pass without suppressions.
 
 ### 2. Coverage and test depth
 - Refresh artefacts: rerun ./scripts/coverage/coverage.ps1 (Release, gate = enforce) so docs/coverage/latest/* and docs/coverage/coverage-hotspots.md describe the latest test suite.
@@ -52,6 +53,11 @@
   3. Updating Ci pipelines (`dotnet test`, scripts/tests/update-fixture-catalog.ps1) to run under NUnit 3.
   4. Once NUnit 3 is in place, enable `[Parallelizable]` on fixtures that don’t mutate shared state, and configure `dotnet test` with `--parallel` (or appropriate settings) so the suite runs in parallel where safe.
 - Document the migration plan in `docs/Testing.md` and add a PLAN.md checkpoint per major milestone (packages upgraded, attributes migrated, CI updated, parallelism enabled).
+- 2025-11-27: Removed the legacy `[ExpectedException]` attribute across the interpreter suite, deleted the custom NUnit shim, updated `TestRunner` accordingly, and verified `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release` stays green (3,152 tests). Contributor docs (`AGENTS.md`, `docs/Testing.md`) now point to the `Assert.Throws` guidance—next step is to scope fixture-level parallelization and retire any other NUnit 2-era shims (e.g., ExpectedException references in historical docs/blog posts).
+- 2025-11-27: Classified every `UserData*`/`VtUserData*` fixture as shared-state heavy and annotated them `[NonParallelizable]` so they continue to run serially while the rest of the suite parallelizes. Documentation now calls out the rule of thumb (immutable/local fixtures ⇒ `[Parallelizable]`, shared state ⇒ `[NonParallelizable]`). Next up: audit the remaining fixtures for shared-state usage and start isolating the `UserData` registries so more suites can safely opt into parallel scope.
+- 2025-11-27: Added scoped `UserData` registry isolation (new `UserData.BeginIsolationScope()` API plus the `[UserDataIsolation]` NUnit attribute) and converted every `UserData*`, `VtUserData*`, and collections/proxy fixtures back to `[Parallelizable(ParallelScope.Self)]`. Release tests remain green and docs now describe the attribute. Next steps: extend the isolation helpers to any remaining shared-state suites and measure the parallel speedup in CI.
+- 2025-11-27: Introduced `Script.BeginGlobalOptionsScope()` and wrapped the converter-heavy fixtures (`UserDataMethodsTests`, `VtUserDataMethodsTests`) in SetUp/TearDown scopes so `Script.GlobalOptions` tweaks stay local even while the suites run in parallel. OsSystemModule tests still pin to `[NonParallelizable]` until we can isolate the platform accessor; next step is to apply the same scope pattern to the remaining global-option consumers (REPL/IO loaders).
+- 2025-11-27: Repl loader tests no longer mutate real environment variables. `ReplInterpreterScriptLoader` now accepts a custom environment provider, and the fixture uses that hook to emulate `NOVASHARP_PATH`/`LUA_PATH_*` scoped per test, so `[Parallelizable(ParallelScope.Self)]` is enabled for `ReplInterpreterScriptLoaderTests`. Remaining `[NonParallelizable]` suites (IO module) still rely on global state and need similar isolation before they can opt in.
 ### 3. Debugger and tooling automation
 - Build a DAP test harness that drives NovaSharp.VsCodeDebugger end-to-end (launch, attach, breakpoints, watches) without requiring VS Code, and feed its transcripts into NUnit.
 - Add CLI integration tests that execute scripted sessions (stdin/stdout golden files) covering success/failure paths for `run`, `register`, `debug`, `compile`, `hardwire`, and `help` commands.

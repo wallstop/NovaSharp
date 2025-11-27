@@ -77,7 +77,7 @@ return caller()
         {
             private readonly Queue<DebuggerAction.ActionType> _actions;
             private readonly HashSet<int> _breakLines;
-            private DebugService _service = null!;
+            private DebugService _service;
             private bool _breakpointsInstalled;
 
             public StepSequencingDebugger(

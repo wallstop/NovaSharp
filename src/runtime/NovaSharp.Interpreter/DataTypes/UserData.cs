@@ -513,5 +513,14 @@ namespace NovaSharp.Interpreter.DataTypes
                 yield return pair.Value.Type;
             }
         }
+
+        /// <summary>
+        /// Creates an isolation scope for subsequent user data registrations.
+        /// </summary>
+        /// <returns>An <see cref="IDisposable"/> that restores the previous registry state when disposed.</returns>
+        internal static IDisposable BeginIsolationScope()
+        {
+            return TypeDescriptorRegistry.EnterIsolationScope();
+        }
     }
 }

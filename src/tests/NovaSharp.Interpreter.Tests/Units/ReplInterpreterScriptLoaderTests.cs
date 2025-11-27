@@ -1,4 +1,3 @@
-#nullable enable
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
@@ -12,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework.Legacy;
 
     [TestFixture]
-    [NonParallelizable]
+    [Parallelizable(ParallelScope.Self)]
     public sealed class ReplInterpreterScriptLoaderTests
     {
         private const string NovaSharpPathVariable = "NOVASHARP_PATH";
@@ -21,21 +20,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static readonly string[] LuaGlobalModulePaths = { "luaGlobal/?.lua" };
         private static readonly string[] DefaultModulePaths = { "?", "?.lua" };
 
-        private static EnvRestore OverrideEnv(string name, string? value)
-        {
-            string? original = Environment.GetEnvironmentVariable(name);
-            Environment.SetEnvironmentVariable(name, value);
-            return new EnvRestore(name, original);
-        }
-
         [Test]
         public void ConstructorPrefersNovaSharpPathEnvironmentVariable()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, "?/fromNova;alt/?.lua");
-            using EnvRestore lua52 = OverrideEnv("LUA_PATH_5_2", "ignored/?.lua");
-            using EnvRestore lua = OverrideEnv("LUA_PATH", "ignored2/?.lua");
-
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader(
+                (NovaSharpPathVariable, "?/fromNova;alt/?.lua"),
+                ("LUA_PATH_5_2", "ignored/?.lua"),
+                ("LUA_PATH", "ignored2/?.lua")
+            );
 
             CollectionAssert.AreEqual(NovaPreferredModulePaths, loader.ModulePaths);
         }
@@ -43,26 +35,24 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorFallsBackToLuaPath52ThenLuaPath()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            using EnvRestore lua52 = OverrideEnv("LUA_PATH_5_2", "lua52/?.lua");
-            using EnvRestore lua = OverrideEnv("LUA_PATH", "luaGlobal/?.lua");
-
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader(
+                (NovaSharpPathVariable, null),
+                ("LUA_PATH_5_2", "lua52/?.lua"),
+                ("LUA_PATH", "luaGlobal/?.lua")
+            );
             CollectionAssert.AreEqual(Lua52ModulePaths, loader.ModulePaths);
 
-            using EnvRestore clearLua52 = OverrideEnv("LUA_PATH_5_2", null);
-            loader = new TestReplLoader();
+            loader = CreateLoader((NovaSharpPathVariable, null), ("LUA_PATH", "luaGlobal/?.lua"));
             CollectionAssert.AreEqual(LuaGlobalModulePaths, loader.ModulePaths);
         }
 
         [Test]
         public void ConstructorIgnoresEmptyNovaSharpPathValue()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, "   ");
-            using EnvRestore lua52 = OverrideEnv("LUA_PATH_5_2", "lua52/?.lua");
-            using EnvRestore lua = OverrideEnv("LUA_PATH", null);
-
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader(
+                (NovaSharpPathVariable, "   "),
+                ("LUA_PATH_5_2", "lua52/?.lua")
+            );
 
             Assert.That(loader.ModulePaths, Is.Not.Null);
             CollectionAssert.AreEqual(Lua52ModulePaths, loader.ModulePaths);
@@ -71,11 +61,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ConstructorFallsBackToDefaultPathWhenEnvironmentUnset()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            using EnvRestore lua52 = OverrideEnv("LUA_PATH_5_2", null);
-            using EnvRestore lua = OverrideEnv("LUA_PATH", null);
-
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
 
             CollectionAssert.AreEqual(DefaultModulePaths, loader.ModulePaths);
         }
@@ -83,8 +69,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ResolveModuleNameUsesLuaPathGlobalWhenPresent()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("lua_path/pkg/mod.lua");
 
@@ -98,8 +83,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ResolveModuleNameFallsBackToModulePathsWhenLuaPathMissing()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("global/pkg/mod.lua");
 
@@ -112,8 +96,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ResolveModuleNameIgnoresNonStringLuaPathGlobal()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("global/pkg/mod.lua");
 
@@ -127,8 +110,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ResolveModuleNameReturnsNullWhenLuaPathCannotResolve()
         {
-            using EnvRestore novaPath = OverrideEnv(NovaSharpPathVariable, null);
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
 
             Table globals = new(new Script());
@@ -141,19 +123,40 @@ namespace NovaSharp.Interpreter.Tests.Units
         [Test]
         public void ResolveModuleNameThrowsWhenGlobalContextIsNull()
         {
-            TestReplLoader loader = new();
+            TestReplLoader loader = CreateLoader();
 
             Assert.That(
-                () => loader.ResolveModuleName("pkg.mod", null),
+                () => loader.ResolveModuleName("pkg.mod", (Table)null),
                 Throws
                     .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
                     .EqualTo("globalContext")
             );
         }
 
+        private static TestReplLoader CreateLoader(
+            params (string Name, string Value)[] environmentVariables
+        )
+        {
+            Dictionary<string, string> env = new(StringComparer.OrdinalIgnoreCase);
+
+            foreach ((string Name, string Value) pair in environmentVariables)
+            {
+                if (pair.Value != null)
+                {
+                    env[pair.Name] = pair.Value;
+                }
+            }
+
+            return new TestReplLoader(env);
+        }
+
         private sealed class TestReplLoader : ReplInterpreterScriptLoader
         {
             private readonly HashSet<string> _existingPaths = new(StringComparer.Ordinal);
+
+            public TestReplLoader(Dictionary<string, string> environment)
+                : base(envVar => environment.TryGetValue(envVar, out string value) ? value : null)
+            { }
 
             public void MarkExisting(params string[] paths)
             {
@@ -173,23 +176,5 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return _existingPaths.Contains(name);
             }
         }
-
-        private sealed class EnvRestore : IDisposable
-        {
-            private readonly string _name;
-            private readonly string? _original;
-
-            public EnvRestore(string name, string? original)
-            {
-                _name = name;
-                _original = original;
-            }
-
-            public void Dispose()
-            {
-                Environment.SetEnvironmentVariable(_name, _original);
-            }
-        }
     }
 }
-#nullable disable

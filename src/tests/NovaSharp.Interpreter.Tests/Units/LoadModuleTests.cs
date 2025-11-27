@@ -418,12 +418,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public string ResolveFileName(string filename, Table globalContext)
             {
-                return null!;
+                return null;
             }
 
             public string ResolveModuleName(string modname, Table globalContext)
             {
-                return null!;
+                return null;
             }
         }
 

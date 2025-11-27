@@ -1,4 +1,3 @@
-#nullable enable
 namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
@@ -36,14 +35,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "Debugger never received DebugService."
             );
             Assert.That(debugger.DebugService.OwnerScript, Is.SameAs(script));
-            Assert.That(
-                debugger.LastSourceCode,
-                Is.Not.Null,
-                "Debugger never received source code."
-            );
+            SourceCode lastSourceCode = debugger.LastSourceCode;
+            if (lastSourceCode == null)
+            {
+                Assert.Fail("Debugger never received source code.");
+                return;
+            }
 
             HashSet<int> applied = debugger.DebugService.ResetBreakpoints(
-                debugger.LastSourceCode!,
+                lastSourceCode,
                 new HashSet<int>(debugger.RequestedBreakpoints)
             );
 
@@ -54,8 +54,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "ResetBreakpoints should ignore lines with no SourceRef."
             );
 
-            HashSet<int> flaggedLines = debugger
-                .LastSourceCode!.Refs.Where(r => r.Breakpoint)
+            HashSet<int> flaggedLines = lastSourceCode
+                .Refs.Where(r => r.Breakpoint)
                 .Select(r => r.FromLine)
                 .ToHashSet();
 
@@ -69,11 +69,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             DebugService service = debugger.DebugService;
             HashSet<int> lines = new(debugger.RequestedBreakpoints);
 
-            ArgumentNullException? ex = Assert.Throws<ArgumentNullException>(() =>
-                service.ResetBreakpoints(null!, lines)
+            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() =>
+                service.ResetBreakpoints(null, lines)
             );
 
-            Assert.That(ex!.ParamName, Is.EqualTo("src"));
+            Assert.That(ex.ParamName, Is.EqualTo("src"));
         }
 
         [Test]
@@ -82,11 +82,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
             DebugService service = debugger.DebugService;
 
-            ArgumentNullException? ex = Assert.Throws<ArgumentNullException>(() =>
-                service.ResetBreakpoints(debugger.LastSourceCode!, null!)
+            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() =>
+                service.ResetBreakpoints(debugger.LastSourceCode, null)
             );
 
-            Assert.That(ex!.ParamName, Is.EqualTo("lines"));
+            Assert.That(ex.ParamName, Is.EqualTo("lines"));
         }
 
         [Test]
@@ -96,11 +96,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             SourceCode source = new("chunk", "return 1", sourceId: 1, script);
             DebugService service = new(script, null);
 
-            InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(() =>
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
                 service.ResetBreakpoints(source, new HashSet<int> { 1 })
             );
 
-            Assert.That(ex!.Message, Does.Contain("processor"));
+            Assert.That(ex.Message, Does.Contain("processor"));
         }
 
         private static (
@@ -121,9 +121,9 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class BreakpointRecordingDebugger : IDebugger
         {
             public HashSet<int> RequestedBreakpoints { get; } = new(new[] { 2, 3, 5, 99 });
-            public DebugService DebugService { get; private set; } = null!;
-            public SourceCode? LastSourceCode { get; private set; }
-            private SourceCode? _pendingSourceCode;
+            public DebugService DebugService { get; private set; }
+            public SourceCode LastSourceCode { get; private set; }
+            private SourceCode _pendingSourceCode;
 
             public DebuggerCaps GetDebuggerCaps()
             {
@@ -202,4 +202,3 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
-#nullable disable

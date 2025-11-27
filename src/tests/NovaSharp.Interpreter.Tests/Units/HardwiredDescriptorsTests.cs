@@ -10,10 +10,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    [NonParallelizable]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public sealed class HardwiredDescriptorsTests
     {
-        private TestHardwiredDescriptor _descriptor = null!;
+        private TestHardwiredDescriptor _descriptor;
 
         [SetUp]
         public void SetUp()

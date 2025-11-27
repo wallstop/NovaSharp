@@ -12,8 +12,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class DebugCommandTests
     {
-        private Func<IRemoteDebuggerBridge> _originalFactory = null!;
-        private IBrowserLauncher _originalLauncher = null!;
+        private Func<IRemoteDebuggerBridge> _originalFactory;
+        private IBrowserLauncher _originalLauncher;
 
         [SetUp]
         public void SetUp()
@@ -131,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public int AttachCount { get; private set; }
 
-            public Script LastScript { get; private set; } = null!;
+            public Script LastScript { get; private set; }
 
             public string LastScriptName { get; private set; } = string.Empty;
 

@@ -13,12 +13,13 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
-    [NonParallelizable]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public sealed class StreamFileUserDataBaseTests
     {
         private static readonly string[] ExpectedWriteSequence = { "A", "B" };
 
-        [OneTimeSetUp]
+        [SetUp]
         public void RegisterUserData()
         {
             UserData.RegisterType<TestStreamFileUserData>();

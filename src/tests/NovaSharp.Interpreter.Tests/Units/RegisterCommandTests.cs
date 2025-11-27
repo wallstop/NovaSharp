@@ -13,8 +13,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class RegisterCommandTests : IDisposable
     {
-        private ConsoleCaptureScope _consoleScope = null!;
-        private ShellContext _context = null!;
+        private ConsoleCaptureScope _consoleScope;
+        private ShellContext _context;
 
         static RegisterCommandTests()
         {
@@ -82,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             if (_consoleScope != null)
             {
                 _consoleScope.Dispose();
-                _consoleScope = null!;
+                _consoleScope = null;
             }
         }
     }

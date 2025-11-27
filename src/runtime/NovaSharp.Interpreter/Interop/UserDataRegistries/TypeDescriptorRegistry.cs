@@ -19,10 +19,103 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     /// </summary>
     internal static class TypeDescriptorRegistry
     {
-        private static readonly object SLock = new();
-        private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistry = new();
-        private static readonly Dictionary<Type, IUserDataDescriptor> STypeRegistryHistory = new();
-        private static InteropAccessMode DefaultAccessModeValue;
+        private sealed class DescriptorRegistryState
+        {
+            public DescriptorRegistryState()
+            {
+                SyncRoot = new object();
+                TypeRegistry = new Dictionary<Type, IUserDataDescriptor>();
+                TypeRegistryHistory = new Dictionary<Type, IUserDataDescriptor>();
+                DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
+                RegistrationPolicy = InteropRegistrationPolicy.Default;
+            }
+
+            public DescriptorRegistryState(DescriptorRegistryState template)
+            {
+                SyncRoot = new object();
+                TypeRegistry = new Dictionary<Type, IUserDataDescriptor>(template.TypeRegistry);
+                TypeRegistryHistory = new Dictionary<Type, IUserDataDescriptor>(
+                    template.TypeRegistryHistory
+                );
+                DefaultAccessModeValue = template.DefaultAccessModeValue;
+                RegistrationPolicy = template.RegistrationPolicy;
+            }
+
+            /// <summary>
+            /// Gets a lock object guarding access to the descriptor dictionaries.
+            /// </summary>
+            public object SyncRoot { get; }
+
+            /// <summary>
+            /// Gets the active registry of descriptors keyed by their CLR type.
+            /// </summary>
+            public Dictionary<Type, IUserDataDescriptor> TypeRegistry { get; }
+
+            /// <summary>
+            /// Gets the history of descriptors that have been registered within the current process.
+            /// </summary>
+            public Dictionary<Type, IUserDataDescriptor> TypeRegistryHistory { get; }
+
+            /// <summary>
+            /// Gets or sets the default access mode applied to newly discovered descriptors.
+            /// </summary>
+            public InteropAccessMode DefaultAccessModeValue { get; set; }
+
+            /// <summary>
+            /// Gets or sets the registration policy used when resolving duplicate descriptors.
+            /// </summary>
+            public IRegistrationPolicy RegistrationPolicy { get; set; }
+        }
+
+        private sealed class RegistryScope : IDisposable
+        {
+            private readonly RegistryScope _previous;
+
+            public RegistryScope(DescriptorRegistryState state, RegistryScope previous)
+            {
+                State = state;
+                _previous = previous;
+            }
+
+            /// <summary>
+            /// Gets the snapshot of descriptor state active within this scope.
+            /// </summary>
+            public DescriptorRegistryState State { get; }
+
+            /// <summary>
+            /// Restores the previous registry scope when the scope is disposed.
+            /// </summary>
+            public void Dispose()
+            {
+                ScopedState.Value = _previous;
+            }
+        }
+
+        private static readonly DescriptorRegistryState GlobalState = new();
+        private static readonly AsyncLocal<RegistryScope> ScopedState = new();
+
+        private static DescriptorRegistryState CurrentState =>
+            ScopedState.Value?.State ?? GlobalState;
+
+        private static object CurrentSyncRoot => CurrentState.SyncRoot;
+
+        private static Dictionary<Type, IUserDataDescriptor> TypeRegistry =>
+            CurrentState.TypeRegistry;
+
+        private static Dictionary<Type, IUserDataDescriptor> TypeRegistryHistory =>
+            CurrentState.TypeRegistryHistory;
+
+        /// <summary>
+        /// Creates an isolation scope so that registrations performed inside it can be reverted easily.
+        /// </summary>
+        /// <returns>An <see cref="IDisposable"/> that restores the previous registry when disposed.</returns>
+        internal static IDisposable EnterIsolationScope()
+        {
+            DescriptorRegistryState clone = new(CurrentState);
+            RegistryScope scope = new(clone, ScopedState.Value);
+            ScopedState.Value = scope;
+            return scope;
+        }
 
         /// <summary>
         /// Registers all types marked with a NovaSharpUserDataAttribute that ar contained in an assembly.
@@ -91,9 +184,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         internal static bool IsTypeRegistered(Type type)
         {
-            lock (SLock)
+            DescriptorRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
-                return STypeRegistry.ContainsKey(type);
+                return state.TypeRegistry.ContainsKey(type);
             }
         }
 
@@ -106,11 +200,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <param name="t">The The type to be unregistered</param>
         internal static void UnregisterType(Type t)
         {
-            lock (SLock)
+            DescriptorRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
-                if (STypeRegistry.TryGetValue(t, out IUserDataDescriptor descriptor))
+                if (state.TypeRegistry.TryGetValue(t, out IUserDataDescriptor descriptor))
                 {
-                    PerformRegistration(t, null, descriptor);
+                    PerformRegistration(state, t, null, descriptor);
                 }
             }
         }
@@ -124,7 +219,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <exception cref="System.ArgumentException">InteropAccessMode is InteropAccessMode.Default</exception>
         internal static InteropAccessMode DefaultAccessMode
         {
-            get { return DefaultAccessModeValue; }
+            get { return CurrentState.DefaultAccessModeValue; }
             set
             {
                 if (value == InteropAccessMode.Default)
@@ -132,7 +227,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     throw new ArgumentException("InteropAccessMode is InteropAccessMode.Default");
                 }
 
-                DefaultAccessModeValue = value;
+                CurrentState.DefaultAccessModeValue = value;
             }
         }
 
@@ -180,9 +275,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             accessMode = ResolveDefaultAccessModeForType(accessMode, type);
 
-            lock (SLock)
+            DescriptorRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
-                STypeRegistry.TryGetValue(type, out IUserDataDescriptor oldDescriptor);
+                state.TypeRegistry.TryGetValue(type, out IUserDataDescriptor oldDescriptor);
 
                 if (descriptor == null)
                 {
@@ -194,17 +290,17 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     if (Framework.Do.GetInterfaces(type).Any(ii => ii == typeof(IUserDataType)))
                     {
                         AutoDescribingUserDataDescriptor audd = new(type, friendlyName);
-                        return PerformRegistration(type, audd, oldDescriptor);
+                        return PerformRegistration(state, type, audd, oldDescriptor);
                     }
                     else if (Framework.Do.IsGenericTypeDefinition(type))
                     {
                         StandardGenericsUserDataDescriptor typeGen = new(type, accessMode);
-                        return PerformRegistration(type, typeGen, oldDescriptor);
+                        return PerformRegistration(state, type, typeGen, oldDescriptor);
                     }
                     else if (Framework.Do.IsEnum(type))
                     {
                         StandardEnumUserDataDescriptor enumDescr = new(type, friendlyName);
-                        return PerformRegistration(type, enumDescr, oldDescriptor);
+                        return PerformRegistration(state, type, enumDescr, oldDescriptor);
                     }
                     else
                     {
@@ -223,24 +319,25 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 #endif
                         }
 
-                        return PerformRegistration(type, udd, oldDescriptor);
+                        return PerformRegistration(state, type, udd, oldDescriptor);
                     }
                 }
                 else
                 {
-                    PerformRegistration(type, descriptor, oldDescriptor);
+                    PerformRegistration(state, type, descriptor, oldDescriptor);
                     return descriptor;
                 }
             }
         }
 
         private static IUserDataDescriptor PerformRegistration(
+            DescriptorRegistryState state,
             Type type,
             IUserDataDescriptor newDescriptor,
             IUserDataDescriptor oldDescriptor
         )
         {
-            IUserDataDescriptor result = RegistrationPolicy.HandleRegistration(
+            IUserDataDescriptor result = state.RegistrationPolicy.HandleRegistration(
                 newDescriptor,
                 oldDescriptor
             );
@@ -249,12 +346,12 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             {
                 if (result == null)
                 {
-                    STypeRegistry.Remove(type);
+                    state.TypeRegistry.Remove(type);
                 }
                 else
                 {
-                    STypeRegistry[type] = result;
-                    STypeRegistryHistory[type] = result;
+                    state.TypeRegistry[type] = result;
+                    state.TypeRegistryHistory[type] = result;
                 }
             }
 
@@ -287,7 +384,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             if (accessMode == InteropAccessMode.Default)
             {
-                accessMode = DefaultAccessModeValue;
+                accessMode = DefaultAccessMode;
             }
 
             return accessMode;
@@ -301,17 +398,18 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         internal static IUserDataDescriptor GetDescriptorForType(Type type, bool searchInterfaces)
         {
-            lock (SLock)
+            DescriptorRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
                 IUserDataDescriptor typeDescriptor = null;
 
                 // if the type has been explicitly registered, return its descriptor as it's complete
-                if (STypeRegistry.TryGetValue(type, out IUserDataDescriptor descriptorForType))
+                if (state.TypeRegistry.TryGetValue(type, out IUserDataDescriptor descriptorForType))
                 {
                     return descriptorForType;
                 }
 
-                if (RegistrationPolicy.AllowTypeAutoRegistration(type))
+                if (state.RegistrationPolicy.AllowTypeAutoRegistration(type))
                 {
                     // no autoreg of delegates
                     if (!Framework.Do.IsAssignableFrom((typeof(Delegate)), type))
@@ -323,14 +421,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                 // search for the base object descriptors
                 for (Type t = type; t != null; t = Framework.Do.GetBaseType(t))
                 {
-                    if (STypeRegistry.TryGetValue(t, out IUserDataDescriptor u))
+                    if (state.TypeRegistry.TryGetValue(t, out IUserDataDescriptor u))
                     {
                         typeDescriptor = u;
                         break;
                     }
                     else if (Framework.Do.IsGenericType(t))
                     {
-                        if (STypeRegistry.TryGetValue(t.GetGenericTypeDefinition(), out u))
+                        if (state.TypeRegistry.TryGetValue(t.GetGenericTypeDefinition(), out u))
                         {
                             typeDescriptor = u;
                             break;
@@ -361,7 +459,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                     foreach (Type interfaceType in Framework.Do.GetInterfaces(type))
                     {
                         if (
-                            STypeRegistry.TryGetValue(
+                            state.TypeRegistry.TryGetValue(
                                 interfaceType,
                                 out IUserDataDescriptor interfaceDescriptor
                             )
@@ -380,7 +478,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
                         else if (Framework.Do.IsGenericType(interfaceType))
                         {
                             if (
-                                STypeRegistry.TryGetValue(
+                                state.TypeRegistry.TryGetValue(
                                     interfaceType.GetGenericTypeDefinition(),
                                     out interfaceDescriptor
                                 )
@@ -454,9 +552,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             get
             {
-                lock (SLock)
+                DescriptorRegistryState state = CurrentState;
+                lock (state.SyncRoot)
                 {
-                    return STypeRegistry.ToArray();
+                    return state.TypeRegistry.ToArray();
                 }
             }
         }
@@ -471,9 +570,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         {
             get
             {
-                lock (SLock)
+                DescriptorRegistryState state = CurrentState;
+                lock (state.SyncRoot)
                 {
-                    return STypeRegistryHistory.ToArray();
+                    return state.TypeRegistryHistory.ToArray();
                 }
             }
         }
@@ -481,6 +581,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <summary>
         /// Gets or sets the registration policy.
         /// </summary>
-        internal static IRegistrationPolicy RegistrationPolicy { get; set; }
+        internal static IRegistrationPolicy RegistrationPolicy
+        {
+            get { return CurrentState.RegistrationPolicy; }
+            set
+            {
+                CurrentState.RegistrationPolicy =
+                    value ?? throw new ArgumentNullException(nameof(value));
+            }
+        }
     }
 }

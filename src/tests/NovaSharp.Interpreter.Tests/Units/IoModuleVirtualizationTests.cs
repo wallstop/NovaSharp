@@ -14,8 +14,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class IoModuleVirtualizationTests : IDisposable
     {
-        private IPlatformAccessor _previousPlatform = null!;
-        private InMemoryPlatformAccessor _platform = null!;
+        private IPlatformAccessor _previousPlatform;
+        private InMemoryPlatformAccessor _platform;
 
         [SetUp]
         public void SetUp()
@@ -165,13 +165,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             if (_previousPlatform != null)
             {
                 Script.GlobalOptions.Platform = _previousPlatform;
-                _previousPlatform = null!;
+                _previousPlatform = null;
             }
 
             if (_platform != null)
             {
                 _platform.Dispose();
-                _platform = null!;
+                _platform = null;
             }
         }
 

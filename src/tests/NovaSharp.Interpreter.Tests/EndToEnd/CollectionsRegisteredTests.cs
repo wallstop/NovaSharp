@@ -11,6 +11,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class CollectionsRegisteredTests
     {
         private sealed class RegCollItem

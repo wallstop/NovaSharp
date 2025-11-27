@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             _ = new AddressInfo();
         }
 
-        private Script _script = null!;
+        private Script _script;
 
         [SetUp]
         public void SetUp()
@@ -103,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             PropertyTableAssigner<BasicSample> assigner = new();
             Table data = new(_script);
 
-            Assert.That(() => assigner.AssignObject(null!, data), Throws.ArgumentNullException);
+            Assert.That(() => assigner.AssignObject(null, data), Throws.ArgumentNullException);
 
             PropertyTableAssigner nonGeneric = new(typeof(BasicSample));
             Assert.That(

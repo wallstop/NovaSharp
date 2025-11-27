@@ -92,6 +92,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     }
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class CollectionsBaseInterfGenRegisteredTests
     {
         private static void Do(string code, Action<DynValue> asserts)

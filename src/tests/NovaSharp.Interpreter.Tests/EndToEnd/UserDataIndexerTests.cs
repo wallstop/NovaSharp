@@ -8,6 +8,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class UserDataIndexerTests
     {
         internal sealed class IndexerTestClass
@@ -91,7 +93,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropMultiIndexerMetamethodGetSet()
         {
             string script =
@@ -106,7 +107,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				setmetatable(t, m);
 
 				t[10,11,12] = 1234; return t[10,11,12];";
-            IndexerTest(script, 1234);
+            Assert.Throws<ScriptRuntimeException>(() => IndexerTest(script, 1234));
         }
 
         [Test]
@@ -117,7 +118,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropExpListIndexingCompilesButNotRun1()
         {
             string script =
@@ -126,14 +126,10 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				return x[2,3];
 				";
 
-            DynValue res = Script.RunString(script);
-
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(98));
+            Assert.Throws<ScriptRuntimeException>(() => Script.RunString(script));
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropExpListIndexingCompilesButNotRun2()
         {
             string script =
@@ -142,10 +138,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x[2,3] = 5;
 				";
 
-            DynValue res = Script.RunString(script);
-
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(98));
+            Assert.Throws<ScriptRuntimeException>(() => Script.RunString(script));
         }
     }
 }

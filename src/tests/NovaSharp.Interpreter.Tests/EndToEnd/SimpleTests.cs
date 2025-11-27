@@ -11,6 +11,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class SimpleTests
     {
         [Test]
@@ -248,7 +250,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void InvalidEscape()
         {
             string script =
@@ -256,7 +257,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 				x = 'ciao\k{41}';
 				return x;";
 
-            DynValue res = Script.RunString(script);
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]
@@ -1489,7 +1490,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(SyntaxErrorException))]
         public void VarArgsInNoVarArgsReturnsError()
         {
             string script =
@@ -1508,7 +1508,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 					return x(1,2,3,4);
 								";
 
-            DynValue res = Script.RunString(script);
+            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
         [Test]

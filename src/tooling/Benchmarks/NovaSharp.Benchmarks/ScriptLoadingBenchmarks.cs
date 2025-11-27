@@ -19,7 +19,7 @@ namespace NovaSharp.Benchmarks
     public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;
-        private Script _precompiledScript = null!;
+        private Script _precompiledScript;
         private DynValue _precompiledFunction = DynValue.Nil;
         private ScriptComplexity _currentComplexity;
 

@@ -192,36 +192,17 @@ namespace NovaSharp.Interpreter.Tests
                 };
             }
 
-            ExpectedExceptionAttribute expectedEx = mi.GetCustomAttributes(
-                    typeof(ExpectedExceptionAttribute),
-                    true
-                )
-                .OfType<ExpectedExceptionAttribute>()
-                .FirstOrDefault();
-
             try
             {
                 object o = Activator.CreateInstance(t);
                 mi.Invoke(o, Array.Empty<object>());
 
-                if (expectedEx != null)
+                return new TestResult()
                 {
-                    return new TestResult()
-                    {
-                        TestName = mi.Name,
-                        Message = $"Exception {expectedEx.ExpectedException} expected",
-                        Type = TestResultType.Fail,
-                    };
-                }
-                else
-                {
-                    return new TestResult()
-                    {
-                        TestName = mi.Name,
-                        Message = "ok",
-                        Type = TestResultType.Ok,
-                    };
-                }
+                    TestName = mi.Name,
+                    Message = "ok",
+                    Type = TestResultType.Ok,
+                };
             }
             catch (TargetInvocationException tiex)
             {
@@ -237,28 +218,13 @@ namespace NovaSharp.Interpreter.Tests
                     };
                 }
 
-                if (
-                    expectedEx != null
-                    && Framework.Do.IsInstanceOfType(expectedEx.ExpectedException, ex)
-                )
+                return new TestResult()
                 {
-                    return new TestResult()
-                    {
-                        TestName = mi.Name,
-                        Message = "ok",
-                        Type = TestResultType.Ok,
-                    };
-                }
-                else
-                {
-                    return new TestResult()
-                    {
-                        TestName = mi.Name,
-                        Message = BuildExceptionMessage(ex),
-                        Type = TestResultType.Fail,
-                        Exception = ex,
-                    };
-                }
+                    TestName = mi.Name,
+                    Message = BuildExceptionMessage(ex),
+                    Type = TestResultType.Fail,
+                    Exception = ex,
+                };
             }
         }
 

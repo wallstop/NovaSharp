@@ -9,7 +9,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class ScriptDefaultOptionsTests
     {
-        private IScriptLoader _originalLoader = null!;
+        private IScriptLoader _originalLoader;
 
         [SetUp]
         public void SetUp()

@@ -1,5 +1,3 @@
-#nullable enable
-
 namespace NovaSharp.Interpreter.Tests.Utilities
 {
     using System;
@@ -9,9 +7,9 @@ namespace NovaSharp.Interpreter.Tests.Utilities
     {
         private readonly TextWriter _originalOut;
         private readonly TextReader _originalIn;
-        private readonly StringReader? _inputReader;
+        private readonly StringReader _inputReader;
 
-        public ConsoleRedirectionScope(string? input = null)
+        public ConsoleRedirectionScope(string input = null)
         {
             Writer = new StringWriter();
             _originalOut = Console.Out;
@@ -23,6 +21,10 @@ namespace NovaSharp.Interpreter.Tests.Utilities
             {
                 _inputReader = new StringReader(input);
                 Console.SetIn(_inputReader);
+            }
+            else
+            {
+                _inputReader = null;
             }
         }
 

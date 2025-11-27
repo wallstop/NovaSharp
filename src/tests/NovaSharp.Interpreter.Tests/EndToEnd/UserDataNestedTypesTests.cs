@@ -10,6 +10,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public sealed class UserDataNestedTypesTests
     {
         [Test]
@@ -57,7 +59,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropNestedTypesPrivateRef2()
         {
             Script s = new();
@@ -66,10 +67,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             s.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue res = s.DoString("return o.SomeNestedTypePrivate2:Get()");
-
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate2"));
+            Assert.Throws<ScriptRuntimeException>(() =>
+                s.DoString("return o.SomeNestedTypePrivate2:Get()")
+            );
         }
 
         [Test]
@@ -103,7 +103,6 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void InteropNestedTypesPrivateVal2()
         {
             Script s = new();
@@ -112,10 +111,9 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             s.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue res = s.DoString("return o.SomeNestedTypePrivate2:Get()");
-
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("Ciao from SomeNestedTypePrivate2"));
+            Assert.Throws<ScriptRuntimeException>(() =>
+                s.DoString("return o.SomeNestedTypePrivate2:Get()")
+            );
         }
     }
 

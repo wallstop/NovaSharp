@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class RecordingDebugger : IDebugger
         {
-            private DebugService _service = null!;
+            private DebugService _service;
             private int _remainingRefreshes = 10;
 
             public Dictionary<WatchType, List<IReadOnlyList<WatchItem>>> Updates { get; } = new();

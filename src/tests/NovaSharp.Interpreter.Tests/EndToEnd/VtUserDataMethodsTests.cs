@@ -13,9 +13,25 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class VtUserDataMethodsTests
     {
         private static readonly int[] ScriptToClrIntArray = { 43, 78, 126, 14 };
+        private IDisposable _globalOptionsScope;
+
+        [SetUp]
+        public void BeginGlobalOptionsIsolation()
+        {
+            _globalOptionsScope = Script.BeginGlobalOptionsScope();
+        }
+
+        [TearDown]
+        public void EndGlobalOptionsIsolation()
+        {
+            _globalOptionsScope?.Dispose();
+            _globalOptionsScope = null;
+        }
 
         internal struct SomeClassNoRegister : IComparable
         {

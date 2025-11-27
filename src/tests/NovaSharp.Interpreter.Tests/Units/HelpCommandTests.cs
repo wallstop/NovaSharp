@@ -13,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class HelpCommandTests : IDisposable
     {
-        private ConsoleCaptureScope _consoleScope = null!;
+        private ConsoleCaptureScope _consoleScope;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -100,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             if (_consoleScope != null)
             {
                 _consoleScope.Dispose();
-                _consoleScope = null!;
+                _consoleScope = null;
             }
         }
     }

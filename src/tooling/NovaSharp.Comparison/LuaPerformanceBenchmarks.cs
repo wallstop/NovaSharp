@@ -8,8 +8,6 @@ using NovaSharp.Interpreter;
 using NovaSharp.Interpreter.DataTypes;
 using NovaSharp.Interpreter.Modules;
 
-#nullable enable
-
 /// <summary>
 /// BenchmarkDotNet suite that compares NovaSharp and NLua compilation/execution throughput.
 /// </summary>
@@ -23,10 +21,10 @@ using NovaSharp.Interpreter.Modules;
 public class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
-    private Script _novaSharpScript = null!;
+    private Script _novaSharpScript;
     private DynValue _novaSharpFunction = DynValue.Nil;
-    private Lua _nLua = null!;
-    private LuaFunction? _nLuaFunction;
+    private Lua _nLua;
+    private LuaFunction _nLuaFunction;
     private bool _disposed;
 
     /// <summary>
@@ -97,7 +95,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// </summary>
     public LuaFunction NLuaCompile()
     {
-        LuaFunction? compiled =
+        LuaFunction compiled =
             _nLua.LoadString(_source, $"compile_{CurrentScenario}") as LuaFunction;
         if (compiled == null)
         {
@@ -111,14 +109,14 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Executes the previously compiled NLua chunk.
     /// </summary>
-    public object? NLuaExecute()
+    public object NLuaExecute()
     {
         if (_nLuaFunction == null)
         {
             return null;
         }
 
-        object? result = null;
+        object result = null;
         foreach (object value in _nLuaFunction.Call())
         {
             result = value;

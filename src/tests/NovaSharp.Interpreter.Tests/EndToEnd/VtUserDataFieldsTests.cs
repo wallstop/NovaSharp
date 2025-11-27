@@ -8,6 +8,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [UserDataIsolation]
     public class VtUserDataFieldsTests
     {
         internal struct SomeClass
@@ -238,9 +240,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Assert.That(obj.IntProp, Is.EqualTo(321));
 
-            DynValue res = s.DoString(script);
-
-            Assert.That(obj.IntProp, Is.EqualTo(19));
+            Assert.Throws<ScriptRuntimeException>(() => s.DoString(script));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
         }
 
         private static void TestStaticFieldAccess(InteropAccessMode opt)
@@ -356,21 +357,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void VInteropInvalidFieldSetterNone()
         {
             TestInvalidFieldSetter(InteropAccessMode.Reflection);
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void VInteropInvalidFieldSetterLazy()
         {
             TestInvalidFieldSetter(InteropAccessMode.LazyOptimized);
         }
 
         [Test]
-        [ExpectedException(typeof(ScriptRuntimeException))]
         public void VInteropInvalidFieldSetterPrecomputed()
         {
             TestInvalidFieldSetter(InteropAccessMode.Preoptimized);

@@ -12,9 +12,9 @@ namespace NovaSharp.Interpreter.Tests.Units
     [TestFixture]
     public sealed class CompileCommandTests
     {
-        private IScriptLoader _originalLoader = null!;
-        private string _sourcePath = null!;
-        private string _targetPath = null!;
+        private IScriptLoader _originalLoader;
+        private string _sourcePath;
+        private string _targetPath;
 
         [SetUp]
         public void SetUp()
