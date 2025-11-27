@@ -12,11 +12,11 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal struct SomeClass
         {
-            public int intProp;
+            public int IntProp { get; set; }
             public const int ConstIntProp = 115;
-            public int? nIntProp;
-            public object objProp;
-            public static string StaticProp;
+            public int? NIntProp { get; set; }
+            public object ObjProp { get; set; }
+            public static string StaticProp { get; set; }
 
             private string _privateProp;
 
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj = new() { intProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -60,7 +60,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
                 Script s = new();
 
-                SomeClass obj = new() { intProp = 321 };
+                SomeClass obj = new() { IntProp = 321 };
 
                 UserData.UnregisterType<SomeClass>();
                 UserData.RegisterType<SomeClass>(opt);
@@ -89,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj = new() { intProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -112,8 +112,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj1 = new() { nIntProp = 321 };
-            SomeClass obj2 = new() { nIntProp = null };
+            SomeClass obj1 = new() { NIntProp = 321 };
+            SomeClass obj2 = new() { NIntProp = null };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -140,8 +140,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj1 = new() { objProp = "ciao" };
-            SomeClass obj2 = new() { objProp = obj1 };
+            SomeClass obj1 = new() { ObjProp = "ciao" };
+            SomeClass obj2 = new() { ObjProp = obj1 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -170,21 +170,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj = new() { intProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
-            Assert.That(obj.intProp, Is.EqualTo(321));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
             DynValue res = s.DoString(script);
 
             Assert.That(res.Number, Is.EqualTo(19));
 
             // right! because value types do not change..
-            Assert.That(obj.intProp, Is.EqualTo(321));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
         }
 
         private static void TestNIntFieldSetter(InteropAccessMode opt)
@@ -198,8 +198,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj1 = new() { nIntProp = 321 };
-            SomeClass obj2 = new() { nIntProp = null };
+            SomeClass obj1 = new() { NIntProp = 321 };
+            SomeClass obj2 = new() { NIntProp = null };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
@@ -207,8 +207,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             s.Globals.Set("myobj1", UserData.Create(obj1));
             s.Globals.Set("myobj2", UserData.Create(obj2));
 
-            Assert.That(obj1.nIntProp, Is.EqualTo(321));
-            Assert.That(obj2.nIntProp, Is.EqualTo(null));
+            Assert.That(obj1.NIntProp, Is.EqualTo(321));
+            Assert.That(obj2.NIntProp, Is.EqualTo(null));
 
             DynValue res = s.DoString(script);
 
@@ -217,8 +217,8 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(19));
 
             // again.. are structs so the originals won't change
-            Assert.That(obj1.nIntProp, Is.EqualTo(321));
-            Assert.That(obj2.nIntProp, Is.EqualTo(null));
+            Assert.That(obj1.NIntProp, Is.EqualTo(321));
+            Assert.That(obj2.NIntProp, Is.EqualTo(null));
         }
 
         private static void TestInvalidFieldSetter(InteropAccessMode opt)
@@ -229,18 +229,18 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj = new() { intProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
-            Assert.That(obj.intProp, Is.EqualTo(321));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(obj.intProp, Is.EqualTo(19));
+            Assert.That(obj.IntProp, Is.EqualTo(19));
         }
 
         private static void TestStaticFieldAccess(InteropAccessMode opt)
@@ -405,21 +405,21 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             Script s = new();
 
-            SomeClass obj = new() { intProp = 321 };
+            SomeClass obj = new() { IntProp = 321 };
 
             UserData.UnregisterType<SomeClass>();
             UserData.RegisterType<SomeClass>();
 
             s.Globals["myobj"] = obj;
 
-            Assert.That(obj.intProp, Is.EqualTo(321));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
 
             DynValue res = s.DoString(script);
 
             Assert.That(res.Number, Is.EqualTo(19));
 
             // expected behaviour
-            Assert.That(obj.intProp, Is.EqualTo(321));
+            Assert.That(obj.IntProp, Is.EqualTo(321));
         }
 
         [Test]

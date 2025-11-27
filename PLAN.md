@@ -31,6 +31,7 @@
 ### 1. Analyzer and warning debt
 - Current status (2025-12-09): dotnet build src/NovaSharp.sln -c Release -nologo remains clean with <TreatWarningsAsErrors>true> enforced across the solution. Keep running that command after every analyzer/formatting sweep so the zero-warning bar never regresses. **Next steps:** document any new suppressions in PLAN.md/docs/Testing.md, keep the PR template’s analyzer checklist up to date, and treat fresh CA hits as stop-ship items.
 - Active follow-up: audit the remaining targeted suppressions (e.g., CA1051 field fixtures, IDE1006 Lua port intentional cases, module-level CA1515) and convert any that are no longer needed into real code fixes so the analyzer baseline remains suppression-light.
+- Remaining CA1051 hotspots now center on the test infrastructure (e.g., `TestRunner` counters, descriptor helper fixtures that still require public members for reflection scenarios). Track these explicitly and either convert them to properties or document a minimal residual suppression per fixture so CA1051 can be fully re-enabled.
 
 ### 2. Coverage and test depth
 - Refresh artefacts: rerun ./scripts/coverage/coverage.ps1 (Release, gate = enforce) so docs/coverage/latest/* and docs/coverage/coverage-hotspots.md describe the latest test suite.

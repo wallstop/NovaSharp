@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table env = new(script);
             env.Set("value", DynValue.NewNumber(7));
 
-            DynValue closure = script.LoadFunction("return value", env, "bound");
+            DynValue closure = script.LoadFunction("function() return value end", env, "bound");
             DynValue result = script.Call(closure);
 
             Assert.That(result.Number, Is.EqualTo(7));

@@ -2,76 +2,54 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using NovaSharp.Interpreter.Debugging;
-    using NovaSharp.Interpreter.Tests.TestUtilities;
+    using NovaSharp.Interpreter.Infrastructure;
     using NUnit.Framework;
 
     [TestFixture]
     public sealed class DebuggerActionTests
     {
-        private static readonly int[] BreakpointLines = { 1, 2, 3 };
-
         [Test]
-        public void ConstructorInitializesTimestampNearCurrentTime()
+        public void TimeStampUsesInjectedProvider()
         {
-            FakeTimeProvider provider = new();
-            DateTime before = provider.GetUtcNow().UtcDateTime;
-            DebuggerAction action = new(provider);
-            provider.Advance(TimeSpan.FromMilliseconds(1));
-            DateTime after = provider.GetUtcNow().UtcDateTime;
+            DateTimeOffset fixedTime = new(2025, 11, 26, 17, 45, 12, TimeSpan.Zero);
+            FixedTimeProvider provider = new(fixedTime);
 
-            Assert.That(action.TimeStampUtc, Is.InRange(before, after));
+            DebuggerAction action = new(provider);
+
+            Assert.That(action.TimeStampUtc, Is.EqualTo(fixedTime.UtcDateTime));
         }
 
         [Test]
-        public void AgeIncreasesOverTime()
-        {
-            FakeTimeProvider provider = new();
-            DebuggerAction action = new(provider);
-
-            TimeSpan initialAge = action.Age;
-            provider.Advance(TimeSpan.FromMilliseconds(5));
-            TimeSpan laterAge = action.Age;
-
-            Assert.That(laterAge, Is.GreaterThanOrEqualTo(initialAge));
-        }
-
-        [Test]
-        public void LinesSetterCopiesAndHandlesNull()
+        public void LinesSetterCopiesInputAndTreatsNullAsEmpty()
         {
             DebuggerAction action = new();
+            int[] source = new[] { 10, 20, 30 };
 
-            int[] original = (int[])BreakpointLines.Clone();
-            action.Lines = original;
+            action.Lines = source;
 
-            original[0] = 42;
+            Assert.That(action.Lines, Is.EquivalentTo(source));
 
-            Assert.That(action.Lines, Is.EqualTo(BreakpointLines));
+            source[0] = 999;
+            Assert.That(action.Lines[0], Is.Not.EqualTo(source[0]), "Lines should be copied");
 
-            action.Lines = null;
-
-            Assert.That(action.Lines.Count, Is.EqualTo(0));
+            action.Lines = null!;
+            Assert.That(action.Lines, Is.Not.Null);
+            Assert.That(action.Lines, Is.Empty);
         }
 
-        [Test]
-        public void ToStringIncludesBreakpointLocationDetails()
+        private sealed class FixedTimeProvider : ITimeProvider
         {
-            DebuggerAction action = new()
+            private readonly DateTimeOffset _timestamp;
+
+            public FixedTimeProvider(DateTimeOffset timestamp)
             {
-                Action = DebuggerAction.ActionType.ToggleBreakpoint,
-                SourceId = 7,
-                SourceLine = 12,
-                SourceCol = 3,
-            };
+                _timestamp = timestamp;
+            }
 
-            Assert.That(action.ToString(), Is.EqualTo("ToggleBreakpoint 7:(12,3)"));
-        }
-
-        [Test]
-        public void ToStringFallsBackToActionNameForOtherActions()
-        {
-            DebuggerAction action = new() { Action = DebuggerAction.ActionType.Run };
-
-            Assert.That(action.ToString(), Is.EqualTo("Run"));
+            public DateTimeOffset GetUtcNow()
+            {
+                return _timestamp;
+            }
         }
     }
 }

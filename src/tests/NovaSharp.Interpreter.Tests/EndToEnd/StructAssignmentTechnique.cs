@@ -10,14 +10,14 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal struct Vector3
         {
-            public float x;
-            public float y;
-            public float z;
+            public float X { get; set; }
+            public float Y { get; set; }
+            public float Z { get; set; }
         }
 
         internal sealed class Transform
         {
-            public Vector3 position;
+            public Vector3 Position { get; set; }
         }
 
         internal sealed class Vector3Accessor
@@ -31,20 +31,35 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
             public float X
             {
-                get { return _transf.position.x; }
-                set { _transf.position.x = value; }
+                get { return _transf.Position.X; }
+                set
+                {
+                    Vector3 current = _transf.Position;
+                    current.X = value;
+                    _transf.Position = current;
+                }
             }
 
             public float Y
             {
-                get { return _transf.position.y; }
-                set { _transf.position.y = value; }
+                get { return _transf.Position.Y; }
+                set
+                {
+                    Vector3 current = _transf.Position;
+                    current.Y = value;
+                    _transf.Position = current;
+                }
             }
 
             public float Z
             {
-                get { return _transf.position.z; }
-                set { _transf.position.z = value; }
+                get { return _transf.Position.Z; }
+                set
+                {
+                    Vector3 current = _transf.Position;
+                    current.Z = value;
+                    _transf.Position = current;
+                }
             }
         }
 
@@ -62,13 +77,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
 
         //	Transform T = new Transform();
 
-        //	T.position.X = 3;
+        //	T.Position.X = 3;
 
         //	S.Globals["transform"] = T;
 
-        //	S.DoString("transform.position.X = 15;");
+        //	S.DoString("transform.Position.X = 15;");
 
-        //	Assert.AreEqual(3, T.position.X);
+        //	Assert.AreEqual(3, T.Position.X);
         //	UserData.UnregisterType<Transform>();
         //	UserData.UnregisterType<Vector3>();
         //	UserData.UnregisterType<Vector3_Accessor>();
@@ -86,13 +101,13 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Vector3Accessor accessor = new(t);
             _ = accessor.X;
 
-            t.position.x = 3;
+            t.Position = new Vector3() { X = 3 };
 
             s.Globals["transform"] = t;
 
-            s.DoString("transform.position.X = 15;");
+            s.DoString("transform.Position.X = 15;");
 
-            Assert.That((int)t.position.x, Is.EqualTo(3));
+            Assert.That((int)t.Position.X, Is.EqualTo(3));
             UserData.UnregisterType<Transform>();
             UserData.UnregisterType<Vector3>();
         }

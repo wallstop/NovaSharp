@@ -19,12 +19,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 "CA5394:Random is an insecure random number generator",
                 Justification = "Tests intentionally proxy System.Random instances; security is not in scope."
             )]
-            public Random randomSource;
+            public Random RandomSource { get; }
 
             [NovaSharpVisible(false)]
             public Proxy(Random r)
             {
-                randomSource = r;
+                RandomSource = r;
             }
 
             [SuppressMessage(
@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             )]
             public int GetValue()
             {
-                return randomSource != null ? randomSource.Next(3, 4) : 3;
+                return RandomSource != null ? RandomSource.Next(3, 4) : 3;
             }
         }
 

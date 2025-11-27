@@ -1,9 +1,11 @@
 namespace NovaSharp.Interpreter
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using System.Reflection;
     using System.Text;
     using CoreLib;
     using Debugging;
@@ -15,6 +17,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
     using Tree.Expressions;
@@ -45,6 +48,10 @@ namespace NovaSharp.Interpreter
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
         private bool _bit32CompatibilityWarningEmitted;
+        private static readonly ConcurrentDictionary<
+            Type,
+            MethodInfo
+        > LegacyResolveFileNameMethods = new();
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -405,14 +412,11 @@ namespace NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalContext);
 
-#pragma warning disable 618
-            filename = Options.ScriptLoader.ResolveFileName(
-                filename,
-                globalContext ?? _globalTable
-            );
-#pragma warning restore 618
+            Table globals = globalContext ?? _globalTable;
 
-            object code = Options.ScriptLoader.LoadFile(filename, globalContext ?? _globalTable);
+            filename = ResolveFileNameWithLegacyFallback(Options.ScriptLoader, filename, globals);
+
+            object code = Options.ScriptLoader.LoadFile(filename, globals);
 
             if (code is string s)
             {
@@ -1070,5 +1074,51 @@ namespace NovaSharp.Interpreter
         /// Provides the owning script reference for <see cref="IScriptPrivateResource"/> consumers.
         /// </summary>
         public virtual Script OwnerScript => this;
+
+        private static string ResolveFileNameWithLegacyFallback(
+            IScriptLoader scriptLoader,
+            string filename,
+            Table globalContext
+        )
+        {
+            if (scriptLoader == null)
+            {
+                throw new ArgumentNullException(nameof(scriptLoader));
+            }
+
+            if (scriptLoader is ScriptLoaderBase scriptLoaderBase)
+            {
+                return scriptLoaderBase.ResolveFileName(filename, globalContext);
+            }
+
+            MethodInfo resolveFileName = LegacyResolveFileNameMethods.GetOrAdd(
+                scriptLoader.GetType(),
+                static type =>
+                {
+                    InterfaceMapping mapping = type.GetInterfaceMap(typeof(IScriptLoader));
+
+                    for (int i = 0; i < mapping.InterfaceMethods.Length; i++)
+                    {
+                        if (
+                            mapping.InterfaceMethods[i].Name
+                            == nameof(IScriptLoader.ResolveFileName)
+                        )
+                        {
+                            return mapping.TargetMethods[i];
+                        }
+                    }
+
+                    return null;
+                }
+            );
+
+            if (resolveFileName == null)
+            {
+                return filename;
+            }
+
+            return (string)
+                resolveFileName.Invoke(scriptLoader, new object[] { filename, globalContext });
+        }
     }
 }

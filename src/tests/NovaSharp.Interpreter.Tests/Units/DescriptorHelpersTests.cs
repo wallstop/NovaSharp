@@ -468,10 +468,6 @@ namespace NovaSharp.Interpreter.Tests.Units
         )]
         private class MemberVisibilityFixtures
         {
-            public const string InternalFieldName = nameof(InternalFieldValue);
-            public const string ProtectedFieldName = nameof(ProtectedFieldValue);
-            public const string PrivateMethodName = nameof(PrivateMethod);
-
             private int _invocationCount;
 
             private void TouchInstance()
@@ -479,6 +475,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 _invocationCount++;
             }
 
+            [SuppressMessage(
+                "Design",
+                "CA1051:Do not declare visible instance fields",
+                Justification = "Tests require concrete public fields to validate DescriptorHelpers visibility logic."
+            )]
             public static int PublicFieldValue;
 
             internal static int InternalFieldValue;

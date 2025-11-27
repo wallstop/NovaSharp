@@ -206,5 +206,38 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
             });
         }
+
+        [Test]
+        public void SuspendedCoroutineReceivesResumeArguments()
+        {
+            Script script = new(CoreModules.PresetComplete);
+            script.DoString(
+                @"
+                function accumulator()
+                    local first = coroutine.yield('ready')
+                    return first * 2
+                end
+            "
+            );
+
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("accumulator"));
+
+            DynValue first = coroutineValue.Coroutine.Resume();
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Type, Is.EqualTo(DataType.String));
+                Assert.That(first.String, Is.EqualTo("ready"));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+            });
+
+            DynValue result = coroutineValue.Coroutine.Resume(DynValue.NewNumber(21));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Type, Is.EqualTo(DataType.Number));
+                Assert.That(result.Number, Is.EqualTo(42));
+                Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Dead));
+            });
+        }
     }
 }

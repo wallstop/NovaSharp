@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Platforms
 {
     using System;
     using System.IO;
+    using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter.Modules;
 
@@ -172,9 +173,7 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns>null</returns>
         public virtual string DefaultInput(string prompt)
         {
-#pragma warning disable 618
-            return DefaultInput();
-#pragma warning restore 618
+            return TryInvokeLegacyDefaultInput();
         }
 
         /// <summary>
@@ -274,6 +273,29 @@ namespace NovaSharp.Interpreter.Platforms
         public virtual bool IsRunningOnAOT()
         {
             return PlatformAutoDetector.IsRunningOnAot;
+        }
+
+        private string TryInvokeLegacyDefaultInput()
+        {
+            MethodInfo legacyOverride = GetType()
+                .GetMethod(
+                    nameof(DefaultInput),
+                    BindingFlags.Instance | BindingFlags.Public,
+                    binder: null,
+                    types: Type.EmptyTypes,
+                    modifiers: null
+                );
+
+            if (
+                legacyOverride == null
+                || legacyOverride.DeclaringType == typeof(PlatformAccessorBase)
+            )
+            {
+                return null;
+            }
+
+            object result = legacyOverride.Invoke(this, Array.Empty<object>());
+            return result as string;
         }
     }
 }

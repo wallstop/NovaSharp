@@ -12,12 +12,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     {
         internal struct IndexerTestClass
         {
-            public Dictionary<int, int> mymap;
+            public Dictionary<int, int> Map { get; set; }
 
             public int this[int idx]
             {
-                get { return mymap[idx]; }
-                set { mymap[idx] = value; }
+                get { return Map[idx]; }
+                set { Map[idx] = value; }
             }
 
             public int this[int idx1, int idx2, int idx3]
@@ -25,12 +25,12 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
                 get
                 {
                     int idx = (idx1 + idx2) * idx3;
-                    return mymap[idx];
+                    return Map[idx];
                 }
                 set
                 {
                     int idx = (idx1 + idx2) * idx3;
-                    mymap[idx] = value;
+                    Map[idx] = value;
                 }
             }
         }
@@ -39,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         {
             Script s = new();
 
-            IndexerTestClass obj = new() { mymap = new Dictionary<int, int>() };
+            IndexerTestClass obj = new() { Map = new Dictionary<int, int>() };
 
             UserData.RegisterType<IndexerTestClass>();
 

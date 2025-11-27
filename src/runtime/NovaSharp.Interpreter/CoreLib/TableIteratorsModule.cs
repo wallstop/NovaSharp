@@ -1,6 +1,3 @@
-// Disable warnings about XML documentation
-#pragma warning disable 1591
-
 namespace NovaSharp.Interpreter.CoreLib
 {
     using NovaSharp.Interpreter.DataTypes;
