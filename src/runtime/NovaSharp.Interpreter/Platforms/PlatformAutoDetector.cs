@@ -64,34 +64,40 @@ namespace NovaSharp.Interpreter.Platforms
 #if UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP
                 return true;
 #else
-
-                if (!RunningOnAotCache.HasValue)
+                bool? cached = RunningOnAotCache;
+                if (!cached.HasValue)
                 {
-                    try
-                    {
-                        Func<bool> probeOverride = TestHooks.GetAotProbeOverride();
-                        if (probeOverride != null)
-                        {
-                            RunningOnAotCache = probeOverride();
-                        }
-                        else
-                        {
-                            Expression e = Expression.Constant(5, typeof(int));
-                            Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
-                            lambda.Compile();
-                            RunningOnAotCache = false;
-                        }
-                    }
-                    catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
-                    {
-                        RunningOnAotCache = true;
-                    }
+                    cached = ProbeIsRunningOnAot();
+                    RunningOnAotCache = cached;
                 }
 
-                return RunningOnAotCache.Value;
+                return cached.Value;
 #endif
             }
         }
+
+#if !(UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP)
+        private static bool ProbeIsRunningOnAot()
+        {
+            try
+            {
+                Func<bool> probeOverride = TestHooks.GetAotProbeOverride();
+                if (probeOverride != null)
+                {
+                    return probeOverride();
+                }
+
+                Expression e = Expression.Constant(5, typeof(int));
+                Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
+                lambda.Compile();
+                return false;
+            }
+            catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
+            {
+                return true;
+            }
+        }
+#endif
 
         private static void AutoDetectPlatformFlags()
         {

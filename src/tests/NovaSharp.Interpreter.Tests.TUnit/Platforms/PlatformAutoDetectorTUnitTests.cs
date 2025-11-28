@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Security;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Loaders;
@@ -182,6 +183,55 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                 bool isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
                 await Assert.That(isRunningOnAot).IsTrue();
             }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotHandlesConcurrentCacheResets()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => false);
+            PlatformDetectorScope.SetAotValue(null);
+
+            const int workerCount = 12;
+            const int iterationsPerWorker = 500;
+            List<Task> workers = new(workerCount + 1);
+
+            for (int index = 0; index < workerCount; index++)
+            {
+                workers.Add(
+                    Task.Run(() =>
+                    {
+                        for (int iteration = 0; iteration < iterationsPerWorker; iteration++)
+                        {
+                            bool result = PlatformAutoDetector.IsRunningOnAot;
+                            if (result)
+                            {
+                                throw new InvalidOperationException(
+                                    "Probe override expected false."
+                                );
+                            }
+                        }
+                    })
+                );
+            }
+
+            workers.Add(
+                Task.Run(() =>
+                {
+                    for (
+                        int iteration = 0;
+                        iteration < workerCount * iterationsPerWorker;
+                        iteration++
+                    )
+                    {
+                        PlatformAutoDetector.TestHooks.SetRunningOnAot(null);
+                        Thread.Yield();
+                    }
+                })
+            );
+
+            await Task.WhenAll(workers).ConfigureAwait(false);
+            await Assert.That(PlatformAutoDetector.IsRunningOnAot).IsFalse();
         }
 
         [global::TUnit.Core.Test]
