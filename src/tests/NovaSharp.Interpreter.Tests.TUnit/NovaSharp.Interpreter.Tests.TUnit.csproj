@@ -5,6 +5,7 @@
         <LangVersion>12</LangVersion>
         <Nullable>disable</Nullable>
         <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -40,6 +41,13 @@
         <Compile
             Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Units/TestHelpers.cs"
             Link="Units\TestHelpers.cs"
+        />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Resources/embedded.lua"
+            Link="Resources/embedded.lua"
         />
     </ItemGroup>
 </Project>
