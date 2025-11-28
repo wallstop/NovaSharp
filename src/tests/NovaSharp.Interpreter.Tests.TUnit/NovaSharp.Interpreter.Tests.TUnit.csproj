@@ -30,6 +30,10 @@
             Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Units/HardwireTestUtilities.cs"
+            Link="Units\HardwireTestUtilities.cs"
+        />
+        <Compile
             Include="$(RepoRoot)src/tests/TestInfrastructure/TUnit/**/*.cs"
             Link="TestInfrastructure\TUnit\%(RecursiveDir)%(Filename)%(Extension)"
         />

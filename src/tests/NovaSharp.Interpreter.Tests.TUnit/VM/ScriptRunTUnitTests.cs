@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
 
     public sealed class ScriptRunTUnitTests
     {
@@ -22,6 +23,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunFileExecutesFileContents()
         {
+            PlatformDetectionTestHelper.ForceFileSystemLoader();
             string tempFile = Path.GetTempFileName();
             try
             {
@@ -45,6 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunFileThrowsWhenFileMissing()
         {
+            PlatformDetectionTestHelper.ForceFileSystemLoader();
             string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.lua");
             if (File.Exists(path))
             {

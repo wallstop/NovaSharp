@@ -16,6 +16,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Tests.TestUtilities;
+    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Interpreter.Tests.Units;
 
     public sealed class ScriptLoadTUnitTests
@@ -317,6 +318,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
+            PlatformDetectionTestHelper.ForceFileSystemLoader();
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 

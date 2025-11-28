@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Security;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
 
     [TestFixture]
@@ -35,6 +36,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             typeof(TargetInvocationException),
             typeof(ArgumentException),
         };
+
+        [TearDown]
+        public void CleanupUnityHarness()
+        {
+            UnityEngineReflectionHarness.Reset();
+        }
 
         [Test]
         public void LoadFileReturnsResourceContentRegardlessOfPath()
@@ -286,6 +293,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static bool AssemblyBuilt;
         private static Func<Exception> ThrowOnLoadFactory;
         private static Assembly UnityAssembly;
+        private static ResolveEventHandler ResolveHandler;
         private static Dictionary<string, string> Scripts = new(StringComparer.OrdinalIgnoreCase);
 
         internal static string LastRequestedPath { get; private set; } = string.Empty;
@@ -315,6 +323,25 @@ namespace NovaSharp.Interpreter.Tests.Units
         internal static void SetThrowOnLoad(Func<Exception> exceptionFactory)
         {
             ThrowOnLoadFactory = exceptionFactory;
+        }
+
+        internal static void Reset()
+        {
+            lock (SyncRoot)
+            {
+                Scripts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                ThrowOnLoadFactory = null;
+                LastRequestedPath = string.Empty;
+                AssemblyBuilt = false;
+                UnityAssembly = null;
+                if (ResolveHandler != null)
+                {
+                    AppDomain.CurrentDomain.AssemblyResolve -= ResolveHandler;
+                    ResolveHandler = null;
+                }
+            }
+            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
+            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(false);
         }
 
         public static Array BuildAssetArray(string assetsPath, Type textAssetType)
@@ -348,7 +375,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 AssemblyBuilderAccess.Run
             );
             UnityAssembly = assembly;
-            AppDomain.CurrentDomain.AssemblyResolve += ResolveUnityAssembly;
+            ResolveHandler = ResolveUnityAssembly;
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveHandler;
             ModuleBuilder module = assembly.DefineDynamicModule("UnityEngine.Dynamic");
 
             CreateTextAssetType(module);

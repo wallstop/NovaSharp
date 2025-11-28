@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
 {
     using System;
     using System.Collections.Generic;
@@ -6,28 +6,33 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Security;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
-    using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [PlatformDetectorIsolation]
-    public sealed class PlatformAutoDetectorTests
+    public sealed class PlatformAutoDetectorTUnitTests
     {
-        [Test]
-        public void GetDefaultPlatformReturnsLimitedAccessorWhenUnityFlagged()
+        private enum AutoDetectionEntryPoint
+        {
+            ScriptLoader,
+            PlatformAccessor,
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetDefaultPlatformReturnsLimitedAccessorWhenUnityFlagged()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: true);
 
             IPlatformAccessor platform = PlatformAutoDetector.GetDefaultPlatform();
 
-            Assert.That(platform, Is.TypeOf<LimitedPlatformAccessor>());
+            await Assert.That(platform).IsTypeOf<LimitedPlatformAccessor>();
         }
 
-        [Test, Order(2)]
-        public void GetDefaultScriptLoaderDetectsUnityAssemblies()
+        [global::TUnit.Core.Test]
+        public async Task GetDefaultScriptLoaderDetectsUnityAssemblies()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             using IDisposable assemblies = PlatformDetectorScope.OverrideAssemblyEnumeration(
@@ -36,45 +41,34 @@ namespace NovaSharp.Interpreter.Tests.Units
             UnityAssemblyProbe.EnsureLoaded();
 
             IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
-            string assemblyState = PlatformDetectorScope.DescribeAssemblyEnumerationOverride();
+            Console.WriteLine(PlatformDetectorScope.DescribeAssemblyEnumerationOverride());
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    loader,
-                    Is.TypeOf<UnityAssetsScriptLoader>(),
-                    $"Unity loader was not selected. {assemblyState}"
-                );
-                Assert.That(
-                    PlatformAutoDetector.IsRunningOnUnity,
-                    Is.True,
-                    $"Unity flag not updated after detection. {assemblyState}"
-                );
-            });
+            await Assert.That(loader).IsTypeOf<UnityAssetsScriptLoader>();
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
         }
 
-        [Test]
-        public void GetDefaultPlatformReturnsDotNetCoreAccessorWhenUnityNotDetected()
+        [global::TUnit.Core.Test]
+        public async Task GetDefaultPlatformReturnsDotNetCoreAccessorWhenUnityNotDetected()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: false);
 
             IPlatformAccessor platform = PlatformAutoDetector.GetDefaultPlatform();
 
-            Assert.That(platform, Is.TypeOf<DotNetCorePlatformAccessor>());
+            await Assert.That(platform).IsTypeOf<DotNetCorePlatformAccessor>();
         }
 
-        [Test]
-        public void GetDefaultScriptLoaderReturnsFileSystemLoaderWhenUnityNotDetected()
+        [global::TUnit.Core.Test]
+        public async Task GetDefaultScriptLoaderReturnsFileSystemLoaderWhenUnityNotDetected()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: false);
 
             IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
 
-            Assert.That(loader, Is.TypeOf<FileSystemScriptLoader>());
+            await Assert.That(loader).IsTypeOf<FileSystemScriptLoader>();
         }
 
-        [Test, Order(1)]
-        public void AutoDetectionWithoutUnityAssembliesPrefersFileSystemLoader()
+        [global::TUnit.Core.Test]
+        public async Task AutoDetectionWithoutUnityAssembliesPrefersFileSystemLoader()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             using IDisposable assemblies = PlatformDetectorScope.OverrideAssemblyEnumeration(
@@ -82,151 +76,60 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             IScriptLoader loader = PlatformAutoDetector.GetDefaultScriptLoader();
-            string assemblyState = PlatformDetectorScope.DescribeAssemblyEnumerationOverride();
+            Console.WriteLine(PlatformDetectorScope.DescribeAssemblyEnumerationOverride());
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    loader,
-                    Is.TypeOf<FileSystemScriptLoader>(),
-                    $"Unity assemblies reported when none were provided. {assemblyState}"
-                );
-                Assert.That(
-                    PlatformAutoDetector.IsRunningOnUnity,
-                    Is.False,
-                    $"Unity flag unexpectedly set. {assemblyState}"
-                );
-                Assert.That(
-                    PlatformAutoDetector.IsUnityNative,
-                    Is.False,
-                    $"UnityNative flag unexpectedly set. {assemblyState}"
-                );
-            });
+            await Assert.That(loader).IsTypeOf<FileSystemScriptLoader>();
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsFalse();
+            await Assert.That(PlatformAutoDetector.IsUnityNative).IsFalse();
         }
 
-        [TestCase(
-            true,
-            TestName = nameof(AutoDetectionDoesNothingWhenAlreadyInitialized) + "_ScriptLoader"
-        )]
-        [TestCase(
-            false,
-            TestName = nameof(AutoDetectionDoesNothingWhenAlreadyInitialized) + "_PlatformAccessor"
-        )]
-        public void AutoDetectionDoesNothingWhenAlreadyInitialized(bool useScriptLoader)
+        [global::TUnit.Core.Test]
+        public async Task AutoDetectionDoesNothingWhenAlreadyInitializedForScriptLoader()
         {
-            using PlatformDetectorScope scope = PlatformDetectorScope.CaptureStateOnly();
-
-            PlatformDetectorScope.SetFlags(
-                isRunningOnMono: true,
-                isRunningOnClr4: true,
-                isRunningOnUnity: true
-            );
-            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
-
-            bool monoBefore = PlatformAutoDetector.IsRunningOnMono;
-            bool unityBefore = PlatformAutoDetector.IsRunningOnUnity;
-
-            object entryResult = useScriptLoader
-                ? PlatformAutoDetector.GetDefaultScriptLoader()
-                : PlatformAutoDetector.GetDefaultPlatform();
-
-            string scenario = useScriptLoader ? "ScriptLoader" : "PlatformAccessor";
-            string detectorState = PlatformDetectorScope.DescribeCurrentState();
-            TestContext.WriteLine($"[{scenario}] Detector state after invocation: {detectorState}");
-
-            Assert.Multiple(() =>
-            {
-                if (useScriptLoader)
-                {
-                    Assert.That(
-                        entryResult,
-                        Is.InstanceOf<UnityAssetsScriptLoader>(),
-                        $"Unexpected loader when reusing detection via {scenario}. {detectorState}"
-                    );
-                }
-                else
-                {
-                    Assert.That(
-                        entryResult,
-                        Is.InstanceOf<LimitedPlatformAccessor>(),
-                        $"Unexpected platform accessor when reusing detection via {scenario}. {detectorState}"
-                    );
-                }
-
-                Assert.That(
-                    PlatformAutoDetector.IsRunningOnMono,
-                    Is.EqualTo(monoBefore),
-                    $"Mono flag mutated while invoking {scenario}. {detectorState}"
-                );
-                Assert.That(
-                    PlatformAutoDetector.IsRunningOnUnity,
-                    Is.EqualTo(unityBefore),
-                    $"Unity flag mutated while invoking {scenario}. {detectorState}"
-                );
-            });
+            await AssertAutoDetectionNoOpAsync(AutoDetectionEntryPoint.ScriptLoader)
+                .ConfigureAwait(false);
         }
 
-        [Test, Order(3)]
-        public void AutoDetectionMarksUnityWhenUnityTypesPresent()
+        [global::TUnit.Core.Test]
+        public async Task AutoDetectionDoesNothingWhenAlreadyInitializedForPlatformAccessor()
+        {
+            await AssertAutoDetectionNoOpAsync(AutoDetectionEntryPoint.PlatformAccessor)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task AutoDetectionMarksUnityWhenUnityTypesPresent()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             using IDisposable assemblies = PlatformDetectorScope.OverrideAssemblyEnumeration(
-                UnityTypeProbe.GetAssemblies
+                UnityAssemblyProbe.GetAssemblies
             );
-            UnityTypeProbe.EnsureTypeLoaded();
+            UnityAssemblyProbe.EnsureLoaded();
 
             IPlatformAccessor platform = PlatformAutoDetector.GetDefaultPlatform();
-            string assemblyState = PlatformDetectorScope.DescribeAssemblyEnumerationOverride();
+            Console.WriteLine(PlatformDetectorScope.DescribeAssemblyEnumerationOverride());
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    platform,
-                    Is.TypeOf<LimitedPlatformAccessor>(),
-                    $"Limited accessor not selected. {assemblyState}"
-                );
-                Assert.That(
-                    PlatformAutoDetector.IsRunningOnUnity,
-                    Is.True,
-                    $"Unity flag not updated. {assemblyState}"
-                );
-            });
+            await Assert.That(platform).IsTypeOf<LimitedPlatformAccessor>();
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
         }
 
-        [Test]
-        public void IsRunningOnAotUsesCachedValueAfterProbe()
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotUsesCachedValueAfterProbe()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
-
             using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
 
             bool initialProbe = PlatformAutoDetector.IsRunningOnAot;
-            Assert.That(initialProbe, Is.True);
+            await Assert.That(initialProbe).IsTrue();
 
             probe.Dispose();
 
-            PlatformAutoDetector.TestHooks.SetAotProbeOverride(() =>
-            {
-                Assert.Fail("Cached AOT detection should not re-run the probe.");
-                return false;
-            });
-            try
-            {
-                TestContext.WriteLine(
-                    "[AOT:CachedProbe] state before cached read -> "
-                        + PlatformDetectorScope.DescribeCurrentState()
-                );
-                bool cached = PlatformAutoDetector.IsRunningOnAot;
-                Assert.That(cached, Is.True);
-            }
-            finally
-            {
-                PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
-            }
+            bool cachedValue = PlatformAutoDetector.IsRunningOnAot;
+            await Assert.That(cachedValue).IsTrue();
         }
 
-        [Test]
-        public void SetFlagsUpdatesUnityIndicators()
+        [global::TUnit.Core.Test]
+        public async Task SetFlagsUpdatesUnityIndicators()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
 
@@ -238,75 +141,61 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isUnityIl2Cpp: true
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.True);
-                Assert.That(PlatformAutoDetector.IsRunningOnClr4, Is.True);
-                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
-                Assert.That(PlatformAutoDetector.IsUnityNative, Is.True);
-                Assert.That(PlatformAutoDetector.IsUnityIl2Cpp, Is.True);
-            });
+            await Assert.That(PlatformAutoDetector.IsRunningOnMono).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsRunningOnClr4).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsUnityNative).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsUnityIl2Cpp).IsTrue();
         }
 
-        [Test]
-        public void IsRunningOnAotUsesProbeOverride()
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotUsesProbeOverride()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
             using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
 
-            Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.True);
+            await Assert.That(PlatformAutoDetector.IsRunningOnAot).IsTrue();
         }
 
-        [TestCase(typeof(PlatformNotSupportedException))]
-        [TestCase(typeof(MemberAccessException))]
-        [TestCase(typeof(NotSupportedException))]
-        [TestCase(typeof(InvalidOperationException))]
-        [TestCase(typeof(TypeLoadException))]
-        [TestCase(typeof(System.Security.SecurityException))]
-        public void IsRunningOnAotTreatsProbeExceptionsAsAotHosts(Type exceptionType)
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotTreatsProbeExceptionsAsAotHosts()
         {
-            ArgumentNullException.ThrowIfNull(exceptionType);
-
-            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
-            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
+            IReadOnlyList<Type> exceptionTypes = new[]
             {
-                Exception instance = (Exception)Activator.CreateInstance(exceptionType);
-                throw instance;
-            });
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(null);
-            TestContext.WriteLine(
-                $"[AOT:{exceptionType.Name}] before probe -> {PlatformDetectorScope.DescribeCurrentState()}, ProbeOverrideNull={PlatformAutoDetector.TestHooks.GetAotProbeOverride() == null}"
-            );
+                typeof(PlatformNotSupportedException),
+                typeof(MemberAccessException),
+                typeof(NotSupportedException),
+                typeof(InvalidOperationException),
+                typeof(TypeLoadException),
+                typeof(SecurityException),
+            };
 
-            bool isRunningOnAot = false;
-            for (int attempt = 0; attempt < 3 && !isRunningOnAot; attempt++)
+            foreach (Type exceptionType in exceptionTypes)
             {
-                PlatformAutoDetector.TestHooks.SetRunningOnAot(null);
-                isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
+                using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+                using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
+                {
+                    Exception instance = (Exception)Activator.CreateInstance(exceptionType);
+                    throw instance;
+                });
+
+                bool isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
+                await Assert.That(isRunningOnAot).IsTrue();
             }
-
-            Assert.That(
-                isRunningOnAot,
-                Is.True,
-                $"AOT detection did not treat {exceptionType.Name} as recoverable. {PlatformDetectorScope.DescribeCurrentState()}"
-            );
-            TestContext.WriteLine(
-                $"[AOT:{exceptionType.Name}] after probe -> {PlatformDetectorScope.DescribeCurrentState()}"
-            );
         }
 
-        [Test]
-        public void SetFlagsUpdatesPortableFrameworkIndicator()
+        [global::TUnit.Core.Test]
+        public async Task SetFlagsUpdatesPortableFrameworkIndicator()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
 
             PlatformDetectorScope.SetFlags(isPortableFramework: true);
 
-            Assert.That(PlatformAutoDetector.IsPortableFramework, Is.True);
+            await Assert.That(PlatformAutoDetector.IsPortableFramework).IsTrue();
         }
 
-        [Test]
-        public void DetectorScopeDisposalRestoresCapturedState()
+        [global::TUnit.Core.Test]
+        public async Task DetectorScopeDisposalRestoresCapturedState()
         {
             using (PlatformDetectorScope.ResetForDetection()) { }
 
@@ -316,14 +205,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             try
             {
-                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.EqualTo(!originalUnityFlag));
+                await Assert
+                    .That(PlatformAutoDetector.IsRunningOnUnity)
+                    .IsEqualTo(!originalUnityFlag);
             }
             finally
             {
                 scope.Dispose();
             }
 
-            Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.EqualTo(originalUnityFlag));
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsEqualTo(originalUnityFlag);
         }
 
         private sealed class PlatformDetectorScope : IDisposable
@@ -380,7 +271,6 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool? isUnityIl2Cpp = null
             )
             {
-                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
                 PlatformAutoDetector.TestHooks.SetFlags(
                     isRunningOnMono,
                     isRunningOnClr4,
@@ -484,15 +374,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static void EnsureLoaded()
             {
                 _ = BuildAssembly(
-                    "UnityEngine.AutoDetectorProbeAssembly",
-                    builder =>
+                    "UnityEngine",
+                    module =>
                     {
-                        builder
-                            .DefineType(
-                                "UnityEngine.AutoDetectorProbe",
-                                TypeAttributes.Public | TypeAttributes.Class
-                            )
-                            .CreateTypeInfo();
+                        DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
+                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                        DefineTextAssetType(module);
+                        DefineResourcesType(module);
                     }
                 );
             }
@@ -500,18 +388,63 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static Assembly[] GetAssemblies()
             {
                 Assembly assembly = BuildAssembly(
-                    "UnityEngine.AutoDetectorProbeAssembly",
-                    builder =>
+                    "UnityEngine",
+                    module =>
                     {
-                        builder
-                            .DefineType(
-                                "UnityEngine.AutoDetectorProbe",
-                                TypeAttributes.Public | TypeAttributes.Class
-                            )
-                            .CreateTypeInfo();
+                        DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
+                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                        DefineTextAssetType(module);
+                        DefineResourcesType(module);
                     }
                 );
                 return new[] { assembly };
+            }
+
+            private static void DefineEmptyType(ModuleBuilder module, string name)
+            {
+                TypeBuilder builder = module.DefineType(
+                    name,
+                    TypeAttributes.Public | TypeAttributes.Class
+                );
+                builder.DefineDefaultConstructor(MethodAttributes.Public);
+                builder.CreateTypeInfo();
+            }
+
+            private static void DefineTextAssetType(ModuleBuilder module)
+            {
+                TypeBuilder builder = module.DefineType(
+                    "UnityEngine.TextAsset",
+                    TypeAttributes.Public | TypeAttributes.Class
+                );
+                builder.DefineDefaultConstructor(MethodAttributes.Public);
+                builder.CreateTypeInfo();
+            }
+
+            private static void DefineResourcesType(ModuleBuilder module)
+            {
+                TypeBuilder resources = module.DefineType(
+                    "UnityEngine.Resources",
+                    TypeAttributes.Public
+                        | TypeAttributes.Class
+                        | TypeAttributes.Abstract
+                        | TypeAttributes.Sealed
+                );
+                MethodBuilder loadAll = resources.DefineMethod(
+                    "LoadAll",
+                    MethodAttributes.Public | MethodAttributes.Static,
+                    typeof(Array),
+                    new[] { typeof(string), typeof(Type) }
+                );
+                ILGenerator il = loadAll.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4_0);
+                MethodInfo createInstance = typeof(Array).GetMethod(
+                    "CreateInstance",
+                    new[] { typeof(Type), typeof(int) }
+                );
+                il.EmitCall(OpCodes.Call, createInstance, null);
+                il.Emit(OpCodes.Ret);
+                resources.CreateTypeInfo();
             }
         }
 
@@ -521,14 +454,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 _ = BuildAssembly(
                     "UnityEngine.PlatformProbeAssembly",
-                    builder =>
+                    module =>
                     {
-                        builder
-                            .DefineType(
-                                "UnityEngine.PlatformProbe",
-                                TypeAttributes.Public | TypeAttributes.Class
-                            )
-                            .CreateTypeInfo();
+                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
                     }
                 );
             }
@@ -537,17 +465,22 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 Assembly assembly = BuildAssembly(
                     "UnityEngine.PlatformProbeAssembly",
-                    builder =>
+                    module =>
                     {
-                        builder
-                            .DefineType(
-                                "UnityEngine.PlatformProbe",
-                                TypeAttributes.Public | TypeAttributes.Class
-                            )
-                            .CreateTypeInfo();
+                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
                     }
                 );
                 return new[] { assembly };
+            }
+
+            private static void DefineEmptyType(ModuleBuilder module, string name)
+            {
+                TypeBuilder builder = module.DefineType(
+                    name,
+                    TypeAttributes.Public | TypeAttributes.Class
+                );
+                builder.DefineDefaultConstructor(MethodAttributes.Public);
+                builder.CreateTypeInfo();
             }
         }
 
@@ -560,6 +493,48 @@ namespace NovaSharp.Interpreter.Tests.Units
             ModuleBuilder module = assembly.DefineDynamicModule($"{name}.Module");
             defineTypes(module);
             return assembly;
+        }
+
+        private static async Task AssertAutoDetectionNoOpAsync(AutoDetectionEntryPoint entryPoint)
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.CaptureStateOnly();
+            PlatformDetectorScope.SetFlags(
+                isRunningOnMono: true,
+                isRunningOnClr4: true,
+                isRunningOnUnity: true
+            );
+            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
+
+            bool monoBefore = PlatformAutoDetector.IsRunningOnMono;
+            bool unityBefore = PlatformAutoDetector.IsRunningOnUnity;
+
+            object entryResult = entryPoint switch
+            {
+                AutoDetectionEntryPoint.ScriptLoader =>
+                    PlatformAutoDetector.GetDefaultScriptLoader(),
+                AutoDetectionEntryPoint.PlatformAccessor =>
+                    PlatformAutoDetector.GetDefaultPlatform(),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(entryPoint),
+                    entryPoint,
+                    "Unsupported detector entry point."
+                ),
+            };
+
+            string detectorState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"[{entryPoint}] Detector state after invocation: {detectorState}");
+
+            if (entryPoint == AutoDetectionEntryPoint.ScriptLoader)
+            {
+                await Assert.That(entryResult).IsTypeOf<UnityAssetsScriptLoader>();
+            }
+            else
+            {
+                await Assert.That(entryResult).IsTypeOf<LimitedPlatformAccessor>();
+            }
+
+            await Assert.That(PlatformAutoDetector.IsRunningOnMono).IsEqualTo(monoBefore);
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsEqualTo(unityBefore);
         }
     }
 }

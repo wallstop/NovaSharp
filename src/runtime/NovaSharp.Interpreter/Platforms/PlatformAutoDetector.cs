@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Platforms
 {
     using System;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
     using Loaders;
@@ -129,7 +130,12 @@ namespace NovaSharp.Interpreter.Platforms
                     IsUnityIL2CPP = true;
 #endif
 #elif !(NETFX_CORE)
-                    Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                    Assembly[] assemblyOverride = TestHooks
+                        .GetAssemblyEnumerationOverride()
+                        ?.Invoke();
+                    Assembly[] loadedAssemblies =
+                        assemblyOverride?.Where(a => a != null).ToArray()
+                        ?? AppDomain.CurrentDomain.GetAssemblies();
                     bool unityTypeFound = false;
 
                     for (
@@ -408,6 +414,24 @@ namespace NovaSharp.Interpreter.Platforms
             private static Func<bool> AotProbeOverride;
 
             private static bool? UnityDetectionOverride;
+
+            private static Func<Assembly[]> AssemblyEnumerationOverride;
+
+            /// <summary>
+            /// Overrides the assembly enumeration used when probing for Unity types.
+            /// </summary>
+            public static void SetAssemblyEnumerationOverride(Func<Assembly[]> provider)
+            {
+                AssemblyEnumerationOverride = provider;
+            }
+
+            /// <summary>
+            /// Gets the currently configured assembly enumeration override, if any.
+            /// </summary>
+            internal static Func<Assembly[]> GetAssemblyEnumerationOverride()
+            {
+                return AssemblyEnumerationOverride;
+            }
         }
 
         private static bool IsAotDetectionSuppressedException(Exception ex)

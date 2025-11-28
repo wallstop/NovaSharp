@@ -154,12 +154,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Globals["file"] = UserData.Create(file);
 
-            Assert.That(
-                () => script.DoString("return file:close()"),
-                Throws
-                    .InstanceOf<ScriptRuntimeException>()
-                    .With.Message.Contains("script close failure")
+            ScriptRuntimeException ex = AssertScriptRuntimeException(() =>
+                script.DoString("return file:close()")
             );
+            Assert.That(ex.Message, Does.Contain("script close failure"));
         }
 
         [Test]
@@ -183,7 +181,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Globals["file"] = UserData.Create(file);
 
-            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+            ScriptRuntimeException ex = AssertScriptRuntimeException(() =>
                 script.DoString("return file:flush()")
             );
             Assert.That(ex.Message, Does.Contain("flush failure"));
@@ -1320,6 +1318,43 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isUnityIl2Cpp: false
             );
             PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
+        }
+
+        private static ScriptRuntimeException AssertScriptRuntimeException(TestDelegate action)
+        {
+            return Assert.Throws<ScriptRuntimeException>(() => ExecuteAndUnwrap(action));
+        }
+
+        private static void ExecuteAndUnwrap(TestDelegate action)
+        {
+            try
+            {
+                action();
+                Assert.Fail("Expected ScriptRuntimeException, but no exception was thrown.");
+            }
+            catch (Exception ex)
+            {
+                ScriptRuntimeException scriptException = ExtractScriptRuntimeException(ex);
+                if (scriptException != null)
+                {
+                    throw scriptException;
+                }
+
+                throw;
+            }
+        }
+
+        private static ScriptRuntimeException ExtractScriptRuntimeException(Exception exception)
+        {
+            while (
+                exception is TargetInvocationException invocationException
+                && invocationException.InnerException != null
+            )
+            {
+                exception = invocationException.InnerException;
+            }
+
+            return exception as ScriptRuntimeException;
         }
 
         private sealed class TestStreamFileUserData : StreamFileUserDataBase
