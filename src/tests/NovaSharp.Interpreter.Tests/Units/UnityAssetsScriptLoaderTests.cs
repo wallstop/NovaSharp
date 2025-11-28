@@ -2,9 +2,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Runtime.CompilerServices;
+    using System.Runtime.Serialization;
     using System.Security;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
@@ -21,21 +24,32 @@ namespace NovaSharp.Interpreter.Tests.Units
             "from_unity.lua",
             "extra.lua",
         };
-        private static readonly System.Type[] RecoverableExceptionTypes =
+
+        private static IEnumerable<TestCaseData> RecoverableExceptionCases()
         {
-            typeof(ScriptRuntimeException),
-            typeof(FileNotFoundException),
-            typeof(DirectoryNotFoundException),
-            typeof(UnauthorizedAccessException),
-            typeof(IOException),
-            typeof(System.Security.SecurityException),
-            typeof(InvalidOperationException),
-            typeof(NotSupportedException),
-            typeof(TypeLoadException),
-            typeof(MissingMethodException),
-            typeof(TargetInvocationException),
-            typeof(ArgumentException),
-        };
+            yield return CreateRecoverableCase(typeof(ScriptRuntimeException));
+            yield return CreateRecoverableCase(typeof(FileNotFoundException));
+            yield return CreateRecoverableCase(typeof(DirectoryNotFoundException));
+            yield return CreateRecoverableCase(typeof(UnauthorizedAccessException));
+            yield return CreateRecoverableCase(typeof(IOException));
+            yield return CreateRecoverableCase(typeof(SecurityException));
+            yield return CreateRecoverableCase(typeof(InvalidOperationException));
+            yield return CreateRecoverableCase(typeof(NotSupportedException));
+            yield return CreateRecoverableCase(typeof(TypeLoadException));
+            yield return CreateRecoverableCase(typeof(MissingMethodException));
+            yield return CreateRecoverableCase(typeof(TargetInvocationException));
+            yield return CreateRecoverableCase(typeof(ArgumentException));
+        }
+
+        private static TestCaseData CreateRecoverableCase(Type exceptionType)
+        {
+            string testName = string.Format(
+                CultureInfo.InvariantCulture,
+                "ReflectionConstructorHandlesRecoverableExceptions({0})",
+                exceptionType.Name
+            );
+            return new TestCaseData(exceptionType).SetName(testName);
+        }
 
         [TearDown]
         public void CleanupUnityHarness()
@@ -164,10 +178,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [TestCaseSource(nameof(RecoverableExceptionTypes))]
+        [TestCaseSource(nameof(RecoverableExceptionCases))]
         public void ReflectionConstructorHandlesRecoverableExceptions(System.Type exceptionType)
         {
+            ArgumentNullException.ThrowIfNull(exceptionType);
             UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
+            string diagnostic = string.Format(
+                CultureInfo.InvariantCulture,
+                "Simulating Unity load failure with exception type {0}",
+                exceptionType.FullName
+            );
+            TestContext.WriteLine(diagnostic);
             UnityEngineReflectionHarness.SetThrowOnLoad(() =>
             {
                 return CreateExceptionInstance(exceptionType);
@@ -238,6 +259,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static Exception CreateExceptionInstance(System.Type exceptionType)
         {
+            ArgumentNullException.ThrowIfNull(exceptionType);
+
             ConstructorInfo ctor = exceptionType.GetConstructor(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 binder: null,
@@ -250,7 +273,105 @@ namespace NovaSharp.Interpreter.Tests.Units
                 return (Exception)ctor.Invoke(null);
             }
 
-            return (Exception)Activator.CreateInstance(exceptionType)!;
+            Exception constructed = TryInvokeConstructorWithDefaults(exceptionType);
+            if (constructed != null)
+            {
+                return constructed;
+            }
+
+            return InstantiateWithoutConstructor(exceptionType);
+        }
+
+        private static Exception TryInvokeConstructorWithDefaults(Type exceptionType)
+        {
+            ConstructorInfo[] constructors = exceptionType.GetConstructors(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
+            );
+
+            foreach (ConstructorInfo candidate in constructors)
+            {
+                ParameterInfo[] parameters = candidate.GetParameters();
+                object[] arguments = new object[parameters.Length];
+                bool canUse = true;
+
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (
+                        !TryGetDefaultArgument(
+                            exceptionType,
+                            parameters[i].ParameterType,
+                            out object argument
+                        )
+                    )
+                    {
+                        canUse = false;
+                        break;
+                    }
+
+                    arguments[i] = argument;
+                }
+
+                if (!canUse)
+                {
+                    continue;
+                }
+
+                return (Exception)candidate.Invoke(arguments);
+            }
+
+            return null;
+        }
+
+        private static bool TryGetDefaultArgument(
+            Type declaringType,
+            Type parameterType,
+            out object argument
+        )
+        {
+            if (parameterType == typeof(string))
+            {
+                argument = string.Empty;
+                return true;
+            }
+
+            if (typeof(Exception).IsAssignableFrom(parameterType))
+            {
+                argument = new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Simulated inner exception for {0}.",
+                        declaringType.FullName
+                    )
+                );
+                return true;
+            }
+
+            if (typeof(SerializationInfo).IsAssignableFrom(parameterType))
+            {
+                argument = null;
+                return false;
+            }
+
+            if (parameterType == typeof(StreamingContext))
+            {
+                argument = default(StreamingContext);
+                return true;
+            }
+
+            if (parameterType.IsValueType)
+            {
+                argument = Activator.CreateInstance(parameterType);
+                return true;
+            }
+
+            argument = null;
+            return true;
+        }
+
+        private static Exception InstantiateWithoutConstructor(Type exceptionType)
+        {
+            object instance = RuntimeHelpers.GetUninitializedObject(exceptionType);
+            return (Exception)instance;
         }
 
         [Test]

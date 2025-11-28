@@ -33,12 +33,27 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             public DescriptorRegistryState(DescriptorRegistryState template)
             {
                 SyncRoot = new object();
-                TypeRegistry = new Dictionary<Type, IUserDataDescriptor>(template.TypeRegistry);
-                TypeRegistryHistory = new Dictionary<Type, IUserDataDescriptor>(
-                    template.TypeRegistryHistory
-                );
-                DefaultAccessModeValue = template.DefaultAccessModeValue;
-                RegistrationPolicy = template.RegistrationPolicy;
+                Dictionary<Type, IUserDataDescriptor> clonedTypeRegistry;
+                Dictionary<Type, IUserDataDescriptor> clonedHistory;
+                InteropAccessMode defaultAccessMode;
+                IRegistrationPolicy registrationPolicy;
+
+                lock (template.SyncRoot)
+                {
+                    clonedTypeRegistry = new Dictionary<Type, IUserDataDescriptor>(
+                        template.TypeRegistry
+                    );
+                    clonedHistory = new Dictionary<Type, IUserDataDescriptor>(
+                        template.TypeRegistryHistory
+                    );
+                    defaultAccessMode = template.DefaultAccessModeValue;
+                    registrationPolicy = template.RegistrationPolicy;
+                }
+
+                TypeRegistry = clonedTypeRegistry;
+                TypeRegistryHistory = clonedHistory;
+                DefaultAccessModeValue = defaultAccessMode;
+                RegistrationPolicy = registrationPolicy;
             }
 
             /// <summary>
