@@ -29,7 +29,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release
+dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings
 
 # Generate coverage reports (Coverlet + ReportGenerator)
 pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux

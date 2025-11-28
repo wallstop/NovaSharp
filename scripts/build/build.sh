@@ -9,6 +9,7 @@ run_tests=1
 restore_tools=1
 test_results_dir=""
 test_results_placeholder=""
+run_settings=""
 
 usage() {
     cat <<'EOF'
@@ -66,6 +67,7 @@ fi
 cd "$repo_root"
 test_results_dir="$repo_root/artifacts/test-results"
 test_results_placeholder="$test_results_dir/.placeholder"
+run_settings="$repo_root/scripts/tests/NovaSharp.Parallel.runsettings"
 
 prepare_test_results_directory() {
     rm -rf "$test_results_dir"
@@ -93,8 +95,14 @@ echo "Building $solution (configuration: $configuration)..."
 dotnet build "$solution" -c "$configuration"
 
 if (( run_tests )); then
+    if [[ ! -f "$run_settings" ]]; then
+        echo "Runsettings file not found: $run_settings" >&2
+        exit 1
+    fi
+
     echo "Running tests for $test_project..."
     dotnet test "$test_project" -c "$configuration" --no-build \
+        --settings "$run_settings" \
         --logger "trx;LogFileName=NovaSharpTests.trx" \
         --results-directory "$test_results_dir"
     rm -f "$test_results_placeholder"

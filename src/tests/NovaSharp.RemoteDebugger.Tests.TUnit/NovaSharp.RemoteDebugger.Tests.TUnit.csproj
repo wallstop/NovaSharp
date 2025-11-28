@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <IsTestProject>true</IsTestProject>
+        <LangVersion>12</LangVersion>
+        <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="TUnit" Version="1.2.11" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="..\NovaSharp.Interpreter.Tests\TestUtilities\RemoteDebuggerTestHarness.cs" Link="TestUtilities\RemoteDebuggerTestHarness.cs" />
+        <Compile Include="..\NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs" Link="TestUtilities\TestWaitHelpers.cs" />
+    </ItemGroup>
+</Project>

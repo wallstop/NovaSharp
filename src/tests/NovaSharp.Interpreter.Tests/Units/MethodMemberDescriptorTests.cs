@@ -21,6 +21,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public sealed class MethodMemberDescriptorTests
     {
         // Serializes compatibility checks that mutate MethodMemberDescriptor's static caches.

@@ -145,7 +145,7 @@ try {
 
     $coverageBase = Join-Path $coverageRoot "coverage"
     $targetArgs =
-        "test `"$runnerProject`" -c $Configuration --no-build --logger `"trx;LogFileName=NovaSharpTests.trx`" --results-directory `"$testResultsDir`""
+        "test --project `"$runnerProject`" -c $Configuration --no-build --results-directory `"$testResultsDir`""
 
     Write-Host "Collecting coverage via coverlet..."
     dotnet tool run coverlet $runnerOutput `

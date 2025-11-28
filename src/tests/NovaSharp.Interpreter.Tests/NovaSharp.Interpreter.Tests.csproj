@@ -7,6 +7,8 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
         <LangVersion>9</LangVersion>
+        <EnableNUnitRunner>true</EnableNUnitRunner>
+        <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
     </PropertyGroup>
     <ItemGroup>
         <None Remove="$(MSBuildProjectDirectory)/.editorconfig" />
@@ -19,6 +21,10 @@
         <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.0.2" />
+        <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
         <PackageReference Include="NUnit" Version="4.4.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
@@ -50,18 +56,10 @@
     </ItemGroup>
     <PropertyGroup>
         <FixtureCatalogScript>$(RepoRoot)scripts/tests/update-fixture-catalog.ps1</FixtureCatalogScript>
-        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' == 'Windows_NT'"
-            >powershell</FixtureCatalogShell
-        >
-        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' != 'Windows_NT'"
-            >pwsh</FixtureCatalogShell
-        >
-        <FixtureCatalogCommand Condition="'$(OS)' == 'Windows_NT'"
-            >$(FixtureCatalogShell) -NoProfile -ExecutionPolicy Bypass -File "&quot;$(FixtureCatalogScript)&quot;"</FixtureCatalogCommand
-        >
-        <FixtureCatalogCommand Condition="'$(OS)' != 'Windows_NT'"
-            >$(FixtureCatalogShell) -NoProfile -File "&quot;$(FixtureCatalogScript)&quot;"</FixtureCatalogCommand
-        >
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' == 'Windows_NT'">powershell</FixtureCatalogShell>
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' != 'Windows_NT'">pwsh</FixtureCatalogShell>
+        <FixtureCatalogCommand Condition="'$(OS)' == 'Windows_NT'">$(FixtureCatalogShell) -NoProfile -ExecutionPolicy Bypass -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand>
+        <FixtureCatalogCommand Condition="'$(OS)' != 'Windows_NT'">$(FixtureCatalogShell) -NoProfile -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand>
     </PropertyGroup>
     <Target Name="GenerateFixtureCatalog" BeforeTargets="BeforeCompile">
         <Message Text="Ensuring FixtureCatalogGenerated.cs is current..." Importance="Low" />

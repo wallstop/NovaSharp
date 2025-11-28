@@ -12,6 +12,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using Platforms;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public sealed class IoModuleVirtualizationTests : IDisposable
     {
         private IPlatformAccessor _previousPlatform;

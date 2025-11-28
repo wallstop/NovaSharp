@@ -14,6 +14,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public sealed class PropertyMemberDescriptorTests
     {
         private readonly Script _script = new();

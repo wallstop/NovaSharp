@@ -11,7 +11,7 @@
 - Run `dotnet tool restore` once per checkout to install local CLI tools such as CSharpier.
 - Build all targets with `dotnet build src\NovaSharp.sln -c Release` for a full verification pass.
 - Legacy environments can use `msbuild src\NovaSharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
-- Execute interpreter tests with `dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release`.
+- Execute interpreter tests with `dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings`.
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
 - Generate coverage locally with `./scripts/coverage/coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`). When running on macOS/Linux without PowerShell, detect the absence of `pwsh`/`powershell` and fall back to `bash ./scripts/coverage/coverage.sh` (supports the same flags).
 - Codex is allowed to run the coverage helpers (`./scripts/coverage/coverage.ps1` or `.sh`) without additional approval, so feel free to self-drive coverage refreshes while iterating.

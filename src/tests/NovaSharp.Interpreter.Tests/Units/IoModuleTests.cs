@@ -16,6 +16,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public sealed class IoModuleTests
     {
         [Test]

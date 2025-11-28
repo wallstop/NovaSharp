@@ -2,6 +2,10 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 0 undocumented public/internal type declarations.
+Found 4 undocumented public/internal type declarations.
 
-All inspected type declarations include XML documentation.
+- src/debuggers/NovaSharp.RemoteDebugger/Network/IDebuggerTransport.cs
+  - line 12: missing XML docs for `PortNumber`
+  - line 14: missing XML docs for `ConnectedClientCount`
+  - line 16: missing XML docs for `Start()`
+  - line 18: missing XML docs for `BroadcastMessage()`

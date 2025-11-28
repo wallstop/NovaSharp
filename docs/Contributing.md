@@ -23,7 +23,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 - Full solution build: `dotnet build src/NovaSharp.sln -c Release`
 - Interpreter-only build: `dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj`
 - Interpreter tests (Release):\
-  `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --logger "trx;LogFileName=NovaSharpTests.trx"`
+  `dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --logger "trx;LogFileName=NovaSharpTests.trx"`
 
 ## Coverage
 

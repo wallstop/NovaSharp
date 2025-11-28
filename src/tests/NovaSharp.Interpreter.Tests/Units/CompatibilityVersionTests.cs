@@ -9,6 +9,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [ScriptGlobalOptionsIsolation]
     public class CompatibilityVersionTests
     {
         [SetUp]

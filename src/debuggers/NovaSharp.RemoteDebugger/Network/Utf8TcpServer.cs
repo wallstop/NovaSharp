@@ -10,7 +10,7 @@ namespace NovaSharp.RemoteDebugger.Network
     /// Lightweight TCP server that frames UTF-8 payloads using a single character terminator and
     /// broadcasts debugger messages to each connected peer.
     /// </summary>
-    public class Utf8TcpServer : IDisposable
+    public class Utf8TcpServer : IDisposable, IDebuggerTransport
     {
         private readonly int _portNumber = 1912;
         private readonly IPAddress _ipAddress;

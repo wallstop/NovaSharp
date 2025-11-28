@@ -80,7 +80,7 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 1. Add temporary compatibility wrappers for the most widely referenced entry points (`Script`, `DynValue`, `UserData`, CLI commands):
    - Add `NovaSharp.LegacyNamespaces.cs` containing `[Obsolete]` forwarding partial classes that derive from the new types or expose static helper methods (limited surface to avoid bloating binaries).
    - Document that the wrappers will be removed after one release.
-1. Run `dotnet build src/NovaSharp.sln -c Release` and `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release`.
+1. Run `dotnet build src/NovaSharp.sln -c Release` and `dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings`.
 
 ### Stage 3 – Tooling & Debugger Rename
 

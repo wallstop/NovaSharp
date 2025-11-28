@@ -7,10 +7,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Security;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Platforms;
+    using NovaSharp.Interpreter.Tests;
     using NUnit.Framework;
 
     [TestFixture]
-    [NonParallelizable]
+    [Parallelizable(ParallelScope.Self)]
+    [PlatformDetectorIsolation]
     public sealed class PlatformAutoDetectorTests
     {
         [Test]

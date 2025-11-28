@@ -6,9 +6,12 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
+    using NovaSharp.Interpreter.Tests;
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
+    [PlatformDetectorIsolation]
     public sealed class PlatformAccessorBaseTests
     {
         [Test]

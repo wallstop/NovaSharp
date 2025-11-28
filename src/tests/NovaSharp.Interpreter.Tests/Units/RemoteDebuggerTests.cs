@@ -4,10 +4,6 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Net;
-    using System.Net.Sockets;
-    using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -16,27 +12,24 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.RemoteDebugger;
-    using NovaSharp.RemoteDebugger.Network;
     using NUnit.Framework;
+    using static NovaSharp.Interpreter.Tests.TestUtilities.RemoteDebuggerTestFactory;
 
     [TestFixture]
     public sealed class RemoteDebuggerTests
     {
-        private const Utf8TcpServerOptions ServerOptions =
-            Utf8TcpServerOptions.LocalHostOnly | Utf8TcpServerOptions.SingleClientOnly;
-
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
 
         [Test]
         public void HandshakeBroadcastsWelcomeAndSourceCode()
         {
             Script script = BuildScript("return 42", "handshake.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out _
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
 
@@ -58,12 +51,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void RunAndBreakpointCommandsBecomeQueuedActions()
         {
             Script script = BuildScript("local x = 1 return x", "queue.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -90,12 +83,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void BreakpointCommandSupportsClearAndToggle()
         {
             Script script = BuildScript("return 0", "breakpoints.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -132,12 +125,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AddWatchQueuesHardRefreshAndCreatesDynamicExpression()
         {
             Script script = BuildScript("local value = 10 return value", "watch.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -159,12 +152,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void HostBusyMessagesClearWhenNextActionRuns()
         {
             Script script = BuildScript("return 0", "host-busy.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -192,12 +185,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             Script script = BuildScript("return watched", "watch-eval.lua");
             script.Globals.Set("watched", DynValue.NewNumber(10));
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -225,12 +218,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void InvalidWatchExpressionFallsBackToConstant()
         {
             Script script = BuildScript("return 0", "invalid-watch.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -261,12 +254,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ErrorRegexCommandControlsPauseRequests()
         {
             Script script = BuildScript("return 0", "error.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
@@ -293,12 +286,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AddWatchQueuesRefreshAndTransitionsHostState()
         {
             Script script = BuildScript("local value = 1 return value", "state.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -328,12 +321,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void QueuedRefreshesIncludeLatestWatchChanges()
         {
             Script script = BuildScript("return 0", "queued-refresh.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -369,12 +362,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void QueuedActionsDrainAfterPauseRequest()
         {
             Script script = BuildScript("return 0", "pause-queue.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -401,12 +394,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void AddWatchDuringActiveGetActionDoesNotSendHostBusy()
         {
             Script script = BuildScript("return 0", "busy-loop.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -442,12 +435,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void UpdateCallStackSendsFormattedItemsOncePerChange()
         {
             Script script = BuildScript("return 1", "callstack.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
 
@@ -498,12 +491,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void RefreshCommandClearsCachedWatches()
         {
             Script script = BuildScript("return 0", "refresh.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
 
@@ -543,12 +536,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DeleteWatchCommandQueuesHardRefresh()
         {
             Script script = BuildScript("return 0", "delwatch.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -568,12 +561,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PauseCommandRequestsDebuggerPause()
         {
             Script script = BuildScript("return 0", "pause.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
@@ -590,12 +583,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void StepCommandsQueueActions()
         {
             Script script = BuildScript("return 0", "steps.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
@@ -629,7 +622,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TimeProvider = timeProvider,
             };
             Script script = BuildScript("return 0", "aging.lua", options);
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out _);
+            using RemoteDebuggerHarness harness = CreateHarness(
+                script,
+                freeRunAfterAttach: false,
+                out DebugServer server
+            );
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
 
             DebuggerAction stale = new(script.TimeProvider)
@@ -654,8 +651,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void FreeRunAfterAttachReturnsRunAction()
         {
             Script script = BuildScript("return 0", "autorun.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: true, out int port);
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerHarness harness = CreateHarness(
+                script,
+                freeRunAfterAttach: true,
+                out DebugServer server
+            );
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
 
@@ -668,12 +669,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void PolicyFileRequestRespondsWithCrossDomainPayload()
         {
             Script script = BuildScript("return 0", "policy.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<policy-file-request/>");
             List<string> policy = client.ReadUntil(
@@ -688,17 +689,17 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void ConnectedClientsReflectActiveSessions()
         {
             Script script = BuildScript("return 0", "clients.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients == 1,
                 DefaultTimeout,
-                "Tcp client never registered with the server."
+                "Debugger client never registered with the server."
             );
         }
 
@@ -706,7 +707,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void DebuggerCapsAdvertiseSourceCodeSupport()
         {
             Script script = BuildScript("return 0", "caps.lua");
-            using DebugServer server = CreateServer(script, freeRunAfterAttach: false, out _);
+            using RemoteDebuggerHarness harness = CreateHarness(
+                script,
+                freeRunAfterAttach: false,
+                out DebugServer server
+            );
             Assert.That(server.GetDebuggerCaps(), Is.EqualTo(DebuggerCaps.CanDebugSourceCode));
         }
 
@@ -714,16 +719,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SignalExecutionEndedBroadcastsCompletion()
         {
             Script script = BuildScript("return 0", "end.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients == 1,
                 DefaultTimeout,
-                "Tcp client never registered with the server."
+                "Debugger client never registered with the server."
             );
 
             server.SignalExecutionEnded();
@@ -738,12 +743,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void SignalRuntimeExceptionBroadcastsDecoratedMessage()
         {
             Script script = BuildScript("return 0", "decorated-error.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
             client.Drain(DefaultTimeout);
@@ -768,16 +773,16 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void RefreshBreakpointsBroadcastsLocations()
         {
             Script script = BuildScript("return 0", "breakpoints.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
             TestWaitHelpers.SpinUntilOrThrow(
                 () => server.ConnectedClients == 1,
                 DefaultTimeout,
-                "Tcp client never registered with the server."
+                "Debugger client never registered with the server."
             );
 
             SourceRef breakpoint = new(0, 1, 2, 3, 4, false);
@@ -800,12 +805,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         public void HandshakeRespondsToPolicyRequestsBeforeCommands()
         {
             Script script = BuildScript("return 0", "state.lua");
-            using DebugServer server = CreateServer(
+            using RemoteDebuggerHarness harness = CreateHarness(
                 script,
                 freeRunAfterAttach: false,
-                out int port
+                out DebugServer server
             );
-            using RemoteDebuggerTestClient client = new(port);
+            using RemoteDebuggerTestClient client = harness.CreateClient();
 
             client.SendCommand("<policy-file-request/>");
             client.ReadUntil(
@@ -822,157 +827,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(messages.Any(m => ContainsOrdinal(m, "<welcome")), Is.True);
         }
 
-        private static DebugServer CreateServer(
+        private static RemoteDebuggerHarness CreateHarness(
             Script script,
             bool freeRunAfterAttach,
-            out int port
+            out DebugServer server
         )
         {
-            port = GetFreeTcpPort();
-            return new DebugServer(
-                "NovaSharp.Tests",
-                script,
-                port,
-                ServerOptions,
-                freeRunAfterAttach
-            );
-        }
-
-        private static Script BuildScript(
-            string code,
-            string chunkName,
-            ScriptOptions options = null
-        )
-        {
-            Script script = options is null ? new Script() : new Script(options);
-            script.Options.DebugPrint = _ => { };
-            script.LoadString(code, null, chunkName);
-            return script;
-        }
-
-        private static int GetFreeTcpPort()
-        {
-            using TcpListener listener = new(IPAddress.Loopback, 0);
-            listener.Start();
-            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
-        }
-
-        private static bool ContainsOrdinal(string source, string value)
-        {
-            return source != null && source.Contains(value, StringComparison.Ordinal);
-        }
-
-        private sealed class RemoteDebuggerTestClient : IDisposable
-        {
-            private readonly TcpClient _client;
-            private readonly NetworkStream _stream;
-            private readonly StringBuilder _buffer = new();
-
-            internal RemoteDebuggerTestClient(int port)
-            {
-                _client = new TcpClient(AddressFamily.InterNetwork);
-                _client.Connect(IPAddress.Loopback, port);
-                _stream = _client.GetStream();
-            }
-
-            internal void SendCommand(string xml)
-            {
-                byte[] payload = Encoding.UTF8.GetBytes(xml + '\0');
-                _stream.Write(payload, 0, payload.Length);
-                _stream.Flush();
-            }
-
-            internal List<string> ReadUntil(Func<List<string>, bool> predicate, TimeSpan timeout)
-            {
-                List<string> messages = new();
-                TestWaitHelpers.SpinUntilOrThrow(
-                    () =>
-                    {
-                        messages.AddRange(ReadAvailable(TimeSpan.FromMilliseconds(25)));
-                        return messages.Count > 0 && predicate(messages);
-                    },
-                    timeout,
-                    "Timed out waiting for debugger messages."
-                );
-                return messages;
-            }
-
-            internal void Drain(TimeSpan timeout)
-            {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                while (stopwatch.Elapsed < timeout)
-                {
-                    List<string> chunk = ReadAvailable(TimeSpan.FromMilliseconds(25));
-                    if (chunk.Count == 0)
-                    {
-                        Thread.Sleep(5);
-                    }
-                }
-            }
-
-            internal List<string> ReadAll(TimeSpan timeout)
-            {
-                List<string> messages = new();
-                Stopwatch stopwatch = Stopwatch.StartNew();
-
-                while (stopwatch.Elapsed < timeout)
-                {
-                    List<string> chunk = ReadAvailable(TimeSpan.FromMilliseconds(25));
-                    if (chunk.Count > 0)
-                    {
-                        messages.AddRange(chunk);
-                    }
-
-                    Thread.Sleep(5);
-                }
-
-                return messages;
-            }
-
-            private List<string> ReadAvailable(TimeSpan timeout)
-            {
-                List<string> messages = new();
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                byte[] buffer = new byte[1024];
-
-                while (stopwatch.Elapsed < timeout)
-                {
-                    if (!_stream.DataAvailable)
-                    {
-                        Thread.Sleep(2);
-                        continue;
-                    }
-
-                    int read = _stream.Read(buffer, 0, buffer.Length);
-                    for (int i = 0; i < read; i++)
-                    {
-                        if (buffer[i] == 0)
-                        {
-                            messages.Add(_buffer.ToString());
-                            _buffer.Clear();
-                        }
-                        else
-                        {
-                            _buffer.Append((char)buffer[i]);
-                        }
-                    }
-
-                    if (messages.Count > 0)
-                    {
-                        break;
-                    }
-                }
-
-                return messages;
-            }
-
-            public void Dispose()
-            {
-                _stream.Dispose();
-                _client.Dispose();
-            }
+            RemoteDebuggerHarness harness = new(script, freeRunAfterAttach);
+            server = harness.Server;
+            return harness;
         }
     }
 }

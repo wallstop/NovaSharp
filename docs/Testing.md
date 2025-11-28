@@ -11,11 +11,29 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 ## Running the Tests Locally
 
 ```bash
-dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --logger "trx;LogFileName=NovaSharpTests.trx"
+dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --logger "trx;LogFileName=NovaSharpTests.trx"
 ```
 
 - Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
 - Mirrors the execution that now powers CI, ensuring branch/line coverage is captured with the same runner configuration.
+
+### Microsoft.Testing.Platform runner
+
+- `global.json` now pins `test.runner` to `Microsoft.Testing.Platform`, so every `dotnet test` invocation must pass an explicit target via `--project`/`--solution`/`--test-modules`. The command above mirrors the CI lane (`--project` is required; the legacy `dotnet test <csproj>` syntax no longer works on .NET 10 SDKs).
+- The interpreter suite (3 155 Release tests) completes in roughly **10.5 s** on a 12-core workstation when invoked with `--settings scripts/tests/NovaSharp.Parallel.runsettings`; expect ~1 s slower when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
+- Visual Studio and Rider inherit the same configuration because the runner is set in `global.json`; if a local command fails with “VSTest target is no longer supported”, re-run it with the explicit `--project` form shown above so the Microsoft.Testing.Platform mode is engaged.
+
+### Remote debugger TUnit pilot
+
+- The first TUnit-backed suite lives in `src/tests/NovaSharp.RemoteDebugger.Tests.TUnit` and exercises the in-memory remote-debugger harness. Run it with:
+
+  ```bash
+  dotnet test --project src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release
+  ```
+
+- Three high-traffic debugger scenarios now execute in ~0.7 s (`HandshakeStreamsWelcomeAndSourceCode`, `AddWatchQueuesHardRefreshAndCreatesDynamicExpression`, `WatchesEvaluateExpressionsAgainstScriptState`). Results are gated by the Microsoft.Testing.Platform runner, so the command above matches the experience that will roll out across the remaining suites if the pilot proves successful.
+
+- The NUnit equivalents still live in `RemoteDebuggerTests.cs`; keep both suites in sync while the migration is evaluated so we can compare ergonomics, analyzer coverage, and timing deltas side-by-side.
 
 ### Build Helper Scripts
 
@@ -29,7 +47,7 @@ pwsh ./scripts/build/build.ps1
 bash ./scripts/build/build.sh
 ```
 
-- Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with `dotnet test --no-build --logger "trx;LogFileName=NovaSharpTests.trx"` writing logs to `artifacts/test-results`.
+- Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with `dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --logger "trx;LogFileName=NovaSharpTests.trx"` writing logs to `artifacts/test-results`.
 - Pass `-SkipTests`/`--skip-tests` for build-only runs, or override `-Configuration`/`--configuration` to target Debug builds.
 
 ## Generating Coverage
@@ -141,7 +159,7 @@ Validation checklist:
 ```powershell
 dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
 dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo
-dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --filter "FullyQualifiedName~RemoteDebugger"
 ```
 
 Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.
