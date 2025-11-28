@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Execution.VM;
@@ -239,11 +240,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             stack.Push(DynValue.NewNumber(3));
 
             DynValue[] peeked = processor.StackTopToArrayForTests(2, pop: false);
-            await Assert.That(peeked.Select(v => v.Number).ToArray()).IsEqualTo(DescendingPair);
+            double[] peekedNumbers = peeked.Select(v => v.Number).ToArray();
+            await Assert.That(peekedNumbers.Length).IsEqualTo(DescendingPair.Length);
+            await Assert.That(peekedNumbers[0]).IsEqualTo(DescendingPair[0]);
+            await Assert.That(peekedNumbers[1]).IsEqualTo(DescendingPair[1]);
             await Assert.That(stack.Count).IsEqualTo(3);
 
             DynValue[] popped = processor.StackTopToArrayForTests(2, pop: true);
-            await Assert.That(popped.Select(v => v.Number).ToArray()).IsEqualTo(DescendingPair);
+            double[] poppedNumbers = popped.Select(v => v.Number).ToArray();
+            await Assert.That(poppedNumbers.Length).IsEqualTo(DescendingPair.Length);
+            await Assert.That(poppedNumbers[0]).IsEqualTo(DescendingPair[0]);
+            await Assert.That(poppedNumbers[1]).IsEqualTo(DescendingPair[1]);
             await Assert.That(stack.Count).IsEqualTo(1);
         }
 
@@ -260,11 +267,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             stack.Push(DynValue.NewNumber(4));
 
             DynValue[] peeked = processor.StackTopToArrayReverseForTests(3, pop: false);
-            await Assert.That(peeked.Select(v => v.Number).ToArray()).IsEqualTo(AscendingTriple);
+            double[] peekedNumbers = peeked.Select(v => v.Number).ToArray();
+            await Assert.That(peekedNumbers.Length).IsEqualTo(AscendingTriple.Length);
+            await Assert.That(peekedNumbers[0]).IsEqualTo(AscendingTriple[0]);
+            await Assert.That(peekedNumbers[1]).IsEqualTo(AscendingTriple[1]);
+            await Assert.That(peekedNumbers[2]).IsEqualTo(AscendingTriple[2]);
             await Assert.That(stack.Count).IsEqualTo(4);
 
             DynValue[] popped = processor.StackTopToArrayReverseForTests(3, pop: true);
-            await Assert.That(popped.Select(v => v.Number).ToArray()).IsEqualTo(AscendingTriple);
+            double[] poppedNumbers = popped.Select(v => v.Number).ToArray();
+            await Assert.That(poppedNumbers.Length).IsEqualTo(AscendingTriple.Length);
+            await Assert.That(poppedNumbers[0]).IsEqualTo(AscendingTriple[0]);
+            await Assert.That(poppedNumbers[1]).IsEqualTo(AscendingTriple[1]);
+            await Assert.That(poppedNumbers[2]).IsEqualTo(AscendingTriple[2]);
             await Assert.That(stack.Count).IsEqualTo(1);
         }
 

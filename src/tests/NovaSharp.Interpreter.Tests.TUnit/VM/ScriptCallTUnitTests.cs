@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue callable = script.Globals.Get("callable");
             DynValue result = script.Call(callable, DynValue.NewNumber(21));
 
-            await Assert.That(result.Number).IsEqualTo(42);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]
@@ -92,7 +92,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ArgumentException exception = ExpectException<ArgumentException>(() =>
                 script.Call(notCallable)
             );
-
             await Assert.That(exception.Message).Contains("has no __call metamethod");
         }
 
@@ -104,7 +103,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue function = script.Globals.Get("add");
 
             DynValue result = script.Call(function, 30, 12);
-            await Assert.That(result.Number).IsEqualTo(42);
+
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]
@@ -115,7 +115,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             object closure = script.Globals.Get("mul").Function;
 
             DynValue result = script.Call(closure, 6, 7);
-            await Assert.That(result.Number).IsEqualTo(42);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]
@@ -126,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 DynValue.NewNumber(args[0].Number * 2);
 
             DynValue result = script.Call(callback, 21);
-            await Assert.That(result.Number).IsEqualTo(42);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]
@@ -174,7 +174,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 script.CreateCoroutine((DynValue)null)
             );
-
             await Assert.That(exception.ParamName).IsEqualTo("function");
         }
 
@@ -193,13 +192,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
 
             await Assert.That(loader.ResolveCalls).IsEqualTo(1);
             await Assert.That(loader.LoadCalls).IsEqualTo(1);
-            await Assert
-                .That(
-                    messages.Exists(static value =>
-                        value.Contains("require('bit32')", StringComparison.Ordinal)
-                    )
-                )
-                .IsTrue();
+            bool foundMessage = messages.Exists(m =>
+                m.Contains("require('bit32')", StringComparison.Ordinal)
+            );
+            await Assert.That(foundMessage).IsTrue();
             await Assert.That(result.Type).IsEqualTo(DataType.Function);
         }
 
@@ -207,8 +203,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task RequireModuleThrowsWhenModuleMissing()
         {
             StubScriptLoader loader = new() { ResolveReturnsNull = true };
-            ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(
+                CoreModules.PresetComplete,
+                new ScriptOptions { ScriptLoader = loader }
+            );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.RequireModule("missing")
@@ -221,8 +219,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             StubScriptLoader loader = new() { ModuleSource = "return function() end" };
             List<string> messages = new();
-            ScriptOptions options = new() { ScriptLoader = loader, DebugPrint = messages.Add };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(
+                CoreModules.PresetComplete,
+                new ScriptOptions { ScriptLoader = loader, DebugPrint = messages.Add }
+            );
 
             script.RequireModule("bit32");
             script.RequireModule("bit32");
@@ -235,13 +235,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             StubScriptLoader loader = new() { ModuleSource = "return function() end" };
             List<string> messages = new();
-            ScriptOptions options = new()
-            {
-                ScriptLoader = loader,
-                DebugPrint = messages.Add,
-                CompatibilityVersion = LuaCompatibilityVersion.Lua52,
-            };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(
+                CoreModules.PresetComplete,
+                new ScriptOptions
+                {
+                    ScriptLoader = loader,
+                    DebugPrint = messages.Add,
+                    CompatibilityVersion = LuaCompatibilityVersion.Lua52,
+                }
+            );
 
             script.RequireModule("bit32");
             await Assert.That(messages.Count).IsEqualTo(0);
@@ -260,7 +262,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             script.RequireModule("custom", customGlobals);
 
             await Assert.That(loader.ResolveCalls).IsEqualTo(1);
-            await Assert.That(loader.LastGlobalContext).IsSameReferenceAs(customGlobals);
+            await Assert.That(ReferenceEquals(loader.LastGlobalContext, customGlobals)).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -273,8 +275,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             );
 
             script.RequireModule("custom");
-
-            await Assert.That(loader.LastGlobalContext).IsSameReferenceAs(script.Globals);
+            await Assert.That(ReferenceEquals(loader.LastGlobalContext, script.Globals)).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -291,7 +292,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.RequireModule("custom", foreignGlobals)
             );
-
             await Assert.That(exception.Message).Contains("different scripts");
         }
 
@@ -307,7 +307,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 scriptB.Call(scriptB.Globals.Get("echo"), foreignTable)
             );
-
             await Assert.That(exception.Message).Contains("different scripts");
         }
 
@@ -323,7 +322,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 scriptB.Call(foreignClosure)
             );
-
             await Assert.That(exception.Message).Contains("different scripts");
         }
 
@@ -337,7 +335,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 scriptB.CreateCoroutine(foreignFunction)
             );
-
             await Assert.That(exception.Message).Contains("different scripts");
         }
 
@@ -360,8 +357,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue first = coroutine.Coroutine.Resume();
             DynValue second = coroutine.Coroutine.Resume();
 
-            await Assert.That(first.Number).IsEqualTo(5);
-            await Assert.That(second.Number).IsEqualTo(6);
+            await Assert.That(first.Number).IsEqualTo(5d);
+            await Assert.That(second.Number).IsEqualTo(6d);
         }
 
         [global::TUnit.Core.Test]
@@ -377,7 +374,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
 
             DynValue result = coroutineValue.Coroutine.Resume(context);
 
-            await Assert.That(result.Number).IsEqualTo(99);
+            await Assert.That(result.Number).IsEqualTo(99d);
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
         }
 
@@ -404,8 +401,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 scriptB.CreateCoroutine(foreignClosure)
             );
-
             await Assert.That(exception.Message).Contains("different scripts");
+        }
+
+        private static TException ExpectException<TException>(Action action)
+            where TException : Exception
+        {
+            try
+            {
+                action();
+            }
+            catch (TException ex)
+            {
+                return ex;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected exception of type {typeof(TException).Name}."
+            );
         }
 
         private sealed class StubScriptLoader : ScriptLoaderBase
@@ -433,40 +446,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 ResolveCalls++;
                 return ResolveReturnsNull ? null : modname;
             }
-        }
-
-        private static TException ExpectException<TException>(Func<DynValue> action)
-            where TException : Exception
-        {
-            try
-            {
-                action();
-            }
-            catch (TException ex)
-            {
-                return ex;
-            }
-
-            throw new InvalidOperationException(
-                $"Expected exception of type {typeof(TException).Name}."
-            );
-        }
-
-        private static TException ExpectException<TException>(Action action)
-            where TException : Exception
-        {
-            try
-            {
-                action();
-            }
-            catch (TException ex)
-            {
-                return ex;
-            }
-
-            throw new InvalidOperationException(
-                $"Expected exception of type {typeof(TException).Name}."
-            );
         }
     }
 }
