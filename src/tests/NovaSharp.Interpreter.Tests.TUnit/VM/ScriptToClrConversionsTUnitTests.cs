@@ -1,0 +1,744 @@
+namespace NovaSharp.Interpreter.Tests.TUnit.VM
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
+    using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataStructs;
+    using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Execution;
+    using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Converters;
+    using NovaSharp.Interpreter.Tests;
+
+    [ScriptGlobalOptionsIsolation]
+    public sealed class ScriptToClrConversionsTUnitTests
+    {
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectUsesCustomConversionResult()
+        {
+            Script.GlobalOptions.CustomConverters.Clear();
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.String,
+                typeof(object),
+                dv => $"converted:{dv.String}"
+            );
+
+            try
+            {
+                object result = ScriptToClrConversions.DynValueToObject(DynValue.NewString("lua"));
+                await Assert.That(result).IsEqualTo("converted:lua");
+            }
+            finally
+            {
+                Script.GlobalOptions.CustomConverters.Clear();
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsNullForVoidValues()
+        {
+            object result = ScriptToClrConversions.DynValueToObject(DynValue.Void);
+            await Assert.That(result).IsNull();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsClosureReference()
+        {
+            DynValue closure = CreateConstantClosure("return 41 + 1");
+
+            object result = ScriptToClrConversions.DynValueToObject(closure);
+
+            await Assert.That(result is Closure).IsTrue();
+            await Assert.That(ReferenceEquals(result, closure.Function)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsTableReference()
+        {
+            Table table = new(null);
+            table.Set("language", DynValue.NewString("Lua"));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObject(tableValue);
+
+            await Assert.That(ReferenceEquals(result, table)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsTupleArray()
+        {
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewString("two");
+            DynValue tupleValue = DynValue.NewTuple(first, second);
+
+            object result = ScriptToClrConversions.DynValueToObject(tupleValue);
+
+            await Assert.That(result is DynValue[]).IsTrue();
+            DynValue[] tuple = (DynValue[])result;
+            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple[0]).IsEqualTo(first);
+            await Assert.That(tuple[1]).IsEqualTo(second);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsDescriptorTypeWhenNoInstanceIsAvailable()
+        {
+            IUserDataDescriptor descriptor = new TestUserDataDescriptor(
+                typeof(FakeUserData),
+                isTypeCompatible: false,
+                stringValue: "<unused>"
+            );
+            DynValue userData = UserData.CreateStatic(descriptor);
+
+            object result = ScriptToClrConversions.DynValueToObject(userData);
+
+            await Assert.That(result).IsEqualTo(descriptor.Type);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsCallbackFunctionInstance()
+        {
+            DynValue callback = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(5));
+
+            object result = ScriptToClrConversions.DynValueToObject(callback);
+
+            await Assert.That(result is CallbackFunction).IsTrue();
+            await Assert.That(ReferenceEquals(result, callback.Callback)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectThrowsForUnsupportedTypes()
+        {
+            DynValue yieldRequest = DynValue.NewYieldReq(Array.Empty<DynValue>());
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObject(yieldRequest)
+            );
+
+            await Assert.That(exception.Message.Length > 0).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalVoid()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.Void,
+                typeof(int),
+                defaultValue: 77,
+                isOptional: true
+            );
+
+            await Assert.That(result).IsEqualTo(77);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsNilToNullable()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.Nil,
+                typeof(int?),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result).IsNull();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalNilValueType()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.Nil,
+                typeof(int),
+                defaultValue: 123,
+                isOptional: true
+            );
+
+            await Assert.That(result).IsEqualTo(123);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsBooleanToStringBuilder()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.NewBoolean(true),
+                typeof(StringBuilder),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is StringBuilder).IsTrue();
+            await Assert.That(result.ToString()).IsEqualTo("True");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsStringToChar()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.NewString("Nova"),
+                typeof(char),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result).IsEqualTo('N');
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsNumberToEnum()
+        {
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                DynValue.NewNumber((double)SampleEnum.Second),
+                typeof(SampleEnum),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is int).IsTrue();
+            await Assert.That(result).IsEqualTo((int)SampleEnum.Second);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsFunctionToClosure()
+        {
+            DynValue functionValue = CreateConstantClosure("return 1337");
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                functionValue,
+                typeof(Closure),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(ReferenceEquals(result, functionValue.Function)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsFunctionToScriptFunctionCallback()
+        {
+            DynValue functionValue = CreateConstantClosure("return 21 + 21");
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                functionValue,
+                typeof(ScriptFunctionCallback),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is ScriptFunctionCallback).IsTrue();
+            ScriptFunctionCallback callback = (ScriptFunctionCallback)result;
+            object invocationResult = callback(Array.Empty<object>());
+            await Assert.That(invocationResult).IsEqualTo(42d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsTableToGenericList()
+        {
+            Table table = new(null);
+            table.Append(DynValue.NewNumber(10));
+            table.Append(DynValue.NewNumber(20));
+            DynValue dynValueTable = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                dynValueTable,
+                typeof(List<int>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is List<int>).IsTrue();
+            List<int> list = (List<int>)result;
+            await Assert.That(list.Count).IsEqualTo(2);
+            await Assert.That(list[0]).IsEqualTo(10);
+            await Assert.That(list[1]).IsEqualTo(20);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeReturnsDescriptorObjectWhenCompatible()
+        {
+            FakeUserData instance = new();
+            IUserDataDescriptor descriptor = new TestUserDataDescriptor(
+                typeof(FakeUserData),
+                isTypeCompatible: true,
+                stringValue: null
+            );
+            DynValue userData = UserData.Create(instance, descriptor);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                userData,
+                typeof(FakeUserData),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(ReferenceEquals(result, instance)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeFallsBackToDescriptorString()
+        {
+            FakeUserData instance = new();
+            IUserDataDescriptor descriptor = new TestUserDataDescriptor(
+                typeof(FakeUserData),
+                isTypeCompatible: false,
+                stringValue: "<userdata>"
+            );
+            DynValue userData = UserData.Create(instance, descriptor);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                userData,
+                typeof(string),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result).IsEqualTo("<userdata>");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsClrFunctionToCallbackFunction()
+        {
+            DynValue callbackDynValue = DynValue.NewCallback(
+                (ctx, args) => DynValue.NewString("ok"),
+                "cb"
+            );
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                callbackDynValue,
+                typeof(CallbackFunction),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(ReferenceEquals(result, callbackDynValue.Callback)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsCallbackFunctionToDelegate()
+        {
+            DynValue callbackDynValue = DynValue.NewCallback(
+                (ctx, args) => DynValue.NewNumber(42),
+                "answer"
+            );
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                callbackDynValue,
+                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> delegateResult =
+                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)result;
+            DynValue invocationResult = delegateResult(
+                null,
+                new CallbackArguments(Array.Empty<DynValue>(), isMethodCall: false)
+            );
+
+            await Assert.That(invocationResult.Number).IsEqualTo(42);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsTableToDictionary()
+        {
+            Script script = new();
+            Table table = new(script);
+            table.Set(DynValue.NewString("alpha"), DynValue.NewNumber(1));
+            table.Set(DynValue.NewNumber(2), DynValue.NewString("beta"));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                tableValue,
+                typeof(Dictionary<object, object>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is Dictionary<object, object>).IsTrue();
+            Dictionary<object, object> dictionary = (Dictionary<object, object>)result;
+            await Assert.That(dictionary["alpha"]).IsEqualTo(1.0);
+            await Assert.That(dictionary[2.0]).IsEqualTo("beta");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeConvertsTableToGenericDictionary()
+        {
+            Script script = new();
+            Table table = new(script);
+            table.Set(DynValue.NewString("one"), DynValue.NewNumber(1));
+            table.Set(DynValue.NewString("two"), DynValue.NewNumber(2));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            object result = ScriptToClrConversions.DynValueToObjectOfType(
+                tableValue,
+                typeof(Dictionary<string, int>),
+                defaultValue: null,
+                isOptional: false
+            );
+
+            await Assert.That(result is Dictionary<string, int>).IsTrue();
+            Dictionary<string, int> dictionary = (Dictionary<string, int>)result;
+            await Assert.That(dictionary["one"]).IsEqualTo(1);
+            await Assert.That(dictionary["two"]).IsEqualTo(2);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsTableToDictionaryWeight()
+        {
+            Table table = new(new Script());
+            table.Set(DynValue.NewString("key"), DynValue.NewNumber(42));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                tableValue,
+                typeof(Dictionary<string, double>),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightTableConversion);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeThrowsForTupleConversions()
+        {
+            DynValue tupleValue = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    tupleValue,
+                    typeof(int),
+                    defaultValue: null,
+                    isOptional: false
+                )
+            );
+
+            await Assert
+                .That(exception.Message.Contains("convert", StringComparison.OrdinalIgnoreCase))
+                .IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeThrowsForEmptyStringCharConversions()
+        {
+            DynValue empty = DynValue.NewString(string.Empty);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    empty,
+                    typeof(char),
+                    defaultValue: null,
+                    isOptional: false
+                )
+            );
+
+            await Assert
+                .That(exception.Message.Contains("convert", StringComparison.OrdinalIgnoreCase))
+                .IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeHonorsCustomConverters()
+        {
+            Script.GlobalOptions.CustomConverters.Clear();
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Number,
+                typeof(int),
+                dv => 999
+            );
+
+            try
+            {
+                object result = ScriptToClrConversions.DynValueToObjectOfType(
+                    DynValue.NewNumber(1.23),
+                    typeof(int),
+                    defaultValue: null,
+                    isOptional: false
+                );
+
+                await Assert.That(result).IsEqualTo(999);
+            }
+            finally
+            {
+                Script.GlobalOptions.CustomConverters.Clear();
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeThrowsWhenNoConversionExists()
+        {
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                ScriptToClrConversions.DynValueToObjectOfType(
+                    DynValue.NewBoolean(true),
+                    typeof(DateTime),
+                    defaultValue: null,
+                    isOptional: false
+                )
+            );
+
+            await Assert.That(exception.Message.Length > 0).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsNilToNullableWeight()
+        {
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.Nil,
+                typeof(int?),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightNilToNullable);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsNumberDowncastWeight()
+        {
+            Script.GlobalOptions.CustomConverters.Clear();
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.NewNumber(3.14),
+                typeof(int),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightNumberDowncast);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsStringToCharWeight()
+        {
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.NewString("nova"),
+                typeof(char),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightStringToChar);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsTableConversionWeight()
+        {
+            Table table = new(null);
+            table.Append(DynValue.NewNumber(1));
+            DynValue tableValue = DynValue.NewTable(table);
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                tableValue,
+                typeof(List<int>),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightTableConversion);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsCustomConverterMatch()
+        {
+            Script.GlobalOptions.CustomConverters.Clear();
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Boolean,
+                typeof(string),
+                dv => dv.Boolean ? "yes" : "no"
+            );
+
+            try
+            {
+                int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                    DynValue.NewBoolean(true),
+                    typeof(string),
+                    isOptional: false
+                );
+
+                await Assert
+                    .That(weight)
+                    .IsEqualTo(ScriptToClrConversions.WeightCustomConverterMatch);
+            }
+            finally
+            {
+                Script.GlobalOptions.CustomConverters.Clear();
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForDynValueRequests()
+        {
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.NewNumber(0),
+                typeof(DynValue),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForClosureConversions()
+        {
+            DynValue functionValue = CreateConstantClosure("return 1");
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                functionValue,
+                typeof(Closure),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForScriptFunctionCallbacks()
+        {
+            DynValue functionValue = CreateConstantClosure("return 2");
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                functionValue,
+                typeof(ScriptFunctionCallback),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForCallbackFunctions()
+        {
+            DynValue callbackValue = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(3));
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                callbackValue,
+                typeof(CallbackFunction),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForCallbackDelegates()
+        {
+            DynValue callbackValue = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(4));
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                callbackValue,
+                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsNilWithDefaultWeight()
+        {
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.Nil,
+                typeof(int),
+                isOptional: true
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightNilWithDefault);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForTableType()
+        {
+            DynValue table = DynValue.NewTable(new Table(null));
+
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                table,
+                typeof(Table),
+                isOptional: false
+            );
+
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        private static DynValue CreateConstantClosure(string code)
+        {
+            Script script = new();
+            return script.LoadString(code);
+        }
+
+        private enum SampleEnum
+        {
+            First = 1,
+            Second = 2,
+        }
+
+        private sealed class FakeUserData { }
+
+        private sealed class TestUserDataDescriptor : IUserDataDescriptor
+        {
+            private readonly bool _isTypeCompatible;
+            private readonly string _stringValue;
+            private readonly Type _type;
+
+            internal TestUserDataDescriptor(Type type, bool isTypeCompatible, string stringValue)
+            {
+                _type = type ?? typeof(object);
+                _isTypeCompatible = isTypeCompatible;
+                _stringValue = stringValue ?? "<user>";
+            }
+
+            public string Name => "TestDescriptor";
+
+            public Type Type => _type;
+
+            public DynValue Index(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing
+            ) => DynValue.Nil;
+
+            public bool SetIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value,
+                bool isDirectIndexing
+            )
+            {
+                return false;
+            }
+
+            public string AsString(object obj)
+            {
+                return _stringValue ?? obj?.ToString();
+            }
+
+            public DynValue MetaIndex(Script script, object obj, string metaname) => null;
+
+            public bool IsTypeCompatible(Type type, object obj)
+            {
+                if (!_isTypeCompatible || obj == null)
+                {
+                    return false;
+                }
+
+                return type.IsInstanceOfType(obj);
+            }
+        }
+
+        private static TException ExpectException<TException>(Action action)
+            where TException : Exception
+        {
+            try
+            {
+                action();
+            }
+            catch (TException ex)
+            {
+                return ex;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected exception of type {typeof(TException).Name}."
+            );
+        }
+    }
+}

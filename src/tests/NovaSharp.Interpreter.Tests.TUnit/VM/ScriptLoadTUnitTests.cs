@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using System.Globalization;
     using System.IO;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
@@ -311,22 +312,34 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             await Assert.That(exception.Message).Contains("function");
         }
 
+        private static readonly SemaphoreSlim RunFileSemaphore = new(1, 1);
+
         [global::TUnit.Core.Test]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 
-            string path = Path.GetTempFileName();
+            string path = Path.Combine(Path.GetTempPath(), $"nova_{Guid.NewGuid():N}.lua");
+
+            await RunFileSemaphore.WaitAsync().ConfigureAwait(false);
+
             try
             {
                 await File.WriteAllTextAsync(path, "return 654").ConfigureAwait(false);
                 DynValue fileResult = Script.RunFile(path);
+
+                await Assert.That(fileResult.Type).IsEqualTo(DataType.Number);
                 await Assert.That(fileResult.Number).IsEqualTo(654);
             }
             finally
             {
-                File.Delete(path);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                RunFileSemaphore.Release();
             }
         }
 
