@@ -16,7 +16,13 @@
         <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="..\NovaSharp.Interpreter.Tests\TestUtilities\RemoteDebuggerTestHarness.cs" Link="TestUtilities\RemoteDebuggerTestHarness.cs" />
-        <Compile Include="..\NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs" Link="TestUtilities\TestWaitHelpers.cs" />
+        <Compile
+            Include="..\NovaSharp.Interpreter.Tests\TestUtilities\RemoteDebuggerTestHarness.cs"
+            Link="TestUtilities\RemoteDebuggerTestHarness.cs"
+        />
+        <Compile
+            Include="..\NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs"
+            Link="TestUtilities\TestWaitHelpers.cs"
+        />
     </ItemGroup>
 </Project>

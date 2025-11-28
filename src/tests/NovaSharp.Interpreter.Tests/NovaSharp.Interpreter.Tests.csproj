@@ -56,10 +56,18 @@
     </ItemGroup>
     <PropertyGroup>
         <FixtureCatalogScript>$(RepoRoot)scripts/tests/update-fixture-catalog.ps1</FixtureCatalogScript>
-        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' == 'Windows_NT'">powershell</FixtureCatalogShell>
-        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' != 'Windows_NT'">pwsh</FixtureCatalogShell>
-        <FixtureCatalogCommand Condition="'$(OS)' == 'Windows_NT'">$(FixtureCatalogShell) -NoProfile -ExecutionPolicy Bypass -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand>
-        <FixtureCatalogCommand Condition="'$(OS)' != 'Windows_NT'">$(FixtureCatalogShell) -NoProfile -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand>
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' == 'Windows_NT'"
+            >powershell</FixtureCatalogShell
+        >
+        <FixtureCatalogShell Condition="'$(FixtureCatalogShell)' == '' and '$(OS)' != 'Windows_NT'"
+            >pwsh</FixtureCatalogShell
+        >
+        <FixtureCatalogCommand Condition="'$(OS)' == 'Windows_NT'"
+            >$(FixtureCatalogShell) -NoProfile -ExecutionPolicy Bypass -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand
+        >
+        <FixtureCatalogCommand Condition="'$(OS)' != 'Windows_NT'"
+            >$(FixtureCatalogShell) -NoProfile -File ""$(FixtureCatalogScript)""</FixtureCatalogCommand
+        >
     </PropertyGroup>
     <Target Name="GenerateFixtureCatalog" BeforeTargets="BeforeCompile">
         <Message Text="Ensuring FixtureCatalogGenerated.cs is current..." Importance="Low" />
