@@ -6,23 +6,39 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Reflection;
     using System.Text;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.CoreLib.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Platforms;
     using NUnit.Framework;
 
     [TestFixture]
     [Parallelizable(ParallelScope.Self)]
     [UserDataIsolation]
+    [ScriptGlobalOptionsIsolation]
+    [PlatformDetectorIsolation]
     public sealed class StreamFileUserDataBaseTests
     {
         private static readonly string[] ExpectedWriteSequence = { "A", "B" };
+        private bool? _previousUnityDetectionOverride;
 
         [SetUp]
         public void RegisterUserData()
         {
+            _previousUnityDetectionOverride =
+                PlatformAutoDetector.TestHooks.GetUnityDetectionOverride();
+            ForceDesktopPlatform();
             UserData.RegisterType<TestStreamFileUserData>();
+        }
+
+        [TearDown]
+        public void RestoreUnityDetectionOverride()
+        {
+            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(
+                _previousUnityDetectionOverride
+            );
         }
 
         [Test]
@@ -167,21 +183,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
-                @"
-                local ok, err = pcall(function()
-                    return file:flush()
-                end)
-                return ok, err
-                "
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return file:flush()")
             );
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("flush failure"));
-            });
+            Assert.That(ex.Message, Does.Contain("flush failure"));
         }
 
         [Test]
@@ -193,20 +198,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
-                @"
-                local ok, err = pcall(function()
-                    return file:flush()
-                end)
-                return ok, err
-                "
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return file:flush()")
             );
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("flush failure"));
-            });
+            Assert.That(ex.Message, Does.Contain("flush failure"));
         }
 
         [Test]
@@ -217,15 +212,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
-                @"
-                io.output(file)
-                local ok, err = pcall(function()
-                    return io.flush()
-                end)
-                return ok, err
-                "
-            );
+            DynValue ioTable = script.Globals.Get("io");
+            Assert.That(ioTable.IsNil(), Is.False, "IO module is unavailable.");
+            Assert.That(ioTable.Table.Get("output").IsNil(), Is.False, "io.output is unavailable.");
+            Assert.That(ioTable.Table.Get("flush").IsNil(), Is.False, "io.flush is unavailable.");
+            IoModule.SetDefaultFile(script, StandardFileType.StdOut, file);
+
+            DynValue pcall = script.Globals.Get("pcall");
+            DynValue flush = ioTable.Table.Get("flush");
+            DynValue tuple = script.Call(pcall, flush);
 
             Assert.Multiple(() =>
             {
@@ -1313,6 +1308,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             Script script = new Script(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private static void ForceDesktopPlatform()
+        {
+            Script.GlobalOptions.Platform = new DotNetCorePlatformAccessor();
+            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
+            PlatformAutoDetector.TestHooks.SetFlags(
+                isRunningOnUnity: false,
+                isUnityNative: false,
+                isUnityIl2Cpp: false
+            );
+            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
         }
 
         private sealed class TestStreamFileUserData : StreamFileUserDataBase

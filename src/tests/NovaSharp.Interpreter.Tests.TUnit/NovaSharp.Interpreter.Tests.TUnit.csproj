@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsTestProject>true</IsTestProject>
+        <LangVersion>12</LangVersion>
+        <Nullable>disable</Nullable>
+        <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.0.2" />
+        <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="TUnit" Version="1.2.11" />
+        <PackageReference Include="TUnit.Assertions" Version="1.2.11" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/TestUtilities/**/*.cs"
+            Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/TUnit/**/*.cs"
+            Link="TestInfrastructure\TUnit\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Units/TestHelpers.cs"
+            Link="Units\TestHelpers.cs"
+        />
+    </ItemGroup>
+</Project>

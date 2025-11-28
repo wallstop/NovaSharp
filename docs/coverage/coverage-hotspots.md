@@ -1,17 +1,19 @@
 # Coverage Hotspots (baseline: 2025-11-10)
 
-Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1 -SkipBuild` on 2025-12-09 09:48 UTC; the Release run executed **2 864** tests and reports the interpreter at **95.99 % line / 93.08 % branch**, still shy of the ≥95 % branch gate).
+Latest data sourced from `docs/coverage/latest/Summary.json` (generated via `./scripts/coverage/coverage.ps1` on 2025-11-27 16:32 UTC; the Release run executed **3 155** tests via Microsoft.Testing.Platform, finished cleanly after rebuilding the platform/stream loader suites, and reports the interpreter at **96.82 % line / 94.52 % branch**, so the ≥95 % branch gate remains in monitor mode while the debugger/coroutine guard rails sit below the enforcement bar).
 
 ## Snapshot
-- Overall line coverage: **86.80 %**
-- NovaSharp.Interpreter line coverage: **95.99 %**
-- NovaSharp.Interpreter branch coverage: **93.08 %** (fails the ≥95 % gate; see the prioritized items below)
-- NovaSharp.Cli line coverage: **83.40 %**
-- NovaSharp.Hardwire line coverage: **52.72 %**
-- NovaSharp.RemoteDebugger line coverage: **86.06 %** (branch coverage **76.54 %**; DebugServer remains high, but Tcp helpers and HTTP glue need attention)
+- Overall line coverage: **87.58 %**
+- NovaSharp.Interpreter line coverage: **96.82 %**
+- NovaSharp.Interpreter branch coverage: **94.52 %** (still shy of the ≥95 % gate; see the prioritized items below)
+- NovaSharp.Cli line coverage: **82.83 %** (branch coverage **76.26 %**; command plumbing + transcript tests remain outstanding)
+- NovaSharp.Hardwire line coverage: **55.72 %**
+- NovaSharp.RemoteDebugger line coverage: **85.70 %** (branch coverage **79.14 %**; DebugServer remains high, but Tcp helpers and HTTP glue need attention)
 - NovaSharp.VsCodeDebugger line coverage: **1.84 %** (no automated smoke tests yet)
 
 ## Prioritized Red List (Interpreter < 90 %)
+- (2025-11-27 16:32 UTC) Latest `./scripts/coverage/coverage.ps1` run (Release suite **3 155** tests via Microsoft.Testing.Platform) rebuilt the platform detector + stream loader suites, finished with **0** failures, refreshed `docs/coverage/latest/*` + `docs/coverage/coverage-hotspots.md`, and reports NovaSharp.Interpreter at **96.82 % line / 94.52 % branch / 98.17 % method**. `COVERAGE_GATING_MODE` stays in monitor mode until debugger/coroutine guard rails lift branch coverage past the ≥95 % threshold.
+- (2025-11-27 16:04 UTC) Latest `./scripts/coverage/coverage.ps1` run (Release suite **3 155** tests; **12** failures concentrated in `PlatformAutoDetectorTests`, `StreamFileUserDataBaseTests`, and `UnityAssetsScriptLoaderTests`) reports NovaSharp.Interpreter at **96.84 % line / 94.54 % branch / 98.17 % method**. Stream/Unity guard-rail tests need investigation so the branch gate can flip back to `enforce`.
 - (2025-11-24 13:11 UTC) Latest coverage (`./scripts/coverage/coverage.ps1`, **2 779** Release tests) reports NovaSharp.Interpreter at **96.03 % line / 92.96 % branch / 98.26 % method**. Compatibility helpers, `_ENV` accessors, and callback wrappers are fully covered, so the remaining interpreter branch delta is concentrated in the debugger/coroutine guard rails called out below.
 - `Execution.VM.Processor` – **98.2 % line / 96.2 % branch** (per `Summary.txt`). Pause requests that arrive mid-refresh, queued debugger actions that drain after a pause, and the forced coroutine resume/guard rails drove the earlier gap; the latest `ProcessorTests` additions finished the `_ENV` branches, so the outstanding work now focuses on the debugger/coroutine edge cases still below 95 % overall branch coverage.
 - Compatibility helpers – `LuaCompatibilityProfile` now reports **100 % line / 100 % branch / 100 % method** after `CompatibilityVersionTests.DisplayNameFallsBackToEnumNameForUnknownVersion` exercised the fallback `GetDisplayName` branch. `ModuleArgumentValidation` and `LuaCompatibilityProfileExtensions` were already at 100 %, so the compatibility red list is officially empty.
@@ -193,7 +195,7 @@ See `docs/coverage/latest/Summary.json` for the full breakdown; update this list
 # Copy docs/coverage/latest/Summary.json entries into the tables above.
 ```
 
-_Last updated: 2025-11-24 (13:15 UTC)_
+_Last updated: 2025-11-27 (16:32 UTC)_
 
 
 

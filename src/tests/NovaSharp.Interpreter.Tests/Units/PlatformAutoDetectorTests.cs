@@ -119,10 +119,12 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
 
-            bool initialProbe = PlatformAutoDetector.IsRunningOnAot;
-            Assert.That(initialProbe, Is.False);
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
 
-            PlatformDetectorScope.SetAotValue(true);
+            bool initialProbe = PlatformAutoDetector.IsRunningOnAot;
+            Assert.That(initialProbe, Is.True);
+
+            probe.Dispose();
 
             bool cached = PlatformAutoDetector.IsRunningOnAot;
 
@@ -194,17 +196,20 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             using (PlatformDetectorScope.ResetForDetection()) { }
 
-            PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(unity: true);
+            bool originalUnityFlag = PlatformAutoDetector.IsRunningOnUnity;
+            PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(
+                unity: !originalUnityFlag
+            );
             try
             {
-                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
+                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.EqualTo(!originalUnityFlag));
             }
             finally
             {
                 scope.Dispose();
             }
 
-            Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.False);
+            Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.EqualTo(originalUnityFlag));
         }
 
         private sealed class PlatformDetectorScope : IDisposable
@@ -254,6 +259,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool? isUnityIl2Cpp = null
             )
             {
+                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
                 PlatformAutoDetector.TestHooks.SetFlags(
                     isRunningOnMono,
                     isRunningOnClr4,

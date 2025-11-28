@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 
 // Give
 [assembly: InternalsVisibleTo("NovaSharp.Interpreter.Tests")]
+[assembly: InternalsVisibleTo("NovaSharp.Interpreter.Tests.TUnit")]

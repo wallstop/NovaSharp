@@ -31,9 +31,23 @@ dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interprete
   dotnet test --project src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release
   ```
 
-- Three high-traffic debugger scenarios now execute in ~0.7 s (`HandshakeStreamsWelcomeAndSourceCode`, `AddWatchQueuesHardRefreshAndCreatesDynamicExpression`, `WatchesEvaluateExpressionsAgainstScriptState`). Results are gated by the Microsoft.Testing.Platform runner, so the command above matches the experience that will roll out across the remaining suites if the pilot proves successful.
+- Five high-traffic debugger scenarios now execute in ~0.7 s (`HandshakeStreamsWelcomeAndSourceCode`, `AddWatchQueuesHardRefreshAndCreatesDynamicExpression`, `WatchesEvaluateExpressionsAgainstScriptState`, `HostBusyTransitionsBackToReadyAfterProcessingAction`, `PauseCommandQueuesRunActionAndClearsPauseRequest`). Results are gated by the Microsoft.Testing.Platform runner, so the command above matches the experience that will roll out across the remaining suites if the pilot proves successful.
 
 - The NUnit equivalents still live in `RemoteDebuggerTests.cs`; keep both suites in sync while the migration is evaluated so we can compare ergonomics, analyzer coverage, and timing deltas side-by-side.
+
+### Interpreter TUnit migration blueprint
+
+- The interpreter-wide migration plan now lives in `docs/testing/tunit-migration-blueprint.md`. It defines the new `NovaSharp.Interpreter.Tests.TUnit` project, the shared adapter required to reuse `TestUtilities/*`, and the six conversion batches (VM core, standard library, interop/userdata, tooling/CLI, debugger/platform, Lua spec/TAP) with owners and target dates.
+- Follow that blueprint when converting fixtures: bootstrap the new csproj, port the isolation attributes into the shared adapter, then dual-run each batch under NUnit + TUnit until the measurement harness reports ±5 % runtime parity and coverage stays within ±0.1 % line/branch/method deltas.
+- Capture those runtime deltas with `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <batch> -NUnitArguments @(...) -TUnitArguments @(...)`. The helper forces `--output Detailed`, stores raw logs under `artifacts/tunit-migration/tmp/<label>/`, and writes a JSON summary (per-suite totals + per-test durations) to `artifacts/tunit-migration/<batch>.json` so PLAN.md checkpoints can link reproducible measurements.
+- The new `NovaSharp.Interpreter.Tests.TUnit` project already builds and ships a smoke fixture; validate the harness with `dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release` before wiring your first migrated batch.
+
+### Authoring tests while the migration is in flight
+
+- **Interpreter + tooling suites default to NUnit unless you are migrating a blueprint batch.** Add new coverage under `src/tests/NovaSharp.Interpreter.Tests` for normal feature work; when you begin porting a fixture, mirror it into `src/tests/NovaSharp.Interpreter.Tests.TUnit`, keep the NUnit version compiling until the batch is complete, and re-run the smoke command above before pushing.
+- **Remote debugger work lands in both suites.** The in-memory pilot (`src/tests/NovaSharp.RemoteDebugger.Tests.TUnit`) is the canonical home for latency-sensitive remote-debugger behaviours, but the existing NUnit fixture (`Units/RemoteDebuggerTests.cs`) must remain in sync until the cutover. Whenever you add or change a remote-debugger scenario, update both suites (or justify the delta in PLAN.md) and re-run `compare-test-runtimes.ps1` so the JSON artefact captures the new timing.
+- **New projects default to NUnit unless the blueprint says otherwise.** Avoid spinning up ad-hoc TUnit projects until the adapter layer is in place; this keeps analyzers, fixture catalog generation, and CI configuration aligned.
+- **Migrations require measurements.** When you convert a fixture or prove a latency improvement, run `pwsh ./scripts/tests/compare-test-runtimes.ps1 ...` with the relevant arguments and attach the emitted JSON/log paths in your PR description. Reference the artefact from PLAN.md so the historical record captures the delta.
 
 ### Build Helper Scripts
 

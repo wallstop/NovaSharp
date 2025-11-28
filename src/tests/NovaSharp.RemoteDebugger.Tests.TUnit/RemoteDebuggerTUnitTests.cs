@@ -86,5 +86,64 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             DynValue updatedValue = watch.Evaluate();
             await Assert.That(updatedValue.Number).IsEqualTo(42);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task HostBusyTransitionsBackToReadyAfterProcessingAction()
+        {
+            Script script = BuildScript("return 0", "tunit-host-busy.lua");
+            using RemoteDebuggerHarness harness = new(script, freeRunAfterAttach: false);
+            DebugServer server = harness.Server;
+            using RemoteDebuggerTestClient client = harness.CreateClient();
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"addwatch\" arg=\"foo\" />");
+            List<string> busyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host busy")),
+                DefaultTimeout
+            );
+
+            await Assert.That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy"))).IsTrue();
+            await Assert.That(server.State).IsEqualTo("Busy");
+
+            DebuggerAction refresh = server.GetAction(0, sourceRef);
+            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+
+            List<string> readyMessages = client.ReadUntil(
+                payloads => payloads.Any(m => ContainsOrdinal(m, "Host ready")),
+                DefaultTimeout
+            );
+
+            await Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready"))).IsTrue();
+            await Assert.That(server.State).IsEqualTo("Unknown");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task PauseCommandQueuesRunActionAndClearsPauseRequest()
+        {
+            Script script = BuildScript("return 0", "tunit-pause-queue.lua");
+            using RemoteDebuggerHarness harness = new(script, freeRunAfterAttach: false);
+            DebugServer server = harness.Server;
+            using RemoteDebuggerTestClient client = harness.CreateClient();
+            SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
+
+            client.SendCommand("<Command cmd=\"handshake\" arg=\"\" />");
+            client.Drain(DefaultTimeout);
+
+            client.SendCommand("<Command cmd=\"pause\" arg=\"\" />");
+            TestWaitHelpers.SpinUntilOrThrow(
+                server.IsPauseRequested,
+                DefaultTimeout,
+                "Pause request was not registered."
+            );
+
+            client.SendCommand("<Command cmd=\"run\" arg=\"\" />");
+
+            DebuggerAction action = server.GetAction(0, sourceRef);
+            await Assert.That(action.Action).IsEqualTo(DebuggerAction.ActionType.Run);
+            await Assert.That(server.IsPauseRequested()).IsFalse();
+        }
     }
 }

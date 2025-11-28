@@ -52,6 +52,12 @@
         <EditorConfigFiles Remove="$(MSBuildProjectDirectory)/.editorconfig" />
     </ItemGroup>
     <ItemGroup>
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/NUnit/**/*.cs"
+            Link="TestInfrastructure\NUnit\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+    </ItemGroup>
+    <ItemGroup>
         <EmbeddedResource Include="Resources/embedded.lua" />
     </ItemGroup>
     <PropertyGroup>

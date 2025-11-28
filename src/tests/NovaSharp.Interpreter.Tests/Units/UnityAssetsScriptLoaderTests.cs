@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NUnit.Framework;
 
     [TestFixture]
+    [PlatformDetectorIsolation]
     public sealed class UnityAssetsScriptLoaderTests
     {
         private static readonly string[] ExpectedLoadedScripts = { "alpha.lua", "beta.lua" };

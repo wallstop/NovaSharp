@@ -332,6 +332,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             )
             {
                 PlatformFlagScope scope = new();
+                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
                 PlatformAutoDetector.TestHooks.SetFlags(
                     isRunningOnUnity: unity,
                     isUnityNative: unityNative,
