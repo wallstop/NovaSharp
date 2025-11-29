@@ -55,7 +55,9 @@ return caller()
             int[] meaningfulLines = debugger.SeenLines.Where(line => line > 0).ToArray();
             await Assert.That(meaningfulLines.Length).IsGreaterThanOrEqualTo(1);
             await Assert.That(debugger.ActionsServed.Count).IsGreaterThanOrEqualTo(2);
-            await Assert.That(debugger.ActionsServed[0]).IsEqualTo(DebuggerAction.ActionType.StepIn);
+            await Assert
+                .That(debugger.ActionsServed[0])
+                .IsEqualTo(DebuggerAction.ActionType.StepIn);
             await Assert
                 .That(debugger.ActionsServed[1])
                 .IsEqualTo(DebuggerAction.ActionType.StepOut);
@@ -112,7 +114,9 @@ return caller()
                 return false;
             }
 
-            public bool SignalRuntimeException(NovaSharp.Interpreter.Errors.ScriptRuntimeException ex)
+            public bool SignalRuntimeException(
+                NovaSharp.Interpreter.Errors.ScriptRuntimeException ex
+            )
             {
                 return false;
             }
@@ -146,4 +150,3 @@ return caller()
     }
 }
 #pragma warning restore CA2007
-

@@ -23,4 +23,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Spec
         }
     }
 }
-

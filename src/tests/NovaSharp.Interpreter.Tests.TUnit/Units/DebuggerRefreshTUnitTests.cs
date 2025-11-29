@@ -42,7 +42,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     debugger
                         .Updates[WatchType.CallStack]
                         .Any(snapshot =>
-                            snapshot.Any(item => item.Name != null && ContainsOrdinal(item.Name, "target"))
+                            snapshot.Any(item =>
+                                item.Name != null && ContainsOrdinal(item.Name, "target")
+                            )
                         )
                 )
                 .IsTrue();
@@ -150,4 +152,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     }
 }
 #pragma warning restore CA2007
-
