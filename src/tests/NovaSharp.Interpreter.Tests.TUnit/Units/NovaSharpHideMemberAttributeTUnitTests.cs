@@ -1,46 +1,49 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class NovaSharpHideMemberAttributeTests
+    [UserDataIsolation]
+    public sealed class NovaSharpHideMemberAttributeTUnitTests
     {
-        [Test]
-        public void HiddenMembersAreNotExposedToScripts()
+        [global::TUnit.Core.Test]
+        public async Task HiddenMembersAreNotExposedToScripts()
         {
             UserData.RegisterType<HiddenMembersSample>();
             Script script = new Script(CoreModules.PresetComplete);
             script.Globals["sample"] = UserData.Create(new HiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.VisibleMethod()");
-            Assert.That(visibleResult.Number, Is.EqualTo(5));
+            await Assert.That(visibleResult.Number).IsEqualTo(5);
 
-            Assert.That(
-                () => script.DoString("return sample.HiddenMethod()"),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return sample.HiddenMethod()")
             );
+            await Assert.That(exception).IsNotNull();
         }
 
-        [Test]
-        public void HiddenMembersPropagateThroughInheritance()
+        [global::TUnit.Core.Test]
+        public async Task HiddenMembersPropagateThroughInheritance()
         {
             UserData.RegisterType<DerivedHiddenMembersSample>();
             Script script = new Script(CoreModules.PresetComplete);
             script.Globals["sample"] = UserData.Create(new DerivedHiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.Visible()");
-            Assert.That(visibleResult.Number, Is.EqualTo(10));
+            await Assert.That(visibleResult.Number).IsEqualTo(10);
 
-            Assert.That(
-                () => script.DoString("return sample.HiddenProperty"),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return sample.HiddenProperty")
             );
+            await Assert.That(exception).IsNotNull();
         }
 
         [NovaSharpHideMember("HiddenMethod")]
@@ -71,10 +74,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             private readonly int _hiddenPropertyValue = 42;
 
-            public int HiddenProperty
-            {
-                get { return _hiddenPropertyValue; }
-            }
+            public int HiddenProperty => _hiddenPropertyValue;
         }
 
         private sealed class DerivedHiddenMembersSample : BaseHiddenMembersSample
@@ -93,3 +93,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

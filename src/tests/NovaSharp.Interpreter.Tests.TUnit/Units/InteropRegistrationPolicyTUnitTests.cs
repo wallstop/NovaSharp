@@ -1,49 +1,44 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Linq;
     using System.Reflection;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class InteropRegistrationPolicyTests
+    public sealed class InteropRegistrationPolicyTUnitTests
     {
-        [Test]
-        public void DefaultReturnsNewDefaultPolicyInstance()
+        [global::TUnit.Core.Test]
+        public async Task DefaultReturnsNewDefaultPolicyInstance()
         {
             IRegistrationPolicy first = InteropRegistrationPolicy.Default;
             IRegistrationPolicy second = InteropRegistrationPolicy.Default;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first, Is.InstanceOf<DefaultRegistrationPolicy>());
-                Assert.That(second, Is.InstanceOf<DefaultRegistrationPolicy>());
-                Assert.That(first, Is.Not.SameAs(second));
-            });
+            await Assert.That(first).IsTypeOf<DefaultRegistrationPolicy>();
+            await Assert.That(second).IsTypeOf<DefaultRegistrationPolicy>();
+            await Assert.That(ReferenceEquals(first, second)).IsFalse();
         }
 
-        [Test]
-        public void AutomaticReturnsAutomaticPolicy()
+        [global::TUnit.Core.Test]
+        public async Task AutomaticReturnsAutomaticPolicy()
         {
             IRegistrationPolicy policy = InteropRegistrationPolicy.Automatic;
-            Assert.That(policy, Is.InstanceOf<AutomaticRegistrationPolicy>());
+            await Assert.That(policy).IsTypeOf<AutomaticRegistrationPolicy>();
         }
 
-        [Test]
-        public void ExplicitReturnsDefaultPolicyAndIsMarkedObsolete()
+        [global::TUnit.Core.Test]
+        public async Task ExplicitReturnsDefaultPolicyAndIsMarkedObsolete()
         {
             PropertyInfo property = typeof(InteropRegistrationPolicy).GetProperty("Explicit");
-            Assert.That(property, Is.Not.Null);
+            await Assert.That(property).IsNotNull();
 
             IRegistrationPolicy policy = GetExplicitPolicy(property);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(policy, Is.InstanceOf<DefaultRegistrationPolicy>());
-                Assert.That(IsExplicitPropertyObsolete(property), Is.True);
-            });
+            await Assert.That(policy).IsTypeOf<DefaultRegistrationPolicy>();
+            await Assert.That(IsExplicitPropertyObsolete(property)).IsTrue();
         }
 
         private static IRegistrationPolicy GetExplicitPolicy(PropertyInfo property)
@@ -75,3 +70,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

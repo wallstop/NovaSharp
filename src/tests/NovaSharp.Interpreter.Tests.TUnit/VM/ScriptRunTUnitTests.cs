@@ -24,7 +24,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task RunFileExecutesFileContents()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string tempFile = Path.GetTempFileName();
+            string tempFile = Path.Combine(Path.GetTempPath(), $"script-{Guid.NewGuid():N}.lua");
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
             try
             {
                 await File.WriteAllTextAsync(tempFile, "return 'file-result'")
@@ -48,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task RunFileThrowsWhenFileMissing()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.lua");
+            string path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.lua");
             if (File.Exists(path))
             {
                 File.Delete(path);

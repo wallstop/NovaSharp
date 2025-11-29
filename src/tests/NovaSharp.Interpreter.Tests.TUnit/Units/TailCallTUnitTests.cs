@@ -1,14 +1,15 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public class TailCallTests
+    public sealed class TailCallTUnitTests
     {
-        [Test]
-        public void TailRecursionHandlesThousandsOfFrames()
+        [global::TUnit.Core.Test]
+        public async Task TailRecursionHandlesThousandsOfFrames()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -24,15 +25,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.Number));
-                Assert.That(result.Number, Is.EqualTo(20000));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(20000);
         }
 
-        [Test]
-        public void TailCallPreservesMultipleReturnValues()
+        [global::TUnit.Core.Test]
+        public async Task TailCallPreservesMultipleReturnValues()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -49,14 +47,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(result.Tuple.Length, Is.EqualTo(3));
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(1));
-                Assert.That(result.Tuple[1].Number, Is.EqualTo(2));
-                Assert.That(result.Tuple[2].Number, Is.EqualTo(3));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple.Length).IsEqualTo(3);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(3);
         }
     }
 }
+#pragma warning restore CA2007

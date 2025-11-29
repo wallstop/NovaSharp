@@ -497,7 +497,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsNumberDowncastWeight()
         {
-            Script.GlobalOptions.CustomConverters.Clear();
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 DynValue.NewNumber(3.14),
                 typeof(int),
@@ -538,29 +537,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsCustomConverterMatch()
         {
-            Script.GlobalOptions.CustomConverters.Clear();
+            using IDisposable scope = Script.BeginGlobalOptionsScope();
             Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
                 DataType.Boolean,
                 typeof(string),
                 dv => dv.Boolean ? "yes" : "no"
             );
 
-            try
-            {
-                int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                    DynValue.NewBoolean(true),
-                    typeof(string),
-                    isOptional: false
-                );
+            int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
+                DynValue.NewBoolean(true),
+                typeof(string),
+                isOptional: false
+            );
 
-                await Assert
-                    .That(weight)
-                    .IsEqualTo(ScriptToClrConversions.WeightCustomConverterMatch);
-            }
-            finally
-            {
-                Script.GlobalOptions.CustomConverters.Clear();
-            }
+            await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightCustomConverterMatch);
         }
 
         [global::TUnit.Core.Test]

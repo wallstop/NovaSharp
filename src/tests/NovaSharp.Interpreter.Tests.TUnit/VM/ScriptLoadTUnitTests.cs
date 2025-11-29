@@ -316,10 +316,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
+            PlatformDetectionTestHelper.ForceFileSystemLoader();
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 
-            string path = Path.GetTempFileName();
+            string path = Path.Combine(Path.GetTempPath(), $"script-{Guid.NewGuid():N}.lua");
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
 
             try
             {

@@ -1,15 +1,16 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class SourceCodeTests
+    public sealed class SourceCodeTUnitTests
     {
-        [Test]
-        public void LinesIncludeSyntheticHeaderAndOriginalCode()
+        [global::TUnit.Core.Test]
+        public async Task LinesIncludeSyntheticHeaderAndOriginalCode()
         {
             const string ChunkName = "units/source/header";
             const string Code = "local one = 1\nreturn one";
@@ -18,35 +19,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.DoString(Code, null, ChunkName);
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(source.Lines[0], Is.EqualTo($"-- Begin of chunk : {ChunkName} "));
-                Assert.That(source.Lines[1], Is.EqualTo("local one = 1"));
-                Assert.That(source.Lines[2], Is.EqualTo("return one"));
-                Assert.That(source.OwnerScript, Is.SameAs(script));
-                Assert.That(source.Name, Is.EqualTo(ChunkName));
-                Assert.That(source.Code, Is.EqualTo(Code));
-            });
+            await Assert.That(source.Lines[0]).IsEqualTo($"-- Begin of chunk : {ChunkName} ");
+            await Assert.That(source.Lines[1]).IsEqualTo("local one = 1");
+            await Assert.That(source.Lines[2]).IsEqualTo("return one");
+            await Assert.That(source.OwnerScript).IsSameReferenceAs(script);
+            await Assert.That(source.Name).IsEqualTo(ChunkName);
+            await Assert.That(source.Code).IsEqualTo(Code);
         }
 
-        [Test]
-        public void GetCodeSnippetThrowsWhenSourceRefIsNull()
+        [global::TUnit.Core.Test]
+        public async Task GetCodeSnippetThrowsWhenSourceRefIsNull()
         {
             Script script = new();
-
             script.DoString("return 1", null, "units/source/null");
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
 
-            Assert.That(
-                () => source.GetCodeSnippet(null),
-                Throws
-                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
-                    .EqualTo("sourceCodeRef")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                source.GetCodeSnippet(null)
             );
+
+            await Assert.That(exception.ParamName).IsEqualTo("sourceCodeRef");
         }
 
-        [Test]
-        public void GetCodeSnippetAppendsIntermediateLines()
+        [global::TUnit.Core.Test]
+        public async Task GetCodeSnippetAppendsIntermediateLines()
         {
             Script script = new();
             script.DoString(
@@ -56,7 +52,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
 
-            SourceRef span = new SourceRef(
+            SourceRef span = new(
                 source.SourceId,
                 from: 0,
                 to: source.Lines[3].Length - 1,
@@ -66,10 +62,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             string snippet = source.GetCodeSnippet(span);
-
             string expected = string.Concat(source.Lines[1], source.Lines[2], source.Lines[3]);
 
-            Assert.That(snippet, Is.EqualTo(expected));
+            await Assert.That(snippet).IsEqualTo(expected);
         }
     }
 }
+#pragma warning restore CA2007

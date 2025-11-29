@@ -1,16 +1,17 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Serialization;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ObjectValueConverterTests
+    public sealed class ObjectValueConverterTUnitTests
     {
-        [Test]
-        public void SerializeObjectToDynValueUsesCustomNullReplacement()
+        [global::TUnit.Core.Test]
+        public async Task SerializeObjectToDynValueUsesCustomNullReplacement()
         {
             Script script = new();
             DynValue fallback = DynValue.NewString("missing");
@@ -21,11 +22,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 fallback
             );
 
-            Assert.That(result, Is.SameAs(fallback));
+            await Assert.That(result).IsSameReferenceAs(fallback);
         }
 
-        [Test]
-        public void SerializeObjectToDynValueCapturesInstanceAndStaticProperties()
+        [global::TUnit.Core.Test]
+        public async Task SerializeObjectToDynValueCapturesInstanceAndStaticProperties()
         {
             Script script = new();
             SampleObject sample = new("value");
@@ -33,21 +34,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = ObjectValueConverter.SerializeObjectToDynValue(script, sample);
             Table serialized = result.Table;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    serialized.Get(nameof(SampleObject.InstanceValue)).String,
-                    Is.EqualTo("value")
-                );
-                Assert.That(
-                    serialized.Get(nameof(SampleObject.StaticNumber)).Number,
-                    Is.EqualTo(SampleObject.StaticNumber)
-                );
-            });
+            await Assert
+                .That(serialized.Get(nameof(SampleObject.InstanceValue)).String)
+                .IsEqualTo("value");
+            await Assert
+                .That(serialized.Get(nameof(SampleObject.StaticNumber)).Number)
+                .IsEqualTo(SampleObject.StaticNumber);
         }
 
-        [Test]
-        public void SerializeObjectToDynValueEnumeratesListsAndEnums()
+        [global::TUnit.Core.Test]
+        public async Task SerializeObjectToDynValueEnumeratesListsAndEnums()
         {
             Script script = new();
             List<object> payload = new() { SampleEnum.Second, null, "tail" };
@@ -60,13 +56,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Table serialized = result.Table;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(serialized.Length, Is.EqualTo(3));
-                Assert.That(serialized.Get(1).Number, Is.EqualTo((double)SampleEnum.Second));
-                Assert.That(serialized.Get(2).String, Is.EqualTo("missing"));
-                Assert.That(serialized.Get(3).String, Is.EqualTo("tail"));
-            });
+            await Assert.That(serialized.Length).IsEqualTo(3);
+            await Assert.That(serialized.Get(1).Number).IsEqualTo((double)SampleEnum.Second);
+            await Assert.That(serialized.Get(2).String).IsEqualTo("missing");
+            await Assert.That(serialized.Get(3).String).IsEqualTo("tail");
         }
 
         private sealed class SampleObject
@@ -88,3 +81,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

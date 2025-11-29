@@ -1,33 +1,31 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class TableTests
+    public sealed class TableTUnitTests
     {
-        [Test]
-        public void ConstructorWithArrayValuesInitializesSequentialEntries()
+        [global::TUnit.Core.Test]
+        public async Task ConstructorWithArrayValuesInitializesSequentialEntries()
         {
             Script script = new();
             DynValue[] values = new[] { DynValue.NewNumber(10), DynValue.NewString("two") };
 
             Table table = new(script, values);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(table.Length, Is.EqualTo(2));
-                Assert.That(table.RawGet(1).Number, Is.EqualTo(10));
-                Assert.That(table.RawGet(2).String, Is.EqualTo("two"));
-            });
+            await Assert.That(table.Length).IsEqualTo(2);
+            await Assert.That(table.RawGet(1).Number).IsEqualTo(10);
+            await Assert.That(table.RawGet(2).String).IsEqualTo("two");
         }
 
-        [Test]
-        public void ClearRemovesAllEntries()
+        [global::TUnit.Core.Test]
+        public async Task ClearRemovesAllEntries()
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(1));
@@ -35,16 +33,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             table.Clear();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(table.Length, Is.EqualTo(0));
-                Assert.That(table.RawGet(1), Is.Null);
-                Assert.That(table.RawGet("name"), Is.Null);
-            });
+            await Assert.That(table.Length).IsEqualTo(0);
+            await Assert.That(table.RawGet(1)).IsNull();
+            await Assert.That(table.RawGet("name")).IsNull();
         }
 
-        [Test]
-        public void LengthCacheInvalidatesWhenEntriesChange()
+        [global::TUnit.Core.Test]
+        public async Task LengthCacheInvalidatesWhenEntriesChange()
         {
             Script script = new();
             Table table = new(script);
@@ -52,26 +47,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set(2, DynValue.NewNumber(20));
             table.Set(3, DynValue.NewNumber(30));
 
-            Assert.That(table.Length, Is.EqualTo(3));
+            await Assert.That(table.Length).IsEqualTo(3);
 
             table.Set(2, DynValue.Nil);
-            Assert.That(
-                table.Length,
-                Is.EqualTo(1),
-                "Setting nil should invalidate the cached length."
-            );
+            await Assert.That(table.Length).IsEqualTo(1);
 
             table.Append(DynValue.NewNumber(40));
-            Assert.Multiple(() =>
-            {
-                Assert.That(table.Length, Is.EqualTo(3));
-                Assert.That(table.RawGet(2).Number, Is.EqualTo(40));
-                Assert.That(table.RawGet(3).Number, Is.EqualTo(30));
-            });
+            await Assert.That(table.Length).IsEqualTo(3);
+            await Assert.That(table.RawGet(2).Number).IsEqualTo(40);
+            await Assert.That(table.RawGet(3).Number).IsEqualTo(30);
         }
 
-        [Test]
-        public void NextKeySkipsNilEntriesAndHandlesTermination()
+        [global::TUnit.Core.Test]
+        public async Task NextKeySkipsNilEntriesAndHandlesTermination()
         {
             Table table = new(new Script());
             table.Set("first", DynValue.Nil);
@@ -79,33 +67,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set(3, DynValue.NewNumber(3));
 
             TablePair? first = table.NextKey(DynValue.Nil);
-            Assert.That(first.HasValue, Is.True);
-            Assert.That(first.Value.Key.String, Is.EqualTo("second"));
+            await Assert.That(first.HasValue).IsTrue();
+            await Assert.That(first.Value.Key.String).IsEqualTo("second");
 
             TablePair? second = table.NextKey(first.Value.Key);
-            Assert.That(second.HasValue, Is.True);
-            Assert.That(second.Value.Key.Number, Is.EqualTo(3));
+            await Assert.That(second.HasValue).IsTrue();
+            await Assert.That(second.Value.Key.Number).IsEqualTo(3);
 
             TablePair? tail = table.NextKey(second.Value.Key);
-            Assert.That(tail, Is.EqualTo(TablePair.Nil));
+            await Assert.That(tail).IsEqualTo(TablePair.Nil);
 
             TablePair? missing = table.NextKey(DynValue.NewString("missing"));
-            Assert.That(missing, Is.Null);
+            await Assert.That(missing).IsNull();
         }
 
-        [Test]
-        public void NextKeyReturnsNullWhenKeyUnknown()
+        [global::TUnit.Core.Test]
+        public async Task NextKeyReturnsNullWhenKeyUnknown()
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(1));
 
             TablePair? unknown = table.NextKey(DynValue.NewNumber(999));
 
-            Assert.That(unknown, Is.Null);
+            await Assert.That(unknown).IsNull();
         }
 
-        [Test]
-        public void NextKeyHandlesNonIntegralNumberKeys()
+        [global::TUnit.Core.Test]
+        public async Task NextKeyHandlesNonIntegralNumberKeys()
         {
             Script script = new();
             Table table = new(script);
@@ -115,33 +103,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             TablePair? next = table.NextKey(fractionalKey);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(next.HasValue, Is.True);
-                Assert.That(next.Value.Key.String, Is.EqualTo("tail"));
-            });
+            await Assert.That(next.HasValue).IsTrue();
+            await Assert.That(next.Value.Key.String).IsEqualTo("tail");
         }
 
-        [Test]
-        public void CollectDeadKeysRemovesNilEntries()
+        [global::TUnit.Core.Test]
+        public async Task CollectDeadKeysRemovesNilEntries()
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(10));
             table.Set(2, DynValue.NewNumber(20));
-            Assert.That(table.Length, Is.EqualTo(2));
+            await Assert.That(table.Length).IsEqualTo(2);
 
             table.Set(2, DynValue.Nil);
             table.CollectDeadKeys();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(table.RawGet(2), Is.Null);
-                Assert.That(table.Length, Is.EqualTo(1));
-            });
+            await Assert.That(table.RawGet(2)).IsNull();
+            await Assert.That(table.Length).IsEqualTo(1);
         }
 
-        [Test]
-        public void AppendThrowsWhenValueOwnedByDifferentScript()
+        [global::TUnit.Core.Test]
+        public async Task AppendThrowsWhenValueOwnedByDifferentScript()
         {
             Script scriptA = new();
             Script scriptB = new();
@@ -152,11 +134,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Append(foreignValue)
             );
 
-            Assert.That(exception.Message, Does.Contain("resources owned by different scripts"));
+            await Assert.That(exception.Message).Contains("resources owned by different scripts");
         }
 
-        [Test]
-        public void SetDynValueNaNThrows()
+        [global::TUnit.Core.Test]
+        public async Task SetDynValueNaNThrows()
         {
             Table table = new(new Script());
             DynValue nanKey = DynValue.NewNumber(double.NaN);
@@ -165,11 +147,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set(nanKey, DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("table index is NaN"));
+            await Assert.That(exception.Message).Contains("table index is NaN");
         }
 
-        [Test]
-        public void SetKeysThrowsWhenPathMissing()
+        [global::TUnit.Core.Test]
+        public async Task SetKeysThrowsWhenPathMissing()
         {
             Table table = new(new Script());
 
@@ -177,11 +159,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("did not point to anything"));
+            await Assert.That(exception.Message).Contains("did not point to anything");
         }
 
-        [Test]
-        public void SetKeysThrowsWhenIntermediateIsNotTable()
+        [global::TUnit.Core.Test]
+        public async Task SetKeysThrowsWhenIntermediateIsNotTable()
         {
             Table table = new(new Script());
             table.Set("leaf", DynValue.NewNumber(5));
@@ -190,11 +172,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("did not point to a table"));
+            await Assert.That(exception.Message).Contains("did not point to a table");
         }
 
-        [Test]
-        public void SetObjectArrayThrowsWhenKeysArrayIsNull()
+        [global::TUnit.Core.Test]
+        public async Task SetObjectArrayThrowsWhenKeysArrayIsNull()
         {
             Table table = new(new Script());
 
@@ -202,11 +184,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set((object[])null, DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("table index is nil"));
+            await Assert.That(exception.Message).Contains("table index is nil");
         }
 
-        [Test]
-        public void SetObjectArrayThrowsWhenKeysArrayEmpty()
+        [global::TUnit.Core.Test]
+        public async Task SetObjectArrayThrowsWhenKeysArrayEmpty()
         {
             Table table = new(new Script());
 
@@ -214,11 +196,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set(Array.Empty<object>(), DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("table index is nil"));
+            await Assert.That(exception.Message).Contains("table index is nil");
         }
 
-        [Test]
-        public void SetObjectRoutesStringsNumbersAndValues()
+        [global::TUnit.Core.Test]
+        public async Task SetObjectRoutesStringsNumbersAndValues()
         {
             Script script = new();
             Table table = new(script);
@@ -229,16 +211,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             double fractionalKey = 4.5;
             table.Set((object)fractionalKey, DynValue.NewNumber(5));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(table.RawGet("name").String, Is.EqualTo("nova"));
-                Assert.That(table.RawGet(4).Number, Is.EqualTo(4));
-                Assert.That(table.RawGet((object)fractionalKey).Number, Is.EqualTo(5));
-            });
+            await Assert.That(table.RawGet("name").String).IsEqualTo("nova");
+            await Assert.That(table.RawGet(4).Number).IsEqualTo(4);
+            await Assert.That(table.RawGet((object)fractionalKey).Number).IsEqualTo(5);
         }
 
-        [Test]
-        public void SetDynValueNumberWithFractionStoresEntry()
+        [global::TUnit.Core.Test]
+        public async Task SetDynValueNumberWithFractionStoresEntry()
         {
             Script script = new();
             Table table = new(script);
@@ -247,11 +226,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             table.Set(fractionalKey, DynValue.NewString("fractional"));
 
             DynValue result = table.RawGet(fractionalKey);
-            Assert.That(result.String, Is.EqualTo("fractional"));
+            await Assert.That(result.String).IsEqualTo("fractional");
         }
 
-        [Test]
-        public void SetObjectArrayCreatesNestedTable()
+        [global::TUnit.Core.Test]
+        public async Task SetObjectArrayCreatesNestedTable()
         {
             Script script = new();
             Table table = new(script);
@@ -259,11 +238,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             table.Set(new object[] { "child", "leaf" }, DynValue.NewString("value"));
 
-            Assert.That(table.RawGet("child", "leaf").String, Is.EqualTo("value"));
+            await Assert.That(table.RawGet("child", "leaf").String).IsEqualTo("value");
         }
 
-        [Test]
-        public void GetParamsReturnsNestedValue()
+        [global::TUnit.Core.Test]
+        public async Task GetParamsReturnsNestedValue()
         {
             Script script = new();
             Table table = new(script);
@@ -273,101 +252,103 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = table.Get("child", 1);
 
-            Assert.That(value.String, Is.EqualTo("inner"));
+            await Assert.That(value.String).IsEqualTo("inner");
         }
 
-        [Test]
-        public void GetObjectReturnsNilWhenKeyMissing()
+        [global::TUnit.Core.Test]
+        public async Task GetObjectReturnsNilWhenKeyMissing()
         {
             Table table = new(new Script());
 
             DynValue value = table.Get((object)"missing");
 
-            Assert.That(value.IsNil(), Is.True);
+            await Assert.That(value.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void GetParamsReturnsNilWhenNoKeysProvided()
+        [global::TUnit.Core.Test]
+        public async Task GetParamsReturnsNilWhenNoKeysProvided()
         {
             Table table = new(new Script());
 
             DynValue value = table.Get(Array.Empty<object>());
 
-            Assert.That(value.IsNil(), Is.True);
+            await Assert.That(value.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void RawGetParamsReturnsNullWhenKeysMissing()
+        [global::TUnit.Core.Test]
+        public async Task RawGetParamsReturnsNullWhenKeysMissing()
         {
             Table table = new(new Script());
 
             DynValue value = table.RawGet(Array.Empty<object>());
 
-            Assert.That(value, Is.Null);
+            await Assert.That(value).IsNull();
         }
 
-        [Test]
-        public void RawGetParamsThrowsWhenPathMissing()
+        [global::TUnit.Core.Test]
+        public async Task RawGetParamsThrowsWhenPathMissing()
         {
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("missing", "child")
-            )!;
+            );
 
-            Assert.That(exception.Message, Does.Contain("did not point to anything"));
+            await Assert.That(exception.Message).Contains("did not point to anything");
         }
 
-        [Test]
-        public void RawGetParamsThrowsWhenIntermediateIsNotTable()
+        [global::TUnit.Core.Test]
+        public async Task RawGetParamsThrowsWhenIntermediateIsNotTable()
         {
             Table table = new(new Script());
             table.Set("leaf", DynValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("leaf", "child")
-            )!;
+            );
 
-            Assert.That(exception.Message, Does.Contain("did not point to a table"));
+            await Assert.That(exception.Message).Contains("did not point to a table");
         }
 
-        [Test]
-        public void RemoveParamsReturnsFalseWhenNoKeys()
+        [global::TUnit.Core.Test]
+        public async Task RemoveParamsReturnsFalseWhenNoKeys()
         {
             Table table = new(new Script());
-            Assert.That(table.Remove(Array.Empty<object>()), Is.False);
+
+            await Assert.That(table.Remove(Array.Empty<object>())).IsFalse();
         }
 
-        [Test]
-        public void RawGetObjectReturnsNullWhenKeyIsNull()
+        [global::TUnit.Core.Test]
+        public async Task RawGetObjectReturnsNullWhenKeyIsNull()
         {
             Table table = new(new Script());
-            Assert.That(table.RawGet((object)null), Is.Null);
+
+            await Assert.That(table.RawGet((object)null)).IsNull();
         }
 
-        [Test]
-        public void RawGetObjectReturnsValueWhenKeyExists()
+        [global::TUnit.Core.Test]
+        public async Task RawGetObjectReturnsValueWhenKeyExists()
         {
             Table table = new(new Script());
             table.Set("existing", DynValue.NewNumber(42));
 
             DynValue value = table.RawGet((object)"existing");
 
-            Assert.That(value.Number, Is.EqualTo(42));
+            await Assert.That(value.Number).IsEqualTo(42);
         }
 
-        [Test]
-        public void RawGetParamsReturnsNullWhenArrayIsNull()
+        [global::TUnit.Core.Test]
+        public async Task RawGetParamsReturnsNullWhenArrayIsNull()
         {
             Table table = new(new Script());
 
             DynValue value = table.RawGet((object[])null);
 
-            Assert.That(value, Is.Null);
+            await Assert.That(value).IsNull();
         }
 
-        [Test]
-        public void SetObjectThrowsWhenKeyIsNull()
+        [global::TUnit.Core.Test]
+        public async Task SetObjectThrowsWhenKeyIsNull()
         {
             Table table = new(new Script());
 
@@ -375,86 +356,71 @@ namespace NovaSharp.Interpreter.Tests.Units
                 table.Set((object)null, DynValue.NewNumber(1))
             );
 
-            Assert.That(exception.Message, Does.Contain("table index is nil"));
+            await Assert.That(exception.Message).Contains("table index is nil");
         }
 
-        [Test]
-        public void RemoveStringKeyDeletesEntry()
+        [global::TUnit.Core.Test]
+        public async Task RemoveStringKeyDeletesEntry()
         {
             Table table = new(new Script());
             table.Set("key", DynValue.NewNumber(12));
 
             bool removed = table.Remove("key");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet("key"), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet("key")).IsNull();
         }
 
-        [Test]
-        public void RemoveDynValueNumberUsesIntegralPath()
+        [global::TUnit.Core.Test]
+        public async Task RemoveDynValueNumberUsesIntegralPath()
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(42));
 
             bool removed = table.Remove(DynValue.NewNumber(1));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet(1), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet(1)).IsNull();
         }
 
-        [Test]
-        public void RemoveDynValueStringDeletesEntry()
+        [global::TUnit.Core.Test]
+        public async Task RemoveDynValueStringDeletesEntry()
         {
             Table table = new(new Script());
             table.Set("value", DynValue.NewNumber(100));
 
             bool removed = table.Remove(DynValue.NewString("value"));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet("value"), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet("value")).IsNull();
         }
 
-        [Test]
-        public void RemoveObjectTreatsBoxedStringAsStringKey()
+        [global::TUnit.Core.Test]
+        public async Task RemoveObjectTreatsBoxedStringAsStringKey()
         {
             Table table = new(new Script());
             table.Set("boxed", DynValue.NewNumber(5));
 
             bool removed = table.Remove((object)"boxed");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet("boxed"), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet("boxed")).IsNull();
         }
 
-        [Test]
-        public void RemoveObjectTreatsBoxedIntAsArrayKey()
+        [global::TUnit.Core.Test]
+        public async Task RemoveObjectTreatsBoxedIntAsArrayKey()
         {
             Table table = new(new Script());
             table.Set(3, DynValue.NewNumber(9));
 
             bool removed = table.Remove((object)3);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet(3), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet(3)).IsNull();
         }
 
-        [Test]
-        public void RemoveObjectDynValueKeyRemovesNonIntegralEntry()
+        [global::TUnit.Core.Test]
+        public async Task RemoveObjectDynValueKeyRemovesNonIntegralEntry()
         {
             Script script = new();
             Table table = new(script);
@@ -463,15 +429,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             bool removed = table.Remove((object)fractionalKey);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(table.RawGet(fractionalKey), Is.Null);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(table.RawGet(fractionalKey)).IsNull();
         }
 
-        [Test]
-        public void RemoveObjectArrayDeletesNestedEntry()
+        [global::TUnit.Core.Test]
+        public async Task RemoveObjectArrayDeletesNestedEntry()
         {
             Script script = new();
             Table table = new(script);
@@ -482,15 +445,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = table.Get("branch", "leaf") ?? DynValue.Nil;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(removed, Is.True);
-                Assert.That(value.IsNil(), Is.True);
-            });
+            await Assert.That(removed).IsTrue();
+            await Assert.That(value.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void RawGetParamsNavigatesNestedTables()
+        [global::TUnit.Core.Test]
+        public async Task RawGetParamsNavigatesNestedTables()
         {
             Script script = new();
             Table table = new(script);
@@ -501,24 +461,22 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = table.RawGet("child", "leaf");
 
-            Assert.That(result.Number, Is.EqualTo(7));
+            await Assert.That(result.Number).IsEqualTo(7);
         }
 
-        [Test]
-        public void KeysEnumeratesInsertedEntries()
+        [global::TUnit.Core.Test]
+        public async Task KeysEnumeratesInsertedEntries()
         {
             Table table = new(new Script());
             table.Set("alpha", DynValue.NewNumber(1));
             table.Set(2, DynValue.NewNumber(2));
 
-            object[] keys = table.Keys.Select(k => k.ToObject()).ToArray();
+            object[] keys = table.Keys.Select(key => key.ToObject()).ToArray();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(keys.Length, Is.EqualTo(2));
-                Assert.That(keys, Does.Contain("alpha"));
-                Assert.That(keys, Does.Contain((double)2));
-            });
+            await Assert.That(keys.Length).IsEqualTo(2);
+            await Assert.That(keys.Contains("alpha")).IsTrue();
+            await Assert.That(keys.Contains(2d)).IsTrue();
         }
     }
 }
+#pragma warning restore CA2007

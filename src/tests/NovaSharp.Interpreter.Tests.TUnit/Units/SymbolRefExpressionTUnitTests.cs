@@ -1,5 +1,9 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -7,13 +11,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Tree.Expressions;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class SymbolRefExpressionTests
+    public sealed class SymbolRefExpressionTUnitTests
     {
-        [Test]
-        public void VarArgsAreRejectedInsideDynamicExpressions()
+        [global::TUnit.Core.Test]
+        public async Task VarArgsAreRejectedInsideDynamicExpressions()
         {
             Script script = new();
             ScriptLoadingContext context = CreateDynamicContext(script, hasVarArgs: true);
@@ -24,28 +26,32 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Text = WellKnownSymbols.VARARGS,
             };
 
-            Assert.That(
-                () => new SymbolRefExpression(token, context),
-                Throws
-                    .TypeOf<DynamicExpressionException>()
-                    .With.Message.Contains("cannot use '...' in a dynamic expression")
-            );
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+            {
+                GC.KeepAlive(new SymbolRefExpression(token, context));
+            });
+
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot use '...' in a dynamic expression");
         }
 
-        [Test]
-        public void SymbolReferenceConstructorRejectsDynamicExpressions()
+        [global::TUnit.Core.Test]
+        public async Task SymbolReferenceConstructorRejectsDynamicExpressions()
         {
             Script script = new();
             ScriptLoadingContext context = CreateDynamicContext(script, hasVarArgs: false);
 
             SymbolRef symbol = SymbolRef.Global("value", SymbolRef.DefaultEnv);
 
-            Assert.That(
-                () => new SymbolRefExpression(context, symbol),
-                Throws
-                    .TypeOf<DynamicExpressionException>()
-                    .With.Message.Contains("Unsupported symbol reference expression")
-            );
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+            {
+                GC.KeepAlive(new SymbolRefExpression(context, symbol));
+            });
+
+            await Assert
+                .That(exception.Message)
+                .Contains("Unsupported symbol reference expression");
         }
 
         private static ScriptLoadingContext CreateDynamicContext(Script script, bool hasVarArgs)
@@ -71,3 +77,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
