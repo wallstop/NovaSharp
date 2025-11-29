@@ -6,6 +6,8 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Reflection;
     using System.Reflection.Emit;
     using System.Security;
+    using System.Threading;
+    using System.Threading.Tasks;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
@@ -293,6 +295,50 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestContext.WriteLine(
                 $"[AOT:{exceptionType.Name}] after probe -> {PlatformDetectorScope.DescribeCurrentState()}"
             );
+        }
+
+        [Test]
+        public void IsRunningOnAotHandlesConcurrentCacheResets()
+        {
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => false);
+            PlatformDetectorScope.SetAotValue(null);
+
+            const int workerCount = 12;
+            const int iterationsPerWorker = 500;
+            Task[] workers = new Task[workerCount + 1];
+
+            for (int index = 0; index < workerCount; index++)
+            {
+                workers[index] = Task.Run(() =>
+                {
+                    for (int iteration = 0; iteration < iterationsPerWorker; iteration++)
+                    {
+                        bool result = PlatformAutoDetector.IsRunningOnAot;
+                        if (result)
+                        {
+                            throw new InvalidOperationException("Probe override expected false.");
+                        }
+                    }
+                });
+            }
+
+            workers[workerCount] = Task.Run(() =>
+            {
+                int resetIterations = workerCount * iterationsPerWorker;
+                for (int iteration = 0; iteration < resetIterations; iteration++)
+                {
+                    PlatformDetectorScope.SetAotValue(null);
+                    Thread.Yield();
+                }
+            });
+
+            TestContext.WriteLine(
+                $"[AOT:Concurrent] workers={workerCount}, iterations={iterationsPerWorker}"
+            );
+
+            Assert.DoesNotThrow(() => Task.WaitAll(workers));
+            Assert.That(PlatformAutoDetector.IsRunningOnAot, Is.False);
         }
 
         [Test]

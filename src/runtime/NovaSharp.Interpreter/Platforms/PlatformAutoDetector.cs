@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Platforms
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Threading;
     using Loaders;
     using NovaSharp.Interpreter.Interop;
 
@@ -12,10 +13,19 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
+        private const int RunningOnAotUnknown = -1;
+        private const int RunningOnAotFalse = 0;
+        private const int RunningOnAotTrue = 1;
+
         /// <summary>
         /// Caches the result of the JIT detection probe so repeated calls avoid recompiling expressions.
         /// </summary>
-        private static bool? RunningOnAotCache;
+        private static int RunningOnAotState = RunningOnAotUnknown;
+
+        /// <summary>
+        /// Synchronizes concurrent AOT detection so we only probe once per process.
+        /// </summary>
+        private static readonly object RunningOnAotStateGate = new();
 
         /// <summary>
         /// Tracks whether the expensive detection logic already populated the platform flags.
@@ -64,14 +74,27 @@ namespace NovaSharp.Interpreter.Platforms
 #if UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP
                 return true;
 #else
-                bool? cached = RunningOnAotCache;
-                if (!cached.HasValue)
+                int cachedState = Volatile.Read(ref RunningOnAotState);
+                if (cachedState != RunningOnAotUnknown)
                 {
-                    cached = ProbeIsRunningOnAot();
-                    RunningOnAotCache = cached;
+                    return cachedState == RunningOnAotTrue;
                 }
 
-                return cached.Value;
+                lock (RunningOnAotStateGate)
+                {
+                    cachedState = Volatile.Read(ref RunningOnAotState);
+                    if (cachedState == RunningOnAotUnknown)
+                    {
+                        bool result = ProbeIsRunningOnAot();
+                        Volatile.Write(
+                            ref RunningOnAotState,
+                            result ? RunningOnAotTrue : RunningOnAotFalse
+                        );
+                        return result;
+                    }
+
+                    return cachedState == RunningOnAotTrue;
+                }
 #endif
             }
         }
@@ -301,7 +324,7 @@ namespace NovaSharp.Interpreter.Platforms
                     IsPortableFramework,
                     IsUnityNative,
                     IsUnityIl2Cpp,
-                    RunningOnAotCache,
+                    ConvertStateToNullable(Volatile.Read(ref RunningOnAotState)),
                     AutoDetectionsDone,
                     AotProbeOverride,
                     UnityDetectionOverride
@@ -319,7 +342,7 @@ namespace NovaSharp.Interpreter.Platforms
                 IsPortableFramework = snapshot.IsPortableFramework;
                 IsUnityNative = snapshot.IsUnityNative;
                 IsUnityIl2Cpp = snapshot.IsUnityIl2Cpp;
-                RunningOnAotCache = snapshot.RunningOnAotCache;
+                SetRunningOnAot(snapshot.RunningOnAotCache);
                 AutoDetectionsDone = snapshot.AutoDetectionsDone;
                 AotProbeOverride = snapshot.AotProbeOverride;
                 UnityDetectionOverride = snapshot.UnityDetectionOverride;
@@ -373,7 +396,7 @@ namespace NovaSharp.Interpreter.Platforms
             /// </summary>
             public static void SetRunningOnAot(bool? value)
             {
-                RunningOnAotCache = value;
+                Volatile.Write(ref RunningOnAotState, ConvertNullableToState(value));
             }
 
             /// <summary>
@@ -448,6 +471,26 @@ namespace NovaSharp.Interpreter.Platforms
                 || ex is InvalidOperationException
                 || ex is TypeLoadException
                 || ex is System.Security.SecurityException;
+        }
+
+        private static bool? ConvertStateToNullable(int state)
+        {
+            return state switch
+            {
+                RunningOnAotTrue => true,
+                RunningOnAotFalse => false,
+                _ => null,
+            };
+        }
+
+        private static int ConvertNullableToState(bool? value)
+        {
+            if (!value.HasValue)
+            {
+                return RunningOnAotUnknown;
+            }
+
+            return value.Value ? RunningOnAotTrue : RunningOnAotFalse;
         }
     }
 }

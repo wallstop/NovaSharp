@@ -14,6 +14,7 @@
     <ItemGroup>
         <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />
         <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/NovaSharp.Cli/NovaSharp.Cli.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Compile
@@ -23,6 +24,10 @@
         <Compile
             Include="..\NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs"
             Link="TestUtilities\TestWaitHelpers.cs"
+        />
+        <Compile
+            Include="..\NovaSharp.Interpreter.Tests\TestUtilities\FakeTimeProvider.cs"
+            Link="TestUtilities\FakeTimeProvider.cs"
         />
     </ItemGroup>
 </Project>
