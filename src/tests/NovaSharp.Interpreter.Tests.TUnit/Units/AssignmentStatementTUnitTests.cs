@@ -1,5 +1,8 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -9,49 +12,46 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Tree.Lexer;
     using NovaSharp.Interpreter.Tree.Statements;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class AssignmentStatementTests
+    public sealed class AssignmentStatementTUnitTests
     {
-        [Test]
-        public void LocalAssignmentAcceptsConstAndCloseAttributes()
+        [global::TUnit.Core.Test]
+        public async Task LocalAssignmentAcceptsConstAndCloseAttributes()
         {
             ScriptLoadingContext context = CreateContext("local resource <const><close> = 1");
             Token localToken = context.Lexer.Current;
             context.Lexer.Next();
 
-            Assert.DoesNotThrow(() => new AssignmentStatement(context, localToken));
+            AssignmentStatement statement = new(context, localToken);
+            await Assert.That(statement).IsNotNull();
 
             SymbolRef symbol = context.Scope.Find("resource");
-            Assert.That(
-                symbol.Attributes,
-                Is.EqualTo(SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed)
-            );
+            await Assert.That(symbol.Attributes)
+                .IsEqualTo(SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed);
         }
 
-        [Test]
-        public void LocalAssignmentRejectsDuplicateAttributes()
+        [global::TUnit.Core.Test]
+        public async Task LocalAssignmentRejectsDuplicateAttributes()
         {
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 ParseLocalAssignment("local duplicate <const><const> = 1")
             )!;
 
-            Assert.That(exception.Message, Does.Contain("duplicate attribute 'const'"));
+            await Assert.That(exception.Message).Contains("duplicate attribute 'const'");
         }
 
-        [Test]
-        public void LocalAssignmentRejectsUnknownAttributes()
+        [global::TUnit.Core.Test]
+        public async Task LocalAssignmentRejectsUnknownAttributes()
         {
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 ParseLocalAssignment("local value <fast> = 1")
             )!;
 
-            Assert.That(exception.Message, Does.Contain("unknown attribute 'fast'"));
+            await Assert.That(exception.Message).Contains("unknown attribute 'fast'");
         }
 
-        [Test]
-        public void ConstAttributeRequiresLua54Compatibility()
+        [global::TUnit.Core.Test]
+        public async Task ConstAttributeRequiresLua54Compatibility()
         {
             Script script = new();
             script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
@@ -60,12 +60,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ParseLocalAssignment("local legacy <const> = 1", script)
             )!;
 
-            Assert.That(exception.Message, Does.Contain("Lua 5.4+ compatibility"));
-            Assert.That(exception.Message, Does.Contain("§3.3.7"));
+            await Assert.That(exception.Message).Contains("Lua 5.4+ compatibility");
+            await Assert.That(exception.Message).Contains("§3.3.7");
         }
 
-        [Test]
-        public void CloseAttributeRequiresLua54Compatibility()
+        [global::TUnit.Core.Test]
+        public async Task CloseAttributeRequiresLua54Compatibility()
         {
             Script script = new();
             script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
@@ -74,16 +74,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ParseLocalAssignment("local guard <close> = newcloser()", script)
             )!;
 
-            Assert.That(exception.Message, Does.Contain("Lua 5.4+ compatibility"));
-            Assert.That(exception.Message, Does.Contain("§3.3.8"));
+            await Assert.That(exception.Message).Contains("Lua 5.4+ compatibility");
+            await Assert.That(exception.Message).Contains("§3.3.8");
         }
 
-        [Test]
-        public void AssignmentRequiresWritableVariables()
+        [global::TUnit.Core.Test]
+        public async Task AssignmentRequiresWritableVariables()
         {
             Script script = new();
 
-            Assert.Throws<SyntaxErrorException>(() => script.DoString("1 = 2"));
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString("1 = 2")
+            );
+
+            await Assert.That(exception).IsNotNull();
         }
 
         private static AssignmentStatement ParseLocalAssignment(string code, Script script = null)
@@ -124,3 +128,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

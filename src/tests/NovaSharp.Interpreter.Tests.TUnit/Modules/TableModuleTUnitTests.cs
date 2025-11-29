@@ -1,16 +1,17 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class TableModuleTests
+    public sealed class TableModuleTUnitTests
     {
-        [Test]
-        public void PackPreservesNilAndReportsCount()
+        [global::TUnit.Core.Test]
+        public async Task PackPreservesNilAndReportsCount()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -20,18 +21,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Tuple.Length, Is.EqualTo(4));
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(3));
-                Assert.That(result.Tuple[1].String, Is.EqualTo("a"));
-                Assert.That(result.Tuple[2].IsNil(), Is.True);
-                Assert.That(result.Tuple[3].Number, Is.EqualTo(42));
-            });
+            await Assert.That(result.Tuple.Length).IsEqualTo(4);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("a");
+            await Assert.That(result.Tuple[2].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42);
         }
 
-        [Test]
-        public void UnpackHonorsExplicitBounds()
+        [global::TUnit.Core.Test]
+        public async Task UnpackHonorsExplicitBounds()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -41,16 +39,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Tuple.Length, Is.EqualTo(2));
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(20));
-                Assert.That(result.Tuple[1].Number, Is.EqualTo(30));
-            });
+            await Assert.That(result.Tuple.Length).IsEqualTo(2);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(20);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(30);
         }
 
-        [Test]
-        public void SortNumbersUsesDefaultComparer()
+        [global::TUnit.Core.Test]
+        public async Task SortNumbersUsesDefaultComparer()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -61,16 +56,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(1));
-                Assert.That(result.Tuple[1].Number, Is.EqualTo(3));
-                Assert.That(result.Tuple[2].Number, Is.EqualTo(4));
-            });
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(4);
         }
 
-        [Test]
-        public void SortThrowsWhenComparatorIsInvalidType()
+        [global::TUnit.Core.Test]
+        public async Task SortThrowsWhenComparatorIsInvalidType()
         {
             Script script = CreateScript();
 
@@ -83,11 +75,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Assert.That(exception.Message, Does.Contain("bad argument #2 to 'sort'"));
+            await Assert.That(exception.Message).Contains("bad argument #2 to 'sort'");
         }
 
-        [Test]
-        public void SortUsesMetamethodWhenComparerMissing()
+        [global::TUnit.Core.Test]
+        public async Task SortUsesMetamethodWhenComparerMissing()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -108,16 +100,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Tuple[0].Number, Is.EqualTo(1));
-                Assert.That(result.Tuple[1].Number, Is.EqualTo(2));
-                Assert.That(result.Tuple[2].Number, Is.EqualTo(3));
-            });
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(3);
         }
 
-        [Test]
-        public void SortTreatsComparatorFalseResultsAsEqual()
+        [global::TUnit.Core.Test]
+        public async Task SortTreatsComparatorFalseResultsAsEqual()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -133,15 +122,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             double first = result.Tuple[0].Number;
             double second = result.Tuple[1].Number;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first + second, Is.EqualTo(4));
-                Assert.That(first * second, Is.EqualTo(3));
-            });
+            await Assert.That(first + second).IsEqualTo(4d);
+            await Assert.That(first * second).IsEqualTo(3d);
         }
 
-        [Test]
-        public void SortThrowsWhenValuesHaveNoNaturalOrder()
+        [global::TUnit.Core.Test]
+        public async Task SortThrowsWhenValuesHaveNoNaturalOrder()
         {
             Script script = CreateScript();
 
@@ -153,11 +139,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Assert.That(exception.Message, Does.Contain("attempt to compare"));
+            await Assert.That(exception.Message).Contains("attempt to compare");
         }
 
-        [Test]
-        public void SortPropagatesErrorsRaisedByComparator()
+        [global::TUnit.Core.Test]
+        public async Task SortPropagatesErrorsRaisedByComparator()
         {
             Script script = CreateScript();
 
@@ -172,11 +158,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Assert.That(exception.Message, Does.Contain("sort failed"));
+            await Assert.That(exception.Message).Contains("sort failed");
         }
 
-        [Test]
-        public void InsertValidatesPositionType()
+        [global::TUnit.Core.Test]
+        public async Task InsertValidatesPositionType()
         {
             Script script = CreateScript();
 
@@ -189,11 +175,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Assert.That(exception.Message, Does.Contain("table.insert"));
+            await Assert.That(exception.Message).Contains("table.insert");
         }
 
-        [Test]
-        public void RemoveRejectsExtraArguments()
+        [global::TUnit.Core.Test]
+        public async Task RemoveRejectsExtraArguments()
         {
             Script script = CreateScript();
 
@@ -206,11 +192,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 )
             );
 
-            Assert.That(exception.Message, Does.Contain("wrong number of arguments to 'remove'"));
+            await Assert.That(exception.Message).Contains("wrong number of arguments to 'remove'");
         }
 
-        [Test]
-        public void InsertUsesLenMetamethodWhenPresent()
+        [global::TUnit.Core.Test]
+        public async Task InsertUsesLenMetamethodWhenPresent()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -226,7 +212,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.String, Is.EqualTo("sentinel"));
+            await Assert.That(result.String).IsEqualTo("sentinel");
         }
 
         private static Script CreateScript()
@@ -235,3 +221,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

@@ -173,7 +173,19 @@ namespace NovaSharp.Interpreter.Platforms
                         asmIndex++
                     )
                     {
-                        Type[] assemblyTypes = loadedAssemblies[asmIndex].SafeGetTypes();
+                        Assembly assembly = loadedAssemblies[asmIndex];
+
+                        string assemblyName = assembly?.GetName().Name;
+                        if (
+                            assemblyName != null
+                            && assemblyName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                        )
+                        {
+                            unityTypeFound = true;
+                            break;
+                        }
+
+                        Type[] assemblyTypes = assembly.SafeGetTypes();
                         for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
                         {
                             if (

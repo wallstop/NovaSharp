@@ -6,3 +6,10 @@ using System.Diagnostics.CodeAnalysis;
     "CA1515:Consider making public types internal",
     Justification = "NUnit 2.6 requires public test fixtures and helpers so the runner can discover them.",
     Scope = "module")]
+
+[assembly: SuppressMessage(
+    "Performance",
+    "CA1812:Avoid uninstantiated internal classes",
+    Justification = "RemoteDebuggerHarness is instantiated from the RemoteDebugger test projects via shared test utilities.",
+    Scope = "type",
+    Target = "NovaSharp.Interpreter.Tests.TestUtilities.RemoteDebuggerHarness")]

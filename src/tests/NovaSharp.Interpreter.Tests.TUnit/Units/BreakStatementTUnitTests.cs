@@ -1,33 +1,30 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class BreakStatementTests
+    public sealed class BreakStatementTUnitTests
     {
-        [Test]
-        public void BreakOutsideLoopThrowsSyntaxError()
+        [global::TUnit.Core.Test]
+        public async Task BreakOutsideLoopThrowsSyntaxError()
         {
-            Script script = new Script();
+            Script script = new();
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("break")
             );
 
-            Assert.That(
-                exception.DecoratedMessage,
-                Does.Contain("not inside a loop"),
-                "Compiler should reject top-level break statements."
-            );
+            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
         }
 
-        [Test]
-        public void BreakInsideStandaloneFunctionTriggersLoopBoundaryGuard()
+        [global::TUnit.Core.Test]
+        public async Task BreakInsideStandaloneFunctionTriggersLoopBoundaryGuard()
         {
-            Script script = new Script();
+            Script script = new();
             const string chunk =
                 @"
                 local function inner()
@@ -38,17 +35,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString(chunk)
             );
-            Assert.That(
-                exception.DecoratedMessage,
-                Does.Contain("not inside a loop"),
-                "Loop boundary guards should prevent functions from breaking outer loops."
-            );
+
+            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
         }
 
-        [Test]
-        public void BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop()
+        [global::TUnit.Core.Test]
+        public async Task BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop()
         {
-            Script script = new Script();
+            Script script = new();
             const string chunk =
                 @"
                 for i = 1, 2 do
@@ -61,17 +55,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString(chunk)
             );
-            Assert.That(
-                exception.DecoratedMessage,
-                Does.Contain("not inside a loop"),
-                "Break statements cannot cross function boundaries even when defined inside loops."
-            );
+
+            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
         }
 
-        [Test]
-        public void MultipleBreakStatementsRespectInnermostLoopScope()
+        [global::TUnit.Core.Test]
+        public async Task MultipleBreakStatementsRespectInnermostLoopScope()
         {
-            Script script = new Script();
+            Script script = new();
             const string chunk =
                 @"
                 local log = {}
@@ -96,18 +87,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = script.DoString(chunk);
             Table log = result.Table;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(log.Length, Is.EqualTo(2));
-                Assert.That(log.Get(1).String, Is.EqualTo("first"));
-                Assert.That(log.Get(2).String, Is.EqualTo("second"));
-            });
+            await Assert.That(log.Length).IsEqualTo(2);
+            await Assert.That(log.Get(1).String).IsEqualTo("first");
+            await Assert.That(log.Get(2).String).IsEqualTo("second");
         }
 
-        [Test]
-        public void BreakOnlyExitsInnermostLoop()
+        [global::TUnit.Core.Test]
+        public async Task BreakOnlyExitsInnermostLoop()
         {
-            Script script = new Script();
+            Script script = new();
             const string chunk =
                 @"
                 local log = {}
@@ -123,13 +111,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue result = script.DoString(chunk);
             Table log = result.Table;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(log.Length, Is.EqualTo(3));
-                Assert.That(log.Get(1).String, Is.EqualTo("1-1"));
-                Assert.That(log.Get(2).String, Is.EqualTo("2-1"));
-                Assert.That(log.Get(3).String, Is.EqualTo("3-1"));
-            });
+            await Assert.That(log.Length).IsEqualTo(3);
+            await Assert.That(log.Get(1).String).IsEqualTo("1-1");
+            await Assert.That(log.Get(2).String).IsEqualTo("2-1");
+            await Assert.That(log.Get(3).String).IsEqualTo("3-1");
         }
     }
 }
+#pragma warning restore CA2007
