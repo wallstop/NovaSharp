@@ -495,30 +495,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             );
         }
 
-        private static Task WithRegistrationAsync<T>(
+        private static async Task WithRegistrationAsync<T>(
             Action register,
             Func<Task<T>> execute,
             Func<T, Task> asserts
         )
         {
+            ArgumentNullException.ThrowIfNull(register);
+            ArgumentNullException.ThrowIfNull(execute);
+            ArgumentNullException.ThrowIfNull(asserts);
+
             try
             {
                 register();
-                return ExecuteAsync();
-
-                async Task ExecuteAsync()
+                T result = await execute().ConfigureAwait(false);
+                try
                 {
-                    try
-                    {
-                        T result = await execute();
-                        await asserts(result);
-                    }
-                    catch (ScriptRuntimeException ex)
-                    {
-                        Debug.WriteLine(ex.DecoratedMessage);
-                        ex.Rethrow();
-                        throw;
-                    }
+                    await asserts(result).ConfigureAwait(false);
+                }
+                catch (ScriptRuntimeException ex)
+                {
+                    Debug.WriteLine(ex.DecoratedMessage);
+                    ex.Rethrow();
+                    throw;
                 }
             }
             finally

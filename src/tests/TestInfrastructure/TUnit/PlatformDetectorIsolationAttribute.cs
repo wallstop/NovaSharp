@@ -12,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests
         AllowMultiple = false,
         Inherited = true
     )]
-    internal sealed class PlatformDetectorIsolationAttribute
+    public sealed class PlatformDetectorIsolationAttribute
         : Attribute,
             ITestStartEventReceiver,
             ITestEndEventReceiver
