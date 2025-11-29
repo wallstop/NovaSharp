@@ -49,5 +49,10 @@
             Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Resources/embedded.lua"
             Link="Resources/embedded.lua"
         />
+        <None
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Fixtures/**/*"
+            Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
+            CopyToOutputDirectory="PreserveNewest"
+        />
     </ItemGroup>
 </Project>

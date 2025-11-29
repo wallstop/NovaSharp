@@ -227,18 +227,37 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             return port;
         }
 
+        private static readonly object RpcPortAllocationLock = new();
+        private static int NextRpcPortBase = 45000;
+
         private static int GetFreeRpcPortBase()
         {
-            for (int attempt = 0; attempt < 10; attempt++)
+            lock (RpcPortAllocationLock)
             {
-                int candidate = GetFreeTcpPort();
-                if (IsPortAvailable(candidate + 1))
-                {
-                    return candidate;
-                }
-            }
+                const int LowerBound = 45000;
+                const int UpperBound = 64000;
+                int candidate = NextRpcPortBase;
 
-            throw new InvalidOperationException("Unable to find two consecutive free TCP ports.");
+                for (int attempt = 0; attempt < 1024; attempt++)
+                {
+                    if (candidate < LowerBound || candidate > UpperBound)
+                    {
+                        candidate = LowerBound;
+                    }
+
+                    if (IsPortAvailable(candidate) && IsPortAvailable(candidate + 1))
+                    {
+                        NextRpcPortBase = candidate + 2;
+                        return candidate;
+                    }
+
+                    candidate += 2;
+                }
+
+                throw new InvalidOperationException(
+                    $"Unable to allocate two consecutive RPC ports in the test range {LowerBound}-{UpperBound}."
+                );
+            }
         }
 
         private static bool IsPortAvailable(int port)
