@@ -1,14 +1,15 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class BinaryMetamethodTests
+    public sealed class BinaryMetamethodTUnitTests
     {
-        [Test]
-        public void FloorDivisionMetamethodOverridesOperator()
+        [global::TUnit.Core.Test]
+        public async Task FloorDivisionMetamethodOverridesOperator()
         {
             Script script = new();
 
@@ -26,13 +27,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Type, Is.EqualTo(DataType.Number));
-            Assert.That(result.Number, Is.EqualTo(13d));
+            await Assert.That(result).IsNotNull();
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(13d);
         }
 
-        [Test]
-        public void BitwiseNotMetamethodOverridesOperator()
+        [global::TUnit.Core.Test]
+        public async Task BitwiseNotMetamethodOverridesOperator()
         {
             Script script = new();
 
@@ -49,9 +50,10 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Type, Is.EqualTo(DataType.Number));
-            Assert.That(result.Number, Is.EqualTo(64d));
+            await Assert.That(result).IsNotNull();
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(64d);
         }
     }
 }
+#pragma warning restore CA2007
