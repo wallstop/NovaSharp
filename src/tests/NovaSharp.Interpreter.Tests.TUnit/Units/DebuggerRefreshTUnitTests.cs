@@ -1,25 +1,24 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using DataTypes;
-    using NovaSharp;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebuggerRefreshTests
+    public sealed class DebuggerRefreshTUnitTests
     {
-        [Test]
-        public void HardRefreshCapturesStackLocalsAndWatchValues()
+        [global::TUnit.Core.Test]
+        public async Task HardRefreshCapturesStackLocalsAndWatchValues()
         {
             Script script = new(CoreModules.PresetComplete);
-
             script.DoString(
                 @"
                 sharedValue = 99
@@ -37,59 +36,41 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.Call(script.Globals.Get("target"));
 
-            Assert.That(
-                debugger.Updates.ContainsKey(WatchType.CallStack),
-                "Call stack snapshot missing"
-            );
-            Assert.That(
-                debugger
-                    .Updates[WatchType.CallStack]
-                    .Any(snapshot =>
-                        snapshot.Any(item =>
-                            item.Name != null && ContainsOrdinal(item.Name, "target")
+            await Assert.That(debugger.Updates.ContainsKey(WatchType.CallStack)).IsTrue();
+            await Assert
+                .That(
+                    debugger
+                        .Updates[WatchType.CallStack]
+                        .Any(snapshot =>
+                            snapshot.Any(item => item.Name != null && ContainsOrdinal(item.Name, "target"))
                         )
-                    ),
-                Is.True,
-                "Target frame not found in call stack updates"
-            );
+                )
+                .IsTrue();
 
-            Assert.That(debugger.Updates.ContainsKey(WatchType.Locals), "Locals snapshot missing");
-            Assert.That(
-                debugger.Updates[WatchType.Locals].Count,
-                Is.GreaterThan(0),
-                "No locals snapshots were recorded"
-            );
+            await Assert.That(debugger.Updates.ContainsKey(WatchType.Locals)).IsTrue();
+            await Assert.That(debugger.Updates[WatchType.Locals].Count).IsGreaterThan(0);
 
-            Assert.That(
-                debugger.Updates.ContainsKey(WatchType.Watches),
-                "Watches snapshot missing"
-            );
-            Assert.That(
-                debugger
-                    .Updates[WatchType.Watches]
-                    .Any(snapshot =>
-                        snapshot.Any(item =>
-                            item.Name == "sharedValue"
-                            && item.Value != null
-                            && item.Value.Type == DataType.Number
-                            && item.Value.Number == 99
+            await Assert.That(debugger.Updates.ContainsKey(WatchType.Watches)).IsTrue();
+            await Assert
+                .That(
+                    debugger
+                        .Updates[WatchType.Watches]
+                        .Any(snapshot =>
+                            snapshot.Any(item =>
+                                item.Name == "sharedValue"
+                                && item.Value != null
+                                && item.Value.Type == DataType.Number
+                                && item.Value.Number == 99
+                            )
                         )
-                    ),
-                Is.True,
-                "Watch expression did not resolve sharedValue"
-            );
+                )
+                .IsTrue();
 
-            Assert.That(debugger.Updates.ContainsKey(WatchType.VStack), "VStack snapshot missing");
-            Assert.That(
-                debugger.Updates[WatchType.VStack].Any(snapshot => snapshot.Count > 0),
-                Is.True,
-                "Value stack snapshot empty"
-            );
-
-            Assert.That(
-                debugger.Updates.ContainsKey(WatchType.Threads),
-                "Threads snapshot missing"
-            );
+            await Assert.That(debugger.Updates.ContainsKey(WatchType.VStack)).IsTrue();
+            await Assert
+                .That(debugger.Updates[WatchType.VStack].Any(snapshot => snapshot.Count > 0))
+                .IsTrue();
+            await Assert.That(debugger.Updates.ContainsKey(WatchType.Threads)).IsTrue();
         }
 
         private sealed class RecordingDebugger : IDebugger
@@ -168,3 +149,5 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
+

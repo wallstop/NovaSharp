@@ -1,18 +1,17 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
     using System.Linq;
-    using NovaSharp;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
-    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebuggerResumeHelpersTests
+    public sealed class DebuggerResumeHelpersTUnitTests
     {
         private static readonly DebuggerAction.ActionType[] StepSequence =
         {
@@ -23,12 +22,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static readonly int[] BreakLines = { 7, 8 };
 
-        [Test]
-        public void StepInThenStepOutBreaksOnExpectedLines()
+        [global::TUnit.Core.Test]
+        public async Task StepInThenStepOutBreaksOnExpectedLines()
         {
             Script script = new(CoreModules.PresetComplete);
 
-            string code =
+            const string Code =
                 @"function callee()
   local inside = 42
   return inside
@@ -48,29 +47,18 @@ return caller()
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;
 
-            DynValue result = script.DoString(code);
+            DynValue result = script.DoString(Code);
 
-            Assert.That(result.Type, Is.EqualTo(DataType.Number));
-            Assert.That(result.Number, Is.EqualTo(43));
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(43);
 
             int[] meaningfulLines = debugger.SeenLines.Where(line => line > 0).ToArray();
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    meaningfulLines.Length,
-                    Is.GreaterThanOrEqualTo(1),
-                    "Debugger never reported a source line."
-                );
-                Assert.That(debugger.ActionsServed.Count, Is.GreaterThanOrEqualTo(2));
-                Assert.That(
-                    debugger.ActionsServed[0],
-                    Is.EqualTo(DebuggerAction.ActionType.StepIn)
-                );
-                Assert.That(
-                    debugger.ActionsServed[1],
-                    Is.EqualTo(DebuggerAction.ActionType.StepOut)
-                );
-            });
+            await Assert.That(meaningfulLines.Length).IsGreaterThanOrEqualTo(1);
+            await Assert.That(debugger.ActionsServed.Count).IsGreaterThanOrEqualTo(2);
+            await Assert.That(debugger.ActionsServed[0]).IsEqualTo(DebuggerAction.ActionType.StepIn);
+            await Assert
+                .That(debugger.ActionsServed[1])
+                .IsEqualTo(DebuggerAction.ActionType.StepOut);
         }
 
         private sealed class StepSequencingDebugger : IDebugger
@@ -90,6 +78,7 @@ return caller()
             }
 
             public List<int> SeenLines { get; } = new();
+
             public List<DebuggerAction.ActionType> ActionsServed { get; } = new();
 
             public DebuggerCaps GetDebuggerCaps()
@@ -123,7 +112,7 @@ return caller()
                 return false;
             }
 
-            public bool SignalRuntimeException(ScriptRuntimeException ex)
+            public bool SignalRuntimeException(NovaSharp.Interpreter.Errors.ScriptRuntimeException ex)
             {
                 return false;
             }
@@ -135,12 +124,12 @@ return caller()
                 if (_actions.Count == 0)
                 {
                     ActionsServed.Add(DebuggerAction.ActionType.Run);
-                    return new DebuggerAction() { Action = DebuggerAction.ActionType.Run };
+                    return new DebuggerAction { Action = DebuggerAction.ActionType.Run };
                 }
 
                 DebuggerAction.ActionType next = _actions.Dequeue();
                 ActionsServed.Add(next);
-                return new DebuggerAction() { Action = next };
+                return new DebuggerAction { Action = next };
             }
 
             public void SignalExecutionEnded() { }
@@ -156,3 +145,5 @@ return caller()
         }
     }
 }
+#pragma warning restore CA2007
+

@@ -1,18 +1,18 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using NovaSharp;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebugServiceTests
+    public sealed class DebugServiceTUnitTests
     {
         private const string SampleScript =
             @"
@@ -24,83 +24,73 @@ namespace NovaSharp.Interpreter.Tests.Units
             return a + b
         ";
 
-        [Test]
-        public void ResetBreakpointsMarksExistingLinesAndReturnsFilteredSet()
+        [global::TUnit.Core.Test]
+        public async Task ResetBreakpointsMarksExistingLinesAndReturnsFilteredSet()
         {
             (Script script, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
 
-            Assert.That(
-                debugger.DebugService,
-                Is.Not.Null,
-                "Debugger never received DebugService."
-            );
-            Assert.That(debugger.DebugService.OwnerScript, Is.SameAs(script));
-            SourceCode lastSourceCode = debugger.LastSourceCode;
-            if (lastSourceCode == null)
-            {
-                Assert.Fail("Debugger never received source code.");
-                return;
-            }
+            DebugService service = debugger.DebugService
+                ?? throw new InvalidOperationException("Debugger never received DebugService.");
+            await Assert.That(service.OwnerScript).IsSameReferenceAs(script);
 
-            HashSet<int> applied = debugger.DebugService.ResetBreakpoints(
-                lastSourceCode,
-                new HashSet<int>(debugger.RequestedBreakpoints)
-            );
+            SourceCode source = debugger.LastSourceCode
+                ?? throw new InvalidOperationException("Debugger never received source code.");
 
-            Assert.That(applied.Count, Is.GreaterThan(0));
-            Assert.That(
-                applied,
-                Is.SubsetOf(debugger.RequestedBreakpoints),
-                "ResetBreakpoints should ignore lines with no SourceRef."
-            );
+            HashSet<int> requested = new(debugger.RequestedBreakpoints);
+            HashSet<int> applied = service.ResetBreakpoints(source, requested);
 
-            HashSet<int> flaggedLines = lastSourceCode
-                .Refs.Where(r => r.Breakpoint)
-                .Select(r => r.FromLine)
+            await Assert.That(applied.Count).IsGreaterThan(0);
+            await Assert.That(applied.All(requested.Contains)).IsTrue();
+
+            HashSet<int> flagged = source
+                .Refs.Where(reference => reference.Breakpoint)
+                .Select(reference => reference.FromLine)
                 .ToHashSet();
 
-            Assert.That(flaggedLines, Is.EquivalentTo(applied));
+            await Assert.That(flagged).IsEquivalentTo(applied);
         }
 
-        [Test]
-        public void ResetBreakpointsThrowsWhenSourceCodeIsNull()
+        [global::TUnit.Core.Test]
+        public async Task ResetBreakpointsThrowsWhenSourceCodeIsNull()
         {
             (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
-            DebugService service = debugger.DebugService;
-            HashSet<int> lines = new(debugger.RequestedBreakpoints);
+            DebugService service = debugger.DebugService
+                ?? throw new InvalidOperationException("Debugger never received DebugService.");
 
-            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() =>
+            HashSet<int> lines = new(debugger.RequestedBreakpoints);
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 service.ResetBreakpoints(null, lines)
             );
 
-            Assert.That(ex.ParamName, Is.EqualTo("src"));
+            await Assert.That(exception.ParamName).IsEqualTo("src");
         }
 
-        [Test]
-        public void ResetBreakpointsThrowsWhenLinesSetIsNull()
+        [global::TUnit.Core.Test]
+        public async Task ResetBreakpointsThrowsWhenLinesSetIsNull()
         {
             (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
-            DebugService service = debugger.DebugService;
+            DebugService service = debugger.DebugService
+                ?? throw new InvalidOperationException("Debugger never received DebugService.");
 
-            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() =>
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 service.ResetBreakpoints(debugger.LastSourceCode, null)
             );
 
-            Assert.That(ex.ParamName, Is.EqualTo("lines"));
+            await Assert.That(exception.ParamName).IsEqualTo("lines");
         }
 
-        [Test]
-        public void ResetBreakpointsThrowsWhenProcessorUnavailable()
+        [global::TUnit.Core.Test]
+        public async Task ResetBreakpointsThrowsWhenProcessorUnavailable()
         {
             Script script = new(CoreModules.PresetComplete);
             SourceCode source = new("chunk", "return 1", sourceId: 1, script);
             DebugService service = new(script, null);
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 service.ResetBreakpoints(source, new HashSet<int> { 1 })
             );
 
-            Assert.That(ex.Message, Does.Contain("processor"));
+            await Assert.That(exception.Message).Contains("processor");
         }
 
         private static (
@@ -121,8 +111,11 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class BreakpointRecordingDebugger : IDebugger
         {
             public HashSet<int> RequestedBreakpoints { get; } = new(new[] { 2, 3, 5, 99 });
+
             public DebugService DebugService { get; private set; }
+
             public SourceCode LastSourceCode { get; private set; }
+
             private SourceCode _pendingSourceCode;
 
             public DebuggerCaps GetDebuggerCaps()
@@ -202,3 +195,5 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
+

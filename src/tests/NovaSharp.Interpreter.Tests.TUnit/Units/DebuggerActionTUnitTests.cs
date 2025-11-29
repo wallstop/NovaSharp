@@ -1,40 +1,40 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Infrastructure;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebuggerActionTests
+    public sealed class DebuggerActionTUnitTests
     {
-        [Test]
-        public void TimeStampUsesInjectedProvider()
+        [global::TUnit.Core.Test]
+        public async Task TimeStampUsesInjectedProvider()
         {
             DateTimeOffset fixedTime = new(2025, 11, 26, 17, 45, 12, TimeSpan.Zero);
             FixedTimeProvider provider = new(fixedTime);
 
             DebuggerAction action = new(provider);
 
-            Assert.That(action.TimeStampUtc, Is.EqualTo(fixedTime.UtcDateTime));
+            await Assert.That(action.TimeStampUtc).IsEqualTo(fixedTime.UtcDateTime);
         }
 
-        [Test]
-        public void LinesSetterCopiesInputAndTreatsNullAsEmpty()
+        [global::TUnit.Core.Test]
+        public async Task LinesSetterCopiesInputAndTreatsNullAsEmpty()
         {
             DebuggerAction action = new();
-            int[] source = new[] { 10, 20, 30 };
+            int[] source = { 10, 20, 30 };
 
             action.Lines = source;
-
-            Assert.That(action.Lines, Is.EquivalentTo(source));
+            await Assert.That(action.Lines).IsEquivalentTo(source);
 
             source[0] = 999;
-            Assert.That(action.Lines[0], Is.Not.EqualTo(source[0]), "Lines should be copied");
+            await Assert.That(action.Lines[0]).IsNotEqualTo(source[0]);
 
             action.Lines = null;
-            Assert.That(action.Lines, Is.Not.Null);
-            Assert.That(action.Lines, Is.Empty);
+            await Assert.That(action.Lines).IsNotNull();
+            await Assert.That(action.Lines.Count).IsEqualTo(0);
         }
 
         private sealed class FixedTimeProvider : ITimeProvider
@@ -53,3 +53,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

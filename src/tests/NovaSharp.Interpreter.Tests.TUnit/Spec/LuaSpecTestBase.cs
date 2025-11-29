@@ -1,11 +1,11 @@
-namespace NovaSharp.Interpreter.Tests.Spec
+namespace NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modules;
 
     /// <summary>
-    /// Shared helpers for spec-driven test fixtures that need to run across multiple compatibility versions.
+    /// Shared helpers for spec-driven fixtures that execute against multiple Lua compatibility versions.
     /// </summary>
     public abstract class LuaSpecTestBase
     {
@@ -23,3 +23,4 @@ namespace NovaSharp.Interpreter.Tests.Spec
         }
     }
 }
+

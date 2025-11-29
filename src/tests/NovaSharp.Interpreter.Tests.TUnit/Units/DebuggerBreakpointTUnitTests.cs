@@ -1,20 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebuggerBreakpointTests
+    public sealed class DebuggerBreakpointTUnitTests
     {
-        [Test]
-        public void DebuggerActionsUpdateBreakpointsAndRefreshes()
+        [global::TUnit.Core.Test]
+        public async Task DebuggerActionsUpdateBreakpointsAndRefreshes()
         {
             Script script = new(CoreModules.PresetComplete);
             script.DoString(
@@ -28,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
-            SourceRef breakable = source.Refs.First(sr => !sr.CannotBreakpoint);
+            SourceRef breakable = source.Refs.First(reference => !reference.CannotBreakpoint);
 
             Queue<DebuggerAction> actions = new();
             actions.Enqueue(
@@ -82,14 +83,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.DebuggerEnabled = true;
 
             DynValue result = script.Call(script.Globals.Get("target"));
-            Assert.That(result.Number, Is.EqualTo(5));
+            await Assert.That(result.Number).IsEqualTo(5);
 
-            Assert.That(debugger.BreakpointSnapshots.Count, Is.GreaterThan(0));
-            Assert.That(
-                debugger.BreakpointSnapshots.Any(snapshot => snapshot.Count > 0),
-                Is.True,
-                "No breakpoint refresh ever reported an active breakpoint."
-            );
+            await Assert.That(debugger.BreakpointSnapshots.Count).IsGreaterThan(0);
+            await Assert
+                .That(debugger.BreakpointSnapshots.Any(snapshot => snapshot.Count > 0))
+                .IsTrue();
         }
 
         private sealed class BreakpointDebugger : IDebugger
@@ -150,3 +149,5 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
+
