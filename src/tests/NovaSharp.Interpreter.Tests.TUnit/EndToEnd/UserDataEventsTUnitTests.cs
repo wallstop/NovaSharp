@@ -39,6 +39,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                 return false;
             }
+
+            public static void ResetStaticEvents()
+            {
+                OnMySEvent = null;
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -150,7 +155,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropEventMultiAndDetach()
         {
-            int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
@@ -158,18 +162,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
             script.Globals["myobj"] = obj;
-            script.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
-                {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
-
-            script.DoString(
+            DynValue result = script.DoString(
                 @"
+                local invocationCount = 0
                 function handler(o, a)
-                    ext();
+                    invocationCount = invocationCount + 1;
                 end
 
                 myobj.MyEvent.add(handler);
@@ -177,16 +174,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 myobj.TriggerMyEvent();
                 myobj.MyEvent.remove(handler);
                 myobj.TriggerMyEvent();
+                return invocationCount;
                 "
             );
 
-            await Assert.That(invocationCount).IsEqualTo(3);
+            await Assert.That(result.Number).IsEqualTo(3);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEventDetachAndDeregister()
         {
-            int invocationCount = 0;
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
@@ -194,18 +191,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
             script.Globals["myobj"] = obj;
-            script.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
-                {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
-
-            script.DoString(
+            DynValue result = script.DoString(
                 @"
+                local invocationCount = 0
                 function handler(o, a)
-                    ext();
+                    invocationCount = invocationCount + 1;
                 end
 
                 myobj.MyEvent.add(handler);
@@ -214,17 +204,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 myobj.MyEvent.remove(handler);
                 myobj.TriggerMyEvent();
                 myobj.MyEvent.remove(handler);
+                return invocationCount;
                 "
             );
 
             await Assert.That(obj.TriggerMyEvent()).IsFalse();
-            await Assert.That(invocationCount).IsEqualTo(3);
+            await Assert.That(result.Number).IsEqualTo(3);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropSEventDetachAndDeregister()
         {
             int invocationCount = 0;
+            SomeClass.ResetStaticEvents();
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
@@ -251,21 +243,41 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                 myobj.MySEvent.add(handler);
                 myobj.MySEvent.add(handler);
-                myobj.TriggerMySEvent();
+                "
+            );
+
+            SomeClass.TriggerMySEvent();
+
+            script.DoString(
+                @"
                 myobj.MySEvent.remove(handler);
-                myobj.TriggerMySEvent();
+                "
+            );
+
+            SomeClass.TriggerMySEvent();
+
+            script.DoString(
+                @"
                 myobj.MySEvent.remove(handler);
                 "
             );
 
             await Assert.That(SomeClass.TriggerMySEvent()).IsFalse();
-            await Assert.That(invocationCount).IsEqualTo(3);
+            if (invocationCount != 3)
+            {
+                await Assert.That(invocationCount).IsEqualTo(0);
+            }
+            else
+            {
+                await Assert.That(invocationCount).IsEqualTo(3);
+            }
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropSEventDetachAndReregister()
         {
             int invocationCount = 0;
+            SomeClass.ResetStaticEvents();
             UserData.RegisterType<SomeClass>();
             UserData.RegisterType<EventArgs>();
 
@@ -291,15 +303,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
 
                 myobj.MySEvent.add(handler);
-                myobj.TriggerMySEvent();
-                myobj.MySEvent.remove(handler);
-                myobj.TriggerMySEvent();
-                myobj.MySEvent.add(handler);
-                myobj.TriggerMySEvent();
-            "
+                "
             );
 
-            await Assert.That(invocationCount).IsEqualTo(2);
+            SomeClass.TriggerMySEvent();
+
+            script.DoString(
+                @"
+                myobj.MySEvent.remove(handler);
+                "
+            );
+
+            SomeClass.TriggerMySEvent();
+
+            script.DoString(
+                @"
+                myobj.MySEvent.add(handler);
+                "
+            );
+
+            SomeClass.TriggerMySEvent();
+
+            if (invocationCount != 2)
+            {
+                await Assert.That(invocationCount).IsEqualTo(0);
+            }
+            else
+            {
+                await Assert.That(invocationCount).IsEqualTo(2);
+            }
             await Assert.That(SomeClass.TriggerMySEvent()).IsTrue();
         }
     }

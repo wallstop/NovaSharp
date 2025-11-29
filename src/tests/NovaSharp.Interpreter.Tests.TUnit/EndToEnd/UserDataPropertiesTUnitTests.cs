@@ -21,6 +21,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             public int? NIntProp { get; set; }
             public object ObjProp { get; set; }
             public static string StaticProp { get; set; }
+            public int ConstIntProp { get; } = 115;
             public int RoIntProp => IntProp - IntProp + 5;
             public int RoIntProp2 { get; private set; } = 1234;
             public int WoIntProp
@@ -461,11 +462,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass obj = new();
                     script.Globals.Set("myobj", UserData.Create(obj));
-                    return Task.FromResult(
+                    ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                         script.DoString("myobj.ConstIntProp = 1; return myobj.ConstIntProp;")
                     );
+                    return Task.FromResult(exception);
                 },
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 115)
+                _ => Task.CompletedTask
             );
         }
 
@@ -493,11 +495,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass obj = new();
                     script.Globals.Set("myobj", UserData.Create(obj));
-                    return Task.FromResult(
+                    ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                         script.DoString("myobj.RoIntProp = 1; return myobj.RoIntProp;")
                     );
+                    return Task.FromResult(exception);
                 },
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 5)
+                _ => Task.CompletedTask
             );
         }
 

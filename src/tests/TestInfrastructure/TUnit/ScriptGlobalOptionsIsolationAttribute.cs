@@ -23,6 +23,7 @@ namespace NovaSharp.Interpreter.Tests
         public ValueTask OnTestStart(global::TUnit.Core.TestContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
+
             context.StateBag[ScopeKey] = Script.BeginGlobalOptionsScope();
             return ValueTask.CompletedTask;
         }

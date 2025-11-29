@@ -21,6 +21,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     [UserDataIsolation]
     public sealed class UserDataTUnitTests
     {
+        private static void ResetCustomDescriptorHostRegistrations()
+        {
+            UserData.UnregisterType<CustomDescriptorHost>();
+        }
+
         [global::TUnit.Core.Test]
         public async Task CreateReturnsNullForUnregisteredType()
         {
@@ -34,6 +39,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CustomDescriptorIsUsedForCreationAndWiring()
         {
+            ResetCustomDescriptorHostRegistrations();
             CustomWireableDescriptor descriptor = new();
             UserData.RegisterType(descriptor);
             CustomDescriptorHost instance = new("tracked");
@@ -99,6 +105,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CreateUsesExplicitDescriptorWhenProvided()
         {
+            ResetCustomDescriptorHostRegistrations();
             CustomWireableDescriptor descriptor = new();
             CustomDescriptorHost host = new("explicit");
 
@@ -167,6 +174,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeGenericOverloadRegistersCustomDescriptor()
         {
+            ResetCustomDescriptorHostRegistrations();
             CustomWireableDescriptor descriptor = new("generic-overload");
 
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
@@ -198,6 +206,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeKeepsExistingDescriptorUnderDefaultPolicy()
         {
+            ResetCustomDescriptorHostRegistrations();
             CustomWireableDescriptor initial = new("initial");
             CustomWireableDescriptor competing = new("competing");
 
@@ -237,6 +246,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptorForTypeGenericReturnsRegisteredDescriptor()
         {
+            ResetCustomDescriptorHostRegistrations();
             CustomWireableDescriptor descriptor = new("generic-resolve");
             UserData.RegisterType(descriptor);
 

@@ -104,6 +104,35 @@ should_emit_full_summary() {
     return 1
 }
 
+run_coverlet() {
+    local runner_output="$1"
+    local target_args="$2"
+    local coverage_base="$3"
+    local label="$4"
+    shift 4
+    local extra_args=("$@")
+
+    log "Collecting coverage via coverlet ($label)..."
+
+    local cmd=(
+        dotnet tool run coverlet "$runner_output"
+        --target "dotnet"
+        --targetargs "$target_args"
+        --format "lcov"
+        --format "cobertura"
+        --format "opencover"
+        --output "$coverage_base"
+        --include "[NovaSharp.*]*"
+        --exclude "[NovaSharp.*Tests*]*"
+    )
+
+    if [[ ${#extra_args[@]} -gt 0 ]]; then
+        cmd+=("${extra_args[@]}")
+    fi
+
+    "${cmd[@]}"
+}
+
 pushd "$repo_root" >/dev/null
 
 trap 'popd >/dev/null' EXIT
@@ -120,6 +149,7 @@ coverage_root="$repo_root/artifacts/coverage"
 mkdir -p "$coverage_root"
 build_log_path="$coverage_root/build.log"
 runner_project="src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
+tunit_runner_project="src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
 
 if [[ "$skip_build" != true ]]; then
     log "Building solution (configuration: $configuration)..."
@@ -138,12 +168,24 @@ if [[ "$skip_build" != true ]]; then
         tail -n 200 "$build_log_path"
         error_exit "dotnet build $runner_project -c $configuration failed."
     fi
+
+    log "Building TUnit test project (configuration: $configuration)..."
+    if ! dotnet build "$tunit_runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
+        echo ""
+        echo "dotnet build $tunit_runner_project failed, tailing $build_log_path:"
+        tail -n 200 "$build_log_path"
+        error_exit "dotnet build $tunit_runner_project -c $configuration failed."
+    fi
 fi
 
 test_results_dir="$coverage_root/test-results"
 mkdir -p "$test_results_dir"
+tunit_results_dir="$test_results_dir/tunit"
+nunit_results_dir="$test_results_dir/nunit"
+mkdir -p "$tunit_results_dir" "$nunit_results_dir"
 
 runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
+tunit_runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests.TUnit/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.TUnit.dll"
 if [[ ! -f "$runner_output" ]]; then
     message="Runner output not found at '$runner_output'."
     if [[ "$skip_build" == true ]]; then
@@ -158,29 +200,52 @@ if [[ ! -f "$runner_output" ]]; then
     error_exit "$message"
 fi
 
+tunit_message_prefix="TUnit runner output not found at '$tunit_runner_output'."
+if [[ ! -f "$tunit_runner_output" ]]; then
+    message="$tunit_message_prefix"
+    if [[ "$skip_build" == true ]]; then
+        message+=" Re-run without --skip-build or build the TUnit test project manually."
+    else
+        if [[ -f "$build_log_path" ]]; then
+            message+=" Inspect $build_log_path for build errors."
+        else
+            message+=" dotnet build may have failed."
+        fi
+    fi
+    error_exit "$message"
+fi
+
 coverage_base="$coverage_root/coverage"
 report_target="$repo_root/docs/coverage/latest"
 
-target_args=(
+tunit_coverage_base="${coverage_base}.tunit"
+tunit_target_args=(
+    test "$tunit_runner_project"
+    -c "$configuration"
+    --no-build
+    --logger "trx;LogFileName=NovaSharpTUnit.trx"
+    --results-directory "$tunit_results_dir"
+)
+nunit_target_args=(
     test "$runner_project"
     -c "$configuration"
     --no-build
     --logger "trx;LogFileName=NovaSharpTests.trx"
-    --results-directory "$test_results_dir"
+    --results-directory "$nunit_results_dir"
 )
-joined_target_args="$(printf "%s " "${target_args[@]}")"
-joined_target_args="${joined_target_args% }"
+tunit_joined_target_args="$(printf "%s " "${tunit_target_args[@]}")"
+tunit_joined_target_args="${tunit_joined_target_args% }"
+nunit_joined_target_args="$(printf "%s " "${nunit_target_args[@]}")"
+nunit_joined_target_args="${nunit_joined_target_args% }"
 
-log "Collecting coverage via coverlet..."
-dotnet tool run coverlet "$runner_output" \
-    --target "dotnet" \
-    --targetargs "$joined_target_args" \
-    --format "lcov" \
-    --format "cobertura" \
-    --format "opencover" \
-    --output "$coverage_base" \
-    --include "[NovaSharp.*]*" \
-    --exclude "[NovaSharp.*Tests*]*"
+run_coverlet "$tunit_runner_output" "$tunit_joined_target_args" "$tunit_coverage_base" "TUnit"
+
+tunit_coverage_json="${tunit_coverage_base}.json"
+if [[ ! -f "$tunit_coverage_json" ]]; then
+    error_exit "Coverage report not found at '$tunit_coverage_json' after running TUnit tests."
+fi
+
+run_coverlet "$runner_output" "$nunit_joined_target_args" "$coverage_base" "NUnit" --merge-with "$tunit_coverage_json"
 
 log "Generating report set..."
 rm -rf "$report_target"

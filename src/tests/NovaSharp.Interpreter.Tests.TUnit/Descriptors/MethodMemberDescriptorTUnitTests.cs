@@ -35,6 +35,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<int[,]>();
         }
 
+        private static void EnsureArrayUserDataRegistered()
+        {
+            if (!UserData.IsTypeRegistered<int[,]>())
+            {
+                UserData.RegisterType<int[,]>();
+            }
+        }
+
         [global::TUnit.Core.Test]
         public async Task ExecuteLazyOptimizedInstanceActionUsesCompiledDelegate()
         {
@@ -129,6 +137,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ExecuteArrayConstructorCreatesExpectedArray()
         {
+            EnsureArrayUserDataRegistered();
             ConstructorInfo ctor =
                 MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
@@ -459,6 +468,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task PrepareForWiringArrayConstructorIncludesArrayMetadata()
         {
+            EnsureArrayUserDataRegistered();
             ConstructorInfo ctor =
                 MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);

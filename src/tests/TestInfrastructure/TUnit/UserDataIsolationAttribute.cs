@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Core.Enums;
     using global::TUnit.Core.Interfaces;
@@ -17,14 +18,20 @@ namespace NovaSharp.Interpreter.Tests
             ITestEndEventReceiver
     {
         private const string ScopeKey = "NovaSharp.Tests.UserDataIsolation.Scope";
+        private const string GateKey = "NovaSharp.Tests.UserDataIsolation.Gate";
+
+        // Serialize user-data heavy fixtures until the TUnit worker lifecycle guarantees per-test isolation.
+        private static readonly SemaphoreSlim IsolationGate = new(1, 1);
 
         public EventReceiverStage Stage => EventReceiverStage.Late;
 
-        public ValueTask OnTestStart(global::TUnit.Core.TestContext context)
+        public async ValueTask OnTestStart(global::TUnit.Core.TestContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
+
+            await IsolationGate.WaitAsync().ConfigureAwait(false);
+            context.StateBag[GateKey] = true;
             context.StateBag[ScopeKey] = UserData.BeginIsolationScope();
-            return ValueTask.CompletedTask;
         }
 
         public ValueTask OnTestEnd(global::TUnit.Core.TestContext context)
@@ -36,6 +43,11 @@ namespace NovaSharp.Interpreter.Tests
             )
             {
                 scope.Dispose();
+            }
+
+            if (context.StateBag.TryRemove(GateKey, out _))
+            {
+                IsolationGate.Release();
             }
 
             return ValueTask.CompletedTask;
