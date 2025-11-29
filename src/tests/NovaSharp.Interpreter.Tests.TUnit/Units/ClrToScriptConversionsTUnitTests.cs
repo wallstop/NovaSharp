@@ -168,6 +168,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
         private static void ClearCustomConverters()
         {
+            if (Script.GlobalOptions.CustomConverters == null)
+            {
+                _ = new Script();
+            }
+
             Script.GlobalOptions.CustomConverters.Clear();
         }
 

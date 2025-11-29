@@ -1,20 +1,23 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
+    using System;
     using System.CodeDom;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Hardwire;
     using NovaSharp.Hardwire.Generators;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class ArrayMemberDescriptorGeneratorTests
+    public sealed class ArrayMemberDescriptorGeneratorTUnitTests
     {
-        [Test]
-        public void GenerateWithoutParametersCreatesDescriptorClass()
+        [global::TUnit.Core.Test]
+        public async Task GenerateWithoutParametersCreatesDescriptorClass()
         {
             ArrayMemberDescriptorGenerator generator = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
@@ -23,29 +26,30 @@ namespace NovaSharp.Interpreter.Tests.Units
             descriptorTable.Set("name", DynValue.NewString("Items"));
             descriptorTable.Set("setter", DynValue.True);
 
-            CodeTypeMemberCollection members = new();
+            CodeTypeMemberCollection members = new CodeTypeMemberCollection();
             CodeExpression[] expressions = generator.Generate(descriptorTable, context, members);
 
-            Assert.That(expressions, Has.Length.EqualTo(1));
+            await Assert.That(expressions.Length).IsEqualTo(1);
             CodeObjectCreateExpression ctorExpression = AssertCast<CodeObjectCreateExpression>(
                 expressions[0]
             );
-            Assert.That(ctorExpression.CreateType.BaseType, Does.StartWith("AIDX_"));
+            await Assert
+                .That(ctorExpression.CreateType.BaseType.StartsWith("AIDX_", StringComparison.Ordinal))
+                .IsTrue();
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
-            Assert.That(
-                generatedClass.BaseTypes[0].BaseType,
-                Is.EqualTo(typeof(ArrayMemberDescriptor).FullName)
-            );
+            await Assert
+                .That(generatedClass.BaseTypes[0].BaseType)
+                .IsEqualTo(typeof(ArrayMemberDescriptor).FullName);
 
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
-            Assert.That(ctor.BaseConstructorArgs.Count, Is.EqualTo(2));
-            AssertPrimitive(ctor.BaseConstructorArgs[0], "Items");
-            AssertPrimitive(ctor.BaseConstructorArgs[1], true);
+            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(2);
+            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Items");
+            await AssertPrimitive(ctor.BaseConstructorArgs[1], true);
         }
 
-        [Test]
-        public void GenerateAddsParameterDescriptorsWhenProvided()
+        [global::TUnit.Core.Test]
+        public async Task GenerateAddsParameterDescriptorsWhenProvided()
         {
             ArrayMemberDescriptorGenerator generator = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
@@ -55,54 +59,58 @@ namespace NovaSharp.Interpreter.Tests.Units
             descriptorTable.Set("setter", DynValue.False);
             descriptorTable.Set("params", DynValue.NewTable(CreateParameterList()));
 
-            CodeTypeMemberCollection members = new();
+            CodeTypeMemberCollection members = new CodeTypeMemberCollection();
             _ = generator.Generate(descriptorTable, context, members);
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
 
-            Assert.That(ctor.BaseConstructorArgs.Count, Is.EqualTo(3));
-            AssertPrimitive(ctor.BaseConstructorArgs[0], "Entries");
-            AssertPrimitive(ctor.BaseConstructorArgs[1], false);
+            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(3);
+            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Entries");
+            await AssertPrimitive(ctor.BaseConstructorArgs[1], false);
 
             CodeArrayCreateExpression parameterArray = AssertCast<CodeArrayCreateExpression>(
                 ctor.BaseConstructorArgs[2]
             );
-            Assert.That(
-                parameterArray.CreateType.BaseType,
-                Is.EqualTo(typeof(ParameterDescriptor).FullName)
-            );
-            Assert.That(parameterArray.Initializers.Count, Is.EqualTo(1));
+            await Assert
+                .That(parameterArray.CreateType.BaseType)
+                .IsEqualTo(typeof(ParameterDescriptor).FullName);
+            await Assert.That(parameterArray.Initializers.Count).IsEqualTo(1);
             CodeObjectCreateExpression parameterCtor = AssertCast<CodeObjectCreateExpression>(
                 parameterArray.Initializers[0]
             );
-            Assert.That(
-                parameterCtor.CreateType.BaseType,
-                Is.EqualTo(typeof(ParameterDescriptor).FullName)
-            );
+            await Assert
+                .That(parameterCtor.CreateType.BaseType)
+                .IsEqualTo(typeof(ParameterDescriptor).FullName);
         }
 
-        [Test]
-        public void GenerateThrowsWhenDescriptorTableNull()
+        [global::TUnit.Core.Test]
+        public async Task GenerateThrowsWhenDescriptorTableNull()
         {
             ArrayMemberDescriptorGenerator generator = new();
 
-            Assert.That(
-                () => generator.Generate(null, HardwireTestUtilities.CreateContext(), new()),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("table")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                generator.Generate(
+                    null,
+                    HardwireTestUtilities.CreateContext(),
+                    new CodeTypeMemberCollection()
+                )
             );
+
+            await Assert.That(exception.ParamName).IsEqualTo("table");
         }
 
-        [Test]
-        public void GenerateThrowsWhenContextNull()
+        [global::TUnit.Core.Test]
+        public async Task GenerateThrowsWhenContextNull()
         {
             ArrayMemberDescriptorGenerator generator = new();
             Table descriptorTable = new(owner: null);
 
-            Assert.That(
-                () => generator.Generate(descriptorTable, null, new()),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("generatorContext")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                generator.Generate(descriptorTable, null, new CodeTypeMemberCollection())
             );
+
+            await Assert.That(exception.ParamName).IsEqualTo("generatorContext");
         }
 
         private static Table CreateParameterList()
@@ -121,17 +129,24 @@ namespace NovaSharp.Interpreter.Tests.Units
             return list;
         }
 
-        private static void AssertPrimitive(CodeExpression expression, object expected)
+        private static async Task AssertPrimitive(CodeExpression expression, object expected)
         {
             CodePrimitiveExpression primitive = AssertCast<CodePrimitiveExpression>(expression);
-            Assert.That(primitive.Value, Is.EqualTo(expected));
+            await Assert.That(primitive.Value).IsEqualTo(expected);
         }
 
         private static T AssertCast<T>(CodeExpression expression)
             where T : CodeExpression
         {
-            Assert.That(expression, Is.TypeOf<T>());
-            return (T)expression;
+            if (expression is T typed)
+            {
+                return typed;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected expression of type {typeof(T).FullName} but found {expression.GetType().FullName}."
+            );
         }
     }
 }
+#pragma warning restore CA2007

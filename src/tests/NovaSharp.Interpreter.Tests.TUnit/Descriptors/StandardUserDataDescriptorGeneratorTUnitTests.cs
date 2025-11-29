@@ -1,17 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
+    using System;
     using System.CodeDom;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Hardwire;
     using NovaSharp.Hardwire.Generators;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class StandardUserDataDescriptorGeneratorTests
+    public sealed class StandardUserDataDescriptorGeneratorTUnitTests
     {
-        [Test]
-        public void GenerateAddsMembersAndMetaMembers()
+        [global::TUnit.Core.Test]
+        public async Task GenerateAddsMembersAndMetaMembers()
         {
             const string userDataType = "NovaSharp.Tests.SampleUserData";
             const string managedType =
@@ -32,22 +36,19 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             CodeExpression[] result = generator.Generate(descriptorTable, context, members);
 
-            Assert.That(result, Has.Length.EqualTo(1));
+            await Assert.That(result.Length).IsEqualTo(1);
             CodeObjectCreateExpression createExpression = AssertCast<CodeObjectCreateExpression>(
                 result[0]
             );
-            Assert.That(createExpression.CreateType.BaseType, Does.StartWith("TYPE_"));
+            await Assert.That(createExpression.CreateType.BaseType).StartsWith("TYPE_");
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
-
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
-            Assert.That(
-                ctor.BaseConstructorArgs[0],
-                Is.TypeOf<CodeTypeOfExpression>()
-                    .With.Property(nameof(CodeTypeOfExpression.Type))
-                    .Property(nameof(CodeTypeReference.BaseType))
-                    .EqualTo(userDataType)
+
+            CodeTypeOfExpression typeArgument = AssertCast<CodeTypeOfExpression>(
+                ctor.BaseConstructorArgs[0]
             );
+            await Assert.That(typeArgument.Type.BaseType).IsEqualTo(userDataType);
 
             CodeMethodInvokeExpression[] calls = ctor
                 .Statements.OfType<CodeExpressionStatement>()
@@ -55,17 +56,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 .OfType<CodeMethodInvokeExpression>()
                 .ToArray();
 
-            Assert.That(calls.Length, Is.EqualTo(2));
-            Assert.That(calls[0].Method.MethodName, Is.EqualTo("AddMember"));
-            Assert.That(
-                calls[0].Parameters[0],
-                Is.TypeOf<CodePrimitiveExpression>().With.Property("Value").EqualTo("Foo")
+            await Assert.That(calls.Length).IsEqualTo(2);
+            await Assert.That(calls[0].Method.MethodName).IsEqualTo("AddMember");
+            CodePrimitiveExpression memberName = AssertCast<CodePrimitiveExpression>(
+                calls[0].Parameters[0]
             );
-            Assert.That(calls[1].Method.MethodName, Is.EqualTo("AddMetaMember"));
-            Assert.That(
-                calls[1].Parameters[0],
-                Is.TypeOf<CodePrimitiveExpression>().With.Property("Value").EqualTo("__index")
+            await Assert.That(memberName.Value).IsEqualTo("Foo");
+
+            await Assert.That(calls[1].Method.MethodName).IsEqualTo("AddMetaMember");
+            CodePrimitiveExpression metaMemberName = AssertCast<CodePrimitiveExpression>(
+                calls[1].Parameters[0]
             );
+            await Assert.That(metaMemberName.Value).IsEqualTo("__index");
         }
 
         private static Table CreateMemberTable(string name)
@@ -80,8 +82,14 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static T AssertCast<T>(CodeExpression expression)
             where T : CodeExpression
         {
-            Assert.That(expression, Is.TypeOf<T>());
-            return (T)expression;
+            if (expression is T cast)
+            {
+                return cast;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected {typeof(T).Name} but received {expression?.GetType().Name ?? "null"}."
+            );
         }
 
         private sealed class StubMemberGenerator : IHardwireGenerator
@@ -102,3 +110,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

@@ -1,25 +1,25 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
-    using NovaSharp;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Options;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ColonOperatorBehaviourTests
+    public sealed class ColonOperatorBehaviourTUnitTests
     {
-        [Test]
-        public void TreatAsDotKeepsMethodCallForCallbacks()
+        [global::TUnit.Core.Test]
+        public async Task TreatAsDotKeepsMethodCallForCallbacks()
         {
             Script script = new();
             bool? observed = null;
             DataType? firstArgumentType = null;
 
             DynValue callback = DynValue.NewCallback(
-                (context, args) =>
+                (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
@@ -30,27 +30,23 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table target = new(script);
             target.Set("invoke", callback);
             script.Globals["target"] = DynValue.NewTable(target);
-
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsDot;
 
             script.DoString("return target:invoke(123)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(observed, Is.True);
-                Assert.That(firstArgumentType, Is.EqualTo(DataType.Table));
-            });
+            await Assert.That(observed).IsTrue();
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table);
         }
 
-        [Test]
-        public void TreatAsColonDisablesMethodCallFlag()
+        [global::TUnit.Core.Test]
+        public async Task TreatAsColonDisablesMethodCallFlag()
         {
             Script script = new();
             bool? observed = null;
             DataType? firstArgumentType = null;
 
             DynValue callback = DynValue.NewCallback(
-                (context, args) =>
+                (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
@@ -61,20 +57,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             Table target = new(script);
             target.Set("invoke", callback);
             script.Globals["target"] = DynValue.NewTable(target);
-
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsColon;
 
             script.DoString("return target:invoke(123)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(observed, Is.False);
-                Assert.That(firstArgumentType, Is.EqualTo(DataType.Table));
-            });
+            await Assert.That(observed).IsFalse();
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table);
         }
 
-        [Test]
-        public void TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls()
+        [global::TUnit.Core.Test]
+        public async Task TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls()
         {
             UserData.RegisterType<Probe>();
 
@@ -87,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 bool? tableCallFlag = null;
 
                 DynValue callback = DynValue.NewCallback(
-                    (context, args) =>
+                    (_, args) =>
                     {
                         tableCallFlag = args.IsMethodCall;
                         return DynValue.NewNumber(args.Count);
@@ -99,19 +91,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 script.Globals["tableTarget"] = DynValue.NewTable(tableTarget);
 
                 script.DoString("return tableTarget:invoke(123)");
-
-                Assert.That(tableCallFlag, Is.False);
+                await Assert.That(tableCallFlag).IsFalse();
 
                 Probe probe = new();
                 script.Globals["userTarget"] = UserData.Create(probe);
 
                 script.DoString("return userTarget:Invoke(456)");
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(probe.LastIsMethodCall, Is.False);
-                    Assert.That(probe.LastFirstArgumentType, Is.EqualTo(DataType.Number));
-                });
+                await Assert.That(probe.LastIsMethodCall).IsFalse();
+                await Assert.That(probe.LastFirstArgumentType).IsEqualTo(DataType.Number);
             }
             finally
             {
@@ -134,3 +122,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
