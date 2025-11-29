@@ -58,6 +58,9 @@
         />
     </ItemGroup>
     <ItemGroup>
+        <Compile Remove="TestUtilities\FakeHighResolutionClock.cs" />
+    </ItemGroup>
+    <ItemGroup>
         <EmbeddedResource Include="Resources/embedded.lua" />
     </ItemGroup>
     <PropertyGroup>
