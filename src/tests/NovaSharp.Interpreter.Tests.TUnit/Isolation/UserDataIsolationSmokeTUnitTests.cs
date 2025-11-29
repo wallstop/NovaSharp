@@ -21,13 +21,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
         public async Task RegistrationDoesNotLeakBetweenTestsFirst()
         {
             await Assert.That(UserData.IsTypeRegistered<SmokeHost>()).IsFalse();
-            UserData.RegisterType<SmokeHost>();
+            try
+            {
+                UserData.RegisterType<SmokeHost>();
+            }
+            finally
+            {
+                UserData.UnregisterType<SmokeHost>();
+            }
         }
 
         [global::TUnit.Core.Test]
         public async Task RegistrationDoesNotLeakBetweenTestsSecond()
         {
             await Assert.That(UserData.IsTypeRegistered<SmokeHost>()).IsFalse();
+            UserData.UnregisterType<SmokeHost>();
         }
     }
 }

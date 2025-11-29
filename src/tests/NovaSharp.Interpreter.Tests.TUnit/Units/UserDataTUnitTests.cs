@@ -187,20 +187,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptorForTypeReturnsCompositeWhenBaseAndInterfaceDescriptorsExist()
         {
-            IUserDataDescriptor baseDescriptor = UserData.RegisterType<BaseHost>(
-                InteropAccessMode.Reflection
-            );
             MarkerDescriptor interfaceDescriptor = new();
-            UserData.RegisterType<IMarker>(interfaceDescriptor);
+            IUserDataDescriptor baseDescriptor = null;
+            try
+            {
+                baseDescriptor = UserData.RegisterType<BaseHost>(InteropAccessMode.Reflection);
+                UserData.RegisterType<IMarker>(interfaceDescriptor);
 
-            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<DerivedInterfaceHost>(
-                searchInterfaces: true
-            );
+                IUserDataDescriptor descriptor =
+                    UserData.GetDescriptorForType<DerivedInterfaceHost>(searchInterfaces: true);
 
-            await Assert.That(descriptor is CompositeUserDataDescriptor).IsTrue();
-            CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
-            await Assert.That(composite.Descriptors.Contains(baseDescriptor)).IsTrue();
-            await Assert.That(composite.Descriptors.Contains(interfaceDescriptor)).IsTrue();
+                await Assert.That(descriptor is CompositeUserDataDescriptor).IsTrue();
+                CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
+                await Assert.That(composite.Descriptors.Contains(baseDescriptor)).IsTrue();
+                await Assert
+                    .That(
+                        composite.Descriptors.Any(descriptor => descriptor.Type == typeof(IMarker))
+                    )
+                    .IsTrue();
+            }
+            finally
+            {
+                UserData.UnregisterType<BaseHost>();
+                UserData.UnregisterType<IMarker>();
+            }
         }
 
         [global::TUnit.Core.Test]

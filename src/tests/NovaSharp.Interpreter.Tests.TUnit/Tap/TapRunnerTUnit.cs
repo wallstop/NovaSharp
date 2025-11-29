@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests
+namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 {
     using System;
     using System.IO;
@@ -7,10 +7,9 @@ namespace NovaSharp.Interpreter.Tests
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
 #if !EMBEDTEST
-    public sealed class TestsScriptLoader : ScriptLoaderBase
+    internal sealed class TestsScriptLoader : ScriptLoaderBase
     {
         public override bool ScriptFileExists(string name)
         {
@@ -24,31 +23,26 @@ namespace NovaSharp.Interpreter.Tests
     }
 #endif
 
-    public class TapRunner
+    internal sealed class TapRunnerTUnit
     {
         private readonly string _file;
         private readonly LuaCompatibilityVersion _compatibilityVersion;
 
-        /// <summary>
-        /// Prints the specified string.
-        /// </summary>
-        /// <param name="str">The string.</param>
-        public void Print(string str)
+        public TapRunnerTUnit(string filename, LuaCompatibilityVersion? compatibilityVersion = null)
         {
-            ArgumentNullException.ThrowIfNull(str);
-            string trimmed = str.Trim();
-            Assert.That(
-                trimmed.StartsWith("not ok", StringComparison.Ordinal),
-                Is.False,
-                $"TAP fail ({_file}) : {str}"
-            );
-        }
-
-        public TapRunner(string filename, LuaCompatibilityVersion? compatibilityVersion = null)
-        {
+            ArgumentNullException.ThrowIfNull(filename);
             _file = filename;
             _compatibilityVersion =
                 compatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
+        }
+
+        public static void Run(
+            string filename,
+            LuaCompatibilityVersion? compatibilityVersion = null
+        )
+        {
+            TapRunnerTUnit runner = new(filename, compatibilityVersion);
+            runner.Run();
         }
 
         public void Run()
@@ -59,21 +53,26 @@ namespace NovaSharp.Interpreter.Tests
                 UseLuaErrorLocations = true,
                 CompatibilityVersion = _compatibilityVersion,
             };
-            Script s = new(options);
 
-            ConfigureScriptLoader(s);
-            s.Globals.Set("arg", DynValue.NewTable(s));
+            Script script = new(options);
+            ConfigureScriptLoader(script);
+            script.Globals.Set("arg", DynValue.NewTable(script));
             string friendlyName = _file.Replace('\\', '/');
-            s.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
+            script.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
         }
 
-        public static void Run(
-            string filename,
-            LuaCompatibilityVersion? compatibilityVersion = null
-        )
+        private void Print(string value)
         {
-            TapRunner t = new(filename, compatibilityVersion);
-            t.Run();
+            if (value == null)
+            {
+                return;
+            }
+
+            string trimmed = value.Trim();
+            if (trimmed.StartsWith("not ok", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException($"TAP fail ({_file}) : {value}");
+            }
         }
 
         private static void ConfigureScriptLoader(Script script)
@@ -85,10 +84,15 @@ namespace NovaSharp.Interpreter.Tests
                 );
             }
 
-            string testDirectory =
-                TestContext.CurrentContext?.TestDirectory ?? AppContext.BaseDirectory;
+#if !EMBEDTEST
+            if (loader is not TestsScriptLoader)
+            {
+                script.Options.ScriptLoader = new TestsScriptLoader();
+                loader = (ScriptLoaderBase)script.Options.ScriptLoader;
+            }
+#endif
 
-            // Normalize to forward slashes because the loader simply does string replacement.
+            string testDirectory = GetTestDirectory();
             string modulesDirectory = Path.Combine(testDirectory, "TestMore", "Modules")
                 .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 .Replace('\\', '/');
@@ -98,10 +102,14 @@ namespace NovaSharp.Interpreter.Tests
 
         private static string GetAbsoluteTestPath(string relativePath)
         {
-            string testDirectory =
-                TestContext.CurrentContext?.TestDirectory ?? AppContext.BaseDirectory;
+            string testDirectory = GetTestDirectory();
             string normalized = relativePath.Replace('/', Path.DirectorySeparatorChar);
             return Path.Combine(testDirectory, normalized);
+        }
+
+        private static string GetTestDirectory()
+        {
+            return AppContext.BaseDirectory;
         }
     }
 }
