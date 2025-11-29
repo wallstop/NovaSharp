@@ -26,7 +26,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(statement).IsNotNull();
 
             SymbolRef symbol = context.Scope.Find("resource");
-            await Assert.That(symbol.Attributes)
+            await Assert
+                .That(symbol.Attributes)
                 .IsEqualTo(SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed);
         }
 

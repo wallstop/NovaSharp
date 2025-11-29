@@ -382,8 +382,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["buildNestedResult"] = DynValue.NewCallback(
                 (_, _) =>
                 {
-                    DynValue nested = DynValue
-                        .NewTuple(DynValue.NewString("inner-value"), DynValue.NewNumber(99));
+                    DynValue nested = DynValue.NewTuple(
+                        DynValue.NewString("inner-value"),
+                        DynValue.NewNumber(99)
+                    );
                     return DynValue.NewTuple(DynValue.NewString("outer"), nested);
                 }
             );

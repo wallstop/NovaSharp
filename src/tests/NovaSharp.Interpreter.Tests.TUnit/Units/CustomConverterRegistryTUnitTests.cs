@@ -45,9 +45,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             registry.SetScriptToClrCustomConversion(DataType.String, typeof(string));
             await Assert
-                .That(
-                    registry.GetScriptToClrCustomConversion(DataType.String, typeof(string))
-                )
+                .That(registry.GetScriptToClrCustomConversion(DataType.String, typeof(string)))
                 .IsNull();
         }
 
@@ -200,9 +198,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             registry.Clear();
 
             await Assert
-                .That(
-                    registry.GetScriptToClrCustomConversion(DataType.String, typeof(string))
-                )
+                .That(registry.GetScriptToClrCustomConversion(DataType.String, typeof(string)))
                 .IsNull();
             await Assert.That(registry.GetClrToScriptCustomConversion(typeof(int))).IsNull();
         }

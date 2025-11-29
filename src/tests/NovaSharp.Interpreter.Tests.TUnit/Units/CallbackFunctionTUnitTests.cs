@@ -217,10 +217,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
 
             await Assert.That(CallbackFunction.CheckCallbackSignature(publicMethod, true)).IsTrue();
-            await Assert.That(CallbackFunction.CheckCallbackSignature(publicMethod, false)).IsTrue();
-            await Assert.That(CallbackFunction.CheckCallbackSignature(internalMethod, true))
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(publicMethod, false))
                 .IsTrue();
-            await Assert.That(CallbackFunction.CheckCallbackSignature(internalMethod, false))
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(internalMethod, true))
+                .IsTrue();
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(internalMethod, false))
                 .IsFalse();
             await Assert.That(CallbackFunction.CheckCallbackSignature(badMethod, true)).IsFalse();
         }
