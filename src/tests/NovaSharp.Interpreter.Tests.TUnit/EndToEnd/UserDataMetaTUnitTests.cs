@@ -2,6 +2,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -29,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             public int Count => _count;
         }
 
-        internal sealed class ArithmOperatorsTestClass : IComparable, System.Collections.IEnumerable
+        internal sealed class ArithmOperatorsTestClass : IComparable, IEnumerable
         {
             public int Value { get; set; }
 
@@ -143,9 +144,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             public override bool Equals(object obj)
             {
-                if (obj is double d)
+                if (obj is double doubleValue)
                 {
-                    return d == Value;
+                    return doubleValue == Value;
                 }
 
                 ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;
@@ -159,9 +160,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             public int CompareTo(object obj)
             {
-                if (obj is double d)
+                if (obj is double doubleValue)
                 {
-                    return Value.CompareTo((int)d);
+                    return Value.CompareTo((int)doubleValue);
                 }
 
                 ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;
@@ -173,7 +174,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return Value.CompareTo(other.Value);
             }
 
-            public System.Collections.IEnumerator GetEnumerator()
+            public IEnumerator GetEnumerator()
             {
                 return (new List<int>() { 1, 2, 3 }).GetEnumerator();
             }
@@ -186,17 +187,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             [NovaSharpUserDataMetamethod("__pairs")]
             [NovaSharpUserDataMetamethod("__ipairs")]
-            public System.Collections.IEnumerator Pairs()
+            public IEnumerator Pairs()
             {
                 _ = Value;
-                return (
-                    new List<DynValue>()
-                    {
-                        DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
-                        DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
-                        DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
-                    }
-                ).GetEnumerator();
+                List<DynValue> tuples = new()
+                {
+                    DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
+                    DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
+                    DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
+                };
+                return tuples.GetEnumerator();
             }
         }
 
@@ -278,7 +278,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await Assert.That(script.DoString("return #o3").Number).IsEqualTo(55);
             await Assert.That(script.DoString("return #o2").Number).IsEqualTo(123);
 
-            Assert.Catch<ScriptRuntimeException>(() => script.DoString("return #o1"));
+            Assert.Throws<ScriptRuntimeException>(() => script.DoString("return #o1"));
         }
 
         [global::TUnit.Core.Test]
@@ -293,7 +293,126 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             await Assert.That(script.DoString("return o1 == o1").Boolean).IsTrue();
             await Assert.That(script.DoString("return o1 != o2").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 == о3").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 == o3").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o2 != o3").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 == 5").Boolean).IsTrue();
+            await Assert.That(script.DoString("return 5 == o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 != 6").Boolean).IsTrue();
+            await Assert.That(script.DoString("return 6 != o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return 'xx' != o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 != 'xx'").Boolean).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaComparisons()
+        {
+            Script script = new();
+            UserData.RegisterType<ArithmOperatorsTestClass>();
+
+            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
+            script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));
+
+            await Assert.That(script.DoString("return o1 <= o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 <= o2").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 < o2").Boolean).IsTrue();
+
+            await Assert.That(script.DoString("return o2 > o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o2 >= o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o2 >= o2").Boolean).IsTrue();
+
+            await Assert.That(script.DoString("return o1 <= 4").Boolean).IsTrue();
+            await Assert.That(script.DoString("return o1 < 4").Boolean).IsTrue();
+
+            await Assert.That(script.DoString("return 4 > o1").Boolean).IsTrue();
+            await Assert.That(script.DoString("return 4 >= o1").Boolean).IsTrue();
+
+            await Assert.That(script.DoString("return o1 > o2").Boolean).IsFalse();
+            await Assert.That(script.DoString("return o1 >= o2").Boolean).IsFalse();
+            await Assert.That(script.DoString("return o2 < o1").Boolean).IsFalse();
+            await Assert.That(script.DoString("return o2 <= o1").Boolean).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        public Task InteropMetaCall()
+        {
+            return OperatorTestAsync("return o()", 5, -5);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpUnm()
+        {
+            await OperatorTestAsync("return -o + 5", 5, 0);
+            await OperatorTestAsync("return -o + -o", 5, -10);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpAdd()
+        {
+            await OperatorTestAsync("return o + 5", 5, 10);
+            await OperatorTestAsync("return o + o", 5, 10);
+            await OperatorTestAsync("return 5 + o", 5, 10);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpConcat()
+        {
+            await OperatorTestAsync("return o .. 5", 5, 10);
+            await OperatorTestAsync("return o .. o", 5, 10);
+            await OperatorTestAsync("return 5 .. o", 5, 10);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpPow()
+        {
+            await OperatorTestAsync("return o ^ 5", 5, 10);
+            await OperatorTestAsync("return o ^ o", 5, 10);
+            await OperatorTestAsync("return 5 ^ o", 5, 10);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpSub()
+        {
+            await OperatorTestAsync("return o - 5", 2, -3);
+            await OperatorTestAsync("return o - o", 2, 0);
+            await OperatorTestAsync("return 5 - o", 2, 3);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpMul()
+        {
+            await OperatorTestAsync("return o * 5", 3, 15);
+            await OperatorTestAsync("return o * o", 3, 9);
+            await OperatorTestAsync("return 5 * o", 3, 15);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpDiv()
+        {
+            await OperatorTestAsync("return o / 5", 25, 5);
+            await OperatorTestAsync("return o / o", 117, 1);
+            await OperatorTestAsync("return 15 / o", 5, 3);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InteropMetaOpMod()
+        {
+            await OperatorTestAsync("return o % 5", 16, 1);
+            await OperatorTestAsync("return o % o", 3, 0);
+            await OperatorTestAsync("return 5 % o", 3, 2);
+        }
+
+        private static async Task OperatorTestAsync(string code, int input, int expected)
+        {
+            Script script = new();
+            ArithmOperatorsTestClass target = new(input);
+
+            UserData.RegisterType<ArithmOperatorsTestClass>();
+            script.Globals.Set("o", UserData.Create(target));
+
+            DynValue result = script.DoString(code);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(expected);
         }
     }
 }
