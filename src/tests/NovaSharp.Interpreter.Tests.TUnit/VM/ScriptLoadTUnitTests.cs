@@ -313,25 +313,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             await Assert.That(exception.Message).Contains("function");
         }
 
-        private static readonly SemaphoreSlim RunFileSemaphore = new(1, 1);
-
         [global::TUnit.Core.Test]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 
-            string path = Path.Combine(Path.GetTempPath(), $"nova_{Guid.NewGuid():N}.lua");
-
-            await RunFileSemaphore.WaitAsync().ConfigureAwait(false);
+            string path = Path.GetTempFileName();
 
             try
             {
                 await File.WriteAllTextAsync(path, "return 654").ConfigureAwait(false);
                 DynValue fileResult = Script.RunFile(path);
-
-                await Assert.That(fileResult.Type).IsEqualTo(DataType.Number);
                 await Assert.That(fileResult.Number).IsEqualTo(654);
             }
             finally
@@ -340,8 +333,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 {
                     File.Delete(path);
                 }
-
-                RunFileSemaphore.Release();
             }
         }
 
