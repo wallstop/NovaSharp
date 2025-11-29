@@ -34,7 +34,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 expressions[0]
             );
             await Assert
-                .That(ctorExpression.CreateType.BaseType.StartsWith("AIDX_", StringComparison.Ordinal))
+                .That(
+                    ctorExpression.CreateType.BaseType.StartsWith("AIDX_", StringComparison.Ordinal)
+                )
                 .IsTrue();
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
