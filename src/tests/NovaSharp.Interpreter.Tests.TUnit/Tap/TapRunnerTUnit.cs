@@ -55,6 +55,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
             };
 
             Script script = new(options);
+            if (script.Options.ScriptLoader is not ScriptLoaderBase)
+            {
+                script.Options.ScriptLoader = new FileSystemScriptLoader();
+            }
             ConfigureScriptLoader(script);
             script.Globals.Set("arg", DynValue.NewTable(script));
             string friendlyName = _file.Replace('\\', '/');

@@ -1,3 +1,4 @@
+#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.VM
 {
     using System.Threading.Tasks;
@@ -7,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
 
+    [ScriptGlobalOptionsIsolation]
     public sealed class ScriptDefaultOptionsTUnitTests
     {
         [global::TUnit.Core.Test]
@@ -47,3 +49,4 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         }
     }
 }
+#pragma warning restore CA2007

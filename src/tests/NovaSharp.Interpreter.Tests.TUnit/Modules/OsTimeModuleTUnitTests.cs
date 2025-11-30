@@ -1,3 +1,4 @@
+#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
@@ -10,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Modules;
 
+    [UserDataIsolation]
     public sealed class OsTimeModuleTUnitTests
     {
         [global::TUnit.Core.Test]
@@ -29,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.Number).IsEqualTo(86400.0).Within(0.001);
+            await Assert.That(Math.Abs(result.Number - 86400.0)).IsLessThanOrEqualTo(0.001);
         }
 
         [global::TUnit.Core.Test]
@@ -37,8 +39,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript();
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-            {
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
                     @"
                     return os.time({
@@ -46,8 +47,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                         month = 5
                     })
                     "
-                );
-            });
+                )
+            );
 
             await Assert.That(exception.Message).Contains("field 'day' missing in date table");
         }
@@ -57,8 +58,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript();
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-            {
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
                     @"
                     return os.time({
@@ -66,8 +66,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                         day = 12
                     })
                     "
-                );
-            });
+                )
+            );
 
             await Assert.That(exception.Message).Contains("field 'month' missing in date table");
         }
@@ -77,8 +77,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript();
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-            {
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
                     @"
                     return os.time({
@@ -86,8 +85,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                         day = 12
                     })
                     "
-                );
-            });
+                )
+            );
 
             await Assert.That(exception.Message).Contains("field 'year' missing in date table");
         }
@@ -96,7 +95,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TimeReturnsNilForDatesBeforeEpoch()
         {
             Script script = CreateScript();
-
             DynValue result = script.DoString(
                 @"
                 return os.time({
@@ -174,7 +172,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             DateTime localTime = DateTimeOffset.FromUnixTimeSeconds(1609459200).LocalDateTime;
             Script script = CreateScript();
-
             DynValue tableValue = script.DoString("return os.date('*t', 1609459200)");
 
             await Assert.That(tableValue.Type).IsEqualTo(DataType.Table);
@@ -222,10 +219,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task DateThrowsWhenConversionSpecifierUnknown()
         {
             Script script = CreateScript();
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-            {
-                script.DoString("return os.date('%Q', 1609459200)");
-            });
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                script.DoString("return os.date('%Q', 1609459200)")
+            );
 
             await Assert.That(exception.Message).Contains("invalid conversion specifier");
         }
@@ -239,7 +236,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return os.time()");
 
-            await Assert.That(result.Number).IsEqualTo((double)unixSeconds).Within(1e-6);
+            await Assert.That(result.Number).IsEqualTo(unixSeconds);
         }
 
         [global::TUnit.Core.Test]
@@ -250,7 +247,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "return os.time({ year = 1970, month = 1, day = 1 })"
             );
 
-            await Assert.That(result.Number).IsEqualTo(12 * 60 * 60).Within(1e-6);
+            await Assert.That(result.Number).IsEqualTo(12 * 60 * 60);
         }
 
         [global::TUnit.Core.Test]
@@ -261,13 +258,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "return os.time({ year = 1970, month = 1, day = 1, hour = 'ignored' })"
             );
 
-            await Assert.That(result.Number).IsEqualTo(12 * 60 * 60).Within(1e-6);
+            await Assert.That(result.Number).IsEqualTo(12 * 60 * 60);
         }
 
         private static Script CreateScript()
         {
-            Script script = new Script(CoreModules.PresetComplete);
-            return script;
+            return new Script(CoreModules.PresetComplete);
         }
 
         private static Script CreateScriptWithTimeProvider(params DateTimeOffset[] timestamps)
@@ -286,6 +282,23 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             };
 
             return new Script(CoreModules.PresetComplete, options);
+        }
+
+        private static TException ExpectException<TException>(Func<DynValue> action)
+            where TException : Exception
+        {
+            try
+            {
+                action();
+            }
+            catch (TException ex)
+            {
+                return ex;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected exception of type {typeof(TException).Name}."
+            );
         }
 
         private sealed class SequenceTimeProvider : ITimeProvider
@@ -311,3 +324,4 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
     }
 }
+#pragma warning restore CA2007
