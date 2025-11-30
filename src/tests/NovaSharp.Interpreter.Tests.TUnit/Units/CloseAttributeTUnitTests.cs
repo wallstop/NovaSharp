@@ -1,14 +1,15 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public class CloseAttributeTests
+    public sealed class CloseAttributeTUnitTests
     {
-        [Test]
-        public void ToBeClosedVariablesCloseInReverseOrderOnScopeExit()
+        [global::TUnit.Core.Test]
+        public async Task ToBeClosedVariablesCloseInReverseOrderOnScopeExit()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -35,15 +36,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(result.Type).IsEqualTo(DataType.Table);
             Table log = result.Table;
-            Assert.That(log.Length, Is.EqualTo(2));
-            Assert.That(log.Get(1).String, Is.EqualTo("second:nil"));
-            Assert.That(log.Get(2).String, Is.EqualTo("first:nil"));
+            await Assert.That(log.Length).IsEqualTo(2);
+            await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
+            await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
         }
 
-        [Test]
-        public void ReassignmentClosesPreviousValueImmediately()
+        [global::TUnit.Core.Test]
+        public async Task ReassignmentClosesPreviousValueImmediately()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -71,21 +72,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Table log = result.Table;
-            Assert.That(log.Length, Is.EqualTo(2));
-            Assert.That(
-                log.Get(1).String,
-                Is.EqualTo("first:nil"),
-                "old value should be closed before reassignment completes"
-            );
-            Assert.That(
-                log.Get(2).String,
-                Is.EqualTo("second:nil"),
-                "new value should close when the scope exits"
-            );
+            await Assert.That(log.Length).IsEqualTo(2);
+            await Assert.That(log.Get(1).String).IsEqualTo("first:nil");
+            await Assert.That(log.Get(2).String).IsEqualTo("second:nil");
         }
 
-        [Test]
-        public void ErrorPathPassesErrorObjectToCloseMetamethod()
+        [global::TUnit.Core.Test]
+        public async Task ErrorPathPassesErrorObjectToCloseMetamethod()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -112,16 +105,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Tuple.Length, Is.EqualTo(3));
-            Assert.That(result.Tuple[0].Boolean, Is.False);
-            string errorMessage = result.Tuple[1].String;
-            Assert.That(errorMessage, Does.Contain("boom"));
-            string closeArgument = result.Tuple[2].String;
-            Assert.That(closeArgument, Does.Contain("boom"), "error propagated to __close");
+            await Assert.That(result.Tuple.Length).IsEqualTo(3);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).Contains("boom");
+            await Assert.That(result.Tuple[2].String).Contains("boom");
         }
 
-        [Test]
-        public void MissingCloseMetamethodRaisesRuntimeError()
+        [global::TUnit.Core.Test]
+        public async Task MissingCloseMetamethodRaisesRuntimeError()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -133,13 +124,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Tuple.Length, Is.EqualTo(2));
-            Assert.That(result.Tuple[0].Boolean, Is.False);
-            Assert.That(result.Tuple[1].String, Does.Contain("__close metamethod expected"));
+            await Assert.That(result.Tuple.Length).IsEqualTo(2);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).Contains("__close metamethod expected");
         }
 
-        [Test]
-        public void GotoJumpOutOfScopeClosesLocals()
+        [global::TUnit.Core.Test]
+        public async Task GotoJumpOutOfScopeClosesLocals()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -170,13 +161,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Table log = result.Table;
-            Assert.That(log.Length, Is.EqualTo(2));
-            Assert.That(log.Get(1).String, Is.EqualTo("inner:nil"));
-            Assert.That(log.Get(2).String, Is.EqualTo("outer:nil"));
+            await Assert.That(log.Length).IsEqualTo(2);
+            await Assert.That(log.Get(1).String).IsEqualTo("inner:nil");
+            await Assert.That(log.Get(2).String).IsEqualTo("outer:nil");
         }
 
-        [Test]
-        public void BreakStatementClosesLoopScopedLocals()
+        [global::TUnit.Core.Test]
+        public async Task BreakStatementClosesLoopScopedLocals()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -203,12 +194,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Table log = result.Table;
-            Assert.That(log.Length, Is.EqualTo(1));
-            Assert.That(log.Get(1).String, Is.EqualTo("loop_1:nil"));
+            await Assert.That(log.Length).IsEqualTo(1);
+            await Assert.That(log.Get(1).String).IsEqualTo("loop_1:nil");
         }
 
-        [Test]
-        public void CloseMetamethodErrorsAreCapturedByPcallAndOtherClosersRun()
+        [global::TUnit.Core.Test]
+        public async Task CloseMetamethodErrorsAreCapturedAndOtherClosersRun()
         {
             Script script = new();
             DynValue result = script.DoString(
@@ -238,22 +229,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Tuple.Length, Is.EqualTo(3));
-            Assert.That(result.Tuple[0].Boolean, Is.False);
-            Assert.That(result.Tuple[1].String, Does.Contain("close:first"));
+            await Assert.That(result.Tuple.Length).IsEqualTo(3);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).Contains("close:first");
 
             Table log = result.Tuple[2].Table;
-            Assert.That(log.Length, Is.EqualTo(2));
-            Assert.That(
-                log.Get(1).String,
-                Is.EqualTo("second:nil"),
-                "later closers still execute before the failing one"
-            );
-            Assert.That(
-                log.Get(2).String,
-                Is.EqualTo("first:nil"),
-                "the raising closer still records the propagated error"
-            );
+            await Assert.That(log.Length).IsEqualTo(2);
+            await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
+            await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
         }
     }
 }
+#pragma warning restore CA2007

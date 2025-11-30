@@ -10,16 +10,10 @@ namespace NovaSharp.Interpreter.Tests
     {
         private static readonly Type[] ReferencedFixtures = new Type[]
         {
-            typeof(global::NovaSharp.Interpreter.Tests.Units.AdjustmentExpressionTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.CloseAttributeTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.ClosureContextTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.ClosureTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.CompatibilityDiagnosticsTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.DataStructs.SliceTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.Debugging.SourceRefTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.Debugging.WatchItemTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.DotNetCorePlatformAccessorTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.DynamicExprExpressionTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.EnumerableWrapperTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.ErrorHandlingModuleTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.EventFacadeTests),
@@ -30,17 +24,13 @@ namespace NovaSharp.Interpreter.Tests
             typeof(global::NovaSharp.Interpreter.Tests.Units.HardwireGeneratorRegistryTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.HardwireGeneratorTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.IndexExpressionTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.InfrastructureTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.InstructionFieldUsageExtensionsTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.InteropTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.JsonNullTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.JsonTableConverterTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.MetatableTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.ModManifestCompatibilityTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.ModManifestTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.MultiDictionaryTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.NodeBaseTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.OsSystemModuleTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.ParameterDescriptorTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.PathSpanExtensionsTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.PerformanceStatisticsTests),
@@ -50,8 +40,6 @@ namespace NovaSharp.Interpreter.Tests
             typeof(global::NovaSharp.Interpreter.Tests.Units.SliceTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.SourceRefTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.StandardGenericsUserDataDescriptorTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.StreamFileUserDataBaseTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.SymbolRefTests),
             typeof(global::NovaSharp.Interpreter.Tests.Units.UndisposableStreamTests),
 };
 

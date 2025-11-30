@@ -1,15 +1,16 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Errors;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public class CompatibilityDiagnosticsTests
+    public sealed class CompatibilityDiagnosticsTUnitTests
     {
-        [Test]
-        public void SyntaxErrorDecoratedMessageIncludesCompatibilityProfile()
+        [global::TUnit.Core.Test]
+        public async Task SyntaxErrorDecoratedMessageIncludesCompatibilityProfile()
         {
             Script script = new(
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua52 }
@@ -17,13 +18,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("local = 1")
-            )!;
+            );
 
-            Assert.That(exception.DecoratedMessage, Does.Contain("[compatibility: Lua 5.2]"));
+            await Assert.That(exception.DecoratedMessage).Contains("[compatibility: Lua 5.2]");
         }
 
-        [Test]
-        public void RuntimeErrorDecoratedMessageIncludesCompatibilityProfile()
+        [global::TUnit.Core.Test]
+        public async Task RuntimeErrorDecoratedMessageIncludesCompatibilityProfile()
         {
             Script script = new(
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua55 }
@@ -31,9 +32,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("error('boom')")
-            )!;
+            );
 
-            Assert.That(exception.DecoratedMessage, Does.Contain("[compatibility: Lua 5.5]"));
+            await Assert.That(exception.DecoratedMessage).Contains("[compatibility: Lua 5.5]");
         }
     }
 }
+#pragma warning restore CA2007

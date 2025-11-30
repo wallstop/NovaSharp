@@ -1,19 +1,22 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Interpreter.Tests.Units;
     using NovaSharp.Interpreter.Tree;
     using NovaSharp.Interpreter.Tree.Expressions;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DynamicExprExpressionTests
+    public sealed class DynamicExprExpressionTUnitTests
     {
-        [Test]
-        public void EvalDelegatesAndMarksContextAnonymous()
+        [global::TUnit.Core.Test]
+        public async Task EvalDelegatesAndMarksContextAnonymous()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -24,17 +27,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(context.Anonymous, Is.True);
-                Assert.That(inner.EvalCount, Is.EqualTo(1));
-                Assert.That(result.Number, Is.EqualTo(7));
-                Assert.That(expression.FindDynamic(executionContext), Is.EqualTo(dynamicRef));
-            });
+            await Assert.That(context.Anonymous).IsTrue();
+            await Assert.That(inner.EvalCount).IsEqualTo(1);
+            await Assert.That(result.Number).IsEqualTo(7);
+            await Assert.That(expression.FindDynamic(executionContext)).IsEqualTo(dynamicRef);
         }
 
-        [Test]
-        public void CompileThrowsInvalidOperation()
+        [global::TUnit.Core.Test]
+        public async Task CompileThrowsInvalidOperation()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -43,18 +43,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 context
             );
 
-            Assert.That(
-                () => expression.Compile(new ByteCode(script)),
-                Throws.InvalidOperationException
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                expression.Compile(new ByteCode(script))
             );
+            await Assert.That(exception).IsNotNull();
         }
     }
 
-    [TestFixture]
-    public sealed class AdjustmentExpressionTests
+    public sealed class AdjustmentExpressionTUnitTests
     {
-        [Test]
-        public void EvalReturnsScalarValue()
+        [global::TUnit.Core.Test]
+        public async Task EvalReturnsScalarValue()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -64,11 +63,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            Assert.That(result.Number, Is.EqualTo(5));
+            await Assert.That(result.Number).IsEqualTo(5);
         }
 
-        [Test]
-        public void CompileEmitsScalarInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsScalarInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -78,11 +77,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             expression.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(inner.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Scalar));
-            });
+            await Assert.That(inner.CompileCount).IsEqualTo(1);
+            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Scalar);
         }
     }
 
@@ -91,7 +87,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         private readonly DynValue _value;
         private readonly SymbolRef _dynamic;
 
-        public StubExpression(
+        internal StubExpression(
             ScriptLoadingContext context,
             DynValue value,
             SymbolRef dynamicRef = null
@@ -102,9 +98,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             _dynamic = dynamicRef;
         }
 
-        public int CompileCount { get; private set; }
+        internal int CompileCount { get; private set; }
 
-        public int EvalCount { get; private set; }
+        internal int EvalCount { get; private set; }
 
         public override void Compile(ByteCode bc)
         {
@@ -124,3 +120,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
