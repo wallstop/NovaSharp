@@ -1,16 +1,18 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class DebugModuleTests
+    public sealed class DebugModuleTUnitTests
     {
         private static readonly string[] PrintThenReturn = { "print('hello')", "return" };
         private static readonly string[] ErrorThenReturn = { "error('boom')", "return" };
@@ -19,14 +21,13 @@ namespace NovaSharp.Interpreter.Tests.Units
         private static readonly string[] WhitespaceReturnSequence = { "   ", "\treturn" };
         private static readonly string[] SingleReturnSequence = { "RETURN" };
 
-        [OneTimeSetUp]
-        public void RegisterTypes()
+        static DebugModuleTUnitTests()
         {
             UserData.RegisterType<SampleUserData>();
         }
 
-        [Test]
-        public void GetUserValueReturnsStoredValue()
+        [global::TUnit.Core.Test]
+        public async Task GetUserValueReturnsStoredValue()
         {
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
@@ -35,11 +36,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.getuservalue(ud)");
 
-            Assert.That(result.String, Is.EqualTo("stored"));
+            await Assert.That(result.String).IsEqualTo("stored");
         }
 
-        [Test]
-        public void GetUserValueDefaultsToNilWhenUnset()
+        [global::TUnit.Core.Test]
+        public async Task GetUserValueDefaultsToNilWhenUnset()
         {
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
@@ -47,20 +48,20 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.getuservalue(ud)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void GetUserValueReturnsNilWhenNotUserData()
+        [global::TUnit.Core.Test]
+        public async Task GetUserValueReturnsNilWhenNotUserData()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getuservalue('not-userdata')");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void SetUserValueUpdatesDescriptor()
+        [global::TUnit.Core.Test]
+        public async Task SetUserValueUpdatesDescriptor()
         {
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
@@ -71,11 +72,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "local result = debug.getuservalue(ud); return result.foo"
             );
 
-            Assert.That(userValue.Number, Is.EqualTo(42));
+            await Assert.That(userValue.Number).IsEqualTo(42);
         }
 
-        [Test]
-        public void SetUserValueAllowsClearingWithNil()
+        [global::TUnit.Core.Test]
+        public async Task SetUserValueAllowsClearingWithNil()
         {
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
@@ -85,84 +86,80 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.DoString("debug.setuservalue(ud, nil)");
 
             DynValue cleared = script.DoString("return debug.getuservalue(ud)");
-            Assert.That(cleared.IsNil(), Is.True);
+            await Assert.That(cleared.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void GetRegistryExposesGlobals()
+        [global::TUnit.Core.Test]
+        public async Task GetRegistryExposesGlobals()
         {
             Script script = CreateScript();
             DynValue registry = script.DoString("return debug.getregistry()");
 
-            Assert.Multiple(() =>
+            bool isTableOrNil = registry.Type == DataType.Table || registry.IsNil();
+            await Assert.That(isTableOrNil).IsTrue();
+
+            if (registry.Type == DataType.Table)
             {
-                Assert.That(registry.Type == DataType.Table || registry.IsNil(), Is.True);
-                if (registry.Type == DataType.Table)
-                {
-                    Assert.That(registry.Table, Is.Not.Null);
-                }
-            });
+                await Assert.That(registry.Table).IsNotNull();
+            }
         }
 
-        [Test]
-        public void GetMetatableReturnsTableMetatable()
+        [global::TUnit.Core.Test]
+        public async Task GetMetatableReturnsTableMetatable()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
                 "local mt = { flag = true }; local t = setmetatable({}, mt); return debug.getmetatable(t).flag"
             );
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void GetMetatableReturnsNilForUnsupportedTypes()
+        [global::TUnit.Core.Test]
+        public async Task GetMetatableReturnsNilForUnsupportedTypes()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
                 "local co = coroutine.create(function() end); return debug.getmetatable(co)"
             );
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void SetMetatableAllowsClearingTableMetatable()
+        [global::TUnit.Core.Test]
+        public async Task SetMetatableAllowsClearingTableMetatable()
         {
             Script script = CreateScript();
-            DynValue result = script.DoString(
-                @"
-                return debug.setmetatable({}, nil) ~= nil
-                "
-            );
+            DynValue result = script.DoString("return debug.setmetatable({}, nil) ~= nil");
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void GetMetatableForTypeReturnsTypeMetatable()
+        [global::TUnit.Core.Test]
+        public async Task GetMetatableForTypeReturnsTypeMetatable()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
                 "debug.setmetatable(true, { value = 7 }); return debug.getmetatable(true).value"
             );
 
-            Assert.That(result.Number, Is.EqualTo(7));
+            await Assert.That(result.Number).IsEqualTo(7);
         }
 
-        [Test]
-        public void SetMetatableThrowsOnUnsupportedType()
+        [global::TUnit.Core.Test]
+        public async Task SetMetatableThrowsOnUnsupportedType()
         {
             Script script = CreateScript();
 
-            Assert.That(
-                () => script.DoString("debug.setmetatable(print, {})"),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("debug.setmetatable(print, {})")
             );
+
+            await Assert.That(exception).IsNotNull();
         }
 
-        [Test]
-        public void GetUpValueAndSetupvalueRoundtrip()
+        [global::TUnit.Core.Test]
+        public async Task GetUpValueAndSetupvalueRoundtrip()
         {
             Script script = CreateScript();
             script.DoString(
@@ -188,32 +185,29 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             int secretIndex = (int)tuple.Tuple[0].Number;
-            Assert.Multiple(() =>
-            {
-                Assert.That(secretIndex, Is.GreaterThan(0));
-                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(21));
-            });
+            await Assert.That(secretIndex).IsGreaterThan(0);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(21);
 
             DynValue setupReturn = script.DoString(
                 $"return debug.setupvalue(fn, {secretIndex}, 64)"
             );
-            Assert.That(setupReturn.String, Is.EqualTo("secret"));
+            await Assert.That(setupReturn.String).IsEqualTo("secret");
 
             DynValue callResult = script.DoString("return fn()");
-            Assert.That(callResult.Number, Is.EqualTo(64));
+            await Assert.That(callResult.Number).IsEqualTo(64);
         }
 
-        [Test]
-        public void GetUpValueReturnsNilForClrFunctions()
+        [global::TUnit.Core.Test]
+        public async Task GetUpValueReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void GetUpValueReturnsNilWhenIndexOutOfRange()
+        [global::TUnit.Core.Test]
+        public async Task GetUpValueReturnsNilWhenIndexOutOfRange()
         {
             Script script = CreateScript();
             script.DoString(
@@ -228,11 +222,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.getupvalue(fn, 99)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void GetUpValueReturnsNilWhenZeroIndexRequested()
+        [global::TUnit.Core.Test]
+        public async Task GetUpValueReturnsNilWhenZeroIndexRequested()
         {
             Script script = CreateScript();
             script.DoString(
@@ -247,20 +241,20 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.getupvalue(fn, 0)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void SetupvalueReturnsNilForClrFunctions()
+        [global::TUnit.Core.Test]
+        public async Task SetupvalueReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.setupvalue(print, 1, 10)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void SetupvalueReturnsNilWhenIndexOutOfRange()
+        [global::TUnit.Core.Test]
+        public async Task SetupvalueReturnsNilWhenIndexOutOfRange()
         {
             Script script = CreateScript();
             script.DoString(
@@ -275,11 +269,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.setupvalue(fn, 99, 20)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void UpValueIdAndJoinShareClosures()
+        [global::TUnit.Core.Test]
+        public async Task UpValueIdAndJoinShareClosures()
         {
             Script script = CreateScript();
             script.DoString(
@@ -324,20 +318,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void UpValueIdReturnsNilForClrFunctions()
+        [global::TUnit.Core.Test]
+        public async Task UpValueIdReturnsNilForClrFunctions()
         {
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.upvalueid(print, 1)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void UpValueIdReturnsNilWhenIndexOutOfRange()
+        [global::TUnit.Core.Test]
+        public async Task UpValueIdReturnsNilWhenIndexOutOfRange()
         {
             Script script = CreateScript();
             script.DoString(
@@ -352,94 +346,90 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.upvalueid(fn, 99)");
 
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void UpValueJoinThrowsOnInvalidIndex()
+        [global::TUnit.Core.Test]
+        public async Task UpValueJoinThrowsOnInvalidIndex()
         {
             Script script = CreateScript();
 
-            Assert.That(
-                () =>
-                    script.DoString(
-                        @"
-                        local function factory()
-                            local value = 0
-                            return function() return value end
-                        end
-                        local fn = factory()
-                        debug.upvaluejoin(fn, 5, fn, 1)
-                        "
-                    ),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("invalid upvalue index")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local function factory()
+                        local value = 0
+                        return function() return value end
+                    end
+                    local fn = factory()
+                    debug.upvaluejoin(fn, 5, fn, 1)
+                    "
+                )
             );
+
+            await Assert.That(exception.Message).Contains("invalid upvalue index");
         }
 
-        [Test]
-        public void UpValueJoinThrowsWhenSecondIndexInvalid()
+        [global::TUnit.Core.Test]
+        public async Task UpValueJoinThrowsWhenSecondIndexInvalid()
         {
             Script script = CreateScript();
 
-            Assert.That(
-                () =>
-                    script.DoString(
-                        @"
-                        local function factory()
-                            local value = 0
-                            return function() return value end
-                        end
-                        local fn = factory()
-                        debug.upvaluejoin(fn, 1, fn, 5)
-                        "
-                    ),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contains("invalid upvalue index")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local function factory()
+                        local value = 0
+                        return function() return value end
+                    end
+                    local fn = factory()
+                    debug.upvaluejoin(fn, 1, fn, 5)
+                    "
+                )
             );
+
+            await Assert.That(exception.Message).Contains("invalid upvalue index");
         }
 
-        [Test]
-        public void TracebackFormatsStack()
+        [global::TUnit.Core.Test]
+        public async Task TracebackFormatsStack()
         {
             Script script = CreateScript();
             DynValue trace = script.DoString("return debug.traceback('custom error', 0)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(trace.String, Does.Contain("custom error"));
-                Assert.That(trace.String, Does.Contain("stack traceback"));
-            });
+            await Assert.That(trace.String).Contains("custom error");
+            await Assert.That(trace.String).Contains("stack traceback");
         }
 
-        [Test]
-        public void TracebackReturnsOriginalValueForNonStringMessages()
+        [global::TUnit.Core.Test]
+        public async Task TracebackReturnsOriginalValueForNonStringMessages()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
                 "local t = { key = 'value' }; return debug.traceback(t) == t"
             );
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void TracebackOmitsMessageWhenNil()
+        [global::TUnit.Core.Test]
+        public async Task TracebackOmitsMessageWhenNil()
         {
             Script script = CreateScript();
             DynValue trace = script.DoString("return debug.traceback(nil, 0)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(trace.String, Does.StartWith("stack traceback:"));
-                Assert.That(trace.String, Does.Not.Contain("nil"));
-            });
+            bool startsWithTraceback = trace.String.StartsWith(
+                "stack traceback:",
+                StringComparison.Ordinal
+            );
+            bool containsNil = trace.String.Contains("nil", StringComparison.Ordinal);
+
+            await Assert.That(startsWithTraceback).IsTrue();
+            await Assert.That(containsNil).IsFalse();
         }
 
-        [Test]
-        public void TracebackIncludesFunctionNameWhenAvailable()
+        [global::TUnit.Core.Test]
+        public async Task TracebackIncludesFunctionNameWhenAvailable()
         {
             Script script = CreateScript();
             DynValue trace = script.DoString(
@@ -451,11 +441,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(trace.String, Does.Contain("function 'inner"));
+            await Assert.That(trace.String).Contains("function 'inner");
         }
 
-        [Test]
-        public void TracebackAcceptsThreadArgument()
+        [global::TUnit.Core.Test]
+        public async Task TracebackAcceptsThreadArgument()
         {
             Script script = CreateScript();
             DynValue trace = script.DoString(
@@ -469,18 +459,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(trace.String, Does.Contain("from coroutine"));
-                Assert.That(trace.String, Does.Contain("stack traceback"));
-            });
+            await Assert.That(trace.String).Contains("from coroutine");
+            await Assert.That(trace.String).Contains("stack traceback");
         }
 
-        [Test]
-        public void DebugLoopProcessesQueuedCommands()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopProcessesQueuedCommands()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(PrintThenReturn);
+            Queue<string> commands = new Queue<string>(PrintThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -488,19 +475,19 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsNil(), Is.True);
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Has.Some.Contains("hello"));
-            });
+            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(commands.Count).IsEqualTo(0);
+            bool printedHello = output.Exists(value =>
+                value?.Contains("hello", StringComparison.Ordinal) == true
+            );
+            await Assert.That(printedHello).IsTrue();
         }
 
-        [Test]
-        public void DebugLoopReportsErrorsAndRespectsReturnCommand()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopReportsErrorsAndRespectsReturnCommand()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(ErrorThenReturn);
+            Queue<string> commands = new Queue<string>(ErrorThenReturn);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -508,18 +495,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.DoString("debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Has.Some.Contains("boom"));
-            });
+            await Assert.That(commands.Count).IsEqualTo(0);
+            bool printedBoom = output.Exists(value =>
+                value?.Contains("boom", StringComparison.Ordinal) == true
+            );
+            await Assert.That(printedBoom).IsTrue();
         }
 
-        [Test]
-        public void DebugLoopPrintsReturnedValues()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopPrintsReturnedValues()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(ReturnValueSequence);
+            Queue<string> commands = new Queue<string>(ReturnValueSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -527,22 +514,22 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.DoString("debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Has.Some.Contains("42"));
-            });
+            await Assert.That(commands.Count).IsEqualTo(0);
+            bool printedValue = output.Exists(value =>
+                value?.Contains("42", StringComparison.Ordinal) == true
+            );
+            await Assert.That(printedValue).IsTrue();
         }
 
-        [Test]
-        public void DebugLoopHandlesGeneralExceptions()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopHandlesGeneralExceptions()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(CallClrSequence);
+            Queue<string> commands = new Queue<string>(CallClrSequence);
             List<string> output = new();
 
             script.Globals["callClr"] = DynValue.NewCallback(
-                (context, args) => throw new InvalidOperationException("unexpected boom"),
+                (_, _) => throw new InvalidOperationException("unexpected boom"),
                 "callClr"
             );
 
@@ -551,18 +538,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             script.DoString("debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Has.Some.Contains("unexpected boom"));
-            });
+            await Assert.That(commands.Count).IsEqualTo(0);
+            bool printedUnexpectedBoom = output.Exists(value =>
+                value?.Contains("unexpected boom", StringComparison.Ordinal) == true
+            );
+            await Assert.That(printedUnexpectedBoom).IsTrue();
         }
 
-        [Test]
-        public void DebugLoopStopsWhenInputReturnsNullImmediately()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopStopsWhenInputReturnsNullImmediately()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(new string[] { null });
+            Queue<string> commands = new Queue<string>(new string[] { null });
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -570,18 +557,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsNil(), Is.True);
-                Assert.That(output, Is.Empty);
-            });
+            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(output.Count).IsEqualTo(0);
         }
 
-        [Test]
-        public void DebugLoopTreatsWhitespaceInputAsNoOp()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopTreatsWhitespaceInputAsNoOp()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(WhitespaceReturnSequence);
+            Queue<string> commands = new Queue<string>(WhitespaceReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -589,19 +573,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsNil(), Is.True);
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Is.Empty);
-            });
+            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(output.Count).IsEqualTo(0);
         }
 
-        [Test]
-        public void DebugLoopHonoursReturnCommandWithDifferentCase()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopHonoursReturnCommandWithDifferentCase()
         {
             Script script = CreateScript();
-            Queue<string> commands = new(SingleReturnSequence);
+            Queue<string> commands = new Queue<string>(SingleReturnSequence);
             List<string> output = new();
 
             script.Options.DebugInput = _ => commands.Count > 0 ? commands.Dequeue() : null;
@@ -609,28 +590,24 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return debug.debug()");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsNil(), Is.True);
-                Assert.That(commands.Count, Is.EqualTo(0));
-                Assert.That(output, Is.Empty);
-            });
+            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(output.Count).IsEqualTo(0);
         }
 
-        [Test]
-        public void DebugLoopThrowsWhenInputProviderMissing()
+        [global::TUnit.Core.Test]
+        public async Task DebugLoopThrowsWhenInputProviderMissing()
         {
             Script script = new Script(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             script.Options.DebugInput = null;
 
-            Assert.That(
-                () => script.DoString("debug.debug()"),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Property(nameof(ScriptRuntimeException.DecoratedMessage))
-                    .Contains("debug.debug not supported")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("debug.debug()")
             );
+
+            string message = exception.DecoratedMessage ?? exception.Message;
+            await Assert.That(message).Contains("debug.debug not supported");
         }
 
         private static Script CreateScript()
@@ -643,3 +620,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class SampleUserData { }
     }
 }
+#pragma warning restore CA2007

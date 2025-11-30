@@ -1,18 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class HardwiredMethodMemberDescriptorTests
+    public sealed class HardwiredMethodMemberDescriptorTUnitTests
     {
-        [Test]
-        public void ExecuteUsesDefaultValueWhenArgumentMissing()
+        [global::TUnit.Core.Test]
+        public async Task ExecuteUsesDefaultValueWhenArgumentMissing()
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -21,18 +24,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.InvocationCount, Is.EqualTo(1));
-                Assert.That(descriptor.LastArgCount, Is.EqualTo(2));
-                Assert.That(descriptor.LastParameters[0], Is.EqualTo(7));
-                Assert.That(descriptor.LastParameters[1], Is.EqualTo("fallback"));
-                Assert.That(result.String, Is.EqualTo("7:fallback:2"));
-            });
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
+            await Assert.That(descriptor.LastParameters[0]).IsEqualTo(7);
+            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("fallback");
+            await Assert.That(result.String).IsEqualTo("7:fallback:2");
         }
 
-        [Test]
-        public void ExecutePassesExplicitArgumentsAndReturnsDynValue()
+        [global::TUnit.Core.Test]
+        public async Task ExecutePassesExplicitArgumentsAndReturnsDynValue()
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -44,17 +44,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.InvocationCount, Is.EqualTo(1));
-                Assert.That(descriptor.LastArgCount, Is.EqualTo(2));
-                Assert.That(descriptor.LastParameters[1], Is.EqualTo("overridden"));
-                Assert.That(result.String, Is.EqualTo("2:overridden:2"));
-            });
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
+            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("overridden");
+            await Assert.That(result.String).IsEqualTo("2:overridden:2");
         }
 
-        [Test]
-        public void ExecuteUsesDefaultValuePlaceholderToReduceArgumentCount()
+        [global::TUnit.Core.Test]
+        public async Task ExecuteUsesDefaultValuePlaceholderToReduceArgumentCount()
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -63,17 +60,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.InvocationCount, Is.EqualTo(1));
-                Assert.That(descriptor.LastArgCount, Is.EqualTo(1));
-                Assert.That(descriptor.LastParameters[1], Is.InstanceOf<DefaultValue>());
-                Assert.That(result.String, Is.EqualTo("sentinel:42:1"));
-            });
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(1);
+            await Assert.That(descriptor.LastParameters[1]).IsTypeOf<DefaultValue>();
+            await Assert.That(result.String).IsEqualTo("sentinel:42:1");
         }
 
-        [Test]
-        public void ExecuteCountsExplicitOptionalArgumentWhenPlaceholderProvided()
+        [global::TUnit.Core.Test]
+        public async Task ExecuteCountsExplicitOptionalArgumentWhenPlaceholderProvided()
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -85,13 +79,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.InvocationCount, Is.EqualTo(1));
-                Assert.That(descriptor.LastArgCount, Is.EqualTo(2));
-                Assert.That(descriptor.LastParameters[1], Is.EqualTo("custom"));
-                Assert.That(result.String, Is.EqualTo("custom:10:2"));
-            });
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
+            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("custom");
+            await Assert.That(result.String).IsEqualTo("custom:10:2");
         }
 
         private sealed class SampleHardwiredDescriptor : HardwiredMethodMemberDescriptor
@@ -168,3 +159,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

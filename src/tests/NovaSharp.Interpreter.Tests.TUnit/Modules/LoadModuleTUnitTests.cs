@@ -1,20 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class LoadModuleTests
+    public sealed class LoadModuleTUnitTests
     {
-        [Test]
-        public void RequireCachesModuleResult()
+        [global::TUnit.Core.Test]
+        public async Task RequireCachesModuleResult()
         {
             Script script = new(CoreModules.PresetComplete);
             RecordingScriptLoader loader = new()
@@ -24,40 +25,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             script.Options.ScriptLoader = loader;
 
             DynValue requireFunc = script.Globals.Get("require");
-            Assert.That(
-                requireFunc.Type,
-                Is.EqualTo(DataType.Function),
-                "require must be available"
-            );
+
+            await Assert.That(requireFunc.Type).IsEqualTo(DataType.Function);
 
             DynValue first = script.Call(requireFunc, DynValue.NewString("modules.sample"));
             DynValue second = script.Call(requireFunc, DynValue.NewString("modules.sample"));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.Type, Is.EqualTo(DataType.Table));
-                Assert.That(first.Table.Get("value").String, Is.EqualTo("modules.sample"));
-                Assert.That(loader.LoadCount, Is.EqualTo(1), "module body is loaded once");
-                Assert.That(second.Table, Is.SameAs(first.Table), "cached module is returned");
-            });
+            await Assert.That(first.Type).IsEqualTo(DataType.Table);
+            await Assert.That(first.Table.Get("value").String).IsEqualTo("modules.sample");
+            await Assert.That(loader.LoadCount).IsEqualTo(1);
+            await Assert.That(second.Table).IsSameReferenceAs(first.Table);
         }
 
-        [Test]
-        public void RequireThrowsWhenModuleCannotBeResolved()
+        [global::TUnit.Core.Test]
+        public async Task RequireThrowsWhenModuleCannotBeResolved()
         {
             Script script = new(CoreModules.PresetComplete);
             script.Options.ScriptLoader = new NullResolvingScriptLoader();
 
-            Assert.That(
-                () => script.DoString("return require('missing.module')"),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contain("module 'missing.module' not found")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return require('missing.module')")
             );
+
+            await Assert.That(exception.Message).Contains("module 'missing.module' not found");
         }
 
-        [Test]
-        public void LoadReturnsTupleWithErrorWhenReaderYieldsNonString()
+        [global::TUnit.Core.Test]
+        public async Task LoadReturnsTupleWithErrorWhenReaderYieldsNonString()
         {
             Script script = new(CoreModules.PresetComplete);
             DynValue loadResult = script.DoString(
@@ -75,19 +69,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(loadResult.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(loadResult.Tuple[0].IsNil());
-                Assert.That(
-                    loadResult.Tuple[1].String,
-                    Does.Contain("reader function must return a string")
-                );
-            });
+            await Assert.That(loadResult.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(loadResult.Tuple[0].IsNil()).IsTrue();
+            await Assert
+                .That(loadResult.Tuple[1].String)
+                .Contains("reader function must return a string");
         }
 
-        [Test]
-        public void LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError()
+        [global::TUnit.Core.Test]
+        public async Task LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError()
         {
             Script script = new(CoreModules.PresetComplete);
             script.Globals["throw_reader_helper"] = DynValue.NewCallback(
@@ -103,17 +93,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(loadResult.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(loadResult.Tuple[0].IsNil());
-                Assert.That(loadResult.Tuple[1].String, Does.Contain("reader failure"));
-                Assert.That(loadResult.Tuple[1].String, Does.Contain("chunk_"));
-            });
+            await Assert.That(loadResult.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(loadResult.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(loadResult.Tuple[1].String).Contains("reader failure");
+            await Assert.That(loadResult.Tuple[1].String).Contains("chunk_");
         }
 
-        [Test]
-        public void LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
+        [global::TUnit.Core.Test]
+        public async Task LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
         {
             Script script = new(CoreModules.PresetComplete);
             DynValue result = script.DoString(
@@ -131,11 +118,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(result.Number, Is.EqualTo(123d));
+            await Assert.That(result.Number).IsEqualTo(123d);
         }
 
-        [Test]
-        public void LoadCompilesStringChunksAndUsesProvidedSourceName()
+        [global::TUnit.Core.Test]
+        public async Task LoadCompilesStringChunksAndUsesProvidedSourceName()
         {
             Script script = new(CoreModules.PresetComplete);
             Table env = new(script);
@@ -144,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue chunk = script.LoadString("return value", env, "chunk-string");
             DynValue result = script.Call(chunk);
 
-            Assert.That(result.Number, Is.EqualTo(321d));
+            await Assert.That(result.Number).IsEqualTo(321d);
 
             DynValue failingChunk = script.LoadString(
                 "error('boom')",
@@ -154,39 +141,37 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.Call(failingChunk)
-            )!;
+            );
 
             string message = exception.DecoratedMessage ?? exception.Message;
-            Assert.That(message, Does.Contain("chunk-string"));
+            await Assert.That(message).Contains("chunk-string");
         }
 
-        [Test]
-        public void LoadRejectsChunkSourcesThatAreNeitherStringNorFunction()
+        [global::TUnit.Core.Test]
+        public async Task LoadRejectsChunkSourcesThatAreNeitherStringNorFunction()
         {
             Script script = new(CoreModules.PresetComplete);
 
-            Assert.That(
-                () => script.DoString("load(true)"),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contain("function expected")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("load(true)")
             );
+
+            await Assert.That(exception.Message).Contains("function expected");
         }
 
-        [Test]
-        public void LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid()
+        [global::TUnit.Core.Test]
+        public async Task LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid()
         {
             Script script = new(CoreModules.PresetComplete);
             DynValue result = script.DoString("return load('function(')");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(result.Tuple[0].IsNil());
-                Assert.That(result.Tuple[1].String, Does.Contain("unexpected symbol near '('"));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[1].String).Contains("unexpected symbol near '('");
         }
 
-        [Test]
-        public void LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
+        [global::TUnit.Core.Test]
+        public async Task LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
         {
             Script script = new(CoreModules.PresetComplete);
             RecordingScriptLoader loader = new() { ModuleBody = "return marker" };
@@ -197,15 +182,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "local fn = loadfilesafe('safe.lua'); return fn()"
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(executionResult.String, Is.EqualTo("global"));
-                Assert.That(loader.LoadCount, Is.EqualTo(1));
-            });
+            await Assert.That(executionResult.String).IsEqualTo("global");
+            await Assert.That(loader.LoadCount).IsEqualTo(1);
         }
 
-        [Test]
-        public void LoadSafeThrowsWhenEnvironmentCannotBeRetrieved()
+        [global::TUnit.Core.Test]
+        public async Task LoadSafeThrowsWhenEnvironmentCannotBeRetrieved()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -221,18 +203,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Tuple[0].Boolean, Is.False);
-                Assert.That(
-                    result.Tuple[1].String,
-                    Does.Contain("current environment cannot be backtracked")
-                );
-            });
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("current environment cannot be backtracked");
         }
 
-        [Test]
-        public void LoadFileHonorsExplicitEnvironmentParameter()
+        [global::TUnit.Core.Test]
+        public async Task LoadFileHonorsExplicitEnvironmentParameter()
         {
             Script script = new(CoreModules.PresetComplete);
             RecordingScriptLoader loader = new() { ModuleBody = "return value" };
@@ -247,50 +225,40 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.String, Is.EqualTo("from-env"));
-                Assert.That(loader.LoadCount, Is.EqualTo(1));
-            });
+            await Assert.That(result.String).IsEqualTo("from-env");
+            await Assert.That(loader.LoadCount).IsEqualTo(1);
         }
 
-        [Test]
-        public void LoadFileReturnsTupleWithSyntaxErrorMessage()
+        [global::TUnit.Core.Test]
+        public async Task LoadFileReturnsTupleWithSyntaxErrorMessage()
         {
             Script script = new(CoreModules.PresetComplete);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
             DynValue loadFileResult = script.DoString("return loadfile('broken.lua')");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(loadFileResult.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(loadFileResult.Tuple[0].IsNil());
-                Assert.That(
-                    loadFileResult.Tuple[1].String,
-                    Does.Contain("unexpected symbol near '('")
-                );
-            });
+            await Assert.That(loadFileResult.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(loadFileResult.Tuple[0].IsNil()).IsTrue();
+            await Assert
+                .That(loadFileResult.Tuple[1].String)
+                .Contains("unexpected symbol near '('");
         }
 
-        [Test]
-        public void LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration()
+        [global::TUnit.Core.Test]
+        public async Task LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration()
         {
             Script script = new(CoreModules.PresetComplete);
             script.Options.ScriptLoader = new ThrowingSyntaxErrorScriptLoader();
 
             DynValue result = script.DoString("return loadfile('anything.lua')");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.Tuple));
-                Assert.That(result.Tuple[0].IsNil());
-                Assert.That(result.Tuple[1].String, Is.EqualTo("loader failure"));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("loader failure");
         }
 
-        [Test]
-        public void GetSyntaxErrorMessagePrefersDecoratedTextWhenAvailable()
+        [global::TUnit.Core.Test]
+        public async Task GetSyntaxErrorMessagePrefersDecoratedTextWhenAvailable()
         {
             SyntaxErrorException exception = new("raw message")
             {
@@ -299,27 +267,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             string message = LoadModule.GetSyntaxErrorMessage(exception);
 
-            Assert.That(message, Is.EqualTo("decorated message"));
+            await Assert.That(message).IsEqualTo("decorated message");
         }
 
-        [Test]
-        public void GetSyntaxErrorMessageFallsBackToRawMessageWhenDecorationMissing()
+        [global::TUnit.Core.Test]
+        public async Task GetSyntaxErrorMessageFallsBackToRawMessageWhenDecorationMissing()
         {
             SyntaxErrorException exception = new("raw message") { DecoratedMessage = null };
 
             string message = LoadModule.GetSyntaxErrorMessage(exception);
 
-            Assert.That(message, Is.EqualTo("raw message"));
+            await Assert.That(message).IsEqualTo("raw message");
         }
 
-        [Test]
-        public void GetSyntaxErrorMessageReturnsEmptyStringWhenExceptionIsNull()
+        [global::TUnit.Core.Test]
+        public async Task GetSyntaxErrorMessageReturnsEmptyStringWhenExceptionIsNull()
         {
-            Assert.That(LoadModule.GetSyntaxErrorMessage(null), Is.EqualTo(string.Empty));
+            await Assert.That(LoadModule.GetSyntaxErrorMessage(null)).IsEqualTo(string.Empty);
         }
 
-        [Test]
-        public void DoFileExecutesLoadedChunk()
+        [global::TUnit.Core.Test]
+        public async Task DoFileExecutesLoadedChunk()
         {
             Script script = new(CoreModules.PresetComplete);
             RecordingScriptLoader loader = new() { ModuleBody = "return 777" };
@@ -327,29 +295,25 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = script.DoString("return dofile('script.lua')");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(value.Number, Is.EqualTo(777d));
-                Assert.That(loader.LoadCount, Is.EqualTo(1));
-            });
+            await Assert.That(value.Number).IsEqualTo(777d);
+            await Assert.That(loader.LoadCount).IsEqualTo(1);
         }
 
-        [Test]
-        public void DoFileWrapsSyntaxErrorsWithScriptRuntimeException()
+        [global::TUnit.Core.Test]
+        public async Task DoFileWrapsSyntaxErrorsWithScriptRuntimeException()
         {
             Script script = new(CoreModules.PresetComplete);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
-            Assert.That(
-                () => script.DoString("dofile('broken.lua')"),
-                Throws
-                    .TypeOf<ScriptRuntimeException>()
-                    .With.Message.Contain("unexpected symbol near '('")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("dofile('broken.lua')")
             );
+
+            await Assert.That(exception.Message).Contains("unexpected symbol near '('");
         }
 
-        [Test]
-        public void NovaSharpInitCreatesPackageTableWhenMissing()
+        [global::TUnit.Core.Test]
+        public async Task NovaSharpInitCreatesPackageTableWhenMissing()
         {
             Script script = new(CoreModules.PresetComplete);
             Table globals = new(script);
@@ -358,31 +322,26 @@ namespace NovaSharp.Interpreter.Tests.Units
             LoadModule.NovaSharpInit(globals, ioTable);
 
             DynValue package = globals.Get("package");
-            Assert.Multiple(() =>
-            {
-                Assert.That(package.Type, Is.EqualTo(DataType.Table));
-                Assert.That(
-                    package.Table.Get("config").String,
-                    Is.EqualTo($"{Path.DirectorySeparatorChar}\n;\n?\n!\n-\n")
-                );
-            });
+            await Assert.That(package.Type).IsEqualTo(DataType.Table);
+            await Assert
+                .That(package.Table.Get("config").String)
+                .IsEqualTo($"{Path.DirectorySeparatorChar}\n;\n?\n!\n-\n");
         }
 
-        [Test]
-        public void NovaSharpInitThrowsWhenPackageIsNotTable()
+        [global::TUnit.Core.Test]
+        public async Task NovaSharpInitThrowsWhenPackageIsNotTable()
         {
             Script script = new(CoreModules.PresetComplete);
             Table globals = new(script);
             globals["package"] = DynValue.NewNumber(42);
 
-            Assert.That(
-                () => LoadModule.NovaSharpInit(globals, new Table(script)),
-                Throws
-                    .TypeOf<InternalErrorException>()
-                    .With.Message.Contain(
-                        "'package' global variable was found and it is not a table"
-                    )
+            InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
+                LoadModule.NovaSharpInit(globals, new Table(script))
             );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("'package' global variable was found and it is not a table");
         }
 
         private sealed class RecordingScriptLoader : IScriptLoader
@@ -464,3 +423,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

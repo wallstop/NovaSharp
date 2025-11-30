@@ -1,63 +1,65 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
     using System.CodeDom;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Hardwire;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests.TestUtilities;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class HardwireCodeGenerationContextTests
+    public sealed class HardwireCodeGenerationContextTUnitTests
     {
         private static readonly string[] ExpectedErrors = { "Failure 1" };
         private static readonly string[] ExpectedWarnings = { "Warning 2" };
         private static readonly string[] ExpectedMinorMessages = { "Note 3" };
 
-        static HardwireCodeGenerationContextTests()
+        static HardwireCodeGenerationContextTUnitTests()
         {
             _ = new RecordingHardwireGenerator();
         }
 
-        [Test]
-        public void IsVisibilityAcceptedHonorsAllowInternalsFlag()
+        [global::TUnit.Core.Test]
+        public async Task IsVisibilityAcceptedHonorsAllowInternalsFlag()
         {
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
             Table table = new(owner: null);
 
             table.Set("visibility", DynValue.NewString("internal"));
-            Assert.That(context.IsVisibilityAccepted(table), Is.False);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsFalse();
 
             context.AllowInternals = true;
-            Assert.That(context.IsVisibilityAccepted(table), Is.True);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsTrue();
 
             table.Set("visibility", DynValue.NewString("protected-internal"));
-            Assert.That(context.IsVisibilityAccepted(table), Is.True);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsTrue();
 
             table.Set("visibility", DynValue.NewString("private"));
-            Assert.That(context.IsVisibilityAccepted(table), Is.False);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsFalse();
         }
 
-        [Test]
-        public void IsVisibilityAcceptedTreatsNonStringAsAccepted()
+        [global::TUnit.Core.Test]
+        public async Task IsVisibilityAcceptedTreatsNonStringAsAccepted()
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             Table table = new(owner: null);
 
-            Assert.That(context.IsVisibilityAccepted(table), Is.True);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsTrue();
 
             table.Set("visibility", DynValue.NewNumber(42));
-            Assert.That(context.IsVisibilityAccepted(table), Is.True);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsTrue();
 
             table.Set("visibility", DynValue.NewString("public"));
-            Assert.That(context.IsVisibilityAccepted(table), Is.True);
+            await Assert.That(context.IsVisibilityAccepted(table)).IsTrue();
         }
 
-        [Test]
-        public void ErrorWarningAndMinorForwardToLogger()
+        [global::TUnit.Core.Test]
+        public async Task ErrorWarningAndMinorForwardToLogger()
         {
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
@@ -66,13 +68,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             context.Warning("Warning {0}", 2);
             context.Minor("Note {0}", 3);
 
-            Assert.That(logger.Errors, Is.EqualTo(ExpectedErrors));
-            Assert.That(logger.Warnings, Is.EqualTo(ExpectedWarnings));
-            Assert.That(logger.MinorMessages, Is.EqualTo(ExpectedMinorMessages));
+            await Assert.That(logger.Errors.SequenceEqual(ExpectedErrors)).IsTrue();
+            await Assert.That(logger.Warnings.SequenceEqual(ExpectedWarnings)).IsTrue();
+            await Assert.That(logger.MinorMessages.SequenceEqual(ExpectedMinorMessages)).IsTrue();
         }
 
-        [Test]
-        public void TimestampCommentComesFromProvidedTimeProvider()
+        [global::TUnit.Core.Test]
+        public async Task TimestampCommentComesFromProvidedTimeProvider()
         {
             DateTimeOffset timestamp = new(new DateTime(2030, 1, 2, 3, 4, 5, DateTimeKind.Utc));
             FakeTimeProvider provider = new(timestamp);
@@ -82,26 +84,27 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             CodeNamespace ns = context.CompileUnit.Namespaces.Cast<CodeNamespace>().Single();
             string expected = $"Code generated on {timestamp.UtcDateTime:O}";
-            Assert.That(
-                ns.Comments.Cast<CodeCommentStatement>().Select(c => c.Comment.Text),
-                Does.Contain(expected)
-            );
+            bool contains = ns
+                .Comments.Cast<CodeCommentStatement>()
+                .Select(c => c.Comment.Text)
+                .Contains(expected);
+            await Assert.That(contains).IsTrue();
         }
 
-        [Test]
-        public void DispatchTableThrowsWhenClassEntryMissing()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTableThrowsWhenClassEntryMissing()
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             Table descriptor = new(owner: null);
 
-            Assert.That(
-                () => context.DispatchTable("key", descriptor, new CodeTypeMemberCollection()),
-                Throws.ArgumentException
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                context.DispatchTable("key", descriptor, new CodeTypeMemberCollection())
             );
+            await Assert.That(exception).IsNotNull();
         }
 
-        [Test]
-        public void GenerateCodeInvokesRegisteredGenerators()
+        [global::TUnit.Core.Test]
+        public async Task GenerateCodeInvokesRegisteredGenerators()
         {
             string managedType = "Hardwire.Tests.Context." + Guid.NewGuid().ToString("N");
             RecordingHardwireGenerator generator = new(managedType);
@@ -115,8 +118,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             context.GenerateCode(root);
 
-            Assert.That(generator.InvocationCount, Is.EqualTo(1));
-            Assert.That(generator.LastKey, Is.EqualTo("Example"));
+            await Assert.That(generator.InvocationCount).IsEqualTo(1);
+            await Assert.That(generator.LastKey).IsEqualTo("Example");
 
             CodeNamespace ns = context.CompileUnit.Namespaces.Cast<CodeNamespace>().Single();
             CodeTypeDeclaration kickstarter = ns.Types.Cast<CodeTypeDeclaration>().Single();
@@ -124,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 .Members.OfType<CodeMemberMethod>()
                 .Single(m => m.Name == "Initialize");
 
-            Assert.That(initialize.Statements, Has.Count.EqualTo(1));
+            await Assert.That(initialize.Statements.Count).IsEqualTo(1);
             CodeExpressionStatement expressionStatement = initialize
                 .Statements.OfType<CodeExpressionStatement>()
                 .Single();
@@ -132,52 +135,51 @@ namespace NovaSharp.Interpreter.Tests.Units
             CodeMethodInvokeExpression invocation = (CodeMethodInvokeExpression)
                 expressionStatement.Expression;
 
-            Assert.That(invocation.Method.MethodName, Is.EqualTo("RegisterType"));
-            Assert.That(invocation.Parameters, Has.Count.EqualTo(1));
+            await Assert.That(invocation.Method.MethodName).IsEqualTo("RegisterType");
+            await Assert.That(invocation.Parameters.Count).IsEqualTo(1);
         }
 
-        [Test]
-        public void DispatchTablePairsThrowsWhenTableNull()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsThrowsWhenTableNull()
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
 
-            Assert.That(
-                () => context.DispatchTablePairs(null, new CodeTypeMemberCollection()),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("table")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                context.DispatchTablePairs(null, new CodeTypeMemberCollection())
             );
+            await Assert.That(exception.ParamName).IsEqualTo("table");
         }
 
-        [Test]
-        public void DispatchTablePairsThrowsWhenMembersNull()
-        {
-            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
-            Table table = new(new Script());
-
-            Assert.That(
-                () => context.DispatchTablePairs(table, null),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("members")
-            );
-        }
-
-        [Test]
-        public void DispatchTablePairsThrowsWhenActionNullForExpressionOverload()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsThrowsWhenMembersNull()
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             Table table = new(new Script());
 
-            Assert.That(
-                () =>
-                    context.DispatchTablePairs(
-                        table,
-                        new CodeTypeMemberCollection(),
-                        (Action<CodeExpression>)null
-                    ),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("action")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                context.DispatchTablePairs(table, null)
             );
+            await Assert.That(exception.ParamName).IsEqualTo("members");
         }
 
-        [Test]
-        public void DispatchTablePairsSkipsEntriesMarkedForSkip()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsThrowsWhenActionNullForExpressionOverload()
+        {
+            HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
+            Table table = new(new Script());
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                context.DispatchTablePairs(
+                    table,
+                    new CodeTypeMemberCollection(),
+                    (Action<CodeExpression>)null
+                )
+            );
+            await Assert.That(exception.ParamName).IsEqualTo("action");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsSkipsEntriesMarkedForSkip()
         {
             string managedType = "Hardwire.Tests.Skip." + Guid.NewGuid().ToString("N");
             RecordingHardwireGenerator generator = new(managedType);
@@ -194,11 +196,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
 
-            Assert.That(generator.InvocationCount, Is.EqualTo(0));
+            await Assert.That(generator.InvocationCount).IsEqualTo(0);
         }
 
-        [Test]
-        public void DispatchTablePairsLogsWarningWhenVisibilityRejected()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsLogsWarningWhenVisibilityRejected()
         {
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
@@ -216,16 +218,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(generator.InvocationCount, Is.EqualTo(0));
-                Assert.That(logger.Warnings, Is.Not.Empty);
-                Assert.That(logger.Warnings[0], Does.Contain("Hidden"));
-            });
+            await Assert.That(generator.InvocationCount).IsEqualTo(0);
+            await Assert.That(logger.Warnings.Count).IsGreaterThan(0);
+            await Assert.That(logger.Warnings[0]).Contains("Hidden");
         }
 
-        [Test]
-        public void DispatchTablePairsLogsErrorWhenEntryNotTable()
+        [global::TUnit.Core.Test]
+        public async Task DispatchTablePairsLogsErrorWhenEntryNotTable()
         {
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
@@ -235,8 +234,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
 
-            Assert.That(logger.Errors, Has.Count.EqualTo(1));
-            Assert.That(logger.Errors[0], Does.Contain("Broken"));
+            await Assert.That(logger.Errors.Count).IsEqualTo(1);
+            await Assert.That(logger.Errors[0]).Contains("Broken");
         }
 
         private sealed class RecordingHardwireGenerator : IHardwireGenerator
@@ -270,3 +269,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

@@ -1,28 +1,32 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Interpreter.Tests.Units;
     using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
 
-    [TestFixture]
-    public sealed class LuaBaseTests
+    public sealed class LuaBaseTUnitTests
     {
-        static LuaBaseTests()
+        static LuaBaseTUnitTests()
         {
             _ = new SampleUserData();
         }
 
-        [Test]
-        public void LuaTypeMapsNovaSharpValuesAndThrowsOnUnsupported()
+        [global::TUnit.Core.Test]
+        public async Task LuaTypeMapsNovaSharpValuesAndThrowsOnUnsupported()
         {
-            Script script = new Script();
+            Script script = new();
             UserData.RegisterType<SampleUserData>();
-            DynValue coroutine = script.CreateCoroutine(
+            DynValue coroutineValue = script.CreateCoroutine(
                 script.LoadString("return function(...) return ... end").Function
             );
 
@@ -32,31 +36,31 @@ namespace NovaSharp.Interpreter.Tests.Units
                 (DynValue.Nil, LuaBaseProxy.TNil),
                 (DynValue.NewNumber(42), LuaBaseProxy.TNumber),
                 (UserData.CreateStatic<SampleUserData>(), LuaBaseProxy.TUserData),
-                (coroutine, LuaBaseProxy.TThread),
+                (coroutineValue, LuaBaseProxy.TThread),
             };
 
             foreach ((DynValue value, int expected) in cases)
             {
                 LuaState state = CreateLuaState(script, value);
-                Assert.That(LuaBaseProxy.GetLuaType(state, 1), Is.EqualTo(expected));
+                await Assert.That(LuaBaseProxy.GetLuaType(state, 1)).IsEqualTo(expected);
             }
 
             LuaState invalidState = CreateLuaState(script);
             invalidState.Push(DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)));
 
-            Assert.That(
-                () => LuaBaseProxy.GetLuaType(invalidState, 1),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("Can't call LuaType")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                LuaBaseProxy.GetLuaType(invalidState, 1)
             );
+            await Assert.That(exception.Message).Contains("Can't call LuaType");
         }
 
-        [Test]
-        public void LuaTypeHandlesBooleansStringsFunctionsAndTables()
+        [global::TUnit.Core.Test]
+        public async Task LuaTypeHandlesBooleansStringsFunctionsAndTables()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue scriptFunction = script.DoString("return function() end");
-            DynValue clrFunction = DynValue.NewCallback((ctx, args) => DynValue.Nil);
-            Table table = new Table(script);
+            DynValue clrFunction = DynValue.NewCallback((_, _) => DynValue.Nil);
+            Table table = new(script);
 
             (DynValue Value, int Expected)[] cases =
             {
@@ -74,16 +78,16 @@ namespace NovaSharp.Interpreter.Tests.Units
             foreach ((DynValue value, int expected) in cases)
             {
                 LuaState state = CreateLuaState(script, value);
-                Assert.That(LuaBaseProxy.GetLuaType(state, 1), Is.EqualTo(expected));
+                await Assert.That(LuaBaseProxy.GetLuaType(state, 1)).IsEqualTo(expected);
             }
         }
 
-        [Test]
-        public void LuaTypeRejectsSyntheticTailCallYieldAndTupleRequests()
+        [global::TUnit.Core.Test]
+        public async Task LuaTypeRejectsSyntheticTailCallYieldAndTupleRequests()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue tailCall = DynValue.NewTailCallReq(
-                DynValue.NewCallback((ctx, args) => DynValue.NewNumber(1)),
+                DynValue.NewCallback((_, _) => DynValue.NewNumber(1)),
                 DynValue.NewNumber(5)
             );
             DynValue yieldRequest = DynValue.NewYieldReq(new[] { DynValue.NewNumber(6) });
@@ -94,19 +98,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 LuaState state = CreateLuaState(script);
                 state.Push(value);
-                Assert.That(
-                    () => LuaBaseProxy.GetLuaType(state, 1),
-                    Throws
-                        .TypeOf<ScriptRuntimeException>()
-                        .With.Message.Contains("Can't call LuaType")
+                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                    LuaBaseProxy.GetLuaType(state, 1)
                 );
+                await Assert.That(exception.Message).Contains("Can't call LuaType");
             }
         }
 
-        [Test]
-        public void LuaTypeClassifiesValuesProducedByLuaScripts()
+        [global::TUnit.Core.Test]
+        public async Task LuaTypeClassifiesValuesProducedByLuaScripts()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue boolValue = script.DoString("return true");
             DynValue stringValue = script.DoString("return 'scripted'");
             DynValue tableValue = script.DoString("return { key = 'value' }");
@@ -124,20 +126,17 @@ namespace NovaSharp.Interpreter.Tests.Units
                 threadValue
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(LuaBaseProxy.GetLuaType(state, 1), Is.EqualTo(LuaBaseProxy.TNil));
-                Assert.That(LuaBaseProxy.GetLuaType(state, 2), Is.EqualTo(LuaBaseProxy.TString));
-                Assert.That(LuaBaseProxy.GetLuaType(state, 3), Is.EqualTo(LuaBaseProxy.TTable));
-                Assert.That(LuaBaseProxy.GetLuaType(state, 4), Is.EqualTo(LuaBaseProxy.TFunction));
-                Assert.That(LuaBaseProxy.GetLuaType(state, 5), Is.EqualTo(LuaBaseProxy.TThread));
-            });
+            await Assert.That(LuaBaseProxy.GetLuaType(state, 1)).IsEqualTo(LuaBaseProxy.TNil);
+            await Assert.That(LuaBaseProxy.GetLuaType(state, 2)).IsEqualTo(LuaBaseProxy.TString);
+            await Assert.That(LuaBaseProxy.GetLuaType(state, 3)).IsEqualTo(LuaBaseProxy.TTable);
+            await Assert.That(LuaBaseProxy.GetLuaType(state, 4)).IsEqualTo(LuaBaseProxy.TFunction);
+            await Assert.That(LuaBaseProxy.GetLuaType(state, 5)).IsEqualTo(LuaBaseProxy.TThread);
         }
 
-        [Test]
-        public void LuaStringHelpersExposeRawStringValues()
+        [global::TUnit.Core.Test]
+        public async Task LuaStringHelpersExposeRawStringValues()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue[] values = { DynValue.NewString("abc"), script.DoString("return 'abc'") };
 
             foreach (DynValue value in values)
@@ -148,19 +147,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 string fromCheck = LuaBaseProxy.CheckString(state, 1, out rawLength);
                 string fromToString = LuaBaseProxy.ReadString(state, 1);
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(fromCheck, Is.EqualTo("abc"));
-                    Assert.That(fromToString, Is.EqualTo("abc"));
-                    Assert.That(rawLength, Is.EqualTo(3));
-                });
+                await Assert.That(fromCheck).IsEqualTo("abc");
+                await Assert.That(fromToString).IsEqualTo("abc");
+                await Assert.That(rawLength).IsEqualTo(3u);
             }
         }
 
-        [Test]
-        public void LuaIntegerChecksValidateNumbers()
+        [global::TUnit.Core.Test]
+        public async Task LuaIntegerChecksValidateNumbers()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue[] numericValues = { DynValue.NewNumber(1337), script.DoString("return 1337") };
 
             foreach (DynValue value in numericValues)
@@ -170,18 +166,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 int strict = LuaBaseProxy.CheckInteger(state, 1);
                 int relaxed = LuaBaseProxy.CheckInt(state, 1);
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(strict, Is.EqualTo(1337));
-                    Assert.That(relaxed, Is.EqualTo(1337));
-                });
+                await Assert.That(strict).IsEqualTo(1337);
+                await Assert.That(relaxed).IsEqualTo(1337);
             }
         }
 
-        [Test]
-        public void LuaArgCheckThrowsWhenConditionFails()
+        [global::TUnit.Core.Test]
+        public async Task LuaArgCheckThrowsWhenConditionFails()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue[] payloads =
             {
                 DynValue.NewString("input"),
@@ -192,18 +185,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             {
                 LuaState state = CreateLuaState(script, payload);
 
-                Assert.That(
-                    () => LuaBaseProxy.ArgCheck(state, false, 1, "expected number"),
-                    Throws.TypeOf<ScriptRuntimeException>().With.Message.Contains("expected number")
+                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                    LuaBaseProxy.ArgCheck(state, false, 1, "expected number")
                 );
+                await Assert.That(exception.Message).Contains("expected number");
             }
         }
 
-        [Test]
-        public void LuaGetTableReturnsRawValuesAndThrowsOnNonTables()
+        [global::TUnit.Core.Test]
+        public async Task LuaGetTableReturnsRawValuesAndThrowsOnNonTables()
         {
-            Script script = new Script();
-            Table table = new Table(script);
+            Script script = new();
+            Table table = new(script);
             table.Set("answer", DynValue.NewNumber(42));
 
             DynValue[] tableVariants =
@@ -219,8 +212,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 successState.Push(DynValue.NewString("answer"));
 
                 LuaBaseProxy.GetTable(successState, 1);
-
-                Assert.That(successState.Pop().Number, Is.EqualTo(42));
+                await Assert.That(successState.Pop().Number).IsEqualTo(42d);
             }
 
             DynValue[] nonTableVariants = { DynValue.NewNumber(10), script.DoString("return 10") };
@@ -231,21 +223,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 failureState.Push(nonTable);
                 failureState.Push(DynValue.NewString("answer"));
 
-                Assert.That(
-                    () => LuaBaseProxy.GetTable(failureState, 1),
-                    Throws.TypeOf<NotImplementedException>()
+                NotImplementedException exception = Assert.Throws<NotImplementedException>(() =>
+                    LuaBaseProxy.GetTable(failureState, 1)
                 );
+                await Assert.That(exception).IsNotNull();
             }
         }
 
-        [Test]
-        public void LuaCallSupportsMultiReturnAndNilPadding()
+        [global::TUnit.Core.Test]
+        public async Task LuaCallSupportsMultiReturnAndNilPadding()
         {
-            Script script = new Script();
+            Script script = new();
 
-            // MULTRET branch
             DynValue multiFunction = DynValue.NewCallback(
-                (ctx, args) => DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+                (_, _) => DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
             );
             DynValue luaMultiFunction = script.DoString("return function(input) return 1, 2 end");
 
@@ -257,15 +248,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 LuaBaseProxy.Call(multiReturnState, 1);
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(multiReturnState.Pop().Number, Is.EqualTo(2));
-                    Assert.That(multiReturnState.Pop().Number, Is.EqualTo(1));
-                });
+                await Assert.That(multiReturnState.Pop().Number).IsEqualTo(2d);
+                await Assert.That(multiReturnState.Pop().Number).IsEqualTo(1d);
             }
 
-            // Nil padding branch
-            DynValue singleFunction = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(7));
+            DynValue singleFunction = DynValue.NewCallback((_, _) => DynValue.NewNumber(7));
             DynValue luaSingleFunction = script.DoString("return function(value) return value end");
 
             foreach (
@@ -282,18 +269,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
                 LuaBaseProxy.Call(paddedState, 1, 2);
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(paddedState.Pop(), Is.EqualTo(DynValue.Nil));
-                    Assert.That(paddedState.Pop().Number, Is.EqualTo(testCase.Expected));
-                });
+                await Assert.That(paddedState.Pop()).IsEqualTo(DynValue.Nil);
+                await Assert.That(paddedState.Pop().Number).IsEqualTo(testCase.Expected);
             }
         }
 
-        [Test]
-        public void LuaBufferAndStackHelpersOperateOnValues()
+        [global::TUnit.Core.Test]
+        public async Task LuaBufferAndStackHelpersOperateOnValues()
         {
-            Script script = new Script();
+            Script script = new();
             DynValue[] sourceVariants =
             {
                 DynValue.NewString("source"),
@@ -310,16 +294,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                     DynValue.NewBoolean(true)
                 );
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(LuaBaseProxy.OptionalInteger(state, 1, 99), Is.EqualTo(99));
-                    Assert.That(LuaBaseProxy.OptionalInteger(state, 2, 99), Is.EqualTo(21));
-                    Assert.That(LuaBaseProxy.OptionalIntAlias(state, 2, 77), Is.EqualTo(21));
-                });
-
-                Assert.That(LuaBaseProxy.ToBoolean(state, 4), Is.EqualTo(1));
-                Assert.That(LuaBaseProxy.TypeName(state, 3), Is.EqualTo("string"));
-                Assert.That(LuaBaseProxy.IsString(state, 2), Is.EqualTo(1));
+                await Assert.That(LuaBaseProxy.OptionalInteger(state, 1, 99)).IsEqualTo(99);
+                await Assert.That(LuaBaseProxy.OptionalInteger(state, 2, 99)).IsEqualTo(21);
+                await Assert.That(LuaBaseProxy.OptionalIntAlias(state, 2, 77)).IsEqualTo(21);
+                await Assert.That(LuaBaseProxy.ToBoolean(state, 4)).IsEqualTo(1);
+                await Assert.That(LuaBaseProxy.TypeName(state, 3)).IsEqualTo("string");
+                await Assert.That(LuaBaseProxy.IsString(state, 2)).IsEqualTo(1);
 
                 LuaBaseProxy.PushInteger(state, 7);
                 LuaBaseProxy.PushNilValue(state);
@@ -327,7 +307,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 LuaBaseProxy.PushValueCopy(state, 3);
                 LuaBaseProxy.Pop(state, 1);
 
-                LuaLBuffer buffer = new LuaLBuffer(state);
+                LuaLBuffer buffer = new(state);
                 LuaBaseProxy.InitBuffer(state, buffer);
                 LuaBaseProxy.AddChar(buffer, 'A');
                 LuaBaseProxy.AddString(buffer, "B");
@@ -335,23 +315,23 @@ namespace NovaSharp.Interpreter.Tests.Units
                 state.Push(DynValue.NewString("tail"));
                 LuaBaseProxy.AddValue(buffer);
                 LuaBaseProxy.PushResult(buffer);
-                Assert.That(state.Pop().String, Is.EqualTo("ABCDtail"));
+                await Assert.That(state.Pop().String).IsEqualTo("ABCDtail");
 
                 LuaBaseProxy.PushLString(state, new CharPtr("WXYZ"), 3);
-                Assert.That(state.Pop().String, Is.EqualTo("WXY"));
+                await Assert.That(state.Pop().String).IsEqualTo("WXY");
 
                 CharPtr pointer = LuaBaseProxy.CheckStringPointer(state, 3);
-                Assert.That(pointer.ToString(), Is.EqualTo("source"));
-                Assert.That(LuaBaseProxy.CheckStringString(state, 3), Is.EqualTo("source"));
-                Assert.That(LuaBaseProxy.CheckNumber(state, 2), Is.EqualTo(21));
+                await Assert.That(pointer.ToString()).IsEqualTo("source");
+                await Assert.That(LuaBaseProxy.CheckStringString(state, 3)).IsEqualTo("source");
+                await Assert.That(LuaBaseProxy.CheckNumber(state, 2)).IsEqualTo(21d);
 
                 uint rawLength;
                 string raw = LuaBaseProxy.ReadRawString(state, 3, out rawLength);
-                Assert.That(rawLength, Is.EqualTo(6));
-                Assert.That(raw, Is.EqualTo("source"));
+                await Assert.That(rawLength).IsEqualTo(6u);
+                await Assert.That(raw).IsEqualTo("source");
 
                 LuaBaseProxy.CheckStack(state, 2, "ok");
-                Assert.That(LuaBaseProxy.QuoteLiteral("foo"), Is.EqualTo("'foo'"));
+                await Assert.That(LuaBaseProxy.QuoteLiteral("foo")).IsEqualTo("'foo'");
             }
 
             LuaState finalState = CreateLuaState(
@@ -362,83 +342,74 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue.NewBoolean(true)
             );
 
-            LuaBaseProxy.AssertCondition(false); // no-op path
+            LuaBaseProxy.AssertCondition(false);
 
-            Assert.That(
-                () => LuaBaseProxy.ThrowLuaError(finalState, "boom {0}", 1),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException error = Assert.Throws<ScriptRuntimeException>(() =>
+                LuaBaseProxy.ThrowLuaError(finalState, "boom {0}", 1)
             );
+            await Assert.That(error).IsNotNull();
         }
 
-        [Test]
-        public void LuaCLibraryPrimitivesMirrorDotNetExpectations()
+        [global::TUnit.Core.Test]
+        public async Task LuaCLibraryPrimitivesMirrorDotNetExpectations()
         {
-            CharPtr abc = new CharPtr("abc");
-            CharPtr abd = new CharPtr("abd");
+            CharPtr abc = new("abc");
+            CharPtr abd = new("abd");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(LuaBaseProxy.MemoryCompare(abc, abd, 2), Is.EqualTo(0));
-                Assert.That(LuaBaseProxy.MemoryCompareExact(abc, abd, 3), Is.LessThan(0));
-                Assert.That(LuaBaseProxy.MemoryCompareExact(abd, abc, 3), Is.GreaterThan(0));
-            });
+            await Assert.That(LuaBaseProxy.MemoryCompare(abc, abd, 2)).IsEqualTo(0);
+            await Assert.That(LuaBaseProxy.MemoryCompareExact(abc, abd, 3)).IsLessThan(0);
+            await Assert.That(LuaBaseProxy.MemoryCompareExact(abd, abc, 3)).IsGreaterThan(0);
 
-            CharPtr memSource = new CharPtr("hello");
+            CharPtr memSource = new("hello");
             CharPtr firstL = LuaBaseProxy.MemoryCharacter(memSource, 'l', 5);
-            Assert.That(firstL.ToString(), Is.EqualTo("llo"));
-            Assert.That(LuaBaseProxy.MemoryCharacter(memSource, 'z', 5), Is.Null);
+            await Assert.That(firstL.ToString()).IsEqualTo("llo");
+            await Assert.That(LuaBaseProxy.MemoryCharacter(memSource, 'z', 5)).IsNull();
 
             CharPtr strpbrk = LuaBaseProxy.StringBreak(new CharPtr("abcdef"), new CharPtr("xyde"));
-            Assert.That(strpbrk.ToString(), Is.EqualTo("def"));
+            await Assert.That(strpbrk.ToString()).IsEqualTo("def");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(LuaBaseProxy.IsAlphaChar('A'), Is.True);
-                Assert.That(LuaBaseProxy.IsAlphaInt('A'), Is.True);
-                Assert.That(LuaBaseProxy.IsControlChar('\n'), Is.True);
-                Assert.That(LuaBaseProxy.IsControlInt('\n'), Is.True);
-                Assert.That(LuaBaseProxy.IsDigitChar('7'), Is.True);
-                Assert.That(LuaBaseProxy.IsDigitInt('7'), Is.True);
-                Assert.That(LuaBaseProxy.IsLowerChar('q'), Is.True);
-                Assert.That(LuaBaseProxy.IsLowerInt('q'), Is.True);
-                Assert.That(LuaBaseProxy.IsPunctuationChar('!'), Is.True);
-                Assert.That(LuaBaseProxy.IsPunctuationInt('!'), Is.True);
-                Assert.That(LuaBaseProxy.IsSpaceChar(' '), Is.True);
-                Assert.That(LuaBaseProxy.IsSpaceInt('\t'), Is.True);
-                Assert.That(LuaBaseProxy.IsUpperChar('Q'), Is.True);
-                Assert.That(LuaBaseProxy.IsUpperInt('Q'), Is.True);
-                Assert.That(LuaBaseProxy.IsAlphaNumericChar('9'), Is.True);
-                Assert.That(LuaBaseProxy.IsAlphaNumericInt('9'), Is.True);
-                Assert.That(LuaBaseProxy.IsGraphicChar('A'), Is.True);
-                Assert.That(LuaBaseProxy.IsGraphicInt('A'), Is.True);
-                Assert.That(LuaBaseProxy.IsHexDigitChar('F'), Is.True);
-                Assert.That(LuaBaseProxy.IsHexDigitChar('G'), Is.False);
-            });
+            await Assert.That(LuaBaseProxy.IsAlphaChar('A')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsAlphaInt('A')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsControlChar('\n')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsControlInt('\n')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsDigitChar('7')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsDigitInt('7')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsLowerChar('q')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsLowerInt('q')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsPunctuationChar('!')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsPunctuationInt('!')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsSpaceChar(' ')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsSpaceInt('\t')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsUpperChar('Q')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsUpperInt('Q')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsAlphaNumericChar('9')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsAlphaNumericInt('9')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsGraphicChar('A')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsGraphicInt('A')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsHexDigitChar('F')).IsTrue();
+            await Assert.That(LuaBaseProxy.IsHexDigitChar('G')).IsFalse();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(LuaBaseProxy.ToLowerChar('X'), Is.EqualTo('x'));
-                Assert.That(LuaBaseProxy.ToLowerInt('Y'), Is.EqualTo('y'));
-                Assert.That(LuaBaseProxy.ToUpperChar('m'), Is.EqualTo('M'));
-                Assert.That(LuaBaseProxy.ToUpperInt('n'), Is.EqualTo('N'));
-            });
+            await Assert.That(LuaBaseProxy.ToLowerChar('X')).IsEqualTo('x');
+            await Assert.That(LuaBaseProxy.ToLowerInt('Y')).IsEqualTo('y');
+            await Assert.That(LuaBaseProxy.ToUpperChar('m')).IsEqualTo('M');
+            await Assert.That(LuaBaseProxy.ToUpperInt('n')).IsEqualTo('N');
 
-            CharPtr str = new CharPtr("foobar");
-            Assert.That(LuaBaseProxy.StringChar(str, 'b').ToString(), Is.EqualTo("bar"));
-            Assert.That(LuaBaseProxy.StringChar(str, 'z'), Is.Null);
+            CharPtr str = new("foobar");
+            await Assert.That(LuaBaseProxy.StringChar(str, 'b').ToString()).IsEqualTo("bar");
+            await Assert.That(LuaBaseProxy.StringChar(str, 'z')).IsNull();
 
             char[] copyDestination = new char[10];
-            CharPtr destinationPtr = new CharPtr(copyDestination);
+            CharPtr destinationPtr = new(copyDestination);
             LuaBaseProxy.StringCopy(destinationPtr, new CharPtr("cat"));
-            Assert.That(destinationPtr.ToString(), Is.EqualTo("cat"));
+            await Assert.That(destinationPtr.ToString()).IsEqualTo("cat");
 
             char[] paddedDestination = new char[6];
-            CharPtr paddedPtr = new CharPtr(paddedDestination);
+            CharPtr paddedPtr = new(paddedDestination);
             LuaBaseProxy.StringCopyN(paddedPtr, new CharPtr("dog"), 5);
-            Assert.That(paddedPtr.ToString(), Is.EqualTo("dog"));
-            Assert.That(paddedDestination[4], Is.EqualTo('\0'));
+            await Assert.That(paddedPtr.ToString()).IsEqualTo("dog");
+            await Assert.That(paddedDestination[4]).IsEqualTo('\0');
 
-            Assert.That(LuaBaseProxy.StringLength(new CharPtr("lengthy")), Is.EqualTo(7));
+            await Assert.That(LuaBaseProxy.StringLength(new CharPtr("lengthy"))).IsEqualTo(7);
 
             char[] sprintfBuffer = new char[20];
             LuaBaseProxy.StringPrint(
@@ -448,14 +419,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 42,
                 255
             );
-            Assert.That(new CharPtr(sprintfBuffer).ToString(), Is.EqualTo("lua-42-FF"));
+            await Assert.That(new CharPtr(sprintfBuffer).ToString()).IsEqualTo("lua-42-FF");
         }
 
         private static LuaState CreateLuaState(Script script, params DynValue[] args)
         {
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments callbackArguments = TestHelpers.CreateArguments(args);
-            return new LuaState(context, callbackArguments, "LuaBaseTests");
+            return new LuaState(context, callbackArguments, "LuaBaseTUnitTests");
         }
 
         private static class LuaBaseProxy
@@ -480,30 +451,19 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static string CheckString(LuaState state, int position, out uint length) =>
                 LuaLCheckLString(state, position, out length);
 
-            public static int CheckInteger(LuaState state, int position)
-            {
-                return LuaLCheckInteger(state, position);
-            }
+            public static int CheckInteger(LuaState state, int position) =>
+                LuaLCheckInteger(state, position);
 
-            public static int CheckInt(LuaState state, int position)
-            {
-                return LuaLCheckInt(state, position);
-            }
+            public static int CheckInt(LuaState state, int position) =>
+                LuaLCheckInt(state, position);
 
-            public static void ArgCheck(LuaState state, bool condition, int arg, string message)
-            {
+            public static void ArgCheck(LuaState state, bool condition, int arg, string message) =>
                 LuaLArgCheck(state, condition, arg, message);
-            }
 
-            public static void GetTable(LuaState state, int index)
-            {
-                LuaGetTable(state, index);
-            }
+            public static void GetTable(LuaState state, int index) => LuaGetTable(state, index);
 
-            public static void Call(LuaState state, int argCount, int resultCount = -1)
-            {
+            public static void Call(LuaState state, int argCount, int resultCount = -1) =>
                 LuaCall(state, argCount, resultCount);
-            }
 
             public static int OptionalInteger(LuaState state, int position, int defaultValue) =>
                 LuaLOptInteger(state, position, defaultValue);
@@ -583,15 +543,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             public static int MemoryCompareExact(CharPtr left, CharPtr right, int size) =>
                 LuaBase.MemoryCompare(left, right, size);
 
-            public static CharPtr MemoryCharacter(CharPtr source, char value, uint count)
-            {
-                return MemoryFindCharacter(source, value, count);
-            }
+            public static CharPtr MemoryCharacter(CharPtr source, char value, uint count) =>
+                MemoryFindCharacter(source, value, count);
 
-            public static CharPtr StringBreak(CharPtr source, CharPtr charset)
-            {
-                return StringFindAny(source, charset);
-            }
+            public static CharPtr StringBreak(CharPtr source, CharPtr charset) =>
+                StringFindAny(source, charset);
 
             public static bool IsAlphaChar(char value) => IsAlpha(value);
 
@@ -650,12 +606,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             public static int StringLength(CharPtr value) => LuaBase.StringLength(value);
 
-            public static void StringPrint(CharPtr buffer, CharPtr format, params object[] args)
-            {
+            public static void StringPrint(CharPtr buffer, CharPtr format, params object[] args) =>
                 StringFormat(buffer, format, args);
-            }
         }
 
         private sealed class SampleUserData { }
     }
 }
+#pragma warning restore CA2007

@@ -1,6 +1,10 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
+    using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -8,106 +12,97 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class HardwiredMemberDescriptorTests
+    public sealed class HardwiredMemberDescriptorTUnitTests
     {
-        private const CoreModules MinimalScriptModules = TestCoreModules.BasicGlobals;
+        private const CoreModules MinimalScriptModules = CoreModules.GlobalConsts;
 
-        [Test]
-        public void ReadWriteDescriptorGetsAndSetsValues()
+        [global::TUnit.Core.Test]
+        public async Task ReadWriteDescriptorGetsAndSetsValues()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleTarget target = new SampleTarget();
-            SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
+            Script script = new(MinimalScriptModules);
+            SampleTarget target = new();
+            SampleReadWriteDescriptor descriptor = new();
 
             descriptor.SetValue(script, target, DynValue.NewNumber(42));
             DynValue result = descriptor.GetValue(script, target);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(target.Value, Is.EqualTo(42));
-                Assert.That(result.Number, Is.EqualTo(42));
-            });
+            await Assert.That(target.Value).IsEqualTo(42);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
-        [Test]
-        public void ReadOnlyDescriptorThrowsOnSet()
+        [global::TUnit.Core.Test]
+        public async Task ReadOnlyDescriptorThrowsOnSet()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleTarget target = new SampleTarget();
-            SampleReadOnlyDescriptor descriptor = new SampleReadOnlyDescriptor(10);
+            Script script = new(MinimalScriptModules);
+            SampleTarget target = new();
+            SampleReadOnlyDescriptor descriptor = new(10);
 
             DynValue value = descriptor.GetValue(script, target);
-            Assert.That(value.Number, Is.EqualTo(10));
+            await Assert.That(value.Number).IsEqualTo(10d);
 
-            Assert.That(
-                () => descriptor.SetValue(script, target, DynValue.NewNumber(5)),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, target, DynValue.NewNumber(5))
             );
+            await Assert.That(exception).IsNotNull();
         }
 
-        [Test]
-        public void WriteOnlyDescriptorThrowsOnGet()
+        [global::TUnit.Core.Test]
+        public async Task WriteOnlyDescriptorThrowsOnGet()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleTarget target = new SampleTarget();
-            SampleWriteOnlyDescriptor descriptor = new SampleWriteOnlyDescriptor();
+            Script script = new(MinimalScriptModules);
+            SampleTarget target = new();
+            SampleWriteOnlyDescriptor descriptor = new();
 
             descriptor.SetValue(script, target, DynValue.NewNumber(5));
 
-            Assert.That(
-                () => descriptor.GetValue(script, target),
-                Throws.TypeOf<ScriptRuntimeException>().With.Message.Contain("writeOnly")
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.GetValue(script, target)
             );
+            await Assert.That(exception.Message).Contains("writeOnly");
         }
 
-        [Test]
-        public void AccessingInstanceMemberWithoutObjectThrows()
+        [global::TUnit.Core.Test]
+        public async Task AccessingInstanceMemberWithoutObjectThrows()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
+            Script script = new(MinimalScriptModules);
+            SampleReadWriteDescriptor descriptor = new();
 
-            Assert.That(
-                () => descriptor.GetValue(script, null),
-                Throws.TypeOf<ScriptRuntimeException>()
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.GetValue(script, null)
             );
+            await Assert.That(exception).IsNotNull();
         }
 
-        [Test]
-        public void SetValueThrowsWhenDynValueNull()
+        [global::TUnit.Core.Test]
+        public async Task SetValueThrowsWhenDynValueNull()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleTarget target = new SampleTarget();
-            SampleReadWriteDescriptor descriptor = new SampleReadWriteDescriptor();
+            Script script = new(MinimalScriptModules);
+            SampleTarget target = new();
+            SampleReadWriteDescriptor descriptor = new();
 
-            Assert.That(
-                () => descriptor.SetValue(script, target, null),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("value")
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                descriptor.SetValue(script, target, value: null)
             );
+            await Assert.That(exception.ParamName).IsEqualTo("value");
         }
 
-        [Test]
-        public void HardwiredMethodDescriptorHonoursDefaultValues()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMethodDescriptorHonoursDefaultValues()
         {
-            Script script = new Script(MinimalScriptModules);
-            SampleTarget target = new SampleTarget { Value = 3 };
-            SampleHardwiredMethodDescriptor descriptor = new SampleHardwiredMethodDescriptor();
+            Script script = new(MinimalScriptModules);
+            SampleTarget target = new() { Value = 3 };
+            SampleHardwiredMethodDescriptor descriptor = new();
 
-            List<DynValue> arguments = new List<DynValue> { DynValue.NewNumber(5) };
-            CallbackArguments callbackArguments = new CallbackArguments(
-                arguments,
-                isMethodCall: false
-            );
+            List<DynValue> arguments = new() { DynValue.NewNumber(5) };
+            CallbackArguments callbackArguments = new(arguments, isMethodCall: false);
 
-            DynValue result = descriptor.Execute(script, target, null, callbackArguments);
+            DynValue result = descriptor.Execute(script, target, context: null, callbackArguments);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Number, Is.EqualTo(3 + 5 + 10));
-                Assert.That(descriptor.LastArgumentCount, Is.EqualTo(2));
-            });
+            await Assert.That(result.Number).IsEqualTo(18d);
+            await Assert.That(descriptor.LastArgumentCount).IsEqualTo(2);
         }
 
         private sealed class SampleTarget
@@ -140,17 +135,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private sealed class SampleReadOnlyDescriptor : HardwiredMemberDescriptor
         {
-            private readonly int _value;
+            private readonly int _storedValue;
 
             public SampleReadOnlyDescriptor(int value)
                 : base(typeof(int), "Constant", isStatic: false, MemberDescriptorAccess.CanRead)
             {
-                _value = value;
+                _storedValue = value;
             }
 
             protected override object GetValueCore(Script script, object obj)
             {
-                return _value;
+                return _storedValue;
             }
         }
 
@@ -206,3 +201,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007
