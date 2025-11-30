@@ -1,19 +1,19 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [ScriptGlobalOptionsIsolation]
-    public sealed class SyntaxErrorExceptionTests
+    public sealed class SyntaxErrorExceptionTUnitTests
     {
-        [Test]
-        public void RethrowWrapsExceptionWhenGlobalOptionEnabled()
+        [global::TUnit.Core.Test]
+        public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled()
         {
             bool original = Script.GlobalOptions.RethrowExceptionNested;
             try
@@ -29,11 +29,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                     captured.Rethrow()
                 )!;
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(nested, Is.Not.SameAs(captured));
-                    Assert.That(nested.DecoratedMessage, Is.EqualTo(captured.DecoratedMessage));
-                });
+                await Assert.That(nested).IsNotSameReferenceAs(captured);
+                await Assert.That(nested.DecoratedMessage).IsEqualTo(captured.DecoratedMessage);
             }
             finally
             {
@@ -41,8 +38,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [Test]
-        public void RethrowDoesNothingWhenGlobalOptionDisabled()
+        [global::TUnit.Core.Test]
+        public async Task RethrowDoesNothingWhenGlobalOptionDisabled()
         {
             bool original = Script.GlobalOptions.RethrowExceptionNested;
             try
@@ -50,7 +47,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 Script.GlobalOptions.RethrowExceptionNested = false;
                 SyntaxErrorException exception = new();
 
-                Assert.DoesNotThrow(() => exception.Rethrow());
+                exception.Rethrow();
+                await Task.CompletedTask;
             }
             finally
             {
@@ -58,8 +56,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [Test]
-        public void RethrowClonesTokenMetadata()
+        [global::TUnit.Core.Test]
+        public async Task RethrowClonesTokenMetadata()
         {
             bool original = Script.GlobalOptions.RethrowExceptionNested;
             try
@@ -72,12 +70,9 @@ namespace NovaSharp.Interpreter.Tests.Units
                     exception.Rethrow()
                 )!;
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(nested, Is.Not.SameAs(exception));
-                    Assert.That(nested.Token, Is.SameAs(token));
-                    Assert.That(nested.InnerException, Is.SameAs(exception));
-                });
+                await Assert.That(nested).IsNotSameReferenceAs(exception);
+                await Assert.That(nested.Token).IsSameReferenceAs(token);
+                await Assert.That(nested.InnerException).IsSameReferenceAs(exception);
             }
             finally
             {
@@ -85,8 +80,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [Test]
-        public void TokenConstructorDecoratesMessage()
+        [global::TUnit.Core.Test]
+        public async Task TokenConstructorDecoratesMessage()
         {
             Script script = CreateScriptWithNamedSource("decorated", out int sourceId);
             Token token = CreateToken(sourceId);
@@ -94,15 +89,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             exception.DecorateMessage(script);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(exception.Token, Is.SameAs(token));
-                Assert.That(exception.DecoratedMessage, Does.StartWith("decorated:"));
-            });
+            await Assert.That(exception.Token).IsSameReferenceAs(token);
+            await Assert.That(exception.DecoratedMessage).StartsWith("decorated:");
         }
 
-        [Test]
-        public void SourceRefConstructorsDecorateMessage()
+        [global::TUnit.Core.Test]
+        public async Task SourceRefConstructorsDecorateMessage()
         {
             Script script = CreateScriptWithNamedSource("chunk", out int sourceId);
             SourceRef location = new(sourceId, 1, 2, 1, 3, false);
@@ -110,65 +102,53 @@ namespace NovaSharp.Interpreter.Tests.Units
             SyntaxErrorException formatted = new(script, location, "issue {0}", 123);
             SyntaxErrorException plain = new(script, location, "plain issue");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(formatted.DecoratedMessage, Does.StartWith("chunk:"));
-                Assert.That(plain.DecoratedMessage, Does.StartWith("chunk:"));
-            });
+            await Assert.That(formatted.DecoratedMessage).StartsWith("chunk:");
+            await Assert.That(plain.DecoratedMessage).StartsWith("chunk:");
         }
 
-        [Test]
-        public void PrematureStreamTerminationFlagRoundTrips()
+        [global::TUnit.Core.Test]
+        public async Task PrematureStreamTerminationFlagRoundTrips()
         {
             SyntaxErrorException exception = new() { IsPrematureStreamTermination = true };
 
-            Assert.That(exception.IsPrematureStreamTermination, Is.True);
-
+            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
             exception.IsPrematureStreamTermination = false;
-            Assert.That(exception.IsPrematureStreamTermination, Is.False);
+            await Assert.That(exception.IsPrematureStreamTermination).IsFalse();
         }
 
-        [Test]
-        public void DynamicExpressionExceptionPrefixesMessages()
+        [global::TUnit.Core.Test]
+        public async Task DynamicExpressionExceptionPrefixesMessages()
         {
             DynamicExpressionException formatted = new("value {0}", 42);
             DynamicExpressionException plain = new("plain text");
             Exception inner = new InvalidOperationException("boom");
             DynamicExpressionException nested = new("inner", inner);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(formatted.Message, Is.EqualTo("<dynamic>: value 42"));
-                Assert.That(plain.Message, Is.EqualTo("<dynamic>: plain text"));
-                Assert.That(nested.Message, Is.EqualTo("<dynamic>: inner"));
-                Assert.That(nested.InnerException, Is.SameAs(inner));
-                Assert.That(
-                    new DynamicExpressionException().Message,
-                    Is.EqualTo("<dynamic>: dynamic expression error")
-                );
-            });
+            await Assert.That(formatted.Message).IsEqualTo("<dynamic>: value 42");
+            await Assert.That(plain.Message).IsEqualTo("<dynamic>: plain text");
+            await Assert.That(nested.Message).IsEqualTo("<dynamic>: inner");
+            await Assert.That(nested.InnerException).IsSameReferenceAs(inner);
+            await Assert
+                .That(new DynamicExpressionException().Message)
+                .IsEqualTo("<dynamic>: dynamic expression error");
         }
 
-        [Test]
-        public void MessageOnlyConstructorStoresMessage()
+        [global::TUnit.Core.Test]
+        public async Task MessageOnlyConstructorStoresMessage()
         {
             SyntaxErrorException exception = new("parse error");
-
-            Assert.That(exception.Message, Is.EqualTo("parse error"));
+            await Assert.That(exception.Message).IsEqualTo("parse error");
         }
 
-        [Test]
-        public void MessageAndInnerConstructorPreservesInnerException()
+        [global::TUnit.Core.Test]
+        public async Task MessageAndInnerConstructorPreservesInnerException()
         {
             InvalidOperationException inner = new("inner");
 
             SyntaxErrorException exception = new("outer", inner);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(exception.Message, Is.EqualTo("outer"));
-                Assert.That(exception.InnerException, Is.SameAs(inner));
-            });
+            await Assert.That(exception.Message).IsEqualTo("outer");
+            await Assert.That(exception.InnerException).IsSameReferenceAs(inner);
         }
 
         private static Script CreateScriptWithNamedSource(string chunkName)
@@ -187,8 +167,8 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private static Token CreateToken(int sourceId = 0)
         {
-            Token token = new(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0) { Text = "value" };
-            return token;
+            return new Token(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0) { Text = "value" };
         }
     }
 }
+#pragma warning restore CA2007

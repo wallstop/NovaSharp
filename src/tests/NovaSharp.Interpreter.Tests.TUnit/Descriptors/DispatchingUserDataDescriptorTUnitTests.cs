@@ -666,8 +666,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
         private sealed class StubMemberDescriptor : IMemberDescriptor
         {
-            private readonly Func<Script, object, DynValue> getter;
-            private readonly Action<Script, object, DynValue> setter;
+            private readonly Func<Script, object, DynValue> _getter;
+            private readonly Action<Script, object, DynValue> _setter;
 
             private StubMemberDescriptor(
                 string name,
@@ -680,8 +680,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 Name = name;
                 MemberAccess = access;
                 IsStatic = isStatic;
-                this.getter = getter ?? ((_, _) => DynValue.Nil);
-                this.setter = setter ?? ((_, _, _) => throw new NotSupportedException());
+                _getter = getter ?? ((_, _) => DynValue.Nil);
+                _setter = setter ?? ((_, _, _) => throw new NotSupportedException());
             }
 
             public static StubMemberDescriptor CreateCallable(
@@ -708,12 +708,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             public DynValue GetValue(Script currentScript, object obj)
             {
-                return getter(currentScript, obj);
+                return _getter(currentScript, obj);
             }
 
             public void SetValue(Script currentScript, object obj, DynValue newValue)
             {
-                setter(currentScript, obj, newValue);
+                _setter(currentScript, obj, newValue);
             }
         }
 

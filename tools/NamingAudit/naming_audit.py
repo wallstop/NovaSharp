@@ -101,27 +101,140 @@ MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
     Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
     Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
 }
+C_SHARP_KEYWORDS = {
+    "abstract",
+    "add",
+    "alias",
+    "as",
+    "ascending",
+    "async",
+    "await",
+    "base",
+    "bool",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "checked",
+    "class",
+    "const",
+    "continue",
+    "decimal",
+    "default",
+    "delegate",
+    "descending",
+    "do",
+    "double",
+    "dynamic",
+    "else",
+    "enum",
+    "event",
+    "explicit",
+    "extern",
+    "false",
+    "finally",
+    "fixed",
+    "float",
+    "for",
+    "foreach",
+    "from",
+    "get",
+    "global",
+    "goto",
+    "group",
+    "if",
+    "implicit",
+    "in",
+    "int",
+    "interface",
+    "internal",
+    "into",
+    "is",
+    "join",
+    "let",
+    "lock",
+    "long",
+    "namespace",
+    "new",
+    "null",
+    "object",
+    "operator",
+    "orderby",
+    "out",
+    "override",
+    "params",
+    "partial",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "record",
+    "ref",
+    "remove",
+    "required",
+    "return",
+    "sbyte",
+    "sealed",
+    "select",
+    "set",
+    "short",
+    "sizeof",
+    "stackalloc",
+    "static",
+    "string",
+    "struct",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "nint",
+    "nuint",
+    "scoped",
+    "uint",
+    "ulong",
+    "unchecked",
+    "unsafe",
+    "ushort",
+    "using",
+    "value",
+    "var",
+    "unmanaged",
+    "with",
+    "virtual",
+    "void",
+    "volatile",
+    "when",
+    "where",
+    "while",
+    "yield",
+}
+
 TYPE_PATTERN = re.compile(
     r"^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+)*"
     r"(class|struct|interface|enum|record)\s+([A-Za-z0-9_<>]+)"
 )
+TYPE_TOKEN_CHAR_CLASS = r"A-Za-z0-9_<>,\[\].?:@*\(\)"
+TYPE_NAME_PATTERN = rf"[{TYPE_TOKEN_CHAR_CLASS}]+"
 METHOD_PATTERN = re.compile(
-    r"^\s*(public|protected|internal|private)\s+(?:static\s+|virtual\s+|override\s+|sealed\s+|async\s+|extern\s+|unsafe\s+|partial\s+|new\s+)*"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*\("
+    rf"^\s*(public|protected|internal|private)\s+(?:ref\s+readonly\s+|static\s+|virtual\s+|override\s+|sealed\s+|async\s+|extern\s+|unsafe\s+|partial\s+|new\s+|readonly\s+|ref\s+|scoped\s+)*"
+    rf"{TYPE_NAME_PATTERN}\s+([A-Za-z0-9_]+)\s*\("
 )
 PROPERTY_PATTERN = re.compile(
-    r"^\s*(public|protected|internal|private)\s+(?:static\s+|virtual\s+|override\s+|sealed\s+|unsafe\s+|new\s+)*"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+([A-Za-z0-9_]+)\s*(?:\{|=>)"
+    rf"^\s*(public|protected|internal|private)\s+(?:ref\s+readonly\s+|static\s+|virtual\s+|override\s+|sealed\s+|unsafe\s+|new\s+|ref\s+|readonly\s+|scoped\s+)*"
+    rf"{TYPE_NAME_PATTERN}\s+([A-Za-z0-9_]+)\s*(?:\{{|=>)"
 )
 FIELD_PATTERN = re.compile(
-    r"^\s*(?P<access>public|protected\s+internal|private\s+protected|protected|internal)\s+"
-    r"(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
+    rf"^\s*(?P<access>public|protected\s+internal|private\s+protected|protected|internal)\s+"
+    rf"(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
+    rf"{TYPE_NAME_PATTERN}\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
 )
 FIELD_NAME_ALLOWLIST = {"operator"}
 PRIVATE_FIELD_PATTERN = re.compile(
-    r"^\s*private\s+(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
-    r"[A-Za-z0-9_<>,\[\].?]+\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
+    rf"^\s*private\s+(?P<modifiers>(?:static\s+|readonly\s+|volatile\s+|const\s+|unsafe\s+|new\s+)*)"
+    rf"{TYPE_NAME_PATTERN}\s+(?P<name>[A-Za-z0-9_]+)\s*(?:=|;)"
 )
 NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z0-9_.]+)")
 
@@ -157,6 +270,34 @@ def is_allowlisted(
     rel_path: Path, identifier: str, allowlist: dict[Path, set[str]]
 ) -> bool:
     return identifier in allowlist.get(rel_path, set())
+
+
+def normalize_line_for_member_detection(line: str) -> str:
+    normalized_chars: list[str] = []
+    stack: list[str] = []
+    for ch in line:
+        if ch == "<":
+            stack.append("<")
+            normalized_chars.append(ch)
+            continue
+        if ch == ">":
+            if stack and stack[-1] == "<":
+                stack.pop()
+            normalized_chars.append(ch)
+            continue
+        if ch == "(":
+            stack.append("(")
+            normalized_chars.append(ch)
+            continue
+        if ch == ")":
+            if stack and stack[-1] == "(":
+                stack.pop()
+            normalized_chars.append(ch)
+            continue
+        if ch.isspace() and stack:
+            continue
+        normalized_chars.append(ch)
+    return "".join(normalized_chars)
 
 
 @dataclass
@@ -232,28 +373,30 @@ def audit_file(
                     current_type = type_name
                     continue
 
-                method_match = METHOD_PATTERN.match(line)
+                normalized_line = normalize_line_for_member_detection(line)
+
+                method_match = METHOD_PATTERN.match(normalized_line)
                 if method_match:
                     method_name = method_match.group(2)
-                    if (
-                        method_name
-                        and method_name not in MEMBER_ALLOWLIST
-                        and not is_allowlisted(rel_path, method_name, MEMBER_ALLOWLIST_BY_PATH)
-                        and method_name != current_type
-                        and not is_pascal_case(method_name)
-                    ):
-                        issues.append(
-                            NamingIssue(
-                                rel_path,
-                                "method",
-                                method_name,
-                                f"Method '{method_name}' should be PascalCase "
-                                f"(line {line_number}).",
+                    if method_name and method_name not in C_SHARP_KEYWORDS:
+                        if (
+                            method_name not in MEMBER_ALLOWLIST
+                            and not is_allowlisted(rel_path, method_name, MEMBER_ALLOWLIST_BY_PATH)
+                            and method_name != current_type
+                            and not is_pascal_case(method_name)
+                        ):
+                            issues.append(
+                                NamingIssue(
+                                    rel_path,
+                                    "method",
+                                    method_name,
+                                    f"Method '{method_name}' should be PascalCase "
+                                    f"(line {line_number}).",
+                                )
                             )
-                        )
-                    continue
+                        continue
 
-                property_match = PROPERTY_PATTERN.match(line)
+                property_match = PROPERTY_PATTERN.match(normalized_line)
                 if property_match:
                     property_name = property_match.group(2)
                     if (
@@ -275,7 +418,7 @@ def audit_file(
                         )
                     continue
 
-                field_match = FIELD_PATTERN.match(line)
+                field_match = FIELD_PATTERN.match(normalized_line)
                 if field_match:
                     field_name = field_match.group("name")
                     field_access = field_match.group("access") or ""
@@ -324,7 +467,7 @@ def audit_file(
                                 )
                     continue
 
-                private_field_match = PRIVATE_FIELD_PATTERN.match(line)
+                private_field_match = PRIVATE_FIELD_PATTERN.match(normalized_line)
                 if private_field_match:
                     field_name = private_field_match.group("name")
                     modifiers_text = private_field_match.group("modifiers") or ""

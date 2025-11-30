@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Modules;
 
     public sealed class TailCallTUnitTests
     {
@@ -52,6 +53,114 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(2);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(3);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RecursiveSumMatchesArithmeticBaseline()
+        {
+            Script script = new();
+            DynValue result = script.DoString(
+                @"
+                local function recsum(n, partial)
+                    if n == 0 then
+                        return partial
+                    end
+                    return recsum(n - 1, partial + n)
+                end
+
+                return recsum(10, 0)
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(55);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RecursiveSumHandlesVeryDeepTailRecursion()
+        {
+            Script script = new();
+            DynValue result = script.DoString(
+                @"
+                local function recsum(n, partial)
+                    if n == 0 then
+                        return partial
+                    end
+                    return recsum(n - 1, partial + n)
+                end
+
+                return recsum(70000, 0)
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(2450035000.0);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TailCallRequestPropagatesAcrossClrCallback()
+        {
+            Script script = new();
+            script.Globals.Set(
+                "clrtail",
+                DynValue.NewCallback(
+                    (context, args) =>
+                    {
+                        DynValue function = script.Globals.Get("getResult");
+                        DynValue adjusted = DynValue.NewNumber(args[0].Number / 3);
+                        return DynValue.NewTailCallReq(function, adjusted);
+                    }
+                )
+            );
+
+            DynValue result = script.DoString(
+                @"
+                function getResult(x)
+                    return 156 * x
+                end
+
+                return clrtail(9)
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(468);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BasicModuleToStringConvertsNumbers()
+        {
+            Script script = new(CoreModules.Basic);
+            DynValue result = script.DoString(
+                @"
+                return tostring(9)
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String);
+            await Assert.That(result.String).IsEqualTo("9");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TostringUsesMetamethodsWhenAvailable()
+        {
+            Script script = new();
+            DynValue result = script.DoString(
+                @"
+                local target = {}
+                local meta = {
+                    __tostring = function()
+                        return 'ciao'
+                    end
+                }
+
+                setmetatable(target, meta)
+                return tostring(target)
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String);
+            await Assert.That(result.String).IsEqualTo("ciao");
         }
     }
 }

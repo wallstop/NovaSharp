@@ -1118,7 +1118,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
         private sealed class StubExpression : Expression
         {
-            private readonly Func<ScriptExecutionContext, DynValue> evaluate;
+            private readonly Func<ScriptExecutionContext, DynValue> _evaluate;
 
             public StubExpression(
                 ScriptLoadingContext context,
@@ -1126,7 +1126,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             )
                 : base(context)
             {
-                this.evaluate = evaluate;
+                _evaluate = evaluate;
             }
 
             public int EvalCount { get; private set; }
@@ -1139,7 +1139,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             public override DynValue Eval(ScriptExecutionContext context)
             {
                 EvalCount++;
-                return evaluate(context);
+                return _evaluate(context);
             }
         }
     }

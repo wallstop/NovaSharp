@@ -1,19 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tests.Units;
     using NovaSharp.Interpreter.Tree;
     using NovaSharp.Interpreter.Tree.Expressions;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ExprListExpressionTests
+    public sealed class ExprListExpressionTUnitTests
     {
-        [Test]
-        public void CompileEmitsTupleWhenMultipleExpressions()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsTupleWhenMultipleExpressions()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -24,17 +26,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             list.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.CompileCount, Is.EqualTo(1));
-                Assert.That(second.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.MkTuple));
-                Assert.That(byteCode.Code[^1].NumVal, Is.EqualTo(2));
-            });
+            await Assert.That(first.CompileCount).IsEqualTo(1);
+            await Assert.That(second.CompileCount).IsEqualTo(1);
+            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.MkTuple);
+            await Assert.That(byteCode.Code[^1].NumVal).IsEqualTo(2);
         }
 
-        [Test]
-        public void CompileSkipsTupleWhenSingleExpression()
+        [global::TUnit.Core.Test]
+        public async Task CompileSkipsTupleWhenSingleExpression()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -44,15 +43,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             list.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(expression.CompileCount, Is.EqualTo(1));
-                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Nop));
-            });
+            await Assert.That(expression.CompileCount).IsEqualTo(1);
+            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Nop);
         }
 
-        [Test]
-        public void EvalReturnsFirstExpressionValue()
+        [global::TUnit.Core.Test]
+        public async Task EvalReturnsFirstExpressionValue()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -64,11 +60,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = list.Eval(executionContext);
 
-            Assert.That(result, Is.EqualTo(expected));
+            await Assert.That(result).IsEqualTo(expected);
         }
 
-        [Test]
-        public void EvalReturnsVoidWhenListIsEmpty()
+        [global::TUnit.Core.Test]
+        public async Task EvalReturnsVoidWhenListIsEmpty()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -77,7 +73,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = list.Eval(executionContext);
 
-            Assert.That(result, Is.EqualTo(DynValue.Void));
+            await Assert.That(result).IsEqualTo(DynValue.Void);
         }
 
         private sealed class StubExpression : Expression
@@ -105,3 +101,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

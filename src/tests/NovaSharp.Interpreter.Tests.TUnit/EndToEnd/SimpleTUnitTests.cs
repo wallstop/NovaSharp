@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.EndToEnd
+namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Collections.Generic;
@@ -10,26 +10,24 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
     using NovaSharp.Interpreter.Modules;
     using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [UserDataIsolation]
-    public class SimpleTests
+    public sealed class SimpleTUnitTests
     {
-        [Test]
+        [global::TUnit.Core.Test]
         public void EmptyLongComment()
         {
             Script s = new(default(CoreModules));
             DynValue res = s.DoString("--[[]]");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void EmptyChunk()
         {
             Script s = new(default(CoreModules));
             DynValue res = s.DoString("");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCallStatement()
         {
             DynValue[] args = Array.Empty<DynValue>();
@@ -61,7 +59,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(args[1].String, Is.EqualTo("world"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCallRedef()
         {
             DynValue[] args = Array.Empty<DynValue>();
@@ -92,7 +90,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.Void));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCall4()
         {
             string script = "return callback()();";
@@ -123,7 +121,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCall3()
         {
             string script = "return callback();";
@@ -146,7 +144,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCall2()
         {
             DynValue[] args = Array.Empty<DynValue>();
@@ -176,7 +174,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CSharpStaticFunctionCall()
         {
             DynValue[] args = Array.Empty<DynValue>();
@@ -208,7 +206,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1234.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         //!!! DO NOT REFORMAT THIS METHOD !!!
         public void LongStrings()
         {
@@ -235,7 +233,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[2].String, Is.EqualTo("[==[[=[[[eheh]]=]=]"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void UnicodeEscapeLua53Style()
         {
             string script =
@@ -249,7 +247,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("ciaoA"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void InvalidEscape()
         {
             string script =
@@ -260,7 +258,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void KeywordsInStrings()
         {
             string keywrd =
@@ -276,7 +274,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo(keywrd));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ParserErrorMessage()
         {
             bool caught = false;
@@ -299,7 +297,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(caught, Is.True);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void StringsWithBackslashLineEndings2()
         {
             string script =
@@ -313,7 +311,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.String));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void StringsWithBackslashLineEndings()
         {
             string script =
@@ -327,7 +325,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.String));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FunctionCallWrappers()
         {
             string script =
@@ -346,7 +344,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1994));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ReturnSimpleUnop()
         {
             string script = @"return -42";
@@ -357,7 +355,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(-42));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ReturnSimple()
         {
             string script = @"return 42";
@@ -368,7 +366,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(42));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorSimple()
         {
             string script = @"return 6*7";
@@ -379,7 +377,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(42));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SimpleBoolShortCircuit()
         {
             string script =
@@ -404,7 +402,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             s.DoString(script);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FunctionOrOperator()
         {
             string script =
@@ -420,7 +418,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.ClrFunction));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SelectNegativeIndex()
         {
             string script =
@@ -435,7 +433,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("c"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void BoolConversionAndShortCircuit()
         {
             string script =
@@ -467,7 +465,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[4].Number, Is.EqualTo(2));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void HanoiTowersDontCrash()
         {
             string script =
@@ -485,7 +483,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue res = Script.RunString(script);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void Factorial()
         {
             string script =
@@ -507,7 +505,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IfStatmWithScopeCheck()
         {
             string script =
@@ -530,7 +528,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ScopeBlockCheck()
         {
             string script =
@@ -552,7 +550,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ForLoopWithBreak()
         {
             string script =
@@ -572,7 +570,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ForEachLoopWithBreak()
         {
             string script =
@@ -615,7 +613,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(12));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ForEachLoop()
         {
             string script =
@@ -654,7 +652,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(42));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void LengthOperator()
         {
             string script =
@@ -674,7 +672,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ForLoopWithBreakAndScopeCheck()
         {
             string script =
@@ -700,7 +698,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FactorialWithOneReturn()
         {
             string script =
@@ -721,7 +719,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VeryBasic()
         {
             string script = @"return 7";
@@ -732,7 +730,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(7));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence1()
         {
             string script = @"return 1+2*3";
@@ -744,7 +742,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(7));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence2()
         {
             string script = @"return 2*3+1";
@@ -755,7 +753,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(7));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorAssociativity()
         {
             string script = @"return 2^3^2";
@@ -766,7 +764,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(512));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence3()
         {
             string script = @"return 5-3-2";
@@ -778,7 +776,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence4()
         {
             string script = @"return 3 + -1";
@@ -790,7 +788,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(2));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence5()
         {
             string script = @"return 3 * -1 + 5 * 3";
@@ -802,7 +800,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(12));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence6()
         {
             string script = @"return -2^2";
@@ -814,7 +812,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(-4));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedence7()
         {
             string script = @"return -7 / 0.5";
@@ -826,7 +824,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(-14));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorPrecedenceAndAssociativity()
         {
             string script = @"return 5+3*7-2*5+2^3^2";
@@ -837,7 +835,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(528));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void OperatorParenthesis()
         {
             string script = @"return (5+3)*7-2*5+(2^3)^2";
@@ -848,7 +846,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(110));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void GlobalVarAssignment()
         {
             string script = @"x = 1; return x;";
@@ -859,7 +857,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TupleAssignment1()
         {
             string script =
@@ -882,7 +880,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(6));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IterativeFactorialWithWhile()
         {
             string script =
@@ -904,7 +902,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IterativeFactorialWithRepeatUntilAndScopeCheck()
         {
             string script =
@@ -928,7 +926,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SimpleForLoop()
         {
             string script =
@@ -947,7 +945,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(6.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SimpleFunc()
         {
             string script =
@@ -964,7 +962,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(3));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IterativeFactorialWithFor()
         {
             string script =
@@ -987,7 +985,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(120.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void LocalFunctionsObscureScopeRule()
         {
             string script =
@@ -1004,7 +1002,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.Function));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FunctionWithStringArg2()
         {
             string script =
@@ -1026,7 +1024,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("ciao"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FunctionWithStringArg()
         {
             string script =
@@ -1048,7 +1046,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("ciao"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void FunctionWithTableArg()
         {
             string script =
@@ -1069,7 +1067,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Type, Is.EqualTo(DataType.Table));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TupleAssignment2()
         {
             string script =
@@ -1094,7 +1092,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void LoopWithReturn()
         {
             string script =
@@ -1110,7 +1108,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue res = Script.RunString(script);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IfWithLongExpr()
         {
             string script =
@@ -1128,7 +1126,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue res = Script.RunString(script);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void IfWithLongExprTbl()
         {
             string script =
@@ -1149,7 +1147,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             DynValue res = Script.RunString(script);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ExpressionReducesTuples()
         {
             string script =
@@ -1168,7 +1166,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ExpressionReducesTuples2()
         {
             string script =
@@ -1186,7 +1184,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple.Length, Is.EqualTo(4));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ArgsDoNotChange()
         {
             string script =
@@ -1214,7 +1212,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsNoError()
         {
             string script =
@@ -1236,7 +1234,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsSum()
         {
             string script =
@@ -1261,7 +1259,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsSum2()
         {
             string script =
@@ -1286,7 +1284,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(50));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsSumTb()
         {
             string script =
@@ -1311,7 +1309,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SwapPattern()
         {
             string script =
@@ -1335,7 +1333,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SwapPatternGlobal()
         {
             string script =
@@ -1359,7 +1357,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void EnvTestSuite()
         {
             string script =
@@ -1414,7 +1412,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(t.Get("T6").Number, Is.EqualTo(3), "T6-Val");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TupleToOperator()
         {
             string script =
@@ -1433,7 +1431,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Boolean, Is.EqualTo(true));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void LiteralExpands()
         {
             string script =
@@ -1449,7 +1447,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.String, Is.EqualTo("aABCz"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void HomonymArguments()
         {
             string script =
@@ -1466,7 +1464,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(3));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsSumMainChunk()
         {
             string script =
@@ -1489,7 +1487,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(res.Number, Is.EqualTo(10));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void VarArgsInNoVarArgsReturnsError()
         {
             string script =
@@ -1511,7 +1509,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void HexFloats1()
         {
             string script = "return 0x0.1E";
@@ -1519,7 +1517,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(result.Number, Is.EqualTo((double)0x1E / (double)0x100));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void HexFloats2()
         {
             string script = "return 0xA23p-4";
@@ -1527,7 +1525,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(result.Number, Is.EqualTo((double)0xA23 / 16.0));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void HexFloats3()
         {
             string script = "return 0X1.921FB54442D18P+1";
@@ -1538,7 +1536,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SimpleDelegateInterop1()
         {
             int a = 3;
@@ -1547,7 +1545,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             Assert.That(a, Is.EqualTo(5));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SimpleDelegateInterop2()
         {
             IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
@@ -1567,7 +1565,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             }
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void MissingArgsDefaultToNil()
         {
             Script s = new(default(CoreModules));
@@ -1582,7 +1580,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ParsingTest()
         {
             Script s = new(default(CoreModules));
@@ -1613,7 +1611,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
             );
         }
 
-        //		[Test]
+        //		[global::TUnit.Core.Test]
         //		public void TestModulesLoadingWithoutCrash()
         //		{
         //#if !PCL
@@ -1630,7 +1628,7 @@ namespace NovaSharp.Interpreter.Tests.EndToEnd
         //#endif
         //		}
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void NumericConversionFailsIfOutOfBounds()
         {
             Script s = new()
