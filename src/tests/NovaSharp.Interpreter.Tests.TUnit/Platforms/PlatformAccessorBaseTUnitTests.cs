@@ -1,21 +1,20 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
 {
     using System;
     using System.IO;
     using System.Text;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
-    using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [PlatformDetectorIsolation]
-    public sealed class PlatformAccessorBaseTests
+    public sealed class PlatformAccessorBaseTUnitTests
     {
-        [Test]
-        public void GetPlatformNameIncludesMonoClr2Suffix()
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNameIncludesMonoClr2Suffix()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: false,
@@ -29,18 +28,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestPlatformAccessor accessor = new("testprefix");
             string name = accessor.GetPlatformName();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(name, Does.StartWith("testprefix."));
-                Assert.That(name, Does.Contain(".mono"));
-                Assert.That(name, Does.Contain(".clr2"));
-                Assert.That(name, Does.Not.Contain(".portable"));
-                Assert.That(name, Does.Not.Contain(".aot"));
-            });
+            await Assert.That(name).StartsWith("testprefix.");
+            await Assert.That(name).Contains(".mono");
+            await Assert.That(name).Contains(".clr2");
+            await Assert.That(name).DoesNotContain(".portable");
+            await Assert.That(name).DoesNotContain(".aot");
         }
 
-        [Test]
-        public void GetPlatformNameIncludesUnityNativeMetadata()
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNameIncludesUnityNativeMetadata()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: true,
@@ -54,17 +50,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestPlatformAccessor accessor = new("unityprefix");
             string name = accessor.GetPlatformName();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(name, Does.Contain("unityprefix.unity.unknownhw.unknown"));
-                Assert.That(name, Does.Contain(".portable"));
-                Assert.That(name, Does.Contain(".clr4"));
-                Assert.That(name, Does.Contain(".aot"));
-            });
+            await Assert.That(name).Contains("unityprefix.unity.unknownhw.unknown");
+            await Assert.That(name).Contains(".portable");
+            await Assert.That(name).Contains(".clr4");
+            await Assert.That(name).Contains(".aot");
         }
 
-        [Test]
-        public void GetPlatformNameUsesUnityDllMonoWhenNotNative()
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNameUsesUnityDllMonoWhenNotNative()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: true,
@@ -78,17 +71,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestPlatformAccessor accessor = new("mono-unity");
             string name = accessor.GetPlatformName();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
-                Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
-                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.True);
-                Assert.That(name, Does.Contain("mono-unity.unity.dll.mono"));
-            });
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsUnityNative).IsFalse();
+            await Assert.That(PlatformAutoDetector.IsRunningOnMono).IsTrue();
+            await Assert.That(name).Contains("mono-unity.unity.dll.mono");
         }
 
-        [Test]
-        public void GetPlatformNameUsesUnityDllUnknownWhenNotMono()
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNameUsesUnityDllUnknownWhenNotMono()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: true,
@@ -102,17 +92,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestPlatformAccessor accessor = new("unknown-unity");
             string name = accessor.GetPlatformName();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(PlatformAutoDetector.IsRunningOnUnity, Is.True);
-                Assert.That(PlatformAutoDetector.IsUnityNative, Is.False);
-                Assert.That(PlatformAutoDetector.IsRunningOnMono, Is.False);
-                Assert.That(name, Does.Contain("unknown-unity.unity.dll.unknown"));
-            });
+            await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
+            await Assert.That(PlatformAutoDetector.IsUnityNative).IsFalse();
+            await Assert.That(PlatformAutoDetector.IsRunningOnMono).IsFalse();
+            await Assert.That(name).Contains("unknown-unity.unity.dll.unknown");
         }
 
-        [Test]
-        public void GetPlatformNameFallsBackToDotnetWhenNotUnityOrMono()
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNameFallsBackToDotnetWhenNotUnityOrMono()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: false,
@@ -126,36 +113,33 @@ namespace NovaSharp.Interpreter.Tests.Units
             TestPlatformAccessor accessor = new("managed");
             string name = accessor.GetPlatformName();
 
-            Assert.That(name, Does.Contain(".dotnet"));
+            await Assert.That(name).Contains(".dotnet");
         }
 
-        [Test]
-        public void DefaultInputWithPromptCallsObsoleteOverload()
+        [global::TUnit.Core.Test]
+        public async Task DefaultInputWithPromptCallsObsoleteOverload()
         {
             TestPlatformAccessor accessor = new("input");
             accessor.DefaultInputResult = "line";
 
             string result = accessor.DefaultInput("prompt> ");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(accessor.ObsoleteDefaultInputInvocations, Is.EqualTo(1));
-                Assert.That(result, Is.EqualTo("line"));
-            });
+            await Assert.That(accessor.ObsoleteDefaultInputInvocations).IsEqualTo(1);
+            await Assert.That(result).IsEqualTo("line");
         }
 
-        [Test]
-        public void DefaultInputReturnsNullForBaseImplementation()
+        [global::TUnit.Core.Test]
+        public async Task DefaultInputReturnsNullForBaseImplementation()
         {
             BaseDefaultInputAccessor accessor = new("base");
 
             string result = accessor.DefaultInput("prompt> ");
 
-            Assert.That(result, Is.Null);
+            await Assert.That(result).IsNull();
         }
 
-        [Test]
-        public void IsRunningOnAotReflectsDetectorFlag()
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotReflectsDetectorFlag()
         {
             using PlatformFlagScope scope = PlatformFlagScope.Override(
                 unity: false,
@@ -167,7 +151,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             TestPlatformAccessor accessor = new("aot");
-            Assert.That(accessor.IsRunningOnAOT(), Is.True);
+            await Assert.That(accessor.IsRunningOnAOT()).IsTrue();
         }
 
         private sealed class TestPlatformAccessor : PlatformAccessorBase

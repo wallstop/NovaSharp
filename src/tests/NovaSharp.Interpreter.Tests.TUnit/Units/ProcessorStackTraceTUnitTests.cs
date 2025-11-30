@@ -1,20 +1,19 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Linq;
-    using NovaSharp;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ProcessorStackTraceTests
+    public sealed class ProcessorStackTraceTUnitTests
     {
-        [Test]
-        public void CoroutineStackTraceIncludesCurrentFrames()
+        [global::TUnit.Core.Test]
+        public async Task CoroutineStackTraceIncludesCurrentFrames()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -37,7 +36,9 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("level1"));
 
             coroutineValue.Coroutine.Resume();
-            Assert.That(coroutineValue.Coroutine.State, Is.EqualTo(CoroutineState.Suspended));
+            await Assert
+                .That(coroutineValue.Coroutine.State)
+                .IsEqualTo(CoroutineState.Suspended);
 
             WatchItem[] stack = coroutineValue.Coroutine.GetStackTrace(0);
             string[] frameNames = stack
@@ -45,16 +46,19 @@ namespace NovaSharp.Interpreter.Tests.Units
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToArray();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level3")), Is.True);
-                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level2")), Is.True);
-                Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level1")), Is.True);
-            });
+            await Assert
+                .That(frameNames.Any(name => ContainsOrdinal(name, "level3")))
+                .IsTrue();
+            await Assert
+                .That(frameNames.Any(name => ContainsOrdinal(name, "level2")))
+                .IsTrue();
+            await Assert
+                .That(frameNames.Any(name => ContainsOrdinal(name, "level1")))
+                .IsTrue();
         }
 
-        [Test]
-        public void InterpreterExceptionIncludesCallStackFrames()
+        [global::TUnit.Core.Test]
+        public async Task InterpreterExceptionIncludesCallStackFrames()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -74,29 +78,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             "
             );
 
-            InterpreterException captured = null;
+            InterpreterException exception = Assert.Throws<InterpreterException>(() =>
+                script.Call(script.Globals.Get("level1"))
+            );
 
-            try
-            {
-                script.Call(script.Globals.Get("level1"));
-            }
-            catch (InterpreterException ex)
-            {
-                captured = ex;
-            }
-
-            Assert.That(captured, Is.Not.Null, "Expected InterpreterException");
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(captured.CallStack, Is.Not.Null);
-                Assert.That(captured.CallStack.Count, Is.GreaterThanOrEqualTo(3));
-                bool hasLevel3 = captured
-                    .CallStack.Select(w => w.Name)
-                    .Where(n => !string.IsNullOrEmpty(n))
-                    .Any(n => ContainsOrdinal(n, "level3"));
-                Assert.That(hasLevel3, Is.True);
-            });
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception.CallStack).IsNotNull();
+            await Assert.That(exception.CallStack.Count).IsGreaterThanOrEqualTo(3);
+            bool hasLevel3 = exception
+                .CallStack.Select(w => w.Name)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Any(n => ContainsOrdinal(n, "level3"));
+            await Assert.That(hasLevel3).IsTrue();
         }
 
         private static bool ContainsOrdinal(string text, string value)

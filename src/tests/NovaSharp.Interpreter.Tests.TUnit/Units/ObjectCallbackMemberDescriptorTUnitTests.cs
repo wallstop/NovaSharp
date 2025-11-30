@@ -1,50 +1,51 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ObjectCallbackMemberDescriptorTests
+    public sealed class ObjectCallbackMemberDescriptorTUnitTests
     {
         private static readonly CallbackArguments NoOpArgs = new CallbackArguments(
             new List<DynValue> { DynValue.NewNumber(1), DynValue.NewNumber(2) },
             false
         );
 
-        [Test]
-        public void ExecuteReturnsCallbackResult()
+        [global::TUnit.Core.Test]
+        public async Task ExecuteReturnsCallbackResult()
         {
             Script script = new();
             int invocationCount = 0;
+            object capturedObject = null;
+            int capturedArgCount = 0;
             ObjectCallbackMemberDescriptor descriptor = new(
                 "Echo",
                 (obj, ctx, args) =>
                 {
                     invocationCount++;
-                    Assert.That(obj, Is.EqualTo("host"));
-                    Assert.That(args.Count, Is.EqualTo(2));
+                    capturedObject = obj;
+                    capturedArgCount = args?.Count ?? 0;
                     return DynValue.NewNumber(42);
                 }
             );
 
             DynValue result = descriptor.Execute(script, "host", context: null, NoOpArgs);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(invocationCount, Is.EqualTo(1));
-                Assert.That(result.Type, Is.EqualTo(DataType.Number));
-                Assert.That(result.Number, Is.EqualTo(42));
-            });
+            await Assert.That(invocationCount).IsEqualTo(1);
+            await Assert.That(capturedObject).IsEqualTo("host");
+            await Assert.That(capturedArgCount).IsEqualTo(2);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
-        [Test]
-        public void ExecuteReturnsVoidWhenCallbackMissing()
+        [global::TUnit.Core.Test]
+        public async Task ExecuteReturnsVoidWhenCallbackMissing()
         {
             Script script = new();
             ObjectCallbackMemberDescriptor descriptor = new(
@@ -55,7 +56,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = descriptor.Execute(script, new object(), null, NoOpArgs);
 
-            Assert.That(result.Type, Is.EqualTo(DataType.Void));
+            await Assert.That(result.Type).IsEqualTo(DataType.Void);
         }
     }
 }

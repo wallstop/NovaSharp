@@ -1,28 +1,28 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class PermanentRegistrationPolicyTests
+    public sealed class PermanentRegistrationPolicyTUnitTests
     {
-        [Test]
-        public void HandleRegistrationReturnsNewDescriptorWhenNoExistingDescriptor()
+        [global::TUnit.Core.Test]
+        public async Task HandleRegistrationReturnsNewDescriptorWhenNoExistingDescriptor()
         {
             PermanentRegistrationPolicy policy = new PermanentRegistrationPolicy();
             IUserDataDescriptor newDescriptor = new StubDescriptor(typeof(string));
 
             IUserDataDescriptor result = policy.HandleRegistration(newDescriptor, null);
 
-            Assert.That(result, Is.EqualTo(newDescriptor));
+            await Assert.That(result).IsEqualTo(newDescriptor);
         }
 
-        [Test]
-        public void HandleRegistrationKeepsExistingDescriptor()
+        [global::TUnit.Core.Test]
+        public async Task HandleRegistrationKeepsExistingDescriptor()
         {
             PermanentRegistrationPolicy policy = new PermanentRegistrationPolicy();
             IUserDataDescriptor newDescriptor = new StubDescriptor(typeof(string));
@@ -30,26 +30,26 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IUserDataDescriptor result = policy.HandleRegistration(newDescriptor, existing);
 
-            Assert.That(result, Is.EqualTo(existing));
+            await Assert.That(result).IsEqualTo(existing);
         }
 
-        [Test]
-        public void HandleRegistrationWithNullNewDescriptorKeepsExisting()
+        [global::TUnit.Core.Test]
+        public async Task HandleRegistrationWithNullNewDescriptorKeepsExisting()
         {
             PermanentRegistrationPolicy policy = new PermanentRegistrationPolicy();
             IUserDataDescriptor existing = new StubDescriptor(typeof(int));
 
             IUserDataDescriptor result = policy.HandleRegistration(null, existing);
 
-            Assert.That(result, Is.EqualTo(existing));
+            await Assert.That(result).IsEqualTo(existing);
         }
 
-        [Test]
-        public void AllowTypeAutoRegistrationAlwaysReturnsFalse()
+        [global::TUnit.Core.Test]
+        public async Task AllowTypeAutoRegistrationAlwaysReturnsFalse()
         {
             PermanentRegistrationPolicy policy = new PermanentRegistrationPolicy();
 
-            Assert.That(policy.AllowTypeAutoRegistration(typeof(object)), Is.False);
+            await Assert.That(policy.AllowTypeAutoRegistration(typeof(object))).IsFalse();
         }
 
         private sealed class StubDescriptor : IUserDataDescriptor
