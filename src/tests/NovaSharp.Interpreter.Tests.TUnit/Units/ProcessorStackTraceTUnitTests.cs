@@ -36,9 +36,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("level1"));
 
             coroutineValue.Coroutine.Resume();
-            await Assert
-                .That(coroutineValue.Coroutine.State)
-                .IsEqualTo(CoroutineState.Suspended);
+            await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Suspended);
 
             WatchItem[] stack = coroutineValue.Coroutine.GetStackTrace(0);
             string[] frameNames = stack
@@ -46,15 +44,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToArray();
 
-            await Assert
-                .That(frameNames.Any(name => ContainsOrdinal(name, "level3")))
-                .IsTrue();
-            await Assert
-                .That(frameNames.Any(name => ContainsOrdinal(name, "level2")))
-                .IsTrue();
-            await Assert
-                .That(frameNames.Any(name => ContainsOrdinal(name, "level1")))
-                .IsTrue();
+            await Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level3"))).IsTrue();
+            await Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level2"))).IsTrue();
+            await Assert.That(frameNames.Any(name => ContainsOrdinal(name, "level1"))).IsTrue();
         }
 
         [global::TUnit.Core.Test]
