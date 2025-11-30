@@ -1,24 +1,26 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Interpreter.Tests.Units;
     using NovaSharp.Interpreter.Tree.Expressions;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
     using Expression = NovaSharp.Interpreter.Tree.Expression;
 
-    [TestFixture]
-    public sealed class BinaryOperatorExpressionTests
+    public sealed class BinaryOperatorExpressionTUnitTests
     {
-        [Test]
-        public void OrShortCircuitsWhenFirstOperandIsTruthy()
+        [global::TUnit.Core.Test]
+        public async Task OrShortCircuitsWhenFirstOperandIsTruthy()
         {
-            Script script = new Script();
+            Script script = new();
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -35,18 +37,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Boolean, Is.True);
-                Assert.That(rhsStub, Is.Not.Null);
-                Assert.That(rhsStub.EvalCount, Is.Zero);
-            });
+            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(rhsStub).IsNotNull();
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(0);
         }
 
-        [Test]
-        public void OrEvaluatesSecondOperandWhenFirstIsFalsey()
+        [global::TUnit.Core.Test]
+        public async Task OrEvaluatesSecondOperandWhenFirstIsFalsey()
         {
-            Script script = new Script();
+            Script script = new();
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -63,18 +62,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Number, Is.EqualTo(42));
-                Assert.That(rhsStub, Is.Not.Null);
-                Assert.That(rhsStub.EvalCount, Is.EqualTo(1));
-            });
+            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(rhsStub).IsNotNull();
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(1);
         }
 
-        [Test]
-        public void AndShortCircuitsWhenFirstOperandIsFalsey()
+        [global::TUnit.Core.Test]
+        public async Task AndShortCircuitsWhenFirstOperandIsFalsey()
         {
-            Script script = new Script();
+            Script script = new();
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -91,18 +87,15 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsNil(), Is.True);
-                Assert.That(rhsStub, Is.Not.Null);
-                Assert.That(rhsStub.EvalCount, Is.Zero);
-            });
+            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(rhsStub).IsNotNull();
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(0);
         }
 
-        [Test]
-        public void AndEvaluatesSecondOperandWhenFirstIsTruthy()
+        [global::TUnit.Core.Test]
+        public async Task AndEvaluatesSecondOperandWhenFirstIsTruthy()
         {
-            Script script = new Script();
+            Script script = new();
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -119,16 +112,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Number, Is.EqualTo(1337));
-                Assert.That(rhsStub, Is.Not.Null);
-                Assert.That(rhsStub.EvalCount, Is.EqualTo(1));
-            });
+            await Assert.That(result.Number).IsEqualTo(1337d);
+            await Assert.That(rhsStub).IsNotNull();
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(1);
         }
 
-        [Test]
-        public void ModuloNormalizesNegativeRemainders()
+        [global::TUnit.Core.Test]
+        public async Task ModuloNormalizesNegativeRemainders()
         {
             Script script = new();
 
@@ -142,11 +132,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(1));
+            await Assert.That(result.Number).IsEqualTo(1d);
         }
 
-        [Test]
-        public void FloorDivisionUsesFlooredQuotient()
+        [global::TUnit.Core.Test]
+        public async Task FloorDivisionUsesFlooredQuotient()
         {
             Script script = new();
 
@@ -160,11 +150,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(-3));
+            await Assert.That(result.Number).IsEqualTo(-3d);
         }
 
-        [Test]
-        public void BitwiseAndReturnsIntegerResult()
+        [global::TUnit.Core.Test]
+        public async Task BitwiseAndReturnsIntegerResult()
         {
             Script script = new();
 
@@ -178,11 +168,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.Zero);
+            await Assert.That(result.Number).IsEqualTo(0d);
         }
 
-        [Test]
-        public void AdditionHasHigherPrecedenceThanShiftOperators()
+        [global::TUnit.Core.Test]
+        public async Task AdditionHasHigherPrecedenceThanShiftOperators()
         {
             Script script = new();
             DynValue[] operands = new DynValue[]
@@ -201,11 +191,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(6));
+            await Assert.That(result.Number).IsEqualTo(6d);
         }
 
-        [Test]
-        public void ArithmeticFailsWhenOperandsAreNotNumbers()
+        [global::TUnit.Core.Test]
+        public async Task ArithmeticFailsWhenOperandsAreNotNumbers()
         {
             Script script = new();
 
@@ -217,13 +207,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
             );
 
-            Assert.Throws<DynamicExpressionException>(() =>
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("arithmetic");
         }
 
-        [Test]
-        public void ConcatThrowsOnNonStringOperands()
+        [global::TUnit.Core.Test]
+        public async Task ConcatThrowsOnNonStringOperands()
         {
             Script script = new();
 
@@ -235,13 +227,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewString("value"))
             );
 
-            Assert.Throws<DynamicExpressionException>(() =>
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("concatenation");
         }
 
-        [Test]
-        public void LessThanSupportsStringComparison()
+        [global::TUnit.Core.Test]
+        public async Task LessThanSupportsStringComparison()
         {
             Script script = new();
 
@@ -255,11 +249,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void LessOrEqualSupportsStringComparison()
+        [global::TUnit.Core.Test]
+        public async Task LessOrEqualSupportsStringComparison()
         {
             Script script = new();
 
@@ -273,11 +267,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void LessThanThrowsOnMismatchedTypes()
+        [global::TUnit.Core.Test]
+        public async Task LessThanThrowsOnMismatchedTypes()
         {
             Script script = new();
 
@@ -289,13 +283,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewNumber(5))
             );
 
-            Assert.Throws<DynamicExpressionException>(() =>
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("compare");
         }
 
-        [Test]
-        public void EqualityTreatsNilAndVoidCombinationAsEqual()
+        [global::TUnit.Core.Test]
+        public async Task EqualityTreatsNilAndVoidCombinationAsEqual()
         {
             Script script = new();
 
@@ -309,11 +305,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void EqualityReturnsFalseWhenNumbersDiffer()
+        [global::TUnit.Core.Test]
+        public async Task EqualityReturnsFalseWhenNumbersDiffer()
         {
             Script script = new();
 
@@ -327,16 +323,17 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.False);
+            await Assert.That(result.Boolean).IsFalse();
         }
 
-        [TestCase(TokenType.OpMinusOrSub, "-", OpCode.Sub)]
-        [TestCase(TokenType.OpMul, "*", OpCode.Mul)]
-        [TestCase(TokenType.OpDiv, "/", OpCode.Div)]
-        [TestCase(TokenType.OpMod, "%", OpCode.Mod)]
-        [TestCase(TokenType.OpPwr, "^", OpCode.Power)]
-        [TestCase(TokenType.OpConcat, "..", OpCode.Concat)]
-        public void CompileEmitsExpectedOpCodeForArithmeticOperators(
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments((int)TokenType.OpMinusOrSub, "-", (int)OpCode.Sub)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpMul, "*", (int)OpCode.Mul)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpDiv, "/", (int)OpCode.Div)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpMod, "%", (int)OpCode.Mod)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpPwr, "^", (int)OpCode.Power)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpConcat, "..", (int)OpCode.Concat)]
+        public async Task CompileEmitsExpectedOpCodeForArithmeticOperators(
             int tokenTypeValue,
             string tokenText,
             int expectedOpCodeValue
@@ -344,6 +341,7 @@ namespace NovaSharp.Interpreter.Tests.Units
         {
             TokenType tokenType = (TokenType)tokenTypeValue;
             OpCode expectedOpCode = (OpCode)expectedOpCodeValue;
+
             Script script = new();
 
             Expression expr = BuildBinaryExpression(
@@ -357,14 +355,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
-            Assert.That(
-                byteCode.Code.ToArray().Select(i => i.OpCode),
-                Does.Contain(expectedOpCode)
-            );
+            bool contains = byteCode.Code.Any(i => i.OpCode == expectedOpCode);
+            await Assert.That(contains).IsTrue();
         }
 
-        [Test]
-        public void ParsingUnexpectedOperatorThrows()
+        [global::TUnit.Core.Test]
+        public async Task ParsingUnexpectedOperatorThrows()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -374,16 +370,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new LiteralExpression(context, DynValue.NewNumber(1))
             );
 
-            Assert.Throws<InternalErrorException>(() =>
+            InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 BinaryOperatorExpression.AddOperatorToChain(
                     chain,
                     CreateToken(TokenType.Comma, ",")
                 )
             );
+
+            await Assert.That(exception.Message).Contains("Unexpected");
         }
 
-        [Test]
-        public void EqualityReturnsFalseForMismatchedTypes()
+        [global::TUnit.Core.Test]
+        public async Task EqualityReturnsFalseForMismatchedTypes()
         {
             Script script = new();
 
@@ -397,11 +395,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.False);
+            await Assert.That(result.Boolean).IsFalse();
         }
 
-        [Test]
-        public void ArithmeticOperationsReturnExpectedResult()
+        [global::TUnit.Core.Test]
+        public async Task ArithmeticOperationsReturnExpectedResult()
         {
             Script script = new Script();
 
@@ -415,11 +413,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(10));
+            await Assert.That(result.Number).IsEqualTo(10d);
         }
 
-        [Test]
-        public void ModuloProducesPositiveResult()
+        [global::TUnit.Core.Test]
+        public async Task ModuloProducesPositiveResult()
         {
             Script script = new Script();
 
@@ -433,27 +431,29 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(1));
+            await Assert.That(result.Number).IsEqualTo(1d);
         }
 
-        [TestCase((int)TokenType.OpAdd, "+", 4, 6, 10)]
-        [TestCase((int)TokenType.OpMinusOrSub, "-", 9, 3, 6)]
-        [TestCase((int)TokenType.OpMul, "*", 7, 8, 56)]
-        [TestCase((int)TokenType.OpDiv, "/", 9, 3, 3)]
-        [TestCase((int)TokenType.OpPwr, "^", 2, 3, 8)]
-        public void ArithmeticOperatorsProduceExpectedNumbers(
-            int tokenType,
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments((int)TokenType.OpAdd, "+", 4d, 6d, 10d)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpMinusOrSub, "-", 9d, 3d, 6d)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpMul, "*", 7d, 8d, 56d)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpDiv, "/", 9d, 3d, 3d)]
+        [global::TUnit.Core.Arguments((int)TokenType.OpPwr, "^", 2d, 3d, 8d)]
+        public async Task ArithmeticOperatorsProduceExpectedNumbers(
+            int tokenTypeValue,
             string tokenText,
             double left,
             double right,
             double expected
         )
         {
+            TokenType tokenType = (TokenType)tokenTypeValue;
+
             Script script = new();
-            TokenType parsedType = (TokenType)tokenType;
             Expression expr = BuildBinaryExpression(
                 script,
-                parsedType,
+                tokenType,
                 tokenText,
                 ctx => new LiteralExpression(ctx, DynValue.NewNumber(left)),
                 ctx => new LiteralExpression(ctx, DynValue.NewNumber(right))
@@ -461,11 +461,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             double result = expr.Eval(TestHelpers.CreateExecutionContext(script)).Number;
 
-            Assert.That(result, Is.EqualTo(expected));
+            await Assert.That(result).IsEqualTo(expected);
         }
 
-        [Test]
-        public void ArithmeticThrowsOnNonNumericOperands()
+        [global::TUnit.Core.Test]
+        public async Task ArithmeticThrowsOnNonNumericOperands()
         {
             Script script = new Script();
 
@@ -477,14 +477,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
             );
 
-            Assert.That(
-                () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
-                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("arithmetic")
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("arithmetic");
         }
 
-        [Test]
-        public void ConcatenationCombinesStrings()
+        [global::TUnit.Core.Test]
+        public async Task ConcatenationCombinesStrings()
         {
             Script script = new Script();
 
@@ -498,11 +499,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.String, Is.EqualTo("LuaSharp"));
+            await Assert.That(result.String).IsEqualTo("LuaSharp");
         }
 
-        [Test]
-        public void ConcatenationThrowsForNonStringOperands()
+        [global::TUnit.Core.Test]
+        public async Task ConcatenationThrowsForNonStringOperands()
         {
             Script script = new Script();
 
@@ -514,14 +515,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewTable(ctx.Script))
             );
 
-            Assert.That(
-                () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
-                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("concatenation")
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("concatenation");
         }
 
-        [Test]
-        public void ComparisonEvaluatesNumericOrdering()
+        [global::TUnit.Core.Test]
+        public async Task ComparisonEvaluatesNumericOrdering()
         {
             Script script = new Script();
 
@@ -535,11 +537,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void ComparisonSupportsGreaterThan()
+        [global::TUnit.Core.Test]
+        public async Task ComparisonSupportsGreaterThan()
         {
             Script script = new Script();
 
@@ -553,11 +555,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void StringLessComparisonUsesLexicographicalOrdering()
+        [global::TUnit.Core.Test]
+        public async Task StringLessComparisonUsesLexicographicalOrdering()
         {
             Script script = new Script();
 
@@ -571,11 +573,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void StringLessOrEqualTreatsEqualStringsAsTrue()
+        [global::TUnit.Core.Test]
+        public async Task StringLessOrEqualTreatsEqualStringsAsTrue()
         {
             Script script = new Script();
 
@@ -589,11 +591,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void EqualityTreatsNilAndVoidAsEqual()
+        [global::TUnit.Core.Test]
+        public async Task EqualityTreatsNilAndVoidAsEqual()
         {
             Script script = new Script();
 
@@ -607,11 +609,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void EqualityReturnsTrueForSharedDynValueReference()
+        [global::TUnit.Core.Test]
+        public async Task EqualityReturnsTrueForSharedDynValueReference()
         {
             Script script = new Script();
             DynValue shared = DynValue.NewTable(script);
@@ -626,11 +628,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void GreaterOrEqualComparisonReturnsTrueForEqualNumbers()
+        [global::TUnit.Core.Test]
+        public async Task GreaterOrEqualComparisonReturnsTrueForEqualNumbers()
         {
             Script script = new Script();
 
@@ -644,11 +646,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void ComparisonThrowsForMismatchedTypes()
+        [global::TUnit.Core.Test]
+        public async Task ComparisonThrowsForMismatchedTypes()
         {
             Script script = new Script();
 
@@ -660,14 +662,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewString("x"))
             );
 
-            Assert.That(
-                () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
-                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("compare")
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("compare");
         }
 
-        [Test]
-        public void LessComparisonSupportsStrings()
+        [global::TUnit.Core.Test]
+        public async Task LessComparisonSupportsStrings()
         {
             Script script = new();
 
@@ -681,11 +684,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void GreaterComparisonUsesInvertedLessOrEqualResult()
+        [global::TUnit.Core.Test]
+        public async Task GreaterComparisonUsesInvertedLessOrEqualResult()
         {
             Script script = new();
 
@@ -699,11 +702,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void LessOrEqualThrowsForMismatchedTypes()
+        [global::TUnit.Core.Test]
+        public async Task LessOrEqualThrowsForMismatchedTypes()
         {
             Script script = new();
 
@@ -715,14 +718,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ctx => new LiteralExpression(ctx, DynValue.NewString("x"))
             );
 
-            Assert.That(
-                () => expr.Eval(TestHelpers.CreateExecutionContext(script)),
-                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("compare")
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("compare");
         }
 
-        [Test]
-        public void EqualityHandlesNilAndVoidEquivalence()
+        [global::TUnit.Core.Test]
+        public async Task EqualityHandlesNilAndVoidEquivalence()
         {
             Script script = new();
             Expression expr = BuildBinaryExpression(
@@ -735,11 +739,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Boolean, Is.True);
+            await Assert.That(result.Boolean).IsTrue();
         }
 
-        [Test]
-        public void PowerOperatorIsRightAssociative()
+        [global::TUnit.Core.Test]
+        public async Task PowerOperatorIsRightAssociative()
         {
             Script script = new Script();
 
@@ -751,11 +755,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(Math.Pow(2, Math.Pow(3, 2))));
+            await Assert.That(result.Number).IsEqualTo(Math.Pow(2, Math.Pow(3, 2)));
         }
 
-        [Test]
-        public void CreatePowerExpressionBuildsExponentNode()
+        [global::TUnit.Core.Test]
+        public async Task CreatePowerExpressionBuildsExponentNode()
         {
             Script script = new Script();
             ScriptLoadingContext ctx = new(script);
@@ -768,11 +772,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(32));
+            await Assert.That(result.Number).IsEqualTo(32d);
         }
 
-        [Test]
-        public void MultiplicationHasHigherPrecedenceThanAddition()
+        [global::TUnit.Core.Test]
+        public async Task MultiplicationHasHigherPrecedenceThanAddition()
         {
             Script script = new Script();
 
@@ -784,11 +788,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            Assert.That(result.Number, Is.EqualTo(7));
+            await Assert.That(result.Number).IsEqualTo(7d);
         }
 
-        [Test]
-        public void CompileOrEmitsShortCircuitJump()
+        [global::TUnit.Core.Test]
+        public async Task CompileOrEmitsShortCircuitJump()
         {
             Script script = new Script();
 
@@ -803,18 +807,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(byteCode.Code[0].OpCode, Is.EqualTo(OpCode.Literal));
-                Instruction jump = byteCode.Code[1];
-                Assert.That(jump.OpCode, Is.EqualTo(OpCode.JtOrPop));
-                Assert.That(jump.NumVal, Is.EqualTo(byteCode.Code.Count));
-                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.Literal));
-            });
+            Instruction[] instructions = byteCode.Code.ToArray();
+            Instruction jump = instructions[1];
+
+            await Assert.That(instructions[0].OpCode).IsEqualTo(OpCode.Literal);
+            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JtOrPop);
+            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length);
+            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.Literal);
         }
 
-        [Test]
-        public void CompileAndEmitsShortCircuitJump()
+        [global::TUnit.Core.Test]
+        public async Task CompileAndEmitsShortCircuitJump()
         {
             Script script = new Script();
 
@@ -829,18 +832,17 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(byteCode.Code[0].OpCode, Is.EqualTo(OpCode.Literal));
-                Instruction jump = byteCode.Code[1];
-                Assert.That(jump.OpCode, Is.EqualTo(OpCode.JfOrPop));
-                Assert.That(jump.NumVal, Is.EqualTo(byteCode.Code.Count));
-                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.Literal));
-            });
+            Instruction[] instructions = byteCode.Code.ToArray();
+            Instruction jump = instructions[1];
+
+            await Assert.That(instructions[0].OpCode).IsEqualTo(OpCode.Literal);
+            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JfOrPop);
+            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length);
+            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.Literal);
         }
 
-        [Test]
-        public void CompileGreaterThanInvertsComparisonResult()
+        [global::TUnit.Core.Test]
+        public async Task CompileGreaterThanInvertsComparisonResult()
         {
             Script script = new Script();
 
@@ -855,16 +857,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode byteCode = new(script);
             expr.Compile(byteCode);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(byteCode.Code[2].OpCode, Is.EqualTo(OpCode.LessEq));
-                Assert.That(byteCode.Code[3].OpCode, Is.EqualTo(OpCode.CNot));
-                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(OpCode.Not));
-            });
+            Instruction[] instructions = byteCode.Code.ToArray();
+
+            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.LessEq);
+            await Assert.That(instructions[3].OpCode).IsEqualTo(OpCode.CNot);
+            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not);
         }
 
-        [Test]
-        public void CompileArithmeticAndConcatEmitsExpectedOpcode()
+        [global::TUnit.Core.Test]
+        public async Task CompileArithmeticAndConcatEmitsExpectedOpcode()
         {
             Script script = new Script();
             (TokenType TokenType, string Text, bool OperandsAreStrings, OpCode OpCode)[] cases =
@@ -904,12 +905,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 ByteCode byteCode = new(script);
                 expr.Compile(byteCode);
 
-                Assert.That(byteCode.Code[^1].OpCode, Is.EqualTo(expectedOpCode), tokenText);
+                OpCode actual = byteCode.Code[^1].OpCode;
+                await Assert.That(actual).IsEqualTo(expectedOpCode);
             }
         }
 
-        [Test]
-        public void CompileComparisonOperatorsEmitExpectedOpcode()
+        [global::TUnit.Core.Test]
+        public async Task CompileComparisonOperatorsEmitExpectedOpcode()
         {
             Script script = new Script();
             (TokenType TokenType, string Text, OpCode OpCode)[] cases =
@@ -937,30 +939,22 @@ namespace NovaSharp.Interpreter.Tests.Units
                     i => i.OpCode == expectedOpCode
                 );
 
-                Assert.Multiple(() =>
-                {
-                    Assert.That(comparisonIndex, Is.GreaterThan(1), text);
+                await Assert.That(comparisonIndex).IsGreaterThan(1);
 
-                    if (expectedOpCode == OpCode.Less)
-                    {
-                        Assert.That(
-                            instructions[comparisonIndex + 1].OpCode,
-                            Is.EqualTo(OpCode.ToBool)
-                        );
-                    }
-                    else
-                    {
-                        Assert.That(
-                            instructions[comparisonIndex + 1].OpCode,
-                            Is.EqualTo(OpCode.CNot)
-                        );
-                    }
-                });
+                OpCode followup = instructions[comparisonIndex + 1].OpCode;
+                if (expectedOpCode == OpCode.Less)
+                {
+                    await Assert.That(followup).IsEqualTo(OpCode.ToBool);
+                }
+                else
+                {
+                    await Assert.That(followup).IsEqualTo(OpCode.CNot);
+                }
             }
         }
 
-        [Test]
-        public void CompileNotEqualEmitsEqualityFollowedByNot()
+        [global::TUnit.Core.Test]
+        public async Task CompileNotEqualEmitsEqualityFollowedByNot()
         {
             Script script = new Script();
 
@@ -978,16 +972,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             Instruction[] instructions = byteCode.Code.ToArray();
             int eqIndex = Array.FindLastIndex(instructions, i => i.OpCode == OpCode.Eq);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(eqIndex, Is.GreaterThan(1));
-                Assert.That(instructions[eqIndex + 1].OpCode, Is.EqualTo(OpCode.ToBool));
-                Assert.That(instructions[^1].OpCode, Is.EqualTo(OpCode.Not));
-            });
+            await Assert.That(eqIndex).IsGreaterThan(1);
+            await Assert.That(instructions[eqIndex + 1].OpCode).IsEqualTo(OpCode.ToBool);
+            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not);
         }
 
-        [Test]
-        public void CommitOperatorChainThrowsWhenReductionLeavesMultipleNodes()
+        [global::TUnit.Core.Test]
+        public async Task CommitOperatorChainThrowsWhenReductionLeavesMultipleNodes()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -1001,16 +992,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new LiteralExpression(context, DynValue.NewNumber(2))
             );
 
-            Assert.That(
-                () => BinaryOperatorExpression.CommitOperatorChain(chain, context),
-                Throws
-                    .TypeOf<InternalErrorException>()
-                    .With.Message.Contain("Expression reduction didn't work! - 1")
+            InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
+                BinaryOperatorExpression.CommitOperatorChain(chain, context)
             );
+
+            await Assert.That(exception.Message).Contains("Expression reduction didn't work! - 1");
         }
 
-        [Test]
-        public void CommitOperatorChainThrowsWhenExpressionMissing()
+        [global::TUnit.Core.Test]
+        public async Task CommitOperatorChainThrowsWhenExpressionMissing()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -1021,16 +1011,15 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             BinaryOperatorExpression.RemoveFirstExpressionForTests(chain);
 
-            Assert.That(
-                () => BinaryOperatorExpression.CommitOperatorChain(chain, context),
-                Throws
-                    .TypeOf<InternalErrorException>()
-                    .With.Message.Contain("Expression reduction didn't work! - 2")
+            InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
+                BinaryOperatorExpression.CommitOperatorChain(chain, context)
             );
+
+            await Assert.That(exception.Message).Contains("Expression reduction didn't work! - 2");
         }
 
-        [Test]
-        public void CompileThrowsWhenOperatorMappingMissing()
+        [global::TUnit.Core.Test]
+        public async Task CompileThrowsWhenOperatorMappingMissing()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -1042,14 +1031,15 @@ namespace NovaSharp.Interpreter.Tests.Units
                 );
             expression.SetOperatorForTests(BinaryOperatorExpression.Operator.NotAnOperator);
 
-            Assert.That(
-                () => expression.Compile(new ByteCode(script)),
-                Throws.TypeOf<InternalErrorException>().With.Message.Contain("Unsupported operator")
+            InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
+                expression.Compile(new ByteCode(script))
             );
+
+            await Assert.That(exception.Message).Contains("Unsupported operator");
         }
 
-        [Test]
-        public void EvalThrowsWhenComparisonOperatorCombinationUnsupported()
+        [global::TUnit.Core.Test]
+        public async Task EvalThrowsWhenComparisonOperatorCombinationUnsupported()
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
@@ -1064,12 +1054,11 @@ namespace NovaSharp.Interpreter.Tests.Units
                 | BinaryOperatorExpression.Operator.StrConcat;
             expression.SetOperatorForTests(combined);
 
-            Assert.That(
-                () => expression.Eval(TestHelpers.CreateExecutionContext(script)),
-                Throws
-                    .TypeOf<DynamicExpressionException>()
-                    .With.Message.Contain("Unsupported operator")
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expression.Eval(TestHelpers.CreateExecutionContext(script))
             );
+
+            await Assert.That(exception.Message).Contains("Unsupported operator");
         }
 
         private static Expression BuildBinaryExpression(
@@ -1155,3 +1144,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

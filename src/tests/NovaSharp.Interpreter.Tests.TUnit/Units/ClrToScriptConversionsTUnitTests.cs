@@ -17,6 +17,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Tests;
 
     [ScriptGlobalOptionsIsolation]
+    [UserDataIsolation]
     public sealed class ClrToScriptConversionsTUnitTests
     {
         [global::TUnit.Core.Test]

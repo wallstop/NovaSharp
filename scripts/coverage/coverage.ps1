@@ -129,6 +129,7 @@ try {
     $buildExecuted = $false
     $runnerProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
     $tunitRunnerProject = "src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
+    $remoteDebuggerRunnerProject = "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
     if (-not $SkipBuild) {
         Write-Host "Building solution (configuration: $Configuration)..."
@@ -182,17 +183,36 @@ try {
                 $buildLogPath
             )
         }
+
+        Write-Host "Building remote debugger test project (configuration: $Configuration)..."
+        dotnet build $remoteDebuggerRunnerProject -c $Configuration --no-restore 2>&1 |
+            Tee-Object -FilePath $buildLogPath -Append | Out-Null
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "dotnet build $remoteDebuggerRunnerProject failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
+            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
+            throw (
+                "dotnet build {0} -c {1} failed. See {2} for full output." -f
+                $remoteDebuggerRunnerProject,
+                $Configuration,
+                $buildLogPath
+            )
+        }
     }
 
     $testResultsDir = Join-Path $coverageRoot "test-results"
     New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
     $tunitResultsDir = Join-Path $testResultsDir "tunit"
     $nunitResultsDir = Join-Path $testResultsDir "nunit"
+    $remoteDebuggerResultsDir = Join-Path $testResultsDir "remote-debugger"
     New-Item -ItemType Directory -Force -Path $tunitResultsDir | Out-Null
     New-Item -ItemType Directory -Force -Path $nunitResultsDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $remoteDebuggerResultsDir | Out-Null
 
     $runnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.Interpreter.Tests/bin/$Configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
     $tunitRunnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.Interpreter.Tests.TUnit/bin/$Configuration/net8.0/NovaSharp.Interpreter.Tests.TUnit.dll"
+    $remoteDebuggerRunnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/bin/$Configuration/net8.0/NovaSharp.RemoteDebugger.Tests.TUnit.dll"
     if (-not (Test-Path $runnerOutput)) {
         $message = "Runner output not found at '$runnerOutput'."
         if ($SkipBuild) {
@@ -229,14 +249,37 @@ try {
         throw $message
     }
 
+    if (-not (Test-Path $remoteDebuggerRunnerOutput)) {
+        $message = "Remote debugger runner output not found at '$remoteDebuggerRunnerOutput'."
+        if ($SkipBuild) {
+            $message += " Rerun without -SkipBuild or build the remote debugger test project manually."
+        }
+        else {
+            if (Test-Path $buildLogPath) {
+                $message += " The preceding build may have failed; inspect $buildLogPath for details."
+            }
+            else {
+                $message += " The preceding build may have failed."
+            }
+            $message += " You can also run `dotnet build $remoteDebuggerRunnerProject -c $Configuration` to confirm."
+        }
+
+        throw $message
+    }
+
     $coverageBase = Join-Path $coverageRoot "coverage"
     $tunitCoverageDir = Join-Path $coverageRoot "tunit"
+    $remoteDebuggerCoverageDir = Join-Path $coverageRoot "remote-debugger"
     New-Item -ItemType Directory -Force -Path $tunitCoverageDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $remoteDebuggerCoverageDir | Out-Null
     $tunitCoverageBase = Join-Path $tunitCoverageDir "coverage"
+    $remoteDebuggerCoverageBase = Join-Path $remoteDebuggerCoverageDir "coverage"
     $tunitTargetArgs =
         "test --project `"$tunitRunnerProject`" -c $Configuration --no-build --results-directory `"$tunitResultsDir`""
     $nunitTargetArgs =
         "test --project `"$runnerProject`" -c $Configuration --no-build --results-directory `"$nunitResultsDir`""
+    $remoteDebuggerTargetArgs =
+        "test --project `"$remoteDebuggerRunnerProject`" -c $Configuration --no-build --results-directory `"$remoteDebuggerResultsDir`""
 
     Invoke-CoverletRun -RunnerOutput $tunitRunnerOutput -TargetArgs $tunitTargetArgs -CoverageBase $tunitCoverageBase -Label "TUnit"
 
@@ -245,7 +288,20 @@ try {
         throw "Coverage report not found at '$tunitCoverageJson' after running TUnit tests."
     }
 
-    $mergeArguments = @("--merge-with", $tunitCoverageJson)
+    $remoteDebuggerMergeArgs = @("--merge-with", $tunitCoverageJson)
+    Invoke-CoverletRun `
+        -RunnerOutput $remoteDebuggerRunnerOutput `
+        -TargetArgs $remoteDebuggerTargetArgs `
+        -CoverageBase $remoteDebuggerCoverageBase `
+        -Label "RemoteDebugger" `
+        -AdditionalArgs $remoteDebuggerMergeArgs
+
+    $remoteDebuggerCoverageJson = "$remoteDebuggerCoverageBase.json"
+    if (-not (Test-Path $remoteDebuggerCoverageJson)) {
+        throw "Coverage report not found at '$remoteDebuggerCoverageJson' after running remote debugger tests."
+    }
+
+    $mergeArguments = @("--merge-with", $remoteDebuggerCoverageJson)
     Invoke-CoverletRun -RunnerOutput $runnerOutput -TargetArgs $nunitTargetArgs -CoverageBase $coverageBase -Label "NUnit" -AdditionalArgs $mergeArguments
 
     $reportTarget = Join-Path $repoRoot "docs/coverage/latest"

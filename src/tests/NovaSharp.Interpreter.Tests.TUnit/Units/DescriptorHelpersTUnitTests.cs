@@ -1,4 +1,5 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Collections.Generic;
@@ -8,11 +9,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
-    using NUnit.Framework;
 
-    [TestFixture]
     public sealed class DescriptorHelpersTests
     {
         private static readonly string[] ExpectedMetaNames = { "__index", "__len" };
@@ -33,135 +34,132 @@ namespace NovaSharp.Interpreter.Tests.Units
             _ = new DerivedSample();
         }
 
-        [Test]
-        public void GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
+        [global::TUnit.Core.Test]
+        public async Task GetVisibilityFromAttributesHandlesNullAndExplicitAttributes()
         {
-            Assert.That(DescriptorHelpers.GetVisibilityFromAttributes(null), Is.False);
+            bool? defaultVisibility = DescriptorHelpers.GetVisibilityFromAttributes(null);
+            await Assert.That(defaultVisibility.GetValueOrDefault()).IsFalse();
 
             MemberInfo visible = VisibilityTargets.Metadata.VisibleMember;
             MemberInfo hidden = VisibilityTargets.Metadata.HiddenMember;
             MemberInfo overridden = VisibilityTargets.Metadata.ForcedHiddenMember;
 
-            Assert.That(visible.GetVisibilityFromAttributes(), Is.True);
-            Assert.That(hidden.GetVisibilityFromAttributes(), Is.False);
-            Assert.That(overridden.GetVisibilityFromAttributes(), Is.False);
+            await Assert.That(visible.GetVisibilityFromAttributes()).IsTrue();
+            await Assert.That(hidden.GetVisibilityFromAttributes()).IsFalse();
+            await Assert.That(overridden.GetVisibilityFromAttributes()).IsFalse();
         }
 
-        [Test]
-        public void GetVisibilityFromAttributesThrowsWhenVisibleAttributeDuplicated()
+        [global::TUnit.Core.Test]
+        public async Task GetVisibilityFromAttributesThrowsWhenVisibleAttributeDuplicated()
         {
             MemberInfo member = new FakeMemberInfo(
                 new NovaSharpVisibleAttribute(true),
                 new NovaSharpVisibleAttribute(true)
             );
 
-            Assert.That(
-                () => member.GetVisibilityFromAttributes(),
-                Throws.InvalidOperationException.With.Message.Contains("VisibleAttribute")
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                member.GetVisibilityFromAttributes()
             );
+
+            await Assert.That(exception.Message).Contains("VisibleAttribute");
         }
 
-        [Test]
-        public void GetVisibilityFromAttributesThrowsWhenHiddenAttributeDuplicated()
+        [global::TUnit.Core.Test]
+        public async Task GetVisibilityFromAttributesThrowsWhenHiddenAttributeDuplicated()
         {
             MemberInfo member = new FakeMemberInfo(
                 new NovaSharpHiddenAttribute(),
                 new NovaSharpHiddenAttribute()
             );
 
-            Assert.That(
-                () => member.GetVisibilityFromAttributes(),
-                Throws.InvalidOperationException.With.Message.Contains("HiddenAttribute")
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                member.GetVisibilityFromAttributes()
             );
+
+            await Assert.That(exception.Message).Contains("HiddenAttribute");
         }
 
-        [Test]
-        public void GetVisibilityFromAttributesThrowsWhenAttributesConflict()
+        [global::TUnit.Core.Test]
+        public async Task GetVisibilityFromAttributesThrowsWhenAttributesConflict()
         {
             MemberInfo conflicting = VisibilityTargets.Metadata.ConflictingMember;
 
-            Assert.That(
-                () => conflicting.GetVisibilityFromAttributes(),
-                Throws.InvalidOperationException.With.Message.Contains("discording")
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                conflicting.GetVisibilityFromAttributes()
             );
+
+            await Assert.That(exception.Message).Contains("discording");
         }
 
-        [Test]
-        public void DescriptorVisibilityHelpersValidateNullArguments()
+        [global::TUnit.Core.Test]
+        public async Task DescriptorVisibilityHelpersValidateNullArguments()
         {
             FieldInfo field = MemberVisibilityFixtures.Metadata.PublicField;
             PropertyInfo property = PropertyFixtures.Metadata.GetterOnly;
             MethodInfo method = MemberVisibilityFixtures.Metadata.PublicMethod;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    () => DescriptorHelpers.GetClrVisibility((Type)null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.GetClrVisibility((FieldInfo)null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.GetClrVisibility((PropertyInfo)null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.GetClrVisibility((MethodBase)null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("info")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.IsPropertyInfoPublic(null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("pi")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.GetMetaNamesFromAttributes(null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("mi")
-                );
-                Assert.That(
-                    () => DescriptorHelpers.GetConversionMethodName(null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("type")
-                );
-            });
+            ArgumentNullException typeException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetClrVisibility((Type)null)
+            );
+            await Assert.That(typeException.ParamName).IsEqualTo("type");
 
-            // Sanity-check that the original helpers still work with valid inputs.
-            Assert.Multiple(() =>
-            {
-                Assert.That(field.GetClrVisibility(), Is.EqualTo("public"));
-                Assert.That(property.IsPropertyInfoPublic(), Is.True);
-                Assert.That(method.GetClrVisibility(), Is.EqualTo("public"));
-            });
+            ArgumentNullException fieldException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetClrVisibility((FieldInfo)null)
+            );
+            await Assert.That(fieldException.ParamName).IsEqualTo("info");
+
+            ArgumentNullException propertyException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetClrVisibility((PropertyInfo)null)
+            );
+            await Assert.That(propertyException.ParamName).IsEqualTo("info");
+
+            ArgumentNullException methodBaseException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetClrVisibility((MethodBase)null)
+            );
+            await Assert.That(methodBaseException.ParamName).IsEqualTo("info");
+
+            ArgumentNullException propertyInfoException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.IsPropertyInfoPublic(null)
+            );
+            await Assert.That(propertyInfoException.ParamName).IsEqualTo("pi");
+
+            ArgumentNullException metaException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetMetaNamesFromAttributes(null)
+            );
+            await Assert.That(metaException.ParamName).IsEqualTo("mi");
+
+            ArgumentNullException conversionException = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.GetConversionMethodName(null)
+            );
+            await Assert.That(conversionException.ParamName).IsEqualTo("type");
+
+            await Assert.That(field.GetClrVisibility()).IsEqualTo("public");
+            await Assert.That(property.IsPropertyInfoPublic()).IsTrue();
+            await Assert.That(method.GetClrVisibility()).IsEqualTo("public");
         }
 
-        [Test]
-        public void GetClrVisibilityReturnsExpectedValuesForTypes()
+        [global::TUnit.Core.Test]
+        public async Task GetClrVisibilityReturnsExpectedValuesForTypes()
         {
             Type protectedInternal = VisibilityFixtures.Metadata.ProtectedInternalType;
             Type protectedNested = VisibilityFixtures.Metadata.ProtectedType;
             Type privateNested = VisibilityFixtures.Metadata.PrivateType;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    typeof(DescriptorHelpersPublicType).GetClrVisibility(),
-                    Is.EqualTo("public")
-                );
-                Assert.That(
-                    typeof(DescriptorHelpersTestsInternalTopLevel).GetClrVisibility(),
-                    Is.EqualTo("internal")
-                );
-                Assert.That(
-                    protectedInternal!.GetClrVisibility(),
-                    Is.EqualTo("protected-internal")
-                );
-                Assert.That(protectedNested!.GetClrVisibility(), Is.EqualTo("protected"));
-                Assert.That(privateNested!.GetClrVisibility(), Is.EqualTo("private"));
-            });
+            await Assert
+                .That(typeof(DescriptorHelpersPublicType).GetClrVisibility())
+                .IsEqualTo("public");
+            await Assert
+                .That(typeof(DescriptorHelpersTestsInternalTopLevel).GetClrVisibility())
+                .IsEqualTo("internal");
+            await Assert
+                .That(protectedInternal!.GetClrVisibility())
+                .IsEqualTo("protected-internal");
+            await Assert.That(protectedNested!.GetClrVisibility()).IsEqualTo("protected");
+            await Assert.That(privateNested!.GetClrVisibility()).IsEqualTo("private");
         }
 
-        [Test]
-        public void GetClrVisibilityReturnsExpectedValuesForMembers()
+        [global::TUnit.Core.Test]
+        public async Task GetClrVisibilityReturnsExpectedValuesForMembers()
         {
             FieldInfo publicField = MemberVisibilityFixtures.Metadata.PublicField;
             FieldInfo internalField = MemberVisibilityFixtures.Metadata.InternalField;
@@ -175,199 +173,163 @@ namespace NovaSharp.Interpreter.Tests.Units
                 .Metadata
                 .ProtectedInternalMethod;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(publicField.GetClrVisibility(), Is.EqualTo("public"));
-                Assert.That(internalField.GetClrVisibility(), Is.EqualTo("internal"));
-                Assert.That(protectedField.GetClrVisibility(), Is.EqualTo("protected"));
-                Assert.That(
-                    protectedInternalField.GetClrVisibility(),
-                    Is.EqualTo("protected-internal")
-                );
-                Assert.That(privateMethod.GetClrVisibility(), Is.EqualTo("private"));
-                Assert.That(publicMethod.GetClrVisibility(), Is.EqualTo("public"));
-                Assert.That(
-                    protectedInternalMethod.GetClrVisibility(),
-                    Is.EqualTo("protected-internal")
-                );
-            });
+            await Assert.That(publicField.GetClrVisibility()).IsEqualTo("public");
+            await Assert.That(internalField.GetClrVisibility()).IsEqualTo("internal");
+            await Assert.That(protectedField.GetClrVisibility()).IsEqualTo("protected");
+            await Assert
+                .That(protectedInternalField.GetClrVisibility())
+                .IsEqualTo("protected-internal");
+            await Assert.That(privateMethod.GetClrVisibility()).IsEqualTo("private");
+            await Assert.That(publicMethod.GetClrVisibility()).IsEqualTo("public");
+            await Assert
+                .That(protectedInternalMethod.GetClrVisibility())
+                .IsEqualTo("protected-internal");
         }
 
-        [Test]
-        public void GetClrVisibilityReturnsExpectedValuesForProperties()
+        [global::TUnit.Core.Test]
+        public async Task GetClrVisibilityReturnsExpectedValuesForProperties()
         {
             PropertyInfo publicProperty = PropertyFixtures.Metadata.GetterOnly;
             PropertyInfo internalProperty = PropertyFixtures.Metadata.InternalAccessors;
             PropertyInfo protectedProperty = PropertyFixtures.Metadata.ProtectedGetterOnly;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(publicProperty.GetClrVisibility(), Is.EqualTo("public"));
-                Assert.That(internalProperty.GetClrVisibility(), Is.EqualTo("internal"));
-                Assert.That(protectedProperty.GetClrVisibility(), Is.EqualTo("protected"));
-            });
+            await Assert.That(publicProperty.GetClrVisibility()).IsEqualTo("public");
+            await Assert.That(internalProperty.GetClrVisibility()).IsEqualTo("internal");
+            await Assert.That(protectedProperty.GetClrVisibility()).IsEqualTo("protected");
         }
 
-        [Test]
-        public void IsPropertyInfoPublicConsidersGetterOrSetter()
+        [global::TUnit.Core.Test]
+        public async Task IsPropertyInfoPublicConsidersGetterOrSetter()
         {
             PropertyInfo getterOnly = PropertyFixtures.Metadata.GetterOnly;
             PropertyInfo setterOnly = PropertyFixtures.Metadata.SetterOnly;
             PropertyInfo privateProperty = PropertyFixtures.Metadata.PrivateBoth;
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(getterOnly.IsPropertyInfoPublic(), Is.True);
-                Assert.That(setterOnly.IsPropertyInfoPublic(), Is.True);
-                Assert.That(privateProperty.IsPropertyInfoPublic(), Is.False);
-            });
+            await Assert.That(getterOnly.IsPropertyInfoPublic()).IsTrue();
+            await Assert.That(setterOnly.IsPropertyInfoPublic()).IsTrue();
+            await Assert.That(privateProperty.IsPropertyInfoPublic()).IsFalse();
         }
 
-        [Test]
-        public void GetMetaNamesFromAttributesReturnsDeclaredNames()
+        [global::TUnit.Core.Test]
+        public async Task GetMetaNamesFromAttributesReturnsDeclaredNames()
         {
             MethodInfo method = MetaFixtures.Metadata.Metamethods;
 
             IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
-            Assert.That(names, Is.EquivalentTo(ExpectedMetaNames));
+            await Assert.That(names).IsEquivalentTo(ExpectedMetaNames);
         }
 
-        [Test]
-        public void GetMetaNamesFromAttributesReturnsEmptyWhenNoAttributesPresent()
+        [global::TUnit.Core.Test]
+        public async Task GetMetaNamesFromAttributesReturnsEmptyWhenNoAttributesPresent()
         {
             MethodInfo method = MetaFixtures.Metadata.PlainMethod;
 
             IReadOnlyList<string> names = method.GetMetaNamesFromAttributes();
 
-            Assert.That(names, Is.Empty);
+            await Assert.That((IEnumerable<string>)names).IsEmpty();
         }
 
-        [Test]
-        public void GetConversionMethodNameSanitizesNonAlphaNumericCharacters()
+        [global::TUnit.Core.Test]
+        public async Task GetConversionMethodNameSanitizesNonAlphaNumericCharacters()
         {
             string name =
                 typeof(VisibilityFixtures.GenericHost<string>.InnerType).GetConversionMethodName();
 
-            Assert.That(name, Is.EqualTo("__toInnerType"));
+            await Assert.That(name).IsEqualTo("__toInnerType");
 
             string genericName = typeof(VisibilityFixtures.GenericHost<>).GetConversionMethodName();
-            Assert.That(genericName, Is.EqualTo("__toGenericHost_1"));
+            await Assert.That(genericName).IsEqualTo("__toGenericHost_1");
         }
 
-        [Test]
-        public void IsDelegateTypeIdentifiesDelegates()
+        [global::TUnit.Core.Test]
+        public async Task IsDelegateTypeIdentifiesDelegates()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(typeof(Action).IsDelegateType(), Is.True);
-                Assert.That(typeof(string).IsDelegateType(), Is.False);
-            });
+            await Assert.That(typeof(Action).IsDelegateType()).IsTrue();
+            await Assert.That(typeof(string).IsDelegateType()).IsFalse();
         }
 
-        [Test]
-        public void GetAllImplementedTypesIncludesBaseTypesAndInterfaces()
+        [global::TUnit.Core.Test]
+        public async Task GetAllImplementedTypesIncludesBaseTypesAndInterfaces()
         {
-            IEnumerable<Type> types = typeof(DerivedSample).GetAllImplementedTypes();
+            Type[] types = typeof(DerivedSample).GetAllImplementedTypes().ToArray();
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(types, Does.Contain(typeof(DerivedSample)));
-                Assert.That(types, Does.Contain(typeof(BaseSample)));
-                Assert.That(types, Does.Contain(typeof(ISampleInterface)));
-            });
+            await Assert.That(types.Contains(typeof(DerivedSample))).IsTrue();
+            await Assert.That(types.Contains(typeof(BaseSample))).IsTrue();
+            await Assert.That(types.Contains(typeof(ISampleInterface))).IsTrue();
         }
 
-        [Test]
-        public void SafeGetTypesReturnsEmptyArrayWhenAssemblyFailsToLoadTypes()
+        [global::TUnit.Core.Test]
+        public async Task SafeGetTypesReturnsEmptyArrayWhenAssemblyFailsToLoadTypes()
         {
             Assembly throwingAssembly = new ThrowingAssembly();
 
             Type[] types = throwingAssembly.SafeGetTypes();
 
-            Assert.That(types, Is.Empty);
+            await Assert.That(types).IsEmpty();
         }
 
-        [Test]
-        public void IdentifierHelpersValidateAndNormalizeNames()
+        [global::TUnit.Core.Test]
+        public async Task IdentifierHelpersValidateAndNormalizeNames()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value_1"), Is.True);
-                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("1value"), Is.False);
-                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value-1"), Is.False);
-                Assert.That(
-                    DescriptorHelpers.ToValidSimpleIdentifier("1 invalid-name"),
-                    Is.EqualTo("_1_invalid_name")
-                );
-                Assert.That(DescriptorHelpers.IsValidSimpleIdentifier(null), Is.False);
-                Assert.That(DescriptorHelpers.ToValidSimpleIdentifier(null), Is.EqualTo("_"));
-                Assert.That(
-                    DescriptorHelpers.ToValidSimpleIdentifier(string.Empty),
-                    Is.EqualTo("_")
-                );
-            });
+            await Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value_1")).IsTrue();
+            await Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("1value")).IsFalse();
+            await Assert.That(DescriptorHelpers.IsValidSimpleIdentifier("value-1")).IsFalse();
+            await Assert
+                .That(DescriptorHelpers.ToValidSimpleIdentifier("1 invalid-name"))
+                .IsEqualTo("_1_invalid_name");
+            await Assert.That(DescriptorHelpers.IsValidSimpleIdentifier(null)).IsFalse();
+            await Assert.That(DescriptorHelpers.ToValidSimpleIdentifier(null)).IsEqualTo("_");
+            await Assert
+                .That(DescriptorHelpers.ToValidSimpleIdentifier(string.Empty))
+                .IsEqualTo("_");
         }
 
-        [Test]
-        public void NameTransformationsCoverCamelCaseAndSnakeCaseVariants()
+        [global::TUnit.Core.Test]
+        public async Task NameTransformationsCoverCamelCaseAndSnakeCaseVariants()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    DescriptorHelpers.Camelify("my_sample_value"),
-                    Is.EqualTo("mySampleValue")
-                );
-                Assert.That(
-                    DescriptorHelpers.Camelify("__Already__Mixed__"),
-                    Is.EqualTo("alreadyMixed")
-                );
-                Assert.That(DescriptorHelpers.Camelify("___"), Is.EqualTo(string.Empty));
-                Assert.That(
-                    DescriptorHelpers.ToUpperUnderscore("HttpRequestV2"),
-                    Is.EqualTo("HTTP_REQUEST_V2")
-                );
-                Assert.That(
-                    DescriptorHelpers.ToUpperUnderscore("Version42Beta"),
-                    Is.EqualTo("VERSION_42_BETA")
-                );
-                Assert.That(
-                    DescriptorHelpers.ToUpperUnderscore("value-with-dash"),
-                    Is.EqualTo("VALUE_WITH_DASH")
-                );
-                Assert.That(
-                    DescriptorHelpers.ToUpperUnderscore("Value123Name"),
-                    Is.EqualTo("VALUE_123_NAME")
-                );
-                Assert.That(
-                    DescriptorHelpers.ToUpperUnderscore("Value123"),
-                    Is.EqualTo("VALUE123")
-                );
-                Assert.That(DescriptorHelpers.UpperFirstLetter("sample"), Is.EqualTo("Sample"));
-                Assert.That(
-                    DescriptorHelpers.NormalizeUppercaseRuns("HTTPRequestURL"),
-                    Is.EqualTo("HttpRequestUrl")
-                );
-                Assert.That(
-                    DescriptorHelpers.NormalizeUppercaseRuns("GPUFPSCounter"),
-                    Is.EqualTo("GpufpsCounter"),
-                    "Acronym chains remain collapsed; revisit when descriptor naming adopts full tokenization."
-                );
-                Assert.That(
-                    DescriptorHelpers.NormalizeUppercaseRuns(string.Empty),
-                    Is.EqualTo(string.Empty)
-                );
-                Assert.That(
-                    DescriptorHelpers.NormalizeUppercaseRuns("___"),
-                    Is.EqualTo(string.Empty)
-                );
-                Assert.That(DescriptorHelpers.NormalizeUppercaseRuns(null), Is.Null);
-                Assert.That(DescriptorHelpers.ToUpperUnderscore(null), Is.Null);
-                Assert.That(
-                    () => DescriptorHelpers.Camelify(null),
-                    Throws.ArgumentNullException.With.Property("ParamName").EqualTo("name")
-                );
-            });
+            await Assert
+                .That(DescriptorHelpers.Camelify("my_sample_value"))
+                .IsEqualTo("mySampleValue");
+            await Assert
+                .That(DescriptorHelpers.Camelify("__Already__Mixed__"))
+                .IsEqualTo("alreadyMixed");
+            await Assert.That(DescriptorHelpers.Camelify("___")).IsEqualTo(string.Empty);
+            await Assert
+                .That(DescriptorHelpers.ToUpperUnderscore("HttpRequestV2"))
+                .IsEqualTo("HTTP_REQUEST_V2");
+            await Assert
+                .That(DescriptorHelpers.ToUpperUnderscore("Version42Beta"))
+                .IsEqualTo("VERSION_42_BETA");
+            await Assert
+                .That(DescriptorHelpers.ToUpperUnderscore("value-with-dash"))
+                .IsEqualTo("VALUE_WITH_DASH");
+            await Assert
+                .That(DescriptorHelpers.ToUpperUnderscore("Value123Name"))
+                .IsEqualTo("VALUE_123_NAME");
+            await Assert
+                .That(DescriptorHelpers.ToUpperUnderscore("Value123"))
+                .IsEqualTo("VALUE123");
+            await Assert.That(DescriptorHelpers.UpperFirstLetter("sample")).IsEqualTo("Sample");
+            await Assert
+                .That(DescriptorHelpers.NormalizeUppercaseRuns("HTTPRequestURL"))
+                .IsEqualTo("HttpRequestUrl");
+            await Assert
+                .That(DescriptorHelpers.NormalizeUppercaseRuns("GPUFPSCounter"))
+                .IsEqualTo("GpufpsCounter");
+            await Assert
+                .That(DescriptorHelpers.NormalizeUppercaseRuns(string.Empty))
+                .IsEqualTo(string.Empty);
+            await Assert
+                .That(DescriptorHelpers.NormalizeUppercaseRuns("___"))
+                .IsEqualTo(string.Empty);
+            await Assert.That(DescriptorHelpers.NormalizeUppercaseRuns(null)).IsNull();
+            await Assert.That(DescriptorHelpers.ToUpperUnderscore(null)).IsNull();
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                DescriptorHelpers.Camelify(null)
+            );
+            await Assert.That(exception.ParamName).IsEqualTo("name");
         }
 
         private sealed class VisibilityTargets
@@ -838,3 +800,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         internal static readonly DescriptorHelpersTestsInternalTopLevel Instance = new();
     }
 }
+#pragma warning restore CA2007

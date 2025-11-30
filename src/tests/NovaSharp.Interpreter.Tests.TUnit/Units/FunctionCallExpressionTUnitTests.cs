@@ -1,6 +1,8 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Linq;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
@@ -9,13 +11,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Tree;
     using NovaSharp.Interpreter.Tree.Expressions;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class FunctionCallExpressionTests
+    public sealed class FunctionCallExpressionTUnitTests
     {
-        [Test]
-        public void CompileEmitsCallWithParenthesizedArguments()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsCallWithParenthesizedArguments()
         {
             FunctionCallExpression expression = CreateExpression("(1, \"two\")", out Script script);
             ByteCode byteCode = new(script);
@@ -24,28 +24,21 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Instruction call = byteCode.Code[^1];
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
-                Assert.That(call.NumVal, Is.EqualTo(2));
-                Assert.That(call.Name, Is.EqualTo("stub::callee"));
-                Assert.That(
-                    byteCode.Code.Any(instruction =>
-                        instruction.OpCode == OpCode.Literal && instruction.Value.Number == 1
-                    ),
-                    Is.True
-                );
-                Assert.That(
-                    byteCode.Code.Any(instruction =>
-                        instruction.OpCode == OpCode.Literal && instruction.Value.String == "two"
-                    ),
-                    Is.True
-                );
-            });
+            await Assert.That(call.OpCode).IsEqualTo(OpCode.Call);
+            await Assert.That(call.NumVal).IsEqualTo(2);
+            await Assert.That(call.Name).IsEqualTo("stub::callee");
+            bool containsNumberLiteral = byteCode.Code.Any(instruction =>
+                instruction.OpCode == OpCode.Literal && instruction.Value.Number == 1
+            );
+            await Assert.That(containsNumberLiteral).IsTrue();
+            bool containsStringLiteral = byteCode.Code.Any(instruction =>
+                instruction.OpCode == OpCode.Literal && instruction.Value.String == "two"
+            );
+            await Assert.That(containsStringLiteral).IsTrue();
         }
 
-        [Test]
-        public void CompileEmitsThisCallForColonSyntax()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsThisCallForColonSyntax()
         {
             FunctionCallExpression expression = CreateExpression(
                 "(42)",
@@ -67,33 +60,25 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
             Instruction thisCall = byteCode.Code[^1];
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(copyIndex, Is.GreaterThanOrEqualTo(0));
-                Assert.That(indexIndex, Is.EqualTo(copyIndex + 1));
-                Assert.That(swapIndex, Is.EqualTo(indexIndex + 1));
+            await Assert.That(copyIndex).IsGreaterThanOrEqualTo(0);
+            await Assert.That(indexIndex).IsEqualTo(copyIndex + 1);
+            await Assert.That(swapIndex).IsEqualTo(indexIndex + 1);
 
-                Instruction copy = byteCode.Code[copyIndex];
-                Instruction index = byteCode.Code[indexIndex];
-                Instruction swap = byteCode.Code[swapIndex];
+            Instruction copy = byteCode.Code[copyIndex];
+            Instruction index = byteCode.Code[indexIndex];
+            Instruction swap = byteCode.Code[swapIndex];
 
-                Assert.That(copy.NumVal, Is.EqualTo(0));
-                Assert.That(index.Value.String, Is.EqualTo("withColon"));
-                Assert.That(swap.NumVal, Is.EqualTo(0));
-                Assert.That(swap.NumVal2, Is.EqualTo(1));
-
-                Assert.That(thisCall.OpCode, Is.EqualTo(OpCode.ThisCall));
-                Assert.That(
-                    thisCall.NumVal,
-                    Is.EqualTo(2),
-                    "self argument should increment arg count"
-                );
-                Assert.That(thisCall.Name, Is.EqualTo("stub::callee"));
-            });
+            await Assert.That(copy.NumVal).IsEqualTo(0);
+            await Assert.That(index.Value.String).IsEqualTo("withColon");
+            await Assert.That(swap.NumVal).IsEqualTo(0);
+            await Assert.That(swap.NumVal2).IsEqualTo(1);
+            await Assert.That(thisCall.OpCode).IsEqualTo(OpCode.ThisCall);
+            await Assert.That(thisCall.NumVal).IsEqualTo(2);
+            await Assert.That(thisCall.Name).IsEqualTo("stub::callee");
         }
 
-        [Test]
-        public void ConstructorAllowsStringLiteralArguments()
+        [global::TUnit.Core.Test]
+        public async Task ConstructorAllowsStringLiteralArguments()
         {
             FunctionCallExpression expression = CreateExpression("\"payload\"", out Script script);
             ByteCode byteCode = new(script);
@@ -102,22 +87,16 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Instruction call = byteCode.Code[^1];
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
-                Assert.That(call.NumVal, Is.EqualTo(1));
-                Assert.That(
-                    byteCode.Code.Any(instruction =>
-                        instruction.OpCode == OpCode.Literal
-                        && instruction.Value.String == "payload"
-                    ),
-                    Is.True
-                );
-            });
+            await Assert.That(call.OpCode).IsEqualTo(OpCode.Call);
+            await Assert.That(call.NumVal).IsEqualTo(1);
+            bool containsStringLiteral = byteCode.Code.Any(instruction =>
+                instruction.OpCode == OpCode.Literal && instruction.Value.String == "payload"
+            );
+            await Assert.That(containsStringLiteral).IsTrue();
         }
 
-        [Test]
-        public void ConstructorAllowsTableConstructorArguments()
+        [global::TUnit.Core.Test]
+        public async Task ConstructorAllowsTableConstructorArguments()
         {
             FunctionCallExpression expression = CreateExpression(
                 "{ value = 1 }",
@@ -129,26 +108,24 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Instruction call = byteCode.Code[^1];
 
-            Assert.That(call.OpCode, Is.EqualTo(OpCode.Call));
-            Assert.That(call.NumVal, Is.EqualTo(1));
+            await Assert.That(call.OpCode).IsEqualTo(OpCode.Call);
+            await Assert.That(call.NumVal).IsEqualTo(1);
         }
 
-        [Test]
-        public void ConstructorThrowsWhenArgumentsMissing()
+        [global::TUnit.Core.Test]
+        public async Task ConstructorThrowsWhenArgumentsMissing()
         {
             Script script = new();
             ScriptLoadingContext context = new(script) { Lexer = new Lexer(0, string.Empty, true) };
             Expression callee = new FunctionExpressionStub(context, "broken::callee");
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
-                new FunctionCallExpression(context, callee, null)
-            )!;
-
-            Assert.Multiple(() =>
             {
-                Assert.That(exception.Message, Does.Contain("function arguments expected"));
-                Assert.That(exception.IsPrematureStreamTermination, Is.True);
-            });
+                _ = new FunctionCallExpression(context, callee, null);
+            })!;
+
+            await Assert.That(exception.Message).Contains("function arguments expected");
+            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
         }
 
         private static FunctionCallExpression CreateExpression(
