@@ -132,9 +132,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.AppendCompatibilityContext(script);
 
-            await Assert
-                .That(exception.DecoratedMessage)
-                .EndsWith($"[compatibility: {profile}]");
+            await Assert.That(exception.DecoratedMessage).EndsWith($"[compatibility: {profile}]");
 
             string firstAppend = exception.DecoratedMessage ?? string.Empty;
 
