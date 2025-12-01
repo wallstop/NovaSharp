@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 #if !DOTNET_CORE
     using System.Linq;
     using NovaSharp.Interpreter.Compatibility;
@@ -178,25 +179,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public Task InteropOutParamInOverloadResolution()
         {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track<
+                Dictionary<int, int>
+            >(ensureUnregistered: true);
+
             UserData.RegisterType<Dictionary<int, int>>();
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
 
-            try
+            Script lua = new()
             {
-                Script lua = new()
-                {
-                    Globals = { ["DictionaryIntInt"] = typeof(Dictionary<int, int>) },
-                };
+                Globals = { ["DictionaryIntInt"] = typeof(Dictionary<int, int>) },
+            };
 
-                string script =
-                    @"local dict = DictionaryIntInt.__new(); local res, v = dict.TryGetValue(0)";
-                lua.DoString(script);
-                lua.DoString(script);
-            }
-            finally
-            {
-                UserData.UnregisterType<Dictionary<int, int>>();
-            }
+            string script =
+                @"local dict = DictionaryIntInt.__new(); local res, v = dict.TryGetValue(0)";
+            lua.DoString(script);
+            lua.DoString(script);
 
             return Task.CompletedTask;
         }

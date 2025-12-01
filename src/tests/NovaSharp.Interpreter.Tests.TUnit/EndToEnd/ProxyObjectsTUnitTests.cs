@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class ProxyObjectsTUnitTests
@@ -53,44 +54,40 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task ProxySurfaceAllowsAccessToRandom()
         {
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<Proxy>(ensureUnregistered: true);
+
             UserData.RegisterProxyType<Proxy, Random>(r => new Proxy(r));
 
             bool callbackInvoked = false;
             Random capturedRandom = null;
 
-            try
+            Script script = new()
             {
-                Script script = new()
+                Globals =
                 {
-                    Globals =
-                    {
-                        ["R"] = CreateNonCryptographicRandom(),
-                        ["func"] =
-                            (Action<Random>)(
-                                target =>
-                                {
-                                    callbackInvoked = true;
-                                    capturedRandom = target;
-                                }
-                            ),
-                    },
-                };
+                    ["R"] = CreateNonCryptographicRandom(),
+                    ["func"] =
+                        (Action<Random>)(
+                            target =>
+                            {
+                                callbackInvoked = true;
+                                capturedRandom = target;
+                            }
+                        ),
+                },
+            };
 
-                script.DoString(
-                    @"
+            script.DoString(
+                @"
                     x = R.GetValue();
                     func(R);
                     "
-                );
+            );
 
-                await Assert.That(script.Globals.Get("x").Number).IsEqualTo(3.0);
-                await Assert.That(callbackInvoked).IsTrue();
-                await Assert.That(capturedRandom).IsNotNull();
-            }
-            finally
-            {
-                UserData.UnregisterType<Proxy>();
-            }
+            await Assert.That(script.Globals.Get("x").Number).IsEqualTo(3.0);
+            await Assert.That(callbackInvoked).IsTrue();
+            await Assert.That(capturedRandom).IsNotNull();
         }
 
         [SuppressMessage(

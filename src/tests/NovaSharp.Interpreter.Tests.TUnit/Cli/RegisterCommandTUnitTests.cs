@@ -14,6 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     [UserDataIsolation]
@@ -47,7 +48,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             RegisterCommand command = new();
             ShellContext context = new(new Script());
-            UserData.UnregisterType<SampleType>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleType>(ensureUnregistered: true);
 
             command.Execute(context, typeof(SampleType).AssemblyQualifiedName);
 
@@ -63,6 +65,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 RegisterCommand command = new();
                 ShellContext context = new(new Script());
+                using UserDataRegistrationScope registrationScope =
+                    UserDataRegistrationScope.Track<SampleType>();
                 UserData.RegisterType<SampleType>();
 
                 command.Execute(context, string.Empty);

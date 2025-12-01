@@ -180,6 +180,11 @@ namespace NovaSharp.Interpreter
             return scope;
         }
 
+        internal static IDisposable BeginDefaultOptionsScope()
+        {
+            return new DefaultOptionsScope(DefaultOptions);
+        }
+
         /// <summary>
         /// Gets access to performance statistics.
         /// </summary>
@@ -1186,6 +1191,50 @@ namespace NovaSharp.Interpreter
             public void Dispose()
             {
                 ScopedGlobalOptions.Value = PreviousScope;
+            }
+        }
+
+        private sealed class DefaultOptionsScope : IDisposable
+        {
+            private readonly ScriptOptions _snapshot;
+            private bool _disposed;
+
+            public DefaultOptionsScope(ScriptOptions defaults)
+            {
+                if (defaults == null)
+                {
+                    throw new ArgumentNullException(nameof(defaults));
+                }
+
+                _snapshot = new ScriptOptions(defaults);
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+
+                ScriptOptions defaultOptions = DefaultOptions;
+
+                defaultOptions.ScriptLoader = _snapshot.ScriptLoader;
+                defaultOptions.DebugPrint = _snapshot.DebugPrint;
+                defaultOptions.DebugInput = _snapshot.DebugInput;
+                defaultOptions.UseLuaErrorLocations = _snapshot.UseLuaErrorLocations;
+                defaultOptions.ColonOperatorClrCallbackBehaviour =
+                    _snapshot.ColonOperatorClrCallbackBehaviour;
+                defaultOptions.Stdin = _snapshot.Stdin;
+                defaultOptions.Stdout = _snapshot.Stdout;
+                defaultOptions.Stderr = _snapshot.Stderr;
+                defaultOptions.TailCallOptimizationThreshold =
+                    _snapshot.TailCallOptimizationThreshold;
+                defaultOptions.CheckThreadAccess = _snapshot.CheckThreadAccess;
+                defaultOptions.CompatibilityVersion = _snapshot.CompatibilityVersion;
+                defaultOptions.HighResolutionClock = _snapshot.HighResolutionClock;
+                defaultOptions.TimeProvider = _snapshot.TimeProvider;
             }
         }
     }

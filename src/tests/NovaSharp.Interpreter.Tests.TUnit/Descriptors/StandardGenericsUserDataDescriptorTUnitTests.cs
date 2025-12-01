@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class StandardGenericsUserDataDescriptorTUnitTests
     {
@@ -145,45 +146,39 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task GenerateReturnsNullWhenTypeAlreadyRegistered()
         {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track<
+                GenericStub<int>
+            >(ensureUnregistered: true);
+
             UserData.RegisterType<GenericStub<int>>();
-            try
-            {
-                StandardGenericsUserDataDescriptor descriptor = new(
-                    typeof(GenericStub<>),
-                    InteropAccessMode.Default
-                );
-
-                await Assert.That(descriptor.Generate(typeof(GenericStub<int>))).IsNull();
-            }
-            finally
-            {
-                UserData.UnregisterType<GenericStub<int>>();
-            }
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task GenerateRegistersUnregisteredConstructedType()
-        {
-            Type concreteType = typeof(GenericStub<string>);
-            UserData.UnregisterType(concreteType);
 
             StandardGenericsUserDataDescriptor descriptor = new(
                 typeof(GenericStub<>),
                 InteropAccessMode.Default
             );
 
-            try
-            {
-                IUserDataDescriptor generated = descriptor.Generate(concreteType);
+            await Assert.That(descriptor.Generate(typeof(GenericStub<int>))).IsNull();
+        }
 
-                await Assert.That(generated).IsNotNull();
-                await Assert.That(generated.Type).IsEqualTo(concreteType);
-                await Assert.That(UserData.IsTypeRegistered(concreteType)).IsTrue();
-            }
-            finally
-            {
-                UserData.UnregisterType(concreteType);
-            }
+        [global::TUnit.Core.Test]
+        public async Task GenerateRegistersUnregisteredConstructedType()
+        {
+            Type concreteType = typeof(GenericStub<string>);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                concreteType,
+                ensureUnregistered: true
+            );
+
+            StandardGenericsUserDataDescriptor descriptor = new(
+                typeof(GenericStub<>),
+                InteropAccessMode.Default
+            );
+
+            IUserDataDescriptor generated = descriptor.Generate(concreteType);
+
+            await Assert.That(generated).IsNotNull();
+            await Assert.That(generated.Type).IsEqualTo(concreteType);
+            await Assert.That(UserData.IsTypeRegistered(concreteType)).IsTrue();
         }
 
         private sealed class GenericStub<T>

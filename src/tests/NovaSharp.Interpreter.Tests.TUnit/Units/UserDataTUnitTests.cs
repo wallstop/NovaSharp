@@ -17,13 +17,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.UserDataRegistries;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataTUnitTests
     {
-        private static void ResetCustomDescriptorHostRegistrations()
+        private static UserDataRegistrationScope TrackCustomDescriptorHost()
         {
-            UserData.UnregisterType<CustomDescriptorHost>();
+            return UserDataRegistrationScope.Track<CustomDescriptorHost>(ensureUnregistered: true);
         }
 
         [global::TUnit.Core.Test]
@@ -39,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CustomDescriptorIsUsedForCreationAndWiring()
         {
-            ResetCustomDescriptorHostRegistrations();
+            using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new();
             UserData.RegisterType(descriptor);
             CustomDescriptorHost instance = new("tracked");
@@ -105,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CreateUsesExplicitDescriptorWhenProvided()
         {
-            ResetCustomDescriptorHostRegistrations();
+            using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new();
             CustomDescriptorHost host = new("explicit");
 
@@ -146,19 +147,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task AutomaticRegistrationPolicyRegistersTypesOnDemand()
         {
-            UserData.UnregisterType<AutoPolicyHost>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<AutoPolicyHost>(ensureUnregistered: true);
+            using UserDataRegistrationPolicyScope policyScope =
+                UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
 
-            UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
-            try
-            {
-                DynValue dynValue = UserData.Create(new AutoPolicyHost());
-                await Assert.That(dynValue).IsNotNull();
-                await Assert.That(UserData.IsTypeRegistered<AutoPolicyHost>()).IsTrue();
-            }
-            finally
-            {
-                UserData.RegistrationPolicy = InteropRegistrationPolicy.Default;
-            }
+            DynValue dynValue = UserData.Create(new AutoPolicyHost());
+            await Assert.That(dynValue).IsNotNull();
+            await Assert.That(UserData.IsTypeRegistered<AutoPolicyHost>()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -174,7 +170,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeGenericOverloadRegistersCustomDescriptor()
         {
-            ResetCustomDescriptorHostRegistrations();
+            using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new("generic-overload");
 
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
@@ -188,35 +184,31 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task GetDescriptorForTypeReturnsCompositeWhenBaseAndInterfaceDescriptorsExist()
         {
             MarkerDescriptor interfaceDescriptor = new();
-            IUserDataDescriptor baseDescriptor = null;
-            try
-            {
-                baseDescriptor = UserData.RegisterType<BaseHost>(InteropAccessMode.Reflection);
-                UserData.RegisterType<IMarker>(interfaceDescriptor);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            registrationScope.Add<BaseHost>(ensureUnregistered: true);
+            registrationScope.Add<IMarker>(ensureUnregistered: true);
 
-                IUserDataDescriptor descriptor =
-                    UserData.GetDescriptorForType<DerivedInterfaceHost>(searchInterfaces: true);
+            IUserDataDescriptor baseDescriptor = UserData.RegisterType<BaseHost>(
+                InteropAccessMode.Reflection
+            );
+            UserData.RegisterType<IMarker>(interfaceDescriptor);
 
-                await Assert.That(descriptor is CompositeUserDataDescriptor).IsTrue();
-                CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
-                await Assert.That(composite.Descriptors.Contains(baseDescriptor)).IsTrue();
-                await Assert
-                    .That(
-                        composite.Descriptors.Any(descriptor => descriptor.Type == typeof(IMarker))
-                    )
-                    .IsTrue();
-            }
-            finally
-            {
-                UserData.UnregisterType<BaseHost>();
-                UserData.UnregisterType<IMarker>();
-            }
+            IUserDataDescriptor descriptor = UserData.GetDescriptorForType<DerivedInterfaceHost>(
+                searchInterfaces: true
+            );
+
+            await Assert.That(descriptor is CompositeUserDataDescriptor).IsTrue();
+            CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
+            await Assert.That(composite.Descriptors.Contains(baseDescriptor)).IsTrue();
+            await Assert
+                .That(composite.Descriptors.Any(descriptor => descriptor.Type == typeof(IMarker)))
+                .IsTrue();
         }
 
         [global::TUnit.Core.Test]
         public async Task RegisterTypeKeepsExistingDescriptorUnderDefaultPolicy()
         {
-            ResetCustomDescriptorHostRegistrations();
+            using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor initial = new("initial");
             CustomWireableDescriptor competing = new("competing");
 
@@ -256,7 +248,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptorForTypeGenericReturnsRegisteredDescriptor()
         {
-            ResetCustomDescriptorHostRegistrations();
+            using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new("generic-resolve");
             UserData.RegisterType(descriptor);
 

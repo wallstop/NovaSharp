@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataPropertiesTUnitTests
@@ -514,25 +515,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ArgumentNullException.ThrowIfNull(execute);
             ArgumentNullException.ThrowIfNull(asserts);
 
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            registrationScope.Add<SomeClass>(ensureUnregistered: true);
+            registrationScope.Add<List<SomeClass>>(ensureUnregistered: true);
+
+            register();
+            T result = await execute().ConfigureAwait(false);
             try
             {
-                register();
-                T result = await execute().ConfigureAwait(false);
-                try
-                {
-                    await asserts(result).ConfigureAwait(false);
-                }
-                catch (ScriptRuntimeException ex)
-                {
-                    Debug.WriteLine(ex.DecoratedMessage);
-                    ex.Rethrow();
-                    throw;
-                }
+                await asserts(result).ConfigureAwait(false);
             }
-            finally
+            catch (ScriptRuntimeException ex)
             {
-                UserData.UnregisterType<SomeClass>();
-                UserData.UnregisterType<List<SomeClass>>();
+                Debug.WriteLine(ex.DecoratedMessage);
+                ex.Rethrow();
+                throw;
             }
         }
     }

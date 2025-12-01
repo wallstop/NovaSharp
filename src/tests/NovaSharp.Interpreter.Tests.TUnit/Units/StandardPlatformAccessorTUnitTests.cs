@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class StandardPlatformAccessorTUnitTests
     {
@@ -85,17 +86,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task GetEnvironmentVariableReflectsEnvironment()
         {
             const string variable = "NOVASHARP_STD_TEST";
-            string previous = Environment.GetEnvironmentVariable(variable);
-            try
-            {
-                Environment.SetEnvironmentVariable(variable, "expected");
-                StandardPlatformAccessor accessor = new();
-                await Assert.That(accessor.GetEnvironmentVariable(variable)).IsEqualTo("expected");
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable(variable, previous);
-            }
+            using EnvironmentVariableScope variableScope = EnvironmentVariableScope.Override(
+                variable,
+                "expected"
+            );
+
+            StandardPlatformAccessor accessor = new();
+            await Assert.That(accessor.GetEnvironmentVariable(variable)).IsEqualTo("expected");
         }
 
         [global::TUnit.Core.Test]
@@ -116,30 +113,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task OpenFileSupportsReadAndWrite()
         {
-            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            using TempFileScope fileScope = TempFileScope.Create(extension: ".txt");
+            string path = fileScope.FilePath;
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             StandardPlatformAccessor accessor = new();
-            try
-            {
-                using (Stream writeStream = accessor.OpenFile(script, path, Encoding.UTF8, "w"))
-                {
-                    using StreamWriter writer = new(writeStream, Encoding.UTF8, leaveOpen: false);
-                    await writer.WriteAsync("data");
-                }
 
-                using (Stream readStream = accessor.OpenFile(script, path, Encoding.UTF8, "r"))
-                {
-                    using StreamReader reader = new(readStream, Encoding.UTF8);
-                    string contents = await reader.ReadToEndAsync();
-                    await Assert.That(contents).IsEqualTo("data");
-                }
-            }
-            finally
+            using (Stream writeStream = accessor.OpenFile(script, path, Encoding.UTF8, "w"))
             {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
+                using StreamWriter writer = new(writeStream, Encoding.UTF8, leaveOpen: false);
+                await writer.WriteAsync("data");
+            }
+
+            using (Stream readStream = accessor.OpenFile(script, path, Encoding.UTF8, "r"))
+            {
+                using StreamReader reader = new(readStream, Encoding.UTF8);
+                string contents = await reader.ReadToEndAsync();
+                await Assert.That(contents).IsEqualTo("data");
             }
         }
 
@@ -177,50 +166,28 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StandardPlatformAccessor accessor = new();
             string tempFile = accessor.GetTempFileName();
-            try
-            {
-                await Assert.That(File.Exists(tempFile)).IsTrue();
-            }
-            finally
-            {
-                if (File.Exists(tempFile))
-                {
-                    File.Delete(tempFile);
-                }
-            }
+            using TempFileScope tempFileScope = TempFileScope.FromExisting(tempFile);
+            await Assert.That(File.Exists(tempFile)).IsTrue();
         }
 
         [global::TUnit.Core.Test]
         public async Task FileOperationsReflectFilesystem()
         {
             StandardPlatformAccessor accessor = new();
-            string source = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            string destination = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+            using TempFileScope sourceScope = TempFileScope.Create(extension: ".txt");
+            using TempFileScope destinationScope = TempFileScope.Create(extension: ".txt");
+            string source = sourceScope.FilePath;
+            string destination = destinationScope.FilePath;
 
-            try
-            {
-                await File.WriteAllTextAsync(source, "content");
-                await Assert.That(accessor.FileExists(source)).IsTrue();
+            await File.WriteAllTextAsync(source, "content");
+            await Assert.That(accessor.FileExists(source)).IsTrue();
 
-                accessor.MoveFile(source, destination);
-                await Assert.That(accessor.FileExists(source)).IsFalse();
-                await Assert.That(accessor.FileExists(destination)).IsTrue();
+            accessor.MoveFile(source, destination);
+            await Assert.That(accessor.FileExists(source)).IsFalse();
+            await Assert.That(accessor.FileExists(destination)).IsTrue();
 
-                accessor.DeleteFile(destination);
-                await Assert.That(accessor.FileExists(destination)).IsFalse();
-            }
-            finally
-            {
-                if (File.Exists(source))
-                {
-                    File.Delete(source);
-                }
-
-                if (File.Exists(destination))
-                {
-                    File.Delete(destination);
-                }
-            }
+            accessor.DeleteFile(destination);
+            await Assert.That(accessor.FileExists(destination)).IsFalse();
         }
 
         [global::TUnit.Core.Test]

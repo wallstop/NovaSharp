@@ -20,6 +20,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectUsesCustomConversionResult()
         {
+            using IDisposable scope = Script.BeginGlobalOptionsScope();
+
             Script.GlobalOptions.CustomConverters.Clear();
             Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
                 DataType.String,
@@ -27,15 +29,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 dv => $"converted:{dv.String}"
             );
 
-            try
-            {
-                object result = ScriptToClrConversions.DynValueToObject(DynValue.NewString("lua"));
-                await Assert.That(result).IsEqualTo("converted:lua");
-            }
-            finally
-            {
-                Script.GlobalOptions.CustomConverters.Clear();
-            }
+            object result = ScriptToClrConversions.DynValueToObject(DynValue.NewString("lua"));
+
+            await Assert.That(result).IsEqualTo("converted:lua");
         }
 
         [global::TUnit.Core.Test]

@@ -15,6 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     [ScriptGlobalOptionsIsolation]
@@ -541,12 +542,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             InteropAccessMode opt
         )
         {
-            try
-            {
-                UserData.UnregisterType<SomeClass>();
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
 
-                string script =
-                    @"    
+            UserData.UnregisterType<SomeClass>();
+
+            string script =
+                @"    
 				strlist = { 'ciao', 'hello', 'aloha' };
 				intlist = {  };
 				dictry = { ciao = 39, hello = 78, aloha = 128 };
@@ -555,53 +556,50 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
 				return x;";
 
-                Script s = new();
+            Script s = new();
 
-                SomeClass obj = new();
+            SomeClass obj = new();
 
-                UserData.UnregisterType<SomeClass>();
-                UserData.RegisterType<SomeClass>(opt);
+            UserData.UnregisterType<SomeClass>();
+            UserData.RegisterType<SomeClass>(opt);
 
-                Script.GlobalOptions.CustomConverters.Clear();
+            Script.GlobalOptions.CustomConverters.Clear();
 
-                Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                    DataType.Table,
-                    typeof(List<string>),
-                    v => null
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Table,
+                typeof(List<string>),
+                v => null
+            );
+
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Table,
+                typeof(IList<int>),
+                v => new List<int>() { 42, 77, 125, 13 }
+            );
+
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Table,
+                typeof(int[]),
+                v => (int[])ScriptToClrIntArray.Clone()
+            );
+
+            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
+                (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
+            );
+
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+            s.Globals.Set("myobj", UserData.Create(obj));
+
+            DynValue res = s.DoString(script);
+
+            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert
+                .That(res.String)
+                .IsEqualTo(
+                    "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14"
                 );
 
-                Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                    DataType.Table,
-                    typeof(IList<int>),
-                    v => new List<int>() { 42, 77, 125, 13 }
-                );
-
-                Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                    DataType.Table,
-                    typeof(int[]),
-                    v => (int[])ScriptToClrIntArray.Clone()
-                );
-
-                Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-                    (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
-                );
-
-                s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-                s.Globals.Set("myobj", UserData.Create(obj));
-
-                DynValue res = s.DoString(script);
-
-                await Assert.That(res.Type).IsEqualTo(DataType.String);
-                await Assert
-                    .That(res.String)
-                    .IsEqualTo(
-                        "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14"
-                    );
-            }
-            finally
-            {
-                Script.GlobalOptions.CustomConverters.Clear();
-            }
+            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         private static async Task TestConcatMethodStaticComplexAsync(InteropAccessMode opt)
@@ -1122,29 +1120,23 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropTestAutoregisterPolicy()
         {
-            IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
+            using UserDataRegistrationPolicyScope policyScope =
+                UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SomeOtherClass>(ensureUnregistered: true);
 
-            try
-            {
-                string script = @"return myobj:Test1()";
+            string script = @"return myobj:Test1()";
 
-                UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
+            Script s = new();
 
-                Script s = new();
+            SomeOtherClass obj = new();
 
-                SomeOtherClass obj = new();
+            s.Globals.Set("myobj", UserData.Create(obj));
 
-                s.Globals.Set("myobj", UserData.Create(obj));
+            DynValue res = s.DoString(script);
 
-                DynValue res = s.DoString(script);
-
-                await Assert.That(res.Type).IsEqualTo(DataType.String);
-                await Assert.That(res.String).IsEqualTo("Test1");
-            }
-            finally
-            {
-                UserData.RegistrationPolicy = oldPolicy;
-            }
+            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.String).IsEqualTo("Test1");
         }
 
         [global::TUnit.Core.Test]

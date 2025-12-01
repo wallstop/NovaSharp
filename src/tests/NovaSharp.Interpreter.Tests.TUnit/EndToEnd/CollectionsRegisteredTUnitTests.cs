@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class CollectionsRegisteredTUnitTests
@@ -274,6 +275,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Func<DynValue, RegCollMethods, Task> asserts
         )
         {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            registrationScope.Add<RegCollMethods>(ensureUnregistered: true);
+            registrationScope.Add<RegCollItem>(ensureUnregistered: true);
+            registrationScope.Add<List<RegCollItem>>(ensureUnregistered: true);
+            registrationScope.Add<List<int>>(ensureUnregistered: true);
+            registrationScope.Add<int[]>(ensureUnregistered: true);
+            registrationScope.Add<int[,]>(ensureUnregistered: true);
+
             try
             {
                 UserData.RegisterType<RegCollMethods>();
@@ -296,15 +305,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Debug.WriteLine(ex.DecoratedMessage);
                 ex.Rethrow();
                 throw;
-            }
-            finally
-            {
-                UserData.UnregisterType<RegCollMethods>();
-                UserData.UnregisterType<RegCollItem>();
-                UserData.UnregisterType<List<RegCollItem>>();
-                UserData.UnregisterType<List<int>>();
-                UserData.UnregisterType<int[]>();
-                UserData.UnregisterType<int[,]>();
             }
         }
     }

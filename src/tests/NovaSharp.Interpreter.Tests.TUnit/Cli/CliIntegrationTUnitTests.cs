@@ -166,27 +166,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             Type targetType = instance.GetType();
             string command = $"!register {targetType.AssemblyQualifiedName}";
 
-            if (UserData.IsTypeRegistered(targetType))
-            {
-                UserData.UnregisterType(targetType);
-            }
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                targetType,
+                ensureUnregistered: true
+            );
 
-            try
-            {
-                await WithConsoleAsync(
-                    async console =>
-                    {
-                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+            await WithConsoleAsync(
+                async console =>
+                {
+                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                        await Assert.That(UserData.IsTypeRegistered(targetType)).IsTrue();
-                    },
-                    command + Environment.NewLine
-                );
-            }
-            finally
-            {
-                UserData.UnregisterType(targetType);
-            }
+                    await Assert.That(UserData.IsTypeRegistered(targetType)).IsTrue();
+                },
+                command + Environment.NewLine
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -280,34 +273,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 UrlToReturn = new Uri("http://localhost:1234/"),
             };
 
-            DebugCommand.DebuggerFactory = () => bridge;
-            DebugCommand.BrowserLauncher = launcher;
+            using DebugCommandScope debugScope = DebugCommandScope.Override(() => bridge, launcher);
 
-            try
-            {
-                await WithConsoleAsync(
-                    async console =>
-                    {
-                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+            await WithConsoleAsync(
+                async console =>
+                {
+                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                        string compatibilityLine = script.CompatibilityProfile.GetFeatureSummary();
-                        await Assert.That(bridge.AttachCount).IsEqualTo(1);
-                        await Assert.That(bridge.LastScript).IsSameReferenceAs(script);
-                        await Assert.That(launcher.LaunchCount).IsEqualTo(1);
-                        await Assert
-                            .That(console.Writer.ToString())
-                            .Contains(
-                                $"[compatibility] Debugger session running under {compatibilityLine}"
-                            );
-                    },
-                    "!debug" + Environment.NewLine
-                );
-            }
-            finally
-            {
-                DebugCommand.DebuggerFactory = _originalDebuggerFactory;
-                DebugCommand.BrowserLauncher = _originalBrowserLauncher;
-            }
+                    string compatibilityLine = script.CompatibilityProfile.GetFeatureSummary();
+                    await Assert.That(bridge.AttachCount).IsEqualTo(1);
+                    await Assert.That(bridge.LastScript).IsSameReferenceAs(script);
+                    await Assert.That(launcher.LaunchCount).IsEqualTo(1);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(
+                            $"[compatibility] Debugger session running under {compatibilityLine}"
+                        );
+                },
+                "!debug" + Environment.NewLine
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -326,41 +310,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             );
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
 
-            await HardwireDumpSemaphore.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(
-                    _ =>
-                    {
-                        Script script = new(default(CoreModules));
-                        return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
-                    }
-                );
+            await using SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
+                .WaitAsync(HardwireDumpSemaphore)
+                .ConfigureAwait(false);
 
-                await WithConsoleAsync(async console =>
+            using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
+            {
+                Script script = new(default(CoreModules));
+                return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
+            });
+
+            await WithConsoleAsync(async console =>
+            {
+                string[] args =
                 {
-                    string[] args =
-                    {
-                        "-W",
-                        dumpPath,
-                        destPath,
-                        "--class:GeneratedTypes",
-                        "--namespace:GeneratedNamespace",
-                        "--internals",
-                    };
+                    "-W",
+                    dumpPath,
+                    destPath,
+                    "--class:GeneratedTypes",
+                    "--namespace:GeneratedNamespace",
+                    "--internals",
+                };
 
-                    bool handled = Program.CheckArgs(args, CreateShellContext());
-                    await Assert.That(handled).IsTrue();
-                    await Assert.That(File.Exists(destPath)).IsTrue();
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-                });
-            }
-            finally
-            {
-                HardwireDumpSemaphore.Release();
-            }
+                bool handled = Program.CheckArgs(args, CreateShellContext());
+                await Assert.That(handled).IsTrue();
+                await Assert.That(File.Exists(destPath)).IsTrue();
+                await Assert
+                    .That(console.Writer.ToString())
+                    .Contains(CliMessages.HardwireGenerationSummary(0, 0));
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -382,49 +360,40 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
             await File.WriteAllTextAsync(dumpPath, "-- placeholder").ConfigureAwait(false);
 
-            await HardwireDumpSemaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await using SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
+                .WaitAsync(HardwireDumpSemaphore)
+                .ConfigureAwait(false);
+
+            using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {
-                using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(
-                    _ =>
-                    {
-                        Script descriptorScript = new(default(CoreModules));
-                        return HardwireTestUtilities.CreateDescriptorTable(
-                            descriptorScript,
-                            "public"
-                        );
-                    }
-                );
+                Script descriptorScript = new(default(CoreModules));
+                return HardwireTestUtilities.CreateDescriptorTable(descriptorScript, "public");
+            });
 
-                string input =
-                    string.Join(
-                        Environment.NewLine,
-                        "!hardwire",
-                        string.Empty,
-                        dumpPath,
-                        destPath,
-                        "y",
-                        "GeneratedNamespace",
-                        "GeneratedTypes"
-                    ) + Environment.NewLine;
+            string input =
+                string.Join(
+                    Environment.NewLine,
+                    "!hardwire",
+                    string.Empty,
+                    dumpPath,
+                    destPath,
+                    "y",
+                    "GeneratedNamespace",
+                    "GeneratedTypes"
+                ) + Environment.NewLine;
 
-                await WithConsoleAsync(
-                    async console =>
-                    {
-                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+            await WithConsoleAsync(
+                async console =>
+                {
+                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                        await Assert.That(File.Exists(destPath)).IsTrue();
-                        await Assert
-                            .That(console.Writer.ToString())
-                            .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-                    },
-                    input
-                );
-            }
-            finally
-            {
-                HardwireDumpSemaphore.Release();
-            }
+                    await Assert.That(File.Exists(destPath)).IsTrue();
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.HardwireGenerationSummary(0, 0));
+                },
+                input
+            );
         }
 
         private static ShellContext CreateShellContext()

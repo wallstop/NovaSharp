@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Loaders;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ScriptDefaultOptionsTUnitTests
@@ -15,19 +16,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task DefaultOptionsScriptLoaderPersistsAcrossNewScripts()
         {
             TrackingScriptLoader loader = new();
-            IScriptLoader prior = Script.DefaultOptions.ScriptLoader;
-            try
-            {
-                Script.DefaultOptions.ScriptLoader = loader;
+            using ScriptDefaultOptionsScope scope = ScriptDefaultOptionsScope.OverrideScriptLoader(
+                loader
+            );
 
-                Script script = new();
+            Script script = new();
 
-                await Assert.That(ReferenceEquals(script.Options.ScriptLoader, loader)).IsTrue();
-            }
-            finally
-            {
-                Script.DefaultOptions.ScriptLoader = prior;
-            }
+            await Assert.That(ReferenceEquals(script.Options.ScriptLoader, loader)).IsTrue();
         }
 
         private sealed class TrackingScriptLoader : IScriptLoader

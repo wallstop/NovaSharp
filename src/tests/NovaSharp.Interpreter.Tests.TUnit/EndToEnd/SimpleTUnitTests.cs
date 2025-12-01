@@ -5,9 +5,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
+    using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
     using NUnit.Framework;
 
     [UserDataIsolation]
@@ -1548,21 +1550,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public void SimpleDelegateInterop2()
         {
-            IRegistrationPolicy oldPolicy = UserData.RegistrationPolicy;
+            using UserDataRegistrationPolicyScope policyScope =
+                UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
 
-            try
-            {
-                UserData.RegistrationPolicy = Interop.InteropRegistrationPolicy.Automatic;
-
-                int a = 3;
-                Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
-                script.DoString("action()");
-                Assert.That(a, Is.EqualTo(5));
-            }
-            finally
-            {
-                UserData.RegistrationPolicy = oldPolicy;
-            }
+            int a = 3;
+            Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
+            script.DoString("action()");
+            Assert.That(a, Is.EqualTo(5));
         }
 
         [global::TUnit.Core.Test]
