@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -23,8 +25,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task HelpWithoutArgumentsListsCommands()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: true);
                 ShellContext context = new(new Script());
@@ -44,18 +45,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     .Contains(
                         $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.RunCommandShortHelp}"
                     );
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task HelpTrimsWhitespaceAroundArguments()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: true);
                 ShellContext context = new(new Script());
@@ -65,18 +61,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.RunCommandLongHelp);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task UnknownCommandReportsAnError()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: true);
                 ShellContext context = new(new Script());
@@ -86,11 +77,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.CommandManagerInvalidCommand("nope"));
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -120,8 +107,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EmptyCommandLineReportsInvalidCommand()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: true);
                 ShellContext context = new(new Script());
@@ -131,11 +117,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.CommandManagerEmptyCommand);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
     }
 }
+
+#pragma warning restore CA2007

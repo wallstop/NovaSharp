@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.CoreLib;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ScriptRunTUnitTests
     {
@@ -24,28 +25,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task RunFileExecutesFileContents()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string tempFile = Path.Combine(Path.GetTempPath(), $"script-{Guid.NewGuid():N}.lua");
-            if (File.Exists(tempFile))
-            {
-                File.Delete(tempFile);
-            }
-            try
-            {
-                await File.WriteAllTextAsync(tempFile, "return 'file-result'")
-                    .ConfigureAwait(false);
+            using TempFileScope tempFileScope = TempFileScope.Create(
+                namePrefix: "script-",
+                extension: ".lua"
+            );
+            string tempFile = tempFileScope.FilePath;
 
-                DynValue result = Script.RunFile(tempFile);
+            await File.WriteAllTextAsync(tempFile, "return 'file-result'").ConfigureAwait(false);
 
-                await Assert.That(result.Type).IsEqualTo(DataType.String);
-                await Assert.That(result.String).IsEqualTo("file-result");
-            }
-            finally
-            {
-                if (File.Exists(tempFile))
-                {
-                    File.Delete(tempFile);
-                }
-            }
+            DynValue result = Script.RunFile(tempFile);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String);
+            await Assert.That(result.String).IsEqualTo("file-result");
         }
 
         [global::TUnit.Core.Test]

@@ -22,6 +22,10 @@
             Link="TestUtilities\RemoteDebuggerTestHarness.cs"
         />
         <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/Scopes/**/*.cs"
+            Link="TestInfrastructure\Scopes\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
             Include="..\NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs"
             Link="TestUtilities\TestWaitHelpers.cs"
         />

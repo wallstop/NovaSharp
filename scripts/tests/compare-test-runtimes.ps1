@@ -1,42 +1,44 @@
 <#
 .SYNOPSIS
-    Compares the runtime of two dotnet test invocations (typically NUnit vs. TUnit) and
+    Compares the runtime of two dotnet test invocations (historically NUnit vs. TUnit) and
     emits a JSON artefact with per-suite and per-test timing data.
 
 .DESCRIPTION
     Runs `dotnet test` twice using the provided argument lists, captures the Microsoft.Testing.Platform
-    “Detailed” console output for each run, parses the per-test durations, and writes a summary JSON file
-    under `artifacts/tunit-migration/<Name>.json`. The script automatically enables `--output Detailed`,
-    stores the raw logs under `artifacts/tunit-migration/tmp/<label>/<label>.log`, and records the parsed
-    data so migrations can be compared without ad-hoc stopwatches.
+    “Detailed” console output for each run, and writes a summary JSON file under
+    `artifacts/tunit-migration/<Name>.json`. When the legacy baseline is no longer available, pass
+    `-BaselineArtefactPath <existing-json>` to reuse a previously captured NUnit measurement and only run
+    the TUnit host. The script automatically enables `--output Detailed`, stores the raw logs under
+    `artifacts/tunit-migration/tmp/<label>/<label>.log`, and records the parsed data so migrations can be
+    compared without ad-hoc stopwatches.
 
 .EXAMPLE
-    # Replace <legacy-suite>.csproj with the NUnit project you are retiring (if any).
+    # Compare an archived NUnit run with the current TUnit suite.
     pwsh ./scripts/tests/compare-test-runtimes.ps1 `
-        -Name remote-debugger `
-        -NUnitArguments @(
-            "--project", "path/to/<legacy-suite>.csproj",
-            "-c", "Release",
-            "--no-build",
-            "--filter", "FullyQualifiedName~RemoteDebuggerTests"
-        ) `
+        -Name remote-debugger-final `
+        -BaselineArtefactPath artifacts/tunit-migration/remote-debugger-sample.json `
         -TUnitArguments @(
             "--project", "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
             "-c", "Release"
         )
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = "RunBaseline")]
 param(
     [Parameter(Mandatory = $true)]
     [string]
     $Name,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = "RunBaseline")]
     [string[]]
     $NUnitArguments,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = "ReuseBaseline")]
+    [string]
+    $BaselineArtefactPath,
+
+    [Parameter(Mandatory = $true, ParameterSetName = "RunBaseline")]
+    [Parameter(Mandatory = $true, ParameterSetName = "ReuseBaseline")]
     [string[]]
     $TUnitArguments,
 
@@ -117,6 +119,38 @@ function ConvertTo-Seconds {
     }
 
     return [Math]::Round($totalSeconds, 6)
+}
+
+function Import-BaselineArtefact {
+    param(
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Baseline artefact not found at '$Path'."
+    }
+
+    $resolved = (Resolve-Path -LiteralPath $Path).Path
+    $json = Get-Content -LiteralPath $resolved -Raw | ConvertFrom-Json
+    if ($null -eq $json -or $null -eq $json.nunit) {
+        throw "Baseline artefact '$resolved' does not contain an 'nunit' result."
+    }
+
+    $nunit = $json.nunit
+    return [pscustomobject]@{
+        label = if ($nunit.PSObject.Properties.Name -contains "label") { $nunit.label } else { "nunit-archive" }
+        command = $nunit.command
+        totalSeconds = $nunit.totalSeconds
+        testCount = $nunit.testCount
+        passed = $nunit.passed
+        failed = $nunit.failed
+        skipped = $nunit.skipped
+        durationSeconds = $nunit.durationSeconds
+        result = $nunit.result
+        logPath = $nunit.logPath
+        tests = $nunit.tests
+        sourceArtefact = $resolved
+    }
 }
 
 function Parse-TestOutput {
@@ -222,7 +256,13 @@ New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
 $TempRoot = Join-Path -Path $outputRoot -ChildPath "tmp"
 New-Item -ItemType Directory -Force -Path $TempRoot | Out-Null
 
-$nunitResult = Invoke-TestRun -Label "nunit" -TestArguments $NUnitArguments
+$nunitResult = $null
+if ($PSCmdlet.ParameterSetName -eq "RunBaseline") {
+    $nunitResult = Invoke-TestRun -Label "nunit" -TestArguments $NUnitArguments
+}
+else {
+    $nunitResult = Import-BaselineArtefact -Path $BaselineArtefactPath
+}
 $tunitResult = Invoke-TestRun -Label "tunit" -TestArguments $TUnitArguments
 
 $sanitizedName = ($Name -replace '[^A-Za-z0-9_.-]', "-").ToLowerInvariant()
@@ -236,6 +276,10 @@ $summary = [pscustomobject]@{
     nunit = $nunitResult
     tunit = $tunitResult
     deltaSeconds = [Math]::Round($tunitResult.totalSeconds - $nunitResult.totalSeconds, 4)
+}
+
+if ($PSCmdlet.ParameterSetName -eq "ReuseBaseline" -and $nunitResult.PSObject.Properties.Name -contains "sourceArtefact") {
+    $summary | Add-Member -NotePropertyName baselineArtefact -NotePropertyValue $nunitResult.sourceArtefact
 }
 
 $json = $summary | ConvertTo-Json -Depth 6

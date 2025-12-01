@@ -36,3 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion(NovaSharp.Interpreter.Script.VERSION)]
 [assembly: InternalsVisibleTo("NovaSharp.Interpreter.Tests")]
 [assembly: InternalsVisibleTo("NovaSharp.Interpreter.Tests.TUnit")]
+[assembly: InternalsVisibleTo("NovaSharp.RemoteDebugger.Tests.TUnit")]

@@ -18,6 +18,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ScriptLoadTUnitTests
     {
@@ -320,25 +321,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 
-            string path = Path.Combine(Path.GetTempPath(), $"script-{Guid.NewGuid():N}.lua");
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
+            using TempFileScope tempFileScope = TempFileScope.Create(
+                namePrefix: "script-",
+                extension: ".lua"
+            );
+            string path = tempFileScope.FilePath;
 
-            try
-            {
-                await File.WriteAllTextAsync(path, "return 654").ConfigureAwait(false);
-                DynValue fileResult = Script.RunFile(path);
-                await Assert.That(fileResult.Number).IsEqualTo(654);
-            }
-            finally
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
+            await File.WriteAllTextAsync(path, "return 654").ConfigureAwait(false);
+            DynValue fileResult = Script.RunFile(path);
+            await Assert.That(fileResult.Number).IsEqualTo(654);
         }
 
         [global::TUnit.Core.Test]

@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -12,6 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     public sealed class RunCommandTUnitTests
@@ -19,8 +22,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsWritesSyntaxHint()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 RunCommand command = new();
@@ -29,11 +31,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 command.Execute(context, string.Empty);
 
                 await Assert.That(consoleScope.Writer.ToString()).Contains("Syntax : !run <file>");
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -74,8 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutManifestLogsCompatibilitySummary()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 RecordingScriptLoader loader = new();
                 Script script = new()
@@ -97,18 +94,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     .That(consoleScope.Writer.ToString())
                     .Contains("[compatibility] Running")
                     .And.Contains("Lua 5.4");
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithManifestRunsScriptInCompatibilityInstance()
         {
-            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
-            Directory.CreateDirectory(modDirectory);
+            using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "mod_"
+            );
+            string modDirectory = modDirectoryScope.DirectoryPath;
 
             string scriptPath = Path.Combine(modDirectory, "entry.lua");
             await File.WriteAllTextAsync(
@@ -127,8 +122,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 )
                 .ConfigureAwait(false);
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 RunCommand command = new();
                 Script script = new();
@@ -145,15 +139,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     .And.Contains("Lua 5.3")
                     .And.Contains("[compatibility] Running");
                 await Assert.That(script.Globals.Get("contextFlag").IsNil()).IsTrue();
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-                if (Directory.Exists(modDirectory))
-                {
-                    Directory.Delete(modDirectory, recursive: true);
-                }
-            }
+            });
         }
 
         private static TException ExpectException<TException>(Action action)
@@ -218,3 +204,5 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
+
+#pragma warning restore CA2007

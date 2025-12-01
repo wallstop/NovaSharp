@@ -17,6 +17,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     public sealed class ProgramTUnitTests
@@ -106,30 +107,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task CheckArgsRunScriptExecutesFile()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string scriptPath = Path.Combine(Path.GetTempPath(), $"sample_{Guid.NewGuid():N}.lua");
+            using TempFileScope scriptScope = TempFileScope.Create(
+                namePrefix: "sample_",
+                extension: ".lua"
+            );
+            string scriptPath = scriptScope.FilePath;
             await File.WriteAllTextAsync(scriptPath, "return 42").ConfigureAwait(false);
 
-            try
+            await WithConsoleAsync(async _ =>
             {
-                await WithConsoleAsync(async _ =>
-                {
-                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
 
-                    await Assert.That(handled).IsTrue();
-                });
-            }
-            finally
-            {
-                DeleteFileIfExists(scriptPath);
-            }
+                await Assert.That(handled).IsTrue();
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsRunScriptAppliesManifestCompatibility()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
-            Directory.CreateDirectory(modDirectory);
+            using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "mod_"
+            );
+            string modDirectory = modDirectoryScope.DirectoryPath;
             string scriptPath = Path.Combine(modDirectory, "entry.lua");
             string manifestPath = Path.Combine(modDirectory, "mod.json");
 
@@ -147,32 +147,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 )
                 .ConfigureAwait(false);
 
-            try
+            await WithConsoleAsync(async console =>
             {
-                await WithConsoleAsync(async console =>
-                {
-                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
 
-                    await Assert.That(handled).IsTrue();
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(
-                            CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile")
-                        );
-                });
-            }
-            finally
-            {
-                DeleteDirectoryIfExists(modDirectory);
-            }
+                await Assert.That(handled).IsTrue();
+                await Assert
+                    .That(console.Writer.ToString())
+                    .Contains(CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile"));
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsRunScriptLogsCompatibilitySummary()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string modDirectory = Path.Combine(Path.GetTempPath(), $"mod_{Guid.NewGuid():N}");
-            Directory.CreateDirectory(modDirectory);
+            using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "mod_"
+            );
+            string modDirectory = modDirectoryScope.DirectoryPath;
             string scriptPath = Path.Combine(modDirectory, "entry.lua");
             string manifestPath = Path.Combine(modDirectory, "mod.json");
 
@@ -186,25 +179,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 )
                 .ConfigureAwait(false);
 
-            try
+            await WithConsoleAsync(async console =>
             {
-                await WithConsoleAsync(async console =>
-                {
-                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
-                    string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
-                    string expectedLine = CliMessages.ProgramRunningScript(
-                        scriptPath,
-                        expectedSummary
-                    );
+                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
+                string expectedLine = CliMessages.ProgramRunningScript(scriptPath, expectedSummary);
 
-                    await Assert.That(handled).IsTrue();
-                    await Assert.That(console.Writer.ToString()).Contains(expectedLine);
-                });
-            }
-            finally
-            {
-                DeleteDirectoryIfExists(modDirectory);
-            }
+                await Assert.That(handled).IsTrue();
+                await Assert.That(console.Writer.ToString()).Contains(expectedLine);
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -227,47 +210,39 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             PlatformDetectionTestHelper.ForceFileSystemLoader();
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
+            using TempFileScope destFileScope = TempFileScope.FromExisting(destPath);
 
-            Func<string, Table> originalLoader = HardwireCommand.DumpLoader;
-            HardwireCommand.DumpLoader = _ =>
+            using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {
                 Script script = new(default(CoreModules));
                 return HardwireTestUtilities.CreateDescriptorTable(script, "internal");
-            };
+            });
 
-            try
+            await WithConsoleAsync(async console =>
             {
-                await WithConsoleAsync(async console =>
-                {
-                    bool handled = Program.CheckArgs(
-                        new[]
-                        {
-                            "-W",
-                            dumpPath,
-                            destPath,
-                            "--internals",
-                            "--vb",
-                            "--class:GeneratedTypes",
-                            "--namespace:GeneratedNamespace",
-                        },
-                        CreateShellContext()
-                    );
+                bool handled = Program.CheckArgs(
+                    new[]
+                    {
+                        "-W",
+                        dumpPath,
+                        destPath,
+                        "--internals",
+                        "--vb",
+                        "--class:GeneratedTypes",
+                        "--namespace:GeneratedNamespace",
+                    },
+                    CreateShellContext()
+                );
 
-                    await Assert.That(handled).IsTrue();
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-                    await Assert.That(File.Exists(destPath)).IsTrue();
-                    string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
-                    await Assert.That(generated).Contains("Namespace GeneratedNamespace");
-                    await Assert.That(generated).Contains("Class GeneratedTypes");
-                });
-            }
-            finally
-            {
-                HardwireCommand.DumpLoader = originalLoader;
-                DeleteFileIfExists(destPath);
-            }
+                await Assert.That(handled).IsTrue();
+                await Assert
+                    .That(console.Writer.ToString())
+                    .Contains(CliMessages.HardwireGenerationSummary(0, 0));
+                await Assert.That(File.Exists(destPath)).IsTrue();
+                string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
+                await Assert.That(generated).Contains("Namespace GeneratedNamespace");
+                await Assert.That(generated).Contains("Class GeneratedTypes");
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -407,37 +382,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             Program.RunInterpreterLoopForTests(interpreter, CreateShellContext());
         }
 
-        private static void DeleteFileIfExists(string path)
-        {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
-
-        private static void DeleteDirectoryIfExists(string path)
-        {
-            if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
-            {
-                Directory.Delete(path, recursive: true);
-            }
-        }
-
         private static async Task WithConsoleAsync(
             Func<ConsoleRedirectionScope, Task> action,
             string input = null
         )
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                using ConsoleRedirectionScope console = new(input);
-                await action(console).ConfigureAwait(false);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleRedirectionScope console = new(input);
+                    await action(console).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         private sealed class StubReplInterpreter : ReplInterpreter

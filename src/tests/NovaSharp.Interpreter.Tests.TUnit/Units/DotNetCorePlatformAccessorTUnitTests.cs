@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class DotNetCorePlatformAccessorTUnitTests
     {
@@ -78,25 +79,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DotNetCorePlatformAccessor accessor = new();
             string path = Path.GetTempFileName();
-            try
-            {
-                using Stream stream = accessor.OpenFile(
-                    script: null,
-                    filename: path,
-                    encoding: Encoding.UTF8,
-                    mode: "w+"
-                );
+            using TempFileScope tempFileScope = TempFileScope.FromExisting(path);
 
-                await Assert.That(stream.CanRead).IsTrue();
-                await Assert.That(stream.CanWrite).IsTrue();
-            }
-            finally
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
+            using Stream stream = accessor.OpenFile(
+                script: null,
+                filename: tempFileScope.FilePath,
+                encoding: Encoding.UTF8,
+                mode: "w+"
+            );
+
+            await Assert.That(stream.CanRead).IsTrue();
+            await Assert.That(stream.CanWrite).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -133,48 +126,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DotNetCorePlatformAccessor accessor = new();
             string path = accessor.GetTempFileName();
-            try
-            {
-                await Assert.That(File.Exists(path)).IsTrue();
-            }
-            finally
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
+            using TempFileScope tempFileScope = TempFileScope.FromExisting(path);
+
+            await Assert.That(File.Exists(tempFileScope.FilePath)).IsTrue();
         }
 
         [global::TUnit.Core.Test]
         public async Task FileExistsDeleteAndMoveOperateOnFilesystem()
         {
             DotNetCorePlatformAccessor accessor = new();
-            string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(directory);
+            using TempDirectoryScope directoryScope = TempDirectoryScope.Create();
+            string directory = directoryScope.DirectoryPath;
 
             string src = Path.Combine(directory, "source.txt");
             string dst = Path.Combine(directory, "dest.txt");
 
-            try
-            {
-                await File.WriteAllTextAsync(src, "payload");
-                await Assert.That(accessor.FileExists(src)).IsTrue();
+            await File.WriteAllTextAsync(src, "payload");
+            await Assert.That(accessor.FileExists(src)).IsTrue();
 
-                accessor.MoveFile(src, dst);
-                await Assert.That(File.Exists(dst)).IsTrue();
-                await Assert.That(File.Exists(src)).IsFalse();
+            accessor.MoveFile(src, dst);
+            await Assert.That(File.Exists(dst)).IsTrue();
+            await Assert.That(File.Exists(src)).IsFalse();
 
-                accessor.DeleteFile(dst);
-                await Assert.That(File.Exists(dst)).IsFalse();
-            }
-            finally
-            {
-                if (Directory.Exists(directory))
-                {
-                    Directory.Delete(directory, recursive: true);
-                }
-            }
+            accessor.DeleteFile(dst);
+            await Assert.That(File.Exists(dst)).IsFalse();
         }
 
         [global::TUnit.Core.Test]

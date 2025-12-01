@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -41,8 +43,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             DebugCommand command = new();
             ShellContext context = new(new Script());
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 command.Execute(context, string.Empty);
@@ -54,11 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert.That(ReferenceEquals(bridge.LastScript, context.Script)).IsTrue();
                 await Assert.That(bridge.LastScriptName).IsEqualTo("NovaSharp REPL interpreter");
                 await Assert.That(bridge.LastFreeRun).IsFalse();
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -71,8 +68,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
             DebugCommand command = new();
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 command.Execute(
@@ -82,11 +78,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
                 await Assert.That(bridge.AttachCount).IsEqualTo(1);
                 await Assert.That(launcher.LaunchCount).IsEqualTo(0);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -99,8 +91,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             DebugCommand command = new();
             ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua52));
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 command.Execute(context, string.Empty);
@@ -109,11 +100,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains($"[compatibility] Debugger session running under {expectedSummary}");
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         private static Script CreateScript(LuaCompatibilityVersion version)
@@ -159,3 +146,5 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
+
+#pragma warning restore CA2007

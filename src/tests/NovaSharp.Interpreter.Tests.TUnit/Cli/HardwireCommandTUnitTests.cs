@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -13,6 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     public sealed class HardwireCommandTUnitTests
@@ -24,20 +27,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
             HardwireCommand command = new();
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
             string input = "#quit" + Environment.NewLine;
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleRedirectionScope consoleScope = new(input);
                 command.Execute(new ShellContext(new Script()), string.Empty);
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.HardwireCommandAbortHint);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -49,8 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 string.Join(Environment.NewLine, "cs", "nonexistent.lua", "#quit")
                 + Environment.NewLine;
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleRedirectionScope consoleScope = new(input);
                 command.Execute(new ShellContext(new Script()), string.Empty);
@@ -58,11 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.HardwireMissingFile);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -71,9 +64,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             PlatformDetectionTestHelper.ForceFileSystemLoader();
             string dumpPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.cs");
+            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleRedirectionScope consoleScope = new();
                 HardwireCommand.Generate(
@@ -88,20 +81,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.HardwireInternalError(string.Empty));
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-                Cleanup(destPath);
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteInvalidNamespaceRequestsRetry()
         {
             PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
+            using TempFileScope dumpScope = TempFileScope.Create(
+                namePrefix: "dump_",
+                extension: ".lua"
+            );
+            string dumpPath = dumpScope.FilePath;
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
+            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
             await File.WriteAllTextAsync(dumpPath, "return {}").ConfigureAwait(false);
             string input =
                 string.Join(
@@ -114,8 +107,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     "#quit"
                 ) + Environment.NewLine;
 
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleRedirectionScope consoleScope = new(input);
                 HardwireCommand command = new();
@@ -124,13 +116,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.HardwireIdentifierValidation);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-                Cleanup(dumpPath);
-                Cleanup(destPath);
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -203,60 +189,53 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 Path.GetTempPath(),
                 $"hardwire_{Guid.NewGuid():N}.{(language == "vb" ? "vb" : "cs")}"
             );
+            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
             await DumpLoaderSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                Func<string, Table> originalLoader = HardwireCommand.DumpLoader;
-                HardwireCommand.DumpLoader = _ =>
-                {
-                    Script script = new(default(CoreModules));
-                    return HardwireTestUtilities.CreateDescriptorTable(script, visibility);
-                };
+                using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(
+                    _ =>
+                    {
+                        Script script = new(default(CoreModules));
+                        return HardwireTestUtilities.CreateDescriptorTable(script, visibility);
+                    }
+                );
 
-                await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-                string output;
-                try
-                {
-                    using ConsoleRedirectionScope consoleScope = new();
-                    HardwireCommand.Generate(
-                        language,
-                        "ignored.lua",
-                        destPath,
-                        allowInternals,
-                        "GeneratedTypes",
-                        "GeneratedNamespace"
-                    );
-                    output = consoleScope.Writer.ToString();
-                }
-                finally
-                {
-                    ConsoleCaptureCoordinator.Semaphore.Release();
-                    HardwireCommand.DumpLoader = originalLoader;
-                }
-
-                try
-                {
-                    await Assert.That(File.Exists(destPath)).IsTrue();
-                    string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
-                    await Assert.That(generated).Contains(expectedNamespaceSnippet);
-                    await Assert.That(generated).Contains(expectedClassSnippet);
-                    await Assert
-                        .That(output)
-                        .Contains(
-                            CliMessages.HardwireGenerationSummary(0, expectInternalWarning ? 1 : 0)
+                string output = string.Empty;
+                await ConsoleCaptureCoordinator
+                    .RunAsync(() =>
+                    {
+                        using ConsoleRedirectionScope consoleScope = new();
+                        HardwireCommand.Generate(
+                            language,
+                            "ignored.lua",
+                            destPath,
+                            allowInternals,
+                            "GeneratedTypes",
+                            "GeneratedNamespace"
                         );
-                    if (expectInternalWarning)
-                    {
-                        await Assert.That(output).Contains("visibility is 'internal'");
-                    }
-                    else
-                    {
-                        await Assert.That(output).DoesNotContain("visibility is 'internal'");
-                    }
-                }
-                finally
+
+                        output = consoleScope.Writer.ToString();
+                        return Task.CompletedTask;
+                    })
+                    .ConfigureAwait(false);
+
+                await Assert.That(File.Exists(destPath)).IsTrue();
+                string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
+                await Assert.That(generated).Contains(expectedNamespaceSnippet);
+                await Assert.That(generated).Contains(expectedClassSnippet);
+                await Assert
+                    .That(output)
+                    .Contains(
+                        CliMessages.HardwireGenerationSummary(0, expectInternalWarning ? 1 : 0)
+                    );
+                if (expectInternalWarning)
                 {
-                    Cleanup(destPath);
+                    await Assert.That(output).Contains("visibility is 'internal'");
+                }
+                else
+                {
+                    await Assert.That(output).DoesNotContain("visibility is 'internal'");
                 }
             }
             finally
@@ -264,13 +243,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 DumpLoaderSemaphore.Release();
             }
         }
-
-        private static void Cleanup(string path)
-        {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
     }
 }
+
+#pragma warning restore CA2007

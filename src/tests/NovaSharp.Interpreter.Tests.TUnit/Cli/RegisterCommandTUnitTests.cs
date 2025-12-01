@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -25,8 +27,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithUnknownTypeWritesError()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 RegisterCommand command = new();
@@ -38,11 +39,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     "Missing.Namespace.TypeName"
                 );
                 await Assert.That(consoleScope.Writer.ToString()).Contains(expected);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -61,8 +58,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsListsRegisteredTypes()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 RegisterCommand command = new();
@@ -74,13 +70,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(typeof(SampleType).FullName);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         private sealed class SampleType { }
     }
 }
+
+#pragma warning restore CA2007

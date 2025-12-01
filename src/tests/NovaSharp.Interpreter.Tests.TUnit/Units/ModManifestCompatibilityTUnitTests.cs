@@ -11,13 +11,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ModManifestCompatibilityTUnitTests
     {
         [global::TUnit.Core.Test]
         public async Task TryApplyFromScriptPathAppliesManifestAndLogsInfo()
         {
-            string tempDir = CreateTempDirectory();
+            using TempDirectoryScope tempDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_"
+            );
+            string tempDir = tempDirectoryScope.DirectoryPath;
             string scriptPath = Path.Combine(tempDir, "main.lua");
             await File.WriteAllTextAsync(scriptPath, "return 1");
 
@@ -50,7 +54,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryApplyFromDirectoryHandlesInvalidManifest()
         {
-            string tempDir = CreateTempDirectory();
+            using TempDirectoryScope tempDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_"
+            );
+            string tempDir = tempDirectoryScope.DirectoryPath;
             await File.WriteAllTextAsync(Path.Combine(tempDir, "mod.json"), "{ this is: not json");
 
             ScriptOptions options = new(Script.DefaultOptions);
@@ -72,7 +79,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CreateScriptFromDirectoryAppliesCompatibilityBeforeInstantiation()
         {
-            string tempDir = CreateTempDirectory();
+            using TempDirectoryScope tempDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_"
+            );
+            string tempDir = tempDirectoryScope.DirectoryPath;
             await File.WriteAllTextAsync(
                 Path.Combine(tempDir, "mod.json"),
                 "{ \"name\": \"mod\", \"luaCompatibility\": \"Lua52\" }"
@@ -137,7 +147,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryApplyFromDirectoryReturnsFalseWhenManifestMissing()
         {
-            string tempDir = CreateTempDirectory();
+            using TempDirectoryScope tempDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_"
+            );
+            string tempDir = tempDirectoryScope.DirectoryPath;
             ScriptOptions options = new(Script.DefaultOptions);
 
             bool applied = ModManifestCompatibility.TryApplyFromDirectory(tempDir, options);
@@ -147,7 +160,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryApplyFromDirectoryDoesNotEmitInfoWhenCompatibilityMissing()
         {
-            string tempDir = CreateTempDirectory();
+            using TempDirectoryScope tempDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_"
+            );
+            string tempDir = tempDirectoryScope.DirectoryPath;
             await File.WriteAllTextAsync(
                 Path.Combine(tempDir, "mod.json"),
                 "{ \"name\": \"sample\" }"
@@ -216,16 +232,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Assert.Throws<ArgumentNullException>(() =>
                 ModManifestCompatibility.TryApplyFromDirectory("mods", null)
             );
-        }
-
-        private static string CreateTempDirectory()
-        {
-            string path = Path.Combine(
-                Path.GetTempPath(),
-                $"novasharp_modcompat_{Guid.NewGuid():N}"
-            );
-            Directory.CreateDirectory(path);
-            return path;
         }
 
         private sealed class TestModFileSystem : IModFileSystem

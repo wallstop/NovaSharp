@@ -17,6 +17,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
     using NovaSharp.Interpreter.Tests.TestUtilities;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.RemoteDebugger.Network;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class RemoteDebuggerServiceTUnitTests
     {
@@ -158,56 +159,48 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
         [global::TUnit.Core.Test]
         public async Task AttachFromDirectoryAppliesManifestCompatibility()
         {
-            string modDirectory = CreateTempDirectory();
-            try
-            {
-                await File.WriteAllTextAsync(
-                        Path.Combine(modDirectory, "mod.json"),
-                        "{ \"name\": \"Sample\", \"luaCompatibility\": \"Lua52\" }"
-                    )
-                    .ConfigureAwait(false);
-                await File.WriteAllTextAsync(
-                        Path.Combine(modDirectory, "main.lua"),
-                        "return _VERSION"
-                    )
-                    .ConfigureAwait(false);
+            using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_debugger_"
+            );
+            string modDirectory = modDirectoryScope.DirectoryPath;
 
-                RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
-                options.HttpPort = null;
-                options.RpcPortBase = GetFreeRpcPortBase();
-                options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
+            await File.WriteAllTextAsync(
+                    Path.Combine(modDirectory, "mod.json"),
+                    "{ \"name\": \"Sample\", \"luaCompatibility\": \"Lua52\" }"
+                )
+                .ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(modDirectory, "main.lua"), "return _VERSION")
+                .ConfigureAwait(false);
 
-                using RemoteDebuggerService service = new(options);
-                ScriptOptions baseOptions = new(Script.DefaultOptions);
+            RemoteDebuggerOptions options = RemoteDebuggerOptions.Default;
+            options.HttpPort = null;
+            options.RpcPortBase = GetFreeRpcPortBase();
+            options.NetworkOptions = Utf8TcpServerOptions.LocalHostOnly;
 
-                List<string> info = new();
-                List<string> warnings = new();
+            using RemoteDebuggerService service = new(options);
+            ScriptOptions baseOptions = new(Script.DefaultOptions);
 
-                Script script = service.AttachFromDirectory(
-                    modDirectory,
-                    scriptName: null,
-                    modules: CoreModules.Basic,
-                    baseOptions: baseOptions,
-                    infoSink: info.Add,
-                    warningSink: warnings.Add
-                );
+            List<string> info = new();
+            List<string> warnings = new();
 
-                await Assert.That(script).IsNotNull();
-                await Assert
-                    .That(script.CompatibilityVersion)
-                    .IsEqualTo(LuaCompatibilityVersion.Lua52);
-                await Assert.That(script.DebuggerEnabled).IsTrue();
-                await Assert.That(info.Count).IsGreaterThanOrEqualTo(2);
-                await Assert.That(info[0]).Contains("Lua 5.2");
-                await Assert
-                    .That(info.Any(message => ContainsOrdinal(message, "running under")))
-                    .IsTrue();
-                await Assert.That(warnings.Count).IsEqualTo(0);
-            }
-            finally
-            {
-                TryDeleteDirectory(modDirectory);
-            }
+            Script script = service.AttachFromDirectory(
+                modDirectory,
+                scriptName: null,
+                modules: CoreModules.Basic,
+                baseOptions: baseOptions,
+                infoSink: info.Add,
+                warningSink: warnings.Add
+            );
+
+            await Assert.That(script).IsNotNull();
+            await Assert.That(script.CompatibilityVersion).IsEqualTo(LuaCompatibilityVersion.Lua52);
+            await Assert.That(script.DebuggerEnabled).IsTrue();
+            await Assert.That(info.Count).IsGreaterThanOrEqualTo(2);
+            await Assert.That(info[0]).Contains("Lua 5.2");
+            await Assert
+                .That(info.Any(message => ContainsOrdinal(message, "running under")))
+                .IsTrue();
+            await Assert.That(warnings.Count).IsEqualTo(0);
         }
 
         private static Script BuildScript(string code, string chunkName)
@@ -377,29 +370,6 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
         private static bool ContainsOrdinal(string source, string value)
         {
             return source != null && source.Contains(value, StringComparison.Ordinal);
-        }
-
-        private static string CreateTempDirectory()
-        {
-            string directory = Path.Combine(
-                Path.GetTempPath(),
-                $"novasharp_debugger_{Guid.NewGuid():N}"
-            );
-            Directory.CreateDirectory(directory);
-            return directory;
-        }
-
-        private static void TryDeleteDirectory(string path)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
-                {
-                    Directory.Delete(path, recursive: true);
-                }
-            }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
         }
     }
 }

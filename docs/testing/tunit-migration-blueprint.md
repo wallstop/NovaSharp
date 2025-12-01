@@ -53,17 +53,11 @@
 
 ## Measurement harness
 
-- Use `pwsh ./scripts/tests/compare-test-runtimes.ps1` to record “NUnit vs. TUnit” timings. The script injects `--output Detailed`, parses the Microsoft.Testing.Platform console output for per-test durations, and writes a JSON artefact under `artifacts/tunit-migration/<name>.json` plus raw logs beneath `artifacts/tunit-migration/tmp/<label>/<label>.log`.
+- Use `pwsh ./scripts/tests/compare-test-runtimes.ps1` to record timing deltas. The script injects `--output Detailed`, parses the Microsoft.Testing.Platform console output for per-test durations, and writes a JSON artefact under `artifacts/tunit-migration/<name>.json` plus raw logs beneath `artifacts/tunit-migration/tmp/<label>/<label>.log`. When the NUnit host is unavailable, pass `-BaselineArtefactPath <existing-json>` to reuse the last captured baseline while only executing the TUnit suite.
 
 - Example (remote debugger pilot):
 
   ```powershell
-  $nunit = @(
-      "--project", "path/to/<legacy-suite>.csproj",
-      "-c", "Release",
-      "--no-build",
-      "--filter", "FullyQualifiedName~RemoteDebuggerTests"
-  )
   $tunit = @(
       "--project", "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
       "-c", "Release",
@@ -71,7 +65,7 @@
   )
   pwsh ./scripts/tests/compare-test-runtimes.ps1 `
       -Name remote-debugger-handshake `
-      -NUnitArguments $nunit `
+      -BaselineArtefactPath artifacts/tunit-migration/remote-debugger-sample.json `
       -TUnitArguments $tunit
   ```
 

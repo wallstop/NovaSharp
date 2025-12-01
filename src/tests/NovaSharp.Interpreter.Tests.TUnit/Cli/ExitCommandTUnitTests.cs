@@ -1,3 +1,5 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -23,8 +25,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task DisplayShortHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 ExitCommand command = new();
@@ -34,18 +35,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.ExitCommandShortHelp);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task DisplayLongHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await ConsoleCaptureCoordinator.RunAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 ExitCommand command = new();
@@ -55,11 +51,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.ExitCommandLongHelp);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -88,3 +80,5 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
+
+#pragma warning restore CA2007

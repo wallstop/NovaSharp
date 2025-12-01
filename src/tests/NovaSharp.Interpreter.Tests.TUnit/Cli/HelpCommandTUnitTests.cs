@@ -1,5 +1,8 @@
+#pragma warning disable CA2007
+
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
+    using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
@@ -24,8 +27,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsListsRegisteredCommands()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await WithConsoleCaptureAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 HelpCommand command = new();
@@ -40,18 +42,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert.That(output).Contains($"{CliMessages.HelpCommandCommandPrefix}run");
                 await Assert.That(output).Contains(expectedSummary);
                 await Assert.That(output).Contains(CliMessages.HelpCommandCompatibilitySummary);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithKnownCommandWritesLongHelp()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await WithConsoleCaptureAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 HelpCommand command = new();
@@ -64,18 +61,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.RunCommandLongHelp);
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithUnknownCommandPrintsError()
         {
-            await ConsoleCaptureCoordinator.Semaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await WithConsoleCaptureAsync(async () =>
             {
                 using ConsoleCaptureScope consoleScope = new(captureError: false);
                 HelpCommand command = new();
@@ -88,11 +80,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 await Assert
                     .That(consoleScope.Writer.ToString())
                     .Contains(CliMessages.HelpCommandCommandNotFound("garbage"));
-            }
-            finally
-            {
-                ConsoleCaptureCoordinator.Semaphore.Release();
-            }
+            });
         }
 
         private static Script CreateScript(LuaCompatibilityVersion version)
@@ -100,5 +88,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ScriptOptions options = new() { CompatibilityVersion = version };
             return new Script(options);
         }
+
+        private static Task WithConsoleCaptureAsync(Func<Task> action)
+        {
+            return ConsoleCaptureCoordinator.RunAsync(action);
+        }
     }
 }
+
+#pragma warning restore CA2007
