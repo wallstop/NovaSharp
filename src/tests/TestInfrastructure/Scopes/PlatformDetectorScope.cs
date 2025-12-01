@@ -17,6 +17,23 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             _overrideScope = PlatformDetectorOverrideScope.Apply(initializer);
         }
 
+        private static void ApplyResetDefaults()
+        {
+            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
+            PlatformAutoDetector.TestHooks.SetFlags(
+                isRunningOnUnity: false,
+                isUnityNative: false,
+                isRunningOnMono: false,
+                isPortableFramework: false,
+                isRunningOnClr4: false,
+                isUnityIl2Cpp: false
+            );
+            SetAotValue(null);
+            SetAutoDetectionsDone(false);
+            ClearAssemblyEnumerationOverride();
+            PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
+        }
+
         /// <summary>
         /// Captures the current detector state without mutating it.
         /// </summary>
@@ -30,22 +47,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
         /// </summary>
         public static PlatformDetectorScope ResetForDetection()
         {
-            return new PlatformDetectorScope(() =>
-            {
-                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
-                PlatformAutoDetector.TestHooks.SetFlags(
-                    isRunningOnUnity: false,
-                    isUnityNative: false,
-                    isRunningOnMono: false,
-                    isPortableFramework: false,
-                    isRunningOnClr4: false,
-                    isUnityIl2Cpp: false
-                );
-                SetAotValue(null);
-                SetAutoDetectionsDone(false);
-                ClearAssemblyEnumerationOverride();
-                PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
-            });
+            return new PlatformDetectorScope(ApplyResetDefaults);
         }
 
         /// <summary>
@@ -53,10 +55,12 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
         /// </summary>
         public static PlatformDetectorScope OverrideFlags(bool unity)
         {
-            PlatformDetectorScope scope = ResetForDetection();
-            PlatformAutoDetector.TestHooks.SetFlags(isRunningOnUnity: unity);
-            SetAutoDetectionsDone(true);
-            return scope;
+            return new PlatformDetectorScope(() =>
+            {
+                ApplyResetDefaults();
+                PlatformAutoDetector.TestHooks.SetFlags(isRunningOnUnity: unity);
+                SetAutoDetectionsDone(true);
+            });
         }
 
         public static void SetFlags(

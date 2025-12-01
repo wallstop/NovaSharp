@@ -143,22 +143,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             InteropAccessMode original = TypeDescriptorRegistry.DefaultAccessMode;
 
-            try
+            using (UserData.BeginIsolationScope())
             {
-                using (UserData.BeginIsolationScope())
-                {
-                    TypeDescriptorRegistry.DefaultAccessMode = targetAccessMode;
-                    await Assert
-                        .That(TypeDescriptorRegistry.DefaultAccessMode)
-                        .IsEqualTo(targetAccessMode);
-                }
+                TypeDescriptorRegistry.DefaultAccessMode = targetAccessMode;
+                await Assert
+                    .That(TypeDescriptorRegistry.DefaultAccessMode)
+                    .IsEqualTo(targetAccessMode);
+            }
 
-                await Assert.That(TypeDescriptorRegistry.DefaultAccessMode).IsEqualTo(original);
-            }
-            finally
-            {
-                TypeDescriptorRegistry.DefaultAccessMode = original;
-            }
+            await Assert.That(TypeDescriptorRegistry.DefaultAccessMode).IsEqualTo(original);
         }
 
         private sealed class IsolatedType { }

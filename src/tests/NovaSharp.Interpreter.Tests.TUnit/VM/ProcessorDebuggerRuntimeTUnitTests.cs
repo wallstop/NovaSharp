@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
     using static NovaSharp.Interpreter.Tests.TUnit.VM.ProcessorDebuggerTestHelpers;
     using StubDebugger = NovaSharp.Interpreter.Tests.TUnit.VM.ProcessorDebuggerTestHelpers.StubDebugger;
 
@@ -26,23 +27,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
 
             Processor parentProcessor = script.GetMainProcessorForTests();
             List<Processor> parentStack = parentProcessor.GetCoroutineStackForTests();
-            List<Processor> originalStack = new(parentStack);
+            using ProcessorCoroutineStackScope stackScope = ProcessorCoroutineStackScope.Capture(
+                parentProcessor
+            );
 
-            try
-            {
-                parentStack.Clear();
-                parentStack.Add(coroutineProcessor);
+            parentStack.Clear();
+            parentStack.Add(coroutineProcessor);
 
-                List<WatchItem> threads = coroutineProcessor.RefreshDebuggerThreadsForTests();
+            List<WatchItem> threads = coroutineProcessor.RefreshDebuggerThreadsForTests();
 
-                await Assert.That(threads.Count).IsEqualTo(1);
-                await Assert.That(threads[0].Address).IsEqualTo(coroutine.ReferenceId);
-                await Assert.That(threads[0].Name).IsEqualTo($"coroutine #{coroutine.ReferenceId}");
-            }
-            finally
-            {
-                parentProcessor.ReplaceCoroutineStackForTests(originalStack);
-            }
+            await Assert.That(threads.Count).IsEqualTo(1);
+            await Assert.That(threads[0].Address).IsEqualTo(coroutine.ReferenceId);
+            await Assert.That(threads[0].Name).IsEqualTo($"coroutine #{coroutine.ReferenceId}");
         }
 
         [global::TUnit.Core.Test]

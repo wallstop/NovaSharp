@@ -1,11 +1,10 @@
 namespace NovaSharp.Interpreter.Tests
 {
     using System;
-    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Core.Enums;
     using global::TUnit.Core.Interfaces;
-    using NovaSharp.Interpreter.Platforms;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [AttributeUsage(
         AttributeTargets.Class | AttributeTargets.Method,
@@ -17,39 +16,30 @@ namespace NovaSharp.Interpreter.Tests
             ITestStartEventReceiver,
             ITestEndEventReceiver
     {
-        private static readonly SemaphoreSlim IsolationGate = new(1, 1);
-        private PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;
-        private bool _gateHeld;
+        private const string ScopeKey = "NovaSharp.Tests.PlatformDetectorIsolation.Scope";
 
         public EventReceiverStage Stage => EventReceiverStage.Early;
 
         public async ValueTask OnTestStart(global::TUnit.Core.TestContext context)
         {
-            await IsolationGate.WaitAsync().ConfigureAwait(false);
-            _gateHeld = true;
-            _snapshot = PlatformAutoDetector.TestHooks.CaptureState();
+            ArgumentNullException.ThrowIfNull(context);
+
+            context.StateBag[ScopeKey] = await PlatformDetectorIsolationScope
+                .EnterAsync()
+                .ConfigureAwait(false);
         }
 
-        public ValueTask OnTestEnd(global::TUnit.Core.TestContext context)
+        public async ValueTask OnTestEnd(global::TUnit.Core.TestContext context)
         {
-            try
-            {
-                if (_snapshot != null)
-                {
-                    PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
-                    _snapshot = null;
-                }
-            }
-            finally
-            {
-                if (_gateHeld)
-                {
-                    IsolationGate.Release();
-                    _gateHeld = false;
-                }
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            return ValueTask.CompletedTask;
+            if (
+                context.StateBag.TryRemove(ScopeKey, out object value)
+                && value is PlatformDetectorIsolationScope scope
+            )
+            {
+                await scope.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 }

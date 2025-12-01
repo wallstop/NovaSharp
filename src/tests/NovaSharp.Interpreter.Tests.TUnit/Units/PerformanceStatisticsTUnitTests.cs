@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Diagnostics;
     using NovaSharp.Interpreter.Diagnostics.PerformanceCounters;
     using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class PerformanceStatisticsTUnitTests
     {
@@ -86,7 +87,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             {
                 ResetGlobalState();
                 FakeClock clock = new();
-                PerformanceStatistics.GlobalClock = clock;
+                using StaticValueScope<IHighResolutionClock> clockScope =
+                    StaticValueScope<IHighResolutionClock>.Override(
+                        () => PerformanceStatistics.GlobalClock,
+                        value => PerformanceStatistics.GlobalClock = value,
+                        clock
+                    );
 
                 using (PerformanceStatistics.StartGlobalStopwatch(ExecutionCounter))
                 {
@@ -142,7 +148,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             {
                 ResetGlobalState();
                 FakeClock clock = new();
-                PerformanceStatistics.GlobalClock = clock;
+                using StaticValueScope<IHighResolutionClock> clockScope =
+                    StaticValueScope<IHighResolutionClock>.Override(
+                        () => PerformanceStatistics.GlobalClock,
+                        value => PerformanceStatistics.GlobalClock = value,
+                        clock
+                    );
 
                 using (PerformanceStatistics.StartGlobalStopwatch(ExecutionCounter))
                 {

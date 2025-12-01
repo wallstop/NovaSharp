@@ -251,18 +251,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
             using (PlatformDetectorScope.ResetForDetection()) { }
 
             bool originalUnityFlag = PlatformAutoDetector.IsRunningOnUnity;
-            PlatformDetectorScope scope = PlatformDetectorScope.OverrideFlags(
-                unity: !originalUnityFlag
-            );
-            try
+            using (PlatformDetectorScope.OverrideFlags(unity: !originalUnityFlag))
             {
                 await Assert
                     .That(PlatformAutoDetector.IsRunningOnUnity)
                     .IsEqualTo(!originalUnityFlag);
-            }
-            finally
-            {
-                scope.Dispose();
             }
 
             await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsEqualTo(originalUnityFlag);

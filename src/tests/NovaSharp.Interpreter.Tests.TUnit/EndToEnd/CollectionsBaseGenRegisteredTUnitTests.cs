@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class CollectionsBaseGenRegisteredTUnitTests
@@ -354,39 +355,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             sentinel.Add(sentinel.Sum());
             sentinel.Add(sentinel.Last());
 
-            try
-            {
-                UserData.RegisterType<RegCollMethods>();
-                UserData.RegisterType<RegCollItem>();
-                UserData.RegisterType<Array>();
-                UserData.RegisterType(typeof(List<>));
-                UserData.RegisterType<List<RegCollItem>>();
-                UserData.RegisterType<List<int>>();
-                UserData.RegisterExtensionType(typeof(Enumerable));
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            registrationScope.Add<RegCollMethods>(ensureUnregistered: true);
+            registrationScope.Add<RegCollItem>(ensureUnregistered: true);
+            registrationScope.Add<Array>(ensureUnregistered: true);
+            registrationScope.Add(typeof(List<>), ensureUnregistered: true);
+            registrationScope.Add<List<RegCollItem>>(ensureUnregistered: true);
+            registrationScope.Add<List<int>>(ensureUnregistered: true);
 
-                Script script = new();
-                RegCollMethods host = new();
-                script.Globals["o"] = host;
-                script.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
+            UserData.RegisterType<RegCollMethods>();
+            UserData.RegisterType<RegCollItem>();
+            UserData.RegisterType<Array>();
+            UserData.RegisterType(typeof(List<>));
+            UserData.RegisterType<List<RegCollItem>>();
+            UserData.RegisterType<List<int>>();
+            UserData.RegisterExtensionType(typeof(Enumerable));
 
-                DynValue result = script.DoString(code);
-                await asserts(result, host);
-            }
-            catch (ScriptRuntimeException ex)
-            {
-                Debug.WriteLine(ex.DecoratedMessage);
-                ex.Rethrow();
-                throw;
-            }
-            finally
-            {
-                UserData.UnregisterType<RegCollMethods>();
-                UserData.UnregisterType<RegCollItem>();
-                UserData.UnregisterType<Array>();
-                UserData.UnregisterType(typeof(List<>));
-                UserData.UnregisterType<List<RegCollItem>>();
-                UserData.UnregisterType<List<int>>();
-            }
+            Script script = new();
+            RegCollMethods host = new();
+            script.Globals["o"] = host;
+            script.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
+
+            DynValue result = script.DoString(code);
+            await asserts(result, host);
         }
     }
 }

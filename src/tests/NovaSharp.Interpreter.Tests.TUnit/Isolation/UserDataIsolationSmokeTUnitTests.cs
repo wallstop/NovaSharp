@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataIsolationSmokeTUnitTests
@@ -21,14 +22,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
         public async Task RegistrationDoesNotLeakBetweenTestsFirst()
         {
             await Assert.That(UserData.IsTypeRegistered<SmokeHost>()).IsFalse();
-            try
-            {
-                UserData.RegisterType<SmokeHost>();
-            }
-            finally
-            {
-                UserData.UnregisterType<SmokeHost>();
-            }
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SmokeHost>(ensureUnregistered: true);
+            UserData.RegisterType<SmokeHost>();
         }
 
         [global::TUnit.Core.Test]

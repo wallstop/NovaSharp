@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Options;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class CallbackFunctionTUnitTests
     {
@@ -99,10 +100,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(captured).IsNotNull();
             await Assert.That(captured!.IsMethodCall).IsFalse();
 
-            if (!UserData.IsTypeRegistered<SampleUserData>())
-            {
-                UserData.RegisterType<SampleUserData>();
-            }
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            UserData.RegisterType<SampleUserData>();
 
             DynValue userData = UserData.Create(new SampleUserData());
             List<DynValue> userDataArgs = new() { userData };
@@ -115,55 +115,48 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task DefaultAccessModeRejectsUnsupportedValues()
         {
-            InteropAccessMode original = CallbackFunction.DefaultAccessMode;
-
-            try
-            {
-                ArgumentException defaultException = Assert.Throws<ArgumentException>(() =>
-                    CallbackFunction.DefaultAccessMode = InteropAccessMode.Default
-                );
-                ArgumentException hideMembers = Assert.Throws<ArgumentException>(() =>
-                    CallbackFunction.DefaultAccessMode = InteropAccessMode.HideMembers
-                );
-                ArgumentException backgroundOptimized = Assert.Throws<ArgumentException>(() =>
-                    CallbackFunction.DefaultAccessMode = InteropAccessMode.BackgroundOptimized
+            using StaticValueScope<InteropAccessMode> modeScope =
+                StaticValueScope<InteropAccessMode>.Capture(
+                    () => CallbackFunction.DefaultAccessMode,
+                    value => CallbackFunction.DefaultAccessMode = value
                 );
 
-                await Assert.That(defaultException).IsNotNull();
-                await Assert.That(hideMembers).IsNotNull();
-                await Assert.That(backgroundOptimized).IsNotNull();
-            }
-            finally
-            {
-                CallbackFunction.DefaultAccessMode = original;
-            }
+            ArgumentException defaultException = Assert.Throws<ArgumentException>(() =>
+                CallbackFunction.DefaultAccessMode = InteropAccessMode.Default
+            );
+            ArgumentException hideMembers = Assert.Throws<ArgumentException>(() =>
+                CallbackFunction.DefaultAccessMode = InteropAccessMode.HideMembers
+            );
+            ArgumentException backgroundOptimized = Assert.Throws<ArgumentException>(() =>
+                CallbackFunction.DefaultAccessMode = InteropAccessMode.BackgroundOptimized
+            );
+
+            await Assert.That(defaultException).IsNotNull();
+            await Assert.That(hideMembers).IsNotNull();
+            await Assert.That(backgroundOptimized).IsNotNull();
         }
 
         [global::TUnit.Core.Test]
         public async Task FromDelegateUsesConfiguredDefaultAccessMode()
         {
             Script script = new();
-            InteropAccessMode original = CallbackFunction.DefaultAccessMode;
-
-            try
-            {
-                CallbackFunction.DefaultAccessMode = InteropAccessMode.Reflection;
-
-                CallbackFunction function = CallbackFunction.FromDelegate(
-                    script,
-                    new Func<int, int>(SampleUserData.AddOne)
+            using StaticValueScope<InteropAccessMode> modeScope =
+                StaticValueScope<InteropAccessMode>.Override(
+                    () => CallbackFunction.DefaultAccessMode,
+                    value => CallbackFunction.DefaultAccessMode = value,
+                    InteropAccessMode.Reflection
                 );
 
-                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-                List<DynValue> args = new() { DynValue.NewNumber(41) };
+            CallbackFunction function = CallbackFunction.FromDelegate(
+                script,
+                new Func<int, int>(SampleUserData.AddOne)
+            );
 
-                DynValue result = function.Invoke(context, args);
-                await Assert.That(result.Number).IsEqualTo(42d);
-            }
-            finally
-            {
-                CallbackFunction.DefaultAccessMode = original;
-            }
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            List<DynValue> args = new() { DynValue.NewNumber(41) };
+
+            DynValue result = function.Invoke(context, args);
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]

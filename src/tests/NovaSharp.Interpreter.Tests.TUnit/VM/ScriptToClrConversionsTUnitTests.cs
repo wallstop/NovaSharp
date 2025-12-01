@@ -121,9 +121,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalVoid()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
                 DynValue.Void,
-                typeof(int),
                 defaultValue: 77,
                 isOptional: true
             );
@@ -134,9 +133,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsNilToNullable()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            int? result = ScriptToClrConversions.DynValueToObjectOfType<int?>(
                 DynValue.Nil,
-                typeof(int?),
                 defaultValue: null,
                 isOptional: false
             );
@@ -147,9 +145,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalNilValueType()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
                 DynValue.Nil,
-                typeof(int),
                 defaultValue: 123,
                 isOptional: true
             );
@@ -160,24 +157,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsBooleanToStringBuilder()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            StringBuilder result = ScriptToClrConversions.DynValueToObjectOfType<StringBuilder>(
                 DynValue.NewBoolean(true),
-                typeof(StringBuilder),
                 defaultValue: null,
                 isOptional: false
             );
 
-            await Assert.That(result is StringBuilder).IsTrue();
             await Assert.That(result.ToString()).IsEqualTo("True");
         }
 
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsStringToChar()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            char result = ScriptToClrConversions.DynValueToObjectOfType<char>(
                 DynValue.NewString("Nova"),
-                typeof(char),
-                defaultValue: null,
+                defaultValue: default(char),
                 isOptional: false
             );
 
@@ -187,15 +181,36 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsNumberToEnum()
         {
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            SampleEnum result = ScriptToClrConversions.DynValueToObjectOfType<SampleEnum>(
                 DynValue.NewNumber((double)SampleEnum.Second),
-                typeof(SampleEnum),
-                defaultValue: null,
+                defaultValue: SampleEnum.First,
                 isOptional: false
             );
 
-            await Assert.That(result is int).IsTrue();
-            await Assert.That(result).IsEqualTo((int)SampleEnum.Second);
+            await Assert.That(result).IsEqualTo(SampleEnum.Second);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeGenericReturnsTypedValue()
+        {
+            int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
+                DynValue.NewNumber(42),
+                isOptional: false
+            );
+
+            await Assert.That(result).IsEqualTo(42);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeGenericHonorsDefaultValue()
+        {
+            int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
+                DynValue.Void,
+                defaultValue: 77,
+                isOptional: true
+            );
+
+            await Assert.That(result).IsEqualTo(77);
         }
 
         [global::TUnit.Core.Test]
@@ -203,9 +218,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             DynValue functionValue = CreateConstantClosure("return 1337");
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            Closure result = ScriptToClrConversions.DynValueToObjectOfType<Closure>(
                 functionValue,
-                typeof(Closure),
                 defaultValue: null,
                 isOptional: false
             );
@@ -218,16 +232,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             DynValue functionValue = CreateConstantClosure("return 21 + 21");
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
-                functionValue,
-                typeof(ScriptFunctionCallback),
-                defaultValue: null,
-                isOptional: false
-            );
+            ScriptFunctionCallback result =
+                ScriptToClrConversions.DynValueToObjectOfType<ScriptFunctionCallback>(
+                    functionValue,
+                    defaultValue: null,
+                    isOptional: false
+                );
 
-            await Assert.That(result is ScriptFunctionCallback).IsTrue();
-            ScriptFunctionCallback callback = (ScriptFunctionCallback)result;
-            object invocationResult = callback(Array.Empty<object>());
+            object invocationResult = result(Array.Empty<object>());
             await Assert.That(invocationResult).IsEqualTo(42d);
         }
 
@@ -239,18 +251,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             table.Append(DynValue.NewNumber(20));
             DynValue dynValueTable = DynValue.NewTable(table);
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            List<int> result = ScriptToClrConversions.DynValueToObjectOfType<List<int>>(
                 dynValueTable,
-                typeof(List<int>),
                 defaultValue: null,
                 isOptional: false
             );
 
-            await Assert.That(result is List<int>).IsTrue();
-            List<int> list = (List<int>)result;
-            await Assert.That(list.Count).IsEqualTo(2);
-            await Assert.That(list[0]).IsEqualTo(10);
-            await Assert.That(list[1]).IsEqualTo(20);
+            await Assert.That(result.Count).IsEqualTo(2);
+            await Assert.That(result[0]).IsEqualTo(10);
+            await Assert.That(result[1]).IsEqualTo(20);
         }
 
         [global::TUnit.Core.Test]
@@ -264,9 +273,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             );
             DynValue userData = UserData.Create(instance, descriptor);
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            FakeUserData result = ScriptToClrConversions.DynValueToObjectOfType<FakeUserData>(
                 userData,
-                typeof(FakeUserData),
                 defaultValue: null,
                 isOptional: false
             );
@@ -285,9 +293,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             );
             DynValue userData = UserData.Create(instance, descriptor);
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
+            string result = ScriptToClrConversions.DynValueToObjectOfType<string>(
                 userData,
-                typeof(string),
                 defaultValue: null,
                 isOptional: false
             );
@@ -303,12 +310,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 "cb"
             );
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
-                callbackDynValue,
-                typeof(CallbackFunction),
-                defaultValue: null,
-                isOptional: false
-            );
+            CallbackFunction result =
+                ScriptToClrConversions.DynValueToObjectOfType<CallbackFunction>(
+                    callbackDynValue,
+                    defaultValue: null,
+                    isOptional: false
+                );
 
             await Assert.That(ReferenceEquals(result, callbackDynValue.Callback)).IsTrue();
         }
@@ -321,15 +328,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 "answer"
             );
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
-                callbackDynValue,
-                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
-                defaultValue: null,
-                isOptional: false
-            );
-
             Func<ScriptExecutionContext, CallbackArguments, DynValue> delegateResult =
-                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)result;
+                ScriptToClrConversions.DynValueToObjectOfType<
+                    Func<ScriptExecutionContext, CallbackArguments, DynValue>
+                >(callbackDynValue, defaultValue: null, isOptional: false);
             DynValue invocationResult = delegateResult(
                 null,
                 new CallbackArguments(Array.Empty<DynValue>(), isMethodCall: false)
@@ -347,17 +349,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             table.Set(DynValue.NewNumber(2), DynValue.NewString("beta"));
             DynValue tableValue = DynValue.NewTable(table);
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
-                tableValue,
-                typeof(Dictionary<object, object>),
-                defaultValue: null,
-                isOptional: false
-            );
+            Dictionary<object, object> result = ScriptToClrConversions.DynValueToObjectOfType<
+                Dictionary<object, object>
+            >(tableValue, defaultValue: null, isOptional: false);
 
-            await Assert.That(result is Dictionary<object, object>).IsTrue();
-            Dictionary<object, object> dictionary = (Dictionary<object, object>)result;
-            await Assert.That(dictionary["alpha"]).IsEqualTo(1.0);
-            await Assert.That(dictionary[2.0]).IsEqualTo("beta");
+            await Assert.That(result["alpha"]).IsEqualTo(1.0);
+            await Assert.That(result[2.0]).IsEqualTo("beta");
         }
 
         [global::TUnit.Core.Test]
@@ -369,17 +366,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             table.Set(DynValue.NewString("two"), DynValue.NewNumber(2));
             DynValue tableValue = DynValue.NewTable(table);
 
-            object result = ScriptToClrConversions.DynValueToObjectOfType(
-                tableValue,
-                typeof(Dictionary<string, int>),
-                defaultValue: null,
-                isOptional: false
-            );
+            Dictionary<string, int> result = ScriptToClrConversions.DynValueToObjectOfType<
+                Dictionary<string, int>
+            >(tableValue, defaultValue: null, isOptional: false);
 
-            await Assert.That(result is Dictionary<string, int>).IsTrue();
-            Dictionary<string, int> dictionary = (Dictionary<string, int>)result;
-            await Assert.That(dictionary["one"]).IsEqualTo(1);
-            await Assert.That(dictionary["two"]).IsEqualTo(2);
+            await Assert.That(result["one"]).IsEqualTo(1);
+            await Assert.That(result["two"]).IsEqualTo(2);
         }
 
         [global::TUnit.Core.Test]
@@ -404,10 +396,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue tupleValue = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                ScriptToClrConversions.DynValueToObjectOfType(
+                ScriptToClrConversions.DynValueToObjectOfType<int>(
                     tupleValue,
-                    typeof(int),
-                    defaultValue: null,
+                    defaultValue: 0,
                     isOptional: false
                 )
             );
@@ -423,10 +414,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             DynValue empty = DynValue.NewString(string.Empty);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                ScriptToClrConversions.DynValueToObjectOfType(
+                ScriptToClrConversions.DynValueToObjectOfType<char>(
                     empty,
-                    typeof(char),
-                    defaultValue: null,
+                    defaultValue: default(char),
                     isOptional: false
                 )
             );
@@ -439,6 +429,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeHonorsCustomConverters()
         {
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
+
             Script.GlobalOptions.CustomConverters.Clear();
             Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
                 DataType.Number,
@@ -446,31 +438,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
                 dv => 999
             );
 
-            try
-            {
-                object result = ScriptToClrConversions.DynValueToObjectOfType(
-                    DynValue.NewNumber(1.23),
-                    typeof(int),
-                    defaultValue: null,
-                    isOptional: false
-                );
+            int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
+                DynValue.NewNumber(1.23),
+                defaultValue: 0,
+                isOptional: false
+            );
 
-                await Assert.That(result).IsEqualTo(999);
-            }
-            finally
-            {
-                Script.GlobalOptions.CustomConverters.Clear();
-            }
+            await Assert.That(result).IsEqualTo(999);
+
+            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeThrowsWhenNoConversionExists()
         {
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                ScriptToClrConversions.DynValueToObjectOfType(
+                ScriptToClrConversions.DynValueToObjectOfType<DateTime>(
                     DynValue.NewBoolean(true),
-                    typeof(DateTime),
-                    defaultValue: null,
+                    defaultValue: default(DateTime),
                     isOptional: false
                 )
             );

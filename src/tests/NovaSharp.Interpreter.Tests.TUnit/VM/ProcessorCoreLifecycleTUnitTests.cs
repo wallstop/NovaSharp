@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ProcessorCoreLifecycleTUnitTests
     {
@@ -241,21 +242,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("boundary"));
             Processor coroutineProcessor = coroutineValue.Coroutine.GetProcessorForTests();
-            bool originalCanYield = coroutineProcessor.SwapCanYieldForTests(false);
+            using ProcessorYieldScope yieldScope = ProcessorYieldScope.Override(
+                coroutineProcessor,
+                newValue: false
+            );
 
-            try
-            {
-                ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                    coroutineValue.Coroutine.Resume()
-                );
-                await Assert
-                    .That(exception.Message)
-                    .Contains("attempt to yield across a CLR-call boundary");
-            }
-            finally
-            {
-                coroutineProcessor.SwapCanYieldForTests(originalCanYield);
-            }
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                coroutineValue.Coroutine.Resume()
+            );
+            await Assert
+                .That(exception.Message)
+                .Contains("attempt to yield across a CLR-call boundary");
         }
 
         private static TException ExpectException<TException>(Action action)

@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class StructAssignmentTechniqueTUnitTests
@@ -84,26 +85,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task StructFieldCantSetThroughLua()
         {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            registrationScope.Add<Transform>(ensureUnregistered: true);
+            registrationScope.Add<Vector3>(ensureUnregistered: true);
+
             UserData.RegisterType<Transform>();
             UserData.RegisterType<Vector3>();
 
-            try
-            {
-                Script script = new();
-                Transform transform = new();
-                _ = new Vector3Accessor(transform);
+            Script script = new();
+            Transform transform = new();
+            _ = new Vector3Accessor(transform);
 
-                transform.Position = new Vector3() { X = 3 };
-                script.Globals["transform"] = transform;
-                script.DoString("transform.Position.X = 15;");
+            transform.Position = new Vector3() { X = 3 };
+            script.Globals["transform"] = transform;
+            script.DoString("transform.Position.X = 15;");
 
-                await Assert.That((int)transform.Position.X).IsEqualTo(3);
-            }
-            finally
-            {
-                UserData.UnregisterType<Transform>();
-                UserData.UnregisterType<Vector3>();
-            }
+            await Assert.That((int)transform.Position.X).IsEqualTo(3);
         }
     }
 }

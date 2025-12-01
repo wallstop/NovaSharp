@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Options;
     using NovaSharp.Interpreter.Tests.TestUtilities;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ScriptOptionsTUnitTests
     {
@@ -92,6 +93,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task HighResolutionClockFlowsIntoPerformanceStatistics()
         {
             FakeHighResolutionClock clock = new();
+            PerformanceStatistics.TestHooks.ResetGlobalStopwatches();
+            using StaticValueScope<IHighResolutionClock> clockScope =
+                StaticValueScope<IHighResolutionClock>.Override(
+                    () => PerformanceStatistics.GlobalClock,
+                    value => PerformanceStatistics.GlobalClock = value,
+                    clock
+                );
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 HighResolutionClock = clock,
