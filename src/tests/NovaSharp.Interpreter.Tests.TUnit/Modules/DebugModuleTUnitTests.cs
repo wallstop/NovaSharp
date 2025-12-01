@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
@@ -36,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.getuservalue(ud)");
 
-            await Assert.That(result.String).IsEqualTo("stored");
+            await Assert.That(result.String).IsEqualTo("stored").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.getuservalue(ud)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -57,7 +56,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getuservalue('not-userdata')");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "local result = debug.getuservalue(ud); return result.foo"
             );
 
-            await Assert.That(userValue.Number).IsEqualTo(42);
+            await Assert.That(userValue.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -86,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             script.DoString("debug.setuservalue(ud, nil)");
 
             DynValue cleared = script.DoString("return debug.getuservalue(ud)");
-            await Assert.That(cleared.IsNil()).IsTrue();
+            await Assert.That(cleared.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -96,11 +95,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue registry = script.DoString("return debug.getregistry()");
 
             bool isTableOrNil = registry.Type == DataType.Table || registry.IsNil();
-            await Assert.That(isTableOrNil).IsTrue();
+            await Assert.That(isTableOrNil).IsTrue().ConfigureAwait(false);
 
             if (registry.Type == DataType.Table)
             {
-                await Assert.That(registry.Table).IsNotNull();
+                await Assert.That(registry.Table).IsNotNull().ConfigureAwait(false);
             }
         }
 
@@ -112,7 +111,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "local mt = { flag = true }; local t = setmetatable({}, mt); return debug.getmetatable(t).flag"
             );
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -123,7 +122,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "local co = coroutine.create(function() end); return debug.getmetatable(co)"
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.setmetatable({}, nil) ~= nil");
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -143,7 +142,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "debug.setmetatable(true, { value = 7 }); return debug.getmetatable(true).value"
             );
 
-            await Assert.That(result.Number).IsEqualTo(7);
+            await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -155,7 +154,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("debug.setmetatable(print, {})")
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -185,16 +184,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             int secretIndex = (int)tuple.Tuple[0].Number;
-            await Assert.That(secretIndex).IsGreaterThan(0);
-            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(21);
+            await Assert.That(secretIndex).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(21).ConfigureAwait(false);
 
             DynValue setupReturn = script.DoString(
                 $"return debug.setupvalue(fn, {secretIndex}, 64)"
             );
-            await Assert.That(setupReturn.String).IsEqualTo("secret");
+            await Assert.That(setupReturn.String).IsEqualTo("secret").ConfigureAwait(false);
 
             DynValue callResult = script.DoString("return fn()");
-            await Assert.That(callResult.Number).IsEqualTo(64);
+            await Assert.That(callResult.Number).IsEqualTo(64).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -203,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -222,7 +221,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.getupvalue(fn, 99)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -241,7 +240,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.getupvalue(fn, 0)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -250,7 +249,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.setupvalue(print, 1, 10)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -269,7 +268,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.setupvalue(fn, 99, 20)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -318,7 +317,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -327,7 +326,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return debug.upvalueid(print, 1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -346,7 +345,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.upvalueid(fn, 99)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -367,7 +366,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
             );
 
-            await Assert.That(exception.Message).Contains("invalid upvalue index");
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -388,7 +390,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
             );
 
-            await Assert.That(exception.Message).Contains("invalid upvalue index");
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -397,8 +402,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue trace = script.DoString("return debug.traceback('custom error', 0)");
 
-            await Assert.That(trace.String).Contains("custom error");
-            await Assert.That(trace.String).Contains("stack traceback");
+            await Assert.That(trace.String).Contains("custom error").ConfigureAwait(false);
+            await Assert.That(trace.String).Contains("stack traceback").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -409,7 +414,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "local t = { key = 'value' }; return debug.traceback(t) == t"
             );
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -424,8 +429,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
             bool containsNil = trace.String.Contains("nil", StringComparison.Ordinal);
 
-            await Assert.That(startsWithTraceback).IsTrue();
-            await Assert.That(containsNil).IsFalse();
+            await Assert.That(startsWithTraceback).IsTrue().ConfigureAwait(false);
+            await Assert.That(containsNil).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -441,7 +446,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(trace.String).Contains("function 'inner");
+            await Assert.That(trace.String).Contains("function 'inner").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -459,8 +464,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(trace.String).Contains("from coroutine");
-            await Assert.That(trace.String).Contains("stack traceback");
+            await Assert.That(trace.String).Contains("from coroutine").ConfigureAwait(false);
+            await Assert.That(trace.String).Contains("stack traceback").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -475,12 +480,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.debug()");
 
-            await Assert.That(result.IsNil()).IsTrue();
-            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
             bool printedHello = output.Exists(value =>
                 value?.Contains("hello", StringComparison.Ordinal) == true
             );
-            await Assert.That(printedHello).IsTrue();
+            await Assert.That(printedHello).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -495,11 +500,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.DoString("debug.debug()");
 
-            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
             bool printedBoom = output.Exists(value =>
                 value?.Contains("boom", StringComparison.Ordinal) == true
             );
-            await Assert.That(printedBoom).IsTrue();
+            await Assert.That(printedBoom).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -514,11 +519,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.DoString("debug.debug()");
 
-            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
             bool printedValue = output.Exists(value =>
                 value?.Contains("42", StringComparison.Ordinal) == true
             );
-            await Assert.That(printedValue).IsTrue();
+            await Assert.That(printedValue).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -538,11 +543,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.DoString("debug.debug()");
 
-            await Assert.That(commands.Count).IsEqualTo(0);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
             bool printedUnexpectedBoom = output.Exists(value =>
                 value?.Contains("unexpected boom", StringComparison.Ordinal) == true
             );
-            await Assert.That(printedUnexpectedBoom).IsTrue();
+            await Assert.That(printedUnexpectedBoom).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -557,8 +562,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.debug()");
 
-            await Assert.That(result.IsNil()).IsTrue();
-            await Assert.That(output.Count).IsEqualTo(0);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(output.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -573,9 +578,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.debug()");
 
-            await Assert.That(result.IsNil()).IsTrue();
-            await Assert.That(commands.Count).IsEqualTo(0);
-            await Assert.That(output.Count).IsEqualTo(0);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(output.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -590,9 +595,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return debug.debug()");
 
-            await Assert.That(result.IsNil()).IsTrue();
-            await Assert.That(commands.Count).IsEqualTo(0);
-            await Assert.That(output.Count).IsEqualTo(0);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(commands.Count).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(output.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -607,7 +612,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             string message = exception.DecoratedMessage ?? exception.Message;
-            await Assert.That(message).Contains("debug.debug not supported");
+            await Assert.That(message).Contains("debug.debug not supported").ConfigureAwait(false);
         }
 
         private static Script CreateScript()
@@ -620,4 +625,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         private sealed class SampleUserData { }
     }
 }
-#pragma warning restore CA2007

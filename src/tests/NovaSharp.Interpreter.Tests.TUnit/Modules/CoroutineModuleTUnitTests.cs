@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
@@ -22,16 +21,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(runningFunc);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2).ConfigureAwait(false);
 
             DynValue coroutineValue = result.Tuple[0];
             DynValue isMain = result.Tuple[1];
 
-            await Assert.That(coroutineValue.Type).IsEqualTo(DataType.Thread);
-            await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Main);
-            await Assert.That(isMain.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(isMain.Boolean).IsTrue();
+            await Assert.That(coroutineValue.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
+            await Assert
+                .That(coroutineValue.Coroutine.State)
+                .IsEqualTo(CoroutineState.Main)
+                .ConfigureAwait(false);
+            await Assert.That(isMain.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(isMain.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -50,8 +52,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("runningCheck"));
             DynValue result = coroutineValue.Coroutine.Resume();
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -74,22 +76,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("compute"));
 
             DynValue initialStatus = script.Call(statusFunc, coroutineValue);
-            await Assert.That(initialStatus.String).IsEqualTo("suspended");
+            await Assert.That(initialStatus.String).IsEqualTo("suspended").ConfigureAwait(false);
 
             coroutineValue.Coroutine.AutoYieldCounter = 1;
             DynValue forced = coroutineValue.Coroutine.Resume();
-            await Assert.That(forced.Type).IsEqualTo(DataType.YieldRequest);
-            await Assert.That(forced.YieldRequest.Forced).IsTrue();
+            await Assert.That(forced.Type).IsEqualTo(DataType.YieldRequest).ConfigureAwait(false);
+            await Assert.That(forced.YieldRequest.Forced).IsTrue().ConfigureAwait(false);
 
             DynValue suspendedStatus = script.Call(statusFunc, coroutineValue);
-            await Assert.That(suspendedStatus.String).IsEqualTo("suspended");
+            await Assert.That(suspendedStatus.String).IsEqualTo("suspended").ConfigureAwait(false);
 
             coroutineValue.Coroutine.AutoYieldCounter = 0;
             DynValue final = coroutineValue.Coroutine.Resume();
-            await Assert.That(final.Type).IsEqualTo(DataType.Number);
+            await Assert.That(final.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
 
             DynValue deadStatus = script.Call(statusFunc, coroutineValue);
-            await Assert.That(deadStatus.String).IsEqualTo("dead");
+            await Assert.That(deadStatus.String).IsEqualTo("dead").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -110,8 +112,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
             DynValue result = coroutineValue.Coroutine.Resume();
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("running");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("running").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,8 +133,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("queryMainStatus"));
             DynValue result = coroutineValue.Coroutine.Resume();
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("normal");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("normal").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -156,7 +158,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.Call(statusFunc, coroutineValue)
             );
 
-            await Assert.That(exception.Message).Contains("Unexpected coroutine state");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected coroutine state")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -169,7 +174,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.Call(wrapFunc, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("bad argument #1 to 'wrap'");
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #1 to 'wrap'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -182,7 +190,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.Call(createFunc, DynValue.NewString("oops"))
             );
 
-            await Assert.That(exception.Message).Contains("bad argument #1 to 'create'");
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #1 to 'create'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -203,17 +214,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             DynValue wrapper = script.Call(script.Globals.Get("buildWrapper"));
-            await Assert.That(wrapper.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert.That(wrapper.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
 
             DynValue first = script.Call(wrapper);
             DynValue second = script.Call(wrapper);
             DynValue third = script.Call(wrapper);
             DynValue final = script.Call(wrapper);
 
-            await Assert.That(first.Number).IsEqualTo(1d);
-            await Assert.That(second.Number).IsEqualTo(2d);
-            await Assert.That(third.Number).IsEqualTo(3d);
-            await Assert.That(final.String).IsEqualTo("done");
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(third.Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(final.String).IsEqualTo("done").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -233,16 +244,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("generator"));
 
             DynValue first = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(first.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(first.Tuple.Length).IsEqualTo(3);
-            await Assert.That(first.Tuple[0].Boolean).IsTrue();
-            await Assert.That(first.Tuple[1].String).IsEqualTo("yielded");
-            await Assert.That(first.Tuple[2].Number).IsEqualTo(42d);
+            await Assert.That(first.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(first.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Tuple[1].String).IsEqualTo("yielded").ConfigureAwait(false);
+            await Assert.That(first.Tuple[2].Number).IsEqualTo(42d).ConfigureAwait(false);
 
             DynValue second = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(second.Tuple[0].Boolean).IsTrue();
-            await Assert.That(second.Tuple[1].Number).IsEqualTo(7d);
-            await Assert.That(second.Tuple[2].Number).IsEqualTo(8d);
+            await Assert.That(second.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(second.Tuple[1].Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert.That(second.Tuple[2].Number).IsEqualTo(8d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -261,9 +272,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("explode"));
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("boom");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).Contains("boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -276,7 +287,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.Call(resumeFunc, DynValue.NewString("oops"))
             );
 
-            await Assert.That(exception.Message).Contains("bad argument #1 to 'resume'");
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #1 to 'resume'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -296,12 +310,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsEqualTo(4);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].String).IsEqualTo("tag");
-            await Assert.That(result.Tuple[2].Type).IsEqualTo(DataType.Thread);
-            await Assert.That(result.Tuple[3].Boolean).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("tag").ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Type)
+                .IsEqualTo(DataType.Thread)
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -333,14 +350,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsEqualTo(6);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].String).IsEqualTo("top");
-            await Assert.That(result.Tuple[2].Boolean).IsTrue();
-            await Assert.That(result.Tuple[3].Boolean).IsTrue();
-            await Assert.That(result.Tuple[4].String).IsEqualTo("deep");
-            await Assert.That(result.Tuple[5].String).IsEqualTo("value");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("top").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("deep").ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -370,10 +387,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 DynValue.NewNumber(5)
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsEqualTo(2);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(10d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(10d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -406,12 +423,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsEqualTo(4);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].String).IsEqualTo("outer");
-            await Assert.That(result.Tuple[2].String).IsEqualTo("inner-value");
-            await Assert.That(result.Tuple[3].Number).IsEqualTo(99d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("outer").ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].String)
+                .IsEqualTo("inner-value")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(99d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -436,7 +456,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 DynValue.NewString("gamma")
             );
 
-            await Assert.That(result.String).IsEqualTo("alpha-beta-gamma");
+            await Assert.That(result.String).IsEqualTo("alpha-beta-gamma").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -447,8 +467,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(isYieldableFunc);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -469,8 +489,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue wrapper = script.Call(wrapperBuilder);
             DynValue result = script.Call(wrapper);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -493,7 +513,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.Call(wrapper)
             );
 
-            await Assert.That(exception.Message).Contains("wrap boom");
+            await Assert.That(exception.Message).Contains("wrap boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -514,14 +534,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue wrapper = script.Call(script.Globals.Get("buildDelayedErrorWrapper"));
             DynValue first = script.Call(wrapper);
 
-            await Assert.That(first.Type).IsEqualTo(DataType.String);
-            await Assert.That(first.String).IsEqualTo("first");
+            await Assert.That(first.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(first.String).IsEqualTo("first").ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.Call(wrapper)
             );
 
-            await Assert.That(exception.Message).Contains("wrap later");
+            await Assert.That(exception.Message).Contains("wrap later").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -545,16 +565,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             coroutineValue.Coroutine.AutoYieldCounter = 1;
 
             DynValue first = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(first.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(first.Tuple[0].Boolean).IsTrue();
-            await Assert.That(first.Tuple[1].Type).IsEqualTo(DataType.YieldRequest);
-            await Assert.That(first.Tuple[1].YieldRequest.Forced).IsTrue();
+            await Assert.That(first.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(first.Tuple[1].Type)
+                .IsEqualTo(DataType.YieldRequest)
+                .ConfigureAwait(false);
+            await Assert.That(first.Tuple[1].YieldRequest.Forced).IsTrue().ConfigureAwait(false);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.Call(resumeFunc, coroutineValue, DynValue.NewNumber(42))
             );
 
-            await Assert.That(exception.Message).Contains("args must be empty");
+            await Assert
+                .That(exception.Message)
+                .Contains("args must be empty")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -581,8 +607,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.Call(script.Globals.Get("invokeClrCheck"));
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -603,10 +629,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue pcall = script.Globals.Get("pcall");
             DynValue result = script.Call(pcall, wrapper);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("wrapped failure");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("wrapped failure")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -630,13 +659,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue pcall = script.Globals.Get("pcall");
 
             DynValue first = script.Call(pcall, wrapper);
-            await Assert.That(first.Tuple[0].Boolean).IsTrue();
-            await Assert.That(first.Tuple[1].String).IsEqualTo("first");
+            await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Tuple[1].String).IsEqualTo("first").ConfigureAwait(false);
 
             DynValue second = script.Call(pcall, wrapper);
-            await Assert.That(second.Tuple[0].Boolean).IsTrue();
-            await Assert.That(second.Tuple[1].String).IsEqualTo("complete");
-            await Assert.That(second.Tuple[2].Number).IsEqualTo(1d);
+            await Assert.That(second.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(second.Tuple[1].String).IsEqualTo("complete").ConfigureAwait(false);
+            await Assert.That(second.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -661,10 +690,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
             DynValue result = coroutineValue.Coroutine.Resume();
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(result.Tuple[1].Boolean).IsTrue();
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Type)
+                .IsEqualTo(DataType.Boolean)
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -695,11 +727,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 DynValue.NewNumber(42)
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].String).IsEqualTo("tail");
-            await Assert.That(result.Tuple[2].String).IsEqualTo("alpha");
-            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("tail").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("alpha").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -729,16 +761,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             DynValue result = coroutineValue.Coroutine.Resume();
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("boom");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).Contains("boom").ConfigureAwait(false);
 
             DynValue status = script.Call(statusFunc, coroutineValue);
-            await Assert.That(status.String).IsEqualTo("dead");
+            await Assert.That(status.String).IsEqualTo("dead").ConfigureAwait(false);
 
             DynValue handlerYieldable = script.Globals.Get("handlerYieldable");
-            await Assert.That(handlerYieldable.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(handlerYieldable.Boolean).IsFalse();
+            await Assert
+                .That(handlerYieldable.Type)
+                .IsEqualTo(DataType.Boolean)
+                .ConfigureAwait(false);
+            await Assert.That(handlerYieldable.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -770,25 +805,40 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("outerCoroutine"));
 
             DynValue firstYield = coroutineValue.Coroutine.Resume();
-            await Assert.That(firstYield.Type).IsEqualTo(DataType.String);
-            await Assert.That(firstYield.String).IsEqualTo("outer-yield");
+            await Assert.That(firstYield.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(firstYield.String).IsEqualTo("outer-yield").ConfigureAwait(false);
 
             DynValue outerStatusAfterYield = script.Call(statusFunc, coroutineValue);
-            await Assert.That(outerStatusAfterYield.String).IsEqualTo("suspended");
+            await Assert
+                .That(outerStatusAfterYield.String)
+                .IsEqualTo("suspended")
+                .ConfigureAwait(false);
 
             DynValue secondResume = coroutineValue.Coroutine.Resume();
-            await Assert.That(secondResume.Type).IsEqualTo(DataType.String);
-            await Assert.That(secondResume.String).IsEqualTo("inner-done");
+            await Assert.That(secondResume.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(secondResume.String).IsEqualTo("inner-done").ConfigureAwait(false);
 
             DynValue outerStatusAfterCompletion = script.Call(statusFunc, coroutineValue);
-            await Assert.That(outerStatusAfterCompletion.String).IsEqualTo("dead");
+            await Assert
+                .That(outerStatusAfterCompletion.String)
+                .IsEqualTo("dead")
+                .ConfigureAwait(false);
 
             DynValue loggedStatuses = script.Globals.Get("loggedStatuses");
-            await Assert.That(loggedStatuses.Type).IsEqualTo(DataType.Table);
-            await Assert.That(loggedStatuses.Table.Length).IsEqualTo(3);
-            await Assert.That(loggedStatuses.Table.Get(1).String).IsEqualTo("suspended");
-            await Assert.That(loggedStatuses.Table.Get(2).String).IsEqualTo("suspended");
-            await Assert.That(loggedStatuses.Table.Get(3).String).IsEqualTo("dead");
+            await Assert.That(loggedStatuses.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            await Assert.That(loggedStatuses.Table.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(loggedStatuses.Table.Get(1).String)
+                .IsEqualTo("suspended")
+                .ConfigureAwait(false);
+            await Assert
+                .That(loggedStatuses.Table.Get(2).String)
+                .IsEqualTo("suspended")
+                .ConfigureAwait(false);
+            await Assert
+                .That(loggedStatuses.Table.Get(3).String)
+                .IsEqualTo("dead")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -824,7 +874,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             Task<DynValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
 
-            await Assert.That(entered.Wait(TimeSpan.FromSeconds(2))).IsTrue();
+            await Assert.That(entered.Wait(TimeSpan.FromSeconds(2))).IsTrue().ConfigureAwait(false);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 script.Call(resumeFunc, coroutineValue)
@@ -836,10 +886,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             completionScope.Dispose();
 
-            DynValue result = await background;
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].String).IsEqualTo("done");
+            DynValue result = await background.ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("done").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -858,12 +908,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("finish"));
 
             DynValue first = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(first.Tuple[0].Boolean).IsTrue();
+            await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
 
             DynValue result = script.Call(resumeFunc, coroutineValue);
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("cannot resume dead coroutine");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("cannot resume dead coroutine")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -878,13 +931,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 DynValue.NewString("value")
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.YieldRequest);
-            await Assert.That(result.YieldRequest.Forced).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.YieldRequest).ConfigureAwait(false);
+            await Assert.That(result.YieldRequest.Forced).IsFalse().ConfigureAwait(false);
 
             ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
-            await Assert.That(values.Length).IsEqualTo(2);
-            await Assert.That(values.Span[0].Number).IsEqualTo(7d);
-            await Assert.That(values.Span[1].String).IsEqualTo("value");
+            await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert.That(values.Span[1].String).IsEqualTo("value").ConfigureAwait(false);
         }
 
         private static Script CreateScript()
@@ -893,4 +946,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
     }
 }
-#pragma warning restore CA2007

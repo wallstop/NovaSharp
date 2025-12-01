@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
@@ -114,4 +113,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
     }
 }
-#pragma warning restore CA2007
