@@ -52,9 +52,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue tuple = script.DoString("return pcall(123)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert
-                .That(tuple.Tuple[1].String)
-                .Contains("attempt to pcall a non-function");
+            await Assert.That(tuple.Tuple[1].String).Contains("attempt to pcall a non-function");
         }
 
         [global::TUnit.Core.Test]
@@ -136,9 +134,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue value = table.Get("value");
 
             await Assert.That(ok.Boolean).IsTrue();
-            await Assert
-                .That(valueType.String == "number" || valueType.String == "nil")
-                .IsTrue();
+            await Assert.That(valueType.String == "number" || valueType.String == "nil").IsTrue();
 
             if (valueType.String == "number")
             {
@@ -160,10 +156,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 {
                     TailCallData tailCall = new()
                     {
-                        Function = DynValue.NewCallback(
-                            (ctx, innerArgs) => DynValue.True,
-                            "inner"
-                        ),
+                        Function = DynValue.NewCallback((ctx, innerArgs) => DynValue.True, "inner"),
                         Args = System.Array.Empty<DynValue>(),
                         Continuation = new CallbackFunction(
                             (ctx, continuationArgs) => DynValue.True,
@@ -179,9 +172,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue tuple = script.DoString("return pcall(tailing)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert
-                .That(tuple.Tuple[1].String)
-                .Contains("wrap in a script function instead");
+            await Assert.That(tuple.Tuple[1].String).Contains("wrap in a script function instead");
         }
 
         [global::TUnit.Core.Test]
@@ -196,9 +187,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue tuple = script.DoString("return pcall(yielding)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert
-                .That(tuple.Tuple[1].String)
-                .Contains("wrap in a script function instead");
+            await Assert.That(tuple.Tuple[1].String).Contains("wrap in a script function instead");
         }
 
         [global::TUnit.Core.Test]
