@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     public sealed class PlatformAccessorBaseTUnitTests
@@ -16,14 +17,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task GetPlatformNameIncludesMonoClr2Suffix()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: false,
-                unityNative: false,
-                mono: true,
-                portable: false,
-                clr4: false,
-                aot: false
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: false,
+                    unityNative: false,
+                    mono: true,
+                    portable: false,
+                    clr4: false,
+                    aot: false
+                );
 
             TestPlatformAccessor accessor = new("testprefix");
             string name = accessor.GetPlatformName();
@@ -38,14 +40,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task GetPlatformNameIncludesUnityNativeMetadata()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: true,
-                unityNative: true,
-                mono: false,
-                portable: true,
-                clr4: true,
-                aot: true
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: true,
+                    unityNative: true,
+                    mono: false,
+                    portable: true,
+                    clr4: true,
+                    aot: true
+                );
 
             TestPlatformAccessor accessor = new("unityprefix");
             string name = accessor.GetPlatformName();
@@ -59,14 +62,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task GetPlatformNameUsesUnityDllMonoWhenNotNative()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: true,
-                unityNative: false,
-                mono: true,
-                portable: false,
-                clr4: true,
-                aot: false
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: true,
+                    unityNative: false,
+                    mono: true,
+                    portable: false,
+                    clr4: true,
+                    aot: false
+                );
 
             TestPlatformAccessor accessor = new("mono-unity");
             string name = accessor.GetPlatformName();
@@ -80,14 +84,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task GetPlatformNameUsesUnityDllUnknownWhenNotMono()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: true,
-                unityNative: false,
-                mono: false,
-                portable: false,
-                clr4: true,
-                aot: false
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: true,
+                    unityNative: false,
+                    mono: false,
+                    portable: false,
+                    clr4: true,
+                    aot: false
+                );
 
             TestPlatformAccessor accessor = new("unknown-unity");
             string name = accessor.GetPlatformName();
@@ -101,14 +106,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task GetPlatformNameFallsBackToDotnetWhenNotUnityOrMono()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: false,
-                unityNative: false,
-                mono: false,
-                portable: false,
-                clr4: true,
-                aot: false
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: false,
+                    unityNative: false,
+                    mono: false,
+                    portable: false,
+                    clr4: true,
+                    aot: false
+                );
 
             TestPlatformAccessor accessor = new("managed");
             string name = accessor.GetPlatformName();
@@ -141,14 +147,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task IsRunningOnAotReflectsDetectorFlag()
         {
-            using PlatformFlagScope scope = PlatformFlagScope.Override(
-                unity: false,
-                unityNative: false,
-                mono: false,
-                portable: false,
-                clr4: true,
-                aot: true
-            );
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetPlatformFlags(
+                    unity: false,
+                    unityNative: false,
+                    mono: false,
+                    portable: false,
+                    clr4: true,
+                    aot: true
+                );
 
             TestPlatformAccessor accessor = new("aot");
             await Assert.That(accessor.IsRunningOnAOT()).IsTrue();
@@ -294,44 +301,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
             public override string GetEnvironmentVariable(string envvarname)
             {
                 return Environment.GetEnvironmentVariable(envvarname);
-            }
-        }
-
-        private sealed class PlatformFlagScope : IDisposable
-        {
-            private readonly PlatformAutoDetector.PlatformDetectorSnapshot _snapshot;
-
-            private PlatformFlagScope()
-            {
-                _snapshot = PlatformAutoDetector.TestHooks.CaptureState();
-            }
-
-            public static PlatformFlagScope Override(
-                bool unity,
-                bool unityNative,
-                bool mono,
-                bool portable,
-                bool clr4,
-                bool aot
-            )
-            {
-                PlatformFlagScope scope = new();
-                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(null);
-                PlatformAutoDetector.TestHooks.SetFlags(
-                    isRunningOnUnity: unity,
-                    isUnityNative: unityNative,
-                    isRunningOnMono: mono,
-                    isPortableFramework: portable,
-                    isRunningOnClr4: clr4
-                );
-                PlatformAutoDetector.TestHooks.SetRunningOnAot(aot);
-                PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
-                return scope;
-            }
-
-            public void Dispose()
-            {
-                PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
             }
         }
     }

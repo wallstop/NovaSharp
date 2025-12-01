@@ -17,7 +17,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWritesCompiledChunkToDisk()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope sourceScope = TempFileScope.Create(
                 namePrefix: "compile_",
                 extension: ".lua"
@@ -51,7 +52,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWhenSourceMissingLogsFailureAndLeavesNoArtefact()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope sourceScope = TempFileScope.Create(
                 namePrefix: "compile_",
                 extension: ".lua"

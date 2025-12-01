@@ -106,7 +106,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task CheckArgsRunScriptExecutesFile()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope scriptScope = TempFileScope.Create(
                 namePrefix: "sample_",
                 extension: ".lua"
@@ -125,7 +126,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task CheckArgsRunScriptAppliesManifestCompatibility()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
                 namePrefix: "mod_"
             );
@@ -161,7 +163,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task CheckArgsRunScriptLogsCompatibilitySummary()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
                 namePrefix: "mod_"
             );
@@ -207,7 +210,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task CheckArgsHardwireFlagGeneratesDescriptors()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
             using TempFileScope destFileScope = TempFileScope.FromExisting(destPath);

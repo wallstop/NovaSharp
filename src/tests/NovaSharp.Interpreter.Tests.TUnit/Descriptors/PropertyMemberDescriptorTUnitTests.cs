@@ -14,6 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     [PlatformDetectorIsolation]
@@ -134,7 +135,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConstructorFallsBackToReflectionWhenPlatformIsAot()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(true);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(true);
 
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,

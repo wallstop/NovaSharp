@@ -317,7 +317,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             DynValue stringResult = Script.RunString("return 321");
             await Assert.That(stringResult.Number).IsEqualTo(321);
 

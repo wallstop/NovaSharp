@@ -1,13 +1,12 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
 {
-    using NovaSharp.Interpreter.Platforms;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     internal static class PlatformDetectionTestHelper
     {
-        public static void ForceFileSystemLoader()
+        public static PlatformDetectorOverrideScope ForceFileSystemLoader()
         {
-            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
-            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(false);
+            return PlatformDetectorOverrideScope.ForceFileSystemLoader();
         }
     }
 }

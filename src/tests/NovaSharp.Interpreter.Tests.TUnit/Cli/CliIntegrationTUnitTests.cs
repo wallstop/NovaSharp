@@ -53,7 +53,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopEvaluatesLuaInputAndPrintsResult()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script) { HandleClassicExprsSyntax = true };
 
@@ -70,7 +71,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task RunScriptArgumentPrintsSummaryAndExecutesFile()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope scriptScope = TempFileScope.Create(
                 namePrefix: "cli-script-",
                 extension: ".lua"
@@ -190,7 +192,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopCompileCommandProducesChunk()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script);
 
@@ -219,7 +222,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopCompileCommandWithMissingFilePrintsError()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script);
             string missingPath = Path.Combine(
@@ -243,7 +247,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopRunCommandExecutesScript()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script);
             using TempFileScope sourceScope = TempFileScope.Create(
@@ -308,7 +313,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task HardwireSwitchGeneratesDescriptorsViaProgramCheckArgs()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope dumpScope = TempFileScope.Create(
                 namePrefix: "hardwire-dump-",
                 extension: ".lua"
@@ -360,7 +366,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopHardwireCommandGeneratesDescriptors()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script);
             using TempFileScope dumpScope = TempFileScope.Create(

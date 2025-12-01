@@ -44,6 +44,11 @@ bash ./scripts/build/build.sh
 - Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with the TUnit command above, writing logs to `artifacts/test-results`.
 - Pass `-SkipTests`/`--skip-tests` for build-only runs, or override `-Configuration`/`--configuration` to target Debug builds.
 
+### Lint guards for test infrastructure
+
+- Detector overrides (Unity/Mono/AOT flags, assembly enumeration hooks) must go through the shared scope helpers in `src/tests/TestInfrastructure/Scopes`. Run `python scripts/lint/check-platform-testhooks.py` (or `./scripts/ci/check-platform-testhooks.sh`) before sending a PR to ensure no new files reference `PlatformAutoDetector.TestHooks` directly. CI runs the same guard in the lint job, so treating it as a local pre-flight check prevents avoidable failures.
+- Console capture is coordinated via `ConsoleCaptureCoordinator.RunAsync`. To keep SemaphoreSlim usage encapsulated, run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the coordinator helper.
+
 ## Generating Coverage
 
 ```powershell

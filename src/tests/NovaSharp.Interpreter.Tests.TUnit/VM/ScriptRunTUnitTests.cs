@@ -24,7 +24,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunFileExecutesFileContents()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope tempFileScope = TempFileScope.Create(
                 namePrefix: "script-",
                 extension: ".lua"
@@ -42,7 +43,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task RunFileThrowsWhenFileMissing()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             string path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.lua");
             if (File.Exists(path))
             {

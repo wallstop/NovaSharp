@@ -22,6 +22,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     [PlatformDetectorIsolation]
@@ -224,7 +225,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConstructorOnAotPlatformForcesReflectionAccessMode()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(true);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(true);
             MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
             MethodMemberDescriptor descriptor = new(method, InteropAccessMode.LazyOptimized);
@@ -235,7 +237,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConstructorThrowsWhenHideMembersAccessModeRequested()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(false);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(false);
             MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>

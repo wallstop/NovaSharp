@@ -25,7 +25,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteAbortOnQuitStopsInteractiveFlow()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             HardwireCommand command = new();
             string input = "#quit" + Environment.NewLine;
             await ConsoleCaptureCoordinator.RunAsync(async () =>
@@ -41,7 +42,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteInvalidLuaFilePromptsForRetry()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             HardwireCommand command = new();
             string input =
                 string.Join(Environment.NewLine, "cs", "nonexistent.lua", "#quit")
@@ -61,7 +63,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task GenerateWithMissingDumpFileReportsInternalError()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             string dumpPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.lua");
             string destPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.cs");
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
@@ -87,7 +90,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteInvalidNamespaceRequestsRetry()
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope dumpScope = TempFileScope.Create(
                 namePrefix: "dump_",
                 extension: ".lua"
@@ -184,7 +188,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             bool expectInternalWarning
         )
         {
-            PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
             string destPath = Path.Combine(
                 Path.GetTempPath(),
                 $"hardwire_{Guid.NewGuid():N}.{(language == "vb" ? "vb" : "cs")}"

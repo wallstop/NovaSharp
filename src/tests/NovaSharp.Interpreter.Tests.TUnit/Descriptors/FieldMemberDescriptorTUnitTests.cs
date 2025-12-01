@@ -14,6 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     [PlatformDetectorIsolation]
@@ -126,7 +127,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task GetValueUsingPreoptimizedGetterReturnsStaticField()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(false);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(false);
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.Preoptimized
@@ -143,7 +145,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task LazyOptimizedGetterCompilesOnFirstAccess()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(false);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(false);
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.LazyOptimized
@@ -180,7 +183,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task PreoptimizedGetterCompilesForInstanceField()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(false);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(false);
             SampleFields instance = new() { _instanceValue = 99 };
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.InstanceValue,
@@ -211,7 +215,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConstructorForcesReflectionModeOnAotPlatforms()
         {
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(true);
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.SetRunningOnAot(true);
             FieldMemberDescriptor descriptor = new(
                 SampleFieldsMetadata.StaticValue,
                 InteropAccessMode.Preoptimized

@@ -15,6 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [PlatformDetectorIsolation]
     public sealed class UnityAssetsScriptLoaderTUnitTests
@@ -45,61 +46,43 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
         [global::TUnit.Core.Test]
         public async Task LoadFileReturnsResourceContentRegardlessOfPath()
         {
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             Dictionary<string, string> resources = new(StringComparer.OrdinalIgnoreCase)
             {
                 ["init.lua"] = "print('hi')",
             };
 
-            try
-            {
-                UnityAssetsScriptLoader loader = new(resources);
+            UnityAssetsScriptLoader loader = new(resources);
 
-                object script = loader.LoadFile("scripts/init.lua", null);
+            object script = loader.LoadFile("scripts/init.lua", null);
 
-                await Assert.That(script).IsEqualTo("print('hi')");
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(script).IsEqualTo("print('hi')");
         }
 
         [global::TUnit.Core.Test]
         public async Task LoadFileThrowsHelpfulMessageWhenMissing()
         {
-            try
-            {
-                UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
-                FileNotFoundException ex = Assert.Throws<FileNotFoundException>(() =>
-                    loader.LoadFile("missing.lua", null)
-                );
-                await Assert.That(ex).IsNotNull();
-                await Assert.That(ex.Message).Contains(UnityAssetsScriptLoader.DefaultPath);
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            FileNotFoundException ex = Assert.Throws<FileNotFoundException>(() =>
+                loader.LoadFile("missing.lua", null)
+            );
+            await Assert.That(ex).IsNotNull();
+            await Assert.That(ex.Message).Contains(UnityAssetsScriptLoader.DefaultPath);
         }
 
         [global::TUnit.Core.Test]
         public async Task ScriptFileExistsHandlesPathsAndExtensions()
         {
-            try
-            {
-                UnityAssetsScriptLoader loader = new(
-                    new Dictionary<string, string> { ["secondary.lua"] = "" }
-                );
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
+            UnityAssetsScriptLoader loader = new(
+                new Dictionary<string, string> { ["secondary.lua"] = "" }
+            );
 
-                await Assert.That(loader.ScriptFileExists("secondary.lua")).IsTrue();
-                await Assert.That(loader.ScriptFileExists("Scripts/secondary.lua")).IsTrue();
-                await Assert.That(loader.ScriptFileExists("Scripts/other.lua")).IsFalse();
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(loader.ScriptFileExists("secondary.lua")).IsTrue();
+            await Assert.That(loader.ScriptFileExists("Scripts/secondary.lua")).IsTrue();
+            await Assert.That(loader.ScriptFileExists("Scripts/other.lua")).IsFalse();
         }
 
         [global::TUnit.Core.Test]
@@ -107,18 +90,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
         {
             Dictionary<string, string> resources = new() { ["alpha.lua"] = "", ["beta.lua"] = "" };
 
-            try
-            {
-                UnityAssetsScriptLoader loader = new(resources);
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
+            UnityAssetsScriptLoader loader = new(resources);
 
-                string[] loaded = loader.GetLoadedScripts();
+            string[] loaded = loader.GetLoadedScripts();
 
-                await Assert.That(loaded).IsEquivalentTo(ExpectedLoadedScripts);
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(loaded).IsEquivalentTo(ExpectedLoadedScripts);
         }
 
         [global::TUnit.Core.Test]
@@ -130,27 +107,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
                 ["extra.lua"] = "-- stub",
             };
 
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             UnityEngineReflectionHarness.EnsureUnityAssemblies(resources);
+            UnityAssetsScriptLoader loader = new("Custom/Unity/Scripts");
 
-            try
-            {
-                UnityAssetsScriptLoader loader = new("Custom/Unity/Scripts");
-
-                await Assert.That(loader.ScriptFileExists("from_unity.lua")).IsTrue();
-                await Assert
-                    .That(loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null))
-                    .IsEqualTo("print('unity')");
-                await Assert
-                    .That(loader.GetLoadedScripts())
-                    .IsEquivalentTo(ReflectionLoadedScripts);
-                await Assert
-                    .That(UnityEngineReflectionHarness.LastRequestedPath)
-                    .IsEqualTo("Custom/Unity/Scripts");
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(loader.ScriptFileExists("from_unity.lua")).IsTrue();
+            await Assert
+                .That(loader.LoadFile("Custom/Unity/Scripts/from_unity.lua", null))
+                .IsEqualTo("print('unity')");
+            await Assert.That(loader.GetLoadedScripts()).IsEquivalentTo(ReflectionLoadedScripts);
+            await Assert
+                .That(UnityEngineReflectionHarness.LastRequestedPath)
+                .IsEqualTo("Custom/Unity/Scripts");
         }
 
         [global::TUnit.Core.Test]
@@ -158,41 +126,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
         {
             Dictionary<string, string> resources = new() { ["alpha.lua"] = "return 1" };
 
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             UnityEngineReflectionHarness.EnsureUnityAssemblies(resources);
             UnityEngineReflectionHarness.SetThrowOnLoad(false);
+            UnityAssetsScriptLoader loader = new();
 
-            try
-            {
-                UnityAssetsScriptLoader loader = new();
-
-                await Assert.That(loader.ScriptFileExists("alpha.lua")).IsTrue();
-                await Assert
-                    .That(UnityEngineReflectionHarness.LastRequestedPath)
-                    .IsEqualTo(UnityAssetsScriptLoader.DefaultPath);
-                await Assert.That(loader.LoadFile("alpha.lua", null)).IsEqualTo("return 1");
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(loader.ScriptFileExists("alpha.lua")).IsTrue();
+            await Assert
+                .That(UnityEngineReflectionHarness.LastRequestedPath)
+                .IsEqualTo(UnityAssetsScriptLoader.DefaultPath);
+            await Assert.That(loader.LoadFile("alpha.lua", null)).IsEqualTo("return 1");
         }
 
         [global::TUnit.Core.Test]
         public async Task ReflectionConstructorHandlesFailuresGracefully()
         {
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
             UnityEngineReflectionHarness.SetThrowOnLoad(true);
-
-            try
-            {
-                UnityAssetsScriptLoader loader = new("Broken/Path");
-                await Assert.That(loader.ScriptFileExists("missing.lua")).IsFalse();
-                await Assert.That(loader.GetLoadedScripts()).IsEmpty();
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            UnityAssetsScriptLoader loader = new("Broken/Path");
+            await Assert.That(loader.ScriptFileExists("missing.lua")).IsFalse();
+            await Assert.That(loader.GetLoadedScripts()).IsEmpty();
         }
 
         [global::TUnit.Core.Test]
@@ -200,6 +154,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
         {
             foreach (Type exceptionType in RecoverableExceptionTypes)
             {
+                using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
                 UnityEngineReflectionHarness.EnsureUnityAssemblies(
                     new Dictionary<string, string>()
                 );
@@ -214,106 +169,71 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
                     return CreateExceptionInstance(exceptionType);
                 });
 
-                try
-                {
-                    UnityAssetsScriptLoader loader = new("Fallback/Scripts");
-                    await Assert.That(loader.ScriptFileExists("any.lua")).IsFalse();
-                    await Assert.That(loader.GetLoadedScripts()).IsEmpty();
-                }
-                finally
-                {
-                    UnityEngineReflectionHarness.Reset();
-                }
+                UnityAssetsScriptLoader loader = new("Fallback/Scripts");
+                await Assert.That(loader.ScriptFileExists("any.lua")).IsFalse();
+                await Assert.That(loader.GetLoadedScripts()).IsEmpty();
             }
         }
 
         [global::TUnit.Core.Test]
         public async Task ReflectionConstructorUnwrapsTargetInvocationExceptions()
         {
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
             UnityEngineReflectionHarness.SetThrowOnLoad(() =>
                 new TargetInvocationException(new SecurityException("denied"))
             );
+            UnityAssetsScriptLoader loader = new("Secure/Scripts");
 
-            try
-            {
-                UnityAssetsScriptLoader loader = new("Secure/Scripts");
-
-                await Assert.That(loader.GetLoadedScripts()).IsEmpty();
-                await Assert
-                    .That(UnityEngineReflectionHarness.LastRequestedPath)
-                    .IsEqualTo("Secure/Scripts");
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+            await Assert.That(loader.GetLoadedScripts()).IsEmpty();
+            await Assert
+                .That(UnityEngineReflectionHarness.LastRequestedPath)
+                .IsEqualTo("Secure/Scripts");
         }
 
         [global::TUnit.Core.Test]
         public async Task ReflectionConstructorPropagatesNonRecoverableExceptions()
         {
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
             UnityEngineReflectionHarness.EnsureUnityAssemblies(new Dictionary<string, string>());
             UnityEngineReflectionHarness.SetThrowOnLoad(() =>
                 new UnityHarnessFatalException("fatal")
             );
-
-            try
+            UnityHarnessFatalException exception = Assert.Throws<UnityHarnessFatalException>(() =>
             {
-                UnityHarnessFatalException exception = Assert.Throws<UnityHarnessFatalException>(
-                    () =>
-                    {
-                        _ = new UnityAssetsScriptLoader("Fatal/Scripts");
-                    }
-                );
-                await Assert.That(exception).IsNotNull();
-            }
-            finally
-            {
-                UnityEngineReflectionHarness.Reset();
-            }
+                _ = new UnityAssetsScriptLoader("Fatal/Scripts");
+            });
+            await Assert.That(exception).IsNotNull();
         }
 
         [global::TUnit.Core.Test]
         public async Task LoadFileThrowsArgumentNullWhenNameMissing()
         {
-            try
-            {
-                UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
-                ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                {
-                    loader.LoadFile(null, null);
-                });
-
-                await Assert.That(exception).IsNotNull();
-                await Assert.That(exception.ParamName).IsEqualTo("file");
-            }
-            finally
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
             {
-                UnityEngineReflectionHarness.Reset();
-            }
+                loader.LoadFile(null, null);
+            });
+
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception.ParamName).IsEqualTo("file");
         }
 
         [global::TUnit.Core.Test]
         public async Task ScriptFileExistsThrowsArgumentNullWhenNameMissing()
         {
-            try
-            {
-                UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
+            using IDisposable harnessScope = UnityEngineReflectionHarness.Reset();
+            UnityAssetsScriptLoader loader = new(new Dictionary<string, string>());
 
-                ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                {
-                    loader.ScriptFileExists(null);
-                });
-
-                await Assert.That(exception).IsNotNull();
-                await Assert.That(exception.ParamName).IsEqualTo("name");
-            }
-            finally
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
             {
-                UnityEngineReflectionHarness.Reset();
-            }
+                loader.ScriptFileExists(null);
+            });
+
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception.ParamName).IsEqualTo("name");
         }
 
         private static Exception CreateExceptionInstance(Type exceptionType)
@@ -483,7 +403,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
             ThrowOnLoadFactory = exceptionFactory;
         }
 
-        internal static void Reset()
+        internal static IDisposable Reset()
+        {
+            ResetState();
+            PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.ForceFileSystemLoader();
+            return new ResetScope(platformScope);
+        }
+
+        private static void ResetState()
         {
             lock (SyncRoot)
             {
@@ -498,8 +426,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
                     ResolveHandler = null;
                 }
             }
-            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
-            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(false);
         }
 
         public static Array BuildAssetArray(string assetsPath, Type textAssetType)
@@ -659,6 +585,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
             }
 
             return null;
+        }
+
+        private sealed class ResetScope : IDisposable
+        {
+            private readonly PlatformDetectorOverrideScope _platformScope;
+            private bool _disposed;
+
+            internal ResetScope(PlatformDetectorOverrideScope platformScope)
+            {
+                _platformScope = platformScope;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _platformScope.Dispose();
+                ResetState();
+                _disposed = true;
+            }
         }
     }
 }

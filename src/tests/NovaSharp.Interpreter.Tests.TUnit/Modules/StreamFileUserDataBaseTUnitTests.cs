@@ -15,6 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     [ScriptGlobalOptionsIsolation]
@@ -26,7 +27,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task WriteAppendsTextAndReturnsSelf()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed\n");
 
@@ -49,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task WritereturnsTupleWhenExceptionOccurs()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true) { ThrowOnWrite = true };
 
@@ -71,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task WriteRethrowsScriptRuntimeException()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true)
             {
@@ -91,7 +92,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task CloseReturnsTupleWithMessage()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed") { CloseMessage = "already closed" };
 
@@ -108,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task CloseReturnsTupleWhenExceptionIsThrown()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed") { ThrowOnClose = true };
 
@@ -124,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task CloseRethrowsScriptRuntimeException()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed") { ThrowScriptRuntimeOnClose = true };
 
@@ -139,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task FlushReturnsTrueWhenWriterPresent()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true);
 
@@ -153,7 +154,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task FlushPropagatesExceptionThroughPcall()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true) { ThrowOnFlush = true };
 
@@ -168,7 +169,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task FlushWrapsNonScriptExceptions()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true);
             file.TriggerFlushFailure();
@@ -184,7 +185,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task IoFlushUsesDefaultOutputAndPropagatesException()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true) { ThrowOnFlush = true };
 
@@ -208,7 +209,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SeekSupportsDifferentOrigins()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("abcdef", allowWrite: false);
 
@@ -234,7 +235,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SeekRejectsInvalidWhence()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed");
 
@@ -256,7 +257,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SeekWrapsNonScriptExceptions()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed");
             file.TriggerSeekFailure();
@@ -279,7 +280,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SeekPropagatesExceptionThroughPcall()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: false) { ThrowOnSeek = true };
 
@@ -302,7 +303,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetvbufWrapsNonScriptExceptions()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true, autoFlush: false);
             script.Globals["file"] = UserData.Create(file);
@@ -325,7 +326,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetvbufAdjustsAutoFlush()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true, autoFlush: false);
 
@@ -348,7 +349,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ClosedFileRejectsFurtherReads()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("line");
 
@@ -372,7 +373,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task EofReturnsFalseWhenReaderMissing()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             TestStreamFileUserData file = new(
                 "seed",
                 allowWrite: true,
@@ -385,7 +386,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task PeekReturnsNextCharacter()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             TestStreamFileUserData file = new("peek");
             await Assert.That(file.CallPeek()).IsEqualTo('p');
         }
@@ -393,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetvbufPropagatesExceptionThroughPcall()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed", allowWrite: true, autoFlush: false)
             {
@@ -419,7 +420,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadSupportsLineAndBlockModes()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("first\nsecond");
 
@@ -434,7 +435,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadSupportsNumericAndAllModes()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("1234\nABCDE");
 
@@ -459,7 +460,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesNumbersWithLeadingDecimal()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new(".75 rest");
 
@@ -481,7 +482,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesNumbersWithExponent()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("2.5e-1 next");
 
@@ -503,7 +504,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesNumbersWhenStreamCannotRewind()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new(
                 "99",
@@ -523,7 +524,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexFloatLiteralWithFraction()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x1.fp1 tail");
 
@@ -545,7 +546,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexFloatLiteralWithoutFraction()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x10p0 done");
 
@@ -567,7 +568,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilForInvalidHexFloatExponent()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x1p remainder");
 
@@ -589,7 +590,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexFloatLiteralWithSignedPrefix()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("-0x2p1 rest");
 
@@ -611,7 +612,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexFloatLiteralWithSignedExponent()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x1p-4 tail");
 
@@ -635,7 +636,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilWhenHexPrefixStartsWithX()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("x12");
 
@@ -650,7 +651,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilWhenHexPrefixLacksZeroAfterSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("+x12");
 
@@ -665,7 +666,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexFloatLiteralWithPositiveExponentSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x1p+4 remainder");
 
@@ -687,7 +688,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilWhenHexLiteralHasNoDigitsAfterPrefix()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x rest");
 
@@ -702,7 +703,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesHexLiteralAndLeavesTrailingCharacters()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("0x1p0garbage");
 
@@ -717,7 +718,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesNumbersWithLeadingWhitespace()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("   42\n");
 
@@ -739,7 +740,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilWhenOnlySignEncountered()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("+ remainder");
 
@@ -761,7 +762,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumberReturnsNilWhenReaderCannotConsumeChar()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("7\nnext") { ForceReadBufferFailureCount = 1 };
 
@@ -777,7 +778,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumberStopsWhenLeadingSignCannotBeConsumed()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("+42") { ForceReadBufferFailureCount = 1 };
 
@@ -800,7 +801,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadLineHandlesMixedNewlines()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("first\r\nsecond\rthird\nlast");
 
@@ -826,7 +827,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadUppercaseLineKeepsTrailingNewLine()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("first\nsecond\n");
 
@@ -848,7 +849,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadToEndAfterLineReadsReturnsRemainingContent()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("line1\nline2\nline3");
 
@@ -870,7 +871,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadAllReturnsEmptyStringWhenAlreadyAtEof()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new(string.Empty);
 
@@ -884,7 +885,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsNilWhenEofAndModeIsNotAll()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new(string.Empty);
 
@@ -898,7 +899,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumberReturnsNilWithoutConsumingNonNumericData()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("abc123");
 
@@ -920,7 +921,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadParsesNumbersWithLeadingPlus()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("+42");
 
@@ -933,7 +934,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumberHandlesExponentWithSignAndBuffersRemainder()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("   -12.5e-3\nrest");
 
@@ -951,7 +952,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumberReturnsNilForStandaloneSignAndRewinds()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("+\nvalue");
 
@@ -966,7 +967,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadNumericCountReturnsNilWhenEofReached()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("hello");
 
@@ -981,7 +982,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadThrowsOnUnknownOption()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("payload");
 
@@ -998,7 +999,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadReturnsEmptyStringAtEofWithAOption()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("hi");
 
@@ -1020,7 +1021,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReadThrowsOnInvalidOption()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("seed");
 
@@ -1043,7 +1044,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LinesEnumeratorTerminatesAtNil()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("one\ntwo\n");
 
@@ -1066,7 +1067,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ToStringTracksOpenAndClosedState()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             Script script = CreateScript();
             TestStreamFileUserData file = new("contents");
 
@@ -1086,7 +1087,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task HexPrefixValidationRejectsEmptyBuilder()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder());
             await Assert.That(result).IsFalse();
         }
@@ -1094,7 +1095,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task HexPrefixValidationAcceptsSignedZero()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder("-0"));
             await Assert.That(result).IsTrue();
         }
@@ -1102,7 +1103,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task HexPrefixValidationRejectsNonZeroAfterSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool result = FileUserDataBase.IsValidHexPrefix(new StringBuilder("+1"));
             await Assert.That(result).IsFalse();
         }
@@ -1110,7 +1111,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TryParseHexFloatLiteralFailsOnEmptyString()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool parsed = FileUserDataBase.TryParseHexFloatLiteral(string.Empty, out double value);
             await Assert.That(parsed).IsFalse();
             await Assert.That(value).IsEqualTo(0d);
@@ -1119,7 +1120,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TryParseHexFloatLiteralFailsWhenNoDigitsAfterPrefix()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x", out double value);
             await Assert.That(parsed).IsFalse();
             await Assert.That(value).IsEqualTo(0d);
@@ -1128,7 +1129,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TryParseHexFloatLiteralFailsWhenExponentDigitsMissing()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p", out double value);
             await Assert.That(parsed).IsFalse();
             await Assert.That(value).IsEqualTo(0d);
@@ -1137,7 +1138,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TryParseHexFloatLiteralFailsWhenTrailingCharactersRemain()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p0junk", out double value);
             await Assert.That(parsed).IsFalse();
             await Assert.That(value).IsEqualTo(0d);
@@ -1146,7 +1147,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TryParseHexFloatLiteralParsesPositiveExponentSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool parsed = FileUserDataBase.TryParseHexFloatLiteral("0x1p+1", out double value);
             await Assert.That(parsed).IsTrue();
             await Assert.That(value).IsEqualTo(2d);
@@ -1155,7 +1156,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SignAllowancePermitsDecimalExponentSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool allowed = FileUserDataBase.IsSignAllowed(
                 new StringBuilder("1e"),
                 isHex: false,
@@ -1172,7 +1173,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SignAllowancePermitsHexExponentSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool allowed = FileUserDataBase.IsSignAllowed(
                 new StringBuilder("0xp"),
                 isHex: true,
@@ -1189,7 +1190,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SignAllowanceRejectsUnexpectedSign()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool allowed = FileUserDataBase.IsSignAllowed(
                 new StringBuilder("12"),
                 isHex: false,
@@ -1206,7 +1207,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task StandaloneSignOrDotRejectsLongerStrings()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool result = FileUserDataBase.IsStandaloneSignOrDot("++");
             await Assert.That(result).IsFalse();
         }
@@ -1214,15 +1215,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task StandaloneSignOrDotAcceptsDot()
         {
-            InitializeTest();
+            using PlatformDetectorOverrideScope platformScope = InitializeTest();
             bool result = FileUserDataBase.IsStandaloneSignOrDot(".");
             await Assert.That(result).IsTrue();
         }
 
-        private static void InitializeTest()
+        private static PlatformDetectorOverrideScope InitializeTest()
         {
-            ForceDesktopPlatform();
+            PlatformDetectorOverrideScope platformScope =
+                PlatformDetectorOverrideScope.ForceDesktopPlatform();
             UserData.RegisterType<TestStreamFileUserData>();
+            return platformScope;
         }
 
         private static Script CreateScript()
@@ -1230,18 +1233,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             return script;
-        }
-
-        private static void ForceDesktopPlatform()
-        {
-            Script.GlobalOptions.Platform = new DotNetCorePlatformAccessor();
-            PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
-            PlatformAutoDetector.TestHooks.SetFlags(
-                isRunningOnUnity: false,
-                isUnityNative: false,
-                isUnityIl2Cpp: false
-            );
-            PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(true);
         }
 
         private static ScriptRuntimeException AssertScriptRuntimeException(Action action)
