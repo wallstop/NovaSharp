@@ -46,7 +46,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             RecordingGenerator first = new(typeName, new CodePrimitiveExpression(1));
             HardwireGeneratorRegistry.Register(first);
 
-            await Assert.That(HardwireGeneratorRegistry.GetGenerator(typeName)).IsSameReferenceAs(first);
+            await Assert
+                .That(HardwireGeneratorRegistry.GetGenerator(typeName))
+                .IsSameReferenceAs(first);
 
             RecordingGenerator second = new(typeName, new CodePrimitiveExpression(2));
             HardwireGeneratorRegistry.Register(second);
@@ -116,7 +118,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             await Assert.That(generator.ManagedType).IsEqualTo(methodDescriptorType);
-            await Assert.That(generator.GetType().Name).IsEqualTo("MethodMemberDescriptorGenerator");
+            await Assert
+                .That(generator.GetType().Name)
+                .IsEqualTo("MethodMemberDescriptorGenerator");
         }
 
         private sealed class RecordingGenerator : IHardwireGenerator

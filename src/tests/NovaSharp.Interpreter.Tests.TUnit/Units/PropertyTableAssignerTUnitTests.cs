@@ -75,7 +75,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
-            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new BasicSample(), data));
+            Assert.Throws<ScriptRuntimeException>(() =>
+                assigner.AssignObject(new BasicSample(), data)
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -100,7 +102,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Assert.Throws<ArgumentNullException>(() => assigner.AssignObject(null, data));
 
             PropertyTableAssigner nonGeneric = new(typeof(BasicSample));
-            Assert.Throws<ArgumentException>(() => nonGeneric.AssignObject(new IncompatibleSample(), data));
+            Assert.Throws<ArgumentException>(() =>
+                nonGeneric.AssignObject(new IncompatibleSample(), data)
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -111,14 +115,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
-            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new BasicSample(), data));
+            Assert.Throws<ScriptRuntimeException>(() =>
+                assigner.AssignObject(new BasicSample(), data)
+            );
         }
 
         [global::TUnit.Core.Test]
         public void SetSubassignerForTypeRejectsInvalidTypes()
         {
             PropertyTableAssigner<ParentWithAddress> assigner = new();
-            Assert.Throws<ArgumentException>(() => assigner.SetSubassignerForType(typeof(int), null));
+            Assert.Throws<ArgumentException>(() =>
+                assigner.SetSubassignerForType(typeof(int), null)
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -188,20 +196,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public void ConstructorRejectsValueTypesAndDuplicateNames()
         {
-            Assert.Throws<ArgumentException>(
-                () =>
-                {
-                    PropertyTableAssigner assigner = new(typeof(int));
-                    _ = assigner.GetType();
-                }
-            );
-            Assert.Throws<ArgumentException>(
-                () =>
-                {
-                    PropertyTableAssigner<DuplicateProperties> assigner = new();
-                    _ = assigner.GetType();
-                }
-            );
+            Assert.Throws<ArgumentException>(() =>
+            {
+                PropertyTableAssigner assigner = new(typeof(int));
+                _ = assigner.GetType();
+            });
+            Assert.Throws<ArgumentException>(() =>
+            {
+                PropertyTableAssigner<DuplicateProperties> assigner = new();
+                _ = assigner.GetType();
+            });
         }
 
         [global::TUnit.Core.Test]
@@ -219,7 +223,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             assigner.SetSubassigner<AddressInfo>(null);
 
-            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new ParentWithAddress(), data));
+            Assert.Throws<ScriptRuntimeException>(() =>
+                assigner.AssignObject(new ParentWithAddress(), data)
+            );
         }
 
         private sealed class DuplicateProperties

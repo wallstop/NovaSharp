@@ -4,13 +4,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
-    using CollectionAssert = NUnit.Framework.CollectionAssert;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NovaSharp.Interpreter.Modules;
+    using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     [UserDataIsolation]
     public sealed class HardwiredDescriptorsTUnitTests
@@ -67,7 +67,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(result.String).IsEqualTo("fallback");
             await Assert.That(host.Value).IsEqualTo(5);
             await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
-            CollectionAssert.AreEqual(new object[] { 5, "fallback" }, _descriptor.Method.LastParameters);
+            CollectionAssert.AreEqual(
+                new object[] { 5, "fallback" },
+                _descriptor.Method.LastParameters
+            );
         }
 
         [global::TUnit.Core.Test]
@@ -82,7 +85,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(result.String).IsEqualTo("custom");
             await Assert.That(host.Value).IsEqualTo(7);
             await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
-            CollectionAssert.AreEqual(new object[] { 7, "custom" }, _descriptor.Method.LastParameters);
+            CollectionAssert.AreEqual(
+                new object[] { 7, "custom" },
+                _descriptor.Method.LastParameters
+            );
         }
 
         [global::TUnit.Core.Test]

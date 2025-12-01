@@ -182,7 +182,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 );
             DynValue reset =
                 descriptor.Index(script, instance, DynValue.NewString("reset"), true)
-                ?? throw new global::System.InvalidOperationException("reset callback should exist");
+                ?? throw new global::System.InvalidOperationException(
+                    "reset callback should exist"
+                );
 
             DynValue GetCurrentAccessor()
             {
