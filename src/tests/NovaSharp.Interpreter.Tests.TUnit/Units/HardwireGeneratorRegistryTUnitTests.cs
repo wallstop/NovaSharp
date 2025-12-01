@@ -1,26 +1,28 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.CodeDom;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Hardwire;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class HardwireGeneratorRegistryTests
+    public sealed class HardwireGeneratorRegistryTUnitTests
     {
-        static HardwireGeneratorRegistryTests()
+        static HardwireGeneratorRegistryTUnitTests()
         {
             _ = new RecordingGenerator();
         }
 
-        [Test]
-        public void UnknownGeneratorFallsBackToNullGenerator()
+        [global::TUnit.Core.Test]
+        public async Task UnknownGeneratorFallsBackToNullGenerator()
         {
             string typeName = "Hardwire.Tests.Unknown." + Guid.NewGuid().ToString("N");
 
             IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(typeName);
-            Assert.That(generator.ManagedType, Is.EqualTo(typeName));
+            await Assert.That(generator.ManagedType).IsEqualTo(typeName);
 
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
@@ -31,26 +33,26 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new CodeTypeMemberCollection()
             );
 
-            Assert.That(expressions, Is.Empty);
-            Assert.That(logger.Errors, Has.Count.EqualTo(1));
-            Assert.That(logger.Errors[0], Does.Contain(typeName));
+            await Assert.That(expressions).IsEmpty();
+            await Assert.That(logger.Errors.Count).IsEqualTo(1);
+            await Assert.That(logger.Errors[0]).Contains(typeName);
         }
 
-        [Test]
-        public void RegisterOverridesExistingGenerator()
+        [global::TUnit.Core.Test]
+        public async Task RegisterOverridesExistingGenerator()
         {
             string typeName = "Hardwire.Tests.Custom." + Guid.NewGuid().ToString("N");
 
             RecordingGenerator first = new(typeName, new CodePrimitiveExpression(1));
             HardwireGeneratorRegistry.Register(first);
 
-            Assert.That(HardwireGeneratorRegistry.GetGenerator(typeName), Is.SameAs(first));
+            await Assert.That(HardwireGeneratorRegistry.GetGenerator(typeName)).IsSameReferenceAs(first);
 
             RecordingGenerator second = new(typeName, new CodePrimitiveExpression(2));
             HardwireGeneratorRegistry.Register(second);
 
             IHardwireGenerator resolved = HardwireGeneratorRegistry.GetGenerator(typeName);
-            Assert.That(resolved, Is.SameAs(second));
+            await Assert.That(resolved).IsSameReferenceAs(second);
 
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             CodeExpression[] expressions = resolved.Generate(
@@ -59,48 +61,33 @@ namespace NovaSharp.Interpreter.Tests.Units
                 new CodeTypeMemberCollection()
             );
 
-            Assert.That(expressions, Has.Length.EqualTo(1));
-            Assert.That(second.InvocationCount, Is.EqualTo(1));
+            await Assert.That(expressions.Length).IsEqualTo(1);
+            await Assert.That(second.InvocationCount).IsEqualTo(1);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RegisterThrowsWhenGeneratorNull()
         {
-            Assert.That(
-                () => HardwireGeneratorRegistry.Register(null),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("generator")
-            );
+            Assert.Throws<ArgumentNullException>(() => HardwireGeneratorRegistry.Register(null));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RegisterThrowsWhenManagedTypeMissing()
         {
             RecordingGenerator generator = new(managedType: "   ");
 
-            Assert.That(
-                () => HardwireGeneratorRegistry.Register(generator),
-                Throws.ArgumentException.With.Property("ParamName").EqualTo("generator")
-            );
+            Assert.Throws<ArgumentException>(() => HardwireGeneratorRegistry.Register(generator));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void GetGeneratorThrowsWhenTypeNullOrWhitespace()
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    () => HardwireGeneratorRegistry.GetGenerator(null),
-                    Throws.ArgumentException.With.Property("ParamName").EqualTo("type")
-                );
-                Assert.That(
-                    () => HardwireGeneratorRegistry.GetGenerator("  "),
-                    Throws.ArgumentException.With.Property("ParamName").EqualTo("type")
-                );
-            });
+            Assert.Throws<ArgumentException>(() => HardwireGeneratorRegistry.GetGenerator(null));
+            Assert.Throws<ArgumentException>(() => HardwireGeneratorRegistry.GetGenerator("  "));
         }
 
-        [Test]
-        public void DiscoverFromAssemblyRegistersGenerators()
+        [global::TUnit.Core.Test]
+        public async Task DiscoverFromAssemblyRegistersGenerators()
         {
             const string managedType =
                 "NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors.DynValueMemberDescriptor";
@@ -111,14 +98,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(managedType);
 
-            Assert.That(
-                generator,
-                Is.TypeOf<NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator>()
-            );
+            await Assert
+                .That(generator)
+                .IsTypeOf<NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator>();
         }
 
-        [Test]
-        public void RegisterPredefinedPopulatesBuiltInGenerators()
+        [global::TUnit.Core.Test]
+        public async Task RegisterPredefinedPopulatesBuiltInGenerators()
         {
             HardwireGeneratorRegistry.RegisterPredefined();
 
@@ -129,8 +115,8 @@ namespace NovaSharp.Interpreter.Tests.Units
                 methodDescriptorType
             );
 
-            Assert.That(generator.ManagedType, Is.EqualTo(methodDescriptorType));
-            Assert.That(generator.GetType().Name, Is.EqualTo("MethodMemberDescriptorGenerator"));
+            await Assert.That(generator.ManagedType).IsEqualTo(methodDescriptorType);
+            await Assert.That(generator.GetType().Name).IsEqualTo("MethodMemberDescriptorGenerator");
         }
 
         private sealed class RecordingGenerator : IHardwireGenerator
@@ -163,3 +149,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

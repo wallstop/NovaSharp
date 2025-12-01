@@ -1,6 +1,9 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
@@ -11,13 +14,11 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Tree;
     using NovaSharp.Interpreter.Tree.Expressions;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class IndexExpressionTests
+    public sealed class IndexExpressionTUnitTests
     {
-        [Test]
-        public void CompileEmitsNameIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsNameIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -30,11 +31,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.IndexN));
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexN);
         }
 
-        [Test]
-        public void CompileEmitsLiteralIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsLiteralIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -47,15 +48,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.Index));
-                Assert.That(bc.Code[^1].Value.String, Is.EqualTo("literal"));
-            });
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.Index);
+            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal");
         }
 
-        [Test]
-        public void CompileEmitsListIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileEmitsListIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -74,11 +72,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.IndexL));
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexL);
         }
 
-        [Test]
-        public void CompileAssignmentEmitsNameIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileAssignmentEmitsNameIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -91,11 +89,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, stackofs: 0, tupleidx: 0);
 
-            Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.IndexSetN));
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetN);
         }
 
-        [Test]
-        public void CompileAssignmentEmitsLiteralIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileAssignmentEmitsLiteralIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -108,15 +106,12 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, 0, 0);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.IndexSet));
-                Assert.That(bc.Code[^1].Value.String, Is.EqualTo("literal"));
-            });
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSet);
+            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal");
         }
 
-        [Test]
-        public void CompileAssignmentEmitsListIndexInstruction()
+        [global::TUnit.Core.Test]
+        public async Task CompileAssignmentEmitsListIndexInstruction()
         {
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
@@ -135,11 +130,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, 0, 0);
 
-            Assert.That(bc.Code[^1].OpCode, Is.EqualTo(OpCode.IndexSetL));
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetL);
         }
 
-        [Test]
-        public void EvalThrowsWhenBaseIsNotTable()
+        [global::TUnit.Core.Test]
+        public async Task EvalThrowsWhenBaseIsNotTable()
         {
             Script script = new();
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
@@ -151,16 +146,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 context
             );
 
-            Assert.That(
-                () => expression.Eval(execContext),
-                Throws
-                    .TypeOf<DynamicExpressionException>()
-                    .With.Message.Contains("Attempt to index non-table")
-            );
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expression.Eval(execContext)
+            )!;
+            await Assert.That(exception.Message).Contains("Attempt to index non-table");
         }
 
-        [Test]
-        public void EvalThrowsWhenKeyIsNil()
+        [global::TUnit.Core.Test]
+        public async Task EvalThrowsWhenKeyIsNil()
         {
             Script script = new();
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
@@ -173,14 +166,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 context
             );
 
-            Assert.That(
-                () => expression.Eval(execContext),
-                Throws.TypeOf<DynamicExpressionException>().With.Message.Contains("nil or nan")
-            );
+            DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
+                expression.Eval(execContext)
+            )!;
+            await Assert.That(exception.Message).Contains("nil or nan");
         }
 
-        [Test]
-        public void EvalReturnsNilWhenKeyMissing()
+        [global::TUnit.Core.Test]
+        public async Task EvalReturnsNilWhenKeyMissing()
         {
             Script script = new();
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
@@ -194,12 +187,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue result = expression.Eval(execContext);
-
-            Assert.That(result.IsNil(), Is.True);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void EvalReturnsExistingValue()
+        [global::TUnit.Core.Test]
+        public async Task EvalReturnsExistingValue()
         {
             Script script = new();
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
@@ -214,11 +206,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue result = expression.Eval(execContext);
-            Assert.That(result.Number, Is.EqualTo(42));
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
-        [Test]
-        public void EvalUsesNameWhenIndexExpressionIsNull()
+        [global::TUnit.Core.Test]
+        public async Task EvalUsesNameWhenIndexExpressionIsNull()
         {
             Script script = new();
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
@@ -233,7 +225,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue result = expression.Eval(execContext);
-            Assert.That(result.String, Is.EqualTo("hit"));
+            await Assert.That(result.String).IsEqualTo("hit");
         }
 
         private static LiteralExpression CreateLiteralExpression(
@@ -293,3 +285,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

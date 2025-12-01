@@ -1,26 +1,23 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public class MetatableTests
+    public sealed class MetatableTUnitTests
     {
-        [Test]
-        public void IndexMetatableResolvesMissingKeys()
+        [global::TUnit.Core.Test]
+        public async Task IndexMetatableResolvesMissingKeys()
         {
             Script script = new();
             Table table = new(script);
             Table metatable = new(script)
             {
                 ["__index"] = DynValue.NewCallback(
-                    (_, args) =>
-                    {
-                        string key = args[1].CastToString();
-                        return DynValue.NewString($"missing:{key}");
-                    }
+                    (_, args) => DynValue.NewString($"missing:{args[1].CastToString()}")
                 ),
             };
 
@@ -29,15 +26,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return subject.someKey");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.String));
-                Assert.That(result.String, Is.EqualTo("missing:someKey"));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.String);
+            await Assert.That(result.String).IsEqualTo("missing:someKey");
         }
 
-        [Test]
-        public void MetatableRawAccessStillRespectsMetatable()
+        [global::TUnit.Core.Test]
+        public async Task MetatableRawAccessStillRespectsMetatable()
         {
             Script script = new(CoreModules.Metatables | CoreModules.Basic);
 
@@ -55,14 +49,14 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             Table subject = script.Globals.Get("subject").Table;
-            Assert.That(subject.Get("value").Number, Is.EqualTo(10));
+            await Assert.That(subject.Get("value").Number).IsEqualTo(10);
 
             subject.Set("value", DynValue.NewNumber(7));
-            Assert.That(subject.Get("value").Number, Is.EqualTo(7));
+            await Assert.That(subject.Get("value").Number).IsEqualTo(7);
         }
 
-        [Test]
-        public void CallMetatableAggregatesState()
+        [global::TUnit.Core.Test]
+        public async Task CallMetatableAggregatesState()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -81,16 +75,13 @@ namespace NovaSharp.Interpreter.Tests.Units
             DynValue second = script.DoString("return subject(2)");
             DynValue total = script.DoString("return subject.total");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.Number, Is.EqualTo(3));
-                Assert.That(second.Number, Is.EqualTo(5));
-                Assert.That(total.Number, Is.EqualTo(5));
-            });
+            await Assert.That(first.Number).IsEqualTo(3);
+            await Assert.That(second.Number).IsEqualTo(5);
+            await Assert.That(total.Number).IsEqualTo(5);
         }
 
-        [Test]
-        public void PairsMetamethodControlsIteration()
+        [global::TUnit.Core.Test]
+        public async Task PairsMetamethodControlsIteration()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -118,11 +109,11 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue result = script.DoString("return table.concat(collected, ',')");
-            Assert.That(result.String, Is.EqualTo("virtual=42"));
+            await Assert.That(result.String).IsEqualTo("virtual=42");
         }
 
-        [Test]
-        public void ProtectedMetatablePreventsMutation()
+        [global::TUnit.Core.Test]
+        public async Task ProtectedMetatablePreventsMutation()
         {
             Script script = new(CoreModules.PresetComplete);
 
@@ -136,21 +127,18 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
 
             DynValue meta = script.DoString("return getmetatable(subject)");
-            Assert.That(meta.String, Is.EqualTo("locked"));
+            await Assert.That(meta.String).IsEqualTo("locked");
 
             DynValue pcallResult = script.DoString(
                 "return pcall(function() setmetatable(subject, {}) end)"
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(pcallResult.Tuple.Length, Is.GreaterThanOrEqualTo(2));
-                Assert.That(pcallResult.Tuple[0].Boolean, Is.False);
-                Assert.That(
-                    pcallResult.Tuple[1].String,
-                    Does.Contain("cannot change a protected metatable")
-                );
-            });
+            await Assert.That(pcallResult.Tuple.Length).IsGreaterThanOrEqualTo(2);
+            await Assert.That(pcallResult.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(pcallResult.Tuple[1].String)
+                .Contains("cannot change a protected metatable");
         }
     }
 }
+#pragma warning restore CA2007

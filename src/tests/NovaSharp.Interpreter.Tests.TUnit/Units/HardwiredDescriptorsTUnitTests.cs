@@ -1,37 +1,24 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
+    using CollectionAssert = NUnit.Framework.CollectionAssert;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [UserDataIsolation]
-    public sealed class HardwiredDescriptorsTests
+    public sealed class HardwiredDescriptorsTUnitTests
     {
         private TestHardwiredDescriptor _descriptor;
 
-        [SetUp]
-        public void SetUp()
-        {
-            UserData.UnregisterType<TestHost>();
-            _descriptor = new TestHardwiredDescriptor();
-            UserData.RegisterType(_descriptor);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            UserData.UnregisterType<TestHost>();
-        }
-
-        [Test]
-        public void HardwiredMemberDescriptorSupportsReadAndWrite()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMemberDescriptorSupportsReadAndWrite()
         {
             Script script = CreateScript();
             TestHost host = new();
@@ -39,40 +26,37 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("obj.value = 123\nreturn obj.value");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Number, Is.EqualTo(123));
-                Assert.That(host.Value, Is.EqualTo(123));
-            });
+            await Assert.That(result.Number).IsEqualTo(123);
+            await Assert.That(host.Value).IsEqualTo(123);
         }
 
-        [Test]
-        public void HardwiredMemberDescriptorRejectsWriteWhenAccessDenied()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMemberDescriptorRejectsWriteWhenAccessDenied()
         {
             Script script = CreateScript();
             script.Globals["obj"] = UserData.Create(new TestHost());
 
-            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("obj.readonly = 'x'")
             )!;
 
-            Assert.That(ex.Message, Does.Contain("cannot be assigned"));
+            await Assert.That(exception.Message).Contains("cannot be assigned");
         }
 
-        [Test]
-        public void HardwiredMemberDescriptorThrowsWhenInstanceMissing()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMemberDescriptorThrowsWhenInstanceMissing()
         {
             Script script = CreateScript();
 
-            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 _descriptor.Value.GetValue(script, null)
             )!;
 
-            Assert.That(ex.Message, Does.Contain("instance member value"));
+            await Assert.That(exception.Message).Contains("instance member value");
         }
 
-        [Test]
-        public void HardwiredMethodDescriptorAppliesDefaultArguments()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMethodDescriptorAppliesDefaultArguments()
         {
             Script script = CreateScript();
             TestHost host = new();
@@ -80,20 +64,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return obj:call(5)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.String, Is.EqualTo("fallback"));
-                Assert.That(host.Value, Is.EqualTo(5));
-                Assert.That(_descriptor.Method.LastArgumentCount, Is.EqualTo(2));
-                Assert.That(
-                    _descriptor.Method.LastParameters,
-                    Is.EqualTo(new object[] { 5, "fallback" })
-                );
-            });
+            await Assert.That(result.String).IsEqualTo("fallback");
+            await Assert.That(host.Value).IsEqualTo(5);
+            await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
+            CollectionAssert.AreEqual(new object[] { 5, "fallback" }, _descriptor.Method.LastParameters);
         }
 
-        [Test]
-        public void HardwiredMethodDescriptorUsesProvidedArguments()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMethodDescriptorUsesProvidedArguments()
         {
             Script script = CreateScript();
             TestHost host = new();
@@ -101,36 +79,41 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return obj:call(7, 'custom')");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.String, Is.EqualTo("custom"));
-                Assert.That(host.Value, Is.EqualTo(7));
-                Assert.That(_descriptor.Method.LastArgumentCount, Is.EqualTo(2));
-                Assert.That(
-                    _descriptor.Method.LastParameters,
-                    Is.EqualTo(new object[] { 7, "custom" })
-                );
-            });
+            await Assert.That(result.String).IsEqualTo("custom");
+            await Assert.That(host.Value).IsEqualTo(7);
+            await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
+            CollectionAssert.AreEqual(new object[] { 7, "custom" }, _descriptor.Method.LastParameters);
         }
 
-        [Test]
-        public void HardwiredMethodDescriptorRejectsStaticInvocation()
+        [global::TUnit.Core.Test]
+        public async Task HardwiredMethodDescriptorRejectsStaticInvocation()
         {
             Script script = CreateScript();
             script.Globals["TestHost"] = UserData.CreateStatic<TestHost>();
 
-            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("TestHost:call(3)")
             )!;
 
-            Assert.That(ex.Message, Does.Contain("call"));
+            await Assert.That(exception.Message).Contains("call");
         }
 
-        private static Script CreateScript()
+        private Script CreateScript()
         {
+            EnsureDescriptorRegistered();
             Script script = new(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private void EnsureDescriptorRegistered()
+        {
+            if (_descriptor == null || !UserData.IsTypeRegistered<TestHost>())
+            {
+                UserData.UnregisterType<TestHost>();
+                _descriptor = new TestHardwiredDescriptor();
+                UserData.RegisterType(_descriptor);
+            }
         }
 
         private sealed class TestHost
@@ -227,3 +210,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

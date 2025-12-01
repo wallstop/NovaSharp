@@ -1,58 +1,53 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Tree;
     using NovaSharp.Interpreter.Tree.Lexer;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class NodeBaseTests
+    public sealed class NodeBaseTUnitTests
     {
-        [Test]
-        public void CheckTokenTypeConsumesMatchingToken()
+        [global::TUnit.Core.Test]
+        public async Task CheckTokenTypeConsumesMatchingToken()
         {
             ScriptLoadingContext context = CreateContext("identifier");
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.Name);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(token.Text, Is.EqualTo("identifier"));
-                Assert.That(context.Lexer.Current.Type, Is.EqualTo(TokenType.Eof));
-            });
+            await Assert.That(token.Text).IsEqualTo("identifier");
+            await Assert.That(context.Lexer.Current.Type).IsEqualTo(TokenType.Eof);
         }
 
-        [Test]
-        public void CheckTokenTypeThrowsOnMismatchAndFlagsPrematureTermination()
+        [global::TUnit.Core.Test]
+        public async Task CheckTokenTypeThrowsOnMismatchAndFlagsPrematureTermination()
         {
             ScriptLoadingContext context = CreateContext(string.Empty);
 
-            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenType(context, TokenType.Name)
-            );
-            Assert.Multiple(() =>
-            {
-                Assert.That(ex.Message, Does.Contain("unexpected symbol"));
-                Assert.That(ex.IsPrematureStreamTermination, Is.True);
-            });
+            )!;
+            await Assert.That(exception.Message).Contains("unexpected symbol");
+            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
         }
 
-        [Test]
-        public void CheckTokenTypeSupportsMultipleExpectedTokens()
+        [global::TUnit.Core.Test]
+        public async Task CheckTokenTypeSupportsMultipleExpectedTokens()
         {
             ScriptLoadingContext context = CreateContext("true");
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False);
 
-            Assert.That(token.Type, Is.EqualTo(TokenType.True));
+            await Assert.That(token.Type).IsEqualTo(TokenType.True);
         }
 
-        [Test]
-        public void CheckTokenTypeSupportsThreeExpectedTokens()
+        [global::TUnit.Core.Test]
+        public async Task CheckTokenTypeSupportsThreeExpectedTokens()
         {
             ScriptLoadingContext context = CreateContext("elseif");
 
@@ -63,82 +58,73 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TokenType.ElseIf
             );
 
-            Assert.That(token.Type, Is.EqualTo(TokenType.ElseIf));
+            await Assert.That(token.Type).IsEqualTo(TokenType.ElseIf);
         }
 
-        [Test]
-        public void CheckTokenTypeNotNextDoesNotAdvanceLexer()
+        [global::TUnit.Core.Test]
+        public async Task CheckTokenTypeNotNextDoesNotAdvanceLexer()
         {
             ScriptLoadingContext context = CreateContext("name");
             string original = context.Lexer.Current.Text;
 
             TestNode.CallCheckTokenTypeNotNext(context, TokenType.Name);
 
-            Assert.That(context.Lexer.Current.Text, Is.EqualTo(original));
+            await Assert.That(context.Lexer.Current.Text).IsEqualTo(original);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckTokenTypeNotNextThrowsWhenTokenDiffers()
         {
             ScriptLoadingContext context = CreateContext("name");
 
-            Assert.That(
-                () => TestNode.CallCheckTokenTypeNotNext(context, TokenType.Number),
-                Throws.TypeOf<SyntaxErrorException>()
+            Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckTokenTypeNotNext(context, TokenType.Number)
             );
         }
 
-        [Test]
-        public void UnexpectedTokenDoesNotMarkPrematureTerminationWhenNotEof()
+        [global::TUnit.Core.Test]
+        public async Task UnexpectedTokenDoesNotMarkPrematureTerminationWhenNotEof()
         {
             ScriptLoadingContext context = CreateContext("identifier");
 
-            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenType(context, TokenType.Number)
-            );
+            )!;
 
-            Assert.That(ex.IsPrematureStreamTermination, Is.False);
+            await Assert.That(exception.IsPrematureStreamTermination).IsFalse();
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckTokenTypeWithMultipleOptionsThrowsWhenTokenDoesNotMatch()
         {
             ScriptLoadingContext context = CreateContext("end");
 
-            Assert.That(
-                () => TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False),
-                Throws.TypeOf<SyntaxErrorException>()
+            Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False)
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckTokenTypeWithThreeOptionsThrowsWhenTokenDoesNotMatch()
         {
             ScriptLoadingContext context = CreateContext("do");
 
-            Assert.That(
-                () =>
-                    TestNode.CallCheckTokenType(
-                        context,
-                        TokenType.If,
-                        TokenType.Else,
-                        TokenType.ElseIf
-                    ),
-                Throws.TypeOf<SyntaxErrorException>()
+            Assert.Throws<SyntaxErrorException>(() =>
+                TestNode.CallCheckTokenType(context, TokenType.If, TokenType.Else, TokenType.ElseIf)
             );
         }
 
-        [Test]
-        public void LoadingContextPropertyCanBeQueriedByDerivedType()
+        [global::TUnit.Core.Test]
+        public async Task LoadingContextPropertyCanBeQueriedByDerivedType()
         {
             ScriptLoadingContext context = CreateContext("return 1");
             TestNode node = new(context);
 
-            Assert.That(node.GetLoadingContextViaHelper(), Is.SameAs(context));
+            await Assert.That(node.GetLoadingContextViaHelper()).IsSameReferenceAs(context);
         }
 
-        [Test]
-        public void CheckMatchConsumesClosingToken()
+        [global::TUnit.Core.Test]
+        public async Task CheckMatchConsumesClosingToken()
         {
             ScriptLoadingContext context = CreateContext("()");
             Token opening = context.Lexer.Current;
@@ -146,28 +132,22 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             Token closing = TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(closing.Type, Is.EqualTo(TokenType.BrkCloseRound));
-                Assert.That(context.Lexer.Current.Type, Is.EqualTo(TokenType.Eof));
-            });
+            await Assert.That(closing.Type).IsEqualTo(TokenType.BrkCloseRound);
+            await Assert.That(context.Lexer.Current.Type).IsEqualTo(TokenType.Eof);
         }
 
-        [Test]
-        public void CheckMatchThrowsForMismatchedClosingToken()
+        [global::TUnit.Core.Test]
+        public async Task CheckMatchThrowsForMismatchedClosingToken()
         {
             ScriptLoadingContext context = CreateContext("(");
             Token opening = context.Lexer.Current;
             TestNode.CallCheckTokenType(context, TokenType.BrkOpenRound);
 
-            SyntaxErrorException ex = Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")")
-            );
-            Assert.Multiple(() =>
-            {
-                Assert.That(ex.Message, Does.Contain("')' expected"));
-                Assert.That(ex.IsPrematureStreamTermination, Is.True);
-            });
+            )!;
+            await Assert.That(exception.Message).Contains("')' expected");
+            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
         }
 
         private static ScriptLoadingContext CreateContext(string code)
@@ -243,3 +223,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

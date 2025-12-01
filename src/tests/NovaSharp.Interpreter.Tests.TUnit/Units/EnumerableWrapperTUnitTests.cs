@@ -1,22 +1,24 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.PredefinedUserData;
-    using NUnit.Framework;
+    using NovaSharp.Interpreter.Tests.Units;
 
-    [TestFixture]
-    public sealed class EnumerableWrapperTests
+    public sealed class EnumerableWrapperTUnitTests
     {
-        [Test]
-        public void ConvertIteratorExposesCallableUserData()
+        [global::TUnit.Core.Test]
+        public async Task ConvertIteratorExposesCallableUserData()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator(1, 2);
+            Script script = new();
+            TrackingEnumerator enumerator = new(1, 2);
 
             DynValue tuple = EnumerableWrapper.ConvertIterator(script, enumerator);
             DynValue iteratorUserData = tuple.Tuple[0];
@@ -36,21 +38,18 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TestHelpers.CreateArguments()
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple.Length, Is.EqualTo(3));
-                Assert.That(iteratorUserData.Type, Is.EqualTo(DataType.UserData));
-                Assert.That(first.Number, Is.EqualTo(1));
-                Assert.That(second.Number, Is.EqualTo(2));
-                Assert.That(third.IsNil(), Is.True);
-            });
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(3);
+            await Assert.That(iteratorUserData.Type).IsEqualTo(DataType.UserData);
+            await Assert.That(first.Number).IsEqualTo(1);
+            await Assert.That(second.Number).IsEqualTo(2);
+            await Assert.That(third.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void IteratorSkipsNilValuesAndResetsOnNextCycle()
+        [global::TUnit.Core.Test]
+        public async Task IteratorSkipsNilValuesAndResetsOnNextCycle()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator(5, null, 7);
+            Script script = new();
+            TrackingEnumerator enumerator = new(5, null, 7);
             DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
@@ -70,34 +69,25 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TestHelpers.CreateArguments()
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.Number, Is.EqualTo(5));
-                Assert.That(second.Number, Is.EqualTo(7), "null entries should be skipped");
-                Assert.That(third.IsNil(), Is.True);
-                Assert.That(enumerator.ResetCalls, Is.Zero);
-            });
+            await Assert.That(first.Number).IsEqualTo(5);
+            await Assert.That(second.Number).IsEqualTo(7);
+            await Assert.That(third.IsNil()).IsTrue();
+            await Assert.That(enumerator.ResetCalls).IsZero();
 
             DynValue restart = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    enumerator.ResetCalls,
-                    Is.EqualTo(1),
-                    "Reset should run before the next cycle"
-                );
-                Assert.That(restart.Number, Is.EqualTo(5));
-            });
+
+            await Assert.That(enumerator.ResetCalls).IsEqualTo(1);
+            await Assert.That(restart.Number).IsEqualTo(5);
         }
 
-        [Test]
-        public void IndexProvidesCurrentMoveNextAndResetCallbacks()
+        [global::TUnit.Core.Test]
+        public async Task IndexProvidesCurrentMoveNextAndResetCallbacks()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator("alpha", "beta");
+            Script script = new();
+            TrackingEnumerator enumerator = new("alpha", "beta");
             DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
@@ -113,7 +103,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             bool advanced = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
-            Assert.That(advanced, Is.True);
+
+            await Assert.That(advanced).IsTrue();
 
             DynValue current = descriptor.Index(
                 script,
@@ -121,7 +112,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue.NewString("Current"),
                 isDirectIndexing: true
             );
-            Assert.That(current.String, Is.EqualTo("alpha"));
+            await Assert.That(current.String).IsEqualTo("alpha");
 
             DynValue resetCallback = descriptor.Index(
                 script,
@@ -133,20 +124,21 @@ namespace NovaSharp.Interpreter.Tests.Units
                 context,
                 TestHelpers.CreateArguments()
             );
-            Assert.That(resetResult.IsNil(), Is.True);
+            await Assert.That(resetResult.IsNil()).IsTrue();
 
             bool restarted = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
-            Assert.That(restarted, Is.True);
-            Assert.That(current.String, Is.EqualTo("alpha"), "Reset should rewind the enumerator");
+
+            await Assert.That(restarted).IsTrue();
+            await Assert.That(current.String).IsEqualTo("alpha");
         }
 
-        [Test]
-        public void ConvertTableIteratesOverTableValues()
+        [global::TUnit.Core.Test]
+        public async Task ConvertTableIteratesOverTableValues()
         {
-            Script script = new Script();
-            Table table = new Table(script);
+            Script script = new();
+            Table table = new(script);
             table.Append(DynValue.NewNumber(10));
             table.Append(DynValue.NewNumber(20));
 
@@ -167,19 +159,16 @@ namespace NovaSharp.Interpreter.Tests.Units
                 TestHelpers.CreateArguments()
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(first.Number, Is.EqualTo(10));
-                Assert.That(second.Number, Is.EqualTo(20));
-                Assert.That(third.IsNil(), Is.True);
-            });
+            await Assert.That(first.Number).IsEqualTo(10);
+            await Assert.That(second.Number).IsEqualTo(20);
+            await Assert.That(third.IsNil()).IsTrue();
         }
 
-        [Test]
-        public void IndexRecognizesAlternateNamesAndIgnoresUnknownEntries()
+        [global::TUnit.Core.Test]
+        public async Task IndexRecognizesAlternateNamesAndIgnoresUnknownEntries()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator("one", "two");
+            Script script = new();
+            TrackingEnumerator enumerator = new("one", "two");
             DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
@@ -188,30 +177,29 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue moveNext =
                 descriptor.Index(script, instance, DynValue.NewString("move_next"), true)
-                ?? throw new AssertionException("move_next callback should exist");
+                ?? throw new global::System.InvalidOperationException(
+                    "move_next callback should exist"
+                );
             DynValue reset =
                 descriptor.Index(script, instance, DynValue.NewString("reset"), true)
-                ?? throw new AssertionException("reset callback should exist");
+                ?? throw new global::System.InvalidOperationException("reset callback should exist");
 
             DynValue GetCurrentAccessor()
             {
                 return descriptor.Index(script, instance, DynValue.NewString("current"), true)
-                    ?? throw new AssertionException("current accessor should exist");
+                    ?? throw new global::System.InvalidOperationException(
+                        "current accessor should exist"
+                    );
             }
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean,
-                    Is.True
-                );
-                Assert.That(GetCurrentAccessor().String, Is.EqualTo("one"));
-                Assert.That(
-                    moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean,
-                    Is.True
-                );
-                Assert.That(GetCurrentAccessor().String, Is.EqualTo("two"));
-            });
+            await Assert
+                .That(moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean)
+                .IsTrue();
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one");
+            await Assert
+                .That(moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean)
+                .IsTrue();
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("two");
 
             DynValue unknown = descriptor.Index(
                 script,
@@ -219,29 +207,29 @@ namespace NovaSharp.Interpreter.Tests.Units
                 DynValue.NewString("does_not_exist"),
                 true
             );
-            Assert.That(unknown, Is.Null);
+            await Assert.That(unknown).IsNull();
 
             DynValue resetResult = reset.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            Assert.That(resetResult.IsNil(), Is.True);
+            await Assert.That(resetResult.IsNil()).IsTrue();
 
-            // Second reset call exercises the branch that actually rewinds the iterator once the flag is set.
             reset.Callback.ClrCallback(context, TestHelpers.CreateArguments());
 
             bool restarted = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
-            Assert.That(restarted, Is.True);
-            Assert.That(GetCurrentAccessor().String, Is.EqualTo("one"));
+
+            await Assert.That(restarted).IsTrue();
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one");
         }
 
-        [Test]
-        public void SetIndexAlwaysReturnsFalse()
+        [global::TUnit.Core.Test]
+        public async Task SetIndexAlwaysReturnsFalse()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator();
+            Script script = new();
+            TrackingEnumerator enumerator = new();
             DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
@@ -255,14 +243,14 @@ namespace NovaSharp.Interpreter.Tests.Units
                 isDirectIndexing: true
             );
 
-            Assert.That(result, Is.False);
+            await Assert.That(result).IsFalse();
         }
 
-        [Test]
-        public void MetaIndexReturnsNullForUnsupportedNames()
+        [global::TUnit.Core.Test]
+        public async Task MetaIndexReturnsNullForUnsupportedNames()
         {
-            Script script = new Script();
-            TrackingEnumerator enumerator = new TrackingEnumerator(1);
+            Script script = new();
+            TrackingEnumerator enumerator = new(1);
             DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
@@ -270,7 +258,7 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue value = descriptor.MetaIndex(script, instance, "__len");
 
-            Assert.That(value, Is.Null);
+            await Assert.That(value).IsNull();
         }
 
         private static DynValue GetIteratorCallback(Script script, DynValue iteratorUserData)
@@ -315,3 +303,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

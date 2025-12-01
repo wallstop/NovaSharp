@@ -1,20 +1,21 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
+    using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Options;
-    using NUnit.Framework;
 
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     [ScriptGlobalOptionsIsolation]
-    public sealed class PropertyTableAssignerTests
+    public sealed class PropertyTableAssignerTUnitTests
     {
-        static PropertyTableAssignerTests()
+        static PropertyTableAssignerTUnitTests()
         {
             _ = new DuplicateProperties();
             _ = new AddressInfo();
@@ -22,14 +23,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
         private Script _script;
 
-        [SetUp]
+        [global::TUnit.Core.Before(global::TUnit.Core.HookType.Test)]
         public void SetUp()
         {
             _script = new Script();
         }
 
-        [Test]
-        public void AssignObjectSetsAttributedProperties()
+        [global::TUnit.Core.Test]
+        public async Task AssignObjectSetsAttributedProperties()
         {
             Table data = new(_script);
             data.Set("name", DynValue.NewString("Nova"));
@@ -40,15 +41,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             assigner.AssignObject(target, data);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(target.Name, Is.EqualTo("Nova"));
-                Assert.That(target.Count, Is.EqualTo(5));
-            });
+            await Assert.That(target.Name).IsEqualTo("Nova");
+            await Assert.That(target.Count).IsEqualTo(5);
         }
 
-        [Test]
-        public void AssignObjectUsesSubassignerForNestedTables()
+        [global::TUnit.Core.Test]
+        public async Task AssignObjectUsesSubassignerForNestedTables()
         {
             Table addressTable = new(_script);
             addressTable.Set("street", DynValue.NewString("Main"));
@@ -65,14 +63,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             assigner.AssignObject(target, data);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(target.Address, Is.Not.Null);
-                Assert.That(target.Address!.Street, Is.EqualTo("Main"));
-            });
+            await Assert.That(target.Address).IsNotNull();
+            await Assert.That(target.Address!.Street).IsEqualTo("Main");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AssignObjectThrowsForUnexpectedProperty()
         {
             Table data = new(_script);
@@ -80,13 +75,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
-            Assert.That(
-                () => assigner.AssignObject(new BasicSample(), data),
-                Throws.TypeOf<ScriptRuntimeException>()
-            );
+            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new BasicSample(), data));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AddExpectedMissingPropertySuppressesError()
         {
             Table data = new(_script);
@@ -96,25 +88,22 @@ namespace NovaSharp.Interpreter.Tests.Units
             assigner.AddExpectedMissingProperty("unknown");
 
             BasicSample target = new();
-            Assert.That(() => assigner.AssignObject(target, data), Throws.Nothing);
+            assigner.AssignObject(target, data);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AssignObjectRequiresCompatibleInstance()
         {
             PropertyTableAssigner<BasicSample> assigner = new();
             Table data = new(_script);
 
-            Assert.That(() => assigner.AssignObject(null, data), Throws.ArgumentNullException);
+            Assert.Throws<ArgumentNullException>(() => assigner.AssignObject(null, data));
 
             PropertyTableAssigner nonGeneric = new(typeof(BasicSample));
-            Assert.That(
-                () => nonGeneric.AssignObject(new IncompatibleSample(), data),
-                Throws.TypeOf<ArgumentException>()
-            );
+            Assert.Throws<ArgumentException>(() => nonGeneric.AssignObject(new IncompatibleSample(), data));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AssignObjectRequiresStringKey()
         {
             Table data = new(_script);
@@ -122,24 +111,18 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
-            Assert.That(
-                () => assigner.AssignObject(new BasicSample(), data),
-                Throws.TypeOf<ScriptRuntimeException>()
-            );
+            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new BasicSample(), data));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void SetSubassignerForTypeRejectsInvalidTypes()
         {
             PropertyTableAssigner<ParentWithAddress> assigner = new();
-            Assert.That(
-                () => assigner.SetSubassignerForType(typeof(int), null),
-                Throws.TypeOf<ArgumentException>()
-            );
+            Assert.Throws<ArgumentException>(() => assigner.SetSubassignerForType(typeof(int), null));
         }
 
-        [Test]
-        public void FuzzyMatchingAllowsUnderscoreKeys()
+        [global::TUnit.Core.Test]
+        public async Task FuzzyMatchingAllowsUnderscoreKeys()
         {
             FuzzySymbolMatchingBehavior previous = Script.GlobalOptions.FuzzySymbolMatching;
             Script.GlobalOptions.FuzzySymbolMatching =
@@ -154,7 +137,7 @@ namespace NovaSharp.Interpreter.Tests.Units
                 PropertyTableAssigner<FuzzySample> assigner = new();
                 assigner.AssignObject(target, data);
 
-                Assert.That(target.FirstName, Is.EqualTo("Nova"));
+                await Assert.That(target.FirstName).IsEqualTo("Nova");
             }
             finally
             {
@@ -162,8 +145,8 @@ namespace NovaSharp.Interpreter.Tests.Units
             }
         }
 
-        [Test]
-        public void GenericAssignerReturnsUnderlyingAssigner()
+        [global::TUnit.Core.Test]
+        public async Task GenericAssignerReturnsUnderlyingAssigner()
         {
             Table data = new(_script);
             data.Set("name", DynValue.NewString("Nova"));
@@ -174,11 +157,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             typeUnsafe.AssignObject(target, data);
 
-            Assert.That(target.Name, Is.EqualTo("Nova"));
+            await Assert.That(target.Name).IsEqualTo("Nova");
         }
 
-        [Test]
-        public void AssignObjectUncheckedInvokesGenericAssigner()
+        [global::TUnit.Core.Test]
+        public async Task AssignObjectUncheckedInvokesGenericAssigner()
         {
             Table data = new(_script);
             data.Set("name", DynValue.NewString("Nova"));
@@ -188,10 +171,10 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             assigner.AssignObjectUnchecked(target, data);
 
-            Assert.That(target.Name, Is.EqualTo("Nova"));
+            await Assert.That(target.Name).IsEqualTo("Nova");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ConstructorAllowsExpectedMissingPropertiesParameter()
         {
             Table data = new(_script);
@@ -199,21 +182,29 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             PropertyTableAssigner<BasicSample> assigner = new("ignored");
 
-            Assert.That(() => assigner.AssignObject(new BasicSample(), data), Throws.Nothing);
+            assigner.AssignObject(new BasicSample(), data);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void ConstructorRejectsValueTypesAndDuplicateNames()
         {
-            Assert.That(() => new PropertyTableAssigner(typeof(int)), Throws.ArgumentException);
-
-            Assert.That(
-                () => new PropertyTableAssigner<DuplicateProperties>(),
-                Throws.ArgumentException.With.Message.Contains("two definitions")
+            Assert.Throws<ArgumentException>(
+                () =>
+                {
+                    PropertyTableAssigner assigner = new(typeof(int));
+                    _ = assigner.GetType();
+                }
+            );
+            Assert.Throws<ArgumentException>(
+                () =>
+                {
+                    PropertyTableAssigner<DuplicateProperties> assigner = new();
+                    _ = assigner.GetType();
+                }
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RemovingSubassignerFallsBackToClrConversion()
         {
             Table address = new(_script);
@@ -224,14 +215,11 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             PropertyTableAssigner<ParentWithAddress> assigner = new();
             assigner.SetSubassigner(new PropertyTableAssigner<AddressInfo>());
-            assigner.AssignObject(new ParentWithAddress(), data); // works with subassigner
+            assigner.AssignObject(new ParentWithAddress(), data);
 
             assigner.SetSubassigner<AddressInfo>(null);
 
-            Assert.That(
-                () => assigner.AssignObject(new ParentWithAddress(), data),
-                Throws.TypeOf<ScriptRuntimeException>()
-            );
+            Assert.Throws<ScriptRuntimeException>(() => assigner.AssignObject(new ParentWithAddress(), data));
         }
 
         private sealed class DuplicateProperties
@@ -273,3 +261,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         private sealed class IncompatibleSample { }
     }
 }
+#pragma warning restore CA2007

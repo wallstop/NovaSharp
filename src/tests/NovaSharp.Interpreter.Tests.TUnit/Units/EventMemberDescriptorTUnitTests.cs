@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests.Units
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
@@ -12,18 +12,18 @@ namespace NovaSharp.Interpreter.Tests.Units
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
+    using NovaSharp.Interpreter.Tests.Units;
     using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class EventMemberDescriptorTests
+    public sealed class EventMemberDescriptorTUnitTests
     {
-        static EventMemberDescriptorTests()
+        static EventMemberDescriptorTUnitTests()
         {
             _ = new PrivateEventSource();
             _ = new IncompatibleEventSource();
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TryCreateIfVisibleReturnsDescriptorForPublicEvent()
         {
             EventInfo eventInfo = typeof(SampleEventSource).GetEvent(
@@ -42,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister()
         {
             SampleEventSource source = new();
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void GetValueReturnsFacadeGrantingAddRemove()
         {
             SampleEventSource source = new();
@@ -77,7 +77,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(facadeValue.UserData.Object, Is.InstanceOf<EventFacade>());
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AddAndRemoveCallbacksManageDelegatesAndClosures()
         {
             const string HitsVariable = "hits";
@@ -132,7 +132,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(hits, Is.EqualTo(11), "No handlers remain after removal");
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void StaticEventsDispatchHandlersAndTrackSubscriptions()
         {
             const string HitsVariable = "staticHits";
@@ -175,7 +175,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             StaticSampleEventSource.Reset();
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void EventDescriptorExposesNameAndGuardsAssignments()
         {
             SampleEventSource source = new();
@@ -202,7 +202,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RemovingSameCallbackTwiceDoesNotDetachDelegateAgain()
         {
             SampleEventSource source = new();
@@ -225,7 +225,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void RemovingUnknownCallbackLeavesDelegateAttached()
         {
             const string HitsVariable = "unknownRemovalHits";
@@ -257,7 +257,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates()
         {
             SampleEventSource source = new();
@@ -276,7 +276,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(source.AddInvokeCount, Is.EqualTo(1));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TryCreateIfVisibleRejectsPrivateEvents()
         {
             EventInfo hiddenEvent = PrivateEventSourceMetadata.HiddenEvent;
@@ -289,7 +289,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptor, Is.Null);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TryCreateIfVisibleRejectsIncompatibleEvents()
         {
             EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
@@ -304,7 +304,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(descriptor, Is.Null);
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleRejectsValueTypeEvents()
         {
             EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
@@ -324,7 +324,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleRejectsHandlersReturningValues()
         {
             EventInfo returning = typeof(IncompatibleEventSource).GetEvent(
@@ -344,7 +344,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleRejectsHandlersWithValueTypeParameters()
         {
             EventInfo valueParameter = typeof(IncompatibleEventSource).GetEvent(
@@ -364,7 +364,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleRejectsHandlersWithByRefParameters()
         {
             EventInfo byRef = typeof(IncompatibleEventSource).GetEvent(
@@ -381,7 +381,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleRejectsHandlersExceedingMaxArguments()
         {
             EventInfo tooMany = typeof(IncompatibleEventSource).GetEvent(
@@ -400,7 +400,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             });
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void TryCreateIfVisibleThrowsWhenEventInfoIsNull()
         {
             Assert.That(
@@ -411,7 +411,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CheckEventIsCompatibleThrowsWhenEventInfoIsNull()
         {
             Assert.That(
@@ -422,7 +422,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             );
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void DispatchEventInvokesZeroArgumentHandlers()
         {
             MultiSignatureEventSource source = new();
@@ -447,7 +447,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(hits, Is.EqualTo(2));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void DispatchEventForwardsMultipleArguments()
         {
             MultiSignatureEventSource source = new();
@@ -471,7 +471,7 @@ namespace NovaSharp.Interpreter.Tests.Units
             Assert.That(script.Globals.Get("payload").String, Is.EqualTo("one:two:three"));
         }
 
-        [Test]
+        [global::TUnit.Core.Test]
         public void CreateDelegateHandlesWideRangeOfArgumentCounts()
         {
             MultiArityEventSource source = new();
@@ -1065,3 +1065,4 @@ end";
         }
     }
 }
+
