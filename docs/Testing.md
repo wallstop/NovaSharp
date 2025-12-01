@@ -5,13 +5,13 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 ## Test Topology
 
 - **Lua compatibility (TestMore)**: Lua TAP fixtures exercise language semantics, standard library coverage, and coroutine behaviour.
-- **End-to-end suites**: C# driven NUnit scenarios cover userdata interop, debugger contracts, serialization, hardwire generation, and coroutine pipelines.
+- **End-to-end suites**: C# driven TUnit scenarios cover userdata interop, debugger contracts, serialization, hardwire generation, and coroutine pipelines.
 - **Units**: Focused checks for low-level structures (stacks, instruction decoding, binary dump/load).
 
 ## Running the Tests Locally
 
 ```bash
-dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --logger "trx;LogFileName=NovaSharpTests.trx"
+dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"
 ```
 
 - Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
@@ -20,34 +20,14 @@ dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interprete
 ### Microsoft.Testing.Platform runner
 
 - `global.json` now pins `test.runner` to `Microsoft.Testing.Platform`, so every `dotnet test` invocation must pass an explicit target via `--project`/`--solution`/`--test-modules`. The command above mirrors the CI lane (`--project` is required; the legacy `dotnet test <csproj>` syntax no longer works on .NET 10 SDKs).
-- The interpreter suite (3 155 Release tests) completes in roughly **10.5 s** on a 12-core workstation when invoked with `--settings scripts/tests/NovaSharp.Parallel.runsettings`; expect ~1 s slower when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
+- The interpreter TUnit suite (≈2.7 k Release tests) completes in roughly **7 s** on a 12-core workstation; expect ~1 s slower when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
 - Visual Studio and Rider inherit the same configuration because the runner is set in `global.json`; if a local command fails with “VSTest target is no longer supported”, re-run it with the explicit `--project` form shown above so the Microsoft.Testing.Platform mode is engaged.
 
-### Remote debugger TUnit pilot
+### TUnit-first policy
 
-- The first TUnit-backed suite lives in `src/tests/NovaSharp.RemoteDebugger.Tests.TUnit` and exercises the in-memory remote-debugger harness. Run it with:
-
-  ```bash
-  dotnet test --project src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release
-  ```
-
-- Five high-traffic debugger scenarios now execute in ~0.7 s (`HandshakeStreamsWelcomeAndSourceCode`, `AddWatchQueuesHardRefreshAndCreatesDynamicExpression`, `WatchesEvaluateExpressionsAgainstScriptState`, `HostBusyTransitionsBackToReadyAfterProcessingAction`, `PauseCommandQueuesRunActionAndClearsPauseRequest`). Results are gated by the Microsoft.Testing.Platform runner, so the command above matches the experience that will roll out across the remaining suites if the pilot proves successful.
-
-- The NUnit equivalents still live in `RemoteDebuggerTests.cs`; keep both suites in sync while the migration is evaluated so we can compare ergonomics, analyzer coverage, and timing deltas side-by-side.
-
-### Interpreter TUnit migration blueprint
-
-- The interpreter-wide migration plan now lives in `docs/testing/tunit-migration-blueprint.md`. It defines the new `NovaSharp.Interpreter.Tests.TUnit` project, the shared adapter required to reuse `TestUtilities/*`, and the six conversion batches (VM core, standard library, interop/userdata, tooling/CLI, debugger/platform, Lua spec/TAP) with owners and target dates.
-- Follow that blueprint when converting fixtures: bootstrap the new csproj, port the isolation attributes into the shared adapter, then dual-run each batch under NUnit + TUnit until the measurement harness reports ±5 % runtime parity and coverage stays within ±0.1 % line/branch/method deltas.
-- Capture those runtime deltas with `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <batch> -NUnitArguments @(...) -TUnitArguments @(...)`. The helper forces `--output Detailed`, stores raw logs under `artifacts/tunit-migration/tmp/<label>/`, and writes a JSON summary (per-suite totals + per-test durations) to `artifacts/tunit-migration/<batch>.json` so PLAN.md checkpoints can link reproducible measurements.
-- The new `NovaSharp.Interpreter.Tests.TUnit` project already builds and ships a smoke fixture; validate the harness with `dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release` before wiring your first migrated batch.
-
-### Authoring tests while the migration is in flight
-
-- **Interpreter + tooling suites default to NUnit unless you are migrating a blueprint batch.** Add new coverage under `src/tests/NovaSharp.Interpreter.Tests` for normal feature work; when you begin porting a fixture, mirror it into `src/tests/NovaSharp.Interpreter.Tests.TUnit`, keep the NUnit version compiling until the batch is complete, and re-run the smoke command above before pushing.
-- **Remote debugger work lands in both suites.** The in-memory pilot (`src/tests/NovaSharp.RemoteDebugger.Tests.TUnit`) is the canonical home for latency-sensitive remote-debugger behaviours, but the existing NUnit fixture (`Units/RemoteDebuggerTests.cs`) must remain in sync until the cutover. Whenever you add or change a remote-debugger scenario, update both suites (or justify the delta in PLAN.md) and re-run `compare-test-runtimes.ps1` so the JSON artefact captures the new timing.
-- **New projects default to NUnit unless the blueprint says otherwise.** Avoid spinning up ad-hoc TUnit projects until the adapter layer is in place; this keeps analyzers, fixture catalog generation, and CI configuration aligned.
-- **Migrations require measurements.** When you convert a fixture or prove a latency improvement, run `pwsh ./scripts/tests/compare-test-runtimes.ps1 ...` with the relevant arguments and attach the emitted JSON/log paths in your PR description. Reference the artefact from PLAN.md so the historical record captures the delta.
+- Interpreter and debugger suites now live entirely on TUnit. Use TUnit’s async assertions and data sources for every new test, and only introduce NUnit fixtures if a third-party dependency requires it (coordinate in `PLAN.md` before doing so).
+- Shared Lua fixtures, TAP corpuses, and helper infrastructure remain under `src/tests/NovaSharp.Interpreter.Tests`. Link the files you need into the TUnit project instead of reviving the deleted NUnit host.
+- The runtime/TAP blueprint in `docs/testing/tunit-migration-blueprint.md` is preserved for historical context. If you need to compare timing against the retired NUnit host, use `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <scenario> -BaselineArguments @(...) -TUnitArguments @(...)` so the JSON artefact captures the delta.
 
 ### Build Helper Scripts
 
@@ -61,7 +41,7 @@ pwsh ./scripts/build/build.ps1
 bash ./scripts/build/build.sh
 ```
 
-- Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with `dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --logger "trx;LogFileName=NovaSharpTests.trx"` writing logs to `artifacts/test-results`.
+- Both scripts restore local tools (unless `-SkipToolRestore`/`--skip-tool-restore` is supplied), build `src/NovaSharp.sln` in Release by default, and execute the interpreter tests with the TUnit command above, writing logs to `artifacts/test-results`.
 - Pass `-SkipTests`/`--skip-tests` for build-only runs, or override `-Configuration`/`--configuration` to target Debug builds.
 
 ## Generating Coverage
@@ -72,9 +52,9 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - If the host only has .NET 9 installed (common on new Ubuntu images), set `DOTNET_ROLL_FORWARD=Major` when invoking the script (PowerShell or Bash) so the .NET 9 runtime can execute the net8.0 testhost.
 
-- Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so NUnit fixtures (including `[SetUp]/[TearDown]`) execute exactly as they do in CI.
+- Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so the TUnit suites execute exactly as they do in CI.
 
-- Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test log in `artifacts/coverage/test-results`.
+- Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test logs in `artifacts/coverage/test-results`.
 
 - Produces HTML + Markdown + JSON summaries in `docs/coverage/latest`; `SummaryGithub.md` and `Summary.json` are also copied to `artifacts/coverage` for automation and PR reporting.
 
@@ -152,7 +132,7 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 - `src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj` now also treats warnings as errors. Run `dotnet build src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj -c Release -nologo` before committing tooling changes, and keep analyzer suppressions documented.
 
-- `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests live inside `src/tests/NovaSharp.Interpreter.Tests`—notably `Units/RemoteDebuggerServiceTests.cs`, `Units/RemoteDebuggerTests.cs`, and `Units/DebugCommandTests.cs`—so `scripts/coverage/coverage.ps1` and `dotnet test` already execute them; add new coverage there when touching RemoteDebugger code.
+- `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests now live in `src/tests/NovaSharp.RemoteDebugger.Tests.TUnit`; add coverage there when touching RemoteDebugger code.
 
 - Record every analyzer command you run when filling out `.github/pull_request_template.md`. Reviewers expect to see the solution build plus any scoped project builds/tests for the areas you touched.
 
@@ -173,7 +153,7 @@ Validation checklist:
 ```powershell
 dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
 dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo
-dotnet test --project src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings --filter "FullyQualifiedName~RemoteDebugger"
+dotnet test --project src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
 ```
 
 Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.

@@ -2,7 +2,7 @@
 
 This directory centralizes helper code that must be shared across multiple test projects.
 
-- `NUnit/` contains the existing attributes and helpers that plug into the interpreter's NUnit suite (for example the isolation attributes that wrap `UserData`, `Script.GlobalOptions`, and `PlatformAutoDetector`).
-- `TUnit/` will host the equivalent implementations for the TUnit suites as they come online so fixtures can retain the exact same isolation semantics without duplicating code inside each project.
+- `TUnit/` hosts the isolation attributes and shared helpers used by every interpreter/remote-debugger fixture. Keep the helpers here so suites can retain identical semantics without duplicating code inside each project.
+- The legacy `NUnit/` folder was removed after the final interpreter migration (2025-12-01). Refer to Git history if you need to resurrect those adapters for a new NUnit host.
 
-Both `NovaSharp.Interpreter.Tests` and `NovaSharp.Interpreter.Tests.TUnit` link files from here via their project files so new helpers only need to be authored once.
+Both `NovaSharp.Interpreter.Tests` (shared assets only) and `NovaSharp.Interpreter.Tests.TUnit` link files from here via their project files so new helpers only need to be authored once.

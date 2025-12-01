@@ -2,9 +2,9 @@
 param(
     [string]$Configuration = "Release",
     [string]$Solution = "src/NovaSharp.sln",
-    [string]$TestProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj",
+    [string]$TestProject = "src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj",
     [switch]$SkipTests,
-[switch]$SkipToolRestore
+    [switch]$SkipToolRestore
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,15 +75,9 @@ try {
             New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
         }
 
-        $runSettings = Join-Path $repoRoot "scripts/tests/NovaSharp.Parallel.runsettings"
-        if (-not (Test-Path $runSettings)) {
-            throw "Runsettings file not found at $runSettings. Ensure scripts/tests/NovaSharp.Parallel.runsettings exists."
-        }
-
         Write-Host "Running tests for $TestProject..."
         dotnet test $TestProject -c $Configuration --no-build `
-            --settings $runSettings `
-            --logger "trx;LogFileName=NovaSharpTests.trx" `
+            --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx" `
             --results-directory $resultsDir
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet test $TestProject failed with exit code $LASTEXITCODE."

@@ -1,14 +1,14 @@
 # tests scripts
 
-Utilities that keep the NUnit test suite metadata in sync live here.
+Utilities that keep the interpreter test metadata in sync now that all fixtures run on
+Microsoft.Testing.Platform/TUnit.
 
 ## update-fixture-catalog.ps1
 
-- **Purpose:** Regenerates `src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs` so every `[TestFixture]` type is referenced via `typeof(...)`. This keeps analyzers (CA1515/CA1812) satisfied once fixtures become `internal`.
+- **Purpose:** Regenerates `src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs` so analyzers always see explicit references to every `[TestFixture]`. The generated file now records “No NUnit fixtures remain,” but the script stays checked in so we can quickly resurrect NUnit coverage if a future project needs it.
 - **Usage:** From the repo root run `pwsh ./scripts/tests/update-fixture-catalog.ps1`. The script accepts optional `-TestsRoot` and `-OutputPath` parameters when experimenting with other assemblies.
-- **CI integration:** `NovaSharp.Interpreter.Tests.csproj` runs this script automatically before compilation, but you should still run it manually whenever you add, rename, or delete a fixture to avoid stale diffs.
+- **CI integration:** The interpreter NUnit project has been deleted, so the script no longer runs automatically. Execute it manually whenever you add/remove NUnit fixtures in any legacy branch to keep the generated file accurate.
 
-## NovaSharp.Parallel.runsettings
+## Retired assets
 
-- **Purpose:** Centralizes the test-runner configuration so `dotnet test` always executes with `RunConfiguration.MaxCpuCount=0` and `NUnit.NumberOfTestWorkers=0`, enabling machine-wide parallelism once fixtures opt into `[Parallelizable]`.
-- **Usage:** Append `--settings scripts/tests/NovaSharp.Parallel.runsettings` to every `dotnet test` invocation (the build helpers already do this) so local runs match CI.
+- `NovaSharp.Parallel.runsettings` was removed after the final TUnit migration (2025-12-01). Microsoft.Testing.Platform already maxes out concurrency, so there is no longer a bespoke runsettings profile to pass to `dotnet test`.

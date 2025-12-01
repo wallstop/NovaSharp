@@ -1,16 +1,15 @@
-namespace NovaSharp.Interpreter.Tests.Units.Debugging
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 {
-    using System;
-    using NovaSharp.Interpreter;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class WatchItemTests
+    public sealed class WatchItemTUnitTests
     {
-        [Test]
-        public void ToStringIncludesAddressNameValueAndSymbol()
+        [global::TUnit.Core.Test]
+        public async Task ToStringIncludesAddressNameValueAndSymbol()
         {
             WatchItem item = new()
             {
@@ -24,14 +23,13 @@ namespace NovaSharp.Interpreter.Tests.Units.Debugging
 
             string formatted = item.ToString();
 
-            Assert.That(
-                formatted,
-                Is.EqualTo("1:2:3:counter:42:counter : Global / (default _ENV)")
-            );
+            await Assert
+                .That(formatted)
+                .IsEqualTo("1:2:3:counter:42:counter : Global / (default _ENV)");
         }
 
-        [Test]
-        public void ToStringHandlesNullMembers()
+        [global::TUnit.Core.Test]
+        public async Task ToStringHandlesNullMembers()
         {
             WatchItem item = new()
             {
@@ -43,7 +41,8 @@ namespace NovaSharp.Interpreter.Tests.Units.Debugging
                 LValue = null,
             };
 
-            Assert.That(item.ToString(), Is.EqualTo("0:0:0:(null):(null):(null)"));
+            await Assert.That(item.ToString()).IsEqualTo("0:0:0:(null):(null):(null)");
         }
     }
 }
+#pragma warning restore CA2007

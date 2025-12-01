@@ -148,8 +148,8 @@ dotnet tool restore >/dev/null
 coverage_root="$repo_root/artifacts/coverage"
 mkdir -p "$coverage_root"
 build_log_path="$coverage_root/build.log"
-runner_project="src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
 tunit_runner_project="src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
+remote_runner_project="src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
 if [[ "$skip_build" != true ]]; then
     log "Building solution (configuration: $configuration)..."
@@ -161,44 +161,30 @@ if [[ "$skip_build" != true ]]; then
         error_exit "dotnet build src/NovaSharp.sln -c $configuration failed."
     fi
 
-    log "Building test project (configuration: $configuration)..."
-    if ! dotnet build "$runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
-        echo ""
-        echo "dotnet build $runner_project failed, tailing $build_log_path:"
-        tail -n 200 "$build_log_path"
-        error_exit "dotnet build $runner_project -c $configuration failed."
-    fi
-
-    log "Building TUnit test project (configuration: $configuration)..."
+    log "Building interpreter TUnit project (configuration: $configuration)..."
     if ! dotnet build "$tunit_runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
         echo ""
         echo "dotnet build $tunit_runner_project failed, tailing $build_log_path:"
         tail -n 200 "$build_log_path"
         error_exit "dotnet build $tunit_runner_project -c $configuration failed."
     fi
+
+    log "Building remote-debugger TUnit project (configuration: $configuration)..."
+    if ! dotnet build "$remote_runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
+        echo ""
+        echo "dotnet build $remote_runner_project failed, tailing $build_log_path:"
+        tail -n 200 "$build_log_path"
+        error_exit "dotnet build $remote_runner_project -c $configuration failed."
+    fi
 fi
 
 test_results_dir="$coverage_root/test-results"
 mkdir -p "$test_results_dir"
 tunit_results_dir="$test_results_dir/tunit"
-nunit_results_dir="$test_results_dir/nunit"
-mkdir -p "$tunit_results_dir" "$nunit_results_dir"
+remote_results_dir="$test_results_dir/remote"
+mkdir -p "$tunit_results_dir" "$remote_results_dir"
 
-runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
 tunit_runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests.TUnit/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.TUnit.dll"
-if [[ ! -f "$runner_output" ]]; then
-    message="Runner output not found at '$runner_output'."
-    if [[ "$skip_build" == true ]]; then
-        message+=" Re-run without --skip-build or build the test project manually."
-    else
-        if [[ -f "$build_log_path" ]]; then
-            message+=" Inspect $build_log_path for build errors."
-        else
-            message+=" dotnet build may have failed."
-        fi
-    fi
-    error_exit "$message"
-fi
 
 tunit_message_prefix="TUnit runner output not found at '$tunit_runner_output'."
 if [[ ! -f "$tunit_runner_output" ]]; then
@@ -215,10 +201,26 @@ if [[ ! -f "$tunit_runner_output" ]]; then
     error_exit "$message"
 fi
 
+remote_runner_output="$repo_root/src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/bin/$configuration/net8.0/NovaSharp.RemoteDebugger.Tests.TUnit.dll"
+if [[ ! -f "$remote_runner_output" ]]; then
+    message="Remote debugger runner output not found at '$remote_runner_output'."
+    if [[ "$skip_build" == true ]]; then
+        message+=" Re-run without --skip-build or build the TUnit test project manually."
+    else
+        if [[ -f "$build_log_path" ]]; then
+            message+=" Inspect $build_log_path for build errors."
+        else
+            message+=" dotnet build may have failed."
+        fi
+    fi
+    error_exit "$message"
+fi
 coverage_base="$coverage_root/coverage"
 report_target="$repo_root/docs/coverage/latest"
 
 tunit_coverage_base="${coverage_base}.tunit"
+tunit_coverage_json="${tunit_coverage_base}.json"
+
 tunit_target_args=(
     test "$tunit_runner_project"
     -c "$configuration"
@@ -226,26 +228,25 @@ tunit_target_args=(
     --logger "trx;LogFileName=NovaSharpTUnit.trx"
     --results-directory "$tunit_results_dir"
 )
-nunit_target_args=(
-    test "$runner_project"
+remote_target_args=(
+    test "$remote_runner_project"
     -c "$configuration"
     --no-build
-    --logger "trx;LogFileName=NovaSharpTests.trx"
-    --results-directory "$nunit_results_dir"
+    --logger "trx;LogFileName=NovaSharpRemoteDebugger.trx"
+    --results-directory "$remote_results_dir"
 )
 tunit_joined_target_args="$(printf "%s " "${tunit_target_args[@]}")"
 tunit_joined_target_args="${tunit_joined_target_args% }"
-nunit_joined_target_args="$(printf "%s " "${nunit_target_args[@]}")"
-nunit_joined_target_args="${nunit_joined_target_args% }"
+remote_joined_target_args="$(printf "%s " "${remote_target_args[@]}")"
+remote_joined_target_args="${remote_joined_target_args% }"
 
-run_coverlet "$tunit_runner_output" "$tunit_joined_target_args" "$tunit_coverage_base" "TUnit"
+run_coverlet "$tunit_runner_output" "$tunit_joined_target_args" "$tunit_coverage_base" "Interpreter TUnit"
 
-tunit_coverage_json="${tunit_coverage_base}.json"
 if [[ ! -f "$tunit_coverage_json" ]]; then
     error_exit "Coverage report not found at '$tunit_coverage_json' after running TUnit tests."
 fi
 
-run_coverlet "$runner_output" "$nunit_joined_target_args" "$coverage_base" "NUnit" --merge-with "$tunit_coverage_json"
+run_coverlet "$remote_runner_output" "$remote_joined_target_args" "$coverage_base" "RemoteDebugger" --merge-with "$tunit_coverage_json"
 
 log "Generating report set..."
 rm -rf "$report_target"

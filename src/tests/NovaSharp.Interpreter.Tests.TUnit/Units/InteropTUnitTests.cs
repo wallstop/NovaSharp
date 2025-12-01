@@ -1,58 +1,50 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public class InteropTests
+    public sealed class InteropTUnitTests
     {
-        [Test]
-        public void ConverterFromObjectCoversPrimitiveAndNullableCases()
+        [global::TUnit.Core.Test]
+        public async Task ConverterFromObjectCoversPrimitiveAndNullableCases()
         {
             Script script = new();
 
             DynValue directNumber = DynValue.FromObject(script, 42);
-            Assert.Multiple(() =>
-            {
-                Assert.That(directNumber.Type, Is.EqualTo(DataType.Number));
-                Assert.That(directNumber.Number, Is.EqualTo(42));
-            });
+            await Assert.That(directNumber.Type).IsEqualTo(DataType.Number);
+            await Assert.That(directNumber.Number).IsEqualTo(42);
 
             int? nullableHasValue = 7;
             DynValue fromNullable = DynValue.FromObject(script, nullableHasValue);
-            Assert.Multiple(() =>
-            {
-                Assert.That(fromNullable.Type, Is.EqualTo(DataType.Number));
-                Assert.That(fromNullable.Number, Is.EqualTo(7));
-            });
+            await Assert.That(fromNullable.Type).IsEqualTo(DataType.Number);
+            await Assert.That(fromNullable.Number).IsEqualTo(7);
 
             int? nullableNull = null;
             DynValue fromNull = DynValue.FromObject(script, nullableNull);
-            Assert.That(fromNull.Type, Is.EqualTo(DataType.Nil));
+            await Assert.That(fromNull.Type).IsEqualTo(DataType.Nil);
         }
 
-        [Test]
-        public void ConverterFromObjectMarshalsDictionariesToLuaTables()
+        [global::TUnit.Core.Test]
+        public async Task ConverterFromObjectMarshalsDictionariesToLuaTables()
         {
             Script script = new();
             Dictionary<string, int> dictionary = new() { ["a"] = 1, ["b"] = 2 };
 
             DynValue dyn = DynValue.FromObject(script, dictionary);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(dyn.Type, Is.EqualTo(DataType.Table));
-                Assert.That(dyn.Table.Length, Is.EqualTo(0)); // dictionary entries are hash-only
-                Assert.That(dyn.Table.Get("a").Number, Is.EqualTo(1));
-                Assert.That(dyn.Table.Get("b").Number, Is.EqualTo(2));
-            });
+            await Assert.That(dyn.Type).IsEqualTo(DataType.Table);
+            await Assert.That(dyn.Table.Length).IsEqualTo(0);
+            await Assert.That(dyn.Table.Get("a").Number).IsEqualTo(1);
+            await Assert.That(dyn.Table.Get("b").Number).IsEqualTo(2);
         }
 
-        [Test]
-        public void TableArgumentsAreConvertedToClrDictionaryParameters()
+        [global::TUnit.Core.Test]
+        public async Task TableArgumentsAreConvertedToClrDictionaryParameters()
         {
             Script script = new()
             {
@@ -64,15 +56,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue result = script.DoString("return sum({ x = 10, y = 32 })");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.Type, Is.EqualTo(DataType.Number));
-                Assert.That(result.Number, Is.EqualTo(42));
-            });
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(42);
         }
 
-        [Test]
-        public void ObjectRoundTripTableToClrObjectAndBack()
+        [global::TUnit.Core.Test]
+        public async Task ObjectRoundTripTableToClrObjectAndBack()
         {
             Script script = new();
             DynValue payload = DynValue.FromObject(
@@ -95,12 +84,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 mutated.ToObject<IDictionary<string, string>>()
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(mutated.Table.Get("name").String, Is.EqualTo("nova"));
-                Assert.That(mutated.Table.Get("role").String, Is.EqualTo("TESTER"));
-                Assert.That(tableAfterCall.Table.Get("role").String, Is.EqualTo("TESTER"));
-            });
+            await Assert.That(mutated.Table.Get("name").String).IsEqualTo("nova");
+            await Assert.That(mutated.Table.Get("role").String).IsEqualTo("TESTER");
+            await Assert.That(tableAfterCall.Table.Get("role").String).IsEqualTo("TESTER");
         }
     }
 }
+#pragma warning restore CA2007

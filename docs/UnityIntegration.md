@@ -137,11 +137,11 @@ Document the NovaSharp version/hash alongside the package so consumers know whic
 
 ## 5. Keep Tests in .NET, Not Unity
 
-All interpreter tests now live in `src/tests/NovaSharp.Interpreter.Tests` and execute via `dotnet test`. Keep Unity projects focused on runtime consumption; run the NUnit suite from the command line (CI already does this) to avoid pulling the full test harness into Unity.
+Interpreter tests now run exclusively via the TUnit host (`src/tests/NovaSharp.Interpreter.Tests.TUnit`). Keep Unity projects focused on runtime consumption; run the TUnit suite from the command line (CI already does this) instead of pulling the full test harness into Unity. Shared Lua fixtures remain under `src/tests/NovaSharp.Interpreter.Tests`.
 
 ______________________________________________________________________
 
 For additional context on the build/test pipeline, see:
 
-- `docs/Testing.md` – how to execute the consolidated NUnit suite and generate coverage.
+- `docs/Testing.md` – how to execute the consolidated TUnit suite and generate coverage.
 - `docs/Modernization.md` – broader modernization milestones.

@@ -29,7 +29,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release --no-build --settings scripts/tests/NovaSharp.Parallel.runsettings
+dotnet test src\tests\NovaSharp.Interpreter.Tests.TUnit\NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
 
 # Generate coverage reports (Coverlet + ReportGenerator)
 pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux
@@ -137,14 +137,12 @@ Script.DoString("return x + 1")
 
 ## Testing Guidelines
 
-- **Framework**: NUnit 2.6 (`[TestFixture]`, `[Test]` attributes)
-- **Organization**: Place tests in descriptive folders (e.g., `Units`, `EndToEnd`, feature-specific) with clear class names
-- **Naming**: `<Feature>Tests.cs` pattern, store Lua fixtures alongside test classes
-- **Method Names**: Use PascalCase without underscores for `[Test]` methods; rename legacy cases when modifying them
-- **Suite Maintenance**: Update `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes; the consolidated project runs under NUnit and feeds CI coverage
-- **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
-- **Spec Alignment**: When any test fails, walk the official Lua manuals for every supported version (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`) to confirm the correct semantics, record the relevant section/link in the test or PR notes, and update both production code and expectations so NovaSharp stays faithful to upstream Lua behaviour.
-- **Spec Suites**: Spec-driven coverage (string/math/table/etc.) must cite the specific manual section (e.g., “§6.4 String Manipulation”) and assert behaviour that matches the canonical Lua interpreter rather than legacy pre-rename quirks.
+- **Framework**: Interpreter and debugger suites run on TUnit (`global::TUnit.Core.Test` + async `Assert.That` APIs). Do not add new NUnit fixtures—`src/tests/NovaSharp.Interpreter.Tests` now stores shared Lua fixtures and helpers only.
+- **Organization**: Keep fixtures in descriptive folders (`Units`, `EndToEnd`, feature-specific) with `<Feature>TUnitTests.cs` names; store Lua fixtures alongside the tests that consume them.
+- **Method Names**: Use PascalCase without underscores; rename legacy methods when touching them.
+- **Suite Maintenance**: Extend `src/tests/NovaSharp.Interpreter.Tests.TUnit` for interpreter behaviour changes. Shared helpers (e.g., TAP corpuses) still live under `src/tests/NovaSharp.Interpreter.Tests`.
+- **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios.
+- **Spec Alignment**: When tests fail, reread the official Lua manual (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`), cite the consulted section in PR notes/tests, and update runtime + expectations together.
 
 ## Commit & Pull Request Guidelines
 
@@ -161,7 +159,7 @@ Script.DoString("return x + 1")
   - **Debuggers**: `src/debuggers/NovaSharp.VsCodeDebugger/`, `src/debuggers/NovaSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
   - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
-  - **Tests**: `src/tests/NovaSharp.Interpreter.Tests/` (NUnit-based suite powering local + CI execution)
+  - **Tests**: `src/tests/NovaSharp.Interpreter.Tests.TUnit/` (TUnit suite powering local + CI); shared Lua fixtures remain under `src/tests/NovaSharp.Interpreter.Tests/`
   - **Legacy Assets**: Flash/Flex debugger, Lua52 binaries, and other historical scripts have been removed from `src/legacy`; see `docs/Modernization.md` for the deprecation summary.
 
 ## Important Implementation Notes

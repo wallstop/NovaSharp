@@ -10,21 +10,8 @@ namespace NovaSharp.Interpreter.Tests
     {
         private static readonly Type[] ReferencedFixtures = new Type[]
         {
-            typeof(global::NovaSharp.Interpreter.Tests.Units.Debugging.SourceRefTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.Debugging.WatchItemTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.DotNetCorePlatformAccessorTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.ErrorHandlingModuleTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.FastStackDynamicTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.InstructionFieldUsageExtensionsTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.InteropTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.ModManifestCompatibilityTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.ModManifestTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.PathSpanExtensionsTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.PerformanceStatisticsTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.SerializationExtensionsTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.SourceRefTests),
-            typeof(global::NovaSharp.Interpreter.Tests.Units.UndisposableStreamTests),
-};
+            // No NUnit fixtures remain.
+        };
 
         static FixtureCatalog()
         {

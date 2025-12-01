@@ -11,13 +11,13 @@
     data so migrations can be compared without ad-hoc stopwatches.
 
 .EXAMPLE
+    # Replace <legacy-suite>.csproj with the NUnit project you are retiring (if any).
     pwsh ./scripts/tests/compare-test-runtimes.ps1 `
         -Name remote-debugger `
         -NUnitArguments @(
-            "--project", "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj",
+            "--project", "path/to/<legacy-suite>.csproj",
             "-c", "Release",
             "--no-build",
-            "--settings", "scripts/tests/NovaSharp.Parallel.runsettings",
             "--filter", "FullyQualifiedName~RemoteDebuggerTests"
         ) `
         -TUnitArguments @(

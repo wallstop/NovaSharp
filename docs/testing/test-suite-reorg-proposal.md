@@ -6,9 +6,9 @@
 - Keep interpreter, CLI, debugger, and hardwire coverage aligned with the production namespace layout.
 - Reduce diffs when files move by establishing a predictable folder + namespace convention.
 
-## Current Layout (Nov 2025)
+## Current Layout (Dec 2025)
 
-- `Units/` – flat list of ~1100 NUnit fixtures spanning every runtime subsystem.
+- `Units/` – flat list of ~1100 TUnit fixtures spanning every runtime subsystem.
 - `EndToEnd/` – scenario-style integration tests (debugger attach, coroutine pipelines, JSON).
 - `TestMore/` – Lua TAP fixtures synchronized with upstream Lua parity suites.
 - `Resources/` – helper Lua scripts and binary payloads used across tests.
@@ -46,7 +46,7 @@ Namespace convention: `NovaSharp.Interpreter.Tests.Units.<Area>.<FixtureName>`.
 
 1. **Adjust Project Globs**
 
-   - Update `NovaSharp.Interpreter.Tests.csproj` `<Compile Include>` patterns to include the new subdirectories.
+   - Update `NovaSharp.Interpreter.Tests.TUnit.csproj` `<Compile Include>` patterns to include the new subdirectories (the legacy NUnit project has been deleted, so the TUnit host is authoritative).
    - Ensure test resources continue to embed correctly after the folder moves.
 
 1. **Move Fixtures Gradually**
@@ -78,5 +78,5 @@ Namespace convention: `NovaSharp.Interpreter.Tests.Units.<Area>.<FixtureName>`.
 ## Next Actions
 
 1. Confirm folder list with maintainers.
-1. Prep `NovaSharp.Interpreter.Tests.csproj` glob changes on a branch.
+1. Prep `NovaSharp.Interpreter.Tests.TUnit.csproj` glob changes on a branch (the shared `src/tests/NovaSharp.Interpreter.Tests` tree only houses fixtures/resources now).
 1. Move `CLI` tests as the pilot to validate the namespace strategy.

@@ -25,7 +25,6 @@ PROPS_PATH = ROOT / "Directory.Build.props"
 EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs", "legacy"}
 FILE_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
-    Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
     Path("src/runtime/NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs"),

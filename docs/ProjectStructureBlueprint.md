@@ -13,7 +13,8 @@ This document captures the current repository layout, highlights legacy or dupli
 | `src/tooling/NovaSharp.Cli`                                  | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); release docs now reference the `cli` drop (formerly `repl`). |
 | `src/tooling/NovaSharp.Hardwire`                             | Hardwire generator                 | Tooling category aligned.                                                                                          |
 | `src/tooling/Benchmarks`, `src/tooling/NovaSharp.Comparison` | Benchmark/perf harnesses           | Paths aligned; scripts still assume legacy locations.                                                              |
-| `src/tests/NovaSharp.Interpreter.Tests`                      | Consolidated NUnit suite           | Powers local + CI execution; hosts Lua TAP fixtures.                                                               |
+| `src/tests/NovaSharp.Interpreter.Tests.TUnit`                | Interpreter test host (TUnit)      | Canonical interpreter/debugger suites; Microsoft.Testing.Platform runner.                                          |
+| `src/tests/NovaSharp.Interpreter.Tests`                      | Shared fixtures/helpers            | Lua TAP fixtures, RealWorld corpuses, shared test infrastructure consumed by the TUnit host.                       |
 | `src/samples/Tutorial`                                       | Tutorial snippets                  | Under dedicated samples hierarchy.                                                                                 |
 | `docs/manual/NovaSharp.Documentation`                        | Historical documentation           | Lives under docs tree; evaluate for migration to markdown.                                                         |
 
@@ -33,7 +34,8 @@ src/
     Benchmarks/
     NovaSharp.Comparison/
   tests/
-    NovaSharp.Interpreter.Tests/          (NUnit suite + Lua TAP fixtures)
+    NovaSharp.Interpreter.Tests.TUnit/    (TUnit suite + linked shared assets)
+    NovaSharp.Interpreter.Tests/          (Shared Lua TAP fixtures and helpers)
   samples/
     Tutorial/
   docs/

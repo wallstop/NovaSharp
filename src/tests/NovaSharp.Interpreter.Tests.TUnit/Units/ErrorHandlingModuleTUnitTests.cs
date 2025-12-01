@@ -1,18 +1,18 @@
-namespace NovaSharp.Interpreter.Tests.Units
+#pragma warning disable CA2007
+namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
-    using System;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Modules;
-    using NUnit.Framework;
 
-    [TestFixture]
-    public sealed class ErrorHandlingModuleTests
+    public sealed class ErrorHandlingModuleTUnitTests
     {
-        [Test]
-        public void PcallReturnsAllValuesOnSuccess()
+        [global::TUnit.Core.Test]
+        public async Task PcallReturnsAllValuesOnSuccess()
         {
             Script script = CreateScript();
 
@@ -23,16 +23,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.True);
-                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(1d));
-                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(2d));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1d);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(2d);
         }
 
-        [Test]
-        public void PcallCapturesScriptErrors()
+        [global::TUnit.Core.Test]
+        public async Task PcallCapturesScriptErrors()
         {
             Script script = CreateScript();
 
@@ -43,29 +40,25 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("boom"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("boom");
         }
 
-        [Test]
-        public void PcallRejectsNonFunctions()
+        [global::TUnit.Core.Test]
+        public async Task PcallRejectsNonFunctions()
         {
             Script script = CreateScript();
 
             DynValue tuple = script.DoString("return pcall(123)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("attempt to pcall a non-function"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("attempt to pcall a non-function");
         }
 
-        [Test]
-        public void PcallHandlesClrFunctionSuccess()
+        [global::TUnit.Core.Test]
+        public async Task PcallHandlesClrFunctionSuccess()
         {
             Script script = CreateScript();
             script.Globals["clr"] = DynValue.NewCallback(
@@ -76,16 +69,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue tuple = script.DoString("return pcall(clr)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.True);
-                Assert.That(tuple.Tuple[1].String, Is.EqualTo("hello"));
-                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(5d));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello");
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(5d);
         }
 
-        [Test]
-        public void PcallForwardsArgumentsToScriptFunction()
+        [global::TUnit.Core.Test]
+        public async Task PcallForwardsArgumentsToScriptFunction()
         {
             Script script = CreateScript();
 
@@ -100,15 +90,12 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.True);
-                Assert.That(tuple.Tuple[1].Number, Is.EqualTo(14d));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(14d);
         }
 
-        [Test]
-        public void PcallDecoratesClrScriptRuntimeExceptions()
+        [global::TUnit.Core.Test]
+        public async Task PcallDecoratesClrScriptRuntimeExceptions()
         {
             Script script = CreateScript();
             script.Globals["clr"] = DynValue.NewCallback(
@@ -118,15 +105,12 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue tuple = script.DoString("return pcall(clr)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("fail"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("fail");
         }
 
-        [Test]
-        public void PcallWrapsClrTailCallRequestWithoutHandlers()
+        [global::TUnit.Core.Test]
+        public async Task PcallWrapsClrTailCallRequestWithoutHandlers()
         {
             Script script = CreateScript();
             script.Globals["tailing"] = DynValue.NewCallback(
@@ -144,32 +128,31 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.That(record.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(record.Type).IsEqualTo(DataType.Table);
             Table table = record.Table;
 
             DynValue ok = table.Get("ok");
             DynValue valueType = table.Get("valueType");
             DynValue value = table.Get("value");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(ok.Boolean, Is.True);
-                Assert.That(valueType.String, Is.EqualTo("number").Or.EqualTo("nil"));
+            await Assert.That(ok.Boolean).IsTrue();
+            await Assert
+                .That(valueType.String == "number" || valueType.String == "nil")
+                .IsTrue();
 
-                if (valueType.String == "number")
-                {
-                    Assert.That(value.Type, Is.EqualTo(DataType.Number));
-                    Assert.That(value.Number, Is.EqualTo(77d));
-                }
-                else
-                {
-                    Assert.That(value.IsNil(), Is.True);
-                }
-            });
+            if (valueType.String == "number")
+            {
+                await Assert.That(value.Type).IsEqualTo(DataType.Number);
+                await Assert.That(value.Number).IsEqualTo(77d);
+            }
+            else
+            {
+                await Assert.That(value.IsNil()).IsTrue();
+            }
         }
 
-        [Test]
-        public void PcallRejectsClrTailCallWithContinuation()
+        [global::TUnit.Core.Test]
+        public async Task PcallRejectsClrTailCallWithContinuation()
         {
             Script script = CreateScript();
             script.Globals["tailing"] = DynValue.NewCallback(
@@ -177,7 +160,10 @@ namespace NovaSharp.Interpreter.Tests.Units
                 {
                     TailCallData tailCall = new()
                     {
-                        Function = DynValue.NewCallback((ctx, innerArgs) => DynValue.True, "inner"),
+                        Function = DynValue.NewCallback(
+                            (ctx, innerArgs) => DynValue.True,
+                            "inner"
+                        ),
                         Args = System.Array.Empty<DynValue>(),
                         Continuation = new CallbackFunction(
                             (ctx, continuationArgs) => DynValue.True,
@@ -192,18 +178,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue tuple = script.DoString("return pcall(tailing)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(
-                    tuple.Tuple[1].String,
-                    Does.Contain("wrap in a script function instead")
-                );
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead");
         }
 
-        [Test]
-        public void PcallRejectsClrYieldRequest()
+        [global::TUnit.Core.Test]
+        public async Task PcallRejectsClrYieldRequest()
         {
             Script script = CreateScript();
             script.Globals["yielding"] = DynValue.NewCallback(
@@ -213,18 +195,14 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue tuple = script.DoString("return pcall(yielding)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(
-                    tuple.Tuple[1].String,
-                    Does.Contain("wrap in a script function instead")
-                );
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead");
         }
 
-        [Test]
-        public void XpcallDecoratesClrExceptionWithHandlerBeforeUnwind()
+        [global::TUnit.Core.Test]
+        public async Task XpcallDecoratesClrExceptionWithHandlerBeforeUnwind()
         {
             Script script = CreateScript();
             script.Globals["clr"] = DynValue.NewCallback(
@@ -242,16 +220,13 @@ namespace NovaSharp.Interpreter.Tests.Units
 
             DynValue tuple = script.DoString("return xpcall(clr, decorator)");
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("decorated:"));
-                Assert.That(tuple.Tuple[1].String, Does.Contain("failure"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("decorated:");
+            await Assert.That(tuple.Tuple[1].String).Contains("failure");
         }
 
-        [Test]
-        public void XpcallInvokesHandlerOnError()
+        [global::TUnit.Core.Test]
+        public async Task XpcallInvokesHandlerOnError()
         {
             Script script = CreateScript();
 
@@ -263,16 +238,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("handled:"));
-                Assert.That(tuple.Tuple[1].String, Does.Contain("bad"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("handled:");
+            await Assert.That(tuple.Tuple[1].String).Contains("bad");
         }
 
-        [Test]
-        public void XpcallReturnsSuccessWhenFunctionSucceeds()
+        [global::TUnit.Core.Test]
+        public async Task XpcallReturnsSuccessWhenFunctionSucceeds()
         {
             Script script = CreateScript();
 
@@ -290,16 +262,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.True);
-                Assert.That(tuple.Tuple[1].String, Is.EqualTo("done"));
-                Assert.That(tuple.Tuple[2].Number, Is.EqualTo(42d));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("done");
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(42d);
         }
 
-        [Test]
-        public void XpcallAcceptsClrHandler()
+        [global::TUnit.Core.Test]
+        public async Task XpcallAcceptsClrHandler()
         {
             Script script = CreateScript();
             script.Globals["clrhandler"] = DynValue.NewCallback(
@@ -317,16 +286,13 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("handled:"));
-                Assert.That(tuple.Tuple[1].String, Does.Contain("boom"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("handled:");
+            await Assert.That(tuple.Tuple[1].String).Contains("boom");
         }
 
-        [Test]
-        public void XpcallAllowsNilHandler()
+        [global::TUnit.Core.Test]
+        public async Task XpcallAllowsNilHandler()
         {
             Script script = CreateScript();
 
@@ -336,24 +302,20 @@ namespace NovaSharp.Interpreter.Tests.Units
                 "
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(tuple.Tuple[0].Boolean, Is.False);
-                Assert.That(tuple.Tuple[1].String, Does.Contain("nil-handler"));
-            });
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[1].String).Contains("nil-handler");
         }
 
-        [Test]
-        public void XpcallRejectsNonFunctionHandler()
+        [global::TUnit.Core.Test]
+        public async Task XpcallRejectsNonFunctionHandler()
         {
             Script script = CreateScript();
 
-            Assert.That(
-                () => script.DoString("return xpcall(function() end, 123)"),
-                Throws
-                    .InstanceOf<ScriptRuntimeException>()
-                    .With.Message.Contains("bad argument #2 to 'xpcall'")
-            );
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return xpcall(function() end, 123)")
+            )!;
+
+            await Assert.That(exception.Message).Contains("bad argument #2 to 'xpcall'");
         }
 
         private static Script CreateScript()
@@ -364,3 +326,4 @@ namespace NovaSharp.Interpreter.Tests.Units
         }
     }
 }
+#pragma warning restore CA2007

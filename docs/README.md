@@ -6,7 +6,7 @@ This folder hosts the canonical documentation set for NovaSharp. Use the index b
 
 | Topic                          | Path                                                            | Notes                                                                                                         |
 | ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Testing / CI workflow          | `docs/Testing.md`                                               | NUnit layout, TAP fixtures, coverage workflow (`scripts/coverage/coverage.ps1` / `.sh`).                      |
+| Testing / CI workflow          | `docs/Testing.md`                                               | TUnit layout, TAP fixtures, coverage workflow (`scripts/coverage/coverage.ps1` / `.sh`).                      |
 | Coverage dashboards & hotspots | `docs/coverage/README.md`, `docs/coverage/coverage-hotspots.md` | Explains generated artefacts, summarizes modules below target coverage, and links to the latest HTML reports. |
 | Lua compatibility matrix       | `docs/LuaCompatibility.md`                                      | Tracks Lua 5.4.8 parity plus work-in-progress items with owners.                                              |
 | Modernization notes            | `docs/Modernization.md`, `docs/modernization/*`                 | Architecture decisions, legacy cleanup plans, and audits (vestigial code, reflection usage, branding).        |
