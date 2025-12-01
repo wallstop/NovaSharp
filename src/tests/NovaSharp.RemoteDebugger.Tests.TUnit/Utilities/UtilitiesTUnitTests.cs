@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
 {
     using System.Threading.Tasks;
@@ -16,7 +15,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
                 new { _name = "NovaSharp", _result = 42 }
             );
 
-            await Assert.That(actual).IsEqualTo("Hello NovaSharp, result: 42!");
+            await Assert
+                .That(actual)
+                .IsEqualTo("Hello NovaSharp, result: 42!")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -25,7 +27,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
             string format = "Command: {_cmd}, Missing: {_missing}";
             string actual = VsCodeUtilities.ExpandVariables(format, new { _cmd = "run" });
 
-            await Assert.That(actual).IsEqualTo("Command: run, Missing: {_missing: not found}");
+            await Assert
+                .That(actual)
+                .IsEqualTo("Command: run, Missing: {_missing: not found}")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -38,7 +43,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
                 underscoredOnly: false
             );
 
-            await Assert.That(actual).IsEqualTo("secret and shown");
+            await Assert.That(actual).IsEqualTo("secret and shown").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,7 +53,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
             string file = "/home/user/project/scripts/main.lua";
 
             string relative = VsCodeUtilities.MakeRelativePath(dir, file);
-            await Assert.That(relative).IsEqualTo("scripts/main.lua");
+            await Assert.That(relative).IsEqualTo("scripts/main.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,8 +63,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit.Utilities
             string file = "/home/user/other/file.lua";
 
             string relative = VsCodeUtilities.MakeRelativePath(dir, file);
-            await Assert.That(relative).IsEqualTo(file);
+            await Assert.That(relative).IsEqualTo(file).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

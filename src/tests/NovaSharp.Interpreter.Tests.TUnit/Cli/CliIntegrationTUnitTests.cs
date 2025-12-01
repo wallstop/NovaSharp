@@ -1,9 +1,8 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -59,13 +58,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(script) { HandleClassicExprsSyntax = true };
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
-                    await Assert.That(console.Writer.ToString()).Contains("2");
-                },
-                "=1 + 1" + Environment.NewLine
-            );
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains("2")
+                            .ConfigureAwait(false);
+                    },
+                    "=1 + 1" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -85,37 +88,43 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
 
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
-                string resolvedPath = Path.GetFullPath(scriptPath);
+                {
+                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                    string resolvedPath = Path.GetFullPath(scriptPath);
 
-                ScriptOptions expectedOptions = new(Script.DefaultOptions);
-                Script summaryScript = new(CoreModules.PresetComplete, expectedOptions);
-                string expectedSummary = summaryScript.CompatibilityProfile.GetFeatureSummary();
-                string expectedBanner = CliMessages.ProgramRunningScript(
-                    resolvedPath,
-                    expectedSummary
-                );
+                    ScriptOptions expectedOptions = new(Script.DefaultOptions);
+                    Script summaryScript = new(CoreModules.PresetComplete, expectedOptions);
+                    string expectedSummary = summaryScript.CompatibilityProfile.GetFeatureSummary();
+                    string expectedBanner = CliMessages.ProgramRunningScript(
+                        resolvedPath,
+                        expectedSummary
+                    );
 
-                await Assert.That(handled).IsTrue();
-                string output = console.Writer.ToString();
-                await Assert.That(output).Contains(expectedBanner);
-                await Assert.That(output).Contains("cli integration sentinel");
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    await Assert.That(output).Contains(expectedBanner).ConfigureAwait(false);
+                    await Assert
+                        .That(output)
+                        .Contains("cli integration sentinel")
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsExecuteCommandRunsHelpCommand()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(ExecuteHelpCommandArgs, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(ExecuteHelpCommandArgs, CreateShellContext());
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.HelpCommandCommandListHeading);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.HelpCommandCommandListHeading)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -125,16 +134,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(script);
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.HelpCommandCommandListHeading);
-                },
-                "!help" + Environment.NewLine
-            );
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains(CliMessages.HelpCommandCommandListHeading)
+                            .ConfigureAwait(false);
+                    },
+                    "!help" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -145,16 +156,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             const string missingType = "NovaSharp.DoesNotExist.Sample";
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.RegisterCommandTypeNotFound(missingType));
-                },
-                $"!register {missingType}{Environment.NewLine}"
-            );
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains(CliMessages.RegisterCommandTypeNotFound(missingType))
+                            .ConfigureAwait(false);
+                    },
+                    $"!register {missingType}{Environment.NewLine}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,14 +185,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             );
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    await Assert.That(UserData.IsTypeRegistered(targetType)).IsTrue();
-                },
-                command + Environment.NewLine
-            );
+                        await Assert
+                            .That(UserData.IsTypeRegistered(targetType))
+                            .IsTrue()
+                            .ConfigureAwait(false);
+                    },
+                    command + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -200,16 +217,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             using TempFileScope compiledScope = TempFileScope.FromExisting(compiledPath);
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
-                    await Assert.That(File.Exists(compiledPath)).IsTrue();
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.CompileCommandSuccess(compiledPath));
-                },
-                $"!compile {sourcePath}{Environment.NewLine}"
-            );
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                        await Assert.That(File.Exists(compiledPath)).IsTrue().ConfigureAwait(false);
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains(CliMessages.CompileCommandSuccess(compiledPath))
+                            .ConfigureAwait(false);
+                    },
+                    $"!compile {sourcePath}{Environment.NewLine}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -225,16 +244,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             );
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains($"Failed to compile '{missingPath}'");
-                },
-                $"!compile {missingPath}{Environment.NewLine}"
-            );
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains($"Failed to compile '{missingPath}'")
+                            .ConfigureAwait(false);
+                    },
+                    $"!compile {missingPath}{Environment.NewLine}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -253,13 +274,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
-                    await Assert.That(console.Writer.ToString()).Contains("run command sentinel");
-                },
-                $"!run {sourcePath}{Environment.NewLine}"
-            );
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains("run command sentinel")
+                            .ConfigureAwait(false);
+                    },
+                    $"!run {sourcePath}{Environment.NewLine}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -276,22 +301,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             using DebugCommandScope debugScope = DebugCommandScope.Override(() => bridge, launcher);
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    string compatibilityLine = script.CompatibilityProfile.GetFeatureSummary();
-                    await Assert.That(bridge.AttachCount).IsEqualTo(1);
-                    await Assert.That(bridge.LastScript).IsSameReferenceAs(script);
-                    await Assert.That(launcher.LaunchCount).IsEqualTo(1);
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(
-                            $"[compatibility] Debugger session running under {compatibilityLine}"
-                        );
-                },
-                "!debug" + Environment.NewLine
-            );
+                        string compatibilityLine = script.CompatibilityProfile.GetFeatureSummary();
+                        await Assert.That(bridge.AttachCount).IsEqualTo(1).ConfigureAwait(false);
+                        await Assert
+                            .That(bridge.LastScript)
+                            .IsSameReferenceAs(script)
+                            .ConfigureAwait(false);
+                        await Assert.That(launcher.LaunchCount).IsEqualTo(1).ConfigureAwait(false);
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains(
+                                $"[compatibility] Debugger session running under {compatibilityLine}"
+                            )
+                            .ConfigureAwait(false);
+                    },
+                    "!debug" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -310,9 +340,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             );
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
 
-            await using SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
+            SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
                 .WaitAsync(HardwireDumpSemaphore)
                 .ConfigureAwait(false);
+            await using ConfiguredAsyncDisposable hardwireLeaseScope = hardwireLease.ConfigureAwait(
+                false
+            );
 
             using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {
@@ -321,24 +354,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             });
 
             await WithConsoleAsync(async console =>
-            {
-                string[] args =
                 {
-                    "-W",
-                    dumpPath,
-                    destPath,
-                    "--class:GeneratedTypes",
-                    "--namespace:GeneratedNamespace",
-                    "--internals",
-                };
+                    string[] args =
+                    {
+                        "-W",
+                        dumpPath,
+                        destPath,
+                        "--class:GeneratedTypes",
+                        "--namespace:GeneratedNamespace",
+                        "--internals",
+                    };
 
-                bool handled = Program.CheckArgs(args, CreateShellContext());
-                await Assert.That(handled).IsTrue();
-                await Assert.That(File.Exists(destPath)).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-            });
+                    bool handled = Program.CheckArgs(args, CreateShellContext());
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert.That(File.Exists(destPath)).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.HardwireGenerationSummary(0, 0))
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -360,9 +395,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
             await File.WriteAllTextAsync(dumpPath, "-- placeholder").ConfigureAwait(false);
 
-            await using SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
+            SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
                 .WaitAsync(HardwireDumpSemaphore)
                 .ConfigureAwait(false);
+            await using ConfiguredAsyncDisposable hardwireLeaseScope = hardwireLease.ConfigureAwait(
+                false
+            );
 
             using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {
@@ -383,17 +421,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 ) + Environment.NewLine;
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
+                    async console =>
+                    {
+                        Program.RunInterpreterLoopForTests(interpreter, new ShellContext(script));
 
-                    await Assert.That(File.Exists(destPath)).IsTrue();
-                    await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-                },
-                input
-            );
+                        await Assert.That(File.Exists(destPath)).IsTrue().ConfigureAwait(false);
+                        await Assert
+                            .That(console.Writer.ToString())
+                            .Contains(CliMessages.HardwireGenerationSummary(0, 0))
+                            .ConfigureAwait(false);
+                    },
+                    input
+                )
+                .ConfigureAwait(false);
         }
 
         private static ShellContext CreateShellContext()
@@ -452,5 +492,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         private sealed class TestRegistrationType { }
     }
 }
-
-#pragma warning restore CA2007

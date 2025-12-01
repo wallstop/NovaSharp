@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
@@ -18,7 +17,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.log(8)");
 
-            await Assert.That(result.Number).IsEqualTo(Math.Log(8d)).Within(1e-12);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(Math.Log(8d))
+                .Within(1e-12)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -27,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.log(8, 2)");
 
-            await Assert.That(result.Number).IsEqualTo(3d).Within(1e-12);
+            await Assert.That(result.Number).IsEqualTo(3d).Within(1e-12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,7 +39,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.pow(10, 6)");
 
-            await Assert.That(result.Number).IsEqualTo(1_000_000d).Within(1e-6);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(1_000_000d)
+                .Within(1e-6)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,9 +52,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.modf(-3.25)");
 
-            await Assert.That(result.Tuple.Length).IsEqualTo(2);
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(-0.25d).Within(1e-12);
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(-0.25d)
+                .Within(1e-12)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.max(-1, 5, 12, 3)");
 
-            await Assert.That(result.Number).IsEqualTo(12d);
+            await Assert.That(result.Number).IsEqualTo(12d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.min(-1, 5, 12, 3)");
 
-            await Assert.That(result.Number).IsEqualTo(-1d);
+            await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -74,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.ldexp(0.5, 3)");
 
-            await Assert.That(result.Number).IsEqualTo(4d).Within(1e-12);
+            await Assert.That(result.Number).IsEqualTo(4d).Within(1e-12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.sqrt(-1)");
 
-            await Assert.That(double.IsNaN(result.Number)).IsTrue();
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -92,7 +103,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.pow(10, 309)");
 
-            await Assert.That(double.IsPositiveInfinity(result.Number)).IsTrue();
+            await Assert
+                .That(double.IsPositiveInfinity(result.Number))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,8 +128,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(firstSequence.Tuple.Length).IsEqualTo(3);
-            await Assert.That(secondSequence.Tuple.Length).IsEqualTo(3);
+            await Assert.That(firstSequence.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(secondSequence.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert
                 .That(firstSequence.Tuple[0].Number)
                 .IsEqualTo(secondSequence.Tuple[0].Number);
@@ -134,8 +148,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue tuple = script.DoString("return math.type(5), math.type(3.14)");
 
-            await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer");
-            await Assert.That(tuple.Tuple[1].String).IsEqualTo("float");
+            await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("float").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -144,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.tointeger('42')");
 
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -153,7 +167,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.tointeger(3.5)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -165,7 +179,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("return math.tointeger()")
             );
 
-            await Assert.That(exception.Message).Contains("got no value");
+            await Assert.That(exception.Message).Contains("got no value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,8 +202,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue tuple = script.DoString("return math.ult(0, -1), math.ult(-1, 0)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
         private static Script CreateScript()
@@ -198,4 +212,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
     }
 }
-#pragma warning restore CA2007

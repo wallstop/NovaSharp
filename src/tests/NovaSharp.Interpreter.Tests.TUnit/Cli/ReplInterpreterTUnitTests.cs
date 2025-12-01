@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -17,10 +16,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
-            await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">");
+            await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">").ConfigureAwait(false);
             interpreter.Evaluate("function foo()");
-            await Assert.That(interpreter.HasPendingCommand).IsTrue();
-            await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">>");
+            await Assert.That(interpreter.HasPendingCommand).IsTrue().ConfigureAwait(false);
+            await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">>").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -29,10 +28,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
             DynValue pending = interpreter.Evaluate("function sample()");
-            await Assert.That(pending).IsNull();
-            await Assert.That(interpreter.CurrentPendingCommand).StartsWith("function sample()");
+            await Assert.That(pending).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(interpreter.CurrentPendingCommand)
+                .StartsWith("function sample()")
+                .ConfigureAwait(false);
             DynValue completion = interpreter.Evaluate("end");
-            await Assert.That(completion).IsEqualTo(DynValue.Void);
+            await Assert.That(completion).IsEqualTo(DynValue.Void).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,8 +46,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             };
 
             DynValue result = interpreter.Evaluate("=1 + 41");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(42);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,8 +62,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             interpreter.Evaluate(string.Empty);
 
             DynValue result = interpreter.Evaluate("?x * 2");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(20);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(20).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -70,17 +72,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
             DynValue first = interpreter.Evaluate("function foo()");
-            await Assert.That(first).IsNull();
-            await Assert.That(interpreter.HasPendingCommand).IsTrue();
+            await Assert.That(first).IsNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsTrue().ConfigureAwait(false);
 
             DynValue second = interpreter.Evaluate("return 99 end");
-            await Assert.That(second).IsNotNull();
-            await Assert.That(second.Type).IsEqualTo(DataType.Void);
+            await Assert.That(second).IsNotNull().ConfigureAwait(false);
+            await Assert.That(second.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
 
             DynValue third = interpreter.Evaluate("return foo()");
-            await Assert.That(third.Type).IsEqualTo(DataType.Number);
-            await Assert.That(third.Number).IsEqualTo(99);
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(third.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(third.Number).IsEqualTo(99).ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -92,9 +94,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             };
 
             DynValue result = interpreter.Evaluate("?1 + 41");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(42);
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,8 +105,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
             DynValue result = interpreter.Evaluate(string.Empty);
-            await Assert.That(result).IsEqualTo(DynValue.Void);
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -119,8 +121,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             interpreter.Evaluate(string.Empty);
 
             DynValue result = interpreter.Evaluate("?   ");
-            await Assert.That(result).IsEqualTo(DynValue.Void);
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -129,14 +131,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
 
             DynValue pending = interpreter.Evaluate("function foo()");
-            await Assert.That(pending).IsNull();
-            await Assert.That(interpreter.HasPendingCommand).IsTrue();
+            await Assert.That(pending).IsNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsTrue().ConfigureAwait(false);
 
             SyntaxErrorException exception = ExpectException<SyntaxErrorException>(() =>
                 interpreter.Evaluate(string.Empty)
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -147,8 +149,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             SyntaxErrorException exception = ExpectException<SyntaxErrorException>(() =>
                 interpreter.Evaluate("return )")
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -159,8 +161,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 interpreter.Evaluate("error('boom')")
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,8 +174,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             NullReferenceException exception = ExpectException<NullReferenceException>(() =>
                 interpreter.Evaluate("return 5")
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(interpreter.HasPendingCommand).IsFalse();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -184,7 +186,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 interpreter.Evaluate(null)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("input");
+            await Assert.That(exception.ParamName).IsEqualTo("input").ConfigureAwait(false);
         }
 
         private static TException ExpectException<TException>(Action action)
@@ -205,4 +207,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
-#pragma warning restore CA2007

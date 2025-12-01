@@ -1,5 +1,3 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -43,19 +41,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             DebugCommand command = new();
             ShellContext context = new(new Script());
 
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                command.Execute(context, string.Empty);
-                command.Execute(context, string.Empty);
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    command.Execute(context, string.Empty);
+                    command.Execute(context, string.Empty);
 
-                await Assert.That(bridge.AttachCount).IsEqualTo(1);
-                await Assert.That(launcher.LaunchCount).IsEqualTo(1);
-                await Assert.That(launcher.LastUrl?.AbsoluteUri).IsEqualTo("http://debugger/");
-                await Assert.That(ReferenceEquals(bridge.LastScript, context.Script)).IsTrue();
-                await Assert.That(bridge.LastScriptName).IsEqualTo("NovaSharp REPL interpreter");
-                await Assert.That(bridge.LastFreeRun).IsFalse();
-            });
+                    await Assert.That(bridge.AttachCount).IsEqualTo(1).ConfigureAwait(false);
+                    await Assert.That(launcher.LaunchCount).IsEqualTo(1).ConfigureAwait(false);
+                    await Assert
+                        .That(launcher.LastUrl?.AbsoluteUri)
+                        .IsEqualTo("http://debugger/")
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(ReferenceEquals(bridge.LastScript, context.Script))
+                        .IsTrue()
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(bridge.LastScriptName)
+                        .IsEqualTo("NovaSharp REPL interpreter")
+                        .ConfigureAwait(false);
+                    await Assert.That(bridge.LastFreeRun).IsFalse().ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,17 +77,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
             DebugCommand command = new();
 
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                command.Execute(
-                    new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
-                    string.Empty
-                );
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    command.Execute(
+                        new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
+                        string.Empty
+                    );
 
-                await Assert.That(bridge.AttachCount).IsEqualTo(1);
-                await Assert.That(launcher.LaunchCount).IsEqualTo(0);
-            });
+                    await Assert.That(bridge.AttachCount).IsEqualTo(1).ConfigureAwait(false);
+                    await Assert.That(launcher.LaunchCount).IsEqualTo(0).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -91,16 +102,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             DebugCommand command = new();
             ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua52));
 
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                command.Execute(context, string.Empty);
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    command.Execute(context, string.Empty);
 
-                string expectedSummary = context.Script.CompatibilityProfile.GetFeatureSummary();
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains($"[compatibility] Debugger session running under {expectedSummary}");
-            });
+                    string expectedSummary =
+                        context.Script.CompatibilityProfile.GetFeatureSummary();
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(
+                            $"[compatibility] Debugger session running under {expectedSummary}"
+                        )
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript(LuaCompatibilityVersion version)
@@ -146,5 +163,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
-
-#pragma warning restore CA2007

@@ -1,5 +1,3 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -28,19 +26,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithUnknownTypeWritesError()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                RegisterCommand command = new();
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    RegisterCommand command = new();
+                    ShellContext context = new(new Script());
 
-                command.Execute(context, "Missing.Namespace.TypeName");
+                    command.Execute(context, "Missing.Namespace.TypeName");
 
-                string expected = CliMessages.RegisterCommandTypeNotFound(
-                    "Missing.Namespace.TypeName"
-                );
-                await Assert.That(consoleScope.Writer.ToString()).Contains(expected);
-            });
+                    string expected = CliMessages.RegisterCommandTypeNotFound(
+                        "Missing.Namespace.TypeName"
+                    );
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(expected)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,31 +57,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             command.Execute(context, typeof(SampleType).AssemblyQualifiedName);
 
             bool registered = UserData.GetRegisteredTypes().Contains(typeof(SampleType));
-            await Assert.That(registered).IsTrue();
+            await Assert.That(registered).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsListsRegisteredTypes()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                RegisterCommand command = new();
-                ShellContext context = new(new Script());
-                using UserDataRegistrationScope registrationScope =
-                    UserDataRegistrationScope.Track<SampleType>();
-                UserData.RegisterType<SampleType>();
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    RegisterCommand command = new();
+                    ShellContext context = new(new Script());
+                    using UserDataRegistrationScope registrationScope =
+                        UserDataRegistrationScope.Track<SampleType>();
+                    UserData.RegisterType<SampleType>();
 
-                command.Execute(context, string.Empty);
+                    command.Execute(context, string.Empty);
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(typeof(SampleType).FullName);
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(typeof(SampleType).FullName)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleType { }
     }
 }
-
-#pragma warning restore CA2007
