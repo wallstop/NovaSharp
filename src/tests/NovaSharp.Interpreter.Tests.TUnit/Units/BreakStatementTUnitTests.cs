@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -18,7 +17,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("break")
             );
 
-            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("not inside a loop")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,7 +38,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString(chunk)
             );
 
-            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("not inside a loop")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +61,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString(chunk)
             );
 
-            await Assert.That(exception.DecoratedMessage).Contains("not inside a loop");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("not inside a loop")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -87,9 +95,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue result = script.DoString(chunk);
             Table log = result.Table;
 
-            await Assert.That(log.Length).IsEqualTo(2);
-            await Assert.That(log.Get(1).String).IsEqualTo("first");
-            await Assert.That(log.Get(2).String).IsEqualTo("second");
+            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("first").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("second").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -111,11 +119,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue result = script.DoString(chunk);
             Table log = result.Table;
 
-            await Assert.That(log.Length).IsEqualTo(3);
-            await Assert.That(log.Get(1).String).IsEqualTo("1-1");
-            await Assert.That(log.Get(2).String).IsEqualTo("2-1");
-            await Assert.That(log.Get(3).String).IsEqualTo("3-1");
+            await Assert.That(log.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("1-1").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("2-1").ConfigureAwait(false);
+            await Assert.That(log.Get(3).String).IsEqualTo("3-1").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

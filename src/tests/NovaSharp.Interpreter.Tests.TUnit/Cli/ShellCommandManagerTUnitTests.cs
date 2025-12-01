@@ -1,5 +1,3 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -25,59 +23,75 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task HelpWithoutArgumentsListsCommands()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: true);
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: true);
+                    ShellContext context = new(new Script());
 
-                CommandManager.Execute(context, "help");
+                    CommandManager.Execute(context, "help");
 
-                string output = consoleScope.Writer.ToString();
-                await Assert.That(output).Contains(CliMessages.HelpCommandPrimaryInstruction);
-                await Assert.That(output).Contains(CliMessages.HelpCommandCommandListHeading);
-                await Assert
-                    .That(output)
-                    .Contains(
-                        $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.HelpCommandShortHelp}"
-                    );
-                await Assert
-                    .That(output)
-                    .Contains(
-                        $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.RunCommandShortHelp}"
-                    );
-            });
+                    string output = consoleScope.Writer.ToString();
+                    await Assert
+                        .That(output)
+                        .Contains(CliMessages.HelpCommandPrimaryInstruction)
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(output)
+                        .Contains(CliMessages.HelpCommandCommandListHeading)
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(output)
+                        .Contains(
+                            $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.HelpCommandShortHelp}"
+                        )
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(output)
+                        .Contains(
+                            $"{CliMessages.HelpCommandCommandPrefix}{CliMessages.RunCommandShortHelp}"
+                        )
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task HelpTrimsWhitespaceAroundArguments()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: true);
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: true);
+                    ShellContext context = new(new Script());
 
-                CommandManager.Execute(context, "   help   run   ");
+                    CommandManager.Execute(context, "   help   run   ");
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(CliMessages.RunCommandLongHelp);
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(CliMessages.RunCommandLongHelp)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task UnknownCommandReportsAnError()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: true);
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: true);
+                    ShellContext context = new(new Script());
 
-                CommandManager.Execute(context, "nope");
+                    CommandManager.Execute(context, "nope");
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(CliMessages.CommandManagerInvalidCommand("nope"));
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(CliMessages.CommandManagerInvalidCommand("nope"))
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -88,7 +102,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 CommandManager.Execute(null, "help");
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("context");
+            await Assert.That(exception.ParamName).IsEqualTo("context").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -101,25 +115,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 CommandManager.Execute(context, null);
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("commandLine");
+            await Assert.That(exception.ParamName).IsEqualTo("commandLine").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task EmptyCommandLineReportsInvalidCommand()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: true);
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: true);
+                    ShellContext context = new(new Script());
 
-                CommandManager.Execute(context, "     ");
+                    CommandManager.Execute(context, "     ");
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(CliMessages.CommandManagerEmptyCommand);
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(CliMessages.CommandManagerEmptyCommand)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
     }
 }
-
-#pragma warning restore CA2007

@@ -1,5 +1,3 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -19,39 +17,45 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ExitCommand command = new();
 
-            await Assert.That(command.Name).IsEqualTo("exit");
+            await Assert.That(command.Name).IsEqualTo("exit").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task DisplayShortHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                ExitCommand command = new();
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    ExitCommand command = new();
 
-                command.DisplayShortHelp();
+                    command.DisplayShortHelp();
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(CliMessages.ExitCommandShortHelp);
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(CliMessages.ExitCommandShortHelp)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task DisplayLongHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                ExitCommand command = new();
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    ExitCommand command = new();
 
-                command.DisplayLongHelp();
+                    command.DisplayLongHelp();
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains(CliMessages.ExitCommandLongHelp);
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains(CliMessages.ExitCommandLongHelp)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -62,8 +66,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
             command.Execute(context, string.Empty);
 
-            await Assert.That(context.IsExitRequested).IsTrue();
-            await Assert.That(context.ExitCode).IsEqualTo(0);
+            await Assert.That(context.IsExitRequested).IsTrue().ConfigureAwait(false);
+            await Assert.That(context.ExitCode).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -76,9 +80,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 command.Execute(null, string.Empty);
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("context");
+            await Assert.That(exception.ParamName).IsEqualTo("context").ConfigureAwait(false);
         }
     }
 }
-
-#pragma warning restore CA2007

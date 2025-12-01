@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using NovaSharp.Interpreter.Interop.UserDataRegistries;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataIsolationTUnitTests
@@ -47,31 +48,33 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             IRegistrationPolicy originalPolicy = TypeDescriptorRegistry.RegistrationPolicy;
             TestRegistrationPolicy customPolicy = new();
+            using StaticValueScope<IRegistrationPolicy> registrationPolicyScope =
+                StaticValueScope<IRegistrationPolicy>.Capture(
+                    () => TypeDescriptorRegistry.RegistrationPolicy,
+                    value => TypeDescriptorRegistry.RegistrationPolicy = value
+                );
 
-            try
+            using (UserData.BeginIsolationScope())
             {
-                using (UserData.BeginIsolationScope())
-                {
-                    TypeDescriptorRegistry.RegistrationPolicy = customPolicy;
-                    await Assert
-                        .That(TypeDescriptorRegistry.RegistrationPolicy)
-                        .IsSameReferenceAs(customPolicy);
-                }
-
+                TypeDescriptorRegistry.RegistrationPolicy = customPolicy;
                 await Assert
                     .That(TypeDescriptorRegistry.RegistrationPolicy)
-                    .IsSameReferenceAs(originalPolicy);
+                    .IsSameReferenceAs(customPolicy);
             }
-            finally
-            {
-                TypeDescriptorRegistry.RegistrationPolicy = originalPolicy;
-            }
+
+            await Assert
+                .That(TypeDescriptorRegistry.RegistrationPolicy)
+                .IsSameReferenceAs(originalPolicy);
         }
 
         [global::TUnit.Core.Test]
         public async Task IsolationScopeCoexistsWithConcurrentRegistrations()
         {
             Type targetType = typeof(ConcurrentIsolationType);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                targetType,
+                ensureUnregistered: true
+            );
             TypeDescriptorRegistry.UnregisterType(targetType);
             _ = new ConcurrentIsolationType();
 
@@ -130,10 +133,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 }
 
                 throw new InvalidOperationException(builder.ToString(), exception);
-            }
-            finally
-            {
-                TypeDescriptorRegistry.UnregisterType(targetType);
             }
         }
 

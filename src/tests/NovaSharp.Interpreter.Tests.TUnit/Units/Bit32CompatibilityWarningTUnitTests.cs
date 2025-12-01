@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -35,9 +34,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(warnings.Count).IsEqualTo(1);
-            await Assert.That(warnings[0]).Contains("require('bit32')");
-            await Assert.That(warnings[0]).Contains("Lua 5.3");
+            await Assert.That(warnings.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(warnings[0]).Contains("require('bit32')").ConfigureAwait(false);
+            await Assert.That(warnings[0]).Contains("Lua 5.3").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,8 +55,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return require('bit32') ~= nil");
 
-            await Assert.That(result.Boolean).IsTrue();
-            await Assert.That(warnings.Count).IsZero();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(warnings.Count).IsZero().ConfigureAwait(false);
         }
 
         private sealed class NullModuleScriptLoader : IScriptLoader
@@ -106,4 +105,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

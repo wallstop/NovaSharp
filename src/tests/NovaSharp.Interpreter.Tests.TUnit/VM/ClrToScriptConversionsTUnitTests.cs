@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Converters;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ClrToScriptConversionsTUnitTests
@@ -47,24 +48,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCustomConverters()
         {
-            ClearCustomConverters();
-            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<CustomValue>(
-                (s, value) => DynValue.NewString(value.Name)
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetClrToScriptCustomConversion<CustomValue>(
+                        (script, value) => DynValue.NewString(value.Name)
+                    )
             );
 
-            try
-            {
-                Script script = new();
-                DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(
-                    script,
-                    new CustomValue("converted")
-                );
-                await Assert.That(result.String).IsEqualTo("converted");
-            }
-            finally
-            {
-                ClearCustomConverters();
-            }
+            Script script = new();
+            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                new CustomValue("converted")
+            );
+            await Assert.That(result.String).IsEqualTo("converted");
         }
 
         [global::TUnit.Core.Test]
@@ -179,11 +175,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             yield return "a";
             yield return "b";
-        }
-
-        private static void ClearCustomConverters()
-        {
-            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         private sealed class SampleUserData { }

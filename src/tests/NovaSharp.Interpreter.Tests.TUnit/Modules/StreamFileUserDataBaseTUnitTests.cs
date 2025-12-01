@@ -2,6 +2,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Reflection;
     using System.Text;
@@ -1282,6 +1283,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             private int _remainingForcedReadFailures;
             private int _forcedReadBufferFailuresTriggered;
 
+            [SuppressMessage(
+                "Reliability",
+                "CA2000:Dispose objects before losing scope",
+                Justification = "StreamFileUserDataBase owns the created stream and reader/writer instances."
+            )]
             internal TestStreamFileUserData(
                 string initialContent,
                 bool allowWrite = true,
@@ -1294,60 +1300,56 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 StreamReader reader = null;
                 FaultyStreamWriter writer = null;
 
-                try
-                {
-                    stream = new FaultyMemoryStream();
-                    stream.AllowSeek = allowSeek;
-
-                    if (!string.IsNullOrEmpty(initialContent))
-                    {
-                        using StreamWriter seed = new StreamWriter(
-                            stream,
-                            _encoding,
-                            bufferSize: 1024,
-                            leaveOpen: true
-                        );
-                        seed.Write(initialContent);
-                        seed.Flush();
-                    }
-
-                    stream.Position = 0;
-
-                    if (allowRead)
-                    {
-                        reader = new StreamReader(
-                            stream,
-                            _encoding,
-                            detectEncodingFromByteOrderMarks: false,
-                            bufferSize: 1024,
-                            leaveOpen: true
-                        );
-                    }
-
-                    if (allowWrite)
-                    {
-                        writer = new FaultyStreamWriter(
-                            stream,
-                            _encoding,
-                            bufferSize: 1024,
-                            leaveOpen: true
-                        )
-                        {
-                            AutoFlush = autoFlush,
-                        };
-                    }
-
-                    Initialize(stream, reader, writer);
-                    stream = null;
-                    reader = null;
-                    writer = null;
-                }
-                finally
+                using DeferredActionScope cleanupScope = DeferredActionScope.Run(() =>
                 {
                     stream?.Dispose();
                     reader?.Dispose();
                     writer?.Dispose();
+                });
+
+                stream = new FaultyMemoryStream();
+                stream.AllowSeek = allowSeek;
+
+                if (!string.IsNullOrEmpty(initialContent))
+                {
+                    using StreamWriter seed = new StreamWriter(
+                        stream,
+                        _encoding,
+                        bufferSize: 1024,
+                        leaveOpen: true
+                    );
+                    seed.Write(initialContent);
+                    seed.Flush();
                 }
+
+                stream.Position = 0;
+
+                if (allowRead)
+                {
+                    reader = new StreamReader(
+                        stream,
+                        _encoding,
+                        detectEncodingFromByteOrderMarks: false,
+                        bufferSize: 1024,
+                        leaveOpen: true
+                    );
+                }
+
+                if (allowWrite)
+                {
+                    writer = new FaultyStreamWriter(
+                        stream,
+                        _encoding,
+                        bufferSize: 1024,
+                        leaveOpen: true
+                    )
+                    {
+                        AutoFlush = autoFlush,
+                    };
+                }
+
+                Initialize(stream, reader, writer);
+                cleanupScope.Suppress();
             }
 
             internal List<string> Writes { get; } = new();

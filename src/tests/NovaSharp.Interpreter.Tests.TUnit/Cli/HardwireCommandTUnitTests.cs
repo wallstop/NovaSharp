@@ -195,57 +195,48 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 $"hardwire_{Guid.NewGuid():N}.{(language == "vb" ? "vb" : "cs")}"
             );
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
-            await DumpLoaderSemaphore.WaitAsync().ConfigureAwait(false);
-            try
+            await using SemaphoreSlimLease dumpLoaderLease = await SemaphoreSlimScope
+                .WaitAsync(DumpLoaderSemaphore)
+                .ConfigureAwait(false);
+            using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {
-                using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(
-                    _ =>
-                    {
-                        Script script = new(default(CoreModules));
-                        return HardwireTestUtilities.CreateDescriptorTable(script, visibility);
-                    }
-                );
+                Script script = new(default(CoreModules));
+                return HardwireTestUtilities.CreateDescriptorTable(script, visibility);
+            });
 
-                string output = string.Empty;
-                await ConsoleCaptureCoordinator
-                    .RunAsync(() =>
-                    {
-                        using ConsoleRedirectionScope consoleScope = new();
-                        HardwireCommand.Generate(
-                            language,
-                            "ignored.lua",
-                            destPath,
-                            allowInternals,
-                            "GeneratedTypes",
-                            "GeneratedNamespace"
-                        );
-
-                        output = consoleScope.Writer.ToString();
-                        return Task.CompletedTask;
-                    })
-                    .ConfigureAwait(false);
-
-                await Assert.That(File.Exists(destPath)).IsTrue();
-                string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
-                await Assert.That(generated).Contains(expectedNamespaceSnippet);
-                await Assert.That(generated).Contains(expectedClassSnippet);
-                await Assert
-                    .That(output)
-                    .Contains(
-                        CliMessages.HardwireGenerationSummary(0, expectInternalWarning ? 1 : 0)
+            string output = string.Empty;
+            await ConsoleCaptureCoordinator
+                .RunAsync(() =>
+                {
+                    using ConsoleRedirectionScope consoleScope = new();
+                    HardwireCommand.Generate(
+                        language,
+                        "ignored.lua",
+                        destPath,
+                        allowInternals,
+                        "GeneratedTypes",
+                        "GeneratedNamespace"
                     );
-                if (expectInternalWarning)
-                {
-                    await Assert.That(output).Contains("visibility is 'internal'");
-                }
-                else
-                {
-                    await Assert.That(output).DoesNotContain("visibility is 'internal'");
-                }
-            }
-            finally
+
+                    output = consoleScope.Writer.ToString();
+                    return Task.CompletedTask;
+                })
+                .ConfigureAwait(false);
+
+            await Assert.That(File.Exists(destPath)).IsTrue();
+            string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
+            await Assert.That(generated).Contains(expectedNamespaceSnippet);
+            await Assert.That(generated).Contains(expectedClassSnippet);
+            await Assert
+                .That(output)
+                .Contains(CliMessages.HardwireGenerationSummary(0, expectInternalWarning ? 1 : 0));
+            if (expectInternalWarning)
             {
-                DumpLoaderSemaphore.Release();
+                await Assert.That(output).Contains("visibility is 'internal'");
+            }
+            else
+            {
+                await Assert.That(output).DoesNotContain("visibility is 'internal'");
             }
         }
     }

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -30,7 +29,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 _ = descriptor;
             });
 
-            await Assert.That(exception.Message).Contains("StandardGenericsUserDataDescriptor");
+            await Assert
+                .That(exception.Message)
+                .Contains("StandardGenericsUserDataDescriptor")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 _ = descriptor;
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("type");
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,11 +58,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Default
             );
 
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(Dictionary<,>));
+            await Assert
+                .That(descriptor.Type)
+                .IsEqualTo(typeof(Dictionary<,>))
+                .ConfigureAwait(false);
             await Assert
                 .That(descriptor.Name)
-                .IsEqualTo("@@System.Collections.Generic.Dictionary`2");
-            await Assert.That(descriptor.AccessMode).IsEqualTo(InteropAccessMode.Default);
+                .IsEqualTo("@@System.Collections.Generic.Dictionary`2")
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.AccessMode)
+                .IsEqualTo(InteropAccessMode.Default)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -89,9 +98,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue metaIndexResult = descriptor.MetaIndex(script, null, "__add");
 
-            await Assert.That(indexResult).IsNull();
-            await Assert.That(setIndexResult).IsFalse();
-            await Assert.That(metaIndexResult).IsNull();
+            await Assert.That(indexResult).IsNull().ConfigureAwait(false);
+            await Assert.That(setIndexResult).IsFalse().ConfigureAwait(false);
+            await Assert.That(metaIndexResult).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -102,7 +111,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Default
             );
 
-            await Assert.That(descriptor.AsString(42)).IsEqualTo("42");
+            await Assert.That(descriptor.AsString(42)).IsEqualTo("42").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -117,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 descriptor.AsString(null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("obj");
+            await Assert.That(exception.ParamName).IsEqualTo("obj").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -128,8 +137,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Default
             );
 
-            await Assert.That(descriptor.IsTypeCompatible(typeof(object), new object())).IsTrue();
-            await Assert.That(descriptor.IsTypeCompatible(typeof(string), 42)).IsFalse();
+            await Assert
+                .That(descriptor.IsTypeCompatible(typeof(object), new object()))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.IsTypeCompatible(typeof(string), 42))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -140,7 +155,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Default
             );
 
-            await Assert.That(descriptor.Generate(typeof(List<>))).IsNull();
+            await Assert.That(descriptor.Generate(typeof(List<>))).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -157,7 +172,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Default
             );
 
-            await Assert.That(descriptor.Generate(typeof(GenericStub<int>))).IsNull();
+            await Assert
+                .That(descriptor.Generate(typeof(GenericStub<int>)))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -176,9 +194,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             IUserDataDescriptor generated = descriptor.Generate(concreteType);
 
-            await Assert.That(generated).IsNotNull();
-            await Assert.That(generated.Type).IsEqualTo(concreteType);
-            await Assert.That(UserData.IsTypeRegistered(concreteType)).IsTrue();
+            await Assert.That(generated).IsNotNull().ConfigureAwait(false);
+            await Assert.That(generated.Type).IsEqualTo(concreteType).ConfigureAwait(false);
+            await Assert
+                .That(UserData.IsTypeRegistered(concreteType))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private sealed class GenericStub<T>
@@ -190,4 +211,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,5 +1,3 @@
-#pragma warning disable CA2007
-
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -22,16 +20,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsWritesSyntaxHint()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
-                RunCommand command = new();
-                ShellContext context = new(new Script());
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    RunCommand command = new();
+                    ShellContext context = new(new Script());
 
-                command.Execute(context, string.Empty);
+                    command.Execute(context, string.Empty);
 
-                await Assert.That(consoleScope.Writer.ToString()).Contains("Syntax : !run <file>");
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains("Syntax : !run <file>")
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -50,9 +53,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
             command.Execute(context, "sample.lua");
 
-            await Assert.That(loader.LastRequestedFile).IsEqualTo("sample.lua");
-            await Assert.That(loader.LoadCount).IsEqualTo(1);
-            await Assert.That(script.Globals.Get("marker").Number).IsEqualTo(1);
+            await Assert
+                .That(loader.LastRequestedFile)
+                .IsEqualTo("sample.lua")
+                .ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.Globals.Get("marker").Number)
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -66,35 +75,38 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 command.Execute(new ShellContext(script), "missing.lua")
             );
 
-            await Assert.That(exception.Message).Contains("missing.lua");
+            await Assert.That(exception.Message).Contains("missing.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutManifestLogsCompatibilitySummary()
         {
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                RecordingScriptLoader loader = new();
-                Script script = new()
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
                 {
-                    Options =
+                    RecordingScriptLoader loader = new();
+                    Script script = new()
                     {
-                        ScriptLoader = loader,
-                        CompatibilityVersion = LuaCompatibilityVersion.Lua54,
-                    },
-                };
-                RunCommand command = new();
-                ShellContext context = new(script);
+                        Options =
+                        {
+                            ScriptLoader = loader,
+                            CompatibilityVersion = LuaCompatibilityVersion.Lua54,
+                        },
+                    };
+                    RunCommand command = new();
+                    ShellContext context = new(script);
 
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
 
-                command.Execute(context, "sample.lua");
+                    command.Execute(context, "sample.lua");
 
-                await Assert
-                    .That(consoleScope.Writer.ToString())
-                    .Contains("[compatibility] Running")
-                    .And.Contains("Lua 5.4");
-            });
+                    await Assert
+                        .That(consoleScope.Writer.ToString())
+                        .Contains("[compatibility] Running")
+                        .And.Contains("Lua 5.4")
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -122,24 +134,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 )
                 .ConfigureAwait(false);
 
-            await ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                RunCommand command = new();
-                Script script = new();
-                ShellContext context = new(script);
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    RunCommand command = new();
+                    Script script = new();
+                    ShellContext context = new(script);
 
-                using ConsoleCaptureScope consoleScope = new(captureError: false);
+                    using ConsoleCaptureScope consoleScope = new(captureError: false);
 
-                command.Execute(context, scriptPath);
+                    command.Execute(context, scriptPath);
 
-                string consoleOutput = consoleScope.Writer.ToString();
-                await Assert
-                    .That(consoleOutput)
-                    .Contains("[compatibility] Applied Lua 5.3 profile")
-                    .And.Contains("Lua 5.3")
-                    .And.Contains("[compatibility] Running");
-                await Assert.That(script.Globals.Get("contextFlag").IsNil()).IsTrue();
-            });
+                    string consoleOutput = consoleScope.Writer.ToString();
+                    await Assert
+                        .That(consoleOutput)
+                        .Contains("[compatibility] Applied Lua 5.3 profile")
+                        .And.Contains("Lua 5.3")
+                        .And.Contains("[compatibility] Running")
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(script.Globals.Get("contextFlag").IsNil())
+                        .IsTrue()
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         private static TException ExpectException<TException>(Action action)
@@ -204,5 +222,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
-
-#pragma warning restore CA2007

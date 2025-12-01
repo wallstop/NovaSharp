@@ -13,6 +13,7 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `check-fixture-catalog.ps1` — Regenerates the NUnit fixture catalog (via `scripts/tests/update-fixture-catalog.ps1`) and fails if `FixtureCatalogGenerated.cs` changes, ensuring contributors rerun the generator when fixtures move.
 - `check-platform-testhooks.sh` — Runs `scripts/lint/check-platform-testhooks.py` to ensure no new files reference `PlatformAutoDetector.TestHooks` directly; detector overrides must go through the shared scope helpers tracked in PLAN.md.
 - `check-console-capture-semaphore.sh` — Runs `scripts/lint/check-console-capture-semaphore.py`, which rejects references to `ConsoleCaptureCoordinator.Semaphore` outside the coordinator helper so tests keep using the `RunAsync` abstraction.
+- `check-test-finally.sh` — Runs `scripts/lint/check-test-finally.py` to ensure tests continue using the shared cleanup scopes instead of reintroducing manual `try`/`finally` blocks.
 
 ## Usage
 

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -24,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _ = new CallbackFunction(null);
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("callBack");
+            await Assert.That(exception.ParamName).IsEqualTo("callBack").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -37,7 +36,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 function.Invoke(null, arguments)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("executionContext");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("executionContext")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,7 +53,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 function.Invoke(context, null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("args");
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -74,8 +76,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             function.Invoke(context, arguments, isMethodCall: true);
 
-            await Assert.That(captured).IsNotNull();
-            await Assert.That(captured!.IsMethodCall).IsFalse();
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,8 +99,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<DynValue> nonUserData = new() { DynValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
-            await Assert.That(captured).IsNotNull();
-            await Assert.That(captured!.IsMethodCall).IsFalse();
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
 
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
@@ -108,8 +110,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<DynValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
-            await Assert.That(captured).IsNotNull();
-            await Assert.That(captured!.IsMethodCall).IsTrue();
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert.That(captured!.IsMethodCall).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,9 +133,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CallbackFunction.DefaultAccessMode = InteropAccessMode.BackgroundOptimized
             );
 
-            await Assert.That(defaultException).IsNotNull();
-            await Assert.That(hideMembers).IsNotNull();
-            await Assert.That(backgroundOptimized).IsNotNull();
+            await Assert.That(defaultException).IsNotNull().ConfigureAwait(false);
+            await Assert.That(hideMembers).IsNotNull().ConfigureAwait(false);
+            await Assert.That(backgroundOptimized).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -156,7 +158,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<DynValue> args = new() { DynValue.NewNumber(41) };
 
             DynValue result = function.Invoke(context, args);
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -166,7 +168,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CallbackFunction.FromDelegate(null, new Func<int, int>(SampleUserData.AddOne))
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("script");
+            await Assert.That(exception.ParamName).IsEqualTo("script").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -177,7 +179,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CallbackFunction.FromDelegate(script, null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("del");
+            await Assert.That(exception.ParamName).IsEqualTo("del").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,7 +190,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CallbackFunction.FromMethodInfo(null, method)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("script");
+            await Assert.That(exception.ParamName).IsEqualTo("script").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -199,7 +201,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CallbackFunction.FromMethodInfo(script, null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("mi");
+            await Assert.That(exception.ParamName).IsEqualTo("mi").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -209,17 +211,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             MethodInfo internalMethod = SampleUserData.GetInternalCallbackMethod();
             MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
 
-            await Assert.That(CallbackFunction.CheckCallbackSignature(publicMethod, true)).IsTrue();
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(publicMethod, true))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(CallbackFunction.CheckCallbackSignature(publicMethod, false))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(CallbackFunction.CheckCallbackSignature(internalMethod, true))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(CallbackFunction.CheckCallbackSignature(internalMethod, false))
-                .IsFalse();
-            await Assert.That(CallbackFunction.CheckCallbackSignature(badMethod, true)).IsFalse();
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(badMethod, true))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleUserData
@@ -279,4 +290,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

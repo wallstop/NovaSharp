@@ -1,5 +1,4 @@
 #define EmitDebug_OPS
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -13,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution.Scopes;
     using NovaSharp.Interpreter.Execution.VM;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ByteCodeTUnitTests
     {
@@ -26,11 +26,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             using (byteCode.EnterSource(sourceRef))
             {
                 Instruction first = byteCode.EmitNop("first");
-                await Assert.That(first.SourceCodeRef).IsSameReferenceAs(sourceRef);
+                await Assert
+                    .That(first.SourceCodeRef)
+                    .IsSameReferenceAs(sourceRef)
+                    .ConfigureAwait(false);
             }
 
             Instruction second = byteCode.EmitNop("second");
-            await Assert.That(second.SourceCodeRef is null).IsTrue();
+            await Assert.That(second.SourceCodeRef is null).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,9 +43,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             byteCode.EmitNop("first");
             byteCode.EmitNop("second");
 
-            await Assert.That(byteCode.GetJumpPointForNextInstruction()).IsEqualTo(2);
-            await Assert.That(byteCode.GetJumpPointForLastInstruction()).IsEqualTo(1);
-            await Assert.That(byteCode.GetLastInstruction().Name).IsEqualTo("second");
+            await Assert
+                .That(byteCode.GetJumpPointForNextInstruction())
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.GetJumpPointForLastInstruction())
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.GetLastInstruction().Name)
+                .IsEqualTo("second")
+                .ConfigureAwait(false);
         }
 
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
@@ -55,23 +67,28 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             byteCode.EmitDebug("trace");
             byteCode.EmitOperator(OpCode.Add);
 
-            string path = Path.Combine(Path.GetTempPath(), $"bytecode-{Guid.NewGuid():N}.txt");
-            try
-            {
-                byteCode.Dump(path);
-                string contents = await File.ReadAllTextAsync(path, CancellationToken.None);
+            using TempFileScope dumpFileScope = TempFileScope.Create(
+                namePrefix: "bytecode-",
+                extension: ".txt"
+            );
+            string path = dumpFileScope.FilePath;
 
-                await Assert.That(contents.Contains("00000000", StringComparison.Ordinal)).IsTrue();
-                await Assert.That(contents.Contains("trace", StringComparison.Ordinal)).IsTrue();
-                await Assert.That(contents.Contains("ADD", StringComparison.Ordinal)).IsTrue();
-            }
-            finally
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
+            byteCode.Dump(path);
+            string contents = await File.ReadAllTextAsync(path, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(contents.Contains("00000000", StringComparison.Ordinal))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(contents.Contains("trace", StringComparison.Ordinal))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(contents.Contains("ADD", StringComparison.Ordinal))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 #endif
 
@@ -136,8 +153,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Instruction instruction = byteCode.EmitInvalid("unsupported");
 
-            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.Invalid);
-            await Assert.That(instruction.Name).IsEqualTo("unsupported");
+            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.Invalid).ConfigureAwait(false);
+            await Assert.That(instruction.Name).IsEqualTo("unsupported").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,10 +166,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitLoad(symbol);
 
-            await Assert.That(stackSlots).IsEqualTo(2);
-            await Assert.That(byteCode.Code[^2].OpCode).IsEqualTo(OpCode.UpValue);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Index);
-            await Assert.That(byteCode.Code[^1].Value.String).IsEqualTo("globalValue");
+            await Assert.That(stackSlots).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^2].OpCode)
+                .IsEqualTo(OpCode.UpValue)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.Index)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].Value.String)
+                .IsEqualTo("globalValue")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -163,9 +189,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitLoad(symbol);
 
-            await Assert.That(stackSlots).IsEqualTo(1);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Local);
-            await Assert.That(byteCode.Code[^1].Symbol).IsSameReferenceAs(symbol);
+            await Assert.That(stackSlots).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.Local)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].Symbol)
+                .IsSameReferenceAs(symbol)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -176,9 +208,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitLoad(symbol);
 
-            await Assert.That(stackSlots).IsEqualTo(1);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.UpValue);
-            await Assert.That(byteCode.Code[^1].Symbol).IsSameReferenceAs(symbol);
+            await Assert.That(stackSlots).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.UpValue)
+                .ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].Symbol)
+                .IsSameReferenceAs(symbol)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -190,13 +228,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitStore(symbol, stackofs: 1, tupleidx: 2);
 
-            await Assert.That(stackSlots).IsEqualTo(2);
-            await Assert.That(byteCode.Code[^2].OpCode).IsEqualTo(OpCode.UpValue);
+            await Assert.That(stackSlots).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^2].OpCode)
+                .IsEqualTo(OpCode.UpValue)
+                .ConfigureAwait(false);
             Instruction setter = byteCode.Code[^1];
-            await Assert.That(setter.OpCode).IsEqualTo(OpCode.IndexSet);
-            await Assert.That(setter.NumVal).IsEqualTo(1);
-            await Assert.That(setter.NumVal2).IsEqualTo(2);
-            await Assert.That(setter.Value.String).IsEqualTo("globalValue");
+            await Assert.That(setter.OpCode).IsEqualTo(OpCode.IndexSet).ConfigureAwait(false);
+            await Assert.That(setter.NumVal).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(setter.NumVal2).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(setter.Value.String).IsEqualTo("globalValue").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -207,12 +248,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitStore(symbol, stackofs: 4, tupleidx: 1);
 
-            await Assert.That(stackSlots).IsEqualTo(1);
+            await Assert.That(stackSlots).IsEqualTo(1).ConfigureAwait(false);
             Instruction setter = byteCode.Code[^1];
-            await Assert.That(setter.OpCode).IsEqualTo(OpCode.StoreLcl);
-            await Assert.That(setter.NumVal).IsEqualTo(4);
-            await Assert.That(setter.NumVal2).IsEqualTo(1);
-            await Assert.That(setter.Symbol).IsSameReferenceAs(symbol);
+            await Assert.That(setter.OpCode).IsEqualTo(OpCode.StoreLcl).ConfigureAwait(false);
+            await Assert.That(setter.NumVal).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(setter.NumVal2).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(setter.Symbol).IsSameReferenceAs(symbol).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -223,12 +264,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int stackSlots = byteCode.EmitStore(symbol, stackofs: 6, tupleidx: 0);
 
-            await Assert.That(stackSlots).IsEqualTo(1);
+            await Assert.That(stackSlots).IsEqualTo(1).ConfigureAwait(false);
             Instruction setter = byteCode.Code[^1];
-            await Assert.That(setter.OpCode).IsEqualTo(OpCode.StoreUpv);
-            await Assert.That(setter.NumVal).IsEqualTo(6);
-            await Assert.That(setter.NumVal2).IsEqualTo(0);
-            await Assert.That(setter.Symbol).IsSameReferenceAs(symbol);
+            await Assert.That(setter.OpCode).IsEqualTo(OpCode.StoreUpv).ConfigureAwait(false);
+            await Assert.That(setter.NumVal).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(setter.NumVal2).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(setter.Symbol).IsSameReferenceAs(symbol).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -246,11 +287,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Instruction instruction = byteCode.EmitClean(scope);
 
-            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.Clean);
-            await Assert.That(instruction.NumVal).IsEqualTo(scope.To + 1);
-            await Assert.That(instruction.NumVal2).IsEqualTo(scope.ToInclusive);
-            await Assert.That(instruction.SymbolList.Length).IsEqualTo(1);
-            await Assert.That(instruction.SymbolList[0]).IsSameReferenceAs(retained);
+            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.Clean).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal).IsEqualTo(scope.To + 1).ConfigureAwait(false);
+            await Assert
+                .That(instruction.NumVal2)
+                .IsEqualTo(scope.ToInclusive)
+                .ConfigureAwait(false);
+            await Assert.That(instruction.SymbolList.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(instruction.SymbolList[0])
+                .IsSameReferenceAs(retained)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -263,28 +310,31 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Instruction instruction = byteCode.EmitBeginFn(frame);
 
-            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.BeginFn);
-            await Assert.That(instruction.SymbolList.Length).IsEqualTo(frame.DebugSymbols.Count);
-            await Assert.That(instruction.SymbolList[0].Name).IsEqualTo("a");
-            await Assert.That(instruction.SymbolList[1].Name).IsEqualTo("b");
-            await Assert.That(instruction.NumVal).IsEqualTo(frame.Count);
-            await Assert.That(instruction.NumVal2).IsEqualTo(42);
+            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.BeginFn).ConfigureAwait(false);
+            await Assert
+                .That(instruction.SymbolList.Length)
+                .IsEqualTo(frame.DebugSymbols.Count)
+                .ConfigureAwait(false);
+            await Assert.That(instruction.SymbolList[0].Name).IsEqualTo("a").ConfigureAwait(false);
+            await Assert.That(instruction.SymbolList[1].Name).IsEqualTo("b").ConfigureAwait(false);
+            await Assert.That(instruction.NumVal).IsEqualTo(frame.Count).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal2).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task EmitTblInitIEncodesLastPositionFlagWhenTrue()
         {
             Instruction instruction = new ByteCode(new Script()).EmitTblInitI(lastpos: true);
-            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI);
-            await Assert.That(instruction.NumVal).IsEqualTo(1);
+            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task EmitTblInitIEncodesLastPositionFlagWhenFalse()
         {
             Instruction instruction = new ByteCode(new Script()).EmitTblInitI(lastpos: false);
-            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI);
-            await Assert.That(instruction.NumVal).IsEqualTo(0);
+            await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -294,8 +344,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             byteCode.EmitDebug("trace");
 
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Debug);
-            await Assert.That(byteCode.Code[^1].Name).IsEqualTo("trace");
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.Debug)
+                .ConfigureAwait(false);
+            await Assert.That(byteCode.Code[^1].Name).IsEqualTo("trace").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -305,7 +358,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 byteCode.EmitLoad(SymbolRef.DefaultEnv)
             );
-            await Assert.That(exception.Message).Contains("Unexpected symbol type");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected symbol type")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +371,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 byteCode.EmitStore(SymbolRef.DefaultEnv, stackofs: 0, tupleidx: 0)
             );
-            await Assert.That(exception.Message).Contains("Unexpected symbol type");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected symbol type")
+                .ConfigureAwait(false);
         }
 
         private static async Task AssertOperatorNormalization(OpCode input, OpCode appended)
@@ -323,8 +382,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode byteCode = new(new Script());
             byteCode.EmitOperator(input);
 
-            await Assert.That(byteCode.Code[^2].OpCode).IsEqualTo(input);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(appended);
+            await Assert.That(byteCode.Code[^2].OpCode).IsEqualTo(input).ConfigureAwait(false);
+            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(appended).ConfigureAwait(false);
         }
 
         private static async Task AssertIndexOpcode(
@@ -340,8 +399,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 isExpList
             );
 
-            await Assert.That(instruction.OpCode).IsEqualTo(expected);
-            await Assert.That(instruction.Value.String).IsEqualTo("name");
+            await Assert.That(instruction.OpCode).IsEqualTo(expected).ConfigureAwait(false);
+            await Assert.That(instruction.Value.String).IsEqualTo("name").ConfigureAwait(false);
         }
 
         private static async Task AssertIndexSetOpcode(
@@ -359,11 +418,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 isExpList: isExpList
             );
 
-            await Assert.That(instruction.OpCode).IsEqualTo(expected);
-            await Assert.That(instruction.NumVal).IsEqualTo(1);
-            await Assert.That(instruction.NumVal2).IsEqualTo(2);
-            await Assert.That(instruction.Value.String).IsEqualTo("idx");
+            await Assert.That(instruction.OpCode).IsEqualTo(expected).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(instruction.NumVal2).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(instruction.Value.String).IsEqualTo("idx").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

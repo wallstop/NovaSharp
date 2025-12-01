@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
@@ -17,8 +16,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script lua52 = CreateScript(LuaCompatibilityVersion.Lua52);
             Script lua53 = CreateScript(LuaCompatibilityVersion.Lua53);
 
-            await Assert.That(lua52.Globals.Get("utf8").IsNil()).IsTrue();
-            await Assert.That(lua53.Globals.Get("utf8").Type).IsEqualTo(DataType.Table);
+            await Assert.That(lua52.Globals.Get("utf8").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(lua53.Globals.Get("utf8").Type)
+                .IsEqualTo(DataType.Table)
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.len counts characters within the provided range.
@@ -30,13 +32,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals.Set("sample", DynValue.NewString(sample));
 
             DynValue len = script.DoString("return utf8.len(sample)");
-            await Assert.That(len.Number).IsEqualTo(5);
+            await Assert.That(len.Number).IsEqualTo(5).ConfigureAwait(false);
 
             DynValue truncated = script.DoString("return utf8.len(sample, 5, 5)");
-            await Assert.That(truncated.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(truncated.Tuple).IsNotNull();
-            await Assert.That(truncated.Tuple[0].IsNil()).IsTrue();
-            await Assert.That(truncated.Tuple[1].Number).IsEqualTo(5);
+            await Assert.That(truncated.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(truncated.Tuple).IsNotNull().ConfigureAwait(false);
+            await Assert.That(truncated.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(truncated.Tuple[1].Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         // Lua 5.4 manual §6.5: utf8.len returns nil + position on invalid UTF-8.
@@ -48,9 +50,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue tuple = script.DoString("return utf8.len(invalid)");
 
-            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
-            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.len accepts negative i/j indices and clamps zero to 1.
@@ -68,8 +70,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(3);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         // Lua 5.4 manual §6.5: high surrogates not followed by low surrogates are invalid.
@@ -81,9 +83,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue tuple = script.DoString("return utf8.len(broken)");
 
-            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
-            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.char builds strings from code points.
@@ -93,7 +95,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
             DynValue result = script.DoString("return utf8.char(0x41, 0x1F600, 0x20AC)");
 
-            await Assert.That(result.String).IsEqualTo("A😀€");
+            await Assert.That(result.String).IsEqualTo("A😀€").ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codepoint returns decoded scalars.
@@ -105,10 +107,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue values = script.DoString("return utf8.codepoint(word, 1, #word)");
 
-            await Assert.That(values.Tuple.Length).IsEqualTo(3);
-            await Assert.That(values.Tuple[0].Number).IsEqualTo(65);
-            await Assert.That(values.Tuple[1].Number).IsEqualTo(0x1F600);
-            await Assert.That(values.Tuple[2].Number).IsEqualTo(0x20AC);
+            await Assert.That(values.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(values.Tuple[0].Number).IsEqualTo(65).ConfigureAwait(false);
+            await Assert.That(values.Tuple[1].Number).IsEqualTo(0x1F600).ConfigureAwait(false);
+            await Assert.That(values.Tuple[2].Number).IsEqualTo(0x20AC).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codepoint defaults j to i when omitted.
@@ -125,8 +127,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(values.Tuple[0].Number).IsEqualTo(1);
-            await Assert.That(values.Tuple[1].Number).IsEqualTo(66);
+            await Assert.That(values.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values.Tuple[1].Number).IsEqualTo(66).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codepoint returns no values for empty ranges.
@@ -137,7 +139,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.codepoint('abc', 5, 4)");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Void);
+            await Assert.That(result.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
         }
 
         // Lua 5.4 manual §6.5: utf8.charpattern matches the documented regex.
@@ -148,8 +150,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue pattern = script.DoString("return utf8.charpattern");
 
             const string Expected = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
-            await Assert.That(pattern.Type).IsEqualTo(DataType.String);
-            await Assert.That(pattern.String).IsEqualTo(Expected);
+            await Assert.That(pattern.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(pattern.String).IsEqualTo(Expected).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codes emits positions and scalars.
@@ -169,7 +171,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(summary.String).IsEqualTo("1:41,2:1F600,4:42");
+            await Assert.That(summary.String).IsEqualTo("1:41,2:1F600,4:42").ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codes rejects invalid UTF-8.
@@ -183,7 +185,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("for _ in utf8.codes(invalid) do end")
             );
 
-            await Assert.That(exception.Message).IsEqualTo("invalid UTF-8 code");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("invalid UTF-8 code")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codes accepts nil control values.
@@ -200,8 +205,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(0x61);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0x61).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codes returns nil once the control value passes the end.
@@ -217,7 +222,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codes throws when the control points inside a rune.
@@ -236,7 +241,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
             );
 
-            await Assert.That(exception.Message).IsEqualTo("invalid UTF-8 code");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("invalid UTF-8 code")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset navigates forward/backward across boundaries.
@@ -257,11 +265,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(offsets.Tuple[0].Number).IsEqualTo(1);
-            await Assert.That(offsets.Tuple[1].Number).IsEqualTo(2);
-            await Assert.That(offsets.Tuple[2].Number).IsEqualTo(4);
-            await Assert.That(offsets.Tuple[3].Number).IsEqualTo(2);
-            await Assert.That(offsets.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(offsets.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(offsets.Tuple[1].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(offsets.Tuple[2].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(offsets.Tuple[3].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(offsets.Tuple[4].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         // Lua 5.4 manual §6.5: utf8.offset fails when i is not on a boundary.
@@ -273,7 +281,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset(word, 1, 3)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset normalizes negative/zero boundaries.
@@ -290,8 +298,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(offsets.Tuple[0].Number).IsEqualTo(4);
-            await Assert.That(offsets.Tuple[1].Number).IsEqualTo(1);
+            await Assert.That(offsets.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(offsets.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.char rejects out-of-range code points.
@@ -304,7 +312,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("return utf8.char(0x110000)")
             );
 
-            await Assert.That(exception.Message).Contains("value out of range");
+            await Assert
+                .That(exception.Message)
+                .Contains("value out of range")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.char rejects surrogate code points.
@@ -317,7 +328,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("return utf8.char(0xD800)")
             );
 
-            await Assert.That(exception.Message).Contains("value out of range");
+            await Assert
+                .That(exception.Message)
+                .Contains("value out of range")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.codepoint errors on malformed UTF-8.
@@ -331,7 +345,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 script.DoString("return utf8.codepoint(invalid)")
             );
 
-            await Assert.That(exception.Message).IsEqualTo("invalid UTF-8 code");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("invalid UTF-8 code")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset returns nil when advancing past the end.
@@ -342,7 +359,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset('\U0001F600', 2)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset returns nil when moving before the start.
@@ -353,7 +370,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset('ab', -3)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset with n = 0 rejects out-of-range boundaries.
@@ -364,7 +381,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset('abc', 0, 10)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: negative offsets across leading low surrogates return nil.
@@ -376,7 +393,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset(leadingLow, -1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: negative offsets across standalone low surrogates return nil.
@@ -388,7 +405,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset(mixedLow, -1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: negative offsets across dangling high surrogates return nil.
@@ -400,7 +417,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset(danglingHigh, -1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.offset(i = 0) returns nil for empty strings.
@@ -412,7 +429,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             DynValue result = script.DoString("return utf8.offset(empty, 0)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         private static Script CreateScript(LuaCompatibilityVersion version)
@@ -428,4 +445,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
     }
 }
-#pragma warning restore CA2007

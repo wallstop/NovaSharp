@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.IO;
@@ -45,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 foreach (int expected in values)
                 {
                     int actual = reader.ReadInt32();
-                    await Assert.That(actual).IsEqualTo(expected);
+                    await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
                 }
             }
         }
@@ -73,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 foreach (uint expected in values)
                 {
                     uint actual = reader.ReadUInt32();
-                    await Assert.That(actual).IsEqualTo(expected);
+                    await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
                 }
             }
         }
@@ -101,10 +100,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 foreach (string expected in values)
                 {
                     string actual = reader.ReadString();
-                    await Assert.That(actual).IsEqualTo(expected);
+                    await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
                 }
             }
         }
     }
 }
-#pragma warning restore CA2007

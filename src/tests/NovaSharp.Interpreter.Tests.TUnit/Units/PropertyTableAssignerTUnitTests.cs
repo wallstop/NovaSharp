@@ -132,25 +132,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task FuzzyMatchingAllowsUnderscoreKeys()
         {
-            FuzzySymbolMatchingBehavior previous = Script.GlobalOptions.FuzzySymbolMatching;
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
             Script.GlobalOptions.FuzzySymbolMatching =
                 FuzzySymbolMatchingBehavior.Camelify | FuzzySymbolMatchingBehavior.PascalCase;
 
-            try
-            {
-                Table data = new(_script);
-                data.Set("first_name", DynValue.NewString("Nova"));
+            Table data = new(_script);
+            data.Set("first_name", DynValue.NewString("Nova"));
 
-                FuzzySample target = new();
-                PropertyTableAssigner<FuzzySample> assigner = new();
-                assigner.AssignObject(target, data);
+            FuzzySample target = new();
+            PropertyTableAssigner<FuzzySample> assigner = new();
+            assigner.AssignObject(target, data);
 
-                await Assert.That(target.FirstName).IsEqualTo("Nova");
-            }
-            finally
-            {
-                Script.GlobalOptions.FuzzySymbolMatching = previous;
-            }
+            await Assert.That(target.FirstName).IsEqualTo("Nova");
         }
 
         [global::TUnit.Core.Test]

@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class CoroutineModuleTUnitTests
     {
@@ -796,6 +797,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             using ManualResetEventSlim entered = new(false);
             using ManualResetEventSlim allowCompletion = new(false);
+            using DeferredActionScope completionScope = DeferredActionScope.Run(
+                allowCompletion.Set
+            );
 
             script.Globals["waitForSignal"] = DynValue.NewCallback(
                 (_, _) =>
@@ -819,22 +823,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
 
             Task<DynValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
-            try
-            {
-                await Assert.That(entered.Wait(TimeSpan.FromSeconds(2))).IsTrue();
 
-                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-                    script.Call(resumeFunc, coroutineValue)
-                );
+            await Assert.That(entered.Wait(TimeSpan.FromSeconds(2))).IsTrue();
 
-                await Assert
-                    .That(exception.Message)
-                    .Contains("Cannot enter the same NovaSharp processor");
-            }
-            finally
-            {
-                allowCompletion.Set();
-            }
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                script.Call(resumeFunc, coroutineValue)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("Cannot enter the same NovaSharp processor");
+
+            completionScope.Dispose();
 
             DynValue result = await background;
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);

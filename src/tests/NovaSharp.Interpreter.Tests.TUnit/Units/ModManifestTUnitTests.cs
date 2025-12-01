@@ -212,27 +212,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ModManifest manifest = new("Compat", "1.0", LuaCompatibilityVersion.Lua54);
             ScriptOptions options = new(Script.DefaultOptions);
-            LuaCompatibilityVersion original = Script.GlobalOptions.CompatibilityVersion;
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
             Script.GlobalOptions.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
-            try
-            {
-                string warning = null;
-                manifest.ApplyCompatibility(
-                    options,
-                    hostCompatibility: null,
-                    warningSink: message => warning = message
-                );
+            string warning = null;
+            manifest.ApplyCompatibility(
+                options,
+                hostCompatibility: null,
+                warningSink: message => warning = message
+            );
 
-                await Assert
-                    .That(options.CompatibilityVersion)
-                    .IsEqualTo(LuaCompatibilityVersion.Lua54);
-                await Assert.That(warning).Contains("Lua 5.3");
-            }
-            finally
-            {
-                Script.GlobalOptions.CompatibilityVersion = original;
-            }
+            await Assert
+                .That(options.CompatibilityVersion)
+                .IsEqualTo(LuaCompatibilityVersion.Lua54);
+            await Assert.That(warning).Contains("Lua 5.3");
         }
     }
 }

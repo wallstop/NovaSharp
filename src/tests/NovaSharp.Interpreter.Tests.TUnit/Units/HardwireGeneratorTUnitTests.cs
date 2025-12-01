@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Hardwire.Languages;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class HardwireGeneratorTUnitTests
     {
@@ -258,16 +259,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
         private static async Task RunWithRegistryLock(Func<Task> action)
         {
-            await RegistryGate.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                ResetGenerators();
-                await action().ConfigureAwait(false);
-            }
-            finally
-            {
-                RegistryGate.Release();
-            }
+            await using SemaphoreSlimLease registryLease = await SemaphoreSlimScope
+                .WaitAsync(RegistryGate)
+                .ConfigureAwait(false);
+            ResetGenerators();
+            await action().ConfigureAwait(false);
         }
 
         private static void ResetGenerators()

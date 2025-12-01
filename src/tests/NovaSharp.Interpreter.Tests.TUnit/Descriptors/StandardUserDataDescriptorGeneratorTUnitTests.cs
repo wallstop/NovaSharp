@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -36,11 +35,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             CodeExpression[] result = generator.Generate(descriptorTable, context, members);
 
-            await Assert.That(result.Length).IsEqualTo(1);
+            await Assert.That(result.Length).IsEqualTo(1).ConfigureAwait(false);
             CodeObjectCreateExpression createExpression = AssertCast<CodeObjectCreateExpression>(
                 result[0]
             );
-            await Assert.That(createExpression.CreateType.BaseType).StartsWith("TYPE_");
+            await Assert
+                .That(createExpression.CreateType.BaseType)
+                .StartsWith("TYPE_")
+                .ConfigureAwait(false);
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
@@ -48,7 +50,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CodeTypeOfExpression typeArgument = AssertCast<CodeTypeOfExpression>(
                 ctor.BaseConstructorArgs[0]
             );
-            await Assert.That(typeArgument.Type.BaseType).IsEqualTo(userDataType);
+            await Assert
+                .That(typeArgument.Type.BaseType)
+                .IsEqualTo(userDataType)
+                .ConfigureAwait(false);
 
             CodeMethodInvokeExpression[] calls = ctor
                 .Statements.OfType<CodeExpressionStatement>()
@@ -56,18 +61,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .OfType<CodeMethodInvokeExpression>()
                 .ToArray();
 
-            await Assert.That(calls.Length).IsEqualTo(2);
-            await Assert.That(calls[0].Method.MethodName).IsEqualTo("AddMember");
+            await Assert.That(calls.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(calls[0].Method.MethodName)
+                .IsEqualTo("AddMember")
+                .ConfigureAwait(false);
             CodePrimitiveExpression memberName = AssertCast<CodePrimitiveExpression>(
                 calls[0].Parameters[0]
             );
-            await Assert.That(memberName.Value).IsEqualTo("Foo");
+            await Assert.That(memberName.Value).IsEqualTo("Foo").ConfigureAwait(false);
 
-            await Assert.That(calls[1].Method.MethodName).IsEqualTo("AddMetaMember");
+            await Assert
+                .That(calls[1].Method.MethodName)
+                .IsEqualTo("AddMetaMember")
+                .ConfigureAwait(false);
             CodePrimitiveExpression metaMemberName = AssertCast<CodePrimitiveExpression>(
                 calls[1].Parameters[0]
             );
-            await Assert.That(metaMemberName.Value).IsEqualTo("__index");
+            await Assert.That(metaMemberName.Value).IsEqualTo("__index").ConfigureAwait(false);
         }
 
         private static Table CreateMemberTable(string name)
@@ -110,4 +121,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

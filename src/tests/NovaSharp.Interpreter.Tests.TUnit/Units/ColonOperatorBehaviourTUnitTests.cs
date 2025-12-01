@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -8,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Options;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ColonOperatorBehaviourTUnitTests
     {
@@ -34,8 +34,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.DoString("return target:invoke(123)");
 
-            await Assert.That(observed).IsTrue();
-            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table);
+            await Assert.That(observed).IsTrue().ConfigureAwait(false);
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,50 +61,48 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.DoString("return target:invoke(123)");
 
-            await Assert.That(observed).IsFalse();
-            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table);
+            await Assert.That(observed).IsFalse().ConfigureAwait(false);
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls()
         {
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<Probe>(ensureUnregistered: true);
             UserData.RegisterType<Probe>();
 
-            try
-            {
-                Script script = new();
-                script.Options.ColonOperatorClrCallbackBehaviour =
-                    ColonOperatorBehaviour.TreatAsDotOnUserData;
+            Script script = new();
+            script.Options.ColonOperatorClrCallbackBehaviour =
+                ColonOperatorBehaviour.TreatAsDotOnUserData;
 
-                bool? tableCallFlag = null;
+            bool? tableCallFlag = null;
 
-                DynValue callback = DynValue.NewCallback(
-                    (_, args) =>
-                    {
-                        tableCallFlag = args.IsMethodCall;
-                        return DynValue.NewNumber(args.Count);
-                    }
-                );
+            DynValue callback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    tableCallFlag = args.IsMethodCall;
+                    return DynValue.NewNumber(args.Count);
+                }
+            );
 
-                Table tableTarget = new(script);
-                tableTarget.Set("invoke", callback);
-                script.Globals["tableTarget"] = DynValue.NewTable(tableTarget);
+            Table tableTarget = new(script);
+            tableTarget.Set("invoke", callback);
+            script.Globals["tableTarget"] = DynValue.NewTable(tableTarget);
 
-                script.DoString("return tableTarget:invoke(123)");
-                await Assert.That(tableCallFlag).IsFalse();
+            script.DoString("return tableTarget:invoke(123)");
+            await Assert.That(tableCallFlag).IsFalse().ConfigureAwait(false);
 
-                Probe probe = new();
-                script.Globals["userTarget"] = UserData.Create(probe);
+            Probe probe = new();
+            script.Globals["userTarget"] = UserData.Create(probe);
 
-                script.DoString("return userTarget:Invoke(456)");
+            script.DoString("return userTarget:Invoke(456)");
 
-                await Assert.That(probe.LastIsMethodCall).IsFalse();
-                await Assert.That(probe.LastFirstArgumentType).IsEqualTo(DataType.Number);
-            }
-            finally
-            {
-                UserData.UnregisterType<Probe>();
-            }
+            await Assert.That(probe.LastIsMethodCall).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(probe.LastFirstArgumentType)
+                .IsEqualTo(DataType.Number)
+                .ConfigureAwait(false);
         }
 
         private sealed class Probe
@@ -122,4 +120,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

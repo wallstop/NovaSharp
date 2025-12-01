@@ -196,20 +196,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConstructorDefaultAccessModeUsesGlobalDefault()
         {
-            InteropAccessMode original = UserData.DefaultAccessMode;
-            try
-            {
-                UserData.DefaultAccessMode = InteropAccessMode.Reflection;
-                MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
+            using StaticValueScope<InteropAccessMode> accessModeScope =
+                StaticValueScope<InteropAccessMode>.Override(
+                    () => UserData.DefaultAccessMode,
+                    value => UserData.DefaultAccessMode = value,
+                    InteropAccessMode.Reflection
+                );
+            MethodInfo method = MethodMemberDescriptorHostMetadata.Sum;
 
-                MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Default);
+            MethodMemberDescriptor descriptor = new(method, InteropAccessMode.Default);
 
-                await Assert.That(descriptor.AccessMode).IsEqualTo(InteropAccessMode.Reflection);
-            }
-            finally
-            {
-                UserData.DefaultAccessMode = original;
-            }
+            await Assert.That(descriptor.AccessMode).IsEqualTo(InteropAccessMode.Reflection);
         }
 
         [global::TUnit.Core.Test]

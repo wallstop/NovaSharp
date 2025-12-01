@@ -48,6 +48,7 @@ bash ./scripts/build/build.sh
 
 - Detector overrides (Unity/Mono/AOT flags, assembly enumeration hooks) must go through the shared scope helpers in `src/tests/TestInfrastructure/Scopes`. Run `python scripts/lint/check-platform-testhooks.py` (or `./scripts/ci/check-platform-testhooks.sh`) before sending a PR to ensure no new files reference `PlatformAutoDetector.TestHooks` directly. CI runs the same guard in the lint job, so treating it as a local pre-flight check prevents avoidable failures.
 - Console capture is coordinated via `ConsoleCaptureCoordinator.RunAsync`. To keep SemaphoreSlim usage encapsulated, run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the coordinator helper.
+- Cleanup helpers (`TempFileScope`, `SemaphoreSlimScope`, `DeferredActionScope`, etc.) replaced the last manual `try`/`finally` blocks under `src/tests`. Run `python scripts/lint/check-test-finally.py` (or `./scripts/ci/check-test-finally.sh`) to ensure new tests do not reintroduce raw `finally` blocks; the script fails on the first match so the offending file is easy to spot.
 
 ## Generating Coverage
 

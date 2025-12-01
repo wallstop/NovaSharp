@@ -15,6 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Converters;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     [UserDataIsolation]
@@ -23,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryObjectToTrivialDynValueCoversPrimitives()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             Table table = new(script);
             table.Set(1, DynValue.NewNumber(2));
@@ -53,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCustomConverters()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<CustomValue>(
                 (_, _) => DynValue.NewString("converted")
@@ -70,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueHandlesClosuresCallbacksAndDelegates()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             DynValue closureValue = script.DoString("return function(a) return a end");
 
@@ -91,7 +92,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ObjectToDynValueHandlesUserDataTypesEnumsAndDelegates()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             RegisterSampleUserData();
             Script script = new();
             SampleUserData instance = new();
@@ -123,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ObjectToDynValueConvertsCollectionsAndEnumerables()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             List<int> list = new() { 1, 2 };
             Dictionary<string, int> dictionary = new() { ["key"] = 3 };
@@ -146,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ObjectToDynValueThrowsWhenConversionFails()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 ClrToScriptConversions.ObjectToDynValue(script, new object())
@@ -158,23 +159,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ObjectToDynValueUsesCallbackFunction()
         {
-            ClearCustomConverters();
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             CallbackFunction function = new((_, _) => DynValue.NewNumber(7));
 
             DynValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
 
             await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction);
-        }
-
-        private static void ClearCustomConverters()
-        {
-            if (Script.GlobalOptions.CustomConverters == null)
-            {
-                _ = new Script();
-            }
-
-            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         public static DynValue StaticClrCallback(ScriptExecutionContext ctx, CallbackArguments args)

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.VM
 {
     using System.Threading.Tasks;
@@ -22,7 +21,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
 
             Script script = new();
 
-            await Assert.That(ReferenceEquals(script.Options.ScriptLoader, loader)).IsTrue();
+            await Assert
+                .That(ReferenceEquals(script.Options.ScriptLoader, loader))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private sealed class TrackingScriptLoader : IScriptLoader
@@ -44,4 +46,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         }
     }
 }
-#pragma warning restore CA2007

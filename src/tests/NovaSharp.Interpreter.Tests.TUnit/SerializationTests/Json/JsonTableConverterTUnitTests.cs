@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
 {
     using System.Threading.Tasks;
@@ -21,10 +20,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
             string json = JsonTableConverter.TableToJson(table);
             Table roundTrip = JsonTableConverter.JsonToTable(json);
 
-            await Assert.That(roundTrip.Length).IsEqualTo(0);
-            await Assert.That(roundTrip.Get("valid").String).IsEqualTo("value");
-            await Assert.That(JsonNull.IsJsonNull(roundTrip.Get("nullEntry"))).IsTrue();
-            await Assert.That(roundTrip.Get("unsupported").IsNil()).IsTrue();
+            await Assert.That(roundTrip.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(roundTrip.Get("valid").String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert
+                .That(JsonNull.IsJsonNull(roundTrip.Get("nullEntry")))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(roundTrip.Get("unsupported").IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -38,9 +43,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
             string json = JsonTableConverter.TableToJson(array);
             Table roundTrip = JsonTableConverter.JsonToTable(json);
 
-            await Assert.That(roundTrip.Length).IsEqualTo(2);
-            await Assert.That(roundTrip.Get(1).Number).IsEqualTo(1);
-            await Assert.That(JsonNull.IsJsonNull(roundTrip.Get(2))).IsTrue();
+            await Assert.That(roundTrip.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(roundTrip.Get(1).Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(JsonNull.IsJsonNull(roundTrip.Get(2))).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -50,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
                 JsonTableConverter.JsonToTable("\"orphan\"")
             );
 
-            await AssertUnexpectedToken(exception);
+            await AssertUnexpectedToken(exception).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
                 JsonTableConverter.JsonToTable("{ \"value\" 1 }")
             );
 
-            await AssertUnexpectedToken(exception);
+            await AssertUnexpectedToken(exception).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -70,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
                 JsonTableConverter.JsonToTable("{ \"value\": -true }")
             );
 
-            await AssertUnexpectedToken(exception);
+            await AssertUnexpectedToken(exception).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -80,14 +85,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.SerializationTests.Json
                 JsonTableConverter.JsonToTable("{ \"value\": foo }")
             );
 
-            await AssertUnexpectedToken(exception);
+            await AssertUnexpectedToken(exception).ConfigureAwait(false);
         }
 
         private static async Task AssertUnexpectedToken(SyntaxErrorException exception)
         {
             string message = exception.DecoratedMessage ?? exception.Message ?? string.Empty;
-            await Assert.That(message).Contains("Unexpected token");
+            await Assert.That(message).Contains("Unexpected token").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

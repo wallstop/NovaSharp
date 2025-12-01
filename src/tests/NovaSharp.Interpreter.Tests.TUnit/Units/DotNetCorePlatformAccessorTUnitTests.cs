@@ -108,17 +108,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DotNetCorePlatformAccessor accessor = new();
             const string key = "NS_TEST_ENV_VAR";
-            string previous = Environment.GetEnvironmentVariable(key);
-            Environment.SetEnvironmentVariable(key, "value123");
-            try
-            {
-                string result = accessor.GetEnvironmentVariable(key);
-                await Assert.That(result).IsEqualTo("value123");
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable(key, previous);
-            }
+            using EnvironmentVariableScope environmentScope = EnvironmentVariableScope.Override(
+                key,
+                "value123"
+            );
+
+            string result = accessor.GetEnvironmentVariable(key);
+            await Assert.That(result).IsEqualTo("value123");
         }
 
         [global::TUnit.Core.Test]

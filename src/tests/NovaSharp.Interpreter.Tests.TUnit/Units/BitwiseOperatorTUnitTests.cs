@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -20,7 +19,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return 1 & 1")
             );
 
-            await Assert.That(exception.Message).Contains("Lua 5.3 manual §3.4.7");
+            await Assert
+                .That(exception.Message)
+                .Contains("Lua 5.3 manual §3.4.7")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,7 +35,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return 5 // 2")
             );
 
-            await Assert.That(exception.Message).Contains("Lua 5.3 manual §3.4.1");
+            await Assert
+                .That(exception.Message)
+                .Contains("Lua 5.3 manual §3.4.1")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,8 +46,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return 0xF0 & 0x0F");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsZero();
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsZero().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -50,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return 0xF0 | 0x0F");
 
-            await Assert.That(result.Number).IsEqualTo(255d);
+            await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return 0xAA ~ 0x55");
 
-            await Assert.That(result.Number).IsEqualTo(0xFF);
+            await Assert.That(result.Number).IsEqualTo(0xFF).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -66,10 +71,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return 1 << 3, (-8) >> 2, 1 << 64, (-1) >> 70");
 
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(8d);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(-2d);
-            await Assert.That(result.Tuple[2].Number).IsEqualTo(0d);
-            await Assert.That(result.Tuple[3].Number).IsEqualTo(-1d);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(8d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(-2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return ~0");
 
-            await Assert.That(result.Number).IsEqualTo(-1d);
+            await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -85,7 +90,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return '3' & '1'");
 
-            await Assert.That(result.Number).IsEqualTo(1d);
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,7 +100,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 Script.RunString("return 0.5 & 1")
             );
 
-            await Assert.That(exception.Message).Contains("bitwise operation on a float value");
+            await Assert
+                .That(exception.Message)
+                .Contains("bitwise operation on a float value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,10 +111,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue result = Script.RunString("return -5 // 2, 5 // 2, 5 // -2");
 
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(2d);
-            await Assert.That(result.Tuple[2].Number).IsEqualTo(-3d);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(-3d).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

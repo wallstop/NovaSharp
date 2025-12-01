@@ -3,6 +3,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     internal static class ConsoleCaptureCoordinator
     {
@@ -10,14 +11,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
 
         internal static async Task RunAsync(Func<Task> callback)
         {
-            await Semaphore.WaitAsync().ConfigureAwait(false);
+            SemaphoreSlimLease lease = await SemaphoreSlimScope
+                .WaitAsync(Semaphore)
+                .ConfigureAwait(false);
+
             try
             {
                 await callback().ConfigureAwait(false);
             }
             finally
             {
-                Semaphore.Release();
+                if (lease != null)
+                {
+                    await lease.DisposeAsync().ConfigureAwait(false);
+                }
             }
         }
     }

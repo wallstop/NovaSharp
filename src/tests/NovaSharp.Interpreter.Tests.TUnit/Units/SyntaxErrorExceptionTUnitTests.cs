@@ -15,69 +15,48 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled()
         {
-            bool original = Script.GlobalOptions.RethrowExceptionNested;
-            try
-            {
-                Script.GlobalOptions.RethrowExceptionNested = true;
-                Script script = new();
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
+            Script.GlobalOptions.RethrowExceptionNested = true;
+            Script script = new();
 
-                SyntaxErrorException captured = Assert.Throws<SyntaxErrorException>(() =>
-                    script.DoString("function broken(")
-                )!;
+            SyntaxErrorException captured = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString("function broken(")
+            )!;
 
-                SyntaxErrorException nested = Assert.Throws<SyntaxErrorException>(() =>
-                    captured.Rethrow()
-                )!;
+            SyntaxErrorException nested = Assert.Throws<SyntaxErrorException>(() =>
+                captured.Rethrow()
+            )!;
 
-                await Assert.That(nested).IsNotSameReferenceAs(captured);
-                await Assert.That(nested.DecoratedMessage).IsEqualTo(captured.DecoratedMessage);
-            }
-            finally
-            {
-                Script.GlobalOptions.RethrowExceptionNested = original;
-            }
+            await Assert.That(nested).IsNotSameReferenceAs(captured);
+            await Assert.That(nested.DecoratedMessage).IsEqualTo(captured.DecoratedMessage);
         }
 
         [global::TUnit.Core.Test]
         public async Task RethrowDoesNothingWhenGlobalOptionDisabled()
         {
-            bool original = Script.GlobalOptions.RethrowExceptionNested;
-            try
-            {
-                Script.GlobalOptions.RethrowExceptionNested = false;
-                SyntaxErrorException exception = new();
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
+            Script.GlobalOptions.RethrowExceptionNested = false;
+            SyntaxErrorException exception = new();
 
-                exception.Rethrow();
-                await Task.CompletedTask;
-            }
-            finally
-            {
-                Script.GlobalOptions.RethrowExceptionNested = original;
-            }
+            exception.Rethrow();
+            await Task.CompletedTask;
         }
 
         [global::TUnit.Core.Test]
         public async Task RethrowClonesTokenMetadata()
         {
-            bool original = Script.GlobalOptions.RethrowExceptionNested;
-            try
-            {
-                Script.GlobalOptions.RethrowExceptionNested = true;
-                Token token = CreateToken();
-                SyntaxErrorException exception = new(token, "unexpected token");
+            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
+            Script.GlobalOptions.RethrowExceptionNested = true;
+            Token token = CreateToken();
+            SyntaxErrorException exception = new(token, "unexpected token");
 
-                SyntaxErrorException nested = Assert.Throws<SyntaxErrorException>(() =>
-                    exception.Rethrow()
-                )!;
+            SyntaxErrorException nested = Assert.Throws<SyntaxErrorException>(() =>
+                exception.Rethrow()
+            )!;
 
-                await Assert.That(nested).IsNotSameReferenceAs(exception);
-                await Assert.That(nested.Token).IsSameReferenceAs(token);
-                await Assert.That(nested.InnerException).IsSameReferenceAs(exception);
-            }
-            finally
-            {
-                Script.GlobalOptions.RethrowExceptionNested = original;
-            }
+            await Assert.That(nested).IsNotSameReferenceAs(exception);
+            await Assert.That(nested.Token).IsSameReferenceAs(token);
+            await Assert.That(nested.InnerException).IsSameReferenceAs(exception);
         }
 
         [global::TUnit.Core.Test]

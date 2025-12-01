@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
 {
     using System.Diagnostics.CodeAnalysis;
@@ -21,7 +20,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
         [global::TUnit.Core.Test]
         public async Task RegistrationDoesNotLeakBetweenTestsFirst()
         {
-            await Assert.That(UserData.IsTypeRegistered<SmokeHost>()).IsFalse();
+            await Assert
+                .That(UserData.IsTypeRegistered<SmokeHost>())
+                .IsFalse()
+                .ConfigureAwait(false);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SmokeHost>(ensureUnregistered: true);
             UserData.RegisterType<SmokeHost>();
@@ -30,9 +32,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
         [global::TUnit.Core.Test]
         public async Task RegistrationDoesNotLeakBetweenTestsSecond()
         {
-            await Assert.That(UserData.IsTypeRegistered<SmokeHost>()).IsFalse();
+            await Assert
+                .That(UserData.IsTypeRegistered<SmokeHost>())
+                .IsFalse()
+                .ConfigureAwait(false);
             UserData.UnregisterType<SmokeHost>();
         }
     }
 }
-#pragma warning restore CA2007

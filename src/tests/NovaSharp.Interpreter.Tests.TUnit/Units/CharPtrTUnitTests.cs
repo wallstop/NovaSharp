@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -16,10 +15,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             CharPtr ptr = "abc";
 
-            await Assert.That(ptr[0]).IsEqualTo('a');
-            await Assert.That(ptr[1]).IsEqualTo('b');
-            await Assert.That(ptr[2]).IsEqualTo('c');
-            await Assert.That(ptr[3]).IsEqualTo('\0');
+            await Assert.That(ptr[0]).IsEqualTo('a').ConfigureAwait(false);
+            await Assert.That(ptr[1]).IsEqualTo('b').ConfigureAwait(false);
+            await Assert.That(ptr[2]).IsEqualTo('c').ConfigureAwait(false);
+            await Assert.That(ptr[3]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -29,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ptr[1u] = 'Z';
             ptr[2L] = 'Y';
 
-            await Assert.That(ptr.ToString()).IsEqualTo("aZYd");
+            await Assert.That(ptr.ToString()).IsEqualTo("aZYd").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -37,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             CharPtr result = "hello" + " world";
 
-            await Assert.That(result.ToString()).IsEqualTo("hello world");
+            await Assert.That(result.ToString()).IsEqualTo("hello world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -47,10 +46,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             CharPtr ptr = bytes;
 
-            await Assert.That(ptr[0]).IsEqualTo('A');
-            await Assert.That(ptr[1]).IsEqualTo('B');
-            await Assert.That(ptr[2]).IsEqualTo('C');
-            await Assert.That(ptr[3]).IsEqualTo('\0');
+            await Assert.That(ptr[0]).IsEqualTo('A').ConfigureAwait(false);
+            await Assert.That(ptr[1]).IsEqualTo('B').ConfigureAwait(false);
+            await Assert.That(ptr[2]).IsEqualTo('C').ConfigureAwait(false);
+            await Assert.That(ptr[3]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,7 +59,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr start = new(root, 0);
             CharPtr later = new(root, 3);
 
-            await Assert.That(later - start).IsEqualTo(3);
+            await Assert.That(later - start).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -70,10 +69,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr head = new(buffer, 0);
             CharPtr tail = new(buffer, 5);
 
-            await Assert.That(head < tail).IsTrue();
-            await Assert.That(head <= tail).IsTrue();
-            await Assert.That(tail > head).IsTrue();
-            await Assert.That(tail >= head).IsTrue();
+            await Assert.That(head < tail).IsTrue().ConfigureAwait(false);
+            await Assert.That(head <= tail).IsTrue().ConfigureAwait(false);
+            await Assert.That(tail > head).IsTrue().ConfigureAwait(false);
+            await Assert.That(tail >= head).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,12 +83,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr second = new(buffer, 0);
             CharPtr advanced = new(buffer, 1);
 
-            await Assert.That(first == second).IsTrue();
-            await Assert.That(first != advanced).IsTrue();
-            await Assert.That(first == 'x').IsTrue();
-            await Assert.That('x' == first).IsTrue();
-            await Assert.That(first != 'y').IsTrue();
-            await Assert.That('y' != first).IsTrue();
+            await Assert.That(first == second).IsTrue().ConfigureAwait(false);
+            await Assert.That(first != advanced).IsTrue().ConfigureAwait(false);
+            await Assert.That(first == 'x').IsTrue().ConfigureAwait(false);
+            await Assert.That('x' == first).IsTrue().ConfigureAwait(false);
+            await Assert.That(first != 'y').IsTrue().ConfigureAwait(false);
+            await Assert.That('y' != first).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -100,8 +99,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr same = new(buffer, 0);
             CharPtr different = "pointer";
 
-            await Assert.That(first.Equals(same)).IsTrue();
-            await Assert.That(first.Equals(different)).IsFalse();
+            await Assert.That(first.Equals(same)).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Equals(different)).IsFalse().ConfigureAwait(false);
         }
 
 #pragma warning disable CA1508
@@ -113,10 +112,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr nullLeft = (CharPtr)null;
             CharPtr nullRight = (CharPtr)null;
 
-            await Assert.That(nullLeft == nullRight).IsTrue();
-            await Assert.That(pointer == nullLeft).IsFalse();
-            await Assert.That(nullRight == pointer).IsFalse();
-            await Assert.That(pointer.GetHashCode()).IsEqualTo(0);
+            await Assert.That(nullLeft == nullRight).IsTrue().ConfigureAwait(false);
+            await Assert.That(pointer == nullLeft).IsFalse().ConfigureAwait(false);
+            await Assert.That(nullRight == pointer).IsFalse().ConfigureAwait(false);
+            await Assert.That(pointer.GetHashCode()).IsEqualTo(0).ConfigureAwait(false);
         }
 #pragma warning restore CA1508
 
@@ -125,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             CharPtr sliced = new(CharPtr.FromString("abcdef"), 2);
 
-            await Assert.That(sliced.ToString(2)).IsEqualTo("cd");
+            await Assert.That(sliced.ToString(2)).IsEqualTo("cd").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -138,10 +137,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr viaUnsigned = buffer + (uint)3;
             CharPtr rewindUnsigned = viaUnsigned - (uint)2;
 
-            await Assert.That(advanced[0]).IsEqualTo('c');
-            await Assert.That(rewind[0]).IsEqualTo('b');
-            await Assert.That(viaUnsigned[0]).IsEqualTo('d');
-            await Assert.That(rewindUnsigned[0]).IsEqualTo('b');
+            await Assert.That(advanced[0]).IsEqualTo('c').ConfigureAwait(false);
+            await Assert.That(rewind[0]).IsEqualTo('b').ConfigureAwait(false);
+            await Assert.That(viaUnsigned[0]).IsEqualTo('d').ConfigureAwait(false);
+            await Assert.That(rewindUnsigned[0]).IsEqualTo('b').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,10 +148,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             CharPtr buffer = "xyz";
             buffer.Inc();
-            await Assert.That(buffer[0]).IsEqualTo('y');
+            await Assert.That(buffer[0]).IsEqualTo('y').ConfigureAwait(false);
 
             buffer.Dec();
-            await Assert.That(buffer[0]).IsEqualTo('x');
+            await Assert.That(buffer[0]).IsEqualTo('x').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -161,10 +160,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr buffer = "pointer";
             CharPtr view = new(buffer, 2);
 
-            await Assert.That(view.Next()[0]).IsEqualTo('n');
-            await Assert.That(view.Prev()[0]).IsEqualTo('o');
-            await Assert.That(view.Add(2)[0]).IsEqualTo('t');
-            await Assert.That(view.Sub(2)[0]).IsEqualTo('p');
+            await Assert.That(view.Next()[0]).IsEqualTo('n').ConfigureAwait(false);
+            await Assert.That(view.Prev()[0]).IsEqualTo('o').ConfigureAwait(false);
+            await Assert.That(view.Add(2)[0]).IsEqualTo('t').ConfigureAwait(false);
+            await Assert.That(view.Sub(2)[0]).IsEqualTo('p').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -173,11 +172,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr defaultPtr = new();
             CharPtr fromIntPtr = new(IntPtr.Zero);
 
-            await Assert.That(defaultPtr.chars).IsNull();
-            await Assert.That(defaultPtr.index).IsEqualTo(0);
-            await Assert.That(fromIntPtr.chars).IsNotNull();
-            await Assert.That(fromIntPtr.chars.Length).IsEqualTo(0);
-            await Assert.That(fromIntPtr.index).IsEqualTo(0);
+            await Assert.That(defaultPtr.chars).IsNull().ConfigureAwait(false);
+            await Assert.That(defaultPtr.index).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(fromIntPtr.chars).IsNotNull().ConfigureAwait(false);
+            await Assert.That(fromIntPtr.chars.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(fromIntPtr.index).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -186,9 +185,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             char[] data = new[] { 'a', 'b', 'c', '\0' };
             CharPtr ptr = data;
 
-            await Assert.That(ptr[0]).IsEqualTo('a');
-            await Assert.That(ptr[1]).IsEqualTo('b');
-            await Assert.That(ptr[2]).IsEqualTo('c');
+            await Assert.That(ptr[0]).IsEqualTo('a').ConfigureAwait(false);
+            await Assert.That(ptr[1]).IsEqualTo('b').ConfigureAwait(false);
+            await Assert.That(ptr[2]).IsEqualTo('c').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -205,17 +204,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CharPtr start = new(buffer, 0);
             CharPtr middle = new(buffer, 3);
 
-            await Assert.That(fromString.ToString()).IsEqualTo("lua");
-            await Assert.That(fromChars[1]).IsEqualTo('B');
-            await Assert.That(fromBytes[1]).IsEqualTo('y');
-            await Assert.That(rewindStatic[0]).IsEqualTo('c');
-            await Assert.That(rewindStaticUnsigned[0]).IsEqualTo('d');
-            await Assert.That(rewindInstance[0]).IsEqualTo('c');
-            await Assert.That(CharPtr.Subtract(middle, start)).IsEqualTo(3);
-            await Assert.That(CharPtr.Compare(start, middle)).IsLessThan(0);
-            await Assert.That(CharPtr.Compare(middle, middle)).IsEqualTo(0);
-            await Assert.That(CharPtr.Compare(middle, start)).IsGreaterThan(0);
+            await Assert.That(fromString.ToString()).IsEqualTo("lua").ConfigureAwait(false);
+            await Assert.That(fromChars[1]).IsEqualTo('B').ConfigureAwait(false);
+            await Assert.That(fromBytes[1]).IsEqualTo('y').ConfigureAwait(false);
+            await Assert.That(rewindStatic[0]).IsEqualTo('c').ConfigureAwait(false);
+            await Assert.That(rewindStaticUnsigned[0]).IsEqualTo('d').ConfigureAwait(false);
+            await Assert.That(rewindInstance[0]).IsEqualTo('c').ConfigureAwait(false);
+            await Assert.That(CharPtr.Subtract(middle, start)).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(CharPtr.Compare(start, middle)).IsLessThan(0).ConfigureAwait(false);
+            await Assert.That(CharPtr.Compare(middle, middle)).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(CharPtr.Compare(middle, start))
+                .IsGreaterThan(0)
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

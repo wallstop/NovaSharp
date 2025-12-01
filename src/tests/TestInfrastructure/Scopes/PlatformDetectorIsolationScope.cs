@@ -39,26 +39,27 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
                 return;
             }
 
-            try
-            {
-                PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
-            }
-            finally
-            {
-                if (_gateHeld)
-                {
-                    IsolationGate.Release();
-                    _gateHeld = false;
-                }
+            PlatformAutoDetector.TestHooks.RestoreState(_snapshot);
+            ReleaseGate();
 
-                _disposed = true;
-            }
+            _disposed = true;
         }
 
         public ValueTask DisposeAsync()
         {
             Dispose();
             return ValueTask.CompletedTask;
+        }
+
+        private void ReleaseGate()
+        {
+            if (!_gateHeld)
+            {
+                return;
+            }
+
+            IsolationGate.Release();
+            _gateHeld = false;
         }
     }
 }
