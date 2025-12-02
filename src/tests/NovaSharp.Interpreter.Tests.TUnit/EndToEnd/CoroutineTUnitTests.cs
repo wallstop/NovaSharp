@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -45,7 +44,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "1-5;2-6;3-7;4-8;");
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1-5;2-6;3-7;4-8;")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +84,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "1-5;2-6;3-7;4-8;");
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1-5;2-6;3-7;4-8;")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -112,13 +115,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             };
 
             DynValue resumeResult = host.DoString(script);
-            await Assert.That(resumeResult.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(resumeResult.Tuple.Length).IsEqualTo(2);
-            await Assert.That(resumeResult.Tuple[0].Boolean).IsFalse();
-            await Assert.That(resumeResult.Tuple[1].Type).IsEqualTo(DataType.String);
+            await Assert.That(resumeResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(resumeResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(resumeResult.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(resumeResult.Tuple[1].Type)
+                .IsEqualTo(DataType.String)
+                .ConfigureAwait(false);
             await Assert
                 .That(resumeResult.Tuple[1].String)
-                .EndsWith("attempt to yield across a CLR-call boundary", StringComparison.Ordinal);
+                .EndsWith("attempt to yield across a CLR-call boundary", StringComparison.Ordinal)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -155,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string lastPrinted = "";
             Script host = new() { Options = { DebugPrint = s => lastPrinted = s } };
             host.DoString(script);
-            await Assert.That(lastPrinted).IsEqualTo("2");
+            await Assert.That(lastPrinted).IsEqualTo("2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -186,7 +193,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 result += yielded.ToString();
             }
 
-            await Assert.That(result).IsEqualTo("1234567");
+            await Assert.That(result).IsEqualTo("1234567").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -216,7 +223,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 result += yielded.ToString();
             }
 
-            await Assert.That(result).IsEqualTo("1234567");
+            await Assert.That(result).IsEqualTo("1234567").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -248,10 +255,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 result = coroutine.Coroutine.Resume();
             }
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(34);
-            await Assert.That(cycles > 10).IsTrue();
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(34).ConfigureAwait(false);
+            await Assert.That(cycles > 10).IsTrue().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

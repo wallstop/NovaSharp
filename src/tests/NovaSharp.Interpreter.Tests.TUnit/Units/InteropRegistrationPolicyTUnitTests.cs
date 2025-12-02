@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -17,28 +16,28 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             IRegistrationPolicy first = InteropRegistrationPolicy.Default;
             IRegistrationPolicy second = InteropRegistrationPolicy.Default;
 
-            await Assert.That(first).IsTypeOf<DefaultRegistrationPolicy>();
-            await Assert.That(second).IsTypeOf<DefaultRegistrationPolicy>();
-            await Assert.That(ReferenceEquals(first, second)).IsFalse();
+            await Assert.That(first).IsTypeOf<DefaultRegistrationPolicy>().ConfigureAwait(false);
+            await Assert.That(second).IsTypeOf<DefaultRegistrationPolicy>().ConfigureAwait(false);
+            await Assert.That(ReferenceEquals(first, second)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task AutomaticReturnsAutomaticPolicy()
         {
             IRegistrationPolicy policy = InteropRegistrationPolicy.Automatic;
-            await Assert.That(policy).IsTypeOf<AutomaticRegistrationPolicy>();
+            await Assert.That(policy).IsTypeOf<AutomaticRegistrationPolicy>().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExplicitReturnsDefaultPolicyAndIsMarkedObsolete()
         {
             PropertyInfo property = typeof(InteropRegistrationPolicy).GetProperty("Explicit");
-            await Assert.That(property).IsNotNull();
+            await Assert.That(property).IsNotNull().ConfigureAwait(false);
 
             IRegistrationPolicy policy = GetExplicitPolicy(property);
 
-            await Assert.That(policy).IsTypeOf<DefaultRegistrationPolicy>();
-            await Assert.That(IsExplicitPropertyObsolete(property)).IsTrue();
+            await Assert.That(policy).IsTypeOf<DefaultRegistrationPolicy>().ConfigureAwait(false);
+            await Assert.That(IsExplicitPropertyObsolete(property)).IsTrue().ConfigureAwait(false);
         }
 
         private static IRegistrationPolicy GetExplicitPolicy(PropertyInfo property)
@@ -70,4 +69,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

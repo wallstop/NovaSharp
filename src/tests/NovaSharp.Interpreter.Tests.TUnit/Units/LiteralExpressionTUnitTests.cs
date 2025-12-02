@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -17,30 +16,31 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task LiteralExpressionParsesNumericTokens()
         {
-            await AssertLiteral("42", DataType.Number, 42d);
-            await AssertLiteral("0x10", DataType.Number, 16d);
-            await AssertLiteral("0x1p1", DataType.Number, 2d);
+            await AssertLiteral("42", DataType.Number, 42d).ConfigureAwait(false);
+            await AssertLiteral("0x10", DataType.Number, 16d).ConfigureAwait(false);
+            await AssertLiteral("0x1p1", DataType.Number, 2d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task LiteralExpressionParsesStringTokens()
         {
-            await AssertLiteral("\"hello\"", DataType.String, "hello");
-            await AssertLiteral("[[multiline]]", DataType.String, "multiline");
+            await AssertLiteral("\"hello\"", DataType.String, "hello").ConfigureAwait(false);
+            await AssertLiteral("[[multiline]]", DataType.String, "multiline")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task LiteralExpressionParsesBooleanTokens()
         {
-            await AssertLiteral("true", DataType.Boolean, true);
-            await AssertLiteral("false", DataType.Boolean, false);
+            await AssertLiteral("true", DataType.Boolean, true).ConfigureAwait(false);
+            await AssertLiteral("false", DataType.Boolean, false).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task LiteralExpressionParsesNilToken()
         {
             LiteralExpression expression = ParseLiteral("nil");
-            await Assert.That(expression.Value.IsNil()).IsTrue();
+            await Assert.That(expression.Value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,23 +54,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _ = new LiteralExpression(context, token);
             })!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         private static async Task AssertLiteral(string code, DataType expectedType, object expected)
         {
             LiteralExpression expression = ParseLiteral(code);
-            await Assert.That(expression.Value.Type).IsEqualTo(expectedType);
+            await Assert.That(expression.Value.Type).IsEqualTo(expectedType).ConfigureAwait(false);
             switch (expectedType)
             {
                 case DataType.Number:
-                    await Assert.That(expression.Value.Number).IsEqualTo((double)expected);
+                    await Assert
+                        .That(expression.Value.Number)
+                        .IsEqualTo((double)expected)
+                        .ConfigureAwait(false);
                     break;
                 case DataType.String:
-                    await Assert.That(expression.Value.String).IsEqualTo((string)expected);
+                    await Assert
+                        .That(expression.Value.String)
+                        .IsEqualTo((string)expected)
+                        .ConfigureAwait(false);
                     break;
                 case DataType.Boolean:
-                    await Assert.That(expression.Value.Boolean).IsEqualTo((bool)expected);
+                    await Assert
+                        .That(expression.Value.Boolean)
+                        .IsEqualTo((bool)expected)
+                        .ConfigureAwait(false);
                     break;
             }
         }
@@ -107,4 +116,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

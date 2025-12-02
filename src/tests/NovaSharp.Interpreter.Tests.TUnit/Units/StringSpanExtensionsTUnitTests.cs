@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -13,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             bool equal = TrimWhitespaceEqualsOriginal("abc");
 
-            await Assert.That(equal).IsTrue();
+            await Assert.That(equal).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -21,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string trimmed = TrimWhitespaceToString("   hello world\t");
 
-            await Assert.That(trimmed).IsEqualTo("hello world");
+            await Assert.That(trimmed).IsEqualTo("hello world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -29,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             int length = TrimWhitespaceLength(" \t \r\n ");
 
-            await Assert.That(length).IsEqualTo(0);
+            await Assert.That(length).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -37,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             bool hasContent = SpanHasContent("   \t ");
 
-            await Assert.That(hasContent).IsFalse();
+            await Assert.That(hasContent).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             bool hasContent = SpanHasContent("  a ");
 
-            await Assert.That(hasContent).IsTrue();
+            await Assert.That(hasContent).IsTrue().ConfigureAwait(false);
         }
 
         private static bool TrimWhitespaceEqualsOriginal(string text)
@@ -70,4 +69,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

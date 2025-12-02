@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -20,8 +19,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.Name);
 
-            await Assert.That(token.Text).IsEqualTo("identifier");
-            await Assert.That(context.Lexer.Current.Type).IsEqualTo(TokenType.Eof);
+            await Assert.That(token.Text).IsEqualTo("identifier").ConfigureAwait(false);
+            await Assert
+                .That(context.Lexer.Current.Type)
+                .IsEqualTo(TokenType.Eof)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -32,8 +34,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenType(context, TokenType.Name)
             )!;
-            await Assert.That(exception.Message).Contains("unexpected symbol");
-            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
+            await Assert
+                .That(exception.Message)
+                .Contains("unexpected symbol")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.IsPrematureStreamTermination)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -43,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False);
 
-            await Assert.That(token.Type).IsEqualTo(TokenType.True);
+            await Assert.That(token.Type).IsEqualTo(TokenType.True).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 TokenType.ElseIf
             );
 
-            await Assert.That(token.Type).IsEqualTo(TokenType.ElseIf);
+            await Assert.That(token.Type).IsEqualTo(TokenType.ElseIf).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,7 +77,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             TestNode.CallCheckTokenTypeNotNext(context, TokenType.Name);
 
-            await Assert.That(context.Lexer.Current.Text).IsEqualTo(original);
+            await Assert.That(context.Lexer.Current.Text).IsEqualTo(original).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -91,7 +99,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 TestNode.CallCheckTokenType(context, TokenType.Number)
             )!;
 
-            await Assert.That(exception.IsPrematureStreamTermination).IsFalse();
+            await Assert
+                .That(exception.IsPrematureStreamTermination)
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -120,7 +131,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ScriptLoadingContext context = CreateContext("return 1");
             TestNode node = new(context);
 
-            await Assert.That(node.GetLoadingContextViaHelper()).IsSameReferenceAs(context);
+            await Assert
+                .That(node.GetLoadingContextViaHelper())
+                .IsSameReferenceAs(context)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,8 +146,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Token closing = TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")");
 
-            await Assert.That(closing.Type).IsEqualTo(TokenType.BrkCloseRound);
-            await Assert.That(context.Lexer.Current.Type).IsEqualTo(TokenType.Eof);
+            await Assert
+                .That(closing.Type)
+                .IsEqualTo(TokenType.BrkCloseRound)
+                .ConfigureAwait(false);
+            await Assert
+                .That(context.Lexer.Current.Type)
+                .IsEqualTo(TokenType.Eof)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -146,8 +166,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")")
             )!;
-            await Assert.That(exception.Message).Contains("')' expected");
-            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
+            await Assert.That(exception.Message).Contains("')' expected").ConfigureAwait(false);
+            await Assert
+                .That(exception.IsPrematureStreamTermination)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private static ScriptLoadingContext CreateContext(string code)
@@ -223,4 +246,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

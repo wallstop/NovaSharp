@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -205,8 +204,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 throw new InvalidOperationException($"Failed asserts {details}");
             }
 
-            await Assert.That(failedTests.Count).IsEqualTo(0);
+            await Assert.That(failedTests.Count).IsEqualTo(0).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

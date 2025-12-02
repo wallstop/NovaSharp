@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -15,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = file.SliceAfterLastSeparator();
 
-            await Assert.That(object.ReferenceEquals(result, file)).IsTrue();
+            await Assert.That(object.ReferenceEquals(result, file)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -23,7 +22,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string result = "/mods/scripts/main.lua".SliceAfterLastSeparator();
 
-            await Assert.That(result).IsEqualTo("main.lua");
+            await Assert.That(result).IsEqualTo("main.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -31,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string result = "C:\\mods\\scripts\\main.lua".SliceAfterLastSeparator();
 
-            await Assert.That(result).IsEqualTo("main.lua");
+            await Assert.That(result).IsEqualTo("main.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = path.NormalizeDirectorySeparators('/');
 
-            await Assert.That(object.ReferenceEquals(result, path)).IsTrue();
+            await Assert.That(object.ReferenceEquals(result, path)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -49,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string result = "mods\\scripts\\main.lua".NormalizeDirectorySeparators('/');
 
-            await Assert.That(result).IsEqualTo("mods/scripts/main.lua");
+            await Assert.That(result).IsEqualTo("mods/scripts/main.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -57,7 +56,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string result = string.Empty.NormalizeDirectorySeparators('/');
 
-            await Assert.That(object.ReferenceEquals(result, string.Empty)).IsTrue();
+            await Assert
+                .That(object.ReferenceEquals(result, string.Empty))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             string result = "mods/scripts/main.lua".NormalizeDirectorySeparators('\\');
 
-            await Assert.That(result).IsEqualTo("mods\\scripts\\main.lua");
+            await Assert.That(result).IsEqualTo("mods\\scripts\\main.lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,8 +86,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.Message)
-                .Contains("Destination span must be at least as long as the source span.");
-            await Assert.That(exception.ParamName).IsEqualTo("destination");
+                .Contains("Destination span must be at least as long as the source span.")
+                .ConfigureAwait(false);
+            await Assert.That(exception.ParamName).IsEqualTo("destination").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -94,7 +97,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             const string Source = "mods\\scripts/main.lua";
             string result = CopyReplacingDirectorySeparators(Source, '/');
 
-            await Assert.That(result).IsEqualTo("mods/scripts/main.lua");
+            await Assert.That(result).IsEqualTo("mods/scripts/main.lua").ConfigureAwait(false);
         }
 
         private static string CopyReplacingDirectorySeparators(string source, char separator)
@@ -109,4 +112,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

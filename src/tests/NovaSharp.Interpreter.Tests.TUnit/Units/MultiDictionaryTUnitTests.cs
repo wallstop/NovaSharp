@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -21,8 +20,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             bool firstInsert = dictionary.Add("alpha", 1);
             bool secondInsert = dictionary.Add("alpha", 2);
 
-            await Assert.That(firstInsert).IsTrue();
-            await Assert.That(secondInsert).IsFalse();
+            await Assert.That(firstInsert).IsTrue().ConfigureAwait(false);
+            await Assert.That(secondInsert).IsFalse().ConfigureAwait(false);
             CollectionAssert.AreEqual(AlphaValues, dictionary.Find("alpha").ToArray());
         }
 
@@ -33,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IEnumerable<int> result = dictionary.Find("missing");
 
-            await Assert.That(result).IsEmpty();
+            await Assert.That(result).IsEmpty().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -42,8 +41,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             MultiDictionary<string, int> dictionary = new();
             dictionary.Add("alpha", 1);
 
-            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue();
-            await Assert.That(dictionary.ContainsKey("beta")).IsFalse();
+            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue().ConfigureAwait(false);
+            await Assert.That(dictionary.ContainsKey("beta")).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,9 +55,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             bool removedLast = dictionary.RemoveValue("alpha", 1);
             bool removedOnly = dictionary.RemoveValue("alpha", 2);
 
-            await Assert.That(removedLast).IsFalse();
-            await Assert.That(removedOnly).IsTrue();
-            await Assert.That(dictionary.ContainsKey("alpha")).IsFalse();
+            await Assert.That(removedLast).IsFalse().ConfigureAwait(false);
+            await Assert.That(removedOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(dictionary.ContainsKey("alpha")).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             dictionary.Remove("alpha");
 
-            await Assert.That(dictionary.Find("alpha")).IsEmpty();
+            await Assert.That(dictionary.Find("alpha")).IsEmpty().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,8 +80,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             dictionary.Clear();
 
-            await Assert.That(dictionary.ContainsKey("alpha")).IsFalse();
-            await Assert.That(dictionary.Keys).IsEmpty();
+            await Assert.That(dictionary.ContainsKey("alpha")).IsFalse().ConfigureAwait(false);
+            await Assert.That(dictionary.Keys).IsEmpty().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -91,9 +90,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             MultiDictionary<string, int> dictionary = new(StringComparer.OrdinalIgnoreCase);
             dictionary.Add("Alpha", 1);
 
-            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue();
-            await Assert.That(dictionary.Find("alpha").Single()).IsEqualTo(1);
-            await Assert.That(dictionary.Keys.Single()).IsEqualTo("Alpha");
+            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue().ConfigureAwait(false);
+            await Assert.That(dictionary.Find("alpha").Single()).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(dictionary.Keys.Single()).IsEqualTo("Alpha").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -104,8 +103,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = dictionary.RemoveValue("alpha", 999);
 
-            await Assert.That(removed).IsFalse();
-            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue();
+            await Assert.That(removed).IsFalse().ConfigureAwait(false);
+            await Assert.That(dictionary.ContainsKey("alpha")).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -115,8 +114,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = dictionary.RemoveValue("alpha", 1);
 
-            await Assert.That(removed).IsFalse();
+            await Assert.That(removed).IsFalse().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

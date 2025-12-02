@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -22,7 +21,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             string typeName = "Hardwire.Tests.Unknown." + Guid.NewGuid().ToString("N");
 
             IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(typeName);
-            await Assert.That(generator.ManagedType).IsEqualTo(typeName);
+            await Assert.That(generator.ManagedType).IsEqualTo(typeName).ConfigureAwait(false);
 
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
@@ -33,9 +32,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 new CodeTypeMemberCollection()
             );
 
-            await Assert.That(expressions).IsEmpty();
-            await Assert.That(logger.Errors.Count).IsEqualTo(1);
-            await Assert.That(logger.Errors[0]).Contains(typeName);
+            await Assert.That(expressions).IsEmpty().ConfigureAwait(false);
+            await Assert.That(logger.Errors.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(logger.Errors[0]).Contains(typeName).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,13 +47,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(HardwireGeneratorRegistry.GetGenerator(typeName))
-                .IsSameReferenceAs(first);
+                .IsSameReferenceAs(first)
+                .ConfigureAwait(false);
 
             RecordingGenerator second = new(typeName, new CodePrimitiveExpression(2));
             HardwireGeneratorRegistry.Register(second);
 
             IHardwireGenerator resolved = HardwireGeneratorRegistry.GetGenerator(typeName);
-            await Assert.That(resolved).IsSameReferenceAs(second);
+            await Assert.That(resolved).IsSameReferenceAs(second).ConfigureAwait(false);
 
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             CodeExpression[] expressions = resolved.Generate(
@@ -63,8 +63,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 new CodeTypeMemberCollection()
             );
 
-            await Assert.That(expressions.Length).IsEqualTo(1);
-            await Assert.That(second.InvocationCount).IsEqualTo(1);
+            await Assert.That(expressions.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(second.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -102,7 +102,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(generator)
-                .IsTypeOf<NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator>();
+                .IsTypeOf<NovaSharp.Hardwire.Generators.DynValueMemberDescriptorGenerator>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -117,10 +118,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 methodDescriptorType
             );
 
-            await Assert.That(generator.ManagedType).IsEqualTo(methodDescriptorType);
+            await Assert
+                .That(generator.ManagedType)
+                .IsEqualTo(methodDescriptorType)
+                .ConfigureAwait(false);
             await Assert
                 .That(generator.GetType().Name)
-                .IsEqualTo("MethodMemberDescriptorGenerator");
+                .IsEqualTo("MethodMemberDescriptorGenerator")
+                .ConfigureAwait(false);
         }
 
         private sealed class RecordingGenerator : IHardwireGenerator
@@ -153,4 +158,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

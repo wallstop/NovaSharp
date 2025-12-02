@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -94,9 +93,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string description = token.ToString();
 
-            await Assert.That(description).StartsWith("Name");
-            await Assert.That(description).Contains("10:4-10:8");
-            await Assert.That(description).Contains("'print'");
+            await Assert.That(description).StartsWith("Name").ConfigureAwait(false);
+            await Assert.That(description).Contains("10:4-10:8").ConfigureAwait(false);
+            await Assert.That(description).Contains("'print'").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -104,14 +103,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             foreach ((string keyword, TokenType expected) in ReservedKeywordCases)
             {
-                await Assert.That(Token.GetReservedTokenType(keyword)).IsEqualTo(expected);
+                await Assert
+                    .That(Token.GetReservedTokenType(keyword))
+                    .IsEqualTo(expected)
+                    .ConfigureAwait(false);
             }
         }
 
         [global::TUnit.Core.Test]
         public async Task GetReservedTokenTypeReturnsNullForUnknownWord()
         {
-            await Assert.That(Token.GetReservedTokenType("novasharp")).IsNull();
+            await Assert
+                .That(Token.GetReservedTokenType("novasharp"))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -120,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             foreach ((TokenType type, string text, double expected) in NumericTokenCases)
             {
                 Token token = CreateToken(type, text);
-                await Assert.That(token.GetNumberValue()).IsEqualTo(expected);
+                await Assert.That(token.GetNumberValue()).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -133,7 +138,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 token.GetNumberValue()
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -142,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             foreach (TokenType type in EndOfBlockTokens)
             {
                 Token token = CreateToken(type);
-                await Assert.That(token.IsEndOfBlock()).IsTrue();
+                await Assert.That(token.IsEndOfBlock()).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -150,7 +155,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task IsEndOfBlockReturnsFalseForRegularTokens()
         {
             Token token = CreateToken(TokenType.Name);
-            await Assert.That(token.IsEndOfBlock()).IsFalse();
+            await Assert.That(token.IsEndOfBlock()).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -159,7 +164,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             foreach (TokenType type in UnaryOperatorTokens)
             {
                 Token token = CreateToken(type);
-                await Assert.That(token.IsUnaryOperator()).IsTrue();
+                await Assert.That(token.IsUnaryOperator()).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -167,7 +172,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task IsUnaryOperatorReturnsFalseForOtherTokens()
         {
             Token token = CreateToken(TokenType.Nil);
-            await Assert.That(token.IsUnaryOperator()).IsFalse();
+            await Assert.That(token.IsUnaryOperator()).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -176,7 +181,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             foreach (TokenType type in BinaryOperatorTokens)
             {
                 Token token = CreateToken(type);
-                await Assert.That(token.IsBinaryOperator()).IsTrue();
+                await Assert.That(token.IsBinaryOperator()).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -184,7 +189,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task IsBinaryOperatorReturnsFalseForOtherTokens()
         {
             Token token = CreateToken(TokenType.Nil);
-            await Assert.That(token.IsBinaryOperator()).IsFalse();
+            await Assert.That(token.IsBinaryOperator()).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -202,12 +207,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SourceRef sourceRef = token.GetSourceRef();
 
-            await Assert.That(sourceRef.SourceIdx).IsEqualTo(5);
-            await Assert.That(sourceRef.FromLine).IsEqualTo(8);
-            await Assert.That(sourceRef.ToLine).IsEqualTo(9);
-            await Assert.That(sourceRef.FromChar).IsEqualTo(2);
-            await Assert.That(sourceRef.ToChar).IsEqualTo(4);
-            await Assert.That(sourceRef.IsStepStop).IsTrue();
+            await Assert.That(sourceRef.SourceIdx).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromLine).IsEqualTo(8).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToLine).IsEqualTo(9).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromChar).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToChar).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(sourceRef.IsStepStop).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -234,12 +239,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SourceRef sourceRef = start.GetSourceRef(end, isStepStop: false);
 
-            await Assert.That(sourceRef.SourceIdx).IsEqualTo(1);
-            await Assert.That(sourceRef.FromChar).IsEqualTo(5);
-            await Assert.That(sourceRef.ToChar).IsEqualTo(9);
-            await Assert.That(sourceRef.FromLine).IsEqualTo(1);
-            await Assert.That(sourceRef.ToLine).IsEqualTo(1);
-            await Assert.That(sourceRef.IsStepStop).IsFalse();
+            await Assert.That(sourceRef.SourceIdx).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromChar).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToChar).IsEqualTo(9).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromLine).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToLine).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(sourceRef.IsStepStop).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -270,12 +275,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SourceRef sourceRef = start.GetSourceRefUpTo(end, isStepStop: false);
 
-            await Assert.That(sourceRef.SourceIdx).IsEqualTo(2);
-            await Assert.That(sourceRef.FromChar).IsEqualTo(10);
-            await Assert.That(sourceRef.ToChar).IsEqualTo(15);
-            await Assert.That(sourceRef.FromLine).IsEqualTo(4);
-            await Assert.That(sourceRef.ToLine).IsEqualTo(4);
-            await Assert.That(sourceRef.IsStepStop).IsFalse();
+            await Assert.That(sourceRef.SourceIdx).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromChar).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToChar).IsEqualTo(15).ConfigureAwait(false);
+            await Assert.That(sourceRef.FromLine).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(sourceRef.ToLine).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(sourceRef.IsStepStop).IsFalse().ConfigureAwait(false);
         }
 
         private static Token CreateToken(
@@ -297,4 +302,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -13,8 +12,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StringRange range = StringRange.FromLuaRange(DynValue.Nil, DynValue.Nil, 5);
 
-            await Assert.That(range.Start).IsEqualTo(1);
-            await Assert.That(range.End).IsEqualTo(5);
+            await Assert.That(range.Start).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(range.End).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -22,8 +21,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StringRange range = StringRange.FromLuaRange(DynValue.NewNumber(3), DynValue.Nil);
 
-            await Assert.That(range.Start).IsEqualTo(3);
-            await Assert.That(range.End).IsEqualTo(3);
+            await Assert.That(range.Start).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(range.End).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = range.ApplyToString("NovaSharp");
 
-            await Assert.That(result).IsEqualTo("Shar");
+            await Assert.That(result).IsEqualTo("Shar").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -46,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = range.ApplyToString("Lua");
 
-            await Assert.That(result).IsEqualTo("Lua");
+            await Assert.That(result).IsEqualTo("Lua").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = range.ApplyToString("Nova");
 
-            await Assert.That(result).IsEmpty();
+            await Assert.That(result).IsEmpty().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -64,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StringRange range = new(2, 6);
 
-            await Assert.That(range.Length()).IsEqualTo(5);
+            await Assert.That(range.Length()).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,9 +71,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StringRange range = new();
 
-            await Assert.That(range.Start).IsEqualTo(0);
-            await Assert.That(range.End).IsEqualTo(0);
+            await Assert.That(range.Start).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(range.End).IsEqualTo(0).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -32,7 +31,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             foreach (Type target in targets)
             {
-                await Assert.That(TableConversions.CanConvertTableToType(null, target)).IsTrue();
+                await Assert
+                    .That(TableConversions.CanConvertTableToType(null, target))
+                    .IsTrue()
+                    .ConfigureAwait(false);
             }
         }
 
@@ -51,14 +53,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             foreach (Type target in targets)
             {
-                await Assert.That(TableConversions.CanConvertTableToType(null, target)).IsTrue();
+                await Assert
+                    .That(TableConversions.CanConvertTableToType(null, target))
+                    .IsTrue()
+                    .ConfigureAwait(false);
             }
         }
 
         [global::TUnit.Core.Test]
         public async Task CanConvertTableToTypeRecognizesArrays()
         {
-            await Assert.That(TableConversions.CanConvertTableToType(null, typeof(int[]))).IsTrue();
+            await Assert
+                .That(TableConversions.CanConvertTableToType(null, typeof(int[])))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(TableConversions.CanConvertTableToType(null, typeof(string[])))
                 .IsTrue();
@@ -79,9 +87,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Table table = TableConversions.ConvertIListToTable(new Script(), values);
 
-            await Assert.That(table.Length).IsEqualTo(2);
-            await Assert.That(table.Get(1).Number).IsEqualTo(1);
-            await Assert.That(table.Get(2).String).IsEqualTo("two");
+            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(table.Get(1).Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(table.Get(2).String).IsEqualTo("two").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -91,8 +99,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Table table = TableConversions.ConvertIDictionaryToTable(new Script(), dictionary);
 
-            await Assert.That(table.Get("name").String).IsEqualTo("NovaSharp");
-            await Assert.That(table.Get("version").Number).IsEqualTo(5);
+            await Assert
+                .That(table.Get("name").String)
+                .IsEqualTo("NovaSharp")
+                .ConfigureAwait(false);
+            await Assert.That(table.Get("version").Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -108,10 +119,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 typeof(Dictionary<object, object>)
             );
 
-            await Assert.That(result).IsTypeOf<Dictionary<object, object>>();
+            await Assert.That(result).IsTypeOf<Dictionary<object, object>>().ConfigureAwait(false);
             Dictionary<object, object> dictionary = (Dictionary<object, object>)result;
-            await Assert.That(dictionary["one"]).IsEqualTo(1d);
-            await Assert.That(dictionary["two"]).IsEqualTo("second");
+            await Assert.That(dictionary["one"]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(dictionary["two"]).IsEqualTo("second").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -126,9 +137,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 typeof(Dictionary<DynValue, DynValue>)
             );
 
-            await Assert.That(result).IsTypeOf<Dictionary<DynValue, DynValue>>();
+            await Assert
+                .That(result)
+                .IsTypeOf<Dictionary<DynValue, DynValue>>()
+                .ConfigureAwait(false);
             Dictionary<DynValue, DynValue> dictionary = (Dictionary<DynValue, DynValue>)result;
-            await Assert.That(dictionary[key]).IsSameReferenceAs(value);
+            await Assert.That(dictionary[key]).IsSameReferenceAs(value).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -141,9 +155,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             object result = TableConversions.ConvertTableToType(table, typeof(List<object>));
 
-            await Assert.That(result).IsTypeOf<List<object>>();
+            await Assert.That(result).IsTypeOf<List<object>>().ConfigureAwait(false);
             List<object> list = (List<object>)result;
-            await AssertSequenceEqual(list, new object[] { 10d, "value" });
+            await AssertSequenceEqual(list, new object[] { 10d, "value" }).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -155,9 +169,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             object result = TableConversions.ConvertTableToType(table, typeof(List<DynValue>));
 
-            await Assert.That(result).IsTypeOf<List<DynValue>>();
+            await Assert.That(result).IsTypeOf<List<DynValue>>().ConfigureAwait(false);
             List<DynValue> list = (List<DynValue>)result;
-            await AssertSequenceSameReferences(list, new[] { first, second });
+            await AssertSequenceSameReferences(list, new[] { first, second }).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -167,7 +181,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             object[] array = (object[])TableConversions.ConvertTableToType(table, typeof(object[]));
 
-            await AssertSequenceEqual(array, ObjectArrayExpectation);
+            await AssertSequenceEqual(array, ObjectArrayExpectation).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -180,7 +194,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue[] array = (DynValue[])
                 TableConversions.ConvertTableToType(table, typeof(DynValue[]));
 
-            await AssertSequenceSameReferences(array, new[] { first, second });
+            await AssertSequenceSameReferences(array, new[] { first, second })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -191,7 +206,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<int> list =
                 (List<int>)TableConversions.ConvertTableToType(table, typeof(List<int>));
 
-            await AssertSequenceEqual(list, ListIntExpectation);
+            await AssertSequenceEqual(list, ListIntExpectation).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -204,7 +219,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     TableConversions.ConvertTableToType(table, typeof(IEnumerable<int>));
 
             List<int> actual = new(enumerable);
-            await AssertSequenceEqual(actual, EnumerableIntExpectation);
+            await AssertSequenceEqual(actual, EnumerableIntExpectation).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -219,8 +234,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 (Dictionary<string, int>)
                     TableConversions.ConvertTableToType(table, typeof(Dictionary<string, int>));
 
-            await Assert.That(dictionary["alpha"]).IsEqualTo(1);
-            await Assert.That(dictionary["beta"]).IsEqualTo(2);
+            await Assert.That(dictionary["alpha"]).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(dictionary["beta"]).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -234,7 +249,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 (IDictionary<string, double>)
                     TableConversions.ConvertTableToType(table, typeof(IDictionary<string, double>));
 
-            await Assert.That(dictionary["pi"]).IsEqualTo(3.14).Within(0.0001);
+            await Assert
+                .That(dictionary["pi"])
+                .IsEqualTo(3.14)
+                .Within(0.0001)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -248,7 +267,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int[] result = (int[])TableConversions.ConvertTableToType(table, typeof(int[]));
 
-            await AssertSequenceEqual(result, GenericArrayExpectation);
+            await AssertSequenceEqual(result, GenericArrayExpectation).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -258,7 +277,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             object result = TableConversions.ConvertTableToType(table, typeof(ValueType));
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         private static async Task AssertSequenceEqual<T>(
@@ -266,10 +285,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             IReadOnlyList<T> expected
         )
         {
-            await Assert.That(actual.Count).IsEqualTo(expected.Count);
+            await Assert.That(actual.Count).IsEqualTo(expected.Count).ConfigureAwait(false);
             for (int i = 0; i < expected.Count; i++)
             {
-                await Assert.That(actual[i]).IsEqualTo(expected[i]);
+                await Assert.That(actual[i]).IsEqualTo(expected[i]).ConfigureAwait(false);
             }
         }
 
@@ -278,10 +297,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue[] expected
         )
         {
-            await Assert.That(actual.Count).IsEqualTo(expected.Length);
+            await Assert.That(actual.Count).IsEqualTo(expected.Length).ConfigureAwait(false);
             for (int i = 0; i < expected.Length; i++)
             {
-                await Assert.That(actual[i]).IsSameReferenceAs(expected[i]);
+                await Assert.That(actual[i]).IsSameReferenceAs(expected[i]).ConfigureAwait(false);
             }
         }
 
@@ -308,4 +327,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

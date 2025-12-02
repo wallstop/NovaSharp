@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -15,15 +14,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             using (stopwatch.Start())
             {
-                await Task.Delay(1);
+                await Task.Delay(1).ConfigureAwait(false);
             }
 
             PerformanceResult result = stopwatch.GetResult();
 
-            await Assert.That(result.Name).IsEqualTo(PerformanceCounter.Execution.ToString());
-            await Assert.That(result.Type).IsEqualTo(PerformanceCounterType.TimeMilliseconds);
-            await Assert.That(result.Instances).IsEqualTo(1);
-            await Assert.That(result.Counter >= 0).IsTrue();
+            await Assert
+                .That(result.Name)
+                .IsEqualTo(PerformanceCounter.Execution.ToString())
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(PerformanceCounterType.TimeMilliseconds)
+                .ConfigureAwait(false);
+            await Assert.That(result.Instances).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Counter >= 0).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -35,15 +40,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             {
                 using (stopwatch.Start())
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1).ConfigureAwait(false);
                 }
             }
 
             PerformanceResult result = stopwatch.GetResult();
 
-            await Assert.That(result.Instances).IsEqualTo(1);
-            await Assert.That(result.Counter >= 0).IsTrue();
+            await Assert.That(result.Instances).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Counter >= 0).IsTrue().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

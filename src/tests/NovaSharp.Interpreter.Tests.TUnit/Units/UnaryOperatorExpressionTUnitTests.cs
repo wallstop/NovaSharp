@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -31,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             foreach ((string chunk, double expected) in cases)
             {
                 double result = script.DoString(chunk).Number;
-                await Assert.That(result).IsEqualTo(expected);
+                await Assert.That(result).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -44,7 +43,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return -\"hello\"")
             );
 
-            await Assert.That(exception.Message).Contains("perform arithmetic on a string value");
+            await Assert
+                .That(exception.Message)
+                .Contains("perform arithmetic on a string value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,7 +63,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Compile(byteCode)
             );
 
-            await Assert.That(exception.Message).Contains("Unexpected unary operator");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected unary operator")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -78,7 +83,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Eval(executionContext)
             );
 
-            await Assert.That(exception.Message).Contains("Unexpected unary operator");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected unary operator")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -94,7 +102,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(result.Number).IsEqualTo(-5d);
+            await Assert.That(result.Number).IsEqualTo(-5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -106,7 +114,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -122,7 +130,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(result.Number).IsEqualTo(3d);
+            await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -140,7 +148,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Eval(executionContext)
             );
 
-            await Assert.That(exception.Message).Contains("Can't get length of type Number");
+            await Assert
+                .That(exception.Message)
+                .Contains("Can't get length of type Number")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -158,7 +169,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Eval(executionContext)
             );
 
-            await Assert.That(exception.Message).Contains("Attempt to perform arithmetic");
+            await Assert
+                .That(exception.Message)
+                .Contains("Attempt to perform arithmetic")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -174,7 +188,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(result.Number).IsEqualTo(~0b1010);
+            await Assert.That(result.Number).IsEqualTo(~0b1010).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -192,7 +206,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Eval(executionContext)
             );
 
-            await Assert.That(exception.Message).Contains("bitwise operation on non-integers");
+            await Assert
+                .That(exception.Message)
+                .Contains("bitwise operation on non-integers")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -217,7 +234,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Compile(byteCode);
 
                 Instruction emitted = byteCode.Code[^1];
-                await Assert.That(emitted.OpCode).IsEqualTo(expected);
+                await Assert.That(emitted.OpCode).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -259,4 +276,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

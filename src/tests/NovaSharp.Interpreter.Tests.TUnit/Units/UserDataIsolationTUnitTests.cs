@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -25,10 +24,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             {
                 UserData.RegisterType(isolatedType);
                 _ = new IsolatedType();
-                await Assert.That(TypeDescriptorRegistry.IsTypeRegistered(isolatedType)).IsTrue();
+                await Assert
+                    .That(TypeDescriptorRegistry.IsTypeRegistered(isolatedType))
+                    .IsTrue()
+                    .ConfigureAwait(false);
             }
 
-            await Assert.That(TypeDescriptorRegistry.IsTypeRegistered(isolatedType)).IsFalse();
+            await Assert
+                .That(TypeDescriptorRegistry.IsTypeRegistered(isolatedType))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -111,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             try
             {
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             catch (Exception exception)
             {
@@ -150,7 +155,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     .IsEqualTo(targetAccessMode);
             }
 
-            await Assert.That(TypeDescriptorRegistry.DefaultAccessMode).IsEqualTo(original);
+            await Assert
+                .That(TypeDescriptorRegistry.DefaultAccessMode)
+                .IsEqualTo(original)
+                .ConfigureAwait(false);
         }
 
         private sealed class IsolatedType { }
@@ -171,4 +179,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

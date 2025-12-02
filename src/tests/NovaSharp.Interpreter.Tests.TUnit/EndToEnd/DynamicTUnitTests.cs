@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -12,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task DynamicAccessEval()
         {
             DynValue result = Script.RunString("return dynamic.eval('5+1');");
-            await EndToEndDynValueAssert.ExpectAsync(result, 6);
+            await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -24,7 +23,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return dynamic.eval(prepared);
                 ";
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 6);
+            await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -42,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 6);
+            await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,7 +60,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await Assert.That(result.Type).IsEqualTo(DataType.Nil);
+            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -73,8 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             DynValue evaluation = script
                 .CreateDynamicExpression("t.ciao[1] .. ' world'")
                 .Evaluate();
-            await Assert.That(evaluation.String).IsEqualTo("hello world");
+            await Assert.That(evaluation.String).IsEqualTo("hello world").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -25,8 +24,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             )!;
 
-            await Assert.That(exception.DecoratedMessage).Contains("chunk_1");
-            await Assert.That(exception.DecoratedMessage).Matches(@".*\(\d+,\d+-\d+\).*");
+            await Assert.That(exception.DecoratedMessage).Contains("chunk_1").ConfigureAwait(false);
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Matches(@".*\(\d+,\d+-\d+\).*")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,7 +42,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.LoadString("local = 1", null, "tests/parser/chunk")
             )!;
 
-            await Assert.That(exception.DecoratedMessage).Contains("tests/parser/chunk");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("tests/parser/chunk")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -49,8 +54,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Script script = new();
             DynValue result = script.DoString("return 0x1.fp3");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(15.5d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(15.5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -59,8 +64,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Script script = new();
             DynValue result = script.DoString("return \"hi-\\u{1F40D}\"");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("hi-\U0001F40D");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("hi-\U0001F40D").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -71,7 +76,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return 0x1G")
             )!;
 
-            await Assert.That(exception.DecoratedMessage).Contains("near 'G'");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("near 'G'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -82,8 +90,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return \"\\400\"")
             )!;
 
-            await Assert.That(exception.DecoratedMessage).Contains("decimal escape too large");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("decimal escape too large")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

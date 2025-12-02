@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -16,16 +15,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             await Assert
                 .That(StringConversions.GetStringSubtype(typeof(string)))
-                .IsEqualTo(StringConversions.StringSubtype.String);
+                .IsEqualTo(StringConversions.StringSubtype.String)
+                .ConfigureAwait(false);
             await Assert
                 .That(StringConversions.GetStringSubtype(typeof(StringBuilder)))
-                .IsEqualTo(StringConversions.StringSubtype.StringBuilder);
+                .IsEqualTo(StringConversions.StringSubtype.StringBuilder)
+                .ConfigureAwait(false);
             await Assert
                 .That(StringConversions.GetStringSubtype(typeof(char)))
-                .IsEqualTo(StringConversions.StringSubtype.Char);
+                .IsEqualTo(StringConversions.StringSubtype.Char)
+                .ConfigureAwait(false);
             await Assert
                 .That(StringConversions.GetStringSubtype(typeof(int)))
-                .IsEqualTo(default(StringConversions.StringSubtype));
+                .IsEqualTo(default(StringConversions.StringSubtype))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,11 +55,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DataType.String
             );
 
-            await Assert.That(stringResult).IsEqualTo(Payload);
-            await Assert.That(builderResult).IsTypeOf<StringBuilder>();
-            await Assert.That(builderResult.ToString()).IsEqualTo(Payload);
-            await Assert.That(charResult).IsTypeOf<char>();
-            await Assert.That((char)charResult).IsEqualTo('N');
+            await Assert.That(stringResult).IsEqualTo(Payload).ConfigureAwait(false);
+            await Assert.That(builderResult).IsTypeOf<StringBuilder>().ConfigureAwait(false);
+            await Assert.That(builderResult.ToString()).IsEqualTo(Payload).ConfigureAwait(false);
+            await Assert.That(charResult).IsTypeOf<char>().ConfigureAwait(false);
+            await Assert.That((char)charResult).IsEqualTo('N').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -71,7 +74,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             );
 
-            await Assert.That(exception.Message).Contains("cannot convert");
+            await Assert.That(exception.Message).Contains("cannot convert").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -86,8 +89,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             );
 
-            await Assert.That(exception.Message).Contains("cannot convert");
+            await Assert.That(exception.Message).Contains("cannot convert").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

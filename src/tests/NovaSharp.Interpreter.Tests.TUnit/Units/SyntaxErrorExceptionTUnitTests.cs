@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -27,8 +26,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 captured.Rethrow()
             )!;
 
-            await Assert.That(nested).IsNotSameReferenceAs(captured);
-            await Assert.That(nested.DecoratedMessage).IsEqualTo(captured.DecoratedMessage);
+            await Assert.That(nested).IsNotSameReferenceAs(captured).ConfigureAwait(false);
+            await Assert
+                .That(nested.DecoratedMessage)
+                .IsEqualTo(captured.DecoratedMessage)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -39,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SyntaxErrorException exception = new();
 
             exception.Rethrow();
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,9 +56,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 exception.Rethrow()
             )!;
 
-            await Assert.That(nested).IsNotSameReferenceAs(exception);
-            await Assert.That(nested.Token).IsSameReferenceAs(token);
-            await Assert.That(nested.InnerException).IsSameReferenceAs(exception);
+            await Assert.That(nested).IsNotSameReferenceAs(exception).ConfigureAwait(false);
+            await Assert.That(nested.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert
+                .That(nested.InnerException)
+                .IsSameReferenceAs(exception)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,8 +73,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.DecorateMessage(script);
 
-            await Assert.That(exception.Token).IsSameReferenceAs(token);
-            await Assert.That(exception.DecoratedMessage).StartsWith("decorated:");
+            await Assert.That(exception.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert
+                .That(exception.DecoratedMessage)
+                .StartsWith("decorated:")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,8 +89,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SyntaxErrorException formatted = new(script, location, "issue {0}", 123);
             SyntaxErrorException plain = new(script, location, "plain issue");
 
-            await Assert.That(formatted.DecoratedMessage).StartsWith("chunk:");
-            await Assert.That(plain.DecoratedMessage).StartsWith("chunk:");
+            await Assert
+                .That(formatted.DecoratedMessage)
+                .StartsWith("chunk:")
+                .ConfigureAwait(false);
+            await Assert.That(plain.DecoratedMessage).StartsWith("chunk:").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -90,9 +101,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             SyntaxErrorException exception = new() { IsPrematureStreamTermination = true };
 
-            await Assert.That(exception.IsPrematureStreamTermination).IsTrue();
+            await Assert
+                .That(exception.IsPrematureStreamTermination)
+                .IsTrue()
+                .ConfigureAwait(false);
             exception.IsPrematureStreamTermination = false;
-            await Assert.That(exception.IsPrematureStreamTermination).IsFalse();
+            await Assert
+                .That(exception.IsPrematureStreamTermination)
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,20 +120,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Exception inner = new InvalidOperationException("boom");
             DynamicExpressionException nested = new("inner", inner);
 
-            await Assert.That(formatted.Message).IsEqualTo("<dynamic>: value 42");
-            await Assert.That(plain.Message).IsEqualTo("<dynamic>: plain text");
-            await Assert.That(nested.Message).IsEqualTo("<dynamic>: inner");
-            await Assert.That(nested.InnerException).IsSameReferenceAs(inner);
+            await Assert
+                .That(formatted.Message)
+                .IsEqualTo("<dynamic>: value 42")
+                .ConfigureAwait(false);
+            await Assert
+                .That(plain.Message)
+                .IsEqualTo("<dynamic>: plain text")
+                .ConfigureAwait(false);
+            await Assert.That(nested.Message).IsEqualTo("<dynamic>: inner").ConfigureAwait(false);
+            await Assert.That(nested.InnerException).IsSameReferenceAs(inner).ConfigureAwait(false);
             await Assert
                 .That(new DynamicExpressionException().Message)
-                .IsEqualTo("<dynamic>: dynamic expression error");
+                .IsEqualTo("<dynamic>: dynamic expression error")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task MessageOnlyConstructorStoresMessage()
         {
             SyntaxErrorException exception = new("parse error");
-            await Assert.That(exception.Message).IsEqualTo("parse error");
+            await Assert.That(exception.Message).IsEqualTo("parse error").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -126,8 +150,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SyntaxErrorException exception = new("outer", inner);
 
-            await Assert.That(exception.Message).IsEqualTo("outer");
-            await Assert.That(exception.InnerException).IsSameReferenceAs(inner);
+            await Assert.That(exception.Message).IsEqualTo("outer").ConfigureAwait(false);
+            await Assert
+                .That(exception.InnerException)
+                .IsSameReferenceAs(inner)
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScriptWithNamedSource(string chunkName)
@@ -150,4 +177,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

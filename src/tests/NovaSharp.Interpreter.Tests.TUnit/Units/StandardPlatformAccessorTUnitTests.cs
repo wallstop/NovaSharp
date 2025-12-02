@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -18,34 +17,45 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("r"))
-                .IsEqualTo(FileAccess.Read);
+                .IsEqualTo(FileAccess.Read)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("r+"))
-                .IsEqualTo(FileAccess.ReadWrite);
+                .IsEqualTo(FileAccess.ReadWrite)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("w"))
-                .IsEqualTo(FileAccess.Write);
+                .IsEqualTo(FileAccess.Write)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("w+"))
-                .IsEqualTo(FileAccess.ReadWrite);
+                .IsEqualTo(FileAccess.ReadWrite)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("rb"))
-                .IsEqualTo(FileAccess.Read);
+                .IsEqualTo(FileAccess.Read)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ParseFileModeHandlesAppend()
         {
-            await Assert.That(StandardPlatformAccessor.ParseFileMode("r")).IsEqualTo(FileMode.Open);
+            await Assert
+                .That(StandardPlatformAccessor.ParseFileMode("r"))
+                .IsEqualTo(FileMode.Open)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileMode("w"))
-                .IsEqualTo(FileMode.Create);
+                .IsEqualTo(FileMode.Create)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileMode("a"))
-                .IsEqualTo(FileMode.Append);
+                .IsEqualTo(FileMode.Append)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileMode("a+"))
-                .IsEqualTo(FileMode.Append);
+                .IsEqualTo(FileMode.Append)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -53,13 +63,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("a"))
-                .IsEqualTo(FileAccess.ReadWrite);
+                .IsEqualTo(FileAccess.ReadWrite)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("a+"))
-                .IsEqualTo(FileAccess.ReadWrite);
+                .IsEqualTo(FileAccess.ReadWrite)
+                .ConfigureAwait(false);
             await Assert
                 .That(StandardPlatformAccessor.ParseFileAccess("unknown"))
-                .IsEqualTo(FileAccess.ReadWrite);
+                .IsEqualTo(FileAccess.ReadWrite)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 StandardPlatformAccessor.ParseFileAccess(null)
             )!;
 
-            await Assert.That(exception.ParamName).IsEqualTo("mode");
+            await Assert.That(exception.ParamName).IsEqualTo("mode").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,7 +92,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 StandardPlatformAccessor.ParseFileMode(null)
             )!;
 
-            await Assert.That(exception.ParamName).IsEqualTo("mode");
+            await Assert.That(exception.ParamName).IsEqualTo("mode").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -92,7 +105,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             StandardPlatformAccessor accessor = new();
-            await Assert.That(accessor.GetEnvironmentVariable(variable)).IsEqualTo("expected");
+            await Assert
+                .That(accessor.GetEnvironmentVariable(variable))
+                .IsEqualTo("expected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -100,14 +116,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StandardPlatformAccessor accessor = new();
             CoreModules modules = CoreModules.PresetComplete;
-            await Assert.That(accessor.FilterSupportedCoreModules(modules)).IsEqualTo(modules);
+            await Assert
+                .That(accessor.FilterSupportedCoreModules(modules))
+                .IsEqualTo(modules)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task PrefixIsStd()
         {
             StandardPlatformAccessor accessor = new();
-            await Assert.That(accessor.GetPlatformNamePrefix()).IsEqualTo("std");
+            await Assert
+                .That(accessor.GetPlatformNamePrefix())
+                .IsEqualTo("std")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -121,14 +143,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             using (Stream writeStream = accessor.OpenFile(script, path, Encoding.UTF8, "w"))
             {
                 using StreamWriter writer = new(writeStream, Encoding.UTF8, leaveOpen: false);
-                await writer.WriteAsync("data");
+                await writer.WriteAsync("data").ConfigureAwait(false);
             }
 
             using (Stream readStream = accessor.OpenFile(script, path, Encoding.UTF8, "r"))
             {
                 using StreamReader reader = new(readStream, Encoding.UTF8);
-                string contents = await reader.ReadToEndAsync();
-                await Assert.That(contents).IsEqualTo("data");
+                string contents = await reader.ReadToEndAsync().ConfigureAwait(false);
+                await Assert.That(contents).IsEqualTo("data").ConfigureAwait(false);
             }
         }
 
@@ -137,16 +159,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             StandardPlatformAccessor accessor = new();
             accessor.DefaultPrint("hello");
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task StandardStreamsAreAvailable()
         {
             StandardPlatformAccessor accessor = new();
-            await Assert.That(accessor.GetStandardStream(StandardFileType.StdIn)).IsNotNull();
-            await Assert.That(accessor.GetStandardStream(StandardFileType.StdOut)).IsNotNull();
-            await Assert.That(accessor.GetStandardStream(StandardFileType.StdErr)).IsNotNull();
+            await Assert
+                .That(accessor.GetStandardStream(StandardFileType.StdIn))
+                .IsNotNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(accessor.GetStandardStream(StandardFileType.StdOut))
+                .IsNotNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(accessor.GetStandardStream(StandardFileType.StdErr))
+                .IsNotNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -158,7 +189,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 accessor.GetStandardStream((StandardFileType)(-1))
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -167,7 +198,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             StandardPlatformAccessor accessor = new();
             string tempFile = accessor.GetTempFileName();
             using TempFileScope tempFileScope = TempFileScope.FromExisting(tempFile);
-            await Assert.That(File.Exists(tempFile)).IsTrue();
+            await Assert.That(File.Exists(tempFile)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -179,15 +210,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             string source = sourceScope.FilePath;
             string destination = destinationScope.FilePath;
 
-            await File.WriteAllTextAsync(source, "content");
-            await Assert.That(accessor.FileExists(source)).IsTrue();
+            await File.WriteAllTextAsync(source, "content").ConfigureAwait(false);
+            await Assert.That(accessor.FileExists(source)).IsTrue().ConfigureAwait(false);
 
             accessor.MoveFile(source, destination);
-            await Assert.That(accessor.FileExists(source)).IsFalse();
-            await Assert.That(accessor.FileExists(destination)).IsTrue();
+            await Assert.That(accessor.FileExists(source)).IsFalse().ConfigureAwait(false);
+            await Assert.That(accessor.FileExists(destination)).IsTrue().ConfigureAwait(false);
 
             accessor.DeleteFile(destination);
-            await Assert.That(accessor.FileExists(destination)).IsFalse();
+            await Assert.That(accessor.FileExists(destination)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -200,8 +231,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             StandardPlatformAccessor accessor = new();
             int exitCode = accessor.ExecuteCommand("ver");
-            await Assert.That(exitCode).IsEqualTo(0);
+            await Assert.That(exitCode).IsEqualTo(0).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

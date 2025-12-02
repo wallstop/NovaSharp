@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -22,7 +21,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 fallback
             );
 
-            await Assert.That(result).IsSameReferenceAs(fallback);
+            await Assert.That(result).IsSameReferenceAs(fallback).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,10 +35,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(serialized.Get(nameof(SampleObject.InstanceValue)).String)
-                .IsEqualTo("value");
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
             await Assert
                 .That(serialized.Get(nameof(SampleObject.StaticNumber)).Number)
-                .IsEqualTo(SampleObject.StaticNumber);
+                .IsEqualTo(SampleObject.StaticNumber)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,10 +57,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             Table serialized = result.Table;
 
-            await Assert.That(serialized.Length).IsEqualTo(3);
-            await Assert.That(serialized.Get(1).Number).IsEqualTo((double)SampleEnum.Second);
-            await Assert.That(serialized.Get(2).String).IsEqualTo("missing");
-            await Assert.That(serialized.Get(3).String).IsEqualTo("tail");
+            await Assert.That(serialized.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(serialized.Get(1).Number)
+                .IsEqualTo((double)SampleEnum.Second)
+                .ConfigureAwait(false);
+            await Assert.That(serialized.Get(2).String).IsEqualTo("missing").ConfigureAwait(false);
+            await Assert.That(serialized.Get(3).String).IsEqualTo("tail").ConfigureAwait(false);
         }
 
         private sealed class SampleObject
@@ -81,4 +85,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

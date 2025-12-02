@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -31,7 +30,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexN);
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexN).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,8 +47,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.Index);
-            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal");
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.Index).ConfigureAwait(false);
+            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.Compile(bc);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexL);
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexL).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -89,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, stackofs: 0, tupleidx: 0);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetN);
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetN).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -106,8 +105,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, 0, 0);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSet);
-            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal");
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSet).ConfigureAwait(false);
+            await Assert.That(bc.Code[^1].Value.String).IsEqualTo("literal").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -130,7 +129,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ByteCode bc = new(script);
             expression.CompileAssignment(bc, 0, 0);
 
-            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetL);
+            await Assert.That(bc.Code[^1].OpCode).IsEqualTo(OpCode.IndexSetL).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,7 +148,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
                 expression.Eval(execContext)
             )!;
-            await Assert.That(exception.Message).Contains("Attempt to index non-table");
+            await Assert
+                .That(exception.Message)
+                .Contains("Attempt to index non-table")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -169,7 +171,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
                 expression.Eval(execContext)
             )!;
-            await Assert.That(exception.Message).Contains("nil or nan");
+            await Assert.That(exception.Message).Contains("nil or nan").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -187,7 +189,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             DynValue result = expression.Eval(execContext);
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -206,7 +208,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             DynValue result = expression.Eval(execContext);
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -225,7 +227,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             DynValue result = expression.Eval(execContext);
-            await Assert.That(result.String).IsEqualTo("hit");
+            await Assert.That(result.String).IsEqualTo("hit").ConfigureAwait(false);
         }
 
         private static LiteralExpression CreateLiteralExpression(
@@ -285,4 +287,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

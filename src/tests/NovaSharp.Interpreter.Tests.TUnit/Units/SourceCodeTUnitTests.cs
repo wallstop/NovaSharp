@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -19,12 +18,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             script.DoString(Code, null, ChunkName);
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
 
-            await Assert.That(source.Lines[0]).IsEqualTo($"-- Begin of chunk : {ChunkName} ");
-            await Assert.That(source.Lines[1]).IsEqualTo("local one = 1");
-            await Assert.That(source.Lines[2]).IsEqualTo("return one");
-            await Assert.That(source.OwnerScript).IsSameReferenceAs(script);
-            await Assert.That(source.Name).IsEqualTo(ChunkName);
-            await Assert.That(source.Code).IsEqualTo(Code);
+            await Assert
+                .That(source.Lines[0])
+                .IsEqualTo($"-- Begin of chunk : {ChunkName} ")
+                .ConfigureAwait(false);
+            await Assert.That(source.Lines[1]).IsEqualTo("local one = 1").ConfigureAwait(false);
+            await Assert.That(source.Lines[2]).IsEqualTo("return one").ConfigureAwait(false);
+            await Assert.That(source.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
+            await Assert.That(source.Name).IsEqualTo(ChunkName).ConfigureAwait(false);
+            await Assert.That(source.Code).IsEqualTo(Code).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -38,7 +40,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 source.GetCodeSnippet(null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("sourceCodeRef");
+            await Assert.That(exception.ParamName).IsEqualTo("sourceCodeRef").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -64,8 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             string snippet = source.GetCodeSnippet(span);
             string expected = string.Concat(source.Lines[1], source.Lines[2], source.Lines[3]);
 
-            await Assert.That(snippet).IsEqualTo(expected);
+            await Assert.That(snippet).IsEqualTo(expected).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

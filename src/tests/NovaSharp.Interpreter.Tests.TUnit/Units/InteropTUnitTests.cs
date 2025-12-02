@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -16,17 +15,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Script script = new();
 
             DynValue directNumber = DynValue.FromObject(script, 42);
-            await Assert.That(directNumber.Type).IsEqualTo(DataType.Number);
-            await Assert.That(directNumber.Number).IsEqualTo(42);
+            await Assert.That(directNumber.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(directNumber.Number).IsEqualTo(42).ConfigureAwait(false);
 
             int? nullableHasValue = 7;
             DynValue fromNullable = DynValue.FromObject(script, nullableHasValue);
-            await Assert.That(fromNullable.Type).IsEqualTo(DataType.Number);
-            await Assert.That(fromNullable.Number).IsEqualTo(7);
+            await Assert.That(fromNullable.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(fromNullable.Number).IsEqualTo(7).ConfigureAwait(false);
 
             int? nullableNull = null;
             DynValue fromNull = DynValue.FromObject(script, nullableNull);
-            await Assert.That(fromNull.Type).IsEqualTo(DataType.Nil);
+            await Assert.That(fromNull.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -37,10 +36,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue dyn = DynValue.FromObject(script, dictionary);
 
-            await Assert.That(dyn.Type).IsEqualTo(DataType.Table);
-            await Assert.That(dyn.Table.Length).IsEqualTo(0);
-            await Assert.That(dyn.Table.Get("a").Number).IsEqualTo(1);
-            await Assert.That(dyn.Table.Get("b").Number).IsEqualTo(2);
+            await Assert.That(dyn.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            await Assert.That(dyn.Table.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(dyn.Table.Get("a").Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(dyn.Table.Get("b").Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,8 +55,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return sum({ x = 10, y = 32 })");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(42);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,10 +83,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 mutated.ToObject<IDictionary<string, string>>()
             );
 
-            await Assert.That(mutated.Table.Get("name").String).IsEqualTo("nova");
-            await Assert.That(mutated.Table.Get("role").String).IsEqualTo("TESTER");
-            await Assert.That(tableAfterCall.Table.Get("role").String).IsEqualTo("TESTER");
+            await Assert
+                .That(mutated.Table.Get("name").String)
+                .IsEqualTo("nova")
+                .ConfigureAwait(false);
+            await Assert
+                .That(mutated.Table.Get("role").String)
+                .IsEqualTo("TESTER")
+                .ConfigureAwait(false);
+            await Assert
+                .That(tableAfterCall.Table.Get("role").String)
+                .IsEqualTo("TESTER")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

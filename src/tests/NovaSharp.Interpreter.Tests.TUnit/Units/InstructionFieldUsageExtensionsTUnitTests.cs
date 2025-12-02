@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -88,7 +87,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InstructionFieldUsage expected = (InstructionFieldUsage)expectedFlags;
             InstructionFieldUsage usage = opCode.GetFieldUsage();
 
-            await Assert.That(usage).IsEqualTo(expected);
+            await Assert.That(usage).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -100,4 +99,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -22,9 +21,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<double> numbers = new(values.Convert<double>(DataType.Number));
 
-            await Assert.That(numbers.Count).IsEqualTo(2);
-            await Assert.That(numbers[0]).IsEqualTo(1d);
-            await Assert.That(numbers[1]).IsEqualTo(2d);
+            await Assert.That(numbers.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,9 +44,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 stringValues.Add(value.String);
             }
 
-            await Assert.That(stringValues.Count).IsEqualTo(2);
-            await Assert.That(stringValues[0]).IsEqualTo("alpha");
-            await Assert.That(stringValues[1]).IsEqualTo("beta");
+            await Assert.That(stringValues.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stringValues[0]).IsEqualTo("alpha").ConfigureAwait(false);
+            await Assert.That(stringValues[1]).IsEqualTo("beta").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,8 +60,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<object> objects = new(values.AsObjects());
 
-            await Assert.That(objects[0]).IsEqualTo(5d);
-            await Assert.That(objects[1]).IsEqualTo("value");
+            await Assert.That(objects[0]).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(objects[1]).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,10 +76,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<string> strings = new(values.AsObjects<string>());
 
-            await Assert.That(strings.Count).IsEqualTo(3);
-            await Assert.That(strings[0]).IsEqualTo("one");
-            await Assert.That(strings[1]).IsEqualTo("two");
-            await Assert.That(strings[2]).IsEqualTo("three");
+            await Assert.That(strings.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(strings[0]).IsEqualTo("one").ConfigureAwait(false);
+            await Assert.That(strings[1]).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(strings[2]).IsEqualTo("three").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -92,26 +91,37 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             {
                 _ = new List<double>(values.Convert<double>(DataType.Number));
             });
-            await Assert.That(convertException.ParamName).IsEqualTo("enumerable");
+            await Assert
+                .That(convertException.ParamName)
+                .IsEqualTo("enumerable")
+                .ConfigureAwait(false);
 
             ArgumentNullException ofDataTypeException = Assert.Throws<ArgumentNullException>(() =>
             {
                 _ = new List<DynValue>(values.OfDataType(DataType.String));
             });
-            await Assert.That(ofDataTypeException.ParamName).IsEqualTo("enumerable");
+            await Assert
+                .That(ofDataTypeException.ParamName)
+                .IsEqualTo("enumerable")
+                .ConfigureAwait(false);
 
             ArgumentNullException asObjectsException = Assert.Throws<ArgumentNullException>(() =>
             {
                 _ = new List<object>(values.AsObjects());
             });
-            await Assert.That(asObjectsException.ParamName).IsEqualTo("enumerable");
+            await Assert
+                .That(asObjectsException.ParamName)
+                .IsEqualTo("enumerable")
+                .ConfigureAwait(false);
 
             ArgumentNullException genericException = Assert.Throws<ArgumentNullException>(() =>
             {
                 _ = new List<string>(values.AsObjects<string>());
             });
-            await Assert.That(genericException.ParamName).IsEqualTo("enumerable");
+            await Assert
+                .That(genericException.ParamName)
+                .IsEqualTo("enumerable")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -26,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 handle = stats.StartStopwatch(ExecutionCounter);
             }
 
-            await Assert.That(handle).IsNull();
+            await Assert.That(handle).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,10 +47,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             }
 
             await Assert.That(result).IsNotNull();
-            await Assert.That(result.Counter).IsEqualTo(25);
-            await Assert.That(result.Instances).IsEqualTo(1);
-            await Assert.That(result.Name).IsEqualTo(ExecutionCounter.ToString());
-            await Assert.That(result.Global).IsFalse();
+            await Assert.That(result.Counter).IsEqualTo(25).ConfigureAwait(false);
+            await Assert.That(result.Instances).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(result.Name)
+                .IsEqualTo(ExecutionCounter.ToString())
+                .ConfigureAwait(false);
+            await Assert.That(result.Global).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,8 +77,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 resultAfterDisable = stats.GetPerformanceCounterResult(ExecutionCounter);
             }
 
-            await Assert.That(resultBeforeDisable).IsNotNull();
-            await Assert.That(resultAfterDisable).IsNull();
+            await Assert.That(resultBeforeDisable).IsNotNull().ConfigureAwait(false);
+            await Assert.That(resultAfterDisable).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,10 +105,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 result = stats.GetPerformanceCounterResult(ExecutionCounter);
             }
 
-            await Assert.That(result).IsNotNull();
-            await Assert.That(result.Global).IsTrue();
-            await Assert.That(result.Counter).IsEqualTo(40);
-            await Assert.That(result.Instances).IsEqualTo(1);
+            await Assert.That(result).IsNotNull().ConfigureAwait(false);
+            await Assert.That(result.Global).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Counter).IsEqualTo(40).ConfigureAwait(false);
+            await Assert.That(result.Instances).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -136,8 +138,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 disabledResult = stats.GetPerformanceCounterResult(ExecutionCounter);
             }
 
-            await Assert.That(enabledResult.Counter).IsEqualTo(5);
-            await Assert.That(disabledResult).IsNull();
+            await Assert.That(enabledResult.Counter).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(disabledResult).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -169,9 +171,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 result = stats.GetPerformanceCounterResult(ExecutionCounter);
             }
 
-            await Assert.That(result.Counter).IsEqualTo(25);
-            await Assert.That(result.Instances).IsEqualTo(2);
-            await Assert.That(result.Global).IsTrue();
+            await Assert.That(result.Counter).IsEqualTo(25).ConfigureAwait(false);
+            await Assert.That(result.Instances).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Global).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -197,8 +199,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 log = stats.GetPerformanceLog();
             }
 
-            await Assert.That(log).Contains("Execution : 1 times / 4 ms");
-            await Assert.That(log).Contains("Compilation : 1 times / 6 ms");
+            await Assert.That(log).Contains("Execution : 1 times / 4 ms").ConfigureAwait(false);
+            await Assert.That(log).Contains("Compilation : 1 times / 6 ms").ConfigureAwait(false);
         }
 
         private static void ResetGlobalState()
@@ -228,4 +230,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -26,7 +25,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call(function, (DynValue[])null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("args");
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call(function, (object[])null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("args");
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call((DynValue)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue callable = script.Globals.Get("callable");
             DynValue result = script.Call(callable, DynValue.NewNumber(21));
 
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,8 +82,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.Call(callback);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("clr");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("clr").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,7 +96,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call(notCallable)
             );
 
-            await Assert.That(exception.Message).Contains("has no __call metamethod");
+            await Assert
+                .That(exception.Message)
+                .Contains("has no __call metamethod")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -109,7 +111,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.Call(function, 30, 12);
 
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -121,7 +123,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.Call(closure, 6, 7);
 
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -133,7 +135,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.Call(callback, 21);
 
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -145,7 +147,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call((object)"not callable")
             );
 
-            await Assert.That(exception.Message).Contains("__call metamethod");
+            await Assert
+                .That(exception.Message)
+                .Contains("__call metamethod")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -157,7 +162,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.Call((object)null)
             );
 
-            await Assert.That(exception.Message).Contains("__call metamethod");
+            await Assert
+                .That(exception.Message)
+                .Contains("__call metamethod")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -167,13 +175,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
 
             DynValue coroutine = script.CreateCoroutine(callback);
-            await Assert.That(coroutine.Type).IsEqualTo(DataType.Thread);
+            await Assert.That(coroutine.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.CreateCoroutine(DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("DataType.Function");
+            await Assert
+                .That(exception.Message)
+                .Contains("DataType.Function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -185,7 +196,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.CreateCoroutine((DynValue)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -201,11 +212,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.RequireModule("bit32");
 
-            await Assert.That(loader.ResolveCalls).IsEqualTo(1);
-            await Assert.That(loader.LoadCalls).IsEqualTo(1);
-            await Assert.That(messages.Count).IsEqualTo(1);
-            await Assert.That(messages[0]).Contains("require('bit32')");
-            await Assert.That(result.Type).IsEqualTo(DataType.Function);
+            await Assert.That(loader.ResolveCalls).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(loader.LoadCalls).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(messages.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(messages[0]).Contains("require('bit32')").ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -219,7 +230,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.RequireModule("missing")
             );
 
-            await Assert.That(exception.Message).Contains("module 'missing' not found");
+            await Assert
+                .That(exception.Message)
+                .Contains("module 'missing' not found")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -233,7 +247,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             script.RequireModule("bit32");
             script.RequireModule("bit32");
 
-            await Assert.That(messages.Count).IsEqualTo(1);
+            await Assert.That(messages.Count).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -251,7 +265,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.RequireModule("bit32");
 
-            await Assert.That(messages.Count).IsZero();
+            await Assert.That(messages.Count).IsZero().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -266,8 +280,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.RequireModule("custom", customGlobals);
 
-            await Assert.That(loader.ResolveCalls).IsEqualTo(1);
-            await Assert.That(loader.LastGlobalContext).IsSameReferenceAs(customGlobals);
+            await Assert.That(loader.ResolveCalls).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(loader.LastGlobalContext)
+                .IsSameReferenceAs(customGlobals)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -281,7 +298,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.RequireModule("custom");
 
-            await Assert.That(loader.LastGlobalContext).IsSameReferenceAs(script.Globals);
+            await Assert
+                .That(loader.LastGlobalContext)
+                .IsSameReferenceAs(script.Globals)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -299,7 +319,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.RequireModule("custom", foreignGlobals)
             );
 
-            await Assert.That(exception.Message).Contains("different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +338,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 scriptB.Call(scriptB.Globals.Get("echo"), foreignTable)
             );
 
-            await Assert.That(exception.Message).Contains("different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -331,7 +357,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 scriptB.Call(foreignClosure)
             );
 
-            await Assert.That(exception.Message).Contains("different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -345,7 +374,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 scriptB.CreateCoroutine(foreignFunction)
             );
 
-            await Assert.That(exception.Message).Contains("different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -367,8 +399,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue first = coroutine.Coroutine.Resume();
             DynValue second = coroutine.Coroutine.Resume();
 
-            await Assert.That(first.Number).IsEqualTo(5d);
-            await Assert.That(second.Number).IsEqualTo(6d);
+            await Assert.That(first.Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(6d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -384,8 +416,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = coroutineValue.Coroutine.Resume(context);
 
-            await Assert.That(result.Number).IsEqualTo(99d);
-            await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
+            await Assert.That(result.Number).IsEqualTo(99d).ConfigureAwait(false);
+            await Assert
+                .That(coroutineValue.Coroutine.State)
+                .IsEqualTo(CoroutineState.Dead)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -397,7 +432,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.CreateCoroutine((object)"invalid")
             );
 
-            await Assert.That(exception.Message).Contains("DataType.Function");
+            await Assert
+                .That(exception.Message)
+                .Contains("DataType.Function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -413,7 +451,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 scriptB.CreateCoroutine(foreignClosure)
             );
 
-            await Assert.That(exception.Message).Contains("different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
         }
 
         private sealed class StubScriptLoader : ScriptLoaderBase
@@ -444,4 +485,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

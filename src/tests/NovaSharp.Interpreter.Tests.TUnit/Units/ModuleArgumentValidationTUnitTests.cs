@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -20,7 +19,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ModuleArgumentValidation.RequireExecutionContext(null, "executionContext")
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("executionContext");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("executionContext")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,7 +35,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "executionContext"
             );
 
-            await Assert.That(validated).IsSameReferenceAs(context);
+            await Assert.That(validated).IsSameReferenceAs(context).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -43,7 +45,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ModuleArgumentValidation.RequireArguments(null, "args")
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("args");
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -59,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "args"
             );
 
-            await Assert.That(validated).IsSameReferenceAs(arguments);
+            await Assert.That(validated).IsSameReferenceAs(arguments).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ModuleArgumentValidation.RequireTable(null, "table")
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("table");
+            await Assert.That(exception.ParamName).IsEqualTo("table").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,7 +81,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Table validated = ModuleArgumentValidation.RequireTable(table, "table");
 
-            await Assert.That(validated).IsSameReferenceAs(table);
+            await Assert.That(validated).IsSameReferenceAs(table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -89,7 +91,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ModuleArgumentValidation.RequireScript(null, "script")
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("script");
+            await Assert.That(exception.ParamName).IsEqualTo("script").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -99,8 +101,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Script validated = ModuleArgumentValidation.RequireScript(script, "script");
 
-            await Assert.That(validated).IsSameReferenceAs(script);
+            await Assert.That(validated).IsSameReferenceAs(script).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

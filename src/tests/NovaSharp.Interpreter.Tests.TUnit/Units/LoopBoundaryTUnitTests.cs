@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -14,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task IsBoundaryReturnsTrue()
         {
             LoopBoundary boundary = new();
-            await Assert.That(boundary.IsBoundary()).IsTrue();
+            await Assert.That(boundary.IsBoundary()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -26,8 +25,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 boundary.CompileBreak(byteCode)
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

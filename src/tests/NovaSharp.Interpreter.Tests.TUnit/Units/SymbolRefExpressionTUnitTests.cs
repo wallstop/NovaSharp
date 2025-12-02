@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -33,7 +32,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.Message)
-                .Contains("cannot use '...' in a dynamic expression");
+                .Contains("cannot use '...' in a dynamic expression")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,7 +51,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.Message)
-                .Contains("Unsupported symbol reference expression");
+                .Contains("Unsupported symbol reference expression")
+                .ConfigureAwait(false);
         }
 
         private static ScriptLoadingContext CreateDynamicContext(Script script, bool hasVarArgs)
@@ -77,4 +78,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -19,9 +18,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Table table = new(script, values);
 
-            await Assert.That(table.Length).IsEqualTo(2);
-            await Assert.That(table.RawGet(1).Number).IsEqualTo(10);
-            await Assert.That(table.RawGet(2).String).IsEqualTo("two");
+            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(table.RawGet(1).Number).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(table.RawGet(2).String).IsEqualTo("two").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,9 +32,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             table.Clear();
 
-            await Assert.That(table.Length).IsEqualTo(0);
-            await Assert.That(table.RawGet(1)).IsNull();
-            await Assert.That(table.RawGet("name")).IsNull();
+            await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet("name")).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -47,15 +46,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             table.Set(2, DynValue.NewNumber(20));
             table.Set(3, DynValue.NewNumber(30));
 
-            await Assert.That(table.Length).IsEqualTo(3);
+            await Assert.That(table.Length).IsEqualTo(3).ConfigureAwait(false);
 
             table.Set(2, DynValue.Nil);
-            await Assert.That(table.Length).IsEqualTo(1);
+            await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
 
             table.Append(DynValue.NewNumber(40));
-            await Assert.That(table.Length).IsEqualTo(3);
-            await Assert.That(table.RawGet(2).Number).IsEqualTo(40);
-            await Assert.That(table.RawGet(3).Number).IsEqualTo(30);
+            await Assert.That(table.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(table.RawGet(2).Number).IsEqualTo(40).ConfigureAwait(false);
+            await Assert.That(table.RawGet(3).Number).IsEqualTo(30).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,18 +66,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             table.Set(3, DynValue.NewNumber(3));
 
             TablePair? first = table.NextKey(DynValue.Nil);
-            await Assert.That(first.HasValue).IsTrue();
-            await Assert.That(first.Value.Key.String).IsEqualTo("second");
+            await Assert.That(first.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Value.Key.String).IsEqualTo("second").ConfigureAwait(false);
 
             TablePair? second = table.NextKey(first.Value.Key);
-            await Assert.That(second.HasValue).IsTrue();
-            await Assert.That(second.Value.Key.Number).IsEqualTo(3);
+            await Assert.That(second.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(second.Value.Key.Number).IsEqualTo(3).ConfigureAwait(false);
 
             TablePair? tail = table.NextKey(second.Value.Key);
-            await Assert.That(tail).IsEqualTo(TablePair.Nil);
+            await Assert.That(tail).IsEqualTo(TablePair.Nil).ConfigureAwait(false);
 
             TablePair? missing = table.NextKey(DynValue.NewString("missing"));
-            await Assert.That(missing).IsNull();
+            await Assert.That(missing).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -89,7 +88,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             TablePair? unknown = table.NextKey(DynValue.NewNumber(999));
 
-            await Assert.That(unknown).IsNull();
+            await Assert.That(unknown).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,8 +102,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             TablePair? next = table.NextKey(fractionalKey);
 
-            await Assert.That(next.HasValue).IsTrue();
-            await Assert.That(next.Value.Key.String).IsEqualTo("tail");
+            await Assert.That(next.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(next.Value.Key.String).IsEqualTo("tail").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -113,13 +112,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(10));
             table.Set(2, DynValue.NewNumber(20));
-            await Assert.That(table.Length).IsEqualTo(2);
+            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
 
             table.Set(2, DynValue.Nil);
             table.CollectDeadKeys();
 
-            await Assert.That(table.RawGet(2)).IsNull();
-            await Assert.That(table.Length).IsEqualTo(1);
+            await Assert.That(table.RawGet(2)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -134,7 +133,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Append(foreignValue)
             );
 
-            await Assert.That(exception.Message).Contains("resources owned by different scripts");
+            await Assert
+                .That(exception.Message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -147,7 +149,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set(nanKey, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("table index is NaN");
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is NaN")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -159,7 +164,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("did not point to anything");
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,7 +180,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("did not point to a table");
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -184,7 +195,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set((object[])null, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("table index is nil");
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -196,7 +210,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set(Array.Empty<object>(), DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("table index is nil");
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -211,9 +228,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             double fractionalKey = 4.5;
             table.Set((object)fractionalKey, DynValue.NewNumber(5));
 
-            await Assert.That(table.RawGet("name").String).IsEqualTo("nova");
-            await Assert.That(table.RawGet(4).Number).IsEqualTo(4);
-            await Assert.That(table.RawGet((object)fractionalKey).Number).IsEqualTo(5);
+            await Assert.That(table.RawGet("name").String).IsEqualTo("nova").ConfigureAwait(false);
+            await Assert.That(table.RawGet(4).Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet((object)fractionalKey).Number)
+                .IsEqualTo(5)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -226,7 +246,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             table.Set(fractionalKey, DynValue.NewString("fractional"));
 
             DynValue result = table.RawGet(fractionalKey);
-            await Assert.That(result.String).IsEqualTo("fractional");
+            await Assert.That(result.String).IsEqualTo("fractional").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -238,7 +258,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             table.Set(new object[] { "child", "leaf" }, DynValue.NewString("value"));
 
-            await Assert.That(table.RawGet("child", "leaf").String).IsEqualTo("value");
+            await Assert
+                .That(table.RawGet("child", "leaf").String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -252,7 +275,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.Get("child", 1);
 
-            await Assert.That(value.String).IsEqualTo("inner");
+            await Assert.That(value.String).IsEqualTo("inner").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -262,7 +285,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.Get((object)"missing");
 
-            await Assert.That(value.IsNil()).IsTrue();
+            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -272,7 +295,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.Get(Array.Empty<object>());
 
-            await Assert.That(value.IsNil()).IsTrue();
+            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -282,7 +305,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.RawGet(Array.Empty<object>());
 
-            await Assert.That(value).IsNull();
+            await Assert.That(value).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -294,7 +317,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.RawGet("missing", "child")
             );
 
-            await Assert.That(exception.Message).Contains("did not point to anything");
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -307,7 +333,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.RawGet("leaf", "child")
             );
 
-            await Assert.That(exception.Message).Contains("did not point to a table");
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +344,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             Table table = new(new Script());
 
-            await Assert.That(table.Remove(Array.Empty<object>())).IsFalse();
+            await Assert.That(table.Remove(Array.Empty<object>())).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -323,7 +352,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             Table table = new(new Script());
 
-            await Assert.That(table.RawGet((object)null)).IsNull();
+            await Assert.That(table.RawGet((object)null)).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -334,7 +363,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.RawGet((object)"existing");
 
-            await Assert.That(value.Number).IsEqualTo(42);
+            await Assert.That(value.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -344,7 +373,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.RawGet((object[])null);
 
-            await Assert.That(value).IsNull();
+            await Assert.That(value).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -356,7 +385,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 table.Set((object)null, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("table index is nil");
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -367,8 +399,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove("key");
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet("key")).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("key")).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -379,8 +411,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove(DynValue.NewNumber(1));
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet(1)).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -391,8 +423,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove(DynValue.NewString("value"));
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet("value")).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("value")).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -403,8 +435,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove((object)"boxed");
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet("boxed")).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("boxed")).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -415,8 +447,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove((object)3);
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet(3)).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet(3)).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -429,8 +461,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             bool removed = table.Remove((object)fractionalKey);
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(table.RawGet(fractionalKey)).IsNull();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet(fractionalKey)).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -445,8 +477,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = table.Get("branch", "leaf") ?? DynValue.Nil;
 
-            await Assert.That(removed).IsTrue();
-            await Assert.That(value.IsNil()).IsTrue();
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -461,7 +493,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = table.RawGet("child", "leaf");
 
-            await Assert.That(result.Number).IsEqualTo(7);
+            await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -473,10 +505,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             object[] keys = table.Keys.Select(key => key.ToObject()).ToArray();
 
-            await Assert.That(keys.Length).IsEqualTo(2);
-            await Assert.That(keys.Contains("alpha")).IsTrue();
-            await Assert.That(keys.Contains(2d)).IsTrue();
+            await Assert.That(keys.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(keys.Contains("alpha")).IsTrue().ConfigureAwait(false);
+            await Assert.That(keys.Contains(2d)).IsTrue().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

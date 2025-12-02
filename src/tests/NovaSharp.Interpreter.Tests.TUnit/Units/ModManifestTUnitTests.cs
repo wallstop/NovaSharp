@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -19,7 +18,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ModManifest manifest = ModManifest.Parse("{ \"luaCompatibility\": \"5.4\" }");
 
-            await Assert.That(manifest.LuaCompatibility).IsEqualTo(LuaCompatibilityVersion.Lua54);
+            await Assert
+                .That(manifest.LuaCompatibility)
+                .IsEqualTo(LuaCompatibilityVersion.Lua54)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -31,9 +33,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 out string error
             );
 
-            await Assert.That(parsed).IsFalse();
-            await Assert.That(manifest).IsNull();
-            await Assert.That(error).Contains("Unable to parse");
+            await Assert.That(parsed).IsFalse().ConfigureAwait(false);
+            await Assert.That(manifest).IsNull().ConfigureAwait(false);
+            await Assert.That(error).Contains("Unable to parse").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,9 +47,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 out string error
             );
 
-            await Assert.That(parsed).IsTrue();
-            await Assert.That(manifest.Name).IsEqualTo("sample");
-            await Assert.That(error).IsNull();
+            await Assert.That(parsed).IsTrue().ConfigureAwait(false);
+            await Assert.That(manifest.Name).IsEqualTo("sample").ConfigureAwait(false);
+            await Assert.That(error).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,7 +74,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(Script.DefaultOptions.CompatibilityVersion);
+                .IsEqualTo(Script.DefaultOptions.CompatibilityVersion)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -90,9 +93,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Latest);
-            await Assert.That(warning).Contains("Example");
-            await Assert.That(warning).Contains("Lua 5.5");
+                .IsEqualTo(LuaCompatibilityVersion.Latest)
+                .ConfigureAwait(false);
+            await Assert.That(warning).Contains("Example").ConfigureAwait(false);
+            await Assert.That(warning).Contains("Lua 5.5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -110,8 +114,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Lua53);
-            await Assert.That(warned).IsFalse();
+                .IsEqualTo(LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(warned).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -141,9 +146,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             ModManifest manifest = ModManifest.Load(stream);
 
-            await Assert.That(manifest.Name).IsEqualTo("streamed");
-            await Assert.That(manifest.Version).IsEqualTo("2.0");
-            await Assert.That(manifest.LuaCompatibility).IsEqualTo(LuaCompatibilityVersion.Lua52);
+            await Assert.That(manifest.Name).IsEqualTo("streamed").ConfigureAwait(false);
+            await Assert.That(manifest.Version).IsEqualTo("2.0").ConfigureAwait(false);
+            await Assert
+                .That(manifest.LuaCompatibility)
+                .IsEqualTo(LuaCompatibilityVersion.Lua52)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -151,9 +159,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             bool parsed = ModManifest.TryParse("  ", out ModManifest manifest, out string error);
 
-            await Assert.That(parsed).IsFalse();
-            await Assert.That(manifest).IsNull();
-            await Assert.That(error).Contains("cannot be empty");
+            await Assert.That(parsed).IsFalse().ConfigureAwait(false);
+            await Assert.That(manifest).IsNull().ConfigureAwait(false);
+            await Assert.That(error).Contains("cannot be empty").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -165,9 +173,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 out string error
             );
 
-            await Assert.That(parsed).IsFalse();
-            await Assert.That(manifest).IsNull();
-            await Assert.That(error).IsNotNull();
+            await Assert.That(parsed).IsFalse().ConfigureAwait(false);
+            await Assert.That(manifest).IsNull().ConfigureAwait(false);
+            await Assert.That(error).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -181,9 +189,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             bool parsed = ModManifest.TryParse("null", out ModManifest manifest, out string error);
 
-            await Assert.That(parsed).IsFalse();
-            await Assert.That(manifest).IsNull();
-            await Assert.That(error).IsEqualTo("Manifest JSON resolved to an empty document.");
+            await Assert.That(parsed).IsFalse().ConfigureAwait(false);
+            await Assert.That(manifest).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(error)
+                .IsEqualTo("Manifest JSON resolved to an empty document.")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -201,10 +212,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Latest);
+                .IsEqualTo(LuaCompatibilityVersion.Latest)
+                .ConfigureAwait(false);
             await Assert
                 .That(warning.StartsWith("mod targets", StringComparison.OrdinalIgnoreCase))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -224,9 +237,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Lua54);
-            await Assert.That(warning).Contains("Lua 5.3");
+                .IsEqualTo(LuaCompatibilityVersion.Lua54)
+                .ConfigureAwait(false);
+            await Assert.That(warning).Contains("Lua 5.3").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

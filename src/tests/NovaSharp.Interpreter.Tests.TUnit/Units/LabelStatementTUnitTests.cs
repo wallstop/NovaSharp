@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -15,8 +14,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             BuildTimeScopeBlock labelBlock = new(parent: null);
             BuildTimeScopeBlock gotoBlock = new(parent: null);
 
-            await Assert.That(LabelStatement.BuildExitScopes(null, labelBlock).Count).IsEqualTo(0);
-            await Assert.That(LabelStatement.BuildExitScopes(gotoBlock, null).Count).IsEqualTo(0);
+            await Assert
+                .That(LabelStatement.BuildExitScopes(null, labelBlock).Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(LabelStatement.BuildExitScopes(gotoBlock, null).Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -28,9 +33,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<RuntimeScopeBlock> scopes = LabelStatement.BuildExitScopes(grandChild, labelBlock);
 
-            await Assert.That(scopes.Count).IsEqualTo(2);
-            await Assert.That(scopes[0]).IsSameReferenceAs(grandChild.ScopeBlock);
-            await Assert.That(scopes[1]).IsSameReferenceAs(child.ScopeBlock);
+            await Assert.That(scopes.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(scopes[0])
+                .IsSameReferenceAs(grandChild.ScopeBlock)
+                .ConfigureAwait(false);
+            await Assert.That(scopes[1]).IsSameReferenceAs(child.ScopeBlock).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -42,8 +50,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             List<RuntimeScopeBlock> scopes = LabelStatement.BuildExitScopes(gotoBlock, labelBlock);
 
-            await Assert.That(scopes.Count).IsEqualTo(0);
+            await Assert.That(scopes.Count).IsEqualTo(0).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -25,14 +24,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<int> source = new() { 1, 2, 3, 4, 5 };
             Slice<int> slice = new(source, from: 1, length: 3, reversed: false);
 
-            await Assert.That(slice[0]).IsEqualTo(2);
-            await Assert.That(slice[1]).IsEqualTo(3);
-            await Assert.That(slice[2]).IsEqualTo(4);
+            await Assert.That(slice[0]).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(slice[1]).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(slice[2]).IsEqualTo(4).ConfigureAwait(false);
 
             slice[1] = 99;
 
-            await Assert.That(source[2]).IsEqualTo(99);
-            await Assert.That(slice[1]).IsEqualTo(99);
+            await Assert.That(source[2]).IsEqualTo(99).ConfigureAwait(false);
+            await Assert.That(slice[1]).IsEqualTo(99).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,12 +40,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<string> source = new() { "a", "b", "c", "d" };
             Slice<string> slice = new(source, from: 1, length: 2, reversed: true);
 
-            await Assert.That(slice[0]).IsEqualTo("c");
-            await Assert.That(slice[1]).IsEqualTo("b");
+            await Assert.That(slice[0]).IsEqualTo("c").ConfigureAwait(false);
+            await Assert.That(slice[1]).IsEqualTo("b").ConfigureAwait(false);
 
             slice[0] = "X";
 
-            await Assert.That(source[2]).IsEqualTo("X");
+            await Assert.That(source[2]).IsEqualTo("X").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -55,9 +54,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<int> source = Enumerable.Range(0, 10).ToList();
             Slice<int> slice = new(source, from: 3, length: 4, reversed: false);
 
-            await Assert.That(slice.From).IsEqualTo(3);
-            await Assert.That(slice.Count).IsEqualTo(4);
-            await Assert.That(slice.Reversed).IsFalse();
+            await Assert.That(slice.From).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(slice.Count).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(slice.Reversed).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -115,8 +114,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             List<int> result = slice.ToList();
             result[0] = 99;
 
-            await Assert.That(result[0]).IsEqualTo(99);
-            await Assert.That(source[0]).IsEqualTo(10);
+            await Assert.That(result[0]).IsEqualTo(99).ConfigureAwait(false);
+            await Assert.That(source[0]).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -158,4 +157,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

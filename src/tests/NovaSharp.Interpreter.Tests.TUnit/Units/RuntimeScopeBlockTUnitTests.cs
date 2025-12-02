@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -12,8 +11,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task DefaultsUseEmptyToBeClosedArray()
         {
             RuntimeScopeBlock block = new();
-            await Assert.That(block.ToBeClosed).IsNotNull();
-            await Assert.That(block.ToBeClosed.Length).IsEqualTo(0);
+            await Assert.That(block.ToBeClosed).IsNotNull().ConfigureAwait(false);
+            await Assert.That(block.ToBeClosed.Length).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -27,11 +26,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ToBeClosed = new[] { SymbolRef.Local("value", 0) },
             };
 
-            await Assert.That(block.From).IsEqualTo(10);
-            await Assert.That(block.To).IsEqualTo(20);
-            await Assert.That(block.ToInclusive).IsEqualTo(30);
-            await Assert.That(block.ToBeClosed.Length).IsEqualTo(1);
-            await Assert.That(block.ToBeClosed[0].Name).IsEqualTo("value");
+            await Assert.That(block.From).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(block.To).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(block.ToInclusive).IsEqualTo(30).ConfigureAwait(false);
+            await Assert.That(block.ToBeClosed.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(block.ToBeClosed[0].Name).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,8 +43,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ToInclusive = 3,
             };
 
-            await Assert.That(block.ToString()).IsEqualTo("ScopeBlock : 1 -> 2 --> 3");
+            await Assert
+                .That(block.ToString())
+                .IsEqualTo("ScopeBlock : 1 -> 2 --> 3")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

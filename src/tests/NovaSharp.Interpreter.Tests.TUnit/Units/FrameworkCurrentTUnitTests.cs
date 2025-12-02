@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -24,17 +23,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task IsDbNullReturnsTrueOnlyForDbNullInstances()
         {
-            await Assert.That(_framework.IsDbNull(DBNull.Value)).IsTrue();
-            await Assert.That(_framework.IsDbNull(null)).IsFalse();
-            await Assert.That(_framework.IsDbNull(new object())).IsFalse();
+            await Assert.That(_framework.IsDbNull(DBNull.Value)).IsTrue().ConfigureAwait(false);
+            await Assert.That(_framework.IsDbNull(null)).IsFalse().ConfigureAwait(false);
+            await Assert.That(_framework.IsDbNull(new object())).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task StringContainsCharHandlesNullAndMissingCharacters()
         {
-            await Assert.That(_framework.StringContainsChar("abc", 'b')).IsTrue();
-            await Assert.That(_framework.StringContainsChar("abc", 'z')).IsFalse();
-            await Assert.That(_framework.StringContainsChar(null, 'a')).IsFalse();
+            await Assert
+                .That(_framework.StringContainsChar("abc", 'b'))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(_framework.StringContainsChar("abc", 'z'))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(_framework.StringContainsChar(null, 'a'))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,11 +52,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(_framework.GetInterface(typeof(DisposableFixture), interfaceName))
-                .IsEqualTo(typeof(IDisposable));
+                .IsEqualTo(typeof(IDisposable))
+                .ConfigureAwait(false);
 
             await Assert
                 .That(_framework.GetInterface(typeof(DisposableFixture), "System.ICloneable"))
-                .IsNull();
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,8 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             TypeInfo info = _framework.GetTypeInfoFromType(typeof(string));
 
-            await Assert.That(info).IsEqualTo(typeof(string).GetTypeInfo());
+            await Assert.That(info).IsEqualTo(typeof(string).GetTypeInfo()).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

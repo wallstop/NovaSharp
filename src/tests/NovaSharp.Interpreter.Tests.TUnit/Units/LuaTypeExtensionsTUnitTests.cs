@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -22,7 +21,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             foreach ((DataType type, bool expected) in cases)
             {
-                await Assert.That(type.CanHaveTypeMetatables()).IsEqualTo(expected);
+                await Assert
+                    .That(type.CanHaveTypeMetatables())
+                    .IsEqualTo(expected)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -45,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             foreach ((DataType type, string expected) in cases)
             {
-                await Assert.That(type.ToLuaTypeString()).IsEqualTo(expected);
+                await Assert.That(type.ToLuaTypeString()).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -56,15 +58,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DataType.Tuple.ToLuaTypeString()
             );
 
-            await Assert.That(exception.Message).Contains("Unexpected LuaType");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unexpected LuaType")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ToErrorTypeStringProvidesDebuggerFallback()
         {
-            await Assert.That(DataType.Void.ToErrorTypeString()).IsEqualTo("no value");
-            await Assert.That(DataType.ClrFunction.ToErrorTypeString()).IsEqualTo("function");
-            await Assert.That(DataType.Tuple.ToErrorTypeString()).IsEqualTo("internal<tuple>");
+            await Assert
+                .That(DataType.Void.ToErrorTypeString())
+                .IsEqualTo("no value")
+                .ConfigureAwait(false);
+            await Assert
+                .That(DataType.ClrFunction.ToErrorTypeString())
+                .IsEqualTo("function")
+                .ConfigureAwait(false);
+            await Assert
+                .That(DataType.Tuple.ToErrorTypeString())
+                .IsEqualTo("internal<tuple>")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,8 +86,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             await Assert
                 .That(DataType.TailCallRequest.ToLuaDebuggerString())
-                .IsEqualTo("tailcallrequest");
+                .IsEqualTo("tailcallrequest")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -12,7 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task ParameterlessConstructorUsesDefaultMessage()
         {
             InternalErrorException exception = new();
-            await Assert.That(exception.Message).IsEqualTo("Internal error");
+            await Assert.That(exception.Message).IsEqualTo("Internal error").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -22,14 +21,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task MessageConstructorNormalizesWhitespace(string message)
         {
             InternalErrorException exception = new(message);
-            await Assert.That(exception.Message).IsEqualTo("Internal error");
+            await Assert.That(exception.Message).IsEqualTo("Internal error").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task MessageConstructorKeepsProvidedText()
         {
             InternalErrorException exception = new("Failure detected");
-            await Assert.That(exception.Message).IsEqualTo("Failure detected");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("Failure detected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,14 +42,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 10
             );
 
-            await Assert.That(exception.Message).IsEqualTo("Value 10 is invalid");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("Value 10 is invalid")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task FormatConstructorDefaultsWhenFormatIsMissing()
         {
             InternalErrorException exception = new InternalErrorException(null, (object[])null);
-            await Assert.That(exception.Message).IsEqualTo("Internal error");
+            await Assert.That(exception.Message).IsEqualTo("Internal error").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,7 +63,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 (object[])null
             );
 
-            await Assert.That(exception.Message).IsEqualTo("Message without args");
+            await Assert
+                .That(exception.Message)
+                .IsEqualTo("Message without args")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,8 +76,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             InternalErrorException exception = new("wrap", inner);
 
-            await Assert.That(exception.InnerException).IsSameReferenceAs(inner);
+            await Assert
+                .That(exception.InnerException)
+                .IsSameReferenceAs(inner)
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

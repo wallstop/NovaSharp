@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -26,8 +25,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return subject.someKey");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("missing:someKey");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("missing:someKey").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -49,10 +48,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             Table subject = script.Globals.Get("subject").Table;
-            await Assert.That(subject.Get("value").Number).IsEqualTo(10);
+            await Assert.That(subject.Get("value").Number).IsEqualTo(10).ConfigureAwait(false);
 
             subject.Set("value", DynValue.NewNumber(7));
-            await Assert.That(subject.Get("value").Number).IsEqualTo(7);
+            await Assert.That(subject.Get("value").Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,9 +74,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue second = script.DoString("return subject(2)");
             DynValue total = script.DoString("return subject.total");
 
-            await Assert.That(first.Number).IsEqualTo(3);
-            await Assert.That(second.Number).IsEqualTo(5);
-            await Assert.That(total.Number).IsEqualTo(5);
+            await Assert.That(first.Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(total.Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -109,7 +108,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             DynValue result = script.DoString("return table.concat(collected, ',')");
-            await Assert.That(result.String).IsEqualTo("virtual=42");
+            await Assert.That(result.String).IsEqualTo("virtual=42").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -127,18 +126,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             DynValue meta = script.DoString("return getmetatable(subject)");
-            await Assert.That(meta.String).IsEqualTo("locked");
+            await Assert.That(meta.String).IsEqualTo("locked").ConfigureAwait(false);
 
             DynValue pcallResult = script.DoString(
                 "return pcall(function() setmetatable(subject, {}) end)"
             );
 
-            await Assert.That(pcallResult.Tuple.Length).IsGreaterThanOrEqualTo(2);
-            await Assert.That(pcallResult.Tuple[0].Boolean).IsFalse();
+            await Assert
+                .That(pcallResult.Tuple.Length)
+                .IsGreaterThanOrEqualTo(2)
+                .ConfigureAwait(false);
+            await Assert.That(pcallResult.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(pcallResult.Tuple[1].String)
-                .Contains("cannot change a protected metatable");
+                .Contains("cannot change a protected metatable")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

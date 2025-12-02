@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -34,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = UserData.Create(new UnregisteredHost());
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,13 +47,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue dynValue = UserData.Create(instance);
             Table description = UserData.GetDescriptionOfRegisteredTypes();
 
-            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(dynValue.UserData.Object).IsEqualTo(instance);
-            await Assert.That(dynValue.UserData.Descriptor).IsSameReferenceAs(descriptor);
-            await Assert.That(descriptor.PreparedForWiring).IsTrue();
+            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert.That(dynValue.UserData.Object).IsEqualTo(instance).ConfigureAwait(false);
+            await Assert
+                .That(dynValue.UserData.Descriptor)
+                .IsSameReferenceAs(descriptor)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.PreparedForWiring).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(description.Get(descriptor.Type.FullName).Table.Get("name").String)
-                .IsEqualTo(descriptor.Name);
+                .IsEqualTo(descriptor.Name)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -66,8 +69,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             IEnumerable<Type> current = UserData.GetRegisteredTypes();
             IEnumerable<Type> history = UserData.GetRegisteredTypes(useHistoricalData: true);
 
-            await Assert.That(current.Contains(typeof(HistoricalHost))).IsFalse();
-            await Assert.That(history.Contains(typeof(HistoricalHost))).IsTrue();
+            await Assert
+                .That(current.Contains(typeof(HistoricalHost)))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(history.Contains(typeof(HistoricalHost)))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,10 +88,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue proxied = UserData.Create(new ProxyTarget("proxy"));
 
-            await Assert.That(UserData.IsTypeRegistered<ProxySurface>()).IsTrue();
-            await Assert.That(UserData.IsTypeRegistered<ProxyTarget>()).IsTrue();
-            await Assert.That(proxied.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(proxied.UserData.Descriptor.Type).IsEqualTo(typeof(ProxyTarget));
+            await Assert
+                .That(UserData.IsTypeRegistered<ProxySurface>())
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(UserData.IsTypeRegistered<ProxyTarget>())
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(proxied.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(proxied.UserData.Descriptor.Type)
+                .IsEqualTo(typeof(ProxyTarget))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -98,9 +116,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     typeof(CustomDescriptorHost)
                 );
 
-            await Assert.That(updatedVersion).IsGreaterThan(startingVersion);
-            await Assert.That(methods).IsNotNull();
-            await Assert.That(methods.Count).IsGreaterThan(0);
+            await Assert.That(updatedVersion).IsGreaterThan(startingVersion).ConfigureAwait(false);
+            await Assert.That(methods).IsNotNull().ConfigureAwait(false);
+            await Assert.That(methods.Count).IsGreaterThan(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -112,16 +130,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue dynValue = UserData.Create(host, descriptor);
 
-            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(dynValue.UserData.Descriptor).IsSameReferenceAs(descriptor);
-            await Assert.That(dynValue.UserData.Object).IsEqualTo(host);
+            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(dynValue.UserData.Descriptor)
+                .IsSameReferenceAs(descriptor)
+                .ConfigureAwait(false);
+            await Assert.That(dynValue.UserData.Object).IsEqualTo(host).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CreateStaticReturnsNullWhenDescriptorMissing()
         {
             DynValue result = UserData.CreateStatic((IUserDataDescriptor)null);
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,7 +152,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = UserData.CreateStatic<UnregisteredHost>();
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -141,7 +162,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IEnumerable<Type> registered = UserData.GetRegisteredTypes();
 
-            await Assert.That(registered.Contains(typeof(RegistryHost))).IsTrue();
+            await Assert
+                .That(registered.Contains(typeof(RegistryHost)))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -153,8 +177,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
 
             DynValue dynValue = UserData.Create(new AutoPolicyHost());
-            await Assert.That(dynValue).IsNotNull();
-            await Assert.That(UserData.IsTypeRegistered<AutoPolicyHost>()).IsTrue();
+            await Assert.That(dynValue).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(UserData.IsTypeRegistered<AutoPolicyHost>())
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -164,7 +191,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.RegisterProxyType((IProxyFactory)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("proxyFactory");
+            await Assert.That(exception.ParamName).IsEqualTo("proxyFactory").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -176,8 +203,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("generic-overload"));
 
-            await Assert.That(result).IsSameReferenceAs(descriptor);
-            await Assert.That(dynValue.UserData.Descriptor).IsSameReferenceAs(descriptor);
+            await Assert.That(result).IsSameReferenceAs(descriptor).ConfigureAwait(false);
+            await Assert
+                .That(dynValue.UserData.Descriptor)
+                .IsSameReferenceAs(descriptor)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -197,12 +227,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 searchInterfaces: true
             );
 
-            await Assert.That(descriptor is CompositeUserDataDescriptor).IsTrue();
+            await Assert
+                .That(descriptor is CompositeUserDataDescriptor)
+                .IsTrue()
+                .ConfigureAwait(false);
             CompositeUserDataDescriptor composite = (CompositeUserDataDescriptor)descriptor;
-            await Assert.That(composite.Descriptors.Contains(baseDescriptor)).IsTrue();
+            await Assert
+                .That(composite.Descriptors.Contains(baseDescriptor))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(composite.Descriptors.Any(descriptor => descriptor.Type == typeof(IMarker)))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -216,19 +253,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(competing);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
 
-            await Assert.That(result).IsSameReferenceAs(competing);
+            await Assert.That(result).IsSameReferenceAs(competing).ConfigureAwait(false);
             IUserDataDescriptor resolved = UserData.GetDescriptorForType<CustomDescriptorHost>(
                 searchInterfaces: false
             );
-            await Assert.That(resolved).IsSameReferenceAs(initial);
-            await Assert.That(dynValue.UserData.Descriptor).IsSameReferenceAs(initial);
+            await Assert.That(resolved).IsSameReferenceAs(initial).ConfigureAwait(false);
+            await Assert
+                .That(dynValue.UserData.Descriptor)
+                .IsSameReferenceAs(initial)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task RegisterAssemblyRegistersAnnotatedTypesWhenAssemblyIsNull()
         {
             UserData.UnregisterType<AnnotatedHost>();
-            await Assert.That(UserData.IsTypeRegistered<AnnotatedHost>()).IsFalse();
+            await Assert
+                .That(UserData.IsTypeRegistered<AnnotatedHost>())
+                .IsFalse()
+                .ConfigureAwait(false);
 
             try
             {
@@ -242,7 +285,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 );
             }
 
-            await Assert.That(UserData.IsTypeRegistered<AnnotatedHost>()).IsTrue();
+            await Assert
+                .That(UserData.IsTypeRegistered<AnnotatedHost>())
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -256,7 +302,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 searchInterfaces: false
             );
 
-            await Assert.That(result).IsSameReferenceAs(descriptor);
+            await Assert.That(result).IsSameReferenceAs(descriptor).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -268,8 +314,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Table description = UserData.GetDescriptionOfRegisteredTypes(useHistoricalData: true);
 
             DynValue entry = description.Get(typeof(HistoricalHost).FullName);
-            await Assert.That(entry).IsNotNull();
-            await Assert.That(entry).IsNotEqualTo(DynValue.Nil);
+            await Assert.That(entry).IsNotNull().ConfigureAwait(false);
+            await Assert.That(entry).IsNotEqualTo(DynValue.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -280,7 +326,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IEnumerable<Type> history = UserData.GetRegisteredTypes(useHistoricalData: true);
 
-            await Assert.That(history.Contains(typeof(RegistryHost))).IsTrue();
+            await Assert
+                .That(history.Contains(typeof(RegistryHost)))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -290,8 +339,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(new DerivedHost());
 
-            await Assert.That(descriptor).IsNotNull();
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(BaseHost));
+            await Assert.That(descriptor).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.Type).IsEqualTo(typeof(BaseHost)).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -302,7 +351,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue left = UserData.Create(new EqualityHost("value"));
             DynValue right = UserData.Create(new EqualityHost("value"));
 
-            await Assert.That(left.Equals(right)).IsTrue();
+            await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +364,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue left = UserData.Create(host, descriptorA);
             DynValue right = UserData.Create(host, descriptorB);
 
-            await Assert.That(left.Equals(right)).IsFalse();
+            await Assert.That(left.Equals(right)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -326,7 +375,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue left = UserData.CreateStatic<EqualityHost>();
             DynValue right = UserData.CreateStatic<EqualityHost>();
 
-            await Assert.That(left.Equals(right)).IsTrue();
+            await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -338,7 +387,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue left = UserData.Create(host, descriptor);
             DynValue right = UserData.CreateStatic(descriptor);
 
-            await Assert.That(left.Equals(right)).IsFalse();
+            await Assert.That(left.Equals(right)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -348,9 +397,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue dynValue = UserData.Create(typeof(RegistryHost));
 
-            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(dynValue.UserData.Object).IsNull();
-            await Assert.That(dynValue.UserData.Descriptor.Type).IsEqualTo(typeof(RegistryHost));
+            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert.That(dynValue.UserData.Object).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(dynValue.UserData.Descriptor.Type)
+                .IsEqualTo(typeof(RegistryHost))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -360,7 +412,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IEnumerable<Type> registered = UserData.GetRegisteredTypes();
 
-            await Assert.That(registered.Contains(typeof(RegistryHost))).IsTrue();
+            await Assert
+                .That(registered.Contains(typeof(RegistryHost)))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -370,8 +425,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForType<InterfaceHost>(true);
 
-            await Assert.That(descriptor).IsNotNull();
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(IMarker));
+            await Assert.That(descriptor).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.Type).IsEqualTo(typeof(IMarker)).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -381,7 +436,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.RegisterType((Type)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("type");
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -391,7 +446,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.RegisterType(typeof(CustomDescriptorHost), (IUserDataDescriptor)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("customDescriptor");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("customDescriptor")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -403,7 +461,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.RegisterType((Type)null, descriptor)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("type");
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -413,7 +471,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.RegisterType((IUserDataDescriptor)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("customDescriptor");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("customDescriptor")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -423,7 +484,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.CreateStatic((Type)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("t");
+            await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -433,7 +494,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.GetDescriptorForObject(null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("o");
+            await Assert.That(exception.ParamName).IsEqualTo("o").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -443,7 +504,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.GetDescriptorForType((Type)null, searchInterfaces: false)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("type");
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -453,7 +514,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.GetExtensionMethodsByNameAndType(null, typeof(CustomDescriptorHost))
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("name");
+            await Assert.That(exception.ParamName).IsEqualTo("name").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -463,7 +524,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 UserData.GetExtensionMethodsByNameAndType("Decorate", null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("extendedType");
+            await Assert.That(exception.ParamName).IsEqualTo("extendedType").ConfigureAwait(false);
         }
     }
 
@@ -643,4 +704,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

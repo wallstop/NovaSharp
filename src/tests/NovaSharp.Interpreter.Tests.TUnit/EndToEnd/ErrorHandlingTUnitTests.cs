@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -16,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             DynValue result = script.DoString("return pcall(function() return 1,2,3 end)");
 
-            await EndToEndDynValueAssert.ExpectAsync(result, true, 1, 2, 3);
+            await EndToEndDynValueAssert.ExpectAsync(result, true, 1, 2, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -29,7 +28,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, false, "catched");
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, false, "catched")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, "!cba");
+            await EndToEndDynValueAssert.ExpectAsync(result, "!cba").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,8 +115,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             };
 
             DynValue executionResult = script.DoString(code);
-            await EndToEndDynValueAssert.ExpectAsync(executionResult, "!cba");
+            await EndToEndDynValueAssert.ExpectAsync(executionResult, "!cba").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -27,12 +26,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 HardwireGeneratorRegistry.Register(generator);
 
                 IHardwireGenerator resolved = HardwireGeneratorRegistry.GetGenerator(managedType);
-                await Assert.That(resolved).IsSameReferenceAs(generator);
+                await Assert.That(resolved).IsSameReferenceAs(generator).ConfigureAwait(false);
 
                 string source = GenerateSourceFor(managedType);
 
-                await Assert.That(generator.InvocationCount).IsEqualTo(1);
-                await Assert.That(source).Contains("UserData.RegisterType(typeof(object));");
+                await Assert.That(generator.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
+                await Assert
+                    .That(source)
+                    .Contains("UserData.RegisterType(typeof(object));")
+                    .ConfigureAwait(false);
             });
         }
 
@@ -51,7 +53,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
                 BuildCodeModel(generator, managedType);
 
-                await Assert.That(generatorInstance.AllowInternalsSeen).IsTrue();
+                await Assert
+                    .That(generatorInstance.AllowInternalsSeen)
+                    .IsTrue()
+                    .ConfigureAwait(false);
             });
         }
 
@@ -83,9 +88,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 generator.BuildCodeModel(root);
                 string source = generator.GenerateSourceCode();
 
-                await Assert.That(source).Contains("refp_0");
-                await Assert.That(source).Contains("argscount <= 1");
-                await Assert.That(source).Contains("DynValue.NewTuple");
+                await Assert.That(source).Contains("refp_0").ConfigureAwait(false);
+                await Assert.That(source).Contains("argscount <= 1").ConfigureAwait(false);
+                await Assert.That(source).Contains("DynValue.NewTuple").ConfigureAwait(false);
             });
         }
 
@@ -114,8 +119,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 generator.BuildCodeModel(root);
                 string source = generator.GenerateSourceCode();
 
-                await Assert.That(source).Contains("tmp.Value = ((int)(pars[0]));");
-                await Assert.That(source).Contains("return null;");
+                await Assert
+                    .That(source)
+                    .Contains("tmp.Value = ((int)(pars[0]));")
+                    .ConfigureAwait(false);
+                await Assert.That(source).Contains("return null;").ConfigureAwait(false);
             });
         }
 
@@ -153,7 +161,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
                 await Assert
                     .That(source)
-                    .Contains("Static indexers are not supported by hardwired descriptors");
+                    .Contains("Static indexers are not supported by hardwired descriptors")
+                    .ConfigureAwait(false);
                 await Assert
                     .That(
                         logger.Warnings.Any(error =>
@@ -163,7 +172,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                             )
                         )
                     )
-                    .IsTrue();
+                    .IsTrue()
+                    .ConfigureAwait(false);
             });
         }
 
@@ -242,7 +252,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                     generator.GenerateSourceCode()
                 )!;
-                await Assert.That(exception.Message).Contains("CodeDom provider");
+                await Assert
+                    .That(exception.Message)
+                    .Contains("CodeDom provider")
+                    .ConfigureAwait(false);
             });
         }
 
@@ -259,11 +272,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
         private static async Task RunWithRegistryLock(Func<Task> action)
         {
-            await using SemaphoreSlimLease registryLease = await SemaphoreSlimScope
+            SemaphoreSlimLease registryLease = await SemaphoreSlimScope
                 .WaitAsync(RegistryGate)
                 .ConfigureAwait(false);
-            ResetGenerators();
-            await action().ConfigureAwait(false);
+            try
+            {
+                ResetGenerators();
+                await action().ConfigureAwait(false);
+            }
+            finally
+            {
+                await registryLease.DisposeAsync().ConfigureAwait(false);
+            }
         }
 
         private static void ResetGenerators()
@@ -444,4 +464,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

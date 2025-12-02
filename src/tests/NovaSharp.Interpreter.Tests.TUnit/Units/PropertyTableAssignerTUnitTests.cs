@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -41,8 +40,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             assigner.AssignObject(target, data);
 
-            await Assert.That(target.Name).IsEqualTo("Nova");
-            await Assert.That(target.Count).IsEqualTo(5);
+            await Assert.That(target.Name).IsEqualTo("Nova").ConfigureAwait(false);
+            await Assert.That(target.Count).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -63,8 +62,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             assigner.AssignObject(target, data);
 
-            await Assert.That(target.Address).IsNotNull();
-            await Assert.That(target.Address!.Street).IsEqualTo("Main");
+            await Assert.That(target.Address).IsNotNull().ConfigureAwait(false);
+            await Assert.That(target.Address!.Street).IsEqualTo("Main").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -143,7 +142,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             PropertyTableAssigner<FuzzySample> assigner = new();
             assigner.AssignObject(target, data);
 
-            await Assert.That(target.FirstName).IsEqualTo("Nova");
+            await Assert.That(target.FirstName).IsEqualTo("Nova").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -158,7 +157,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             typeUnsafe.AssignObject(target, data);
 
-            await Assert.That(target.Name).IsEqualTo("Nova");
+            await Assert.That(target.Name).IsEqualTo("Nova").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,7 +171,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             assigner.AssignObjectUnchecked(target, data);
 
-            await Assert.That(target.Name).IsEqualTo("Nova");
+            await Assert.That(target.Name).IsEqualTo("Nova").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -66,12 +65,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 }"
             );
 
-            await Assert.That(assigned.MyNumber).IsEqualTo(3);
-            await Assert.That(assigned.MyString).IsEqualTo("ciao");
-            await Assert.That(assigned.NativeValue.Type).IsEqualTo(DataType.Function);
-            await Assert.That(assigned.SubObj.MyNumber).IsEqualTo(15);
-            await Assert.That(assigned.SubObj.MyString).IsEqualTo("hi");
-            await Assert.That(assigned.SomeTable).IsNotNull();
+            await Assert.That(assigned.MyNumber).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(assigned.MyString).IsEqualTo("ciao").ConfigureAwait(false);
+            await Assert
+                .That(assigned.NativeValue.Type)
+                .IsEqualTo(DataType.Function)
+                .ConfigureAwait(false);
+            await Assert.That(assigned.SubObj.MyNumber).IsEqualTo(15).ConfigureAwait(false);
+            await Assert.That(assigned.SubObj.MyString).IsEqualTo("hi").ConfigureAwait(false);
+            await Assert.That(assigned.SomeTable).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -92,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 );
             });
 
-            await Assert.That(exception.Message).Contains("invalid");
+            await Assert.That(exception.Message).Contains("invalid").ConfigureAwait(false);
         }
 
         private static MyClass AssignFromLua(string tableDefinition)
@@ -114,4 +116,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

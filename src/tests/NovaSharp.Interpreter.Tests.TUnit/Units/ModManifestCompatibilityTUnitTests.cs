@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -23,12 +22,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             string tempDir = tempDirectoryScope.DirectoryPath;
             string scriptPath = Path.Combine(tempDir, "main.lua");
-            await File.WriteAllTextAsync(scriptPath, "return 1");
+            await File.WriteAllTextAsync(scriptPath, "return 1").ConfigureAwait(false);
 
             await File.WriteAllTextAsync(
-                Path.Combine(tempDir, "mod.json"),
-                "{ \"luaCompatibility\": \"Lua53\" }"
-            );
+                    Path.Combine(tempDir, "mod.json"),
+                    "{ \"luaCompatibility\": \"Lua53\" }"
+                )
+                .ConfigureAwait(false);
 
             ScriptOptions options = new(Script.DefaultOptions);
             List<string> info = new();
@@ -42,13 +42,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 warnings.Add
             );
 
-            await Assert.That(applied).IsTrue();
+            await Assert.That(applied).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Lua53);
-            await Assert.That(info.Count).IsEqualTo(1);
-            await Assert.That(info[0]).Contains("Lua 5.3");
-            await Assert.That(warnings.Count).IsEqualTo(0);
+                .IsEqualTo(LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(info.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(info[0]).Contains("Lua 5.3").ConfigureAwait(false);
+            await Assert.That(warnings.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,7 +59,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 namePrefix: "novasharp_modcompat_"
             );
             string tempDir = tempDirectoryScope.DirectoryPath;
-            await File.WriteAllTextAsync(Path.Combine(tempDir, "mod.json"), "{ this is: not json");
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "mod.json"), "{ this is: not json")
+                .ConfigureAwait(false);
 
             ScriptOptions options = new(Script.DefaultOptions);
             List<string> warnings = new();
@@ -71,9 +73,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 warningSink: warnings.Add
             );
 
-            await Assert.That(applied).IsFalse();
-            await Assert.That(warnings.Count).IsEqualTo(1);
-            await Assert.That(warnings[0]).Contains("Failed to load");
+            await Assert.That(applied).IsFalse().ConfigureAwait(false);
+            await Assert.That(warnings.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(warnings[0]).Contains("Failed to load").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,9 +86,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             string tempDir = tempDirectoryScope.DirectoryPath;
             await File.WriteAllTextAsync(
-                Path.Combine(tempDir, "mod.json"),
-                "{ \"name\": \"mod\", \"luaCompatibility\": \"Lua52\" }"
-            );
+                    Path.Combine(tempDir, "mod.json"),
+                    "{ \"name\": \"mod\", \"luaCompatibility\": \"Lua52\" }"
+                )
+                .ConfigureAwait(false);
 
             List<string> info = new();
 
@@ -98,9 +101,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 warningSink: null
             );
 
-            await Assert.That(script.CompatibilityVersion).IsEqualTo(LuaCompatibilityVersion.Lua52);
-            await Assert.That(info.Count).IsGreaterThan(0);
-            await Assert.That(info[0]).Contains("Lua 5.2");
+            await Assert
+                .That(script.CompatibilityVersion)
+                .IsEqualTo(LuaCompatibilityVersion.Lua52)
+                .ConfigureAwait(false);
+            await Assert.That(info.Count).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert.That(info[0]).Contains("Lua 5.2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -123,11 +129,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 fileSystem: fileSystem
             );
 
-            await Assert.That(applied).IsTrue();
+            await Assert.That(applied).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Lua53);
-            await Assert.That(fileSystem.OpenReadCallCount).IsEqualTo(1);
+                .IsEqualTo(LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(fileSystem.OpenReadCallCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -141,7 +148,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 warningSink: null
             );
 
-            await Assert.That(result).IsFalse();
+            await Assert.That(result).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -154,7 +161,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ScriptOptions options = new(Script.DefaultOptions);
 
             bool applied = ModManifestCompatibility.TryApplyFromDirectory(tempDir, options);
-            await Assert.That(applied).IsFalse();
+            await Assert.That(applied).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -165,9 +172,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             string tempDir = tempDirectoryScope.DirectoryPath;
             await File.WriteAllTextAsync(
-                Path.Combine(tempDir, "mod.json"),
-                "{ \"name\": \"sample\" }"
-            );
+                    Path.Combine(tempDir, "mod.json"),
+                    "{ \"name\": \"sample\" }"
+                )
+                .ConfigureAwait(false);
 
             ScriptOptions options = new(Script.DefaultOptions);
             List<string> info = new();
@@ -179,8 +187,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 warningSink: null
             );
 
-            await Assert.That(applied).IsTrue();
-            await Assert.That(info.Count).IsEqualTo(0);
+            await Assert.That(applied).IsTrue().ConfigureAwait(false);
+            await Assert.That(info.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -202,10 +210,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 fileSystem: fileSystem
             );
 
-            await Assert.That(applied).IsTrue();
+            await Assert.That(applied).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(options.CompatibilityVersion)
-                .IsEqualTo(LuaCompatibilityVersion.Lua54);
+                .IsEqualTo(LuaCompatibilityVersion.Lua54)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -222,8 +231,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 fileSystem: fileSystem
             );
 
-            await Assert.That(applied).IsFalse();
-            await Assert.That(fileSystem.GetFullPathAttempts).IsEqualTo(1);
+            await Assert.That(applied).IsFalse().ConfigureAwait(false);
+            await Assert.That(fileSystem.GetFullPathAttempts).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -343,4 +352,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

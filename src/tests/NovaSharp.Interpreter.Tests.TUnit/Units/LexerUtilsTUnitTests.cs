@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             double value = LexerUtils.ParseNumber(token);
 
-            await Assert.That(value).IsEqualTo(42.5d);
+            await Assert.That(value).IsEqualTo(42.5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -27,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseNumber(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -37,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             double value = LexerUtils.ParseHexInteger(token);
 
-            await Assert.That(value).IsEqualTo(26d);
+            await Assert.That(value).IsEqualTo(26d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -49,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexInteger(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,7 +60,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexInteger(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -73,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexInteger(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             double value = LexerUtils.ParseHexFloat(token);
 
-            await Assert.That(value).IsEqualTo(7.75d);
+            await Assert.That(value).IsEqualTo(7.75d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexFloat(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -107,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexFloat(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -119,7 +118,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexFloat(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,7 +130,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.ParseHexFloat(token)
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -141,9 +140,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string remainder = LexerUtils.ReadHexProgressive("1AG", ref value, out int digits);
 
-            await Assert.That(digits).IsEqualTo(2);
-            await Assert.That(value).IsEqualTo(26d);
-            await Assert.That(remainder).IsEqualTo("G");
+            await Assert.That(digits).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(value).IsEqualTo(26d).ConfigureAwait(false);
+            await Assert.That(remainder).IsEqualTo("G").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -153,14 +152,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.HexDigit2Value('Z')
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task AdjustLuaLongStringDropsLeadingLineBreaks()
         {
-            await Assert.That(LexerUtils.AdjustLuaLongString("\r\nline")).IsEqualTo("line");
-            await Assert.That(LexerUtils.AdjustLuaLongString("\nline")).IsEqualTo("line");
+            await Assert
+                .That(LexerUtils.AdjustLuaLongString("\r\nline"))
+                .IsEqualTo("line")
+                .ConfigureAwait(false);
+            await Assert
+                .That(LexerUtils.AdjustLuaLongString("\nline"))
+                .IsEqualTo("line")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -171,7 +176,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string result = LexerUtils.UnescapeLuaString(token, escaped);
 
-            await Assert.That(result).IsEqualTo("SA😀world");
+            await Assert.That(result).IsEqualTo("SA😀world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -183,7 +188,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.UnescapeLuaString(token, "\\x4G")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -195,7 +200,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.UnescapeLuaString(token, "\\u1234")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -207,7 +212,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.UnescapeLuaString(token, "\\u{123456789")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -219,7 +224,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 LexerUtils.UnescapeLuaString(token, "unfinished\\")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         private static Token CreateToken(TokenType type, string text)
@@ -240,4 +245,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

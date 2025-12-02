@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -13,7 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task IsNullAlwaysReturnsTrue()
         {
             JsonNull.Create();
-            await Assert.That(JsonNull.IsNull()).IsTrue();
+            await Assert.That(JsonNull.IsNull()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -21,9 +20,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue value = JsonNull.Create();
 
-            await Assert.That(value.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(value.UserData.Object is null).IsTrue();
-            await Assert.That(value.UserData.Descriptor.Type).IsEqualTo(typeof(JsonNull));
+            await Assert.That(value.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert.That(value.UserData.Object is null).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(value.UserData.Descriptor.Type)
+                .IsEqualTo(typeof(JsonNull))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,9 +35,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue ordinaryNil = DynValue.Nil;
             DynValue number = DynValue.NewNumber(1);
 
-            await Assert.That(JsonNull.IsJsonNull(jsonNull)).IsTrue();
-            await Assert.That(JsonNull.IsJsonNull(ordinaryNil)).IsFalse();
-            await Assert.That(JsonNull.IsJsonNull(number)).IsFalse();
+            await Assert.That(JsonNull.IsJsonNull(jsonNull)).IsTrue().ConfigureAwait(false);
+            await Assert.That(JsonNull.IsJsonNull(ordinaryNil)).IsFalse().ConfigureAwait(false);
+            await Assert.That(JsonNull.IsJsonNull(number)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,8 +46,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 JsonNull.IsJsonNull(null)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("v");
+            await Assert.That(exception.ParamName).IsEqualTo("v").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

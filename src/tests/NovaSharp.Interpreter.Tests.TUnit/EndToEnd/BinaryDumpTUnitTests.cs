@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -21,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     + "local fn = load(str); "
                     + "return fn(9);"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 81);
+            await EndToEndDynValueAssert.ExpectAsync(result, 81).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -32,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     + "local fn = load(str); "
                     + "return fn(9);"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 81);
+            await EndToEndDynValueAssert.ExpectAsync(result, 81).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -47,7 +46,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "fact"
             );
             DynValue result = fact.Function.Call(5);
-            await EndToEndDynValueAssert.ExpectAsync(result, 120);
+            await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -64,7 +63,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             );
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             DynValue result = fact.Function.Call(5);
-            await EndToEndDynValueAssert.ExpectAsync(result, 120);
+            await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +82,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             fact.Function.OwnerScript.Globals.Set("fact", fact);
             fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
             DynValue result = fact.Function.Call(5);
-            await EndToEndDynValueAssert.ExpectAsync(result, 120);
+            await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -105,7 +104,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
                 _ = fact.Function.Call(5);
             });
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -125,7 +124,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return y;
                 "
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 140);
+            await EndToEndDynValueAssert.ExpectAsync(result, 140).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -142,7 +141,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return g(3)(2);
                 "
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 5);
+            await EndToEndDynValueAssert.ExpectAsync(result, 5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -163,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return 10 * m.t.dojob();
                 "
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 10);
+            await EndToEndDynValueAssert.ExpectAsync(result, 10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,7 +187,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return 10 * Q.t.dojob();
                 "
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 10);
+            await EndToEndDynValueAssert.ExpectAsync(result, 10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -224,11 +223,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            await Assert.That(captured.Count).IsEqualTo(6);
+            await Assert.That(captured.Count).IsEqualTo(6).ConfigureAwait(false);
             int[] expected = { 0, 1, 1, 0, 1, 1 };
             for (int i = 0; i < captured.Count; i++)
             {
-                await Assert.That(ReferenceEquals(captured[i], captured[expected[i]])).IsTrue();
+                await Assert
+                    .That(ReferenceEquals(captured[i], captured[expected[i]]))
+                    .IsTrue()
+                    .ConfigureAwait(false);
             }
         }
 
@@ -261,4 +263,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

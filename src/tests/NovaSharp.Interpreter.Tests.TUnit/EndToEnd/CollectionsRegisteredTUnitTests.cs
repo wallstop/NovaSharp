@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 #pragma warning disable CA1814
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
@@ -93,7 +92,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return x;
                 ",
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 6)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false)
             );
         }
 
@@ -117,7 +117,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return x;
                 ",
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 6)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false)
             );
         }
 
@@ -136,10 +137,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await EndToEndDynValueAssert.ExpectAsync(result, 9);
-                    await Assert.That(host.GetList()[0]).IsEqualTo(1);
-                    await Assert.That(host.GetList()[1]).IsEqualTo(5);
-                    await Assert.That(host.GetList()[2]).IsEqualTo(3);
+                    await EndToEndDynValueAssert.ExpectAsync(result, 9).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[0]).IsEqualTo(1).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[1]).IsEqualTo(5).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[2]).IsEqualTo(3).ConfigureAwait(false);
                 }
             );
         }
@@ -156,7 +157,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return x;
                 ",
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 12)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 12).ConfigureAwait(false)
             );
         }
 
@@ -175,10 +177,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await EndToEndDynValueAssert.ExpectAsync(result, 13);
-                    await Assert.That(host.GetArray()[0]).IsEqualTo(2);
-                    await Assert.That(host.GetArray()[1]).IsEqualTo(5);
-                    await Assert.That(host.GetArray()[2]).IsEqualTo(6);
+                    await EndToEndDynValueAssert.ExpectAsync(result, 13).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[0]).IsEqualTo(2).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[1]).IsEqualTo(5).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[2]).IsEqualTo(6).ConfigureAwait(false);
                 }
             );
         }
@@ -198,8 +200,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await EndToEndDynValueAssert.ExpectAsync(result, 41);
-                    await Assert.That(host.GetMultiArray()[0, 1]).IsEqualTo(9);
+                    await EndToEndDynValueAssert.ExpectAsync(result, 41).ConfigureAwait(false);
+                    await Assert
+                        .That(host.GetMultiArray()[0, 1])
+                        .IsEqualTo(9)
+                        .ConfigureAwait(false);
                 }
             );
         }
@@ -216,7 +221,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return x;
                 ",
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 24)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 24).ConfigureAwait(false)
             );
         }
 
@@ -240,7 +246,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return x;
                 ",
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 24)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 24).ConfigureAwait(false)
             );
         }
 
@@ -259,15 +266,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await EndToEndDynValueAssert.ExpectAsync(result, 7 + 17 + 9);
-                    await Assert.That(host.GetItems()[1].Value).IsEqualTo(17);
+                    await EndToEndDynValueAssert
+                        .ExpectAsync(result, 7 + 17 + 9)
+                        .ConfigureAwait(false);
+                    await Assert.That(host.GetItems()[1].Value).IsEqualTo(17).ConfigureAwait(false);
                 }
             );
         }
 
         private static Task RunScriptAsync(string code, Func<DynValue, Task> asserts)
         {
-            return RunScriptAsync(code, async (value, _) => await asserts(value));
+            return RunScriptAsync(
+                code,
+                async (value, _) => await asserts(value).ConfigureAwait(false)
+            );
         }
 
         private static Task RunScriptAsync(
@@ -309,4 +321,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

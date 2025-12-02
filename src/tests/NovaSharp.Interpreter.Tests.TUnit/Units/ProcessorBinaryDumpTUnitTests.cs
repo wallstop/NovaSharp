@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -32,7 +31,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 processor.Undump(stream, 0, script.Globals, out bool _)
             );
-            await Assert.That(exception.Message).Contains("Not a NovaSharp chunk");
+            await Assert
+                .That(exception.Message)
+                .Contains("Not a NovaSharp chunk")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -53,7 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 processor.Undump(stream, 0, script.Globals, out bool _)
             );
-            await Assert.That(exception.Message).Contains("Invalid version");
+            await Assert.That(exception.Message).Contains("Invalid version").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -78,14 +80,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 invalidBase++;
             }
 
-            await Assert.That(invalidBase).IsLessThan(byteCode.Code.Count);
+            await Assert.That(invalidBase).IsLessThan(byteCode.Code.Count).ConfigureAwait(false);
 
             using MemoryStream stream = new();
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 processor.Dump(stream, invalidBase, hasUpValues: false)
             );
-            await Assert.That(exception.Message).Contains("baseAddress");
+            await Assert.That(exception.Message).Contains("baseAddress").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

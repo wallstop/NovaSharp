@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -12,35 +11,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task VarArgsTupleBasic()
         {
-            await ExpectAsync("f(3)", "a: 3 b: nil");
-            await ExpectAsync("f(3,4)", "a: 3 b: 4");
-            await ExpectAsync("f(3,4,5)", "a: 3 b: 4");
-            await ExpectAsync("f(r(),10)", "a: 1 b: 10");
-            await ExpectAsync("f(r())", "a: 1 b: 2");
+            await ExpectAsync("f(3)", "a: 3 b: nil").ConfigureAwait(false);
+            await ExpectAsync("f(3,4)", "a: 3 b: 4").ConfigureAwait(false);
+            await ExpectAsync("f(3,4,5)", "a: 3 b: 4").ConfigureAwait(false);
+            await ExpectAsync("f(r(),10)", "a: 1 b: 10").ConfigureAwait(false);
+            await ExpectAsync("f(r())", "a: 1 b: 2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task VarArgsTupleIntermediate()
         {
-            await ExpectAsync("g(3)", "a: 3 b: nil arg: {}");
-            await ExpectAsync("g(3,4)", "a: 3 b: 4 arg: {}");
-            await ExpectAsync("g(3,4,5,8)", "a: 3 b: 4 arg: {5, 8, }");
-            await ExpectAsync("g(5,r())", "a: 5 b: 1 arg: {2, 3, }");
+            await ExpectAsync("g(3)", "a: 3 b: nil arg: {}").ConfigureAwait(false);
+            await ExpectAsync("g(3,4)", "a: 3 b: 4 arg: {}").ConfigureAwait(false);
+            await ExpectAsync("g(3,4,5,8)", "a: 3 b: 4 arg: {5, 8, }").ConfigureAwait(false);
+            await ExpectAsync("g(5,r())", "a: 5 b: 1 arg: {2, 3, }").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task VarArgsTupleAdvanced()
         {
-            await ExpectAsync("h(5,r())", "a: 5 b: 1 arg: {2, 3, }");
+            await ExpectAsync("h(5,r())", "a: 5 b: 1 arg: {2, 3, }").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task VarArgsTupleAdvanced2()
         {
-            await ExpectAsync("i(3)", "a: extra b: 3 arg: {}");
-            await ExpectAsync("i(3,4)", "a: extra b: 3 arg: {4, }");
-            await ExpectAsync("i(3,4,5,8)", "a: extra b: 3 arg: {4, 5, 8, }");
-            await ExpectAsync("i(5,r())", "a: extra b: 5 arg: {1, 2, 3, }");
+            await ExpectAsync("i(3)", "a: extra b: 3 arg: {}").ConfigureAwait(false);
+            await ExpectAsync("i(3,4)", "a: extra b: 3 arg: {4, }").ConfigureAwait(false);
+            await ExpectAsync("i(3,4,5,8)", "a: extra b: 3 arg: {4, 5, 8, }").ConfigureAwait(false);
+            await ExpectAsync("i(5,r())", "a: extra b: 5 arg: {1, 2, 3, }").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -55,7 +54,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Obj(1)
                 ";
             script.DoString(lua);
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         private static async Task ExpectAsync(string code, string expected)
@@ -94,9 +93,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             );
 
             DynValue result = script.DoString("return " + code);
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo(expected);
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

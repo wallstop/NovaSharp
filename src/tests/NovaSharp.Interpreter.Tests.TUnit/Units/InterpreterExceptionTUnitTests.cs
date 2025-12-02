@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -21,7 +20,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.DecoratedMessage)
-                .IsEqualTo($"{location.FormatLocation(script)}: boom");
+                .IsEqualTo($"{location.FormatLocation(script)}: boom")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -32,7 +32,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.DecorateMessage(script, null, ip: 42);
 
-            await Assert.That(exception.DecoratedMessage).IsEqualTo("bytecode:42: boom");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .IsEqualTo("bytecode:42: boom")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.DecorateMessage(script, location);
 
-            await Assert.That(exception.DecoratedMessage).IsEqualTo("boom");
+            await Assert.That(exception.DecoratedMessage).IsEqualTo("boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +59,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.DecorateMessage(script, location);
 
-            await Assert.That(exception.DecoratedMessage).IsEqualTo("custom");
+            await Assert.That(exception.DecoratedMessage).IsEqualTo("custom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,21 +70,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _ = new TestInterpreterException(format: null);
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("format");
+            await Assert.That(exception.ParamName).IsEqualTo("format").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task FormatConstructorAppliesInvariantFormatting()
         {
             TestInterpreterException exception = new("value {0}", 1.5);
-            await Assert.That(exception.Message).IsEqualTo("value 1.5");
+            await Assert.That(exception.Message).IsEqualTo("value 1.5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task FormatConstructorReturnsLiteralWhenNoArgumentsProvided()
         {
             TestInterpreterException exception = new("literal");
-            await Assert.That(exception.Message).IsEqualTo("literal");
+            await Assert.That(exception.Message).IsEqualTo("literal").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -90,12 +93,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ArgumentNullException noMessage = ExpectException<ArgumentNullException>(() =>
                 TestInterpreterException.Wrap(null)
             );
-            await Assert.That(noMessage.ParamName).IsEqualTo("ex");
+            await Assert.That(noMessage.ParamName).IsEqualTo("ex").ConfigureAwait(false);
 
             ArgumentNullException withMessage = ExpectException<ArgumentNullException>(() =>
                 TestInterpreterException.Wrap(null, "override")
             );
-            await Assert.That(withMessage.ParamName).IsEqualTo("ex");
+            await Assert.That(withMessage.ParamName).IsEqualTo("ex").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -105,8 +108,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             TestInterpreterException wrapped = TestInterpreterException.Wrap(inner);
 
-            await Assert.That(wrapped.InnerException).IsSameReferenceAs(inner);
-            await Assert.That(wrapped.Message).IsEqualTo("inner");
+            await Assert
+                .That(wrapped.InnerException)
+                .IsSameReferenceAs(inner)
+                .ConfigureAwait(false);
+            await Assert.That(wrapped.Message).IsEqualTo("inner").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -116,8 +122,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             TestInterpreterException wrapped = TestInterpreterException.Wrap(inner, "override");
 
-            await Assert.That(wrapped.InnerException).IsSameReferenceAs(inner);
-            await Assert.That(wrapped.Message).IsEqualTo("override");
+            await Assert
+                .That(wrapped.InnerException)
+                .IsSameReferenceAs(inner)
+                .ConfigureAwait(false);
+            await Assert.That(wrapped.Message).IsEqualTo("override").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,13 +141,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             exception.AppendCompatibilityContext(script);
 
-            await Assert.That(exception.DecoratedMessage).EndsWith($"[compatibility: {profile}]");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .EndsWith($"[compatibility: {profile}]")
+                .ConfigureAwait(false);
 
             string firstAppend = exception.DecoratedMessage ?? string.Empty;
 
             exception.AppendCompatibilityContext(script);
 
-            await Assert.That(exception.DecoratedMessage).IsEqualTo(firstAppend);
+            await Assert
+                .That(exception.DecoratedMessage)
+                .IsEqualTo(firstAppend)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -147,15 +162,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InterpreterException exception = new("boom");
 
             exception.AppendCompatibilityContext(null);
-            await Assert.That(exception.DecoratedMessage).IsNull();
+            await Assert.That(exception.DecoratedMessage).IsNull().ConfigureAwait(false);
 
             Script script = new();
             exception.AppendCompatibilityContext(script);
-            await Assert.That(exception.DecoratedMessage).IsNull();
+            await Assert.That(exception.DecoratedMessage).IsNull().ConfigureAwait(false);
 
             exception.DecoratedMessage = "ready";
             exception.AppendCompatibilityContext(script);
-            await Assert.That(exception.DecoratedMessage).Contains("compatibility");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("compatibility")
+                .ConfigureAwait(false);
         }
 
         private static SourceRef CreateSourceRef(Script script, string chunkName)
@@ -214,4 +232,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

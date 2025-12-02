@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -26,8 +25,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("obj.value = 123\nreturn obj.value");
 
-            await Assert.That(result.Number).IsEqualTo(123);
-            await Assert.That(host.Value).IsEqualTo(123);
+            await Assert.That(result.Number).IsEqualTo(123).ConfigureAwait(false);
+            await Assert.That(host.Value).IsEqualTo(123).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,7 +39,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("obj.readonly = 'x'")
             )!;
 
-            await Assert.That(exception.Message).Contains("cannot be assigned");
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot be assigned")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,7 +54,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _descriptor.Value.GetValue(script, null)
             )!;
 
-            await Assert.That(exception.Message).Contains("instance member value");
+            await Assert
+                .That(exception.Message)
+                .Contains("instance member value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -64,9 +69,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return obj:call(5)");
 
-            await Assert.That(result.String).IsEqualTo("fallback");
-            await Assert.That(host.Value).IsEqualTo(5);
-            await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
+            await Assert.That(result.String).IsEqualTo("fallback").ConfigureAwait(false);
+            await Assert.That(host.Value).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(_descriptor.Method.LastArgumentCount)
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
             CollectionAssert.AreEqual(
                 new object[] { 5, "fallback" },
                 _descriptor.Method.LastParameters
@@ -82,9 +90,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return obj:call(7, 'custom')");
 
-            await Assert.That(result.String).IsEqualTo("custom");
-            await Assert.That(host.Value).IsEqualTo(7);
-            await Assert.That(_descriptor.Method.LastArgumentCount).IsEqualTo(2);
+            await Assert.That(result.String).IsEqualTo("custom").ConfigureAwait(false);
+            await Assert.That(host.Value).IsEqualTo(7).ConfigureAwait(false);
+            await Assert
+                .That(_descriptor.Method.LastArgumentCount)
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
             CollectionAssert.AreEqual(
                 new object[] { 7, "custom" },
                 _descriptor.Method.LastParameters
@@ -101,7 +112,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("TestHost:call(3)")
             )!;
 
-            await Assert.That(exception.Message).Contains("call");
+            await Assert.That(exception.Message).Contains("call").ConfigureAwait(false);
         }
 
         private Script CreateScript()
@@ -216,4 +227,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

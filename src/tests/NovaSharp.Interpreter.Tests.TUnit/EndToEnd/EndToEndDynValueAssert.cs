@@ -5,7 +5,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter.DataTypes;
 
-#pragma warning disable CA2007 // ConfigureAwait noise is intentionally suppressed in test helpers.
     internal static class EndToEndDynValueAssert
     {
         public static async Task ExpectAsync(DynValue actual, params object[] expected)
@@ -23,21 +22,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             if (expected.Length == 1)
             {
-                await AssertValueAsync(actual, expected[0]);
+                await AssertValueAsync(actual, expected[0]).ConfigureAwait(false);
                 return;
             }
 
-            await AssertTupleAsync(actual, expected);
+            await AssertTupleAsync(actual, expected).ConfigureAwait(false);
         }
 
         private static async Task AssertTupleAsync(DynValue value, object[] expected)
         {
-            await Assert.That(value.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length);
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
 
             for (int index = 0; index < expected.Length; index++)
             {
-                await AssertValueAsync(value.Tuple[index], expected[index]);
+                await AssertValueAsync(value.Tuple[index], expected[index]).ConfigureAwait(false);
             }
         }
 
@@ -45,32 +44,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             if (expected is DataType dataType)
             {
-                await Assert.That(value.Type).IsEqualTo(dataType);
+                await Assert.That(value.Type).IsEqualTo(dataType).ConfigureAwait(false);
                 return;
             }
             else if (expected == null)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Nil);
+                await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             }
             else if (expected is bool boolean)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Boolean);
-                await Assert.That(value.Boolean).IsEqualTo(boolean);
+                await Assert.That(value.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+                await Assert.That(value.Boolean).IsEqualTo(boolean).ConfigureAwait(false);
             }
             else if (expected is double doubleValue)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Number);
-                await Assert.That(value.Number).IsEqualTo(doubleValue);
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(doubleValue).ConfigureAwait(false);
             }
             else if (expected is int intValue)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Number);
-                await Assert.That(value.Number).IsEqualTo(intValue);
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(intValue).ConfigureAwait(false);
             }
             else if (expected is string stringValue)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.String);
-                await Assert.That(value.String).IsEqualTo(stringValue);
+                await Assert.That(value.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                await Assert.That(value.String).IsEqualTo(stringValue).ConfigureAwait(false);
             }
             else
             {
@@ -80,5 +79,4 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
         }
     }
-#pragma warning restore CA2007
 }

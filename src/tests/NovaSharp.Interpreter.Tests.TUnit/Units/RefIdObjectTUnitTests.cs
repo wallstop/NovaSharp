@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Text.RegularExpressions;
@@ -21,7 +20,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SampleRefObject first = new();
             SampleRefObject second = new();
 
-            await Assert.That(second.ReferenceId > first.ReferenceId).IsTrue();
+            await Assert
+                .That(second.ReferenceId > first.ReferenceId)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -31,8 +33,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             string formatted = instance.FormatTypeString("Sample");
 
-            await Assert.That(RefPattern.IsMatch(formatted)).IsTrue();
+            await Assert.That(RefPattern.IsMatch(formatted)).IsTrue().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 #pragma warning disable CA1814
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
@@ -117,8 +116,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async result =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(6);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
                 }
             );
         }
@@ -145,8 +144,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async result =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(6);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
                 }
             );
         }
@@ -166,11 +165,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(9);
-                    await Assert.That(host.GetList()[0]).IsEqualTo(1);
-                    await Assert.That(host.GetList()[1]).IsEqualTo(5);
-                    await Assert.That(host.GetList()[2]).IsEqualTo(3);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(9).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[0]).IsEqualTo(1).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[1]).IsEqualTo(5).ConfigureAwait(false);
+                    await Assert.That(host.GetList()[2]).IsEqualTo(3).ConfigureAwait(false);
                 }
             );
         }
@@ -189,8 +188,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async result =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(12);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(12).ConfigureAwait(false);
                 }
             );
         }
@@ -210,11 +209,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(13);
-                    await Assert.That(host.GetArray()[0]).IsEqualTo(2);
-                    await Assert.That(host.GetArray()[1]).IsEqualTo(5);
-                    await Assert.That(host.GetArray()[2]).IsEqualTo(6);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(13).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[0]).IsEqualTo(2).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[1]).IsEqualTo(5).ConfigureAwait(false);
+                    await Assert.That(host.GetArray()[2]).IsEqualTo(6).ConfigureAwait(false);
                 }
             );
         }
@@ -233,8 +232,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async result =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(24);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(24).ConfigureAwait(false);
                 }
             );
         }
@@ -261,8 +260,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async result =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(24);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(24).ConfigureAwait(false);
                 }
             );
         }
@@ -282,18 +281,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ",
                 async (result, host) =>
                 {
-                    await Assert.That(result.Type).IsEqualTo(DataType.Number);
-                    await Assert.That(result.Number).IsEqualTo(7 + 17 + 9);
-                    await Assert.That(host.GetItems()[0].Value).IsEqualTo(7);
-                    await Assert.That(host.GetItems()[1].Value).IsEqualTo(17);
-                    await Assert.That(host.GetItems()[2].Value).IsEqualTo(9);
+                    await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(7 + 17 + 9).ConfigureAwait(false);
+                    await Assert.That(host.GetItems()[0].Value).IsEqualTo(7).ConfigureAwait(false);
+                    await Assert.That(host.GetItems()[1].Value).IsEqualTo(17).ConfigureAwait(false);
+                    await Assert.That(host.GetItems()[2].Value).IsEqualTo(9).ConfigureAwait(false);
                 }
             );
         }
 
         private static Task RunScriptAsync(string code, Func<DynValue, Task> asserts)
         {
-            return RunScriptAsync(code, async (value, _) => await asserts(value));
+            return RunScriptAsync(
+                code,
+                async (value, _) => await asserts(value).ConfigureAwait(false)
+            );
         }
 
         private static async Task RunScriptAsync(
@@ -328,9 +330,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
 
             DynValue result = script.DoString(code);
-            await asserts(result, host);
+            await asserts(result, host).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007
 #pragma warning restore CA1814

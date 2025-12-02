@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -19,14 +18,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .GetParameters()[1];
             ParameterDescriptor descriptor = new(optional);
 
-            await Assert.That(descriptor.Name).IsEqualTo("text");
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(string));
-            await Assert.That(descriptor.HasDefaultValue).IsTrue();
-            await Assert.That(descriptor.DefaultValue).IsEqualTo("fallback");
-            await Assert.That(descriptor.IsOut).IsFalse();
-            await Assert.That(descriptor.IsRef).IsFalse();
-            await Assert.That(descriptor.IsVarArgs).IsFalse();
-            await Assert.That(descriptor.HasBeenRestricted).IsFalse();
+            await Assert.That(descriptor.Name).IsEqualTo("text").ConfigureAwait(false);
+            await Assert.That(descriptor.Type).IsEqualTo(typeof(string)).ConfigureAwait(false);
+            await Assert.That(descriptor.HasDefaultValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.DefaultValue).IsEqualTo("fallback").ConfigureAwait(false);
+            await Assert.That(descriptor.IsOut).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.IsRef).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.IsVarArgs).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.HasBeenRestricted).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,9 +55,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ParameterDescriptor byRefDescriptor = new(byRef);
             ParameterDescriptor outDescriptor = new(outParam);
 
-            await Assert.That(varArgsDescriptor.IsVarArgs).IsTrue();
-            await Assert.That(byRefDescriptor.IsRef).IsTrue();
-            await Assert.That(outDescriptor.IsOut).IsTrue();
+            await Assert.That(varArgsDescriptor.IsVarArgs).IsTrue().ConfigureAwait(false);
+            await Assert.That(byRefDescriptor.IsRef).IsTrue().ConfigureAwait(false);
+            await Assert.That(outDescriptor.IsOut).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -76,9 +75,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             descriptor.RestrictType(typeof(string));
 
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(string));
-            await Assert.That(descriptor.OriginalType).IsEqualTo(typeof(object));
-            await Assert.That(descriptor.HasBeenRestricted).IsTrue();
+            await Assert.That(descriptor.Type).IsEqualTo(typeof(string)).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.OriginalType)
+                .IsEqualTo(typeof(object))
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.HasBeenRestricted).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -129,14 +131,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             descriptor.RestrictType(typeof(string));
             descriptor.PrepareForWiring(table);
 
-            await Assert.That(table.RawGet("name").String).IsEqualTo("value");
-            await Assert.That(table.RawGet("type").String).IsEqualTo(typeof(string).FullName);
-            await Assert.That(table.RawGet("origtype").String).IsEqualTo(typeof(object).FullName);
-            await Assert.That(table.RawGet("default").Boolean).IsTrue();
-            await Assert.That(table.RawGet("restricted").Boolean).IsTrue();
-            await Assert.That(table.RawGet("out").Boolean).IsFalse();
-            await Assert.That(table.RawGet("ref").Boolean).IsFalse();
-            await Assert.That(table.RawGet("varargs").Boolean).IsFalse();
+            await Assert.That(table.RawGet("name").String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("type").String)
+                .IsEqualTo(typeof(string).FullName)
+                .ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("origtype").String)
+                .IsEqualTo(typeof(object).FullName)
+                .ConfigureAwait(false);
+            await Assert.That(table.RawGet("default").Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("restricted").Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("out").Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(table.RawGet("ref").Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(table.RawGet("varargs").Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -153,9 +161,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 typeRestriction: typeof(string)
             );
 
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(string));
-            await Assert.That(descriptor.OriginalType).IsEqualTo(typeof(object));
-            await Assert.That(descriptor.HasBeenRestricted).IsTrue();
+            await Assert.That(descriptor.Type).IsEqualTo(typeof(string)).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.OriginalType)
+                .IsEqualTo(typeof(object))
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.HasBeenRestricted).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -175,9 +186,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             descriptor.PrepareForWiring(table);
 
-            await Assert.That(table.RawGet("type").String).IsEqualTo(typeof(int).FullName);
-            await Assert.That(table.RawGet("origtype").String).IsEqualTo(typeof(int).FullName);
-            await Assert.That(table.RawGet("ref").Boolean).IsTrue();
+            await Assert
+                .That(table.RawGet("type").String)
+                .IsEqualTo(typeof(int).FullName)
+                .ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("origtype").String)
+                .IsEqualTo(typeof(int).FullName)
+                .ConfigureAwait(false);
+            await Assert.That(table.RawGet("ref").Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -185,8 +202,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ParameterDescriptor descriptor = new("value", typeof(double));
 
-            await Assert.That(descriptor.HasBeenRestricted).IsFalse();
-            await Assert.That(descriptor.OriginalType).IsEqualTo(typeof(double));
+            await Assert.That(descriptor.HasBeenRestricted).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.OriginalType)
+                .IsEqualTo(typeof(double))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -199,7 +219,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 defaultValue: 10
             );
 
-            await Assert.That(descriptor.ToString()).IsEqualTo("Int32 count = ...");
+            await Assert
+                .That(descriptor.ToString())
+                .IsEqualTo("Int32 count = ...")
+                .ConfigureAwait(false);
         }
 
         private static class SampleTarget
@@ -217,4 +240,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

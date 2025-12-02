@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -23,7 +22,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 CreateDescriptor(typeof(string))
             );
 
-            await Assert.That(exception.Message).Contains("valueType is not a value type");
+            await Assert
+                .That(exception.Message)
+                .Contains("valueType is not a value type")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,10 +42,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 args: new CallbackArguments(new List<DynValue>(), isMethodCall: false)
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(result.UserData.Object).IsTypeOf<SampleStruct>();
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(result.UserData.Object)
+                .IsTypeOf<SampleStruct>()
+                .ConfigureAwait(false);
             SampleStruct payload = (SampleStruct)result.UserData.Object;
-            await Assert.That(payload.Value).IsEqualTo(0);
+            await Assert.That(payload.Value).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -55,8 +60,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = descriptor.GetValue(script, obj: null);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(result.UserData.Object).IsTypeOf<SampleStruct>();
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(result.UserData.Object)
+                .IsTypeOf<SampleStruct>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,7 +76,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 descriptor.SetValue(new Script(), null, DynValue.NewNumber(1))
             );
 
-            await Assert.That(exception.Message).Contains("cannot be assigned");
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot be assigned")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,9 +92,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(wiring.Get("class").String)
-                .Contains(nameof(ValueTypeDefaultCtorMemberDescriptor));
-            await Assert.That(wiring.Get("type").String).IsEqualTo(typeof(SampleStruct).FullName);
-            await Assert.That(wiring.Get("name").String).IsEqualTo("__new");
+                .Contains(nameof(ValueTypeDefaultCtorMemberDescriptor))
+                .ConfigureAwait(false);
+            await Assert
+                .That(wiring.Get("type").String)
+                .IsEqualTo(typeof(SampleStruct).FullName)
+                .ConfigureAwait(false);
+            await Assert.That(wiring.Get("name").String).IsEqualTo("__new").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,7 +110,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 descriptor.PrepareForWiring(null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("t");
+            await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,14 +118,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
-            await Assert.That(descriptor.Parameters.Count).IsEqualTo(0);
-            await Assert.That(descriptor.ExtensionMethodType).IsNull();
-            await Assert.That(descriptor.VarArgsArrayType).IsNull();
-            await Assert.That(descriptor.VarArgsElementType).IsNull();
-            await Assert.That(descriptor.SortDiscriminant).IsEqualTo("@.ctor");
+            await Assert.That(descriptor.Parameters.Count).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(descriptor.ExtensionMethodType).IsNull().ConfigureAwait(false);
+            await Assert.That(descriptor.VarArgsArrayType).IsNull().ConfigureAwait(false);
+            await Assert.That(descriptor.VarArgsElementType).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.SortDiscriminant)
+                .IsEqualTo("@.ctor")
+                .ConfigureAwait(false);
             await Assert
                 .That(descriptor.MemberAccess)
-                .IsEqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute);
+                .IsEqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute)
+                .ConfigureAwait(false);
         }
 
         private static void RegisterSampleStruct()
@@ -132,4 +151,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007
