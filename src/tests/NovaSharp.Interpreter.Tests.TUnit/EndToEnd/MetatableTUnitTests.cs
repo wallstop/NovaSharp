@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Diagnostics.CodeAnalysis;
@@ -39,7 +38,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = new Script().DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "321");
+            await EndToEndDynValueAssert.ExpectAsync(result, "321").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -63,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             scriptHost.Globals.RegisterModuleType(typeof(TableIteratorsModule));
             scriptHost.Globals.RegisterModuleType(typeof(MetaTableModule));
             DynValue result = scriptHost.DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 24);
+            await EndToEndDynValueAssert.ExpectAsync(result, 24).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,8 +82,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = new Script().DoString(script);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].Boolean).IsFalse();
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -104,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script scriptHost = new();
             DynValue table = scriptHost.DoString(script);
             DynValue result = scriptHost.Call(table, 3);
-            await EndToEndDynValueAssert.ExpectAsync(result, 468);
+            await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -124,7 +123,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = new Script().DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 468);
+            await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -150,7 +149,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = new Script().DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc");
+            await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -170,7 +169,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = new Script().DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc");
+            await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
         internal sealed class MyObject
@@ -211,7 +210,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             UserData.RegisterType<MyObject>();
             scriptHost.Globals["o"] = new MyObject();
             DynValue result = scriptHost.DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 120);
+            await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -245,8 +244,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 exception = ex;
             }
 
-            await Assert.That(exception).IsNull();
+            await Assert.That(exception).IsNull().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

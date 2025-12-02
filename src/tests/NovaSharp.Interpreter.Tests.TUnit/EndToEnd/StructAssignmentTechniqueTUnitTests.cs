@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Diagnostics.CodeAnalysis;
@@ -100,8 +99,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals["transform"] = transform;
             script.DoString("transform.Position.X = 15;");
 
-            await Assert.That((int)transform.Position.X).IsEqualTo(3);
+            await Assert.That((int)transform.Position.X).IsEqualTo(3).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

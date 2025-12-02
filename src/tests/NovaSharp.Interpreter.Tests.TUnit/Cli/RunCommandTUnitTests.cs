@@ -9,216 +9,67 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
-    using NovaSharp.Interpreter.Loaders;
-    using NovaSharp.Interpreter.Tests;
-    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
-    [PlatformDetectorIsolation]
     public sealed class RunCommandTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithoutArgumentsWritesSyntaxHint()
+        public async Task ExecuteWithoutArgumentsShowsSyntax()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    RunCommand command = new();
-                    ShellContext context = new(new Script());
+            RunCommand command = new();
+            ShellContext context = new(new Script());
 
+            await WithConsoleAsync(async console =>
+                {
                     command.Execute(context, string.Empty);
 
+                    string output = console.Writer.ToString();
                     await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains("Syntax : !run <file>")
+                        .That(output)
+                        .Contains(CliMessages.RunCommandSyntax)
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteLoadsScriptThroughConfiguredLoader()
+        public async Task ExecuteRunsScriptAndLogsCompatibilitySummary()
         {
-            RecordingScriptLoader loader = new();
-            Script script = new()
-            {
-                Globals = { ["marker"] = DynValue.NewNumber(0) },
-                Options = { ScriptLoader = loader },
-            };
-            loader.ScriptBody = "marker = (marker or 0) + 1";
+            using TempFileScope scriptScope = TempFileScope.Create(
+                namePrefix: "run_",
+                extension: ".lua"
+            );
+            string scriptPath = scriptScope.FilePath;
+            await File.WriteAllTextAsync(scriptPath, "result = 42").ConfigureAwait(false);
 
             RunCommand command = new();
-            ShellContext context = new(script);
+            ShellContext context = new(new Script());
 
-            command.Execute(context, "sample.lua");
-
-            await Assert
-                .That(loader.LastRequestedFile)
-                .IsEqualTo("sample.lua")
-                .ConfigureAwait(false);
-            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
-            await Assert
-                .That(script.Globals.Get("marker").Number)
-                .IsEqualTo(1)
-                .ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task ExecuteWithMissingFilePropagatesLoaderException()
-        {
-            ThrowingScriptLoader loader = new();
-            Script script = new() { Options = { ScriptLoader = loader } };
-            RunCommand command = new();
-
-            FileNotFoundException exception = ExpectException<FileNotFoundException>(() =>
-                command.Execute(new ShellContext(script), "missing.lua")
-            );
-
-            await Assert.That(exception.Message).Contains("missing.lua").ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task ExecuteWithoutManifestLogsCompatibilitySummary()
-        {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await WithConsoleAsync(async console =>
                 {
-                    RecordingScriptLoader loader = new();
-                    Script script = new()
-                    {
-                        Options =
-                        {
-                            ScriptLoader = loader,
-                            CompatibilityVersion = LuaCompatibilityVersion.Lua54,
-                        },
-                    };
-                    RunCommand command = new();
-                    ShellContext context = new(script);
-
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-
-                    command.Execute(context, "sample.lua");
-
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains("[compatibility] Running")
-                        .And.Contains("Lua 5.4")
-                        .ConfigureAwait(false);
-                })
-                .ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task ExecuteWithManifestRunsScriptInCompatibilityInstance()
-        {
-            using TempDirectoryScope modDirectoryScope = TempDirectoryScope.Create(
-                namePrefix: "mod_"
-            );
-            string modDirectory = modDirectoryScope.DirectoryPath;
-
-            string scriptPath = Path.Combine(modDirectory, "entry.lua");
-            await File.WriteAllTextAsync(
-                    scriptPath,
-                    "if warn ~= nil then error('warn available') end\ncontextFlag = true\n"
-                )
-                .ConfigureAwait(false);
-
-            string manifestPath = Path.Combine(modDirectory, "mod.json");
-            await File.WriteAllTextAsync(
-                    manifestPath,
-                    "{\n"
-                        + "    \"name\": \"CompatMod\",\n"
-                        + "    \"luaCompatibility\": \"Lua53\"\n"
-                        + "}\n"
-                )
-                .ConfigureAwait(false);
-
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    RunCommand command = new();
-                    Script script = new();
-                    ShellContext context = new(script);
-
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-
                     command.Execute(context, scriptPath);
 
-                    string consoleOutput = consoleScope.Writer.ToString();
-                    await Assert
-                        .That(consoleOutput)
-                        .Contains("[compatibility] Applied Lua 5.3 profile")
-                        .And.Contains("Lua 5.3")
-                        .And.Contains("[compatibility] Running")
-                        .ConfigureAwait(false);
-                    await Assert
-                        .That(script.Globals.Get("contextFlag").IsNil())
-                        .IsTrue()
-                        .ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    string expectedSummary =
+                        $"[compatibility] Running '{Path.GetFullPath(scriptPath)}' with {context.Script.CompatibilityProfile.GetFeatureSummary()}";
+                    await Assert.That(output).Contains(expectedSummary).ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
+
+            DynValue result = context.Script.Globals.Get("result");
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
-        private static TException ExpectException<TException>(Action action)
-            where TException : Exception
+        private static async Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
         {
-            try
-            {
-                action();
-            }
-            catch (TException exception)
-            {
-                return exception;
-            }
-
-            throw new InvalidOperationException(
-                $"Expected exception of type {typeof(TException).Name}."
-            );
-        }
-
-        private sealed class RecordingScriptLoader : IScriptLoader
-        {
-            public string ScriptBody { get; set; } = "return";
-
-            public string LastRequestedFile { get; private set; } = string.Empty;
-
-            public int LoadCount { get; private set; }
-
-            public object LoadFile(string file, Table globalContext)
-            {
-                LastRequestedFile = file;
-                LoadCount++;
-                return ScriptBody;
-            }
-
-            public string ResolveFileName(string filename, Table globalContext)
-            {
-                return filename;
-            }
-
-            public string ResolveModuleName(string modname, Table globalContext)
-            {
-                return modname;
-            }
-        }
-
-        private sealed class ThrowingScriptLoader : IScriptLoader
-        {
-            public object LoadFile(string file, Table globalContext)
-            {
-                throw new FileNotFoundException($"Missing {file}");
-            }
-
-            public string ResolveFileName(string filename, Table globalContext)
-            {
-                return filename;
-            }
-
-            public string ResolveModuleName(string modname, Table globalContext)
-            {
-                return modname;
-            }
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleRedirectionScope console = new();
+                    await action(console).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
     }
 }

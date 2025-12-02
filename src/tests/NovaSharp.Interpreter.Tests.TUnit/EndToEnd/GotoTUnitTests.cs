@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -25,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 3);
+            await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,7 +43,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 3);
+            await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +55,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Script.RunString(code);
             });
 
-            await Assert.That(exception.DecoratedMessage).Contains("no visible label");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("no visible label")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ::label::
                 ";
             _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script.RunString(code);
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -101,7 +103,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 3);
+            await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -118,7 +120,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,7 +134,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -157,7 +159,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 3);
+            await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,8 +190,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert.ExpectAsync(result, 67);
+            await EndToEndDynValueAssert.ExpectAsync(result, 67).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

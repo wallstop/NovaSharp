@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
-    using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -10,79 +9,83 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
-    using NovaSharp.Interpreter.Tests;
-    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
-    [PlatformDetectorIsolation]
-    [UserDataIsolation]
     public sealed class RegisterCommandTUnitTests
     {
-        static RegisterCommandTUnitTests()
-        {
-            _ = new SampleType();
-        }
-
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithUnknownTypeWritesError()
+        public async Task ExecuteWithUnknownTypePrintsError()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            RegisterCommand command = new();
+            ShellContext context = new(new Script());
+
+            await WithConsoleAsync(async console =>
                 {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    RegisterCommand command = new();
-                    ShellContext context = new(new Script());
+                    command.Execute(context, "Unknown.Namespace.Type");
 
-                    command.Execute(context, "Missing.Namespace.TypeName");
-
-                    string expected = CliMessages.RegisterCommandTypeNotFound(
-                        "Missing.Namespace.TypeName"
-                    );
                     await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(expected)
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.RegisterCommandTypeNotFound("Unknown.Namespace.Type"))
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithClrTypeRegistersItForUserDataInterop()
+        public async Task ExecuteWithValidTypeRegistersUserData()
         {
             RegisterCommand command = new();
             ShellContext context = new(new Script());
-            using UserDataRegistrationScope registrationScope =
-                UserDataRegistrationScope.Track<SampleType>(ensureUnregistered: true);
 
-            command.Execute(context, typeof(SampleType).AssemblyQualifiedName);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
 
-            bool registered = UserData.GetRegisteredTypes().Contains(typeof(SampleType));
-            await Assert.That(registered).IsTrue().ConfigureAwait(false);
+            await WithConsoleAsync(async console =>
+                {
+                    command.Execute(context, typeof(SampleUserData).AssemblyQualifiedName);
+                    _ = console;
+                })
+                .ConfigureAwait(false);
+
+            _ = new SampleUserData();
+            bool isRegistered = UserData.GetRegisteredTypes().Contains(typeof(SampleUserData));
+            await Assert.That(isRegistered).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsListsRegisteredTypes()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    RegisterCommand command = new();
-                    ShellContext context = new(new Script());
-                    using UserDataRegistrationScope registrationScope =
-                        UserDataRegistrationScope.Track<SampleType>();
-                    UserData.RegisterType<SampleType>();
+            RegisterCommand command = new();
+            ShellContext context = new(new Script());
 
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            UserData.RegisterType(typeof(SampleUserData));
+
+            await WithConsoleAsync(async console =>
+                {
                     command.Execute(context, string.Empty);
 
                     await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(typeof(SampleType).FullName)
+                        .That(console.Writer.ToString())
+                        .Contains(typeof(SampleUserData).FullName)
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
         }
 
-        private sealed class SampleType { }
+        private static async Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
+        {
+            await ConsoleCaptureCoordinator
+                .RunAsync(async () =>
+                {
+                    using ConsoleRedirectionScope console = new();
+                    await action(console).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        private sealed class SampleUserData
+        {
+            public string Name { get; set; } = "Nova";
+        }
     }
 }

@@ -259,4 +259,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         private sealed class IncompatibleSample { }
     }
 }
-#pragma warning restore CA2007

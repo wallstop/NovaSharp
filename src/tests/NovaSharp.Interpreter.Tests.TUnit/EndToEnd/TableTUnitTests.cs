@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -14,7 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableAccessAndEmptyCtor()
         {
             DynValue result = Script.RunString("a = {} a[1] = 1 return a[1]");
-            await EndToEndDynValueAssert.ExpectAsync(result, 1);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -26,7 +25,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 + "return a[1], a[2], a[3], a['ciao'], a.hello, a.aurevoir, a[false]";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 1, 2, 3, 4, 5, 6, 7);
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, 1, 2, 3, 4, 5, 6, 7)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,7 +37,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a.val(a, 82) return x"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 1994);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -46,7 +47,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a:val(82) return x"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 1994);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "x = 0 a = { value = 1912 } function a.val(self, num) x = self.value + num end "
                     + "a:val(82) return x"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 1994);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -66,7 +67,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "x = 0 local a = { value = 1912 } function a:val(num) x = self.value + num end "
                     + "a:val(82) return x"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 1994);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,7 +78,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     + "function c.tb.tb:val(num) x = self.value + num end "
                     + "a:val(82) return x"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, 1994);
+            await EndToEndDynValueAssert.ExpectAsync(result, 1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -88,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     + "function a:add(x) self.x, a.y = self.x + x, 20; return self end "
                     + "return (a:add(10):add(20):add(30).x == 60 and a.y == 20) end)()"
             );
-            await EndToEndDynValueAssert.ExpectAsync(result, true);
+            await EndToEndDynValueAssert.ExpectAsync(result, true).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -108,7 +109,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "1|2|3|4|5");
+            await EndToEndDynValueAssert.ExpectAsync(result, "1|2|3|4|5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -127,8 +128,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(script);
-            await Assert.That(result.Tuple[0].String.Length).IsEqualTo(5);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(15);
+            await Assert.That(result.Tuple[0].String.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(15).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -148,7 +149,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 6, 12);
+            await EndToEndDynValueAssert.ExpectAsync(result, 6, 12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -167,8 +168,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(script);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
-            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.String);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Type)
+                .IsEqualTo(DataType.String)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -176,29 +180,38 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             Script script = new();
             DynValue table = script.DoString("t = { ciao = 'hello' } return t");
-            await Assert.That(table.Table["ciao"]).IsEqualTo("hello");
+            await Assert.That(table.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
             Script scriptWithGlobal = new() { Globals = { ["x"] = "hello" } };
             DynValue tableWithRef = scriptWithGlobal.DoString("t = { ciao = x } return t");
-            await Assert.That(tableWithRef.Table["ciao"]).IsEqualTo("hello");
+            await Assert.That(tableWithRef.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
             Script empty = new();
             DynValue created = empty.DoString("t = {} return t");
             empty.Globals["t", "ciao"] = "hello";
-            await Assert.That(created.Table["ciao"]).IsEqualTo("hello");
+            await Assert.That(created.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
             Script assignAfter = new();
             assignAfter.DoString("t = {}");
             assignAfter.Globals["t", "ciao"] = "hello";
-            await Assert.That(assignAfter.Globals["t", "ciao"]).IsEqualTo("hello");
+            await Assert
+                .That(assignAfter.Globals["t", "ciao"])
+                .IsEqualTo("hello")
+                .ConfigureAwait(false);
 
             Script readGlobal = new();
             readGlobal.DoString("t = { ciao = 'hello' }");
-            await Assert.That(readGlobal.Globals["t", "ciao"]).IsEqualTo("hello");
+            await Assert
+                .That(readGlobal.Globals["t", "ciao"])
+                .IsEqualTo("hello")
+                .ConfigureAwait(false);
 
             Script nested = new(default(CoreModules));
             nested.DoString("t = { ciao = { 'hello' } }");
-            await Assert.That(nested.Globals["t", "ciao", 1]).IsEqualTo("hello");
+            await Assert
+                .That(nested.Globals["t", "ciao", 1])
+                .IsEqualTo("hello")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -222,14 +235,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             DynValue result = Script.RunString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "id$$");
+            await EndToEndDynValueAssert.ExpectAsync(result, "id$$").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task TableUnpackReturnsTuple()
         {
             DynValue result = Script.RunString("return unpack({3,4})");
-            await EndToEndDynValueAssert.ExpectAsync(result, 3, 4);
+            await EndToEndDynValueAssert.ExpectAsync(result, 3, 4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -238,8 +251,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             script.DoString("t = ${ ciao = 'hello' }");
 
-            await Assert.That(script.Globals["t", "ciao"]).IsEqualTo("hello");
-            await Assert.That(script.Globals.Get("t").Table.OwnerScript == null).IsTrue();
+            await Assert.That(script.Globals["t", "ciao"]).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert
+                .That(script.Globals.Get("t").Table.OwnerScript == null)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -249,7 +265,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("t = ${ ciao = function() end }")
             );
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -257,30 +273,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             Table table = new(null);
 
-            await Assert.That(table.Length).IsEqualTo(0);
+            await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
             table.Set(1, DynValue.True);
-            await Assert.That(table.Length).IsEqualTo(1);
+            await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
 
             table.Set(2, DynValue.True);
             table.Set(3, DynValue.True);
             table.Set(4, DynValue.True);
-            await Assert.That(table.Length).IsEqualTo(4);
+            await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
             table.Set(3, DynValue.Nil);
-            await Assert.That(table.Length).IsEqualTo(2);
+            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
 
             table.Set(3, DynValue.True);
-            await Assert.That(table.Length).IsEqualTo(4);
+            await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
             table.Set(3, DynValue.Nil);
-            await Assert.That(table.Length).IsEqualTo(2);
+            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
 
             table.Append(DynValue.True);
-            await Assert.That(table.Length).IsEqualTo(4);
+            await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
             table.Append(DynValue.True);
-            await Assert.That(table.Length).IsEqualTo(5);
+            await Assert.That(table.Length).IsEqualTo(5).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

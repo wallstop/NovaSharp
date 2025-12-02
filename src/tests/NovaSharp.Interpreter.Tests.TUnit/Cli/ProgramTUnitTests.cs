@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
@@ -40,67 +39,80 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task CheckArgsNoArgumentsReturnsFalse()
         {
             bool handled = Program.CheckArgs(Array.Empty<string>(), CreateShellContext());
-            await Assert.That(handled).IsFalse();
+            await Assert.That(handled).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsHelpFlagWritesUsageAndReturnsTrue()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(HelpFlagArguments, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(HelpFlagArguments, CreateShellContext());
 
-                await Assert.That(handled).IsTrue();
-                await Assert.That(console.Writer.ToString()).Contains(CliMessages.ProgramUsageLong);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.ProgramUsageLong)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsExecuteCommandFlagRunsRequestedCommand()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(ExecuteHelpCommandArguments, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(
+                        ExecuteHelpCommandArguments,
+                        CreateShellContext()
+                    );
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.HelpCommandCommandListHeading);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.HelpCommandCommandListHeading)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsExecuteCommandFlagWithMissingArgumentShowsSyntax()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(
-                    ExecuteCommandMissingArgument,
-                    CreateShellContext()
-                );
+                {
+                    bool handled = Program.CheckArgs(
+                        ExecuteCommandMissingArgument,
+                        CreateShellContext()
+                    );
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.ProgramWrongSyntax);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsExecuteCommandFlagWithUnknownCommandReportsError()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(
-                    ExecuteUnknownCommandArguments,
-                    CreateShellContext()
-                );
+                {
+                    bool handled = Program.CheckArgs(
+                        ExecuteUnknownCommandArguments,
+                        CreateShellContext()
+                    );
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.CommandManagerInvalidCommand("nope"));
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.CommandManagerInvalidCommand("nope"))
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -116,11 +128,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await File.WriteAllTextAsync(scriptPath, "return 42").ConfigureAwait(false);
 
             await WithConsoleAsync(async _ =>
-            {
-                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
 
-                await Assert.That(handled).IsTrue();
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -150,14 +163,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
 
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile"));
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(
+                            CliMessages.ContextualCompatibilityInfo("Applied Lua 5.3 profile")
+                        )
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -183,28 +200,37 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
 
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
-                string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
-                string expectedLine = CliMessages.ProgramRunningScript(scriptPath, expectedSummary);
+                {
+                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+                    string expectedSummary = GetCompatibilitySummary(LuaCompatibilityVersion.Lua52);
+                    string expectedLine = CliMessages.ProgramRunningScript(
+                        scriptPath,
+                        expectedSummary
+                    );
 
-                await Assert.That(handled).IsTrue();
-                await Assert.That(console.Writer.ToString()).Contains(expectedLine);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(expectedLine)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
         {
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(HardwireFlagArguments, CreateShellContext());
+                {
+                    bool handled = Program.CheckArgs(HardwireFlagArguments, CreateShellContext());
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.ProgramWrongSyntax);
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -223,30 +249,38 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             });
 
             await WithConsoleAsync(async console =>
-            {
-                bool handled = Program.CheckArgs(
-                    new[]
-                    {
-                        "-W",
-                        dumpPath,
-                        destPath,
-                        "--internals",
-                        "--vb",
-                        "--class:GeneratedTypes",
-                        "--namespace:GeneratedNamespace",
-                    },
-                    CreateShellContext()
-                );
+                {
+                    bool handled = Program.CheckArgs(
+                        new[]
+                        {
+                            "-W",
+                            dumpPath,
+                            destPath,
+                            "--internals",
+                            "--vb",
+                            "--class:GeneratedTypes",
+                            "--namespace:GeneratedNamespace",
+                        },
+                        CreateShellContext()
+                    );
 
-                await Assert.That(handled).IsTrue();
-                await Assert
-                    .That(console.Writer.ToString())
-                    .Contains(CliMessages.HardwireGenerationSummary(0, 0));
-                await Assert.That(File.Exists(destPath)).IsTrue();
-                string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
-                await Assert.That(generated).Contains("Namespace GeneratedNamespace");
-                await Assert.That(generated).Contains("Class GeneratedTypes");
-            });
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(CliMessages.HardwireGenerationSummary(0, 0))
+                        .ConfigureAwait(false);
+                    await Assert.That(File.Exists(destPath)).IsTrue().ConfigureAwait(false);
+                    string generated = await File.ReadAllTextAsync(destPath).ConfigureAwait(false);
+                    await Assert
+                        .That(generated)
+                        .Contains("Namespace GeneratedNamespace")
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(generated)
+                        .Contains("Class GeneratedTypes")
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -255,16 +289,23 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             StubReplInterpreter interpreter = new();
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    RunInterpreterLoop(interpreter);
+                    async console =>
+                    {
+                        RunInterpreterLoop(interpreter);
 
-                    string output = console.Writer.ToString();
-                    await Assert.That(interpreter.EvaluateCalled).IsFalse();
-                    await Assert.That(output).Contains(CliMessages.HelpCommandCommandListHeading);
-                },
-                "!help" + Environment.NewLine
-            );
+                        string output = console.Writer.ToString();
+                        await Assert
+                            .That(interpreter.EvaluateCalled)
+                            .IsFalse()
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(output)
+                            .Contains(CliMessages.HelpCommandCommandListHeading)
+                            .ConfigureAwait(false);
+                    },
+                    "!help" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -277,17 +318,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             };
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    RunInterpreterLoop(interpreter);
+                    async console =>
+                    {
+                        RunInterpreterLoop(interpreter);
 
-                    string output = console.Writer.ToString();
-                    await Assert.That(interpreter.EvaluateCalled).IsTrue();
-                    await Assert.That(interpreter.LastInput).IsEqualTo("!help");
-                    await Assert.That(output).Contains("queued");
-                },
-                "!help" + Environment.NewLine
-            );
+                        string output = console.Writer.ToString();
+                        await Assert
+                            .That(interpreter.EvaluateCalled)
+                            .IsTrue()
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(interpreter.LastInput)
+                            .IsEqualTo("!help")
+                            .ConfigureAwait(false);
+                        await Assert.That(output).Contains("queued").ConfigureAwait(false);
+                    },
+                    "!help" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -296,16 +344,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             StubReplInterpreter interpreter = new() { ReturnValue = DynValue.Void };
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    RunInterpreterLoop(interpreter);
+                    async console =>
+                    {
+                        RunInterpreterLoop(interpreter);
 
-                    string output = console.Writer.ToString();
-                    await Assert.That(interpreter.EvaluateCalled).IsTrue();
-                    await Assert.That(output).DoesNotContain("Void");
-                },
-                "return 1" + Environment.NewLine
-            );
+                        string output = console.Writer.ToString();
+                        await Assert
+                            .That(interpreter.EvaluateCalled)
+                            .IsTrue()
+                            .ConfigureAwait(false);
+                        await Assert.That(output).DoesNotContain("Void").ConfigureAwait(false);
+                    },
+                    "return 1" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -320,16 +372,23 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             };
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    RunInterpreterLoop(interpreter);
+                    async console =>
+                    {
+                        RunInterpreterLoop(interpreter);
 
-                    string output = console.Writer.ToString();
-                    await Assert.That(interpreter.EvaluateCalled).IsTrue();
-                    await Assert.That(output).Contains("decorated message");
-                },
-                "return 1" + Environment.NewLine
-            );
+                        string output = console.Writer.ToString();
+                        await Assert
+                            .That(interpreter.EvaluateCalled)
+                            .IsTrue()
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(output)
+                            .Contains("decorated message")
+                            .ConfigureAwait(false);
+                    },
+                    "return 1" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -341,33 +400,41 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             };
 
             await WithConsoleAsync(
-                async console =>
-                {
-                    RunInterpreterLoop(interpreter);
+                    async console =>
+                    {
+                        RunInterpreterLoop(interpreter);
 
-                    string output = console.Writer.ToString();
-                    await Assert.That(interpreter.EvaluateCalled).IsTrue();
-                    await Assert.That(output).Contains("broken");
-                },
-                "return 1" + Environment.NewLine
-            );
+                        string output = console.Writer.ToString();
+                        await Assert
+                            .That(interpreter.EvaluateCalled)
+                            .IsTrue()
+                            .ConfigureAwait(false);
+                        await Assert.That(output).Contains("broken").ConfigureAwait(false);
+                    },
+                    "return 1" + Environment.NewLine
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task BannerPrintsCompatibilitySummary()
         {
             await WithConsoleAsync(async console =>
-            {
-                Script script = new(CoreModules.PresetDefault);
-                script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+                {
+                    Script script = new(CoreModules.PresetDefault);
+                    script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
-                Program.ShowBannerForTests(script);
+                    Program.ShowBannerForTests(script);
 
-                string expectedActiveProfile = CliMessages.ProgramActiveProfile(
-                    script.CompatibilityProfile.GetFeatureSummary()
-                );
-                await Assert.That(console.Writer.ToString()).Contains(expectedActiveProfile);
-            });
+                    string expectedActiveProfile = CliMessages.ProgramActiveProfile(
+                        script.CompatibilityProfile.GetFeatureSummary()
+                    );
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains(expectedActiveProfile)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         private static string GetCompatibilitySummary(LuaCompatibilityVersion version)
@@ -440,4 +507,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
     }
 }
-#pragma warning restore CA2007

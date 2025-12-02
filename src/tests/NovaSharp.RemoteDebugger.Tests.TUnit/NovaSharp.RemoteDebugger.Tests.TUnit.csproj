@@ -11,6 +11,7 @@
     <ItemGroup>
         <PackageReference Include="TUnit" Version="1.2.11" />
         <PackageReference Include="TUnit.Assertions" Version="1.2.11" />
+        <ProjectReference Include="$(SrcRoot)debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="$(SrcRoot)runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj" />

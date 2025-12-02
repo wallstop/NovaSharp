@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -85,9 +84,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     "
             );
 
-            await Assert.That(script.Globals.Get("x").Number).IsEqualTo(3.0);
-            await Assert.That(callbackInvoked).IsTrue();
-            await Assert.That(capturedRandom).IsNotNull();
+            await Assert.That(script.Globals.Get("x").Number).IsEqualTo(3.0).ConfigureAwait(false);
+            await Assert.That(callbackInvoked).IsTrue().ConfigureAwait(false);
+            await Assert.That(capturedRandom).IsNotNull().ConfigureAwait(false);
         }
 
         [SuppressMessage(
@@ -101,4 +100,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

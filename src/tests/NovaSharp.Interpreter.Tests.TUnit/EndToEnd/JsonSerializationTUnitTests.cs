@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
@@ -21,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 }".Replace('\'', '\"');
 
             Table table = JsonTableConverter.JsonToTable(json);
-            await AssertTableValues(table);
+            await AssertTableValues(table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -39,7 +38,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Table original = JsonTableConverter.JsonToTable(json);
             string serialized = JsonTableConverter.TableToJson(original);
             Table roundTrip = JsonTableConverter.JsonToTable(serialized);
-            await AssertTableValues(roundTrip);
+            await AssertTableValues(roundTrip).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -57,31 +56,33 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             string json = JsonTableConverter.ObjectToJson(payload);
             Table parsed = JsonTableConverter.JsonToTable(json);
-            await AssertTableValues(parsed);
+            await AssertTableValues(parsed).ConfigureAwait(false);
         }
 
         private static async Task AssertTableValues(Table table)
         {
-            await Assert.That(table.Get("aNumber").Number).IsEqualTo(1);
-            await Assert.That(table.Get("aString").String).IsEqualTo("2");
-            await Assert.That(table.Get("slash").String).IsEqualTo("a/b");
+            await Assert.That(table.Get("aNumber").Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(table.Get("aString").String).IsEqualTo("2").ConfigureAwait(false);
+            await Assert.That(table.Get("slash").String).IsEqualTo("a/b").ConfigureAwait(false);
 
             Table nested = table.Get("anObject").Table;
-            await Assert.That(nested.Get("aNumber").Number).IsEqualTo(3);
-            await Assert.That(nested.Get("aString").String).IsEqualTo("4");
+            await Assert.That(nested.Get("aNumber").Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(nested.Get("aString").String).IsEqualTo("4").ConfigureAwait(false);
 
             Table array = table.Get("anArray").Table;
-            await Assert.That(array.Get(1).Number).IsEqualTo(5);
-            await Assert.That(array.Get(2).String).IsEqualTo("6");
-            await Assert.That(array.Get(3).Boolean).IsTrue();
-            await Assert.That(JsonNull.IsJsonNull(array.Get(4))).IsTrue();
+            await Assert.That(array.Get(1).Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(array.Get(2).String).IsEqualTo("6").ConfigureAwait(false);
+            await Assert.That(array.Get(3).Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(JsonNull.IsJsonNull(array.Get(4))).IsTrue().ConfigureAwait(false);
 
             Table obj = array.Get(5).Table;
-            await Assert.That(obj.Get("aNumber").Number).IsEqualTo(7);
-            await Assert.That(obj.Get("aString").String).IsEqualTo("8");
+            await Assert.That(obj.Get("aNumber").Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(obj.Get("aString").String).IsEqualTo("8").ConfigureAwait(false);
 
-            await Assert.That(table.Get("aNegativeNumber").Number).IsEqualTo(-9);
+            await Assert
+                .That(table.Get("aNegativeNumber").Number)
+                .IsEqualTo(-9)
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

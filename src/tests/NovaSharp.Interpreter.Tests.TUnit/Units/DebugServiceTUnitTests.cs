@@ -198,4 +198,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007
