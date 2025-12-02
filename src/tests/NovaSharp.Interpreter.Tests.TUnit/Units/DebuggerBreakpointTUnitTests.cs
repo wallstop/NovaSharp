@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -83,12 +82,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             script.DebuggerEnabled = true;
 
             DynValue result = script.Call(script.Globals.Get("target"));
-            await Assert.That(result.Number).IsEqualTo(5);
+            await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
 
-            await Assert.That(debugger.BreakpointSnapshots.Count).IsGreaterThan(0);
+            await Assert
+                .That(debugger.BreakpointSnapshots.Count)
+                .IsGreaterThan(0)
+                .ConfigureAwait(false);
             await Assert
                 .That(debugger.BreakpointSnapshots.Any(snapshot => snapshot.Count > 0))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private sealed class BreakpointDebugger : IDebugger
@@ -149,4 +152,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

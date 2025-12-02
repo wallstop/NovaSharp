@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 {
     using System.Threading.Tasks;
@@ -25,7 +24,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             await Assert
                 .That(formatted)
-                .IsEqualTo("1:2:3:counter:42:counter : Global / (default _ENV)");
+                .IsEqualTo("1:2:3:counter:42:counter : Global / (default _ENV)")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,8 +41,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
                 LValue = null,
             };
 
-            await Assert.That(item.ToString()).IsEqualTo("0:0:0:(null):(null):(null)");
+            await Assert
+                .That(item.ToString())
+                .IsEqualTo("0:0:0:(null):(null):(null)")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

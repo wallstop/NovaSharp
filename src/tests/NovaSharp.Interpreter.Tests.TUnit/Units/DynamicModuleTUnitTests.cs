@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -19,8 +18,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = script.DoString("return dynamic.eval('value * 3')");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(18d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(18d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -39,8 +38,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             script.Globals["b"] = DynValue.NewNumber(-4);
             DynValue second = script.DoString("return dynamic.eval(expr)");
 
-            await Assert.That(first.Number).IsEqualTo(5d);
-            await Assert.That(second.Number).IsEqualTo(6d);
+            await Assert.That(first.Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(6d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -56,7 +55,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.Message)
-                .Contains("was not a previously prepared expression");
+                .Contains("was not a previously prepared expression")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,7 +68,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return dynamic.eval('function(')")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -80,7 +80,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return dynamic.prepare('function(')")
             )!;
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         private static void EnsureDummyRegistered()
@@ -94,4 +94,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         private sealed class Dummy { }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System.Threading.Tasks;
@@ -17,9 +16,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             SampleHardwiredDescriptor descriptor = new();
 
-            await Assert.That(descriptor.FriendlyName).IsEqualTo("::hardwired::SampleUserData");
-            await Assert.That(descriptor.Type).IsEqualTo(typeof(SampleUserData));
-            await Assert.That(descriptor.Name).IsEqualTo(typeof(SampleUserData).FullName);
+            await Assert
+                .That(descriptor.FriendlyName)
+                .IsEqualTo("::hardwired::SampleUserData")
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.Type)
+                .IsEqualTo(typeof(SampleUserData))
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.Name)
+                .IsEqualTo(typeof(SampleUserData).FullName)
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleUserData
@@ -34,4 +42,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

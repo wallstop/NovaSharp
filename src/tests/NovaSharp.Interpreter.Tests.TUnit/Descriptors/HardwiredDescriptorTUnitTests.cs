@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -27,9 +26,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.GetValue(script, target);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("value-for:System.Object");
-            await Assert.That(descriptor.GetCallCount).IsEqualTo(1);
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("value-for:System.Object")
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.GetCallCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,8 +46,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.SetValue(script, new object(), payload);
 
-            await Assert.That(descriptor.SetCallCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastAssignedValue).IsEqualTo(42);
+            await Assert.That(descriptor.SetCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(descriptor.LastAssignedValue).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,12 +63,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException readException = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.GetValue(script, null)
             );
-            await Assert.That(readException).IsNotNull();
+            await Assert.That(readException).IsNotNull().ConfigureAwait(false);
 
             ScriptRuntimeException writeException = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.SetValue(script, null, DynValue.NewString("data"))
             );
-            await Assert.That(writeException).IsNotNull();
+            await Assert.That(writeException).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,8 +83,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.GetValue(script, new object())
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(descriptor.GetCallCount).IsEqualTo(0);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.GetCallCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,8 +99,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.SetValue(script, new object(), DynValue.NewString("data"))
             );
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(descriptor.SetCallCount).IsEqualTo(0);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.SetCallCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,12 +116,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, instance, context: null, args);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("owner:7:fallback:2");
-            await Assert.That(descriptor.LastInvocationArgs.Length).IsEqualTo(2);
-            await Assert.That(descriptor.LastInvocationArgs[0]).IsEqualTo(7);
-            await Assert.That(descriptor.LastInvocationArgs[1]).IsEqualTo("fallback");
-            await Assert.That(descriptor.LastArgsCount).IsEqualTo(2);
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("owner:7:fallback:2").ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastInvocationArgs.Length)
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.LastInvocationArgs[0]).IsEqualTo(7).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastInvocationArgs[1])
+                .IsEqualTo("fallback")
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgsCount).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -135,7 +143,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.Execute(script, obj: null, context: null, args)
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -144,7 +152,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DefaultValue first = DefaultValue.Instance;
             DefaultValue second = DefaultValue.Instance;
 
-            await Assert.That(first).IsSameReferenceAs(second);
+            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -158,7 +166,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             await Assert
                 .That(exception.Message)
-                .Contains("GetValue on write-only hardwired descriptor defaulting");
+                .Contains("GetValue on write-only hardwired descriptor defaulting")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,7 +181,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             await Assert
                 .That(exception.Message)
-                .Contains("SetValue on read-only hardwired descriptor defaulting");
+                .Contains("SetValue on read-only hardwired descriptor defaulting")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -184,7 +194,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 descriptor.SetValue(script, new object(), value: null)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value");
+            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -194,7 +204,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 _ = new StubHardwiredUserDataDescriptor(null);
             });
-            await Assert.That(exception.ParamName).IsEqualTo("t");
+            await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -204,11 +214,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.GetValue(new Script(), obj: null);
 
-            await Assert.That(descriptor.IsStatic).IsTrue();
-            await Assert.That(descriptor.Name).IsEqualTo("constant");
-            await Assert.That(descriptor.MemberAccess).IsEqualTo(MemberDescriptorAccess.CanRead);
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(123d);
+            await Assert.That(descriptor.IsStatic).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.Name).IsEqualTo("constant").ConfigureAwait(false);
+            await Assert
+                .That(descriptor.MemberAccess)
+                .IsEqualTo(MemberDescriptorAccess.CanRead)
+                .ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(123d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -221,7 +234,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That(descriptor.MemberAccess)
-                .IsEqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute);
+                .IsEqualTo(MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanExecute)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -232,7 +246,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.SetValue(new Script(), obj: null, DynValue.NewNumber(2))
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -243,10 +257,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("class").String).Contains("DynValueMemberDescriptor");
-            await Assert.That(wiring.Get("name").String).IsEqualTo("count");
-            await Assert.That(wiring.Get("value").Number).IsEqualTo(7d);
-            await Assert.That(wiring.Get("error").IsNil()).IsTrue();
+            await Assert
+                .That(wiring.Get("class").String)
+                .Contains("DynValueMemberDescriptor")
+                .ConfigureAwait(false);
+            await Assert.That(wiring.Get("name").String).IsEqualTo("count").ConfigureAwait(false);
+            await Assert.That(wiring.Get("value").Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert.That(wiring.Get("error").IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -260,8 +277,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("error").String).Contains("non-prime table");
-            await Assert.That(wiring.Get("value").IsNil()).IsTrue();
+            await Assert
+                .That(wiring.Get("error").String)
+                .Contains("non-prime table")
+                .ConfigureAwait(false);
+            await Assert.That(wiring.Get("value").IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -280,11 +300,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("type").String).IsEqualTo("userdata");
+            await Assert
+                .That(wiring.Get("type").String)
+                .IsEqualTo("userdata")
+                .ConfigureAwait(false);
             await Assert
                 .That(wiring.Get("staticType").String)
-                .IsEqualTo(typeof(DummyStaticUserData).FullName);
-            await Assert.That(wiring.Get("visibility").String).IsEqualTo("internal");
+                .IsEqualTo(typeof(DummyStaticUserData).FullName)
+                .ConfigureAwait(false);
+            await Assert
+                .That(wiring.Get("visibility").String)
+                .IsEqualTo("internal")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -301,8 +328,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("error").String).Contains("non-static userdata");
-            await Assert.That(wiring.Get("type").IsNil()).IsTrue();
+            await Assert
+                .That(wiring.Get("error").String)
+                .Contains("non-static userdata")
+                .ConfigureAwait(false);
+            await Assert.That(wiring.Get("type").IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +345,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("error").String).Contains("value members not supported");
+            await Assert
+                .That(wiring.Get("error").String)
+                .Contains("value members not supported")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -323,9 +356,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             SerializedDynValueDescriptor descriptor = new("serialized", "${ 'payload' }");
 
-            await Assert.That(descriptor.Name).IsEqualTo("serialized");
-            await Assert.That(descriptor.MemberAccess).IsEqualTo(MemberDescriptorAccess.CanRead);
-            await Assert.That(descriptor.Value.String).IsEqualTo("payload");
+            await Assert.That(descriptor.Name).IsEqualTo("serialized").ConfigureAwait(false);
+            await Assert
+                .That(descriptor.MemberAccess)
+                .IsEqualTo(MemberDescriptorAccess.CanRead)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.Value.String).IsEqualTo("payload").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -333,9 +369,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             NullValueDescriptor descriptor = new("unset");
 
-            await Assert.That(descriptor.Name).IsEqualTo("unset");
-            await Assert.That(descriptor.MemberAccess).IsEqualTo(MemberDescriptorAccess.CanRead);
-            await Assert.That(descriptor.Value).IsNull();
+            await Assert.That(descriptor.Name).IsEqualTo("unset").ConfigureAwait(false);
+            await Assert
+                .That(descriptor.MemberAccess)
+                .IsEqualTo(MemberDescriptorAccess.CanRead)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.Value).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -348,8 +387,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(wiring);
 
-            await Assert.That(wiring.Get("value").Type).IsEqualTo(DataType.Table);
-            await Assert.That(wiring.Get("error").IsNil()).IsTrue();
+            await Assert
+                .That(wiring.Get("value").Type)
+                .IsEqualTo(DataType.Table)
+                .ConfigureAwait(false);
+            await Assert.That(wiring.Get("error").IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
@@ -465,4 +507,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

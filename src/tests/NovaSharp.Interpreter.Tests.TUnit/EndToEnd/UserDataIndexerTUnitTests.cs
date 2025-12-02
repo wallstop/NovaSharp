@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Collections.Generic;
@@ -53,8 +52,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             async Task VerifyAsync(DynValue value)
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Number);
-                await Assert.That(value.Number).IsEqualTo(expected);
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -115,7 +114,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 RunIndexerTestAsync(script, 1234).GetAwaiter().GetResult()
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -151,4 +150,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

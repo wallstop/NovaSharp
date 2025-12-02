@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -49,18 +48,26 @@ return caller()
 
             DynValue result = script.DoString(Code);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(43);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(43).ConfigureAwait(false);
 
             int[] meaningfulLines = debugger.SeenLines.Where(line => line > 0).ToArray();
-            await Assert.That(meaningfulLines.Length).IsGreaterThanOrEqualTo(1);
-            await Assert.That(debugger.ActionsServed.Count).IsGreaterThanOrEqualTo(2);
+            await Assert
+                .That(meaningfulLines.Length)
+                .IsGreaterThanOrEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ActionsServed.Count)
+                .IsGreaterThanOrEqualTo(2)
+                .ConfigureAwait(false);
             await Assert
                 .That(debugger.ActionsServed[0])
-                .IsEqualTo(DebuggerAction.ActionType.StepIn);
+                .IsEqualTo(DebuggerAction.ActionType.StepIn)
+                .ConfigureAwait(false);
             await Assert
                 .That(debugger.ActionsServed[1])
-                .IsEqualTo(DebuggerAction.ActionType.StepOut);
+                .IsEqualTo(DebuggerAction.ActionType.StepOut)
+                .ConfigureAwait(false);
         }
 
         private sealed class StepSequencingDebugger : IDebugger
@@ -149,4 +156,3 @@ return caller()
         }
     }
 }
-#pragma warning restore CA2007

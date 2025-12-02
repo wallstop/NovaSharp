@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -17,7 +16,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DebuggerAction action = new(provider);
 
-            await Assert.That(action.TimeStampUtc).IsEqualTo(fixedTime.UtcDateTime);
+            await Assert
+                .That(action.TimeStampUtc)
+                .IsEqualTo(fixedTime.UtcDateTime)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -27,14 +29,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             int[] source = { 10, 20, 30 };
 
             action.Lines = source;
-            await Assert.That(action.Lines).IsEquivalentTo(source);
+            await Assert.That(action.Lines).IsEquivalentTo(source).ConfigureAwait(false);
 
             source[0] = 999;
-            await Assert.That(action.Lines[0]).IsNotEqualTo(source[0]);
+            await Assert.That(action.Lines[0]).IsNotEqualTo(source[0]).ConfigureAwait(false);
 
             action.Lines = null;
-            await Assert.That(action.Lines).IsNotNull();
-            await Assert.That(action.Lines.Count).IsEqualTo(0);
+            await Assert.That(action.Lines).IsNotNull().ConfigureAwait(false);
+            await Assert.That(action.Lines.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         private sealed class FixedTimeProvider : ITimeProvider
@@ -53,4 +55,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

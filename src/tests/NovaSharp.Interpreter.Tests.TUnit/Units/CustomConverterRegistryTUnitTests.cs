@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -28,7 +27,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DataType.String,
                 typeof(string)
             );
-            await Assert.That(resolved(dynValue)).IsEqualTo("payload-first");
+            await Assert.That(resolved(dynValue)).IsEqualTo("payload-first").ConfigureAwait(false);
 
             Func<DynValue, object> secondConverter = value => value.String + "-second";
             registry.SetScriptToClrCustomConversion(
@@ -41,12 +40,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DataType.String,
                 typeof(string)
             );
-            await Assert.That(updated(dynValue)).IsEqualTo("payload-second");
+            await Assert.That(updated(dynValue)).IsEqualTo("payload-second").ConfigureAwait(false);
 
             registry.SetScriptToClrCustomConversion(DataType.String, typeof(string));
             await Assert
                 .That(registry.GetScriptToClrCustomConversion(DataType.String, typeof(string)))
-                .IsNull();
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -63,7 +63,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("scriptDataType");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("scriptDataType")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,7 +80,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 typeof(string)
             );
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -93,15 +96,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(string)
             );
-            await Assert.That(resolved).IsNotNull();
+            await Assert.That(resolved).IsNotNull().ConfigureAwait(false);
             DynValue converted = resolved(script, "value");
-            await Assert.That(converted.String).IsEqualTo("value-converted");
+            await Assert.That(converted.String).IsEqualTo("value-converted").ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion(
                 typeof(string),
                 (Func<Script, object, DynValue>)null
             );
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(string))).IsNull();
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(string)))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -121,7 +127,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             DynValue result = resolved(script, 10);
 
-            await Assert.That(result.Number).IsEqualTo(15d);
+            await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -145,13 +151,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 typeof(Guid)
             );
             DynValue guidResult = guidConverter(script, sampleGuid);
-            await Assert.That(guidResult.String).IsEqualTo(sampleGuid.ToString("N"));
+            await Assert
+                .That(guidResult.String)
+                .IsEqualTo(sampleGuid.ToString("N"))
+                .ConfigureAwait(false);
 
             Func<Script, object, DynValue> longConverter = registry.GetClrToScriptCustomConversion(
                 typeof(long)
             );
             DynValue longResult = longConverter(script, 7L);
-            await Assert.That(longResult.Number).IsEqualTo(14d);
+            await Assert.That(longResult.Number).IsEqualTo(14d).ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion(
                 typeof(Guid),
@@ -159,8 +168,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             registry.SetClrToScriptCustomConversion<long>((Func<Script, long, DynValue>)null);
 
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(Guid))).IsNull();
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(long))).IsNull();
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(Guid)))
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(long)))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -174,11 +189,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 }
             );
 
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(int))).IsNotNull();
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(int)))
+                .IsNotNull()
+                .ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion<int>((Func<Script, int, DynValue>)null);
 
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(int))).IsNull();
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(int)))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -199,8 +220,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(registry.GetScriptToClrCustomConversion(DataType.String, typeof(string)))
-                .IsNull();
-            await Assert.That(registry.GetClrToScriptCustomConversion(typeof(int))).IsNull();
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(int)))
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         private static readonly MethodInfo LegacyClrToScriptConversionMethod =
@@ -279,4 +304,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

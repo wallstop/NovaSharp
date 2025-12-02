@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -272,7 +271,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 },
                 async tuple =>
                 {
-                    await Assert.That(tuple.Item2.IntProp).IsEqualTo(19);
+                    await Assert.That(tuple.Item2.IntProp).IsEqualTo(19).ConfigureAwait(false);
                 }
             );
         }
@@ -288,7 +287,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     script.Globals.Set("myobj", UserData.Create(obj));
                     return Task.FromResult((script.DoString("return myobj.IntProp;"), obj));
                 },
-                async tuple => await EndToEndDynValueAssert.ExpectAsync(tuple.Item1, 321)
+                async tuple =>
+                    await EndToEndDynValueAssert.ExpectAsync(tuple.Item1, 321).ConfigureAwait(false)
             );
         }
 
@@ -307,7 +307,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                         script.DoString("return myobj1.NIntProp, myobj2.NIntProp;")
                     );
                 },
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 321, null)
+                async result =>
+                    await EndToEndDynValueAssert
+                        .ExpectAsync(result, 321, null)
+                        .ConfigureAwait(false)
             );
         }
 
@@ -329,12 +332,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     );
                 },
                 async result =>
-                    await EndToEndDynValueAssert.ExpectAsync(
-                        result,
-                        "ciao",
-                        DataType.UserData,
-                        "ciao"
-                    )
+                    await EndToEndDynValueAssert
+                        .ExpectAsync(result, "ciao", DataType.UserData, "ciao")
+                        .ConfigureAwait(false)
             );
         }
 
@@ -350,7 +350,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     script.DoString("myobj.IntProp = 19;");
                     return Task.FromResult(obj);
                 },
-                async obj => await Assert.That(obj.IntProp).IsEqualTo(19)
+                async obj => await Assert.That(obj.IntProp).IsEqualTo(19).ConfigureAwait(false)
             );
         }
 
@@ -370,8 +370,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 },
                 async tuple =>
                 {
-                    await Assert.That(tuple.first.NIntProp).IsNull();
-                    await Assert.That(tuple.second.NIntProp).IsEqualTo(19);
+                    await Assert.That(tuple.first.NIntProp).IsNull().ConfigureAwait(false);
+                    await Assert.That(tuple.second.NIntProp).IsEqualTo(19).ConfigureAwait(false);
                 }
             );
         }
@@ -392,8 +392,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 },
                 async tuple =>
                 {
-                    await Assert.That(tuple.first.ObjProp).IsEqualTo(tuple.second);
-                    await Assert.That(tuple.second.ObjProp).IsEqualTo("hello");
+                    await Assert
+                        .That(tuple.first.ObjProp)
+                        .IsEqualTo(tuple.second)
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(tuple.second.ObjProp)
+                        .IsEqualTo("hello")
+                        .ConfigureAwait(false);
                 }
             );
         }
@@ -412,7 +418,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     );
                     return Task.FromResult(obj);
                 },
-                async obj => await Assert.That(obj.IntProp).IsEqualTo(321)
+                async obj => await Assert.That(obj.IntProp).IsEqualTo(321).ConfigureAwait(false)
             );
         }
 
@@ -428,7 +434,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     script.DoString("static.StaticProp = 'asdasd' .. static.StaticProp;");
                     return Task.FromResult(SomeClass.StaticProp);
                 },
-                async value => await Assert.That(value).IsEqualTo("asdasdqweqwe")
+                async value =>
+                    await Assert.That(value).IsEqualTo("asdasdqweqwe").ConfigureAwait(false)
             );
         }
 
@@ -443,7 +450,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     script.Globals.Set("myobj", UserData.Create(obj));
                     return Task.FromResult(script.DoString("return myobj.ConstIntProp;"));
                 },
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 115)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 115).ConfigureAwait(false)
             );
         }
 
@@ -476,7 +484,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     script.Globals.Set("myobj", UserData.Create(obj));
                     return Task.FromResult(script.DoString("return myobj.RoIntProp;"));
                 },
-                async result => await EndToEndDynValueAssert.ExpectAsync(result, 123)
+                async result =>
+                    await EndToEndDynValueAssert.ExpectAsync(result, 123).ConfigureAwait(false)
             );
         }
 
@@ -527,4 +536,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

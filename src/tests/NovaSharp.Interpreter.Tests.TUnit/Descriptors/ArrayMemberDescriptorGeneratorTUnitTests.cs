@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -29,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CodeTypeMemberCollection members = new CodeTypeMemberCollection();
             CodeExpression[] expressions = generator.Generate(descriptorTable, context, members);
 
-            await Assert.That(expressions.Length).IsEqualTo(1);
+            await Assert.That(expressions.Length).IsEqualTo(1).ConfigureAwait(false);
             CodeObjectCreateExpression ctorExpression = AssertCast<CodeObjectCreateExpression>(
                 expressions[0]
             );
@@ -37,17 +36,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(
                     ctorExpression.CreateType.BaseType.StartsWith("AIDX_", StringComparison.Ordinal)
                 )
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
 
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
             await Assert
                 .That(generatedClass.BaseTypes[0].BaseType)
-                .IsEqualTo(typeof(ArrayMemberDescriptor).FullName);
+                .IsEqualTo(typeof(ArrayMemberDescriptor).FullName)
+                .ConfigureAwait(false);
 
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
-            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(2);
-            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Items");
-            await AssertPrimitive(ctor.BaseConstructorArgs[1], true);
+            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(2).ConfigureAwait(false);
+            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Items").ConfigureAwait(false);
+            await AssertPrimitive(ctor.BaseConstructorArgs[1], true).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,23 +68,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CodeTypeDeclaration generatedClass = members.OfType<CodeTypeDeclaration>().Single();
             CodeConstructor ctor = generatedClass.Members.OfType<CodeConstructor>().Single();
 
-            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(3);
-            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Entries");
-            await AssertPrimitive(ctor.BaseConstructorArgs[1], false);
+            await Assert.That(ctor.BaseConstructorArgs.Count).IsEqualTo(3).ConfigureAwait(false);
+            await AssertPrimitive(ctor.BaseConstructorArgs[0], "Entries").ConfigureAwait(false);
+            await AssertPrimitive(ctor.BaseConstructorArgs[1], false).ConfigureAwait(false);
 
             CodeArrayCreateExpression parameterArray = AssertCast<CodeArrayCreateExpression>(
                 ctor.BaseConstructorArgs[2]
             );
             await Assert
                 .That(parameterArray.CreateType.BaseType)
-                .IsEqualTo(typeof(ParameterDescriptor).FullName);
-            await Assert.That(parameterArray.Initializers.Count).IsEqualTo(1);
+                .IsEqualTo(typeof(ParameterDescriptor).FullName)
+                .ConfigureAwait(false);
+            await Assert.That(parameterArray.Initializers.Count).IsEqualTo(1).ConfigureAwait(false);
             CodeObjectCreateExpression parameterCtor = AssertCast<CodeObjectCreateExpression>(
                 parameterArray.Initializers[0]
             );
             await Assert
                 .That(parameterCtor.CreateType.BaseType)
-                .IsEqualTo(typeof(ParameterDescriptor).FullName);
+                .IsEqualTo(typeof(ParameterDescriptor).FullName)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -99,7 +102,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("table");
+            await Assert.That(exception.ParamName).IsEqualTo("table").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -112,7 +115,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 generator.Generate(descriptorTable, null, new CodeTypeMemberCollection())
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("generatorContext");
+            await Assert
+                .That(exception.ParamName)
+                .IsEqualTo("generatorContext")
+                .ConfigureAwait(false);
         }
 
         private static Table CreateParameterList()
@@ -134,7 +140,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         private static async Task AssertPrimitive(CodeExpression expression, object expected)
         {
             CodePrimitiveExpression primitive = AssertCast<CodePrimitiveExpression>(expression);
-            await Assert.That(primitive.Value).IsEqualTo(expected);
+            await Assert.That(primitive.Value).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         private static T AssertCast<T>(CodeExpression expression)
@@ -151,4 +157,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

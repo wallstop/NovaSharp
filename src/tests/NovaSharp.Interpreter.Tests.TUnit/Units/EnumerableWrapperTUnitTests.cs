@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections;
@@ -38,11 +37,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 TestHelpers.CreateArguments()
             );
 
-            await Assert.That(tuple.Tuple.Length).IsEqualTo(3);
-            await Assert.That(iteratorUserData.Type).IsEqualTo(DataType.UserData);
-            await Assert.That(first.Number).IsEqualTo(1);
-            await Assert.That(second.Number).IsEqualTo(2);
-            await Assert.That(third.IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(iteratorUserData.Type)
+                .IsEqualTo(DataType.UserData)
+                .ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,18 +71,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 TestHelpers.CreateArguments()
             );
 
-            await Assert.That(first.Number).IsEqualTo(5);
-            await Assert.That(second.Number).IsEqualTo(7);
-            await Assert.That(third.IsNil()).IsTrue();
-            await Assert.That(enumerator.ResetCalls).IsZero();
+            await Assert.That(first.Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(enumerator.ResetCalls).IsZero().ConfigureAwait(false);
 
             DynValue restart = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
 
-            await Assert.That(enumerator.ResetCalls).IsEqualTo(1);
-            await Assert.That(restart.Number).IsEqualTo(5);
+            await Assert.That(enumerator.ResetCalls).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(restart.Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -104,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
 
-            await Assert.That(advanced).IsTrue();
+            await Assert.That(advanced).IsTrue().ConfigureAwait(false);
 
             DynValue current = descriptor.Index(
                 script,
@@ -112,7 +114,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewString("Current"),
                 isDirectIndexing: true
             );
-            await Assert.That(current.String).IsEqualTo("alpha");
+            await Assert.That(current.String).IsEqualTo("alpha").ConfigureAwait(false);
 
             DynValue resetCallback = descriptor.Index(
                 script,
@@ -124,14 +126,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 context,
                 TestHelpers.CreateArguments()
             );
-            await Assert.That(resetResult.IsNil()).IsTrue();
+            await Assert.That(resetResult.IsNil()).IsTrue().ConfigureAwait(false);
 
             bool restarted = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
 
-            await Assert.That(restarted).IsTrue();
-            await Assert.That(current.String).IsEqualTo("alpha");
+            await Assert.That(restarted).IsTrue().ConfigureAwait(false);
+            await Assert.That(current.String).IsEqualTo("alpha").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -159,9 +161,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 TestHelpers.CreateArguments()
             );
 
-            await Assert.That(first.Number).IsEqualTo(10);
-            await Assert.That(second.Number).IsEqualTo(20);
-            await Assert.That(third.IsNil()).IsTrue();
+            await Assert.That(first.Number).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -196,12 +198,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean)
-                .IsTrue();
-            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one");
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one").ConfigureAwait(false);
             await Assert
                 .That(moveNext.Callback.ClrCallback(context, TestHelpers.CreateArguments()).Boolean)
-                .IsTrue();
-            await Assert.That(GetCurrentAccessor().String).IsEqualTo("two");
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("two").ConfigureAwait(false);
 
             DynValue unknown = descriptor.Index(
                 script,
@@ -209,13 +213,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewString("does_not_exist"),
                 true
             );
-            await Assert.That(unknown).IsNull();
+            await Assert.That(unknown).IsNull().ConfigureAwait(false);
 
             DynValue resetResult = reset.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            await Assert.That(resetResult.IsNil()).IsTrue();
+            await Assert.That(resetResult.IsNil()).IsTrue().ConfigureAwait(false);
 
             reset.Callback.ClrCallback(context, TestHelpers.CreateArguments());
 
@@ -223,8 +227,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
 
-            await Assert.That(restarted).IsTrue();
-            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one");
+            await Assert.That(restarted).IsTrue().ConfigureAwait(false);
+            await Assert.That(GetCurrentAccessor().String).IsEqualTo("one").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -245,7 +249,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 isDirectIndexing: true
             );
 
-            await Assert.That(result).IsFalse();
+            await Assert.That(result).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -260,7 +264,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue value = descriptor.MetaIndex(script, instance, "__len");
 
-            await Assert.That(value).IsNull();
+            await Assert.That(value).IsNull().ConfigureAwait(false);
         }
 
         private static DynValue GetIteratorCallback(Script script, DynValue iteratorUserData)
@@ -305,4 +309,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

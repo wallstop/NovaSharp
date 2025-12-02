@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 {
     using System;
@@ -17,7 +16,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             string snippet = source.GetCodeSnippet(span);
 
-            await Assert.That(snippet).IsEqualTo("sample");
+            await Assert.That(snippet).IsEqualTo("sample").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -28,7 +27,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             string snippet = source.GetCodeSnippet(span);
 
-            await Assert.That(snippet).IsEqualTo("return 123");
+            await Assert.That(snippet).IsEqualTo("return 123").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             string snippet = source.GetCodeSnippet(span);
             string expected = string.Concat(source.Lines[1].AsSpan(6), source.Lines[2]);
 
-            await Assert.That(snippet).IsEqualTo(expected);
+            await Assert.That(snippet).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,11 +57,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             SourceRef span = new(source.SourceId, 2, 6, 1, 2, false);
 
-            await Assert.That(span.IncludesLocation(source.SourceId, 1, 2)).IsTrue();
-            await Assert.That(span.IncludesLocation(source.SourceId, 1, 1)).IsFalse();
-            await Assert.That(span.IncludesLocation(source.SourceId, 2, 6)).IsTrue();
-            await Assert.That(span.IncludesLocation(source.SourceId, 2, 7)).IsFalse();
-            await Assert.That(span.IncludesLocation(source.SourceId + 1, 1, 2)).IsFalse();
+            await Assert
+                .That(span.IncludesLocation(source.SourceId, 1, 2))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.IncludesLocation(source.SourceId, 1, 1))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.IncludesLocation(source.SourceId, 2, 6))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.IncludesLocation(source.SourceId, 2, 7))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.IncludesLocation(source.SourceId + 1, 1, 2))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,13 +91,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             await Assert
                 .That(span.GetLocationDistance(source.SourceId + 1, 1, 5))
-                .IsEqualTo(int.MaxValue);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 1, 3)).IsEqualTo(1);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 1, 6)).IsEqualTo(0);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 2, 10)).IsEqualTo(0);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 3, 11)).IsEqualTo(3);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 0, 0)).IsEqualTo(1600);
-            await Assert.That(span.GetLocationDistance(source.SourceId, 4, 0)).IsEqualTo(1600);
+                .IsEqualTo(int.MaxValue)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 1, 3))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 1, 6))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 2, 10))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 3, 11))
+                .IsEqualTo(3)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 0, 0))
+                .IsEqualTo(1600)
+                .ConfigureAwait(false);
+            await Assert
+                .That(span.GetLocationDistance(source.SourceId, 4, 0))
+                .IsEqualTo(1600)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -93,20 +126,33 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             SourceRef location = new(source.SourceId, 2, 2, 1, 1, false);
 
             script.Options.UseLuaErrorLocations = true;
-            await Assert.That(location.FormatLocation(script)).IsEqualTo("units/format:1");
+            await Assert
+                .That(location.FormatLocation(script))
+                .IsEqualTo("units/format:1")
+                .ConfigureAwait(false);
 
             script.Options.UseLuaErrorLocations = false;
-            await Assert.That(location.FormatLocation(script)).IsEqualTo("units/format:(1,2)");
+            await Assert
+                .That(location.FormatLocation(script))
+                .IsEqualTo("units/format:(1,2)")
+                .ConfigureAwait(false);
 
             SourceRef span = new(source.SourceId, 0, 5, 1, 1, false);
-            await Assert.That(span.FormatLocation(script)).IsEqualTo("units/format:(1,0-5)");
+            await Assert
+                .That(span.FormatLocation(script))
+                .IsEqualTo("units/format:(1,0-5)")
+                .ConfigureAwait(false);
 
             SourceRef multi = new(source.SourceId, 0, 3, 1, 2, false);
-            await Assert.That(multi.FormatLocation(script)).IsEqualTo("units/format:(1,0-2,3)");
+            await Assert
+                .That(multi.FormatLocation(script))
+                .IsEqualTo("units/format:(1,0-2,3)")
+                .ConfigureAwait(false);
 
             await Assert
                 .That(location.FormatLocation(script, forceClassicFormat: true))
-                .IsEqualTo("units/format:1");
+                .IsEqualTo("units/format:1")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -115,7 +161,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             Script script = new();
             SourceRef location = SourceRef.GetClrLocation();
 
-            await Assert.That(location.FormatLocation(script)).IsEqualTo("[clr]");
+            await Assert
+                .That(location.FormatLocation(script))
+                .IsEqualTo("[clr]")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -125,8 +174,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 
             SourceRef returned = span.SetNoBreakPoint();
 
-            await Assert.That(span.CannotBreakpoint).IsTrue();
-            await Assert.That(object.ReferenceEquals(returned, span)).IsTrue();
+            await Assert.That(span.CannotBreakpoint).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(object.ReferenceEquals(returned, span))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -135,13 +187,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             SourceRef original = new(1, 0, 4, 2, 3, false) { Breakpoint = true };
             SourceRef copy = new(original, true);
 
-            await Assert.That(copy.SourceIdx).IsEqualTo(original.SourceIdx);
-            await Assert.That(copy.FromChar).IsEqualTo(original.FromChar);
-            await Assert.That(copy.ToChar).IsEqualTo(original.ToChar);
-            await Assert.That(copy.FromLine).IsEqualTo(original.FromLine);
-            await Assert.That(copy.ToLine).IsEqualTo(original.ToLine);
-            await Assert.That(copy.IsStepStop).IsTrue();
-            await Assert.That(copy.Breakpoint).IsFalse();
+            await Assert.That(copy.SourceIdx).IsEqualTo(original.SourceIdx).ConfigureAwait(false);
+            await Assert.That(copy.FromChar).IsEqualTo(original.FromChar).ConfigureAwait(false);
+            await Assert.That(copy.ToChar).IsEqualTo(original.ToChar).ConfigureAwait(false);
+            await Assert.That(copy.FromLine).IsEqualTo(original.FromLine).ConfigureAwait(false);
+            await Assert.That(copy.ToLine).IsEqualTo(original.ToLine).ConfigureAwait(false);
+            await Assert.That(copy.IsStepStop).IsTrue().ConfigureAwait(false);
+            await Assert.That(copy.Breakpoint).IsFalse().ConfigureAwait(false);
         }
 
         private static (Script Script, SourceCode Source) CreateScript(string code, string name)
@@ -153,4 +205,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 {
     using System;
@@ -21,10 +20,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             List<int> source = new() { 1, 2, 3, 4, 5 };
             Slice<int> slice = new(source, from: 1, length: 3, reversed: false);
 
-            await Assert.That(slice.Count).IsEqualTo(3);
-            await Assert.That(slice[0]).IsEqualTo(2);
-            await Assert.That(slice[1]).IsEqualTo(3);
-            await Assert.That(slice[2]).IsEqualTo(4);
+            await Assert.That(slice.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(slice[0]).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(slice[1]).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(slice[2]).IsEqualTo(4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -35,8 +34,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             slice[1] = 42;
 
-            await Assert.That(slice[1]).IsEqualTo(42);
-            await Assert.That(source[2]).IsEqualTo(42);
+            await Assert.That(slice[1]).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(source[2]).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -85,9 +84,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             List<string> source = new() { "a", "b", "c", "d" };
             Slice<string> slice = new(source, from: 0, length: 3, reversed: true);
 
-            await Assert.That(slice.IndexOf("c")).IsEqualTo(0);
-            await Assert.That(slice.IndexOf("b")).IsEqualTo(1);
-            await Assert.That(slice.IndexOf("z")).IsEqualTo(-1);
+            await Assert.That(slice.IndexOf("c")).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(slice.IndexOf("b")).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(slice.IndexOf("z")).IsEqualTo(-1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -104,8 +103,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                     slice.Insert(0, 4)
             )!;
 
-            await Assert.That(addException.Message).Contains("readonly");
-            await Assert.That(insertException.Message).Contains("readonly");
+            await Assert.That(addException.Message).Contains("readonly").ConfigureAwait(false);
+            await Assert.That(insertException.Message).Contains("readonly").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -123,8 +122,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                     slice.Clear()
             )!;
 
-            await Assert.That(removeException.Message).Contains("readonly");
-            await Assert.That(clearException.Message).Contains("readonly");
+            await Assert.That(removeException.Message).Contains("readonly").ConfigureAwait(false);
+            await Assert.That(clearException.Message).Contains("readonly").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -133,10 +132,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             List<int> source = new() { 1, 2, 3, 4, 5 };
             Slice<int> slice = new(source, from: 1, length: 3, reversed: false);
 
-            await Assert.That(slice.Contains(3)).IsTrue();
-            await Assert.That(slice.Contains(5)).IsFalse();
-            await Assert.That(slice.IndexOf(4)).IsEqualTo(2);
-            await Assert.That(slice.IndexOf(5)).IsEqualTo(-1);
+            await Assert.That(slice.Contains(3)).IsTrue().ConfigureAwait(false);
+            await Assert.That(slice.Contains(5)).IsFalse().ConfigureAwait(false);
+            await Assert.That(slice.IndexOf(4)).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(slice.IndexOf(5)).IsEqualTo(-1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -150,4 +149,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         }
     }
 }
-#pragma warning restore CA2007

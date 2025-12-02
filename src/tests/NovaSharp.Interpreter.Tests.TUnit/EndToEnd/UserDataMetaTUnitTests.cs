@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -218,7 +217,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = script.DoString(lua);
-            await Assert.That(result.String).IsEqualTo("aAbBcC");
+            await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -239,7 +238,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = script.DoString(lua);
-            await Assert.That(result.String).IsEqualTo("aAbBcC");
+            await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -260,7 +259,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             DynValue result = script.DoString(lua);
-            await Assert.That(result.Number).IsEqualTo(6);
+            await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -275,8 +274,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals.Set("o2", UserData.Create(new ClassWithCount()));
             script.Globals.Set("o3", UserData.Create(new ClassWithLength()));
 
-            await Assert.That(script.DoString("return #o3").Number).IsEqualTo(55);
-            await Assert.That(script.DoString("return #o2").Number).IsEqualTo(123);
+            await Assert
+                .That(script.DoString("return #o3").Number)
+                .IsEqualTo(55)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return #o2").Number)
+                .IsEqualTo(123)
+                .ConfigureAwait(false);
 
             Assert.Throws<ScriptRuntimeException>(() => script.DoString("return #o1"));
         }
@@ -291,16 +296,46 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)));
             script.Globals.Set("o3", UserData.Create(new ArithmOperatorsTestClass(5)));
 
-            await Assert.That(script.DoString("return o1 == o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 != o2").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 == o3").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o2 != o3").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 == 5").Boolean).IsTrue();
-            await Assert.That(script.DoString("return 5 == o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 != 6").Boolean).IsTrue();
-            await Assert.That(script.DoString("return 6 != o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return 'xx' != o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 != 'xx'").Boolean).IsTrue();
+            await Assert
+                .That(script.DoString("return o1 == o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 != o2").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 == o3").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o2 != o3").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 == 5").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return 5 == o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 != 6").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return 6 != o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return 'xx' != o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 != 'xx'").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -312,24 +347,66 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
             script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));
 
-            await Assert.That(script.DoString("return o1 <= o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 <= o2").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 < o2").Boolean).IsTrue();
+            await Assert
+                .That(script.DoString("return o1 <= o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 <= o2").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 < o2").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(script.DoString("return o2 > o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o2 >= o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o2 >= o2").Boolean).IsTrue();
+            await Assert
+                .That(script.DoString("return o2 > o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o2 >= o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o2 >= o2").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(script.DoString("return o1 <= 4").Boolean).IsTrue();
-            await Assert.That(script.DoString("return o1 < 4").Boolean).IsTrue();
+            await Assert
+                .That(script.DoString("return o1 <= 4").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 < 4").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(script.DoString("return 4 > o1").Boolean).IsTrue();
-            await Assert.That(script.DoString("return 4 >= o1").Boolean).IsTrue();
+            await Assert
+                .That(script.DoString("return 4 > o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return 4 >= o1").Boolean)
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(script.DoString("return o1 > o2").Boolean).IsFalse();
-            await Assert.That(script.DoString("return o1 >= o2").Boolean).IsFalse();
-            await Assert.That(script.DoString("return o2 < o1").Boolean).IsFalse();
-            await Assert.That(script.DoString("return o2 <= o1").Boolean).IsFalse();
+            await Assert
+                .That(script.DoString("return o1 > o2").Boolean)
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o1 >= o2").Boolean)
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o2 < o1").Boolean)
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return o2 <= o1").Boolean)
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -341,64 +418,64 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpUnm()
         {
-            await OperatorTestAsync("return -o + 5", 5, 0);
-            await OperatorTestAsync("return -o + -o", 5, -10);
+            await OperatorTestAsync("return -o + 5", 5, 0).ConfigureAwait(false);
+            await OperatorTestAsync("return -o + -o", 5, -10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpAdd()
         {
-            await OperatorTestAsync("return o + 5", 5, 10);
-            await OperatorTestAsync("return o + o", 5, 10);
-            await OperatorTestAsync("return 5 + o", 5, 10);
+            await OperatorTestAsync("return o + 5", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return o + o", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 + o", 5, 10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpConcat()
         {
-            await OperatorTestAsync("return o .. 5", 5, 10);
-            await OperatorTestAsync("return o .. o", 5, 10);
-            await OperatorTestAsync("return 5 .. o", 5, 10);
+            await OperatorTestAsync("return o .. 5", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return o .. o", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 .. o", 5, 10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpPow()
         {
-            await OperatorTestAsync("return o ^ 5", 5, 10);
-            await OperatorTestAsync("return o ^ o", 5, 10);
-            await OperatorTestAsync("return 5 ^ o", 5, 10);
+            await OperatorTestAsync("return o ^ 5", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return o ^ o", 5, 10).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 ^ o", 5, 10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpSub()
         {
-            await OperatorTestAsync("return o - 5", 2, -3);
-            await OperatorTestAsync("return o - o", 2, 0);
-            await OperatorTestAsync("return 5 - o", 2, 3);
+            await OperatorTestAsync("return o - 5", 2, -3).ConfigureAwait(false);
+            await OperatorTestAsync("return o - o", 2, 0).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 - o", 2, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpMul()
         {
-            await OperatorTestAsync("return o * 5", 3, 15);
-            await OperatorTestAsync("return o * o", 3, 9);
-            await OperatorTestAsync("return 5 * o", 3, 15);
+            await OperatorTestAsync("return o * 5", 3, 15).ConfigureAwait(false);
+            await OperatorTestAsync("return o * o", 3, 9).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 * o", 3, 15).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpDiv()
         {
-            await OperatorTestAsync("return o / 5", 25, 5);
-            await OperatorTestAsync("return o / o", 117, 1);
-            await OperatorTestAsync("return 15 / o", 5, 3);
+            await OperatorTestAsync("return o / 5", 25, 5).ConfigureAwait(false);
+            await OperatorTestAsync("return o / o", 117, 1).ConfigureAwait(false);
+            await OperatorTestAsync("return 15 / o", 5, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropMetaOpMod()
         {
-            await OperatorTestAsync("return o % 5", 16, 1);
-            await OperatorTestAsync("return o % o", 3, 0);
-            await OperatorTestAsync("return 5 % o", 3, 2);
+            await OperatorTestAsync("return o % 5", 16, 1).ConfigureAwait(false);
+            await OperatorTestAsync("return o % o", 3, 0).ConfigureAwait(false);
+            await OperatorTestAsync("return 5 % o", 3, 2).ConfigureAwait(false);
         }
 
         private static async Task OperatorTestAsync(string code, int input, int expected)
@@ -411,9 +488,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString(code);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(expected);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

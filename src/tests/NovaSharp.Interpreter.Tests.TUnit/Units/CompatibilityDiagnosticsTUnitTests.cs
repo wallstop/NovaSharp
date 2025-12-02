@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -20,7 +19,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("local = 1")
             );
 
-            await Assert.That(exception.DecoratedMessage).Contains("[compatibility: Lua 5.2]");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("[compatibility: Lua 5.2]")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -34,8 +36,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("error('boom')")
             );
 
-            await Assert.That(exception.DecoratedMessage).Contains("[compatibility: Lua 5.5]");
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("[compatibility: Lua 5.5]")
+                .ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -22,9 +21,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 constant
             );
 
-            await Assert.That(expression.IsConstant()).IsTrue();
+            await Assert.That(expression.IsConstant()).IsTrue().ConfigureAwait(false);
             DynValue result = expression.Evaluate();
-            await Assert.That(result.String).IsEqualTo("constant");
+            await Assert.That(result.String).IsEqualTo("constant").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -34,13 +33,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynamicExpression firstExpression = script.CreateDynamicExpression("x * 2");
             DynValue result = firstExpression.Evaluate(script.CreateDynamicExecutionContext());
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
 
             script.Globals["x"] = 5;
             DynamicExpression secondExpression = script.CreateDynamicExpression("x + 10");
             DynValue second = secondExpression.Evaluate(script.CreateDynamicExecutionContext());
-            await Assert.That(second.Number).IsEqualTo(15d);
+            await Assert.That(second.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,8 +51,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue function = script.LoadString("return value * 5", env, "dynamic-expression");
             DynValue result = script.Call(function);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(15d);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,9 +64,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynamicExpression expression = script.CreateDynamicExpression("foo");
             SymbolRef symbol = expression.FindSymbol(script.CreateDynamicExecutionContext());
 
-            await Assert.That(symbol).IsNotNull();
-            await Assert.That(symbol.Type).IsEqualTo(SymbolRefType.Global);
-            await Assert.That(symbol.Name).IsEqualTo("foo");
+            await Assert.That(symbol).IsNotNull().ConfigureAwait(false);
+            await Assert.That(symbol.Type).IsEqualTo(SymbolRefType.Global).ConfigureAwait(false);
+            await Assert.That(symbol.Name).IsEqualTo("foo").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,9 +78,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynamicExpression second = script.CreateDynamicExpression("foo");
             DynamicExpression third = script.CreateDynamicExpression("bar");
 
-            await Assert.That(first).IsEqualTo(second);
-            await Assert.That(first.GetHashCode()).IsEqualTo(second.GetHashCode());
-            await Assert.That(first.Equals(third)).IsFalse();
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
+            await Assert
+                .That(first.GetHashCode())
+                .IsEqualTo(second.GetHashCode())
+                .ConfigureAwait(false);
+            await Assert.That(first.Equals(third)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,7 +99,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Evaluate(context)
             );
 
-            await Assert.That(exception.Message).Contains("resource owned by a script");
+            await Assert
+                .That(exception.Message)
+                .Contains("resource owned by a script")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -110,7 +115,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.FindSymbol(null)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -123,7 +128,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            await Assert.That(constant.FindSymbol(context)).IsNull();
+            await Assert.That(constant.FindSymbol(context)).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -137,7 +142,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Evaluate(context);
 
-            await Assert.That(result.Number).IsEqualTo(8d);
+            await Assert.That(result.Number).IsEqualTo(8d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -146,7 +151,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Script script = new();
             DynamicExpression expression = script.CreateDynamicExpression("foo");
 
-            await Assert.That(expression.Equals("foo")).IsFalse();
+            await Assert.That(expression.Equals("foo")).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -155,8 +160,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Script script = new();
             DynamicExpression expression = new(script, null, DynValue.NewNumber(1));
 
-            await Assert.That(expression.GetHashCode()).IsEqualTo(0);
+            await Assert.That(expression.GetHashCode()).IsEqualTo(0).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

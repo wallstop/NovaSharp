@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -25,7 +24,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 _ = new StandardEnumUserDataDescriptor(typeof(string));
             });
 
-            await Assert.That(exception.Message).Contains("enumType must be an enum");
+            await Assert
+                .That(exception.Message)
+                .Contains("enumType must be an enum")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,12 +35,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
 
-            await Assert.That(descriptor.UnderlyingType).IsEqualTo(typeof(byte));
-            await Assert.That(descriptor.IsUnsigned).IsTrue();
-            await Assert.That(descriptor.IsFlags).IsTrue();
-            await Assert.That(descriptor.HasMember("flagsOr")).IsTrue();
-            await Assert.That(descriptor.HasMember("__flagsOr")).IsTrue();
-            await Assert.That(descriptor.HasMember(nameof(SampleFlags.Fast))).IsTrue();
+            await Assert
+                .That(descriptor.UnderlyingType)
+                .IsEqualTo(typeof(byte))
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.IsUnsigned).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.IsFlags).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("flagsOr")).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("__flagsOr")).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.HasMember(nameof(SampleFlags.Fast)))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -46,9 +54,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
 
-            await Assert.That(descriptor.IsFlags).IsFalse();
-            await Assert.That(descriptor.HasMember("flagsOr")).IsFalse();
-            await Assert.That(descriptor.HasMember("__flagsOr")).IsFalse();
+            await Assert.That(descriptor.IsFlags).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("flagsOr")).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("__flagsOr")).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,7 +75,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That((SampleFlags)result.UserData.Object)
-                .IsEqualTo(SampleFlags.Fast | SampleFlags.Safe);
+                .IsEqualTo(SampleFlags.Fast | SampleFlags.Safe)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,7 +93,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That((SampleFlags)result.UserData.Object).IsEqualTo(SampleFlags.Fast);
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(SampleFlags.Fast)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -98,7 +110,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
             );
 
-            await Assert.That((SampleFlags)result.UserData.Object).IsEqualTo(~SampleFlags.Safe);
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(~SampleFlags.Safe)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,7 +129,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That((SampleFlags)result.UserData.Object)
-                .IsEqualTo(SampleFlags.Fast | SampleFlags.Light);
+                .IsEqualTo(SampleFlags.Fast | SampleFlags.Light)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,8 +147,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(hasAll.Boolean).IsTrue();
+            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAll.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,8 +165,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(hasAny.Boolean).IsFalse();
+            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAny.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -169,7 +185,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That((SignedIntFlags)result.UserData.Object)
-                .IsEqualTo(SignedIntFlags.Left);
+                .IsEqualTo(SignedIntFlags.Left)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,7 +205,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That((SignedIntFlags)result.UserData.Object)
-                .IsEqualTo(SignedIntFlags.Left);
+                .IsEqualTo(SignedIntFlags.Left)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -205,8 +223,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(hasAll.Boolean).IsTrue();
+            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAll.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -223,8 +241,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean);
-            await Assert.That(hasAny.Boolean).IsFalse();
+            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAny.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -240,7 +258,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.Message).Contains("expects two arguments");
+            await Assert
+                .That(exception.Message)
+                .Contains("expects two arguments")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -258,8 +279,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That((SampleSignedEnum)result.UserData.Object)
-                .IsEqualTo(SampleSignedEnum.Zero);
-            await Assert.That(descriptor.IsUnsigned).IsFalse();
+                .IsEqualTo(SampleSignedEnum.Zero)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.IsUnsigned).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -278,8 +300,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 long expected = Convert.ToInt64(flagValue, CultureInfo.InvariantCulture);
                 long actual = Convert.ToInt64(result.UserData.Object, CultureInfo.InvariantCulture);
 
-                await Assert.That(descriptor.IsUnsigned).IsFalse();
-                await Assert.That(actual).IsEqualTo(expected);
+                await Assert.That(descriptor.IsUnsigned).IsFalse().ConfigureAwait(false);
+                await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -302,8 +324,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                     CultureInfo.InvariantCulture
                 );
 
-                await Assert.That(descriptor.IsUnsigned).IsTrue();
-                await Assert.That(actual).IsEqualTo(expected);
+                await Assert.That(descriptor.IsUnsigned).IsTrue().ConfigureAwait(false);
+                await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -318,7 +340,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
             );
 
-            await Assert.That((int)result.UserData.Object).IsEqualTo(3);
+            await Assert.That((int)result.UserData.Object).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -334,7 +356,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.Message).Contains("Enum userdata or number expected");
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -354,7 +379,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.Message).Contains("Enum userdata or number expected");
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -374,7 +402,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.Message).Contains("Enum userdata or number expected");
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -390,7 +421,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
-            await Assert.That(exception.Message).Contains("expects two arguments");
+            await Assert
+                .That(exception.Message)
+                .Contains("expects two arguments")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -403,7 +437,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 descriptor.CallbackBwNot(context, TestHelpers.CreateArguments())
             );
 
-            await Assert.That(exception.Message).Contains("expects one argument");
+            await Assert
+                .That(exception.Message)
+                .Contains("expects one argument")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -413,7 +450,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue meta = descriptor.MetaIndex(new Script(), SampleFlags.Fast, "__concat");
 
-            await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -422,7 +459,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
             DynValue meta = descriptor.MetaIndex(new Script(), SampleEnum.One, "__concat");
 
-            await Assert.That(meta).IsNull();
+            await Assert.That(meta).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -432,8 +469,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert
                 .That(descriptor.IsTypeCompatible(typeof(SampleEnum), SampleEnum.One))
-                .IsTrue();
-            await Assert.That(descriptor.IsTypeCompatible(typeof(SampleEnum), null)).IsFalse();
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.IsTypeCompatible(typeof(SampleEnum), null))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         private static IEnumerable<(Type EnumType, object Value)> SignedEnumCases()
@@ -534,4 +575,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

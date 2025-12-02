@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -27,10 +26,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(context.Anonymous).IsTrue();
-            await Assert.That(inner.EvalCount).IsEqualTo(1);
-            await Assert.That(result.Number).IsEqualTo(7);
-            await Assert.That(expression.FindDynamic(executionContext)).IsEqualTo(dynamicRef);
+            await Assert.That(context.Anonymous).IsTrue().ConfigureAwait(false);
+            await Assert.That(inner.EvalCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert
+                .That(expression.FindDynamic(executionContext))
+                .IsEqualTo(dynamicRef)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -46,7 +48,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 expression.Compile(new ByteCode(script))
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
     }
 
@@ -63,7 +65,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expression.Eval(executionContext);
 
-            await Assert.That(result.Number).IsEqualTo(5);
+            await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,8 +79,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             expression.Compile(byteCode);
 
-            await Assert.That(inner.CompileCount).IsEqualTo(1);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Scalar);
+            await Assert.That(inner.CompileCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.Scalar)
+                .ConfigureAwait(false);
         }
     }
 
@@ -120,4 +125,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -16,7 +15,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 frame.PopBlock()
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -27,8 +26,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             RuntimeScopeBlock block = frame.PopBlock();
 
-            await Assert.That(block).IsNotNull();
-            await Assert.That(block.ToInclusive).IsEqualTo(0);
+            await Assert.That(block).IsNotNull().ConfigureAwait(false);
+            await Assert.That(block.ToInclusive).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,7 +39,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 frame.GetRuntimeFrameData()
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             RuntimeScopeFrame runtimeFrame = frame.GetRuntimeFrameData();
 
-            await Assert.That(runtimeFrame).IsNotNull();
+            await Assert.That(runtimeFrame).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -62,9 +61,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SymbolRef second = frame.TryDefineLocal("value");
 
-            await Assert.That(ReferenceEquals(second, first)).IsFalse();
-            await Assert.That(frame.Find("value")).IsSameReferenceAs(second);
+            await Assert.That(ReferenceEquals(second, first)).IsFalse().ConfigureAwait(false);
+            await Assert.That(frame.Find("value")).IsSameReferenceAs(second).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

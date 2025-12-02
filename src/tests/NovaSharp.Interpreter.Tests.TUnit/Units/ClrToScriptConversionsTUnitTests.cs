@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -31,24 +30,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, null).IsNil())
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
 
             DynValue dyn = DynValue.NewNumber(5);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, dyn))
-                .IsSameReferenceAs(dyn);
+                .IsSameReferenceAs(dyn)
+                .ConfigureAwait(false);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, true).Boolean)
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, "abc").String)
-                .IsEqualTo("abc");
+                .IsEqualTo("abc")
+                .ConfigureAwait(false);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, 42).Number)
-                .IsEqualTo(42d);
+                .IsEqualTo(42d)
+                .ConfigureAwait(false);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, table).Table)
-                .IsSameReferenceAs(table);
+                .IsSameReferenceAs(table)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 new CustomValue("converted")
             );
 
-            await Assert.That(result.String).IsEqualTo("converted");
+            await Assert.That(result.String).IsEqualTo("converted").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,14 +84,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script,
                 closureValue.Function
             );
-            await Assert.That(closureResult.Type).IsEqualTo(DataType.Function);
+            await Assert
+                .That(closureResult.Type)
+                .IsEqualTo(DataType.Function)
+                .ConfigureAwait(false);
 
             CallbackFunction callback = new((_, _) => DynValue.NewNumber(7));
             DynValue callbackResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
                 callback
             );
-            await Assert.That(callbackResult.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert
+                .That(callbackResult.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -98,27 +109,39 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SampleUserData instance = new();
 
             DynValue userData = ClrToScriptConversions.ObjectToDynValue(script, instance);
-            await Assert.That(userData.Type).IsEqualTo(DataType.UserData);
+            await Assert.That(userData.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
 
             DynValue staticUserData = ClrToScriptConversions.ObjectToDynValue(
                 script,
                 typeof(SampleUserData)
             );
-            await Assert.That(staticUserData.Type).IsEqualTo(DataType.UserData);
+            await Assert
+                .That(staticUserData.Type)
+                .IsEqualTo(DataType.UserData)
+                .ConfigureAwait(false);
 
             DynValue enumValue = ClrToScriptConversions.ObjectToDynValue(script, DayOfWeek.Friday);
-            await Assert.That(enumValue.Number).IsEqualTo((double)DayOfWeek.Friday);
+            await Assert
+                .That(enumValue.Number)
+                .IsEqualTo((double)DayOfWeek.Friday)
+                .ConfigureAwait(false);
 
             Func<int> simpleDelegate = () => 5;
             DynValue delegateValue = ClrToScriptConversions.ObjectToDynValue(
                 script,
                 simpleDelegate
             );
-            await Assert.That(delegateValue.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert
+                .That(delegateValue.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
 
             MethodInfo method = StaticClrCallbackMethodInfo;
             DynValue methodValue = ClrToScriptConversions.ObjectToDynValue(script, method);
-            await Assert.That(methodValue.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert
+                .That(methodValue.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -130,18 +153,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Dictionary<string, int> dictionary = new() { ["key"] = 3 };
 
             DynValue listValue = ClrToScriptConversions.ObjectToDynValue(script, list);
-            await Assert.That(listValue.Table.Get(1).Number).IsEqualTo(1d);
+            await Assert.That(listValue.Table.Get(1).Number).IsEqualTo(1d).ConfigureAwait(false);
 
             DynValue dictValue = ClrToScriptConversions.ObjectToDynValue(script, dictionary);
-            await Assert.That(dictValue.Table.Get("key").Number).IsEqualTo(3d);
+            await Assert
+                .That(dictValue.Table.Get("key").Number)
+                .IsEqualTo(3d)
+                .ConfigureAwait(false);
 
             IEnumerable enumerable = YieldStrings();
             DynValue enumerableValue = ClrToScriptConversions.ObjectToDynValue(script, enumerable);
-            await Assert.That(enumerableValue.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(enumerableValue.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
             IEnumerator enumerator = YieldStrings().GetEnumerator();
             DynValue iteratorTuple = ClrToScriptConversions.ObjectToDynValue(script, enumerator);
-            await Assert.That(iteratorTuple.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(iteratorTuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -153,7 +179,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ClrToScriptConversions.ObjectToDynValue(script, new object())
             );
 
-            await Assert.That(exception.Message).Contains("cannot convert clr type");
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot convert clr type")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -165,7 +194,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction);
+            await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         public static DynValue StaticClrCallback(ScriptExecutionContext ctx, CallbackArguments args)
@@ -196,4 +225,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         private sealed record CustomValue(string Name);
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -32,7 +31,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DebugService service =
                 debugger.DebugService
                 ?? throw new InvalidOperationException("Debugger never received DebugService.");
-            await Assert.That(service.OwnerScript).IsSameReferenceAs(script);
+            await Assert.That(service.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
 
             SourceCode source =
                 debugger.LastSourceCode
@@ -41,15 +40,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             HashSet<int> requested = new(debugger.RequestedBreakpoints);
             HashSet<int> applied = service.ResetBreakpoints(source, requested);
 
-            await Assert.That(applied.Count).IsGreaterThan(0);
-            await Assert.That(applied.All(requested.Contains)).IsTrue();
+            await Assert.That(applied.Count).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert.That(applied.All(requested.Contains)).IsTrue().ConfigureAwait(false);
 
             HashSet<int> flagged = source
                 .Refs.Where(reference => reference.Breakpoint)
                 .Select(reference => reference.FromLine)
                 .ToHashSet();
 
-            await Assert.That(flagged).IsEquivalentTo(applied);
+            await Assert.That(flagged).IsEquivalentTo(applied).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 service.ResetBreakpoints(null, lines)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("src");
+            await Assert.That(exception.ParamName).IsEqualTo("src").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -80,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 service.ResetBreakpoints(debugger.LastSourceCode, null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("lines");
+            await Assert.That(exception.ParamName).IsEqualTo("lines").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -94,7 +93,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 service.ResetBreakpoints(source, new HashSet<int> { 1 })
             );
 
-            await Assert.That(exception.Message).Contains("processor");
+            await Assert.That(exception.Message).Contains("processor").ConfigureAwait(false);
         }
 
         private static (

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -77,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             obj.TriggerMyEvent();
 
-            await Assert.That(invocationCount).IsEqualTo(1);
+            await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,7 +113,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             obj.TriggerMyEvent();
             obj2.TriggerMyEvent();
 
-            await Assert.That(invocationCount).IsEqualTo(1);
+            await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,7 +148,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             obj.TriggerMyEvent();
 
-            await Assert.That(invocationCount).IsEqualTo(2);
+            await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -178,7 +177,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            await Assert.That(result.Number).IsEqualTo(3);
+            await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -208,8 +207,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            await Assert.That(obj.TriggerMyEvent()).IsFalse();
-            await Assert.That(result.Number).IsEqualTo(3);
+            await Assert.That(obj.TriggerMyEvent()).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -262,14 +261,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            await Assert.That(SomeClass.TriggerMySEvent()).IsFalse();
+            await Assert.That(SomeClass.TriggerMySEvent()).IsFalse().ConfigureAwait(false);
             if (invocationCount != 3)
             {
-                await Assert.That(invocationCount).IsEqualTo(0);
+                await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
             }
             else
             {
-                await Assert.That(invocationCount).IsEqualTo(3);
+                await Assert.That(invocationCount).IsEqualTo(3).ConfigureAwait(false);
             }
         }
 
@@ -326,14 +325,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             if (invocationCount != 2)
             {
-                await Assert.That(invocationCount).IsEqualTo(0);
+                await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
             }
             else
             {
-                await Assert.That(invocationCount).IsEqualTo(2);
+                await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
             }
-            await Assert.That(SomeClass.TriggerMySEvent()).IsTrue();
+            await Assert.That(SomeClass.TriggerMySEvent()).IsTrue().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

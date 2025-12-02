@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -24,9 +23,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue single = DynValue.NewNumber(42);
             DynValue wrappedSingle = DynValue.NewTuple(single);
 
-            await Assert.That(empty.Type).IsEqualTo(DataType.Nil);
+            await Assert.That(empty.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
-            await Assert.That(wrappedSingle).IsSameReferenceAs(single);
+            await Assert.That(wrappedSingle).IsSameReferenceAs(single).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,18 +40,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewString("tail")
             );
 
-            await Assert.That(flattened.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(flattened.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
-            await Assert.That(flattened.Tuple.Length).IsEqualTo(5);
-            await Assert.That(flattened.Tuple[0].String).IsEqualTo("a");
+            await Assert.That(flattened.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(flattened.Tuple[0].String).IsEqualTo("a").ConfigureAwait(false);
 
-            await Assert.That(flattened.Tuple[1].String).IsEqualTo("b");
+            await Assert.That(flattened.Tuple[1].String).IsEqualTo("b").ConfigureAwait(false);
 
-            await Assert.That(flattened.Tuple[2].Number).IsEqualTo(3);
+            await Assert.That(flattened.Tuple[2].Number).IsEqualTo(3).ConfigureAwait(false);
 
-            await Assert.That(flattened.Tuple[3].Number).IsEqualTo(4);
+            await Assert.That(flattened.Tuple[3].Number).IsEqualTo(4).ConfigureAwait(false);
 
-            await Assert.That(flattened.Tuple[4].String).IsEqualTo("tail");
+            await Assert.That(flattened.Tuple[4].String).IsEqualTo("tail").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -62,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewTupleNested((DynValue[])null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("values");
+            await Assert.That(exception.ParamName).IsEqualTo("values").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue nested = DynValue.NewTupleNested(tuple);
 
-            await Assert.That(nested).IsSameReferenceAs(tuple);
+            await Assert.That(nested).IsSameReferenceAs(tuple).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,12 +82,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = DynValue.NewTupleNested(first, second);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
-            await Assert.That(result.Tuple.Length).IsEqualTo(2);
-            await Assert.That(result.Tuple[0]).IsSameReferenceAs(first);
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0]).IsSameReferenceAs(first).ConfigureAwait(false);
 
-            await Assert.That(result.Tuple[1]).IsSameReferenceAs(second);
+            await Assert.That(result.Tuple[1]).IsSameReferenceAs(second).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -99,13 +98,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tableValue = DynValue.NewTable(script, values);
 
-            await Assert.That(tableValue.Table.OwnerScript).IsSameReferenceAs(script);
+            await Assert
+                .That(tableValue.Table.OwnerScript)
+                .IsSameReferenceAs(script)
+                .ConfigureAwait(false);
 
-            await Assert.That(tableValue.Table.Length).IsEqualTo(2);
+            await Assert.That(tableValue.Table.Length).IsEqualTo(2).ConfigureAwait(false);
 
-            await Assert.That(tableValue.Table.Get(1).Number).IsEqualTo(7);
+            await Assert.That(tableValue.Table.Get(1).Number).IsEqualTo(7).ConfigureAwait(false);
 
-            await Assert.That(tableValue.Table.Get(2).String).IsEqualTo("value");
+            await Assert
+                .That(tableValue.Table.Get(2).String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -118,23 +123,26 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue scalar = nested.ToScalar();
 
-            await Assert.That(scalar.Type).IsEqualTo(DataType.Number);
+            await Assert.That(scalar.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
 
-            await Assert.That(scalar.Number).IsEqualTo(1);
+            await Assert.That(scalar.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CastToBoolRespectsLuaTruthinessRules()
         {
-            await Assert.That(DynValue.Nil.CastToBool()).IsFalse();
+            await Assert.That(DynValue.Nil.CastToBool()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.Void.CastToBool()).IsFalse();
+            await Assert.That(DynValue.Void.CastToBool()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.False.CastToBool()).IsFalse();
+            await Assert.That(DynValue.False.CastToBool()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.NewString("value").CastToBool()).IsTrue();
+            await Assert
+                .That(DynValue.NewString("value").CastToBool())
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(DynValue.NewNumber(0).CastToBool()).IsTrue();
+            await Assert.That(DynValue.NewNumber(0).CastToBool()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,9 +157,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue stringLength = @string.GetLength();
             DynValue tableLength = tableValue.GetLength();
 
-            await Assert.That(stringLength.Number).IsEqualTo(4);
+            await Assert.That(stringLength.Number).IsEqualTo(4).ConfigureAwait(false);
 
-            await Assert.That(tableLength.Number).IsEqualTo(2);
+            await Assert.That(tableLength.Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -163,7 +171,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 number.GetLength()
             );
 
-            await Assert.That(exception.Message).Contains("Can't get length");
+            await Assert.That(exception.Message).Contains("Can't get length").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -175,11 +183,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue source = DynValue.NewString("hello");
             destination.Assign(source);
 
-            await Assert.That(destination.Type).IsEqualTo(DataType.String);
+            await Assert.That(destination.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
 
-            await Assert.That(destination.String).IsEqualTo("hello");
+            await Assert.That(destination.String).IsEqualTo("hello").ConfigureAwait(false);
 
-            await Assert.That(destination.GetHashCode()).IsEqualTo(source.GetHashCode());
+            await Assert
+                .That(destination.GetHashCode())
+                .IsEqualTo(source.GetHashCode())
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -189,7 +200,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.True.Assign(DynValue.False)
             );
 
-            await Assert.That(exception.Message).Contains("Assigning on r-value");
+            await Assert
+                .That(exception.Message)
+                .Contains("Assigning on r-value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -204,9 +218,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 flags: TypeValidationOptions.AutoConvert
             );
 
-            await Assert.That(converted.Type).IsEqualTo(DataType.String);
+            await Assert.That(converted.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
 
-            await Assert.That(converted.String).IsEqualTo("12.5");
+            await Assert.That(converted.String).IsEqualTo("12.5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -223,7 +237,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             );
 
-            await Assert.That(exception.Message).Contains("bad argument #1");
+            await Assert.That(exception.Message).Contains("bad argument #1").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -237,7 +251,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 function.GetLength()
             );
 
-            await Assert.That(exception.Message).Contains("Can't get length");
+            await Assert.That(exception.Message).Contains("Can't get length").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -249,9 +263,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             destination.Assign(DynValue.NewTable(table));
 
-            await Assert.That(destination.Type).IsEqualTo(DataType.Table);
+            await Assert.That(destination.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
-            await Assert.That(destination.Table).IsSameReferenceAs(table);
+            await Assert.That(destination.Table).IsSameReferenceAs(table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -263,7 +277,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 destination.Assign(DynValue.NewNumber(2))
             );
 
-            await Assert.That(exception.Message).Contains("Assigning on r-value");
+            await Assert
+                .That(exception.Message)
+                .Contains("Assigning on r-value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -287,7 +304,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue number = DynValue.NewNumber(5);
 
-            await Assert.That(number.ScriptPrivateResource).IsNull();
+            await Assert.That(number.ScriptPrivateResource).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -297,7 +314,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             double converted = number.ToObject<double>();
 
-            await Assert.That(converted).IsEqualTo(7d);
+            await Assert.That(converted).IsEqualTo(7d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -309,7 +326,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 nil.CheckType("func", DataType.Number, argNum: 1)
             );
 
-            await Assert.That(exception.Message).Contains("bad argument #2");
+            await Assert.That(exception.Message).Contains("bad argument #2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -319,7 +336,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.Void.CheckType("func", DataType.Number, argNum: 2)
             );
 
-            await Assert.That(exception.Message).Contains("got no value");
+            await Assert.That(exception.Message).Contains("got no value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -328,13 +345,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue numericString = DynValue.NewString("12.75");
             double? result = numericString.CastToNumber();
 
-            await Assert.That(result).IsEqualTo(12.75);
+            await Assert.That(result).IsEqualTo(12.75).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CastToNumberReturnsNullForNonNumericStrings()
         {
-            await Assert.That(DynValue.NewString("not-a-number").CastToNumber()).IsNull();
+            await Assert
+                .That(DynValue.NewString("not-a-number").CastToNumber())
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -342,7 +362,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue number = DynValue.NewNumber(5.5);
 
-            await Assert.That(number.CastToString()).IsEqualTo("5.5");
+            await Assert.That(number.CastToString()).IsEqualTo("5.5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -354,7 +374,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 flags: TypeValidationOptions.AllowNil
             );
 
-            await Assert.That(result).IsSameReferenceAs(DynValue.Nil);
+            await Assert.That(result).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -364,7 +384,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             SampleUserData result = userData.CheckUserDataType<SampleUserData>("func");
 
-            await Assert.That(result.Name).IsEqualTo("ud");
+            await Assert.That(result.Name).IsEqualTo("ud").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -376,7 +396,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 userData.CheckUserDataType<string>("func")
             );
 
-            await Assert.That(exception.Message).Contains("userdata");
+            await Assert.That(exception.Message).Contains("userdata").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -387,7 +407,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 flags: TypeValidationOptions.AllowNil
             );
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -397,7 +417,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue value = DynValue.NewString(builder);
             builder.Append("mutated");
 
-            await Assert.That(value.String).IsEqualTo("seed");
+            await Assert.That(value.String).IsEqualTo("seed").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -407,7 +427,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewString((StringBuilder)null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("sb");
+            await Assert.That(exception.ParamName).IsEqualTo("sb").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -417,7 +437,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.NewString(null, "value")
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("format");
+            await Assert.That(exception.ParamName).IsEqualTo("format").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -425,7 +445,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue value = DynValue.NewString("value {0} {1}", 5, "x");
 
-            await Assert.That(value.String).IsEqualTo("value 5 x");
+            await Assert.That(value.String).IsEqualTo("value 5 x").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -433,7 +453,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue value = DynValue.NewString("literal", (object[])null);
 
-            await Assert.That(value.String).IsEqualTo("literal");
+            await Assert.That(value.String).IsEqualTo("literal").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -443,9 +463,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue readOnly = number.Clone(true);
             DynValue writable = readOnly.Clone(false);
 
-            await Assert.That(readOnly.ReadOnly).IsTrue();
+            await Assert.That(readOnly.ReadOnly).IsTrue().ConfigureAwait(false);
 
-            await Assert.That(writable.ReadOnly).IsFalse();
+            await Assert.That(writable.ReadOnly).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -456,9 +476,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             clone.Assign(DynValue.NewString("unlocked"));
 
-            await Assert.That(clone.String).IsEqualTo("unlocked");
+            await Assert.That(clone.String).IsEqualTo("unlocked").ConfigureAwait(false);
 
-            await Assert.That(readOnly.String).IsEqualTo("locked");
+            await Assert.That(readOnly.String).IsEqualTo("locked").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -469,11 +489,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             target.Assign(DynValue.NewString("assigned"));
 
-            await Assert.That(target.Type).IsEqualTo(DataType.String);
+            await Assert.That(target.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
 
-            await Assert.That(target.String).IsEqualTo("assigned");
+            await Assert.That(target.String).IsEqualTo("assigned").ConfigureAwait(false);
 
-            await Assert.That(target.GetHashCode()).IsNotEqualTo(oldHash);
+            await Assert.That(target.GetHashCode()).IsNotEqualTo(oldHash).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -483,7 +503,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.True.Assign(DynValue.NewNumber(2))
             );
 
-            await Assert.That(exception.Message).Contains("Assigning on r-value");
+            await Assert
+                .That(exception.Message)
+                .Contains("Assigning on r-value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -496,18 +519,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue coroutineValue = script.CreateCoroutine(function);
             DynValue wrapped = DynValue.NewCoroutine(coroutineValue.Coroutine);
 
-            await Assert.That(wrapped.Type).IsEqualTo(DataType.Thread);
+            await Assert.That(wrapped.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
 
-            await Assert.That(wrapped.Coroutine).IsSameReferenceAs(coroutineValue.Coroutine);
+            await Assert
+                .That(wrapped.Coroutine)
+                .IsSameReferenceAs(coroutineValue.Coroutine)
+                .ConfigureAwait(false);
 
-            await Assert.That(wrapped.ToString()).Contains("Coroutine");
+            await Assert.That(wrapped.ToString()).Contains("Coroutine").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ToStringFormatsClrFunctions()
         {
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "named");
-            await Assert.That(callback.ToString()).IsEqualTo("(Function CLR)");
+            await Assert
+                .That(callback.ToString())
+                .IsEqualTo("(Function CLR)")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -521,19 +550,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue userData = UserData.Create(new SampleUserData("ignored"));
             DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
-            await Assert.That(DynValue.Void.ToString()).IsEqualTo("void");
+            await Assert.That(DynValue.Void.ToString()).IsEqualTo("void").ConfigureAwait(false);
 
-            await Assert.That(chunk.ToString()).StartsWith("(Function ");
+            await Assert.That(chunk.ToString()).StartsWith("(Function ").ConfigureAwait(false);
 
-            await Assert.That(tableValue.ToString()).IsEqualTo("(Table)");
+            await Assert.That(tableValue.ToString()).IsEqualTo("(Table)").ConfigureAwait(false);
 
-            await Assert.That(tuple.ToString()).IsEqualTo("1, \"two\"");
+            await Assert.That(tuple.ToString()).IsEqualTo("1, \"two\"").ConfigureAwait(false);
 
-            await Assert.That(userData.ToString()).IsEqualTo("(UserData)");
+            await Assert.That(userData.ToString()).IsEqualTo("(UserData)").ConfigureAwait(false);
 
-            await Assert.That(coroutine.ToString()).StartsWith("(Coroutine ");
+            await Assert.That(coroutine.ToString()).StartsWith("(Coroutine ").ConfigureAwait(false);
 
-            await Assert.That(yield.ToString()).IsEqualTo("(???)");
+            await Assert.That(yield.ToString()).IsEqualTo("(???)").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -549,11 +578,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .NewNumber(3.5)
                 .CheckType("func", DataType.String, flags: TypeValidationOptions.AutoConvert);
 
-            await Assert.That(boolValue.Boolean).IsTrue();
+            await Assert.That(boolValue.Boolean).IsTrue().ConfigureAwait(false);
 
-            await Assert.That(numberValue.Number).IsEqualTo(42);
+            await Assert.That(numberValue.Number).IsEqualTo(42).ConfigureAwait(false);
 
-            await Assert.That(stringValue.String).IsEqualTo("3.5");
+            await Assert.That(stringValue.String).IsEqualTo("3.5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -563,7 +592,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DynValue.Void.CheckType("func", DataType.String)
             );
 
-            await Assert.That(exception.Message).Contains("no value");
+            await Assert.That(exception.Message).Contains("no value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -576,7 +605,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 flags: TypeValidationOptions.AutoConvert
             );
 
-            await Assert.That(result).IsSameReferenceAs(original);
+            await Assert.That(result).IsSameReferenceAs(original).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -587,7 +616,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 flags: TypeValidationOptions.AllowNil
             );
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -595,7 +624,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue userData = UserData.Create(new SampleUserData("Printable"));
 
-            await Assert.That(userData.ToPrintString()).IsEqualTo("Printable");
+            await Assert
+                .That(userData.ToPrintString())
+                .IsEqualTo("Printable")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -608,11 +640,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
-            await Assert.That(tuple.ToPrintString()).IsEqualTo("a\t5");
+            await Assert.That(tuple.ToPrintString()).IsEqualTo("a\t5").ConfigureAwait(false);
 
-            await Assert.That(tail.ToPrintString()).IsEqualTo("(TailCallRequest -- INTERNAL!)");
+            await Assert
+                .That(tail.ToPrintString())
+                .IsEqualTo("(TailCallRequest -- INTERNAL!)")
+                .ConfigureAwait(false);
 
-            await Assert.That(yield.ToPrintString()).IsEqualTo("(YieldRequest -- INTERNAL!)");
+            await Assert
+                .That(yield.ToPrintString())
+                .IsEqualTo("(YieldRequest -- INTERNAL!)")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -622,15 +660,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue tableValue = DynValue.NewTable(new Table(script));
             DynValue userData = UserData.Create(new object(), new NullStringDescriptor());
 
-            await Assert.That(tableValue.ToPrintString()).StartsWith("table: ");
+            await Assert
+                .That(tableValue.ToPrintString())
+                .StartsWith("table: ")
+                .ConfigureAwait(false);
 
-            await Assert.That(userData.ToPrintString()).StartsWith("userdata: ");
+            await Assert
+                .That(userData.ToPrintString())
+                .StartsWith("userdata: ")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task AsReadOnlyReturnsSameInstanceWhenAlreadyReadOnly()
         {
-            await Assert.That(DynValue.True.AsReadOnly()).IsSameReferenceAs(DynValue.True);
+            await Assert
+                .That(DynValue.True.AsReadOnly())
+                .IsSameReferenceAs(DynValue.True)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -641,7 +688,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             int first = str.GetHashCode();
             int second = str.GetHashCode();
 
-            await Assert.That(second).IsEqualTo(first);
+            await Assert.That(second).IsEqualTo(first).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -651,9 +698,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
             int tupleHash = tuple.GetHashCode();
 
-            await Assert.That(nilHash).IsEqualTo(DynValue.Nil.GetHashCode());
+            await Assert.That(nilHash).IsEqualTo(DynValue.Nil.GetHashCode()).ConfigureAwait(false);
 
-            await Assert.That(tupleHash).IsEqualTo(tuple.GetHashCode());
+            await Assert.That(tupleHash).IsEqualTo(tuple.GetHashCode()).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -667,15 +714,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue userData = UserData.Create(new SampleUserData("value"));
             DynValue forcedYield = DynValue.NewForcedYieldReq();
 
-            await Assert.That(tuple.Equals("value")).IsFalse();
+            await Assert.That(tuple.Equals("value")).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(tuple.Equals(alias)).IsTrue();
+            await Assert.That(tuple.Equals(alias)).IsTrue().ConfigureAwait(false);
 
-            await Assert.That(tuple.Equals(tupleCopy)).IsFalse();
+            await Assert.That(tuple.Equals(tupleCopy)).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(nullUserData.Equals(userData)).IsFalse();
+            await Assert.That(nullUserData.Equals(userData)).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(forcedYield.Equals(forcedYield)).IsTrue();
+            await Assert.That(forcedYield.Equals(forcedYield)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -683,7 +730,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             DynValue tuple = DynValue.NewTuple(DynValue.NewString("x"), DynValue.NewNumber(4));
 
-            await Assert.That(tuple.ToDebugPrintString()).IsEqualTo("x\t4");
+            await Assert.That(tuple.ToDebugPrintString()).IsEqualTo("x\t4").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -695,28 +742,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
-            await Assert.That(tail.ToDebugPrintString()).IsEqualTo("(TailCallRequest)");
+            await Assert
+                .That(tail.ToDebugPrintString())
+                .IsEqualTo("(TailCallRequest)")
+                .ConfigureAwait(false);
 
-            await Assert.That(yield.ToDebugPrintString()).IsEqualTo("(YieldRequest)");
+            await Assert
+                .That(yield.ToDebugPrintString())
+                .IsEqualTo("(YieldRequest)")
+                .ConfigureAwait(false);
 
             await Assert
                 .That(DynValue.True.ToDebugPrintString())
-                .IsEqualTo(DynValue.True.ToString());
+                .IsEqualTo(DynValue.True.ToString())
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task IsNilOrNanDetectsNaN()
         {
             DynValue value = DynValue.NewNumber(double.NaN);
-            await Assert.That(value.IsNilOrNan()).IsTrue();
+            await Assert.That(value.IsNilOrNan()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task IsNotVoidDistinguishesVoidValues()
         {
-            await Assert.That(DynValue.Void.IsNotVoid()).IsFalse();
+            await Assert.That(DynValue.Void.IsNotVoid()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.NewNumber(1).IsNotVoid()).IsTrue();
+            await Assert.That(DynValue.NewNumber(1).IsNotVoid()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -726,7 +780,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Table table = new(script);
             DynValue tableValue = DynValue.NewTable(table);
 
-            await Assert.That(tableValue.ScriptPrivateResource).IsSameReferenceAs(table);
+            await Assert
+                .That(tableValue.ScriptPrivateResource)
+                .IsSameReferenceAs(table)
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleUserData
@@ -788,5 +845,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-
-#pragma warning restore CA2007

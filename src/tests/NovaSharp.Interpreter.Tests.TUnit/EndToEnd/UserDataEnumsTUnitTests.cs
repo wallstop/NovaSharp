@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -106,8 +105,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             async Task VerifyAsync(DynValue result)
             {
-                await Assert.That(result.Type).IsEqualTo(DataType.String);
-                await Assert.That(result.String).IsEqualTo(expected);
+                await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
             }
         }
 
@@ -127,10 +126,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropEnumOverload1()
         {
             await RunTestOverloadAsync(
-                "o:MyMethod(SampleFlagSet.FlagsOr(SampleFlagSet.Uno, SampleFlagSet.Due))",
-                "3"
-            );
-            await RunTestOverloadAsync("o:MyMethod(SampleRating.Cinque)", "[Cinque]");
+                    "o:MyMethod(SampleFlagSet.FlagsOr(SampleFlagSet.Uno, SampleFlagSet.Due))",
+                    "3"
+                )
+                .ConfigureAwait(false);
+            await RunTestOverloadAsync("o:MyMethod(SampleRating.Cinque)", "[Cinque]")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -203,30 +204,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropEnumFlagsHasAll()
         {
             await RunTestOverloadAsync(
-                "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
-                "F"
-            );
+                    "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                    "F"
+                )
+                .ConfigureAwait(false);
             await RunTestOverloadAsync(
-                "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
-                "T"
-            );
+                    "o:MyMethodB(SampleFlagSet.hasAll(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
+                    "T"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEnumFlagsHasAny()
         {
             await RunTestOverloadAsync(
-                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
-                "T"
-            );
+                    "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Uno, SampleFlagSet.Cinque))",
+                    "T"
+                )
+                .ConfigureAwait(false);
             await RunTestOverloadAsync(
-                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
-                "T"
-            );
+                    "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Cinque, SampleFlagSet.Uno))",
+                    "T"
+                )
+                .ConfigureAwait(false);
             await RunTestOverloadAsync(
-                "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Quattro, SampleFlagSet.Uno))",
-                "F"
-            );
+                    "o:MyMethodB(SampleFlagSet.hasAny(SampleFlagSet.Quattro, SampleFlagSet.Uno))",
+                    "F"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -242,4 +248,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -23,12 +22,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             context.Lexer.Next();
 
             AssignmentStatement statement = new(context, localToken);
-            await Assert.That(statement).IsNotNull();
+            await Assert.That(statement).IsNotNull().ConfigureAwait(false);
 
             SymbolRef symbol = context.Scope.Find("resource");
             await Assert
                 .That(symbol.Attributes)
-                .IsEqualTo(SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed);
+                .IsEqualTo(SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -38,7 +38,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ParseLocalAssignment("local duplicate <const><const> = 1")
             )!;
 
-            await Assert.That(exception.Message).Contains("duplicate attribute 'const'");
+            await Assert
+                .That(exception.Message)
+                .Contains("duplicate attribute 'const'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -48,7 +51,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ParseLocalAssignment("local value <fast> = 1")
             )!;
 
-            await Assert.That(exception.Message).Contains("unknown attribute 'fast'");
+            await Assert
+                .That(exception.Message)
+                .Contains("unknown attribute 'fast'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,8 +67,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ParseLocalAssignment("local legacy <const> = 1", script)
             )!;
 
-            await Assert.That(exception.Message).Contains("Lua 5.4+ compatibility");
-            await Assert.That(exception.Message).Contains("§3.3.7");
+            await Assert
+                .That(exception.Message)
+                .Contains("Lua 5.4+ compatibility")
+                .ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains("§3.3.7").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,8 +84,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 ParseLocalAssignment("local guard <close> = newcloser()", script)
             )!;
 
-            await Assert.That(exception.Message).Contains("Lua 5.4+ compatibility");
-            await Assert.That(exception.Message).Contains("§3.3.8");
+            await Assert
+                .That(exception.Message)
+                .Contains("Lua 5.4+ compatibility")
+                .ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains("§3.3.8").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -88,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("1 = 2")
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         private static AssignmentStatement ParseLocalAssignment(string code, Script script = null)
@@ -129,4 +141,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

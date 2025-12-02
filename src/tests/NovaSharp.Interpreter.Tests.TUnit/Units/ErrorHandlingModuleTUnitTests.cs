@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -23,9 +22,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1d);
-            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(2d);
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -40,8 +39,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("boom");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,8 +50,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return pcall(123)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("attempt to pcall a non-function");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("attempt to pcall a non-function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,9 +69,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return pcall(clr)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello");
-            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(5d);
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -88,8 +90,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(14d);
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(14d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,8 +105,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return pcall(clr)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("fail");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("fail").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -126,24 +128,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(record.Type).IsEqualTo(DataType.Table);
+            await Assert.That(record.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             Table table = record.Table;
 
             DynValue ok = table.Get("ok");
             DynValue valueType = table.Get("valueType");
             DynValue value = table.Get("value");
 
-            await Assert.That(ok.Boolean).IsTrue();
-            await Assert.That(valueType.String == "number" || valueType.String == "nil").IsTrue();
+            await Assert.That(ok.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(valueType.String == "number" || valueType.String == "nil")
+                .IsTrue()
+                .ConfigureAwait(false);
 
             if (valueType.String == "number")
             {
-                await Assert.That(value.Type).IsEqualTo(DataType.Number);
-                await Assert.That(value.Number).IsEqualTo(77d);
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(77d).ConfigureAwait(false);
             }
             else
             {
-                await Assert.That(value.IsNil()).IsTrue();
+                await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -171,8 +176,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return pcall(tailing)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("wrap in a script function instead");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -186,8 +194,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return pcall(yielding)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("wrap in a script function instead");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -209,9 +220,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue tuple = script.DoString("return xpcall(clr, decorator)");
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("decorated:");
-            await Assert.That(tuple.Tuple[1].String).Contains("failure");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("failure").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -227,9 +238,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("handled:");
-            await Assert.That(tuple.Tuple[1].String).Contains("bad");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("handled:").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("bad").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -251,9 +262,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].String).IsEqualTo("done");
-            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(42d);
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("done").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -275,9 +286,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("handled:");
-            await Assert.That(tuple.Tuple[1].String).Contains("boom");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("handled:").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -291,8 +302,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[1].String).Contains("nil-handler");
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("nil-handler").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -304,7 +315,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 script.DoString("return xpcall(function() end, 123)")
             )!;
 
-            await Assert.That(exception.Message).Contains("bad argument #2 to 'xpcall'");
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #2 to 'xpcall'")
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript()
@@ -315,4 +329,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

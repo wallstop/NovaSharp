@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -37,9 +36,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
-            await Assert.That(rhsStub).IsNotNull();
-            await Assert.That(rhsStub.EvalCount).IsEqualTo(0);
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -62,9 +61,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(42d);
-            await Assert.That(rhsStub).IsNotNull();
-            await Assert.That(rhsStub.EvalCount).IsEqualTo(1);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -87,9 +86,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.IsNil()).IsTrue();
-            await Assert.That(rhsStub).IsNotNull();
-            await Assert.That(rhsStub.EvalCount).IsEqualTo(0);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -112,9 +111,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(1337d);
-            await Assert.That(rhsStub).IsNotNull();
-            await Assert.That(rhsStub.EvalCount).IsEqualTo(1);
+            await Assert.That(result.Number).IsEqualTo(1337d).ConfigureAwait(false);
+            await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
+            await Assert.That(rhsStub.EvalCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,7 +131,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(1d);
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -150,7 +149,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(-3d);
+            await Assert.That(result.Number).IsEqualTo(-3d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -168,7 +167,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(0d);
+            await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -191,7 +190,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(6d);
+            await Assert.That(result.Number).IsEqualTo(6d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -211,7 +210,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("arithmetic");
+            await Assert.That(exception.Message).Contains("arithmetic").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -231,7 +230,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("concatenation");
+            await Assert.That(exception.Message).Contains("concatenation").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -249,7 +248,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -267,7 +266,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -287,7 +286,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("compare");
+            await Assert.That(exception.Message).Contains("compare").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -305,7 +304,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -323,7 +322,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -356,7 +355,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             expr.Compile(byteCode);
 
             bool contains = byteCode.Code.Any(i => i.OpCode == expectedOpCode);
-            await Assert.That(contains).IsTrue();
+            await Assert.That(contains).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -377,7 +376,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             );
 
-            await Assert.That(exception.Message).Contains("Unexpected");
+            await Assert.That(exception.Message).Contains("Unexpected").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -395,7 +394,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsFalse();
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -413,7 +412,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(10d);
+            await Assert.That(result.Number).IsEqualTo(10d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -431,7 +430,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(1d);
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -461,7 +460,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             double result = expr.Eval(TestHelpers.CreateExecutionContext(script)).Number;
 
-            await Assert.That(result).IsEqualTo(expected);
+            await Assert.That(result).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -481,7 +480,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("arithmetic");
+            await Assert.That(exception.Message).Contains("arithmetic").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -499,7 +498,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.String).IsEqualTo("LuaSharp");
+            await Assert.That(result.String).IsEqualTo("LuaSharp").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -519,7 +518,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("concatenation");
+            await Assert.That(exception.Message).Contains("concatenation").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -537,7 +536,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -555,7 +554,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -573,7 +572,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -591,7 +590,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -609,7 +608,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -628,7 +627,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -646,7 +645,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -666,7 +665,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("compare");
+            await Assert.That(exception.Message).Contains("compare").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -684,7 +683,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -702,7 +701,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -722,7 +721,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("compare");
+            await Assert.That(exception.Message).Contains("compare").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -739,7 +738,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -755,7 +754,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(Math.Pow(2, Math.Pow(3, 2)));
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(Math.Pow(2, Math.Pow(3, 2)))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -772,7 +774,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(32d);
+            await Assert.That(result.Number).IsEqualTo(32d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -788,7 +790,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.Number).IsEqualTo(7d);
+            await Assert.That(result.Number).IsEqualTo(7d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -810,10 +812,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Instruction[] instructions = byteCode.Code.ToArray();
             Instruction jump = instructions[1];
 
-            await Assert.That(instructions[0].OpCode).IsEqualTo(OpCode.Literal);
-            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JtOrPop);
-            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length);
-            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.Literal);
+            await Assert
+                .That(instructions[0].OpCode)
+                .IsEqualTo(OpCode.Literal)
+                .ConfigureAwait(false);
+            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JtOrPop).ConfigureAwait(false);
+            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length).ConfigureAwait(false);
+            await Assert
+                .That(instructions[2].OpCode)
+                .IsEqualTo(OpCode.Literal)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -835,10 +843,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Instruction[] instructions = byteCode.Code.ToArray();
             Instruction jump = instructions[1];
 
-            await Assert.That(instructions[0].OpCode).IsEqualTo(OpCode.Literal);
-            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JfOrPop);
-            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length);
-            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.Literal);
+            await Assert
+                .That(instructions[0].OpCode)
+                .IsEqualTo(OpCode.Literal)
+                .ConfigureAwait(false);
+            await Assert.That(jump.OpCode).IsEqualTo(OpCode.JfOrPop).ConfigureAwait(false);
+            await Assert.That(jump.NumVal).IsEqualTo(instructions.Length).ConfigureAwait(false);
+            await Assert
+                .That(instructions[2].OpCode)
+                .IsEqualTo(OpCode.Literal)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -859,9 +873,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Instruction[] instructions = byteCode.Code.ToArray();
 
-            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.LessEq);
-            await Assert.That(instructions[3].OpCode).IsEqualTo(OpCode.CNot);
-            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not);
+            await Assert
+                .That(instructions[2].OpCode)
+                .IsEqualTo(OpCode.LessEq)
+                .ConfigureAwait(false);
+            await Assert.That(instructions[3].OpCode).IsEqualTo(OpCode.CNot).ConfigureAwait(false);
+            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -906,7 +923,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expr.Compile(byteCode);
 
                 OpCode actual = byteCode.Code[^1].OpCode;
-                await Assert.That(actual).IsEqualTo(expectedOpCode);
+                await Assert.That(actual).IsEqualTo(expectedOpCode).ConfigureAwait(false);
             }
         }
 
@@ -939,16 +956,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     i => i.OpCode == expectedOpCode
                 );
 
-                await Assert.That(comparisonIndex).IsGreaterThan(1);
+                await Assert.That(comparisonIndex).IsGreaterThan(1).ConfigureAwait(false);
 
                 OpCode followup = instructions[comparisonIndex + 1].OpCode;
                 if (expectedOpCode == OpCode.Less)
                 {
-                    await Assert.That(followup).IsEqualTo(OpCode.ToBool);
+                    await Assert.That(followup).IsEqualTo(OpCode.ToBool).ConfigureAwait(false);
                 }
                 else
                 {
-                    await Assert.That(followup).IsEqualTo(OpCode.CNot);
+                    await Assert.That(followup).IsEqualTo(OpCode.CNot).ConfigureAwait(false);
                 }
             }
         }
@@ -972,9 +989,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Instruction[] instructions = byteCode.Code.ToArray();
             int eqIndex = Array.FindLastIndex(instructions, i => i.OpCode == OpCode.Eq);
 
-            await Assert.That(eqIndex).IsGreaterThan(1);
-            await Assert.That(instructions[eqIndex + 1].OpCode).IsEqualTo(OpCode.ToBool);
-            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not);
+            await Assert.That(eqIndex).IsGreaterThan(1).ConfigureAwait(false);
+            await Assert
+                .That(instructions[eqIndex + 1].OpCode)
+                .IsEqualTo(OpCode.ToBool)
+                .ConfigureAwait(false);
+            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -996,7 +1016,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 BinaryOperatorExpression.CommitOperatorChain(chain, context)
             );
 
-            await Assert.That(exception.Message).Contains("Expression reduction didn't work! - 1");
+            await Assert
+                .That(exception.Message)
+                .Contains("Expression reduction didn't work! - 1")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1015,7 +1038,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 BinaryOperatorExpression.CommitOperatorChain(chain, context)
             );
 
-            await Assert.That(exception.Message).Contains("Expression reduction didn't work! - 2");
+            await Assert
+                .That(exception.Message)
+                .Contains("Expression reduction didn't work! - 2")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1035,7 +1061,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Compile(new ByteCode(script))
             );
 
-            await Assert.That(exception.Message).Contains("Unsupported operator");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unsupported operator")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1058,7 +1087,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 expression.Eval(TestHelpers.CreateExecutionContext(script))
             );
 
-            await Assert.That(exception.Message).Contains("Unsupported operator");
+            await Assert
+                .That(exception.Message)
+                .Contains("Unsupported operator")
+                .ConfigureAwait(false);
         }
 
         private static Expression BuildBinaryExpression(
@@ -1144,4 +1176,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

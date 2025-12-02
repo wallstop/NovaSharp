@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -27,9 +26,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             "
             );
 
-            await Assert.That(result).IsNotNull();
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(13d);
+            await Assert.That(result).IsNotNull().ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(13d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -50,10 +49,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             "
             );
 
-            await Assert.That(result).IsNotNull();
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(64d);
+            await Assert.That(result).IsNotNull().ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(64d).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

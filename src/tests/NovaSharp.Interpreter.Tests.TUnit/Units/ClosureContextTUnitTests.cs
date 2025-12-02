@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -25,10 +24,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             ClosureContext context = new(symbols, values);
 
-            await Assert.That(context.Symbols.SequenceEqual(ExpectedSymbols)).IsTrue();
-            await Assert.That(context.Count).IsEqualTo(2);
-            await Assert.That(context[0].Number).IsEqualTo(1);
-            await Assert.That(context[1].String).IsEqualTo("two");
+            await Assert
+                .That(context.Symbols.SequenceEqual(ExpectedSymbols))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(context.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(context[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(context[1].String).IsEqualTo("two").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -36,8 +38,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ClosureContext context = new();
 
-            await Assert.That(context.Symbols.SequenceEqual(Array.Empty<string>())).IsTrue();
-            await Assert.That(context.Count).IsEqualTo(0);
+            await Assert
+                .That(context.Symbols.SequenceEqual(Array.Empty<string>()))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(context.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -49,8 +54,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _ = new ClosureContext(null, values)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("symbols");
+            await Assert.That(exception.ParamName).IsEqualTo("symbols").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

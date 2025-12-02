@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -25,7 +24,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return o:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.UserData);
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -38,8 +37,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return o.SomeNestedType:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("Ciao from SomeNestedType");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Ciao from SomeNestedType")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,8 +54,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("Ciao from SomeNestedTypePrivate");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,8 +86,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return o.SomeNestedType:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("Ciao from SomeNestedType");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Ciao from SomeNestedType")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,8 +103,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("Ciao from SomeNestedTypePrivate");
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -264,4 +275,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

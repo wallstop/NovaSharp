@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -18,15 +17,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             stack.Push(1);
             stack.Push(2);
 
-            await Assert.That(stack.Count).IsEqualTo(2);
-            await Assert.That(stack.Peek()).IsEqualTo(2);
-            await Assert.That(stack.Peek(1)).IsEqualTo(1);
+            await Assert.That(stack.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(1).ConfigureAwait(false);
 
             int popped = stack.Pop();
 
-            await Assert.That(popped).IsEqualTo(2);
-            await Assert.That(stack.Count).IsEqualTo(1);
-            await Assert.That(stack.Peek()).IsEqualTo(1);
+            await Assert.That(popped).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,15 +40,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             stack.RemoveLast(3);
 
-            await Assert.That(stack.Count).IsEqualTo(1);
-            await Assert.That(stack.Peek()).IsEqualTo(10);
+            await Assert.That(stack.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(10).ConfigureAwait(false);
 
             stack.Push(50);
             stack.Push(60);
 
-            await Assert.That(stack.Count).IsEqualTo(3);
-            await Assert.That(stack.Peek()).IsEqualTo(60);
-            await Assert.That(stack.Peek(1)).IsEqualTo(50);
+            await Assert.That(stack.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(60).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(50).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,14 +59,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             stack.Push(7);
             stack.Expand(2);
 
-            await Assert.That(stack.Count).IsEqualTo(3);
+            await Assert.That(stack.Count).IsEqualTo(3).ConfigureAwait(false);
 
             stack.Set(0, 30);
             stack.Set(1, 20);
 
-            await Assert.That(stack.Peek()).IsEqualTo(30);
-            await Assert.That(stack.Peek(1)).IsEqualTo(20);
-            await Assert.That(stack.Peek(2)).IsEqualTo(7);
+            await Assert.That(stack.Peek()).IsEqualTo(30).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(stack.Peek(2)).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -82,9 +81,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             stack.CropAtCount(2);
 
-            await Assert.That(stack.Count).IsEqualTo(2);
-            await Assert.That(stack.Peek()).IsEqualTo(2);
-            await Assert.That(stack.Peek(1)).IsEqualTo(1);
+            await Assert.That(stack.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,12 +96,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             stack.ClearUsed();
 
-            await Assert.That(stack.Count).IsEqualTo(0);
+            await Assert.That(stack.Count).IsEqualTo(0).ConfigureAwait(false);
 
             stack.Push("C");
 
-            await Assert.That(stack.Count).IsEqualTo(1);
-            await Assert.That(stack.Peek()).IsEqualTo("C");
+            await Assert.That(stack.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo("C").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -116,9 +115,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             stack.RemoveLast(0);
             stack.RemoveLast(-2);
 
-            await Assert.That(stack.Count).IsEqualTo(2);
-            await Assert.That(stack.Peek()).IsEqualTo(2);
-            await Assert.That(stack.Peek(1)).IsEqualTo(1);
+            await Assert.That(stack.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -142,9 +141,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             stack.RemoveLast();
 
-            await Assert.That(stack.Count).IsEqualTo(1);
-            await Assert.That(stack.Peek()).IsEqualTo(8);
-            await Assert.That(stack[1]).IsEqualTo(0);
+            await Assert.That(stack.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(8).ConfigureAwait(false);
+            await Assert.That(stack[1]).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -157,9 +156,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             stack.Clear();
 
-            await Assert.That(stack.Count).IsEqualTo(0);
-            await Assert.That(stack[0]).IsEqualTo(0);
-            await Assert.That(stack[1]).IsEqualTo(0);
+            await Assert.That(stack.Count).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(stack[0]).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(stack[1]).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -171,14 +170,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             collection.Add(5);
             collection.Add(6);
 
-            await Assert.That(stack.Count).IsEqualTo(2);
-            await Assert.That(stack.Peek()).IsEqualTo(6);
-            await Assert.That(collection.Count).IsEqualTo(2);
-            await Assert.That(collection.IsReadOnly).IsFalse();
+            await Assert.That(stack.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(collection.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(collection.IsReadOnly).IsFalse().ConfigureAwait(false);
 
             collection.Clear();
 
-            await Assert.That(stack.Count).IsEqualTo(0);
+            await Assert.That(stack.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -198,8 +197,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             stack.Push(123);
             list[0] = 99;
 
-            await Assert.That(list[0]).IsEqualTo(99);
-            await Assert.That(stack.Peek()).IsEqualTo(99);
+            await Assert.That(list[0]).IsEqualTo(99).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(99).ConfigureAwait(false);
 
             Assert.Throws<NotImplementedException>(() => ((IEnumerable<int>)stack).GetEnumerator());
             Assert.Throws<NotImplementedException>(() => ((IEnumerable)stack).GetEnumerator());
@@ -208,4 +207,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -29,8 +28,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.SetValue(script, target, DynValue.NewNumber(42));
             DynValue result = descriptor.GetValue(script, target);
 
-            await Assert.That(target.Value).IsEqualTo(42);
-            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(target.Value).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -41,12 +40,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleReadOnlyDescriptor descriptor = new(10);
 
             DynValue value = descriptor.GetValue(script, target);
-            await Assert.That(value.Number).IsEqualTo(10d);
+            await Assert.That(value.Number).IsEqualTo(10d).ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.SetValue(script, target, DynValue.NewNumber(5))
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,7 +60,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.GetValue(script, target)
             );
-            await Assert.That(exception.Message).Contains("writeOnly");
+            await Assert.That(exception.Message).Contains("writeOnly").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -73,7 +72,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.GetValue(script, null)
             );
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -86,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 descriptor.SetValue(script, target, value: null)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value");
+            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -101,8 +100,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, target, context: null, callbackArguments);
 
-            await Assert.That(result.Number).IsEqualTo(18d);
-            await Assert.That(descriptor.LastArgumentCount).IsEqualTo(2);
+            await Assert.That(result.Number).IsEqualTo(18d).ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgumentCount).IsEqualTo(2).ConfigureAwait(false);
         }
 
         private sealed class SampleTarget
@@ -201,4 +200,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

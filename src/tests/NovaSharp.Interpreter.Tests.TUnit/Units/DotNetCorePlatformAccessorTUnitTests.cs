@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -22,7 +21,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             FileAccess access = DotNetCorePlatformAccessor.ParseFileAccess(mode);
 
-            await Assert.That(access).IsEqualTo(expected);
+            await Assert.That(access).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -35,7 +34,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             FileMode fileMode = DotNetCorePlatformAccessor.ParseFileMode(mode);
 
-            await Assert.That(fileMode).IsEqualTo(expected);
+            await Assert.That(fileMode).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -43,7 +42,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             FileAccess access = DotNetCorePlatformAccessor.ParseFileAccess(" R+B ");
 
-            await Assert.That(access).IsEqualTo(FileAccess.ReadWrite);
+            await Assert.That(access).IsEqualTo(FileAccess.ReadWrite).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,7 +50,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             FileMode mode = DotNetCorePlatformAccessor.ParseFileMode(" W + B ");
 
-            await Assert.That(mode).IsEqualTo(FileMode.Truncate);
+            await Assert.That(mode).IsEqualTo(FileMode.Truncate).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,7 +60,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DotNetCorePlatformAccessor.ParseFileAccess(null)
             )!;
 
-            await Assert.That(exception.ParamName).IsEqualTo("mode");
+            await Assert.That(exception.ParamName).IsEqualTo("mode").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -71,7 +70,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 DotNetCorePlatformAccessor.ParseFileMode(null)
             )!;
 
-            await Assert.That(exception.ParamName).IsEqualTo("mode");
+            await Assert.That(exception.ParamName).IsEqualTo("mode").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -88,8 +87,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 mode: "w+"
             );
 
-            await Assert.That(stream.CanRead).IsTrue();
-            await Assert.That(stream.CanWrite).IsTrue();
+            await Assert.That(stream.CanRead).IsTrue().ConfigureAwait(false);
+            await Assert.That(stream.CanWrite).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -100,7 +99,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             accessor.DefaultPrint("hello");
 
-            await Assert.That(scope.Writer.ToString().Trim()).IsEqualTo("hello");
+            await Assert
+                .That(scope.Writer.ToString().Trim())
+                .IsEqualTo("hello")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -114,7 +116,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             string result = accessor.GetEnvironmentVariable(key);
-            await Assert.That(result).IsEqualTo("value123");
+            await Assert.That(result).IsEqualTo("value123").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -124,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             string path = accessor.GetTempFileName();
             using TempFileScope tempFileScope = TempFileScope.FromExisting(path);
 
-            await Assert.That(File.Exists(tempFileScope.FilePath)).IsTrue();
+            await Assert.That(File.Exists(tempFileScope.FilePath)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -137,15 +139,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             string src = Path.Combine(directory, "source.txt");
             string dst = Path.Combine(directory, "dest.txt");
 
-            await File.WriteAllTextAsync(src, "payload");
-            await Assert.That(accessor.FileExists(src)).IsTrue();
+            await File.WriteAllTextAsync(src, "payload").ConfigureAwait(false);
+            await Assert.That(accessor.FileExists(src)).IsTrue().ConfigureAwait(false);
 
             accessor.MoveFile(src, dst);
-            await Assert.That(File.Exists(dst)).IsTrue();
-            await Assert.That(File.Exists(src)).IsFalse();
+            await Assert.That(File.Exists(dst)).IsTrue().ConfigureAwait(false);
+            await Assert.That(File.Exists(src)).IsFalse().ConfigureAwait(false);
 
             accessor.DeleteFile(dst);
-            await Assert.That(File.Exists(dst)).IsFalse();
+            await Assert.That(File.Exists(dst)).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -167,8 +169,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             using Stream stream = accessor.GetStandardStream(type);
 
-            await Assert.That(stream).IsNotNull();
+            await Assert.That(stream).IsNotNull().ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

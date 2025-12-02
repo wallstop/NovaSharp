@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -17,11 +16,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Closure closure = function.Function;
 
-            await Assert.That(closure.UpValuesCount).IsEqualTo(1);
-            await Assert.That(closure.GetUpValueName(0)).IsEqualTo(WellKnownSymbols.ENV);
+            await Assert.That(closure.UpValuesCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(closure.GetUpValueName(0))
+                .IsEqualTo(WellKnownSymbols.ENV)
+                .ConfigureAwait(false);
             await Assert
                 .That(closure.CapturedUpValuesType)
-                .IsEqualTo(Closure.UpValuesType.Environment);
+                .IsEqualTo(Closure.UpValuesType.Environment)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -31,8 +34,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue function = script.DoString("return function() return 42 end");
             Closure closure = function.Function;
 
-            await Assert.That(closure.OwnerScript).IsSameReferenceAs(script);
-            await Assert.That(closure.EntryPointByteCodeLocation).IsGreaterThanOrEqualTo(0);
+            await Assert.That(closure.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
+            await Assert
+                .That(closure.EntryPointByteCodeLocation)
+                .IsGreaterThanOrEqualTo(0)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -43,11 +49,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             Closure closure = function.Function;
 
-            await Assert.That(closure.UpValuesCount).IsEqualTo(1);
-            await Assert.That(closure.GetUpValueName(0)).IsEqualTo(WellKnownSymbols.ENV);
+            await Assert.That(closure.UpValuesCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(closure.GetUpValueName(0))
+                .IsEqualTo(WellKnownSymbols.ENV)
+                .ConfigureAwait(false);
             await Assert
                 .That(closure.CapturedUpValuesType)
-                .IsEqualTo(Closure.UpValuesType.Environment);
+                .IsEqualTo(Closure.UpValuesType.Environment)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,13 +87,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             int xIndex = names.IndexOf("x");
             int yIndex = names.IndexOf("y");
 
-            await Assert.That(upvalueCount).IsEqualTo(3);
-            await Assert.That(envIndex).IsGreaterThanOrEqualTo(0);
-            await Assert.That(xIndex).IsGreaterThanOrEqualTo(0);
-            await Assert.That(yIndex).IsGreaterThanOrEqualTo(0);
-            await Assert.That(closure.GetUpValue(xIndex).Number).IsEqualTo(3d);
-            await Assert.That(closure.GetUpValue(yIndex).Number).IsEqualTo(4d);
-            await Assert.That(closure.CapturedUpValuesType).IsEqualTo(Closure.UpValuesType.Closure);
+            await Assert.That(upvalueCount).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(envIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert.That(yIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(closure.GetUpValue(xIndex).Number)
+                .IsEqualTo(3d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(closure.GetUpValue(yIndex).Number)
+                .IsEqualTo(4d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(closure.CapturedUpValuesType)
+                .IsEqualTo(Closure.UpValuesType.Closure)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -99,8 +118,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ScriptFunctionCallback<int> typed = closure.GetDelegate<int>();
             int typedResult = typed(5, 7);
 
-            await Assert.That(genericResult).IsEqualTo(3d);
-            await Assert.That(typedResult).IsEqualTo(12);
+            await Assert.That(genericResult).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(typedResult).IsEqualTo(12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -116,9 +135,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue objectArgs = closure.Call(2, 3);
             DynValue dynValues = closure.Call(DynValue.NewNumber(10), DynValue.NewNumber(5));
 
-            await Assert.That(noArgs.Number).IsEqualTo(0d);
-            await Assert.That(objectArgs.Number).IsEqualTo(5d);
-            await Assert.That(dynValues.Number).IsEqualTo(15d);
+            await Assert.That(noArgs.Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(objectArgs.Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(dynValues.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,10 +151,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 resolvedLocals: System.Array.Empty<DynValue>()
             );
 
-            await Assert.That(closure.UpValuesCount).IsEqualTo(0);
+            await Assert.That(closure.UpValuesCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert
                 .That(closure.CapturedUpValuesType)
-                .IsEqualTo(default(Closure.UpValuesType));
+                .IsEqualTo(default(Closure.UpValuesType))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -164,11 +184,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 }
             }
 
-            await Assert.That(context).IsNotNull();
-            await Assert.That(context.Count).IsEqualTo(closure.UpValuesCount);
-            await Assert.That(capturedIndex).IsGreaterThanOrEqualTo(0);
-            await Assert.That(context[capturedIndex].Number).IsEqualTo(99d);
+            await Assert.That(context).IsNotNull().ConfigureAwait(false);
+            await Assert.That(context.Count).IsEqualTo(closure.UpValuesCount).ConfigureAwait(false);
+            await Assert.That(capturedIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert.That(context[capturedIndex].Number).IsEqualTo(99d).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

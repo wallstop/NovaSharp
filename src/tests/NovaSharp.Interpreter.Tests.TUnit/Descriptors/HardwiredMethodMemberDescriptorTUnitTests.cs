@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -24,11 +23,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
-            await Assert.That(descriptor.LastParameters[0]).IsEqualTo(7);
-            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("fallback");
-            await Assert.That(result.String).IsEqualTo("7:fallback:2");
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(descriptor.LastParameters[0]).IsEqualTo(7).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastParameters[1])
+                .IsEqualTo("fallback")
+                .ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("7:fallback:2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -44,10 +46,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
-            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("overridden");
-            await Assert.That(result.String).IsEqualTo("2:overridden:2");
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastParameters[1])
+                .IsEqualTo("overridden")
+                .ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("2:overridden:2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,10 +65,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastArgCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastParameters[1]).IsTypeOf<DefaultValue>();
-            await Assert.That(result.String).IsEqualTo("sentinel:42:1");
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastParameters[1])
+                .IsTypeOf<DefaultValue>()
+                .ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("sentinel:42:1").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -79,10 +87,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.Execute(script, null, context, args);
 
-            await Assert.That(descriptor.InvocationCount).IsEqualTo(1);
-            await Assert.That(descriptor.LastArgCount).IsEqualTo(2);
-            await Assert.That(descriptor.LastParameters[1]).IsEqualTo("custom");
-            await Assert.That(result.String).IsEqualTo("custom:10:2");
+            await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(descriptor.LastParameters[1])
+                .IsEqualTo("custom")
+                .ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("custom:10:2").ConfigureAwait(false);
         }
 
         private sealed class SampleHardwiredDescriptor : HardwiredMethodMemberDescriptor
@@ -159,4 +170,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007

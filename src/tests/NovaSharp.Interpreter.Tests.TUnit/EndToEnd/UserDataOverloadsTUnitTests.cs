@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -168,12 +167,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             if (tupleExpected)
             {
-                await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+                await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
                 result = result.Tuple[0];
             }
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo(expected);
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -261,8 +260,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
 
-            await RunTestOverloadAsync("o:method1('xx', true)", "X1");
-            await RunTestOverloadAsync("o:method3()", "X3");
+            await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method3()", "X3").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -270,11 +269,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
 
-            await RunTestOverloadAsync("o:method1('xx', true)", "X1");
+            await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
 
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods2));
 
-            await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!");
+            await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -283,8 +282,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
             UserData.RegisterExtensionType(typeof(OverloadsExtMethods2));
 
-            await RunTestOverloadAsync("o:method1('xx', true)", "X1");
-            await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!");
+            await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -302,7 +301,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsStatic2()
         {
-            await RunTestOverloadAsync("o:method1(5)", "3");
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
 
             Assert.Throws<ScriptRuntimeException>(() =>
                 RunTestOverloadAsync("s:method1(5)", "s").GetAwaiter().GetResult()
@@ -312,36 +311,36 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsCache1()
         {
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5)", "3");
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsCache2()
         {
-            await RunTestOverloadAsync("o:method1()", "1");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5, nil)", "4");
-            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("s:method1(true)", "s");
-            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5");
-            await RunTestOverloadAsync("o:method1(5, 'x')", "4");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5, 'x', 0)", "5");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5");
-            await RunTestOverloadAsync("s:method1(true)", "s");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5, 5)", "4");
-            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("s:method1(true)", "s");
-            await RunTestOverloadAsync("o:method1(5)", "3");
-            await RunTestOverloadAsync("o:method1(5, 5, 0)", "5");
-            await RunTestOverloadAsync("s:method1(true)", "s");
+            await RunTestOverloadAsync("o:method1()", "1").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, nil)", "4").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("s:method1(true)", "s").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, 'x')", "4").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, 'x', 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("s:method1(true)", "s").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, 5)", "4").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, nil, 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("s:method1(true)", "s").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5)", "3").ConfigureAwait(false);
+            await RunTestOverloadAsync("o:method1(5, 5, 0)", "5").ConfigureAwait(false);
+            await RunTestOverloadAsync("s:method1(true)", "s").ConfigureAwait(false);
         }
 
         private int Method1()
@@ -390,13 +389,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue result = script.DoString("return func(), func(17)");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(1);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(22);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Type)
+                .IsEqualTo(DataType.Number)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Type)
+                .IsEqualTo(DataType.Number)
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(22).ConfigureAwait(false);
         }
 #endif
     }
 }
-#pragma warning restore CA2007

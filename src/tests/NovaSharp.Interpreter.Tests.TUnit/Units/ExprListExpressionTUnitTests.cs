@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Collections.Generic;
@@ -26,10 +25,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             list.Compile(byteCode);
 
-            await Assert.That(first.CompileCount).IsEqualTo(1);
-            await Assert.That(second.CompileCount).IsEqualTo(1);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.MkTuple);
-            await Assert.That(byteCode.Code[^1].NumVal).IsEqualTo(2);
+            await Assert.That(first.CompileCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(second.CompileCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(byteCode.Code[^1].OpCode)
+                .IsEqualTo(OpCode.MkTuple)
+                .ConfigureAwait(false);
+            await Assert.That(byteCode.Code[^1].NumVal).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -43,8 +45,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             list.Compile(byteCode);
 
-            await Assert.That(expression.CompileCount).IsEqualTo(1);
-            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Nop);
+            await Assert.That(expression.CompileCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(byteCode.Code[^1].OpCode).IsEqualTo(OpCode.Nop).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -60,7 +62,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = list.Eval(executionContext);
 
-            await Assert.That(result).IsEqualTo(expected);
+            await Assert.That(result).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -73,7 +75,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             DynValue result = list.Eval(executionContext);
 
-            await Assert.That(result).IsEqualTo(DynValue.Void);
+            await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
         }
 
         private sealed class StubExpression : Expression
@@ -101,4 +103,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

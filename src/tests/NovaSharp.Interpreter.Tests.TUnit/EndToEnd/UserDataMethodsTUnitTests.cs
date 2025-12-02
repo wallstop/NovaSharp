@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
@@ -534,8 +533,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
-            await Assert.That(res.String).IsEqualTo("1.2@ciao:True");
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("1.2@ciao:True").ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodStaticComplexCustomConvAsync(
@@ -592,12 +591,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14"
-                );
+                )
+                .ConfigureAwait(false);
 
             Script.GlobalOptions.CustomConverters.Clear();
         }
@@ -628,12 +628,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "ciao,hello,aloha|42,77,125,13|aloha,ciao,hello|39,78,128|ciao,hello,aloha|42,77,125,13"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodStaticComplexRecAsync(InteropAccessMode opt)
@@ -660,8 +661,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
-            await Assert.That(res.String).IsEqualTo("1,2,3|11,35,77|16,42,64|99,76,17|");
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(res.String)
+                .IsEqualTo("1,2,3|11,35,77|16,42,64|99,76,17|")
+                .ConfigureAwait(false);
         }
 
         private static async Task TestRefOutParamsAsync(InteropAccessMode opt)
@@ -685,14 +689,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(res.Tuple.Length).IsEqualTo(3);
-            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String);
-            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.String);
-            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.String);
-            await Assert.That(res.Tuple[0].String).IsEqualTo("CIAO");
-            await Assert.That(res.Tuple[1].String).IsEqualTo("CiAohello");
-            await Assert.That(res.Tuple[2].String).IsEqualTo("ciao");
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].String).IsEqualTo("CIAO").ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].String).IsEqualTo("CiAohello").ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].String).IsEqualTo("ciao").ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodStaticAsync(InteropAccessMode opt)
@@ -717,12 +721,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodAsync(InteropAccessMode opt)
@@ -746,12 +751,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodSemicolonAsync(InteropAccessMode opt)
@@ -775,12 +781,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestConstructorAndConcatMethodSemicolonAsync(
@@ -807,12 +814,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1912"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestConcatMethodStaticSimplifiedSyntaxAsync(InteropAccessMode opt)
@@ -837,12 +845,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(res.String)
                 .IsEqualTo(
                     "eheh1ciao!SOMECLASS!True|asdqwezxc|asdqwezxc|123xy|asdqweXYzxc|!SOMECLASS!1994"
-                );
+                )
+                .ConfigureAwait(false);
         }
 
         private static async Task TestDelegateMethodAsync(InteropAccessMode opt)
@@ -866,8 +875,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
-            await Assert.That(res.String).IsEqualTo("1%2");
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("1%2").ConfigureAwait(false);
         }
 
         private static async Task TestListMethodAsync(InteropAccessMode opt)
@@ -897,8 +906,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.Number);
-            await Assert.That(res.Number).IsEqualTo(10);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1135,8 +1144,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
-            await Assert.That(res.String).IsEqualTo("Test1");
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("Test1").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1157,8 +1166,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.String);
-            await Assert.That(res.String).IsEqualTo("Test1Test2");
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("Test1Test2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1187,8 +1196,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.Number);
-            await Assert.That(res.Number).IsEqualTo(20);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(20).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1216,8 +1225,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.Number);
-            await Assert.That(res.Number).IsEqualTo(18);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(18).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1244,8 +1253,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            await Assert.That(res.Type).IsEqualTo(DataType.Number);
-            await Assert.That(res.Number).IsEqualTo(24);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(24).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1287,7 +1296,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                                 StringComparison.Ordinal
                             )
                     )
-                    .IsTrue();
+                    .IsTrue()
+                    .ConfigureAwait(false);
             }
         }
 
@@ -1304,4 +1314,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
     }
 }
-#pragma warning restore CA2007

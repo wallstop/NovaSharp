@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -20,10 +19,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int written = _encoding.GetBytes(source, 0, source.Length, destination, 0);
 
-            await Assert.That(written).IsEqualTo(source.Length);
-            await Assert.That(destination[0]).IsEqualTo((byte)source[0]);
-            await Assert.That(destination[1]).IsEqualTo((byte)source[1]);
-            await Assert.That(destination[2]).IsEqualTo((byte)source[2]);
+            await Assert.That(written).IsEqualTo(source.Length).ConfigureAwait(false);
+            await Assert.That(destination[0]).IsEqualTo((byte)source[0]).ConfigureAwait(false);
+            await Assert.That(destination[1]).IsEqualTo((byte)source[1]).ConfigureAwait(false);
+            await Assert.That(destination[2]).IsEqualTo((byte)source[2]).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -33,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetBytes((char[])null, 0, 0, Array.Empty<byte>(), 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -51,8 +50,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     _encoding.GetBytes(source, 1, 4, destination, 0)
             );
 
-            await Assert.That(negativeIndex).IsNotNull();
-            await Assert.That(excessiveCount).IsNotNull();
+            await Assert.That(negativeIndex).IsNotNull().ConfigureAwait(false);
+            await Assert.That(excessiveCount).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetBytes(source, 0, source.Length, destination, 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetBytes(source, 0, source.Length, null, 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -89,10 +88,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int written = _encoding.GetBytes(source, 1, 2, destination, 3);
 
-            await Assert.That(written).IsEqualTo(2);
-            await Assert.That(destination[3]).IsEqualTo((byte)'A');
-            await Assert.That(destination[4]).IsEqualTo((byte)'B');
-            await Assert.That(destination[5]).IsEqualTo((byte)0xFF);
+            await Assert.That(written).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(destination[3]).IsEqualTo((byte)'A').ConfigureAwait(false);
+            await Assert.That(destination[4]).IsEqualTo((byte)'B').ConfigureAwait(false);
+            await Assert.That(destination[5]).IsEqualTo((byte)0xFF).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -103,10 +102,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int written = _encoding.GetBytes(source, source.Length, 0, destination, 0);
 
-            await Assert.That(written).IsEqualTo(0);
+            await Assert.That(written).IsEqualTo(0).ConfigureAwait(false);
             await Assert
                 .That(destination.AsSpan().SequenceEqual(ExpectedDestinationBytes))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -117,10 +117,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int read = _encoding.GetChars(source, 0, source.Length, destination, 0);
 
-            await Assert.That(read).IsEqualTo(source.Length);
-            await Assert.That(destination[0]).IsEqualTo((char)source[0]);
-            await Assert.That(destination[1]).IsEqualTo((char)source[1]);
-            await Assert.That(destination[2]).IsEqualTo((char)source[2]);
+            await Assert.That(read).IsEqualTo(source.Length).ConfigureAwait(false);
+            await Assert.That(destination[0]).IsEqualTo((char)source[0]).ConfigureAwait(false);
+            await Assert.That(destination[1]).IsEqualTo((char)source[1]).ConfigureAwait(false);
+            await Assert.That(destination[2]).IsEqualTo((char)source[2]).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -130,7 +130,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetChars((byte[])null, 0, 0, Array.Empty<char>(), 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -148,8 +148,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     _encoding.GetChars(source, 1, 4, destination, 0)
             );
 
-            await Assert.That(negativeIndex).IsNotNull();
-            await Assert.That(excessiveCount).IsNotNull();
+            await Assert.That(negativeIndex).IsNotNull().ConfigureAwait(false);
+            await Assert.That(excessiveCount).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -162,7 +162,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetChars(source, 0, source.Length, destination, 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -174,7 +174,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 _encoding.GetChars(source, 0, source.Length, null, 0)
             );
 
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -186,10 +186,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int read = _encoding.GetChars(source, 1, 2, destination, 2);
 
-            await Assert.That(read).IsEqualTo(2);
-            await Assert.That(destination[2]).IsEqualTo('C');
-            await Assert.That(destination[3]).IsEqualTo('D');
-            await Assert.That(destination[4]).IsEqualTo('\uFFFF');
+            await Assert.That(read).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(destination[2]).IsEqualTo('C').ConfigureAwait(false);
+            await Assert.That(destination[3]).IsEqualTo('D').ConfigureAwait(false);
+            await Assert.That(destination[4]).IsEqualTo('\uFFFF').ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -200,8 +200,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             int read = _encoding.GetChars(source, source.Length, 0, destination, 1);
 
-            await Assert.That(read).IsEqualTo(0);
-            await Assert.That(destination.AsSpan().SequenceEqual(ExpectedCharSnapshot)).IsTrue();
+            await Assert.That(read).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(destination.AsSpan().SequenceEqual(ExpectedCharSnapshot))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -212,15 +215,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             ArgumentOutOfRangeException charCountException =
                 Assert.Throws<ArgumentOutOfRangeException>(() => _encoding.GetMaxCharCount(-1));
 
-            await Assert.That(byteCountException).IsNotNull();
-            await Assert.That(charCountException).IsNotNull();
+            await Assert.That(byteCountException).IsNotNull().ConfigureAwait(false);
+            await Assert.That(charCountException).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task GetMaxCountsReturnRequestedSize()
         {
-            await Assert.That(_encoding.GetMaxByteCount(5)).IsEqualTo(5);
-            await Assert.That(_encoding.GetMaxCharCount(7)).IsEqualTo(7);
+            await Assert.That(_encoding.GetMaxByteCount(5)).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(_encoding.GetMaxCharCount(7)).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -229,7 +232,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             char[] chars = { 'a', 'b', 'c', 'd' };
             int count = _encoding.GetByteCount(chars, 0, chars.Length);
 
-            await Assert.That(count).IsEqualTo(chars.Length);
+            await Assert.That(count).IsEqualTo(chars.Length).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -238,8 +241,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             byte[] bytes = { 0x10, 0x20, 0x30 };
             int count = _encoding.GetCharCount(bytes, 0, bytes.Length);
 
-            await Assert.That(count).IsEqualTo(bytes.Length);
+            await Assert.That(count).IsEqualTo(bytes.Length).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -30,9 +29,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             add.Callback.Invoke(context, args.GetArray(), args.IsMethodCall);
             remove.Callback.Invoke(context, args.GetArray(), args.IsMethodCall);
 
-            await Assert.That(target.AddInvokeCount).IsEqualTo(1);
-            await Assert.That(target.RemoveInvokeCount).IsEqualTo(1);
-            await Assert.That(target.LastHandler).IsEqualTo(handler);
+            await Assert.That(target.AddInvokeCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(target.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(target.LastHandler).IsEqualTo(handler).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -47,7 +46,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert
                 .That(exception.Message)
-                .Contains("Events only support add and remove methods");
+                .Contains("Events only support add and remove methods")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -65,7 +65,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 )
             )!;
 
-            await Assert.That(exception.Message).Contains("Events do not have settable fields");
+            await Assert
+                .That(exception.Message)
+                .Contains("Events do not have settable fields")
+                .ConfigureAwait(false);
         }
 
         private sealed class TestEventTarget
@@ -94,4 +97,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

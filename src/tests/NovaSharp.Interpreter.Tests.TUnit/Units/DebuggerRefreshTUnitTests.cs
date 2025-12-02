@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System;
@@ -36,7 +35,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             script.Call(script.Globals.Get("target"));
 
-            await Assert.That(debugger.Updates.ContainsKey(WatchType.CallStack)).IsTrue();
+            await Assert
+                .That(debugger.Updates.ContainsKey(WatchType.CallStack))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(
                     debugger
@@ -47,12 +49,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                             )
                         )
                 )
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(debugger.Updates.ContainsKey(WatchType.Locals)).IsTrue();
-            await Assert.That(debugger.Updates[WatchType.Locals].Count).IsGreaterThan(0);
+            await Assert
+                .That(debugger.Updates.ContainsKey(WatchType.Locals))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.Updates[WatchType.Locals].Count)
+                .IsGreaterThan(0)
+                .ConfigureAwait(false);
 
-            await Assert.That(debugger.Updates.ContainsKey(WatchType.Watches)).IsTrue();
+            await Assert
+                .That(debugger.Updates.ContainsKey(WatchType.Watches))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(
                     debugger
@@ -66,13 +78,21 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                             )
                         )
                 )
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
 
-            await Assert.That(debugger.Updates.ContainsKey(WatchType.VStack)).IsTrue();
+            await Assert
+                .That(debugger.Updates.ContainsKey(WatchType.VStack))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(debugger.Updates[WatchType.VStack].Any(snapshot => snapshot.Count > 0))
-                .IsTrue();
-            await Assert.That(debugger.Updates.ContainsKey(WatchType.Threads)).IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.Updates.ContainsKey(WatchType.Threads))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private sealed class RecordingDebugger : IDebugger
@@ -151,4 +171,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
     }
 }
-#pragma warning restore CA2007

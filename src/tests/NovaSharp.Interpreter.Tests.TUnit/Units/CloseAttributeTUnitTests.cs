@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Units
 {
     using System.Threading.Tasks;
@@ -36,11 +35,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Table);
+            await Assert.That(result.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             Table log = result.Table;
-            await Assert.That(log.Length).IsEqualTo(2);
-            await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
-            await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
+            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("second:nil").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("first:nil").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -72,9 +71,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             Table log = result.Table;
-            await Assert.That(log.Length).IsEqualTo(2);
-            await Assert.That(log.Get(1).String).IsEqualTo("first:nil");
-            await Assert.That(log.Get(2).String).IsEqualTo("second:nil");
+            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("first:nil").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("second:nil").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -105,10 +104,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(result.Tuple.Length).IsEqualTo(3);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("boom");
-            await Assert.That(result.Tuple[2].String).Contains("boom");
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).Contains("boom").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).Contains("boom").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -124,9 +123,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(result.Tuple.Length).IsEqualTo(2);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("__close metamethod expected");
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("__close metamethod expected")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -161,9 +163,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             Table log = result.Table;
-            await Assert.That(log.Length).IsEqualTo(2);
-            await Assert.That(log.Get(1).String).IsEqualTo("inner:nil");
-            await Assert.That(log.Get(2).String).IsEqualTo("outer:nil");
+            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("inner:nil").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("outer:nil").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -194,8 +196,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
 
             Table log = result.Table;
-            await Assert.That(log.Length).IsEqualTo(1);
-            await Assert.That(log.Get(1).String).IsEqualTo("loop_1:nil");
+            await Assert.That(log.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("loop_1:nil").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -229,15 +231,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "
             );
 
-            await Assert.That(result.Tuple.Length).IsEqualTo(3);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("close:first");
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).Contains("close:first").ConfigureAwait(false);
 
             Table log = result.Tuple[2].Table;
-            await Assert.That(log.Length).IsEqualTo(2);
-            await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
-            await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
+            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(log.Get(1).String).IsEqualTo("second:nil").ConfigureAwait(false);
+            await Assert.That(log.Get(2).String).IsEqualTo("first:nil").ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore CA2007

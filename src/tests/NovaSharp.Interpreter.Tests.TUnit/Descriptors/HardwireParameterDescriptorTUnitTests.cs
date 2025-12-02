@@ -1,4 +1,3 @@
-#pragma warning disable CA2007
 namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
@@ -18,11 +17,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             HardwireParameterDescriptor descriptor = CreateDescriptor(hasDefault: true);
 
-            await Assert.That(descriptor.ParamType).IsEqualTo(typeof(string).FullName);
-            await Assert.That(descriptor.HasDefaultValue).IsTrue();
-            await Assert.That(descriptor.IsOut).IsFalse();
-            await Assert.That(descriptor.IsRef).IsFalse();
-            await Assert.That(descriptor.Expression).IsTypeOf<CodeObjectCreateExpression>();
+            await Assert
+                .That(descriptor.ParamType)
+                .IsEqualTo(typeof(string).FullName)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.HasDefaultValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.IsOut).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.IsRef).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.Expression)
+                .IsTypeOf<CodeObjectCreateExpression>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -32,7 +37,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.SetTempVar("tmp");
 
-            await Assert.That(descriptor.TempVarName).IsEqualTo("tmp");
+            await Assert.That(descriptor.TempVarName).IsEqualTo("tmp").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,7 +50,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             await Assert
                 .That(exception.Message.Contains("byval", StringComparison.Ordinal))
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -58,9 +64,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             IReadOnlyList<HardwireParameterDescriptor> descriptors =
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(list);
 
-            await Assert.That(descriptors.Count).IsEqualTo(2);
-            await Assert.That(descriptors[0].IsRef).IsTrue();
-            await Assert.That(descriptors[1].IsOut).IsTrue();
+            await Assert.That(descriptors.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(descriptors[0].IsRef).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptors[1].IsOut).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -70,7 +76,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(null)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("t");
+            await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,7 +89,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(list)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("t");
+            await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -94,7 +100,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 _ = new HardwireParameterDescriptor(null);
             });
 
-            await Assert.That(exception.ParamName).IsEqualTo("tpar");
+            await Assert.That(exception.ParamName).IsEqualTo("tpar").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -102,23 +108,31 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             HardwireParameterDescriptor descriptor = CreateDescriptor(hasDefault: true);
 
-            await Assert.That(descriptor.HasDefaultValue).IsTrue();
-            await Assert.That(descriptor.Expression).IsTypeOf<CodeObjectCreateExpression>();
+            await Assert.That(descriptor.HasDefaultValue).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.Expression)
+                .IsTypeOf<CodeObjectCreateExpression>()
+                .ConfigureAwait(false);
 
             CodeObjectCreateExpression parameterFactory = (CodeObjectCreateExpression)
                 descriptor.Expression;
             await Assert
                 .That(parameterFactory.CreateType.BaseType)
-                .IsEqualTo(typeof(ParameterDescriptor).FullName);
+                .IsEqualTo(typeof(ParameterDescriptor).FullName)
+                .ConfigureAwait(false);
 
             CodeExpression defaultArgument = parameterFactory.Parameters[3];
-            await Assert.That(defaultArgument).IsTypeOf<CodeObjectCreateExpression>();
+            await Assert
+                .That(defaultArgument)
+                .IsTypeOf<CodeObjectCreateExpression>()
+                .ConfigureAwait(false);
 
             CodeObjectCreateExpression defaultValueFactory =
                 (CodeObjectCreateExpression)defaultArgument;
             await Assert
                 .That(defaultValueFactory.CreateType.BaseType)
-                .IsEqualTo(typeof(DefaultValue).FullName);
+                .IsEqualTo(typeof(DefaultValue).FullName)
+                .ConfigureAwait(false);
         }
 
         private static HardwireParameterDescriptor CreateDescriptor(
@@ -153,4 +167,3 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
     }
 }
-#pragma warning restore CA2007
