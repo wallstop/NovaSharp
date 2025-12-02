@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task ObjectToDynValueHandlesUserDataTypesEnumsAndDelegates()
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
-            RegisterSampleUserData();
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             Script script = new();
             SampleUserData instance = new();
 
@@ -206,12 +206,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             (Func<ScriptExecutionContext, CallbackArguments, DynValue>)StaticClrCallback
         ).Method;
 
-        private static void RegisterSampleUserData()
+        private static UserDataRegistrationScope RegisterSampleUserData()
         {
-            if (!UserData.IsTypeRegistered<SampleUserData>())
-            {
-                UserData.RegisterType<SampleUserData>();
-            }
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<SampleUserData>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<SampleUserData>();
+            return scope;
         }
 
         private static IEnumerable<string> YieldStrings()

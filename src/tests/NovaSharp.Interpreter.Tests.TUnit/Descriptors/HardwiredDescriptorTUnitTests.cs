@@ -11,7 +11,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [ScriptGlobalOptionsIsolation]
+    [UserDataIsolation]
     public sealed class HardwiredDescriptorTUnitTests
     {
         [global::TUnit.Core.Test]
@@ -287,11 +291,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task DynValueMemberDescriptorPrepareForWiringHandlesStaticUserData()
         {
-            if (!UserData.IsTypeRegistered<DummyStaticUserData>())
-            {
-                UserData.RegisterType<DummyStaticUserData>();
-            }
-
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<DummyStaticUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<DummyStaticUserData>();
             DynValueMemberDescriptor descriptor = new(
                 "userdata",
                 UserData.CreateStatic<DummyStaticUserData>()
@@ -317,11 +319,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task DynValueMemberDescriptorPrepareForWiringHandlesInstanceUserDataError()
         {
-            if (!UserData.IsTypeRegistered<DummyInstanceUserData>())
-            {
-                UserData.RegisterType<DummyInstanceUserData>();
-            }
-
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<DummyInstanceUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<DummyInstanceUserData>();
             DynValue instance = UserData.Create(new DummyInstanceUserData());
             DynValueMemberDescriptor descriptor = new("userdata", instance);
             Table wiring = new(null);

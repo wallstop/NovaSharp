@@ -8,8 +8,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using NovaSharp.Interpreter.Tests;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [UserDataIsolation]
     public sealed class StandardGenericsUserDataDescriptorTUnitTests
     {
         static StandardGenericsUserDataDescriptorTUnitTests()
@@ -165,7 +167,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 GenericStub<int>
             >(ensureUnregistered: true);
 
-            UserData.RegisterType<GenericStub<int>>();
+            registrationScope.RegisterType<GenericStub<int>>();
 
             StandardGenericsUserDataDescriptor descriptor = new(
                 typeof(GenericStub<>),

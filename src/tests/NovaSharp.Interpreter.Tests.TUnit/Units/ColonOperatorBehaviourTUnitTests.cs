@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Options;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [UserDataIsolation]
     public sealed class ColonOperatorBehaviourTUnitTests
     {
         [global::TUnit.Core.Test]
@@ -70,7 +71,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<Probe>(ensureUnregistered: true);
-            UserData.RegisterType<Probe>();
+            registrationScope.RegisterType<Probe>();
 
             Script script = new();
             script.Options.ColonOperatorClrCallbackBehaviour =

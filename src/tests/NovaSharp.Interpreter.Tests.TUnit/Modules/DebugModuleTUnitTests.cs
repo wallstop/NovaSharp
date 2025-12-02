@@ -10,7 +10,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [UserDataIsolation]
     public sealed class DebugModuleTUnitTests
     {
         private static readonly string[] PrintThenReturn = { "print('hello')", "return" };
@@ -20,14 +23,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         private static readonly string[] WhitespaceReturnSequence = { "   ", "\treturn" };
         private static readonly string[] SingleReturnSequence = { "RETURN" };
 
-        static DebugModuleTUnitTests()
-        {
-            UserData.RegisterType<SampleUserData>();
-        }
-
         [global::TUnit.Core.Test]
         public async Task GetUserValueReturnsStoredValue()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
             userdata.UserData.UserValue = DynValue.NewString("stored");
@@ -41,6 +40,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetUserValueDefaultsToNilWhenUnset()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
             script.Globals["ud"] = userdata;
@@ -62,6 +62,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUserValueUpdatesDescriptor()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
             script.Globals["ud"] = userdata;
@@ -77,6 +78,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUserValueAllowsClearingWithNil()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             Script script = CreateScript();
             DynValue userdata = UserData.Create(new SampleUserData());
             script.Globals["ud"] = userdata;
@@ -620,6 +622,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private static UserDataRegistrationScope RegisterSampleUserData()
+        {
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<SampleUserData>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<SampleUserData>();
+            return scope;
         }
 
         private sealed class SampleUserData { }

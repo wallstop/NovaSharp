@@ -8,14 +8,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [UserDataIsolation]
     public sealed class DynValueTUnitTests
     {
-        static DynValueTUnitTests()
-        {
-            UserData.RegisterType<SampleUserData>();
-        }
-
         [global::TUnit.Core.Test]
         public async Task NewTupleHandlesEmptyAndSingleInputs()
         {
@@ -380,6 +378,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeReturnsManagedInstance()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue userData = UserData.Create(new SampleUserData("ud"));
 
             SampleUserData result = userData.CheckUserDataType<SampleUserData>("func");
@@ -390,6 +389,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeThrowsWhenTypeMismatch()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue userData = UserData.Create(new SampleUserData("ud"));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -547,6 +547,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue coroutine = script.CreateCoroutine(chunk);
             DynValue tableValue = DynValue.NewTable(new Table(script));
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue userData = UserData.Create(new SampleUserData("ignored"));
             DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
@@ -622,6 +623,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ToPrintStringReflectsUserDataDescriptor()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue userData = UserData.Create(new SampleUserData("Printable"));
 
             await Assert
@@ -706,6 +708,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task EqualsHandlesNonDynValuesTuplesUserDataAndYieldRequests()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
             DynValue alias = DynValue.NewNil();
             alias.Assign(tuple);
@@ -784,6 +787,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .That(tableValue.ScriptPrivateResource)
                 .IsSameReferenceAs(table)
                 .ConfigureAwait(false);
+        }
+
+        private static UserDataRegistrationScope RegisterSampleUserData()
+        {
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<SampleUserData>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<SampleUserData>();
+            return scope;
         }
 
         private sealed class SampleUserData

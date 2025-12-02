@@ -17,8 +17,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
+    [UserDataIsolation]
     public sealed class DispatchingUserDataDescriptorTUnitTests
     {
         private const string IndexerGetterName = "get_Item";
@@ -27,21 +29,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         private static readonly int[] HostOtherSequence = { 3 };
         private static readonly int[] HostCopySequence = { 2 };
         private static readonly int[] HostZeroSequence = { 0 };
-        private static bool ExtensionRegistered;
-
-        static DispatchingUserDataDescriptorTUnitTests()
-        {
-            _ = new AccessibleDispatchingUserDataDescriptor();
-            UserData.RegisterType<DispatchHost>(InteropAccessMode.Reflection);
-            UserData.RegisterType<MetaFallbackHost>(InteropAccessMode.Reflection);
-            UserData.RegisterType<CountOnlyHost>(InteropAccessMode.Reflection);
-            UserData.RegisterType<IntConversionOnlyHost>(InteropAccessMode.Reflection);
-            UserData.RegisterType<NoConversionHost>(InteropAccessMode.Reflection);
-        }
 
         [global::TUnit.Core.Test]
         public async Task ArithmeticOperatorsDispatchToClrOverloads()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             DynValue sum = script.DoString("return (hostAdd + hostOther).value");
@@ -62,6 +54,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ComparisonOperatorsUseComparable()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             DynValue equality = script.DoString("return hostAdd == hostCopy");
@@ -76,6 +69,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ComparisonMetamethodSupportsSecondOperandOwnership()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(
                 out DispatchHost hostAdd,
                 out DispatchHost hostOther,
@@ -99,6 +93,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task MetaIndexReturnsNullForUnsupportedMetamethod()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out DispatchHost hostAdd, out _, out _, out _);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
 
@@ -110,6 +105,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task LenOperatorReturnsCount()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             DynValue len = script.DoString("return #hostAdd");
@@ -120,6 +116,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task LenOperatorFallsBackToCountWhenLengthMissing()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
 
@@ -131,6 +128,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ComparisonMetamethodReturnsNullWhenObjectIsNotComparable()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
@@ -144,6 +142,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task LenMetamethodReturnsNullWhenTargetIsNull()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
@@ -155,6 +154,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ToNumberDispatchesImplicitConversion()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out DispatchHost hostOther, out _, out _);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostOther);
             DynValue meta = descriptor.MetaIndex(script, hostOther, "__tonumber");
@@ -170,6 +170,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ToNumberSkipsMissingConvertersBeforeFindingMatch()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             IntConversionOnlyHost host = new(9);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
@@ -186,6 +187,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ToNumberReturnsNilWhenNoConvertersExist()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             NoConversionHost host = new(6);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
@@ -198,6 +200,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ToBoolUsesImplicitConversion()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(
                 out DispatchHost hostAdd,
                 out _,
@@ -219,6 +222,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task IteratorDispatchEnumeratesClrEnumerable()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             DynValue sum = script.DoString(
@@ -363,12 +367,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task IndexFallsBackToExtensionMethodsAfterRegistration()
         {
-            if (!ExtensionRegistered)
-            {
-                UserData.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
-                ExtensionRegistered = true;
-            }
-
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            UserData.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             DynValue result = script.DoString("return hostAdd:DescribeExt()");
 
@@ -378,6 +378,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task DivisionByZeroPropagatesInvocationException()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             TargetInvocationException exception = ExpectException<TargetInvocationException>(() =>
@@ -390,6 +391,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ConcatOperatorFallsBackToRegisteredMetamethod()
         {
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L"));
             script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R"));
@@ -424,8 +426,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+
             bool handled = descriptor.SetIndex(
-                CreateScriptWithHosts(out _, out _, out _, out _),
+                script,
                 new DescriptorHost(),
                 DynValue.NewNumber(2),
                 DynValue.NewString("payload"),
@@ -458,8 +463,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 )
             );
 
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+
             bool handled = descriptor.SetIndex(
-                CreateScriptWithHosts(out _, out _, out _, out _),
+                script,
                 new DescriptorHost(),
                 DynValue.NewString("DirectTarget"),
                 DynValue.NewString("direct"),
@@ -475,9 +483,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task SetIndexReturnsFalseWhenNonStringIndexProvided()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
-                CreateScriptWithHosts(out _, out _, out _, out _),
+                script,
                 new DescriptorHost(),
                 DynValue.NewNumber(5),
                 DynValue.NewString("ignored"),
@@ -491,9 +501,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task SetIndexReturnsFalseWhenMemberIsMissing()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
-                CreateScriptWithHosts(out _, out _, out _, out _),
+                script,
                 new DescriptorHost(),
                 DynValue.NewString("DoesNotExist"),
                 DynValue.NewNumber(1),
@@ -524,14 +536,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task IndexThrowsWhenIndexIsNull()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                descriptor.Index(
-                    CreateScriptWithHosts(out _, out _, out _, out _),
-                    new DescriptorHost(),
-                    index: null,
-                    isDirectIndexing: true
-                )
+                descriptor.Index(script, new DescriptorHost(), index: null, isDirectIndexing: true)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("index");
@@ -541,10 +550,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task SetIndexThrowsWhenValueIsNull()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 descriptor.SetIndex(
-                    CreateScriptWithHosts(out _, out _, out _, out _),
+                    script,
                     new DescriptorHost(),
                     DynValue.NewString("Value"),
                     value: null,
@@ -559,13 +570,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task MetaIndexThrowsWhenMetanameIsNull()
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
+            using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
+            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                descriptor.MetaIndex(
-                    CreateScriptWithHosts(out _, out _, out _, out _),
-                    new DescriptorHost(),
-                    metaname: null
-                )
+                descriptor.MetaIndex(script, new DescriptorHost(), metaname: null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("metaname");
@@ -598,6 +607,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task HelperNameTransformationsMirrorDescriptorHelpers()
         {
+            _ = new AccessibleDispatchingUserDataDescriptor();
             await Assert
                 .That(AccessibleDispatchingUserDataDescriptor.InvokeCamelify("hello_world-value"))
                 .IsEqualTo(DescriptorHelpers.Camelify("hello_world-value"));
@@ -624,6 +634,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["hostCopy"] = UserData.Create(hostCopy);
             script.Globals["hostZero"] = UserData.Create(hostZero);
             return script;
+        }
+
+        private static UserDataRegistrationScope RegisterDispatchHosts()
+        {
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Create();
+            scope.RegisterType<DispatchHost>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            scope.RegisterType<MetaFallbackHost>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            scope.RegisterType<CountOnlyHost>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            scope.RegisterType<IntConversionOnlyHost>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            scope.RegisterType<NoConversionHost>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            return scope;
         }
 
         private static DescriptorHostDescriptor CreateDescriptorHostDescriptor()

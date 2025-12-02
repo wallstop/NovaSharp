@@ -26,23 +26,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
     [ScriptGlobalOptionsIsolation]
     [PlatformDetectorIsolation]
+    [UserDataIsolation]
     public sealed class MethodMemberDescriptorTUnitTests
     {
         private static readonly object CompatibilityLock = new();
-
-        static MethodMemberDescriptorTUnitTests()
-        {
-            UserData.RegisterType<MethodMemberDescriptorHost>();
-            UserData.RegisterType<int[,]>();
-        }
-
-        private static void EnsureArrayUserDataRegistered()
-        {
-            if (!UserData.IsTypeRegistered<int[,]>())
-            {
-                UserData.RegisterType<int[,]>();
-            }
-        }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteLazyOptimizedInstanceActionUsesCompiledDelegate()
@@ -138,7 +125,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task ExecuteArrayConstructorCreatesExpectedArray()
         {
-            EnsureArrayUserDataRegistered();
+            using UserDataRegistrationScope registrationScope = RegisterArrayUserData();
             ConstructorInfo ctor =
                 MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
@@ -468,7 +455,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task PrepareForWiringArrayConstructorIncludesArrayMetadata()
         {
-            EnsureArrayUserDataRegistered();
+            using UserDataRegistrationScope registrationScope = RegisterArrayUserData();
             ConstructorInfo ctor =
                 MethodMemberDescriptorArrayMetadata.Int32TwoDimensionalConstructor;
             MethodMemberDescriptor descriptor = new(ctor, InteropAccessMode.Reflection);
@@ -510,6 +497,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             throw new InvalidOperationException(
                 $"Expected exception of type {typeof(TException).Name}."
             );
+        }
+
+        private static UserDataRegistrationScope RegisterArrayUserData()
+        {
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Create();
+            scope.RegisterType(typeof(int[,]), ensureUnregistered: true);
+            return scope;
         }
     }
 

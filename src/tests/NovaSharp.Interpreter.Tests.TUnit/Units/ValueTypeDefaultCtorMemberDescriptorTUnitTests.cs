@@ -11,6 +11,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
+    using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class ValueTypeDefaultCtorMemberDescriptorTUnitTests
@@ -31,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task ExecuteReturnsDefaultStructValue()
         {
-            RegisterSampleStruct();
+            using UserDataRegistrationScope registrationScope = RegisterSampleStruct();
             Script script = new();
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
@@ -54,7 +56,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetValueReturnsDefaultStructValue()
         {
-            RegisterSampleStruct();
+            using UserDataRegistrationScope registrationScope = RegisterSampleStruct();
             Script script = new();
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
@@ -132,12 +134,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .ConfigureAwait(false);
         }
 
-        private static void RegisterSampleStruct()
+        private static UserDataRegistrationScope RegisterSampleStruct()
         {
-            if (!UserData.IsTypeRegistered<SampleStruct>())
-            {
-                UserData.RegisterType<SampleStruct>();
-            }
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<SampleStruct>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<SampleStruct>();
+            return scope;
         }
 
         private static ValueTypeDefaultCtorMemberDescriptor CreateDescriptor(Type type)

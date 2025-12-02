@@ -10,7 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
-    [UserDataIsolation]
+    [UserDataIsolation(serialize: true)]
     public sealed class UserDataEventsTUnitTests
     {
         internal sealed class SomeClass
