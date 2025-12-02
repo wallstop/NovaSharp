@@ -158,7 +158,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             OverloadsTestClass obj = new();
 
-            UserData.RegisterType<OverloadsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<OverloadsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<OverloadsTestClass>();
 
             script.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
             script.Globals.Set("o", UserData.Create(obj));

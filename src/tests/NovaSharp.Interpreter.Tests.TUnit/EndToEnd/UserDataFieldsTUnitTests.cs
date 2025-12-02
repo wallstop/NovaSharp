@@ -260,7 +260,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task InteropIntFieldSetterWithSimplifiedSyntax()
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(),
+                scope => scope.RegisterType<SomeClass>(),
                 () =>
                 {
                     Script script = new();
@@ -279,7 +279,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestIntFieldGetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -295,7 +295,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestNullableIntFieldGetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -317,7 +317,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestObjectFieldGetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -341,7 +341,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestIntFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -357,7 +357,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestNullableIntFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -379,7 +379,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestObjectFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -407,7 +407,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestInvalidFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -425,7 +425,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestStaticFieldAccessAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -442,7 +442,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestConstIntFieldGetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -458,7 +458,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestConstIntFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -476,7 +476,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestReadOnlyIntFieldGetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -492,7 +492,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static Task TestReadOnlyIntFieldSetterAsync(InteropAccessMode mode)
         {
             return WithRegistrationAsync(
-                () => UserData.RegisterType<SomeClass>(mode),
+                scope => scope.RegisterType<SomeClass>(mode),
                 () =>
                 {
                     Script script = new();
@@ -508,7 +508,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         private static async Task WithRegistrationAsync<T>(
-            Action register,
+            Action<UserDataRegistrationScope> register,
             Func<Task<T>> execute,
             Func<T, Task> asserts
         )
@@ -518,10 +518,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ArgumentNullException.ThrowIfNull(asserts);
 
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
-            registrationScope.Add<SomeClass>(ensureUnregistered: true);
-            registrationScope.Add<List<SomeClass>>(ensureUnregistered: true);
 
-            register();
+            register(registrationScope);
             T result = await execute().ConfigureAwait(false);
             try
             {

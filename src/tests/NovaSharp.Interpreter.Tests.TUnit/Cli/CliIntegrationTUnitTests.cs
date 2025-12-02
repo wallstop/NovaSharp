@@ -22,12 +22,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
     [PlatformDetectorIsolation]
     [UserDataIsolation]
-    public sealed class CliIntegrationTUnitTests : IDisposable
+    public sealed class CliIntegrationTUnitTests
     {
         private static readonly string[] ExecuteHelpCommandArgs = { "-X", "help" };
         private static readonly SemaphoreSlim HardwireDumpSemaphore = new(1, 1);
-        private readonly Func<IRemoteDebuggerBridge> _originalDebuggerFactory;
-        private readonly IBrowserLauncher _originalBrowserLauncher;
 
         static CliIntegrationTUnitTests()
         {
@@ -35,18 +33,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             {
                 CommandManager.Initialize();
             }
-        }
-
-        public CliIntegrationTUnitTests()
-        {
-            _originalDebuggerFactory = DebugCommand.DebuggerFactory;
-            _originalBrowserLauncher = DebugCommand.BrowserLauncher;
-        }
-
-        public void Dispose()
-        {
-            DebugCommand.DebuggerFactory = _originalDebuggerFactory;
-            DebugCommand.BrowserLauncher = _originalBrowserLauncher;
         }
 
         [global::TUnit.Core.Test]

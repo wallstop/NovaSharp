@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -275,15 +276,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             SemaphoreSlimLease registryLease = await SemaphoreSlimScope
                 .WaitAsync(RegistryGate)
                 .ConfigureAwait(false);
-            try
-            {
-                ResetGenerators();
-                await action().ConfigureAwait(false);
-            }
-            finally
-            {
-                await registryLease.DisposeAsync().ConfigureAwait(false);
-            }
+            await using ConfiguredAsyncDisposable registryLeaseScope = registryLease.ConfigureAwait(
+                false
+            );
+
+            ResetGenerators();
+            await action().ConfigureAwait(false);
         }
 
         private static void ResetGenerators()

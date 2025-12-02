@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataMetaTUnitTests
@@ -203,7 +204,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaPairs()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
             script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string lua =
@@ -224,7 +227,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaIPairs()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
             script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string lua =
@@ -245,7 +250,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaIterator()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
             script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
 
             string lua =
@@ -266,9 +273,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaOpLen()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
-            UserData.RegisterType<ClassWithCount>();
-            UserData.RegisterType<ClassWithLength>();
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(ArithmOperatorsTestClass),
+                typeof(ClassWithCount),
+                typeof(ClassWithLength)
+            );
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
+            registrationScope.RegisterType<ClassWithCount>();
+            registrationScope.RegisterType<ClassWithLength>();
 
             script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
             script.Globals.Set("o2", UserData.Create(new ClassWithCount()));
@@ -290,7 +303,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaEquality()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
 
             script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
             script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)));
@@ -342,7 +357,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task InteropMetaComparisons()
         {
             Script script = new();
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
 
             script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
             script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));

@@ -303,26 +303,28 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Func<DynValue, RegCollMethods, Task> asserts
         )
         {
-            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
-            registrationScope.Add<RegCollMethods>(ensureUnregistered: true);
-            registrationScope.Add<RegCollItem>(ensureUnregistered: true);
-            registrationScope.Add<Array>(ensureUnregistered: true);
-            registrationScope.Add(typeof(IList<>), ensureUnregistered: true);
-            registrationScope.Add<IList<RegCollItem>>(ensureUnregistered: true);
-            registrationScope.Add<IList<int>>(ensureUnregistered: true);
-            registrationScope.Add(typeof(IEnumerable<>), ensureUnregistered: true);
-            registrationScope.Add<IEnumerable<RegCollItem>>(ensureUnregistered: true);
-            registrationScope.Add<IEnumerable<int>>(ensureUnregistered: true);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(RegCollMethods),
+                typeof(RegCollItem),
+                typeof(Array),
+                typeof(IList<>),
+                typeof(IEnumerable<>),
+                typeof(IList<RegCollItem>),
+                typeof(IList<int>),
+                typeof(IEnumerable<RegCollItem>),
+                typeof(IEnumerable<int>)
+            );
 
-            UserData.RegisterType<RegCollMethods>();
-            UserData.RegisterType<RegCollItem>();
-            UserData.RegisterType<Array>();
-            UserData.RegisterType(typeof(IList<>));
-            UserData.RegisterType<IList<RegCollItem>>();
-            UserData.RegisterType<IList<int>>();
-            UserData.RegisterType(typeof(IEnumerable<>));
-            UserData.RegisterType<IEnumerable<RegCollItem>>();
-            UserData.RegisterType<IEnumerable<int>>();
+            registrationScope.RegisterType<RegCollMethods>();
+            registrationScope.RegisterType<RegCollItem>();
+            registrationScope.RegisterType<Array>();
+            registrationScope.RegisterType(typeof(IList<>));
+            registrationScope.RegisterType<IList<RegCollItem>>();
+            registrationScope.RegisterType<IList<int>>();
+            registrationScope.RegisterType(typeof(IEnumerable<>));
+            registrationScope.RegisterType<IEnumerable<RegCollItem>>();
+            registrationScope.RegisterType<IEnumerable<int>>();
 
             Script script = new();
             RegCollMethods host = new();

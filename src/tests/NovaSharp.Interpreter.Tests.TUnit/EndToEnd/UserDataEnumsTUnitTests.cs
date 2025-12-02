@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public enum SampleRating
     {
@@ -91,9 +92,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             EnumOverloadsTestClass target = new();
 
-            UserData.RegisterType<EnumOverloadsTestClass>(InteropAccessMode.Reflection);
-            UserData.RegisterType<SampleRating>();
-            UserData.RegisterType<SampleFlagSet>();
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(EnumOverloadsTestClass),
+                typeof(SampleRating),
+                typeof(SampleFlagSet)
+            );
+
+            registrationScope.RegisterType<EnumOverloadsTestClass>(
+                InteropAccessMode.Reflection,
+                ensureUnregistered: true
+            );
+            registrationScope.RegisterType<SampleRating>();
+            registrationScope.RegisterType<SampleFlagSet>();
 
             script.Globals.Set("SampleRating", UserData.CreateStatic<SampleRating>());
             script.Globals["SampleFlagSet"] = typeof(SampleFlagSet);

@@ -37,7 +37,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             RegisterCommand command = new();
             ShellContext context = new(new Script());
 
-            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
 
             await WithConsoleAsync(async console =>
                 {
@@ -57,11 +58,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             RegisterCommand command = new();
             ShellContext context = new(new Script());
 
-            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
-            UserData.RegisterType(typeof(SampleUserData));
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
 
             await WithConsoleAsync(async console =>
                 {
+                    UserData.RegisterType(typeof(SampleUserData));
                     command.Execute(context, string.Empty);
 
                     await Assert

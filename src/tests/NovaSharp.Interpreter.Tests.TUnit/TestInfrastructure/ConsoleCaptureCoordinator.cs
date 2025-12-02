@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
@@ -14,18 +15,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
             SemaphoreSlimLease lease = await SemaphoreSlimScope
                 .WaitAsync(Semaphore)
                 .ConfigureAwait(false);
+            await using ConfiguredAsyncDisposable leaseScope = lease.ConfigureAwait(false);
 
-            try
-            {
-                await callback().ConfigureAwait(false);
-            }
-            finally
-            {
-                if (lease != null)
-                {
-                    await lease.DisposeAsync().ConfigureAwait(false);
-                }
-            }
+            await callback().ConfigureAwait(false);
         }
     }
 }

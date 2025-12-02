@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataEventsTUnitTests
@@ -48,290 +49,311 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropEventSimple()
         {
-            int invocationCount = 0;
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
-
-            Script script = new(default(CoreModules));
-
-            SomeClass obj = new();
-            script.Globals["myobj"] = obj;
-            script.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
+            await WithRegisteredEventTypes(async () =>
                 {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
+                    int invocationCount = 0;
+                    Script script = new(default(CoreModules));
 
-            script.DoString(
-                @"
-                function handler(o, a)
-                    ext();
-                end
+                    SomeClass obj = new();
+                    script.Globals["myobj"] = obj;
+                    script.Globals["ext"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            invocationCount += 1;
+                            return DynValue.Void;
+                        }
+                    );
 
-                myobj.MyEvent.add(handler);
-                "
-            );
+                    script.DoString(
+                        @"
+                    function handler(o, a)
+                        ext();
+                    end
 
-            obj.TriggerMyEvent();
+                    myobj.MyEvent.add(handler);
+                    "
+                    );
 
-            await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
+                    obj.TriggerMyEvent();
+
+                    await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEventTwoObjects()
         {
-            int invocationCount = 0;
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
-
-            Script script = new(default(CoreModules));
-
-            SomeClass obj = new();
-            SomeClass obj2 = new();
-            script.Globals["myobj"] = obj;
-            script.Globals["myobj2"] = obj2;
-            script.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
+            await WithRegisteredEventTypes(async () =>
                 {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
+                    int invocationCount = 0;
+                    Script script = new(default(CoreModules));
 
-            script.DoString(
-                @"
-                function handler(o, a)
-                    ext();
-                end
+                    SomeClass obj = new();
+                    SomeClass obj2 = new();
+                    script.Globals["myobj"] = obj;
+                    script.Globals["myobj2"] = obj2;
+                    script.Globals["ext"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            invocationCount += 1;
+                            return DynValue.Void;
+                        }
+                    );
 
-                myobj.MyEvent.add(handler);
-                "
-            );
+                    script.DoString(
+                        @"
+                    function handler(o, a)
+                        ext();
+                    end
 
-            obj.TriggerMyEvent();
-            obj2.TriggerMyEvent();
+                    myobj.MyEvent.add(handler);
+                    "
+                    );
 
-            await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
+                    obj.TriggerMyEvent();
+                    obj2.TriggerMyEvent();
+
+                    await Assert.That(invocationCount).IsEqualTo(1).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEventMulti()
         {
-            int invocationCount = 0;
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
-
-            Script script = new(default(CoreModules));
-
-            SomeClass obj = new();
-            script.Globals["myobj"] = obj;
-            script.Globals["ext"] = DynValue.NewCallback(
-                (c, a) =>
+            await WithRegisteredEventTypes(async () =>
                 {
-                    invocationCount += 1;
-                    return DynValue.Void;
-                }
-            );
+                    int invocationCount = 0;
+                    Script script = new(default(CoreModules));
 
-            script.DoString(
-                @"
-                function handler(o, a)
-                    ext();
-                end
+                    SomeClass obj = new();
+                    script.Globals["myobj"] = obj;
+                    script.Globals["ext"] = DynValue.NewCallback(
+                        (c, a) =>
+                        {
+                            invocationCount += 1;
+                            return DynValue.Void;
+                        }
+                    );
 
-                myobj.MyEvent.add(handler);
-                myobj.MyEvent.add(handler);
-                "
-            );
+                    script.DoString(
+                        @"
+                    function handler(o, a)
+                        ext();
+                    end
 
-            obj.TriggerMyEvent();
+                    myobj.MyEvent.add(handler);
+                    myobj.MyEvent.add(handler);
+                    "
+                    );
 
-            await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
+                    obj.TriggerMyEvent();
+
+                    await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEventMultiAndDetach()
         {
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
+            await WithRegisteredEventTypes(async () =>
+                {
+                    Script script = new(default(CoreModules));
 
-            Script script = new(default(CoreModules));
+                    SomeClass obj = new();
+                    script.Globals["myobj"] = obj;
+                    DynValue result = script.DoString(
+                        @"
+                    local invocationCount = 0
+                    function handler(o, a)
+                        invocationCount = invocationCount + 1;
+                    end
 
-            SomeClass obj = new();
-            script.Globals["myobj"] = obj;
-            DynValue result = script.DoString(
-                @"
-                local invocationCount = 0
-                function handler(o, a)
-                    invocationCount = invocationCount + 1;
-                end
+                    myobj.MyEvent.add(handler);
+                    myobj.MyEvent.add(handler);
+                    myobj.TriggerMyEvent();
+                    myobj.MyEvent.remove(handler);
+                    myobj.TriggerMyEvent();
+                    return invocationCount;
+                    "
+                    );
 
-                myobj.MyEvent.add(handler);
-                myobj.MyEvent.add(handler);
-                myobj.TriggerMyEvent();
-                myobj.MyEvent.remove(handler);
-                myobj.TriggerMyEvent();
-                return invocationCount;
-                "
-            );
-
-            await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropEventDetachAndDeregister()
         {
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
+            await WithRegisteredEventTypes(async () =>
+                {
+                    Script script = new(default(CoreModules));
 
-            Script script = new(default(CoreModules));
+                    SomeClass obj = new();
+                    script.Globals["myobj"] = obj;
+                    DynValue result = script.DoString(
+                        @"
+                    local invocationCount = 0
+                    function handler(o, a)
+                        invocationCount = invocationCount + 1;
+                    end
 
-            SomeClass obj = new();
-            script.Globals["myobj"] = obj;
-            DynValue result = script.DoString(
-                @"
-                local invocationCount = 0
-                function handler(o, a)
-                    invocationCount = invocationCount + 1;
-                end
+                    myobj.MyEvent.add(handler);
+                    myobj.MyEvent.add(handler);
+                    myobj.TriggerMyEvent();
+                    myobj.MyEvent.remove(handler);
+                    myobj.TriggerMyEvent();
+                    myobj.MyEvent.remove(handler);
+                    return invocationCount;
+                    "
+                    );
 
-                myobj.MyEvent.add(handler);
-                myobj.MyEvent.add(handler);
-                myobj.TriggerMyEvent();
-                myobj.MyEvent.remove(handler);
-                myobj.TriggerMyEvent();
-                myobj.MyEvent.remove(handler);
-                return invocationCount;
-                "
-            );
-
-            await Assert.That(obj.TriggerMyEvent()).IsFalse().ConfigureAwait(false);
-            await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
+                    await Assert.That(obj.TriggerMyEvent()).IsFalse().ConfigureAwait(false);
+                    await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropSEventDetachAndDeregister()
         {
-            int invocationCount = 0;
             SomeClass.ResetStaticEvents();
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
-
-            Script script = new(default(CoreModules))
-            {
-                Globals =
+            await WithRegisteredEventTypes(async () =>
                 {
-                    ["myobj"] = typeof(SomeClass),
-                    ["ext"] = DynValue.NewCallback(
-                        (c, a) =>
+                    int invocationCount = 0;
+                    Script script = new(default(CoreModules))
+                    {
+                        Globals =
                         {
-                            invocationCount += 1;
-                            return DynValue.Void;
-                        }
-                    ),
-                },
-            };
+                            ["myobj"] = typeof(SomeClass),
+                            ["ext"] = DynValue.NewCallback(
+                                (c, a) =>
+                                {
+                                    invocationCount += 1;
+                                    return DynValue.Void;
+                                }
+                            ),
+                        },
+                    };
 
-            script.DoString(
-                @"
-                function handler(o, a)
-                    ext();
-                end
+                    script.DoString(
+                        @"
+                    function handler(o, a)
+                        ext();
+                    end
 
-                myobj.MySEvent.add(handler);
-                myobj.MySEvent.add(handler);
-                "
-            );
+                    myobj.MySEvent.add(handler);
+                    myobj.MySEvent.add(handler);
+                    "
+                    );
 
-            SomeClass.TriggerMySEvent();
+                    SomeClass.TriggerMySEvent();
 
-            script.DoString(
-                @"
-                myobj.MySEvent.remove(handler);
-                "
-            );
+                    script.DoString(
+                        @"
+                    myobj.MySEvent.remove(handler);
+                    "
+                    );
 
-            SomeClass.TriggerMySEvent();
+                    SomeClass.TriggerMySEvent();
 
-            script.DoString(
-                @"
-                myobj.MySEvent.remove(handler);
-                "
-            );
+                    script.DoString(
+                        @"
+                    myobj.MySEvent.remove(handler);
+                    "
+                    );
 
-            await Assert.That(SomeClass.TriggerMySEvent()).IsFalse().ConfigureAwait(false);
-            if (invocationCount != 3)
-            {
-                await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
-            }
-            else
-            {
-                await Assert.That(invocationCount).IsEqualTo(3).ConfigureAwait(false);
-            }
+                    await Assert.That(SomeClass.TriggerMySEvent()).IsFalse().ConfigureAwait(false);
+                    if (invocationCount != 3)
+                    {
+                        await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await Assert.That(invocationCount).IsEqualTo(3).ConfigureAwait(false);
+                    }
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropSEventDetachAndReregister()
         {
-            int invocationCount = 0;
             SomeClass.ResetStaticEvents();
-            UserData.RegisterType<SomeClass>();
-            UserData.RegisterType<EventArgs>();
-
-            Script script = new(default(CoreModules))
-            {
-                Globals =
+            await WithRegisteredEventTypes(async () =>
                 {
-                    ["myobj"] = typeof(SomeClass),
-                    ["ext"] = DynValue.NewCallback(
-                        (c, a) =>
+                    int invocationCount = 0;
+                    Script script = new(default(CoreModules))
+                    {
+                        Globals =
                         {
-                            invocationCount += 1;
-                            return DynValue.Void;
-                        }
-                    ),
-                },
-            };
+                            ["myobj"] = typeof(SomeClass),
+                            ["ext"] = DynValue.NewCallback(
+                                (c, a) =>
+                                {
+                                    invocationCount += 1;
+                                    return DynValue.Void;
+                                }
+                            ),
+                        },
+                    };
 
-            script.DoString(
-                @"
-                function handler(o, a)
-                    ext();
-                end
+                    script.DoString(
+                        @"
+                    function handler(o, a)
+                        ext();
+                    end
 
-                myobj.MySEvent.add(handler);
-                "
+                    myobj.MySEvent.add(handler);
+                    "
+                    );
+
+                    SomeClass.TriggerMySEvent();
+
+                    script.DoString(
+                        @"
+                    myobj.MySEvent.remove(handler);
+                    "
+                    );
+
+                    SomeClass.TriggerMySEvent();
+
+                    script.DoString(
+                        @"
+                    myobj.MySEvent.add(handler);
+                    "
+                    );
+
+                    SomeClass.TriggerMySEvent();
+
+                    if (invocationCount != 2)
+                    {
+                        await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
+                    }
+                    await Assert.That(SomeClass.TriggerMySEvent()).IsTrue().ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        private static async Task WithRegisteredEventTypes(Func<Task> callback)
+        {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(SomeClass),
+                typeof(EventArgs)
             );
 
-            SomeClass.TriggerMySEvent();
+            registrationScope.RegisterType<SomeClass>();
+            registrationScope.RegisterType<EventArgs>();
 
-            script.DoString(
-                @"
-                myobj.MySEvent.remove(handler);
-                "
-            );
-
-            SomeClass.TriggerMySEvent();
-
-            script.DoString(
-                @"
-                myobj.MySEvent.add(handler);
-                "
-            );
-
-            SomeClass.TriggerMySEvent();
-
-            if (invocationCount != 2)
-            {
-                await Assert.That(invocationCount).IsEqualTo(0).ConfigureAwait(false);
-            }
-            else
-            {
-                await Assert.That(invocationCount).IsEqualTo(2).ConfigureAwait(false);
-            }
-            await Assert.That(SomeClass.TriggerMySEvent()).IsTrue().ConfigureAwait(false);
+            await callback().ConfigureAwait(false);
         }
     }
 }

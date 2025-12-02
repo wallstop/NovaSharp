@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataNestedTypesTUnitTests
@@ -17,112 +18,151 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropNestedTypesPublicEnum()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<SomeType>(async () =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<SomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue result = script.DoString("return o:Get()");
+                    DynValue result = script.DoString("return o:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+                    await Assert
+                        .That(result.Type)
+                        .IsEqualTo(DataType.UserData)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropNestedTypesPublicRef()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<SomeType>(async () =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<SomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue result = script.DoString("return o.SomeNestedType:Get()");
+                    DynValue result = script.DoString("return o.SomeNestedType:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert
-                .That(result.String)
-                .IsEqualTo("Ciao from SomeNestedType")
+                    await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                    await Assert
+                        .That(result.String)
+                        .IsEqualTo("Ciao from SomeNestedType")
+                        .ConfigureAwait(false);
+                })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropNestedTypesPrivateRef()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<SomeType>(async () =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<SomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
+                    DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert
-                .That(result.String)
-                .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                    await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                    await Assert
+                        .That(result.String)
+                        .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                        .ConfigureAwait(false);
+                })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public Task InteropNestedTypesPrivateRef2()
+        public async Task InteropNestedTypesPrivateRef2()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<SomeType>(() =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<SomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
-            Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return o.SomeNestedTypePrivate2:Get()")
-            );
+                    Assert.Throws<ScriptRuntimeException>(() =>
+                        script.DoString("return o.SomeNestedTypePrivate2:Get()")
+                    );
 
-            return Task.CompletedTask;
+                    return Task.CompletedTask;
+                })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropNestedTypesPublicVal()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<VSomeType>(async () =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<VSomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue result = script.DoString("return o.SomeNestedType:Get()");
+                    DynValue result = script.DoString("return o.SomeNestedType:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert
-                .That(result.String)
-                .IsEqualTo("Ciao from SomeNestedType")
+                    await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                    await Assert
+                        .That(result.String)
+                        .IsEqualTo("Ciao from SomeNestedType")
+                        .ConfigureAwait(false);
+                })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task InteropNestedTypesPrivateVal()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<VSomeType>(async () =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<VSomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
+                    DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert
-                .That(result.String)
-                .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                    await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+                    await Assert
+                        .That(result.String)
+                        .IsEqualTo("Ciao from SomeNestedTypePrivate")
+                        .ConfigureAwait(false);
+                })
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public Task InteropNestedTypesPrivateVal2()
+        public async Task InteropNestedTypesPrivateVal2()
         {
-            Script script = new();
+            await WithRegisteredTypeAsync<VSomeType>(() =>
+                {
+                    Script script = new();
 
-            UserData.RegisterType<VSomeType>();
-            script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
-            Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return o.SomeNestedTypePrivate2:Get()")
+                    Assert.Throws<ScriptRuntimeException>(() =>
+                        script.DoString("return o.SomeNestedTypePrivate2:Get()")
+                    );
+
+                    return Task.CompletedTask;
+                })
+                .ConfigureAwait(false);
+        }
+
+        private static Task WithRegisteredTypeAsync<T>(Func<Task> callback)
+        {
+            return WithRegisteredTypeAsync(typeof(T), callback);
+        }
+
+        private static async Task WithRegisteredTypeAsync(Type type, Func<Task> callback)
+        {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                type,
+                ensureUnregistered: true
             );
-
-            return Task.CompletedTask;
+            registrationScope.RegisterType(type);
+            await callback().ConfigureAwait(false);
         }
     }
 

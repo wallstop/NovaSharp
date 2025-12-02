@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -8,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.Interpreter;
     using NovaSharp.RemoteDebugger;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class DebugCommandTUnitTests
     {
@@ -16,21 +18,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteAttachesDebuggerAndLaunchesBrowser()
         {
-            await DebugCommandGate.WaitAsync().ConfigureAwait(false);
+            SemaphoreSlimLease gateLease = await SemaphoreSlimScope
+                .WaitAsync(DebugCommandGate)
+                .ConfigureAwait(false);
+            await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
+
             Script script = new();
             ShellContext context = new(script);
             DebugCommand command = new();
 
             StubDebuggerBridge bridge = new();
             StubBrowserLauncher launcher = new();
-            Func<IRemoteDebuggerBridge> originalFactory = DebugCommand.DebuggerFactory;
-            IBrowserLauncher originalLauncher = DebugCommand.BrowserLauncher;
 
-            try
+            using (
+                DebugCommandScope debugCommandScope = DebugCommandScope.Override(
+                    () => bridge,
+                    launcher
+                )
+            )
             {
-                DebugCommand.DebuggerFactory = () => bridge;
-                DebugCommand.BrowserLauncher = launcher;
-
                 command.Execute(context, arguments: string.Empty);
 
                 await Assert.That(bridge.AttachCount).IsEqualTo(1).ConfigureAwait(false);
@@ -50,43 +56,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     .IsEqualTo(bridge.HttpUrlStringLocalHost)
                     .ConfigureAwait(false);
             }
-            finally
-            {
-                DebugCommand.DebuggerFactory = originalFactory;
-                DebugCommand.BrowserLauncher = originalLauncher;
-                DebugCommandGate.Release();
-            }
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteDoesNotReattachAfterFirstInvocation()
         {
-            await DebugCommandGate.WaitAsync().ConfigureAwait(false);
+            SemaphoreSlimLease gateLease = await SemaphoreSlimScope
+                .WaitAsync(DebugCommandGate)
+                .ConfigureAwait(false);
+            await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
+
             Script script = new();
             ShellContext context = new(script);
             DebugCommand command = new();
 
             StubDebuggerBridge bridge = new();
             StubBrowserLauncher launcher = new();
-            Func<IRemoteDebuggerBridge> originalFactory = DebugCommand.DebuggerFactory;
-            IBrowserLauncher originalLauncher = DebugCommand.BrowserLauncher;
 
-            try
+            using (
+                DebugCommandScope debugCommandScope = DebugCommandScope.Override(
+                    () => bridge,
+                    launcher
+                )
+            )
             {
-                DebugCommand.DebuggerFactory = () => bridge;
-                DebugCommand.BrowserLauncher = launcher;
-
                 command.Execute(context, arguments: string.Empty);
                 command.Execute(context, arguments: string.Empty);
 
                 await Assert.That(bridge.AttachCount).IsEqualTo(1).ConfigureAwait(false);
                 await Assert.That(launcher.LaunchCount).IsEqualTo(1).ConfigureAwait(false);
-            }
-            finally
-            {
-                DebugCommand.DebuggerFactory = originalFactory;
-                DebugCommand.BrowserLauncher = originalLauncher;
-                DebugCommandGate.Release();
             }
         }
 

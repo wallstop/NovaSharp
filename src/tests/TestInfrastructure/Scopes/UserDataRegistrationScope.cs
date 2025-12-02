@@ -3,6 +3,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
     using System;
     using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// Tracks user-data registrations and guarantees they are unregistered when disposed.
@@ -24,6 +25,23 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
         public static UserDataRegistrationScope Track<T>(bool ensureUnregistered = false)
         {
             return Track(typeof(T), ensureUnregistered);
+        }
+
+        public static UserDataRegistrationScope Track(bool ensureUnregistered, params Type[] types)
+        {
+            UserDataRegistrationScope scope = new();
+            scope.AddRange(types, ensureUnregistered);
+            return scope;
+        }
+
+        public static UserDataRegistrationScope Track(
+            IEnumerable<Type> types,
+            bool ensureUnregistered = false
+        )
+        {
+            UserDataRegistrationScope scope = new();
+            scope.AddRange(types, ensureUnregistered);
+            return scope;
         }
 
         public static UserDataRegistrationScope Create()
@@ -53,6 +71,46 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             Add(typeof(T), ensureUnregistered);
         }
 
+        public IUserDataDescriptor RegisterType<T>(
+            InteropAccessMode accessMode = InteropAccessMode.Default,
+            string friendlyName = null,
+            bool ensureUnregistered = false
+        )
+        {
+            Add<T>(ensureUnregistered);
+            return UserData.RegisterType<T>(accessMode, friendlyName);
+        }
+
+        public IUserDataDescriptor RegisterType(
+            Type type,
+            InteropAccessMode accessMode = InteropAccessMode.Default,
+            string friendlyName = null,
+            bool ensureUnregistered = false
+        )
+        {
+            Add(type, ensureUnregistered);
+            return UserData.RegisterType(type, accessMode, friendlyName);
+        }
+
+        public IUserDataDescriptor RegisterType<T>(
+            IUserDataDescriptor customDescriptor,
+            bool ensureUnregistered = false
+        )
+        {
+            Add<T>(ensureUnregistered);
+            return UserData.RegisterType<T>(customDescriptor);
+        }
+
+        public IUserDataDescriptor RegisterType(
+            Type type,
+            IUserDataDescriptor customDescriptor,
+            bool ensureUnregistered = false
+        )
+        {
+            Add(type, ensureUnregistered);
+            return UserData.RegisterType(type, customDescriptor);
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -69,6 +127,16 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             }
 
             _disposed = true;
+        }
+
+        private void AddRange(IEnumerable<Type> types, bool ensureUnregistered)
+        {
+            ArgumentNullException.ThrowIfNull(types);
+
+            foreach (Type type in types)
+            {
+                Add(type, ensureUnregistered);
+            }
         }
     }
 }

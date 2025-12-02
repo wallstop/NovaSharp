@@ -516,7 +516,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestVarArgsAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -525,9 +525,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -542,8 +539,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -558,9 +554,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             Script.GlobalOptions.CustomConverters.Clear();
 
@@ -604,7 +597,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodStaticComplexAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -619,9 +612,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
             s.Globals.Set("myobj", UserData.Create(obj));
@@ -639,7 +629,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodStaticComplexRecAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -652,9 +642,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
             s.Globals.Set("myobj", UserData.Create(obj));
@@ -670,7 +657,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestRefOutParamsAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -680,9 +667,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
             s.Globals.Set("myobj", UserData.Create(obj));
@@ -701,7 +685,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodStaticAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -712,9 +696,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
             s.Globals.Set("myobj", UserData.Create(obj));
@@ -732,7 +713,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -743,9 +724,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -762,7 +740,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodSemicolonAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -773,9 +751,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -794,7 +769,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             InteropAccessMode opt
         )
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -806,9 +781,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals["mytype"] = typeof(SomeClass);
 
@@ -825,7 +797,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestConcatMethodStaticSimplifiedSyntaxAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
 
             string script =
                 @"    
@@ -836,9 +808,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>(opt);
 
             s.Globals["static"] = typeof(SomeClass);
             s.Globals["myobj"] = obj;
@@ -1173,7 +1142,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropTestNamesCamelized()
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass();
 
             string script =
                 @"    
@@ -1188,9 +1157,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
 
             SomeClass obj = new();
-
-            UserData.UnregisterType<SomeClass>();
-            UserData.RegisterType<SomeClass>();
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -1260,10 +1226,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropStaticInstanceAccessRaisesError()
         {
+            using UserDataRegistrationScope registrationScope = RegisterSomeClass();
             try
             {
-                UserData.UnregisterType<SomeClass>();
-
                 string script =
                     @"    
 				t = { 'asd', 'qwe', 'zxc', ['x'] = 'X', ['y'] = 'Y' };
@@ -1273,9 +1238,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Script s = new();
 
                 SomeClass obj = new();
-
-                UserData.UnregisterType<SomeClass>();
-                UserData.RegisterType<SomeClass>();
 
                 s.Globals.Set("mystatic", UserData.CreateStatic<SomeClass>());
                 s.Globals.Set("myobj", UserData.Create(obj));
@@ -1299,6 +1261,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     .IsTrue()
                     .ConfigureAwait(false);
             }
+        }
+
+        private static UserDataRegistrationScope RegisterSomeClass(
+            InteropAccessMode mode = InteropAccessMode.Default
+        )
+        {
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<SomeClass>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<SomeClass>(mode, ensureUnregistered: true);
+            return scope;
         }
 
         private static string FormatUnchecked(string format, object[] args)

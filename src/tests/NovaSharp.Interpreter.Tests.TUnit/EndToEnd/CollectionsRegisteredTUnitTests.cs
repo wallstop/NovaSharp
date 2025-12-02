@@ -287,22 +287,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Func<DynValue, RegCollMethods, Task> asserts
         )
         {
-            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
-            registrationScope.Add<RegCollMethods>(ensureUnregistered: true);
-            registrationScope.Add<RegCollItem>(ensureUnregistered: true);
-            registrationScope.Add<List<RegCollItem>>(ensureUnregistered: true);
-            registrationScope.Add<List<int>>(ensureUnregistered: true);
-            registrationScope.Add<int[]>(ensureUnregistered: true);
-            registrationScope.Add<int[,]>(ensureUnregistered: true);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(RegCollMethods),
+                typeof(RegCollItem),
+                typeof(List<RegCollItem>),
+                typeof(List<int>),
+                typeof(int[]),
+                typeof(int[,])
+            );
 
             try
             {
-                UserData.RegisterType<RegCollMethods>();
-                UserData.RegisterType<RegCollItem>();
-                UserData.RegisterType<List<RegCollItem>>();
-                UserData.RegisterType<List<int>>();
-                UserData.RegisterType<int[]>();
-                UserData.RegisterType<int[,]>();
+                registrationScope.RegisterType<RegCollMethods>();
+                registrationScope.RegisterType<RegCollItem>();
+                registrationScope.RegisterType<List<RegCollItem>>();
+                registrationScope.RegisterType<List<int>>();
+                registrationScope.RegisterType<int[]>();
+                registrationScope.RegisterType<int[,]>();
 
                 Script script = new();
                 RegCollMethods host = new();

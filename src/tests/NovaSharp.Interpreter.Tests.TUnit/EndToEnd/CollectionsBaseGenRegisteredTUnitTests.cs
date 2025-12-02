@@ -375,20 +375,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             sentinel.Add(sentinel.Sum());
             sentinel.Add(sentinel.Last());
 
-            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
-            registrationScope.Add<RegCollMethods>(ensureUnregistered: true);
-            registrationScope.Add<RegCollItem>(ensureUnregistered: true);
-            registrationScope.Add<Array>(ensureUnregistered: true);
-            registrationScope.Add(typeof(List<>), ensureUnregistered: true);
-            registrationScope.Add<List<RegCollItem>>(ensureUnregistered: true);
-            registrationScope.Add<List<int>>(ensureUnregistered: true);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(RegCollMethods),
+                typeof(RegCollItem),
+                typeof(Array),
+                typeof(List<>),
+                typeof(List<RegCollItem>),
+                typeof(List<int>)
+            );
 
-            UserData.RegisterType<RegCollMethods>();
-            UserData.RegisterType<RegCollItem>();
-            UserData.RegisterType<Array>();
-            UserData.RegisterType(typeof(List<>));
-            UserData.RegisterType<List<RegCollItem>>();
-            UserData.RegisterType<List<int>>();
+            registrationScope.RegisterType<RegCollMethods>();
+            registrationScope.RegisterType<RegCollItem>();
+            registrationScope.RegisterType<Array>();
+            registrationScope.RegisterType(typeof(List<>));
+            registrationScope.RegisterType<List<RegCollItem>>();
+            registrationScope.RegisterType<List<int>>();
             UserData.RegisterExtensionType(typeof(Enumerable));
 
             Script script = new();
