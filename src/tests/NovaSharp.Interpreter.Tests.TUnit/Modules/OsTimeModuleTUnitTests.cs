@@ -186,12 +186,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateReturnsPlaceholderForUnsupportedWeekPatterns()
+        public async Task DateFormatsWeekPatterns()
         {
             Script script = CreateScript();
-            DynValue value = script.DoString("return os.date('%U-%V-%W', 1609459200)");
+            DynValue epochWeeks = script.DoString("return os.date('!%U-%W-%V', 0)");
+            DynValue marchWeeks = script.DoString("return os.date('!%U-%W-%V', 345600)");
 
-            await Assert.That(value.String).IsEqualTo("??-??-??");
+            await Assert.That(epochWeeks.String).IsEqualTo("00-00-01");
+            await Assert.That(marchWeeks.String).IsEqualTo("01-01-02");
         }
 
         [global::TUnit.Core.Test]
@@ -201,6 +203,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue formatted = script.DoString("return os.date('!%OY-%Ew', 0)");
 
             await Assert.That(formatted.String).IsEqualTo("1970-4");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DateSupportsOyModifier()
+        {
+            Script script = CreateScript();
+            DynValue formatted = script.DoString("return os.date('!%Oy', 0)");
+
+            await Assert.That(formatted.String).IsEqualTo("70");
         }
 
         [global::TUnit.Core.Test]

@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class TestMoreTUnitTests
@@ -15,10 +16,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
             LuaCompatibilityVersion? compatibilityVersion = null
         )
         {
-            using (UserData.BeginIsolationScope())
-            {
-                TapRunnerTUnit.Run(relativePath, compatibilityVersion);
-            }
+            using UserDataIsolationScope scope = UserDataIsolationScope.Begin();
+            TapRunnerTUnit.Run(relativePath, compatibilityVersion);
 
             return Task.CompletedTask;
         }

@@ -23,38 +23,42 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task DisplayShortHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    ExitCommand command = new();
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    async consoleScope =>
+                    {
+                        ExitCommand command = new();
 
-                    command.DisplayShortHelp();
+                        command.DisplayShortHelp();
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.ExitCommandShortHelp)
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.ExitCommandShortHelp)
+                            .ConfigureAwait(false);
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task DisplayLongHelpWritesDescription()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    ExitCommand command = new();
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    async consoleScope =>
+                    {
+                        ExitCommand command = new();
 
-                    command.DisplayLongHelp();
+                        command.DisplayLongHelp();
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.ExitCommandLongHelp)
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.ExitCommandLongHelp)
+                            .ConfigureAwait(false);
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
         }
 

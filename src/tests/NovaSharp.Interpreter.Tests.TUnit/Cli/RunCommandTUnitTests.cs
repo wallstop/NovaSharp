@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class RunCommandTUnitTests
@@ -61,15 +62,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
-        private static async Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
+        private static Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope console = new();
-                    await action(console).ConfigureAwait(false);
-                })
-                .ConfigureAwait(false);
+            return ConsoleTestUtilities.WithConsoleRedirectionAsync(action);
         }
     }
 }

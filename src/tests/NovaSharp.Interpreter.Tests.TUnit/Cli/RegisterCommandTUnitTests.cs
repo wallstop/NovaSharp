@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class RegisterCommandTUnitTests
@@ -74,15 +75,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
         }
 
-        private static async Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
+        private static Task WithConsoleAsync(Func<ConsoleRedirectionScope, Task> action)
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope console = new();
-                    await action(console).ConfigureAwait(false);
-                })
-                .ConfigureAwait(false);
+            return ConsoleTestUtilities.WithConsoleRedirectionAsync(action);
         }
 
         private sealed class SampleUserData

@@ -82,7 +82,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
                 script.Options.ScriptLoader = new FileSystemScriptLoader();
             }
             ConfigureScriptLoader(script);
-            SeedTapGlobals(script);
+            string suiteDirectory =
+                Path.GetDirectoryName(GetAbsoluteTestPath(_file)) ?? GetTestDirectory();
+            SeedTapGlobals(script, _compatibilityVersion, suiteDirectory);
             string friendlyName = _file.Replace('\\', '/');
             try
             {
@@ -162,7 +164,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
             return AppContext.BaseDirectory;
         }
 
-        private static void SeedTapGlobals(Script script)
+        private static void SeedTapGlobals(
+            Script script,
+            LuaCompatibilityVersion compatibilityVersion,
+            string testDirectory
+        )
         {
             ArgumentNullException.ThrowIfNull(script);
 
@@ -177,6 +183,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
             platform.Set("compat", DynValue.NewBoolean(false));
             platform.Set("intsize", DynValue.NewNumber(IntPtr.Size));
             platform.Set("osname", DynValue.NewString(GetPlatformName()));
+            TapStdinHelper.Register(script, platform, compatibilityVersion, testDirectory);
             script.Globals.Set("platform", DynValue.NewTable(platform));
         }
 

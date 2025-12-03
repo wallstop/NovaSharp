@@ -20,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Type isolatedType = typeof(IsolatedType);
             TypeDescriptorRegistry.UnregisterType(isolatedType);
 
-            using (UserData.BeginIsolationScope())
+            using (UserDataIsolationScope.Begin())
             {
                 UserData.RegisterType(isolatedType);
                 _ = new IsolatedType();
@@ -59,7 +59,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     value => TypeDescriptorRegistry.RegistrationPolicy = value
                 );
 
-            using (UserData.BeginIsolationScope())
+            using (UserDataIsolationScope.Begin())
             {
                 TypeDescriptorRegistry.RegistrationPolicy = customPolicy;
                 await Assert
@@ -94,7 +94,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 {
                     for (int iteration = 0; iteration < iterationsPerWorker; iteration++)
                     {
-                        using (UserData.BeginIsolationScope())
+                        using (UserDataIsolationScope.Begin())
                         {
                             _ = TypeDescriptorRegistry.IsTypeRegistered(targetType);
                         }
@@ -147,7 +147,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             InteropAccessMode original = TypeDescriptorRegistry.DefaultAccessMode;
 
-            using (UserData.BeginIsolationScope())
+            using (UserDataIsolationScope.Begin())
             {
                 TypeDescriptorRegistry.DefaultAccessMode = targetAccessMode;
                 await Assert

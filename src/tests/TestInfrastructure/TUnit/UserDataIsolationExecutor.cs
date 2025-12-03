@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using global::TUnit.Core.Interfaces;
 using NovaSharp.Interpreter.DataTypes;
+using NovaSharp.Tests.TestInfrastructure.Scopes;
 
 [assembly: global::TUnit.Core.Executors.TestExecutor(
     typeof(NovaSharp.Interpreter.Tests.UserDataIsolationExecutor)
@@ -52,56 +53,39 @@ namespace NovaSharp.Interpreter.Tests
             await ExclusiveMutex.WaitAsync().ConfigureAwait(false);
             ExclusiveMutex.Release();
 
-            await IsolationGate.WaitAsync().ConfigureAwait(false);
+            SemaphoreSlimLease isolationLease = await SemaphoreSlimScope
+                .WaitAsync(IsolationGate)
+                .ConfigureAwait(false);
 
-            try
+            using (isolationLease)
             {
                 await RunIsolatedAsync(action).ConfigureAwait(false);
-            }
-            finally
-            {
-                IsolationGate.Release();
             }
         }
 
         private static async ValueTask ExecuteExclusivelyAsync(Func<ValueTask> action)
         {
-            await ExclusiveMutex.WaitAsync().ConfigureAwait(false);
-            int acquired = 0;
+            SemaphoreSlimLease exclusiveLease = await SemaphoreSlimScope
+                .WaitAsync(ExclusiveMutex)
+                .ConfigureAwait(false);
 
-            try
+            using (exclusiveLease)
             {
-                while (acquired < MaxParallelism)
-                {
-                    await IsolationGate.WaitAsync().ConfigureAwait(false);
-                    acquired += 1;
-                }
+                SemaphoreSlimLeaseCollection isolationLeases = await SemaphoreSlimScope
+                    .WaitAsync(IsolationGate, MaxParallelism)
+                    .ConfigureAwait(false);
 
-                await RunIsolatedAsync(action).ConfigureAwait(false);
-            }
-            finally
-            {
-                while (acquired > 0)
+                using (isolationLeases)
                 {
-                    IsolationGate.Release();
-                    acquired -= 1;
+                    await RunIsolatedAsync(action).ConfigureAwait(false);
                 }
-
-                ExclusiveMutex.Release();
             }
         }
 
         private static async ValueTask RunIsolatedAsync(Func<ValueTask> action)
         {
-            IDisposable scope = UserData.BeginIsolationScope();
-            try
-            {
-                await action().ConfigureAwait(false);
-            }
-            finally
-            {
-                scope.Dispose();
-            }
+            using UserDataIsolationScope scope = UserDataIsolationScope.Begin();
+            await action().ConfigureAwait(false);
         }
 
         private static bool TryGetIsolationSettings(

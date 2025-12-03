@@ -32,14 +32,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             ShellContext context = new(new Script());
 
             string consoleOutput = string.Empty;
-            await ConsoleCaptureCoordinator
-                .RunAsync(() =>
-                {
-                    using ConsoleCaptureScope consoleScopeInner = new(captureError: false);
-                    command.Execute(context, sourcePath);
-                    consoleOutput = consoleScopeInner.Writer.ToString();
-                    return Task.CompletedTask;
-                })
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    consoleScope =>
+                    {
+                        command.Execute(context, sourcePath);
+                        consoleOutput = consoleScope.Writer.ToString();
+                        return Task.CompletedTask;
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
 
             await Assert.That(File.Exists(targetPath)).IsTrue();

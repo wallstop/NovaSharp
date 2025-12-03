@@ -149,12 +149,24 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Options.DebugPrint = null;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            using ConsoleCaptureScope captureScope = new(captureError: true);
+            string output = string.Empty;
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    consoleScope =>
+                    {
+                        CallbackArguments args = new(
+                            new[] { DynValue.NewString("console-warning") },
+                            false
+                        );
+                        BasicModule.Warn(context, args);
+                        output = consoleScope.Writer.ToString();
+                        return Task.CompletedTask;
+                    },
+                    captureError: true
+                )
+                .ConfigureAwait(false);
 
-            CallbackArguments args = new(new[] { DynValue.NewString("console-warning") }, false);
-            BasicModule.Warn(context, args);
-
-            await Assert.That(captureScope.Writer.ToString()).Contains("console-warning");
+            await Assert.That(output).Contains("console-warning");
         }
 
         [global::TUnit.Core.Test]

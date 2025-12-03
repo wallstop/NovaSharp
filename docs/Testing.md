@@ -47,7 +47,7 @@ bash ./scripts/build/build.sh
 ### Lint guards for test infrastructure
 
 - Detector overrides (Unity/Mono/AOT flags, assembly enumeration hooks) must go through the shared scope helpers in `src/tests/TestInfrastructure/Scopes`. Run `python scripts/lint/check-platform-testhooks.py` (or `./scripts/ci/check-platform-testhooks.sh`) before sending a PR to ensure no new files reference `PlatformAutoDetector.TestHooks` directly. CI runs the same guard in the lint job, so treating it as a local pre-flight check prevents avoidable failures.
-- Console capture is now centralized in `ConsoleTestUtilities` (`WithConsoleRedirectionAsync` / `WithConsoleCaptureAsync`), which wraps `ConsoleCaptureCoordinator.RunAsync` and the redirection scopes. Run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the helper instead of referencing `ConsoleCaptureCoordinator.Semaphore` directly.
+- Console capture is now centralized in `ConsoleTestUtilities` (`WithConsoleRedirectionAsync` / `WithConsoleCaptureAsync`), which wraps `ConsoleCaptureCoordinator.RunAsync` and the redirection scopes. Run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the helper instead of referencing `ConsoleCaptureCoordinator.Semaphore` or instantiating `ConsoleCaptureScope`/`ConsoleRedirectionScope` directly.
 - Cleanup helpers (`TempFileScope`, `SemaphoreSlimScope`, `DeferredActionScope`, etc.) replaced the last manual `try`/`finally` blocks under `src/tests`. Run `python scripts/lint/check-test-finally.py` (or `./scripts/ci/check-test-finally.sh`) to ensure new tests do not reintroduce raw `finally` blocks; the script fails on the first match so the offending file is easy to spot.
 - `dotnet_diagnostic.CA2007` is enforced as an error. Every awaited assertion/task must end with `.ConfigureAwait(false)` (the TUnit assertion extensions already do this—be sure to append the call when writing custom awaits). Avoid `await using`/`await foreach` unless the language demands it; in all other cases, follow the helper pattern so tests remain analyzer-clean.
 - `python scripts/lint/check-userdata-scope-usage.py` (or `./scripts/ci/check-userdata-scope.sh`) ensures new tests register userdata through `UserDataRegistrationScope`; direct calls to `UserData.RegisterType`/`UserData.UnregisterType` are confined to the isolation/history suites called out in PLAN.md.
@@ -96,7 +96,7 @@ pwsh ./scripts/coverage/coverage.ps1
 
 ## Pass/Fail Policy
 
-- The newly catalogued Lua TAP suites now run inside the TUnit harness. `TestMore/LanguageExtensions/310-debug.t` is still skipped because NovaSharp does not expose Lua’s debug library yet, and `TestMore/LanguageExtensions/320-stdin.t` short-circuits via `skip_all` whenever `io.popen` is unavailable. Keep the runtime TODOs in PLAN.md so those suites can execute without skips once the debugger/IO helpers land.
+- The newly catalogued Lua TAP suites now run inside the TUnit harness. `TestMore/LanguageExtensions/310-debug.t` is still skipped because NovaSharp does not expose Lua’s debug library yet, while `TestMore/LanguageExtensions/320-stdin.t` now relies on the `platform.stdin_helper` bridge to exercise stdin semantics without shelling out to `io.popen`.
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 

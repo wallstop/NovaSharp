@@ -34,6 +34,41 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        public async Task ReadNumberConsumesMultipleLinesFromStdin()
+        {
+            string stdinContent = "6.0     -3.23   15e12\n4.3     234     1000001\n";
+            using MemoryStream stdinStream = new(
+                Encoding.UTF8.GetBytes(stdinContent),
+                writable: false
+            );
+
+            ScriptOptions options = new(Script.DefaultOptions) { Stdin = stdinStream };
+            List<string> outputs = new();
+            options.DebugPrint = message =>
+            {
+                outputs.Add(message ?? string.Empty);
+            };
+
+            Script script = new(CoreModules.PresetComplete, options);
+            string chunk =
+                @"
+while true do
+    local n1, n2, n3 = io.read('*number', '*number', '*number')
+    if not n1 then
+        break
+    end
+
+    print(math.max(n1, n2, n3))
+end
+";
+            script.DoString(chunk);
+
+            await Assert.That(outputs.Count).IsEqualTo(2);
+            await Assert.That(outputs[0]).IsEqualTo("15000000000000");
+            await Assert.That(outputs[1]).IsEqualTo("1000001");
+        }
+
+        [global::TUnit.Core.Test]
         public async Task OpenThrowsForInvalidMode()
         {
             Script script = CreateScript();

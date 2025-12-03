@@ -95,14 +95,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task DefaultPrintWritesToConsoleOut()
         {
             DotNetCorePlatformAccessor accessor = new();
-            using ConsoleCaptureScope scope = new(captureError: false);
-
-            accessor.DefaultPrint("hello");
-
-            await Assert
-                .That(scope.Writer.ToString().Trim())
-                .IsEqualTo("hello")
+            string output = string.Empty;
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    consoleScope =>
+                    {
+                        accessor.DefaultPrint("hello");
+                        output = consoleScope.Writer.ToString().Trim();
+                        return Task.CompletedTask;
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
+
+            await Assert.That(output).IsEqualTo("hello").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

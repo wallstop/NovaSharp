@@ -261,10 +261,16 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
                 DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
+                Table resolvedEnv = env.IsNil() ? defaultEnv : env.Table;
 
-                DynValue fn = s.LoadFile(filename.String, env.IsNil() ? defaultEnv : env.Table);
+                if (args.Count == 0 || args[0].IsNil())
+                {
+                    return LoadFromStandardInput(s, resolvedEnv);
+                }
+
+                DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
+                DynValue fn = s.LoadFile(filename.String, resolvedEnv);
 
                 return fn;
             }
@@ -343,7 +349,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 Script script = executionContext.Script;
                 if (args.Count == 0 || args[0].IsNil())
                 {
-                    DynValue stdinChunk = LoadFromStandardInput(script);
+                    DynValue stdinChunk = LoadFromStandardInput(script, null);
                     return DynValue.NewTailCallReq(stdinChunk);
                 }
 
@@ -406,7 +412,7 @@ namespace NovaSharp.Interpreter.CoreLib
             return fn; // tail call to dofile
         }
 
-        private static DynValue LoadFromStandardInput(Script script)
+        private static DynValue LoadFromStandardInput(Script script, Table globalContext)
         {
             Stream stdin = script.Options.Stdin;
 
@@ -422,7 +428,7 @@ namespace NovaSharp.Interpreter.CoreLib
                 throw new ScriptRuntimeException("stdin stream is not available.");
             }
 
-            return script.LoadStream(stdin, null, "stdin");
+            return script.LoadStream(stdin, globalContext, "stdin");
         }
 
         /// <summary>

@@ -453,18 +453,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             Program.RunInterpreterLoopForTests(interpreter, CreateShellContext());
         }
 
-        private static async Task WithConsoleAsync(
+        private static Task WithConsoleAsync(
             Func<ConsoleRedirectionScope, Task> action,
             string input = null
         )
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope console = new(input);
-                    await action(console).ConfigureAwait(false);
-                })
-                .ConfigureAwait(false);
+            return ConsoleTestUtilities.WithConsoleRedirectionAsync(action, input);
         }
 
         private sealed class StubReplInterpreter : ReplInterpreter

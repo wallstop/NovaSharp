@@ -25,77 +25,86 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ExecuteWithoutArgumentsListsRegisteredCommands()
         {
-            await WithConsoleCaptureAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    HelpCommand command = new();
-                    ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    async consoleScope =>
+                    {
+                        HelpCommand command = new();
+                        ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
 
-                    command.Execute(context, string.Empty);
+                        command.Execute(context, string.Empty);
 
-                    string output = consoleScope.Writer.ToString();
-                    string expectedSummary =
-                        context.Script.CompatibilityProfile.GetFeatureSummary();
-                    await Assert
-                        .That(output)
-                        .Contains(CliMessages.HelpCommandCommandListHeading)
-                        .ConfigureAwait(false);
-                    await Assert
-                        .That(output)
-                        .Contains($"{CliMessages.HelpCommandCommandPrefix}help")
-                        .ConfigureAwait(false);
-                    await Assert
-                        .That(output)
-                        .Contains($"{CliMessages.HelpCommandCommandPrefix}run")
-                        .ConfigureAwait(false);
-                    await Assert.That(output).Contains(expectedSummary).ConfigureAwait(false);
-                    await Assert
-                        .That(output)
-                        .Contains(CliMessages.HelpCommandCompatibilitySummary)
-                        .ConfigureAwait(false);
-                })
+                        string output = consoleScope.Writer.ToString();
+                        string expectedSummary =
+                            context.Script.CompatibilityProfile.GetFeatureSummary();
+                        await Assert
+                            .That(output)
+                            .Contains(CliMessages.HelpCommandCommandListHeading)
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(output)
+                            .Contains($"{CliMessages.HelpCommandCommandPrefix}help")
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(output)
+                            .Contains($"{CliMessages.HelpCommandCommandPrefix}run")
+                            .ConfigureAwait(false);
+                        await Assert.That(output).Contains(expectedSummary).ConfigureAwait(false);
+                        await Assert
+                            .That(output)
+                            .Contains(CliMessages.HelpCommandCompatibilitySummary)
+                            .ConfigureAwait(false);
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithKnownCommandWritesLongHelp()
         {
-            await WithConsoleCaptureAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    HelpCommand command = new();
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    async consoleScope =>
+                    {
+                        HelpCommand command = new();
 
-                    command.Execute(
-                        new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
-                        "run"
-                    );
+                        command.Execute(
+                            new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
+                            "run"
+                        );
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.RunCommandLongHelp)
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.RunCommandLongHelp)
+                            .ConfigureAwait(false);
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ExecuteWithUnknownCommandPrintsError()
         {
-            await WithConsoleCaptureAsync(async () =>
-                {
-                    using ConsoleCaptureScope consoleScope = new(captureError: false);
-                    HelpCommand command = new();
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    async consoleScope =>
+                    {
+                        HelpCommand command = new();
 
-                    command.Execute(
-                        new ShellContext(CreateScript(LuaCompatibilityVersion.Lua52)),
-                        "garbage"
-                    );
+                        command.Execute(
+                            new ShellContext(CreateScript(LuaCompatibilityVersion.Lua52)),
+                            "garbage"
+                        );
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.HelpCommandCommandNotFound("garbage"))
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.HelpCommandCommandNotFound("garbage"))
+                            .ConfigureAwait(false);
+                    },
+                    captureError: false
+                )
                 .ConfigureAwait(false);
         }
 
@@ -103,11 +112,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ScriptOptions options = new() { CompatibilityVersion = version };
             return new Script(options);
-        }
-
-        private static Task WithConsoleCaptureAsync(Func<Task> action)
-        {
-            return ConsoleCaptureCoordinator.RunAsync(action);
         }
     }
 }

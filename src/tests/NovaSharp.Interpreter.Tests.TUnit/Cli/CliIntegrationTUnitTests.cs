@@ -432,11 +432,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             string input = null
         )
         {
-            return ConsoleCaptureCoordinator.RunAsync(async () =>
-            {
-                using ConsoleRedirectionScope console = new(input);
-                await action(console).ConfigureAwait(false);
-            });
+            return ConsoleTestUtilities.WithConsoleRedirectionAsync(action, input);
         }
 
         private sealed class TestDebuggerBridge : IRemoteDebuggerBridge

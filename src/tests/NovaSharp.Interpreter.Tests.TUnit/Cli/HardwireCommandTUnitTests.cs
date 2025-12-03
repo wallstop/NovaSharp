@@ -28,16 +28,18 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
             HardwireCommand command = new();
             string input = "#quit" + Environment.NewLine;
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope consoleScope = new(input);
-                    command.Execute(new ShellContext(new Script()), string.Empty);
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.HardwireCommandAbortHint)
-                        .ConfigureAwait(false);
-                })
+            await ConsoleTestUtilities
+                .WithConsoleRedirectionAsync(
+                    async consoleScope =>
+                    {
+                        command.Execute(new ShellContext(new Script()), string.Empty);
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.HardwireCommandAbortHint)
+                            .ConfigureAwait(false);
+                    },
+                    input
+                )
                 .ConfigureAwait(false);
         }
 
@@ -51,17 +53,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 string.Join(Environment.NewLine, "cs", "nonexistent.lua", "#quit")
                 + Environment.NewLine;
 
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope consoleScope = new(input);
-                    command.Execute(new ShellContext(new Script()), string.Empty);
+            await ConsoleTestUtilities
+                .WithConsoleRedirectionAsync(
+                    async consoleScope =>
+                    {
+                        command.Execute(new ShellContext(new Script()), string.Empty);
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.HardwireMissingFile)
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.HardwireMissingFile)
+                            .ConfigureAwait(false);
+                    },
+                    input
+                )
                 .ConfigureAwait(false);
         }
 
@@ -74,10 +78,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             string destPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.cs");
             using TempFileScope destScope = TempFileScope.FromExisting(destPath);
 
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await ConsoleTestUtilities
+                .WithConsoleRedirectionAsync(async consoleScope =>
                 {
-                    using ConsoleRedirectionScope consoleScope = new();
                     HardwireCommand.Generate(
                         "cs",
                         dumpPath,
@@ -119,18 +122,20 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     "#quit"
                 ) + Environment.NewLine;
 
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
-                {
-                    using ConsoleRedirectionScope consoleScope = new(input);
-                    HardwireCommand command = new();
-                    command.Execute(new ShellContext(new Script()), string.Empty);
+            await ConsoleTestUtilities
+                .WithConsoleRedirectionAsync(
+                    async consoleScope =>
+                    {
+                        HardwireCommand command = new();
+                        command.Execute(new ShellContext(new Script()), string.Empty);
 
-                    await Assert
-                        .That(consoleScope.Writer.ToString())
-                        .Contains(CliMessages.HardwireIdentifierValidation)
-                        .ConfigureAwait(false);
-                })
+                        await Assert
+                            .That(consoleScope.Writer.ToString())
+                            .Contains(CliMessages.HardwireIdentifierValidation)
+                            .ConfigureAwait(false);
+                    },
+                    input
+                )
                 .ConfigureAwait(false);
         }
 
@@ -218,10 +223,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             });
 
             string output = string.Empty;
-            await ConsoleCaptureCoordinator
-                .RunAsync(() =>
+            await ConsoleTestUtilities
+                .WithConsoleRedirectionAsync(consoleScope =>
                 {
-                    using ConsoleRedirectionScope consoleScope = new();
                     HardwireCommand.Generate(
                         language,
                         "ignored.lua",

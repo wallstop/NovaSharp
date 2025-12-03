@@ -23,10 +23,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task HelpWithoutArgumentsListsCommands()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    using ConsoleCaptureScope consoleScope = new(captureError: true);
                     ShellContext context = new(new Script());
 
                     CommandManager.Execute(context, "help");
@@ -59,10 +58,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task HelpTrimsWhitespaceAroundArguments()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    using ConsoleCaptureScope consoleScope = new(captureError: true);
                     ShellContext context = new(new Script());
 
                     CommandManager.Execute(context, "   help   run   ");
@@ -78,10 +76,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task UnknownCommandReportsAnError()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    using ConsoleCaptureScope consoleScope = new(captureError: true);
                     ShellContext context = new(new Script());
 
                     CommandManager.Execute(context, "nope");
@@ -121,10 +118,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EmptyCommandLineReportsInvalidCommand()
         {
-            await ConsoleCaptureCoordinator
-                .RunAsync(async () =>
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    using ConsoleCaptureScope consoleScope = new(captureError: true);
                     ShellContext context = new(new Script());
 
                     CommandManager.Execute(context, "     ");

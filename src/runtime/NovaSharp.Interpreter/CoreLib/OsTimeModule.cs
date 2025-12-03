@@ -357,18 +357,18 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
                 else if (c == 'U')
                 {
-                    // Week number with the first Sunday as the first day of week one (00-53)
-                    sb.Append("??");
+                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Sunday);
+                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'V')
                 {
-                    // ISO 8601 week number (00-53)
-                    sb.Append("??");
+                    int isoWeek = GetIso8601WeekNumber(d);
+                    sb.Append(isoWeek.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'W')
                 {
-                    // Week number with the first Monday as the first day of week one (00-53)
-                    sb.Append("??");
+                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Monday);
+                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else
                 {
@@ -389,5 +389,40 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context) =>
             context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
+
+        private static int GetWeekNumberWithFirstDay(DateTime dateTime, DayOfWeek firstDayOfWeek)
+        {
+            DateTime date = dateTime.Date;
+            DateTime jan1 = new(date.Year, 1, 1);
+            int offset = ((int)firstDayOfWeek - (int)jan1.DayOfWeek + 7) % 7;
+            DateTime firstWeekStart = jan1.AddDays(offset);
+
+            if (firstWeekStart > date)
+            {
+                return 0;
+            }
+
+            double totalDays = (date - firstWeekStart).TotalDays;
+            int week = (int)(totalDays / 7) + 1;
+            return Math.Min(Math.Max(week, 0), 53);
+        }
+
+        private static int GetIso8601WeekNumber(DateTime dateTime)
+        {
+            DateTime date = dateTime.Date;
+            Calendar calendar = CultureInfo.InvariantCulture.Calendar;
+            DayOfWeek day = calendar.GetDayOfWeek(date);
+
+            if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
+            {
+                date = date.AddDays(3);
+            }
+
+            return calendar.GetWeekOfYear(
+                date,
+                CalendarWeekRule.FirstFourDayWeek,
+                DayOfWeek.Monday
+            );
+        }
     }
 }
