@@ -9,7 +9,13 @@ namespace NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal class FileUserData : StreamFileUserDataBase
     {
-        public FileUserData(Script script, string filename, Encoding encoding, string mode)
+        public FileUserData(
+            Script script,
+            string filename,
+            Encoding encoding,
+            string mode,
+            bool isBinaryMode
+        )
         {
             Stream stream = Script.GlobalOptions.Platform.OpenFile(
                 script,
@@ -21,7 +27,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             StreamReader reader = (stream.CanRead) ? new StreamReader(stream, encoding) : null;
             StreamWriter writer = (stream.CanWrite) ? new StreamWriter(stream, encoding) : null;
 
-            Initialize(stream, reader, writer);
+            Initialize(stream, reader, writer, isBinaryMode);
         }
     }
 }

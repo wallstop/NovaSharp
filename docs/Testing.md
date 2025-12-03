@@ -4,7 +4,7 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 
 ## Test Topology
 
-- **Lua compatibility (TestMore)**: Lua TAP fixtures exercise language semantics, standard library coverage, and coroutine behaviour.
+- **Lua compatibility (TestMore)**: Lua TAP fixtures exercise language semantics, standard library coverage, and coroutine behaviour. See `docs/testing/tap-suite-index.md` for the canonical mapping between the historical suite numbers and the new category-based folder layout (e.g., `TestMore/StandardLibrary/307-bit.t`).
 - **End-to-end suites**: C# driven TUnit scenarios cover userdata interop, debugger contracts, serialization, hardwire generation, and coroutine pipelines.
 - **Units**: Focused checks for low-level structures (stacks, instruction decoding, binary dump/load).
 
@@ -47,8 +47,10 @@ bash ./scripts/build/build.sh
 ### Lint guards for test infrastructure
 
 - Detector overrides (Unity/Mono/AOT flags, assembly enumeration hooks) must go through the shared scope helpers in `src/tests/TestInfrastructure/Scopes`. Run `python scripts/lint/check-platform-testhooks.py` (or `./scripts/ci/check-platform-testhooks.sh`) before sending a PR to ensure no new files reference `PlatformAutoDetector.TestHooks` directly. CI runs the same guard in the lint job, so treating it as a local pre-flight check prevents avoidable failures.
-- Console capture is coordinated via `ConsoleCaptureCoordinator.RunAsync`. To keep SemaphoreSlim usage encapsulated, run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the coordinator helper.
+- Console capture is now centralized in `ConsoleTestUtilities` (`WithConsoleRedirectionAsync` / `WithConsoleCaptureAsync`), which wraps `ConsoleCaptureCoordinator.RunAsync` and the redirection scopes. Run `python scripts/lint/check-console-capture-semaphore.py` (or `./scripts/ci/check-console-capture-semaphore.sh`) and fix any violations by switching to the helper instead of referencing `ConsoleCaptureCoordinator.Semaphore` directly.
 - Cleanup helpers (`TempFileScope`, `SemaphoreSlimScope`, `DeferredActionScope`, etc.) replaced the last manual `try`/`finally` blocks under `src/tests`. Run `python scripts/lint/check-test-finally.py` (or `./scripts/ci/check-test-finally.sh`) to ensure new tests do not reintroduce raw `finally` blocks; the script fails on the first match so the offending file is easy to spot.
+- `dotnet_diagnostic.CA2007` is enforced as an error. Every awaited assertion/task must end with `.ConfigureAwait(false)` (the TUnit assertion extensions already do this—be sure to append the call when writing custom awaits). Avoid `await using`/`await foreach` unless the language demands it; in all other cases, follow the helper pattern so tests remain analyzer-clean.
+- `python scripts/lint/check-userdata-scope-usage.py` (or `./scripts/ci/check-userdata-scope.sh`) ensures new tests register userdata through `UserDataRegistrationScope`; direct calls to `UserData.RegisterType`/`UserData.UnregisterType` are confined to the isolation/history suites called out in PLAN.md.
 
 ## Generating Coverage
 
@@ -94,13 +96,13 @@ pwsh ./scripts/coverage/coverage.ps1
 
 ## Pass/Fail Policy
 
-- Two Lua TAP suites (`TestMore_308_io`, `TestMore_309_os`) remain skipped because they require raw filesystem/OS access. Enable them manually only on trusted machines.
+- The newly catalogued Lua TAP suites now run inside the TUnit harness. `TestMore/LanguageExtensions/310-debug.t` is still skipped because NovaSharp does not expose Lua’s debug library yet, and `TestMore/LanguageExtensions/320-stdin.t` short-circuits via `skip_all` whenever `io.popen` is unavailable. Keep the runtime TODOs in PLAN.md so those suites can execute without skips once the debugger/IO helpers land.
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
 - **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 10:23 UTC)**: 96.98 % line / 95.13 % branch / 98.57 % method for `NovaSharp.Interpreter` across 2 547 Release tests (overall repository line coverage 87.5 %).
 
-- **Fixtures**: ~45 `[TestFixture]` types, 2 547 active tests, 0 skips (the two TAP suites remain disabled unless explicitly enabled).
+- **Fixtures**: ~45 `[TestFixture]` types, 2 731 active tests, 0 known failures (all Release suites are green; the only intentional skip is `TestMore/LanguageExtensions/310-debug.t` until the debug library ships).
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 

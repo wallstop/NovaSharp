@@ -1295,7 +1295,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 bool allowWrite = true,
                 bool autoFlush = true,
                 bool allowRead = true,
-                bool allowSeek = true
+                bool allowSeek = true,
+                bool isBinaryMode = false
             )
             {
                 FaultyMemoryStream stream = null;
@@ -1350,7 +1351,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                     };
                 }
 
-                Initialize(stream, reader, writer);
+                Initialize(stream, reader, writer, isBinaryMode);
                 cleanupScope.Suppress();
             }
 

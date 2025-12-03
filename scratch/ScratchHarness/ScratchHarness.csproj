@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\tests\NovaSharp.Interpreter.Tests.TUnit\NovaSharp.Interpreter.Tests.TUnit.csproj" />
+    <ProjectReference Include="..\..\src\tooling\NovaSharp.Cli\NovaSharp.Cli.csproj" />
+  </ItemGroup>
+</Project>
+

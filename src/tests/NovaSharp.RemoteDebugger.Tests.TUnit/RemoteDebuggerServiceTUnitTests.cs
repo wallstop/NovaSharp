@@ -36,10 +36,14 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             string body = GetHttpBody(options.HttpPort.Value, "/");
 
-            await Assert.That(body).Contains($"Debugger?port={options.RpcPortBase}");
+            await Assert
+                .That(body)
+                .Contains($"Debugger?port={options.RpcPortBase}")
+                .ConfigureAwait(false);
             await Assert
                 .That(service.HttpUrlStringLocalHost)
-                .IsEqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"));
+                .IsEqualTo(new Uri($"http://127.0.0.1:{options.HttpPort.Value}/"))
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -57,8 +61,11 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             string body = GetHttpBody(options.HttpPort.Value, "/");
 
-            await Assert.That(body).Contains("JumpScript");
-            await Assert.That(body).Contains($"Debugger?port={options.RpcPortBase}");
+            await Assert.That(body).Contains("JumpScript").ConfigureAwait(false);
+            await Assert
+                .That(body)
+                .Contains($"Debugger?port={options.RpcPortBase}")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -80,11 +87,14 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             string firstLink = $"Debugger?port={options.RpcPortBase}";
             string secondLink = $"Debugger?port={options.RpcPortBase + 1}";
 
-            await Assert.That(body).Contains("FirstScript");
-            await Assert.That(body).Contains("SecondScript");
-            await Assert.That(body).Contains(firstLink);
-            await Assert.That(body).Contains(secondLink);
-            await Assert.That(CountOccurrences(body, "Debugger?port=")).IsEqualTo(2);
+            await Assert.That(body).Contains("FirstScript").ConfigureAwait(false);
+            await Assert.That(body).Contains("SecondScript").ConfigureAwait(false);
+            await Assert.That(body).Contains(firstLink).ConfigureAwait(false);
+            await Assert.That(body).Contains(secondLink).ConfigureAwait(false);
+            await Assert
+                .That(CountOccurrences(body, "Debugger?port="))
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -107,10 +117,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 BindingFlags.Public | BindingFlags.Instance
             )!;
 
-            await Assert.That(script.DebuggerEnabled).IsTrue();
+            await Assert.That(script.DebuggerEnabled).IsTrue().ConfigureAwait(false);
             Uri httpUrl = (Uri)httpProperty.GetValue(bridge);
-            await Assert.That(httpUrl).IsNotNull();
-            await Assert.That(httpUrl.Scheme).IsEqualTo("http");
+            await Assert.That(httpUrl).IsNotNull().ConfigureAwait(false);
+            await Assert.That(httpUrl.Scheme).IsEqualTo("http").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,9 +141,9 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 $"/Debugger?port={options.RpcPortBase}"
             );
 
-            await Assert.That(debuggerResponse).Contains("200 OK");
-            await Assert.That(debuggerResponse).Contains("<html");
-            await Assert.That(debuggerResponse).Contains("swfobject.js");
+            await Assert.That(debuggerResponse).Contains("200 OK").ConfigureAwait(false);
+            await Assert.That(debuggerResponse).Contains("<html").ConfigureAwait(false);
+            await Assert.That(debuggerResponse).Contains("swfobject.js").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -152,8 +162,11 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             string response = SendHttpRequest(options.HttpPort.Value, "/DebuggerInvalid?port=9999");
             string body = ExtractHttpBody(response);
 
-            await Assert.That(response).Contains("404 Not Found");
-            await Assert.That(body).Contains("This padding is added to bring the error message");
+            await Assert.That(response).Contains("404 Not Found").ConfigureAwait(false);
+            await Assert
+                .That(body)
+                .Contains("This padding is added to bring the error message")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -192,15 +205,19 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 warningSink: warnings.Add
             );
 
-            await Assert.That(script).IsNotNull();
-            await Assert.That(script.CompatibilityVersion).IsEqualTo(LuaCompatibilityVersion.Lua52);
-            await Assert.That(script.DebuggerEnabled).IsTrue();
-            await Assert.That(info.Count).IsGreaterThanOrEqualTo(2);
-            await Assert.That(info[0]).Contains("Lua 5.2");
+            await Assert.That(script).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(script.CompatibilityVersion)
+                .IsEqualTo(LuaCompatibilityVersion.Lua52)
+                .ConfigureAwait(false);
+            await Assert.That(script.DebuggerEnabled).IsTrue().ConfigureAwait(false);
+            await Assert.That(info.Count).IsGreaterThanOrEqualTo(2).ConfigureAwait(false);
+            await Assert.That(info[0]).Contains("Lua 5.2").ConfigureAwait(false);
             await Assert
                 .That(info.Any(message => ContainsOrdinal(message, "running under")))
-                .IsTrue();
-            await Assert.That(warnings.Count).IsEqualTo(0);
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(warnings.Count).IsEqualTo(0).ConfigureAwait(false);
         }
 
         private static Script BuildScript(string code, string chunkName)

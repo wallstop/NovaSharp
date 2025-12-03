@@ -43,15 +43,8 @@ namespace NovaSharp.Cli.Commands
         /// <param name="commandLine">Full command line entered by the user.</param>
         internal static void Execute(ShellContext context, string commandLine)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            if (commandLine == null)
-            {
-                throw new ArgumentNullException(nameof(commandLine));
-            }
+            ArgumentValidation.ThrowIfNull(context, nameof(context));
+            ArgumentValidation.ThrowIfNull(commandLine, nameof(commandLine));
 
             string trimmed = commandLine.Trim();
 

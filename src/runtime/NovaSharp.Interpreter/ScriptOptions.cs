@@ -17,6 +17,7 @@ namespace NovaSharp.Interpreter
             CompatibilityVersion = LuaCompatibilityVersion.Latest;
             HighResolutionClock = SystemHighResolutionClock.Instance;
             TimeProvider = SystemTimeProvider.Instance;
+            ForceUtcDateTime = false;
         }
 
         public ScriptOptions(ScriptOptions defaults)
@@ -42,6 +43,7 @@ namespace NovaSharp.Interpreter
             CompatibilityVersion = defaults.CompatibilityVersion;
             HighResolutionClock = defaults.HighResolutionClock;
             TimeProvider = defaults.TimeProvider;
+            ForceUtcDateTime = defaults.ForceUtcDateTime;
         }
 
         /// <summary>
@@ -125,5 +127,10 @@ namespace NovaSharp.Interpreter
         /// Gets or sets the wall-clock provider used by modules that need UTC timestamps (defaults to <see cref="SystemTimeProvider.Instance"/>).
         /// </summary>
         public ITimeProvider TimeProvider { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether Lua date/time helpers should treat all timestamps as UTC—even when the caller does not use the <c>!</c> format prefix.
+        /// </summary>
+        public bool ForceUtcDateTime { get; set; }
     }
 }

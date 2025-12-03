@@ -1,6 +1,7 @@
 namespace NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
+    using System.Threading;
     using NovaSharp.Cli.Commands.Implementations;
     using NovaSharp.RemoteDebugger;
 
@@ -9,6 +10,8 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
     /// </summary>
     internal sealed class DebugCommandScope : IDisposable
     {
+        private static readonly SemaphoreSlim DebugCommandLock = new(1, 1);
+
         private readonly Func<IRemoteDebuggerBridge> _previousFactory;
         private readonly IBrowserLauncher _previousLauncher;
         private bool _disposed;
@@ -18,6 +21,8 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             IBrowserLauncher browserLauncher
         )
         {
+            DebugCommandLock.Wait();
+
             _previousFactory = DebugCommand.DebuggerFactory;
             _previousLauncher = DebugCommand.BrowserLauncher;
 
@@ -57,6 +62,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
 
             DebugCommand.DebuggerFactory = _previousFactory;
             DebugCommand.BrowserLauncher = _previousLauncher;
+            DebugCommandLock.Release();
             _disposed = true;
         }
     }

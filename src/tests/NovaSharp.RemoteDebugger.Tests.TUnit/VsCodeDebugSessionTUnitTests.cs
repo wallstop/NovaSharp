@@ -38,20 +38,23 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             DebugAdapterTranscript transcript = fixture.Execute();
 
             JsonElement initResponse = transcript.RequireResponse("initialize");
-            await Assert.That(initResponse.GetProperty("Success").GetBoolean()).IsTrue();
+            await Assert
+                .That(initResponse.GetProperty("Success").GetBoolean())
+                .IsTrue()
+                .ConfigureAwait(false);
 
             bool initializedEvent = transcript.Events.Any(e =>
                 DebugAdapterTranscript.TryGetEventName(e, out string eventName)
                 && string.Equals(eventName, "initialized", StringComparison.Ordinal)
             );
-            await Assert.That(initializedEvent).IsTrue();
+            await Assert.That(initializedEvent).IsTrue().ConfigureAwait(false);
 
             JsonElement threadsResponse = transcript.RequireResponse("threads");
             JsonElement threadArray = threadsResponse.GetProperty("Body").GetProperty("Threads");
-            await Assert.That(threadArray.GetArrayLength()).IsEqualTo(1);
+            await Assert.That(threadArray.GetArrayLength()).IsEqualTo(1).ConfigureAwait(false);
 
             string threadName = threadArray[0].GetProperty("Name").GetString();
-            await Assert.That(threadName).IsEqualTo("Main Thread");
+            await Assert.That(threadName).IsEqualTo("Main Thread").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,7 +78,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 message.Contains("dap-list.lua", StringComparison.Ordinal)
             );
 
-            await Assert.That(listedScript).IsTrue();
+            await Assert.That(listedScript).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -93,7 +96,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             DebugAdapterTranscript transcript = fixture.Execute();
 
-            await Assert.That(fixture.Debugger.PauseRequested).IsTrue();
+            await Assert.That(fixture.Debugger.PauseRequested).IsTrue().ConfigureAwait(false);
 
             bool pauseMessageFound = transcript
                 .GetOutputMessages()
@@ -101,7 +104,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                     message.Contains("Pause pending", StringComparison.OrdinalIgnoreCase)
                 );
 
-            await Assert.That(pauseMessageFound).IsTrue();
+            await Assert.That(pauseMessageFound).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -133,7 +136,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             );
             JsonElement[] bpArray = breakpoints.EnumerateArray().ToArray();
 
-            await Assert.That(bpArray.Length).IsEqualTo(2);
+            await Assert.That(bpArray.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert
                 .That(
                     bpArray.All(bp =>
@@ -142,7 +145,8 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                             .GetBoolean()
                     )
                 )
-                .IsTrue();
+                .IsTrue()
+                .ConfigureAwait(false);
 
             int firstLine = DebugAdapterTranscript
                 .GetPropertyCaseInsensitive(bpArray[0], "line")
@@ -151,8 +155,8 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 .GetPropertyCaseInsensitive(bpArray[1], "line")
                 .GetInt32();
 
-            await Assert.That(firstLine).IsEqualTo(1);
-            await Assert.That(secondLine).IsEqualTo(3);
+            await Assert.That(firstLine).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(secondLine).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -172,7 +176,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             _ = transcript;
 
             DebuggerAction action = fixture.DrainQueuedAction();
-            await Assert.That(action.Action).IsEqualTo(DebuggerAction.ActionType.Run);
+            await Assert
+                .That(action.Action)
+                .IsEqualTo(DebuggerAction.ActionType.Run)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -194,7 +201,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             DebugAdapterTranscript transcript = fixture.Execute();
             _ = transcript;
 
-            await Assert.That(fixture.Debugger.ErrorRegex.ToString()).IsEqualTo("timeout");
+            await Assert
+                .That(fixture.Debugger.ErrorRegex.ToString())
+                .IsEqualTo("timeout")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -224,8 +234,8 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 && string.Equals(eventName, "terminated", StringComparison.Ordinal)
             );
 
-            await Assert.That(terminatedEvent).IsTrue();
-            await Assert.That(fixture.CurrentId).IsEqualTo(secondId);
+            await Assert.That(terminatedEvent).IsTrue().ConfigureAwait(false);
+            await Assert.That(fixture.CurrentId).IsEqualTo(secondId).ConfigureAwait(false);
         }
     }
 

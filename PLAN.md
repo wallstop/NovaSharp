@@ -1,15 +1,15 @@
 # Modern Testing & Coverage Plan
 
-## Repository Snapshot — 2025-12-01 (UTC)
-- Build: `dotnet build src/NovaSharp.sln -c Release` (2025-12-01 01:34 UTC) finished with zero warnings while `<TreatWarningsAsErrors>true>` stays enforced across the solution.
-- Tests: `scripts/coverage/coverage.ps1` now runs exclusively against the interpreter and remote-debugger TUnit hosts via Microsoft.Testing.Platform. The latest Release sanity run (2025-12-01 01:35 UTC) executed **2,728** interpreter/remote tests (`src/tests/NovaSharp.Interpreter.Tests.TUnit` + `src/tests/NovaSharp.RemoteDebugger.Tests.TUnit`) with zero failures. `FixtureCatalogGenerated.cs` now records **0** NUnit fixtures; the generator script remains so analyzers stay happy if any future NUnit project appears.
-- Coverage: `docs/coverage/latest/Summary.md` now reflects the 2025-11-30 17:57 UTC artefacts from the post-TUnit coverage sweep (**86.5 % line / 86.5 % branch / 88.8 % method** overall). Interpreter coverage sits at **96.10 % line / 93.80 % branch / 97.52 % method**, so `COVERAGE_GATING_MODE` remains in monitor mode until branch coverage clears the ≥95 % bar.
-  - NovaSharp.Interpreter: 96.13 % line / 93.83 % branch / 97.56 % method (still <95 % branch, so `COVERAGE_GATING_MODE` remains in monitor mode).
-  - NovaSharp.Cli: 83.02 % line / 76.26 % branch.
-  - NovaSharp.Hardwire: 55.72 % line / 46.58 % branch.
-  - NovaSharp.RemoteDebugger: 76.73 % line / 66.25 % branch (headless debugger TUnit coverage is active again).
-  - NovaSharp.VsCodeDebugger: 1.84 % line / 2.08 % branch (DAP automation still pending).
-- Coverage collateral: rerun `./scripts/coverage/coverage.ps1` (Microsoft.Testing.Platform-aware) and refresh `docs/coverage/coverage-hotspots.md` whenever numbers move; last refresh completed 2025-11-30 17:57 UTC with the figures above.
+## Repository Snapshot — 2025-12-03 (UTC)
+- Build: `dotnet build src/NovaSharp.sln -c Release` (2025-12-03 03:12 UTC) still finishes with zero warnings while `<TreatWarningsAsErrors>true>` remains enforced across the solution; the coverage sweep rebuild performed the latest validation.
+- Tests: The latest Release coverage sweep (`pwsh ./scripts/coverage/coverage.ps1`, 2025-12-03 03:15 UTC) executed **2,731** interpreter tests and **52** remote-debugger tests via Microsoft.Testing.Platform. The interpreter suite is green; the remote suite originally failed `UpdateCallStackSendsFormattedItemsOncePerChange` because the expected payload escaped `<chunk-root>` incorrectly, but that test has now been updated and passes locally. `FixtureCatalogGenerated.cs` continues to report **0** NUnit fixtures; keep the generator script handy for any future NUnit additions.
+- Coverage: Even though the run aborted after the remote-debugger failure, coverlet still emitted artefacts under `docs/coverage/latest` with the new aggregate numbers (**88.85 % line / 87.90 % branch / 92.08 % method** overall). Interpreter coverage sits at **95.84 % line / 93.48 % branch / 97.33 % method**, so `COVERAGE_GATING_MODE` stays in monitor mode until branch coverage clears 95 %.
+  - NovaSharp.Interpreter: 95.84 % line / 93.48 % branch / 97.33 % method.
+  - NovaSharp.Cli: 80.07 % line / 71.69 % branch / 86.82 % method.
+  - NovaSharp.Hardwire: 56.12 % line / 46.58 % branch / 67.70 % method.
+  - NovaSharp.RemoteDebugger: 76.64 % line / 65.95 % branch / 87.85 % method (numbers captured even though the run failed).
+  - NovaSharp.VsCodeDebugger: 40.57 % line / 38.54 % branch / 48.82 % method.
+- Coverage collateral: rerun `./scripts/coverage/coverage.ps1` now that the remote-debugger payload assertion is fixed so `docs/coverage/latest/*` and `docs/coverage/coverage-hotspots.md` can be refreshed with a passing run; drop the “failing run” label in the summary once the rerun completes.
 - Audits: `documentation_audit.log`, `naming_audit.log`, and `spelling_audit.log` are green (0 missing XML docs, no naming/spelling findings). Re-run the trio whenever APIs or text-heavy docs change.
 - Regions: `rg -n '#region'` only returns AGENTS.md/PLAN.md, so runtime/tooling/tests remain region-free.
 
@@ -35,23 +35,15 @@
   4. Add an analyzer or Roslyn-based lint (even a temporary `rg`/CI script) that flags new `try`/`finally` usage in tests when the `finally` block simply tears down disposable state, keeping the suite aligned with the helper abstractions long term.
   5. Update `docs/Testing.md` + AGENTS.md so contributors know to reach for the helper scopes before writing manual cleanup logic, and highlight this initiative in PR templates until the sweep is finished.
 - Current status: CLI/harness suites now run console capture through `ConsoleCaptureCoordinator.RunAsync`; interpreter/remote tests share the scope helpers; Unity loader tests use the reflection scope; CI lint guards enforce detector/semaphore usage; and UserData isolation now scales with `NS_USERDATA_ISOLATION_MAX_PARALLEL` (defaults to `max(Environment.ProcessorCount / 2, 1)`).
-- Remaining UserData cleanups: `DynamicModuleTUnitTests`, the CLI smoke suites (`UserDataIsolationSmokeTUnitTests`, `RegisterCommandTUnitTests`), and the infrastructure-heavy `UserDataTUnitTests`. Convert these to `UserDataRegistrationScope`, keep isolation attributes high-level, and update documentation once the entire interpreter tree is region-free.
-- Next steps:
-  1. Finish the ConfigureAwait(false) sweep across any remaining CLI/descriptor fixtures and keep `dotnet_diagnostic.CA2007` green.
-  2. Convert the outstanding suites above to scoped registrations (add shared helpers where it reduces repetition) and update `docs/Testing.md` once `rg -n "UserData.RegisterType"` only returns intentional extension registrations.
-  3. Keep monitoring the new `check-test-finally.py` guard and add lint if new cleanup patterns emerge; revisit the `NS_USERDATA_ISOLATION_MAX_PARALLEL` default if CI throughput still suffers.
-- 2025-12-01 22:21 UTC: `UserDataRegistrationScope` now exposes multi-type `Track` overloads plus `RegisterType` helpers so tests can atomically register/clean up userdata. `Cli/RegisterCommandTUnitTests` and `EndToEnd/CollectionsRegisteredTUnitTests` were migrated to the helpers, and the CLI integration suite no longer implements `IDisposable` just to reset the debug command hooks.
-- Next steps: (1) keep `dotnet_diagnostic.CA2007` green by running the updated lint/test suite whenever async helpers change; (2) continue expanding the VS Code DAP harness to cover host busy/ready flows and CLI-driven attach scenarios; (3) grow the CLI automation suite (hardwire/help/error paths) so REPL commands stay regression-proof.
-- Remaining CA2007 suppressions now live in the remaining Units suites (parser/VM/data-structures/etc.—see the latest `rg -l '#pragma warning disable CA2007'` snapshot). **Next pass**: continue sweeping those fixtures to add `.ConfigureAwait(false)` and drop their pragmas so we can re-enable CA2007 repo-wide.
-- Ease-of-use backlog (still active):
-  1. DynValue.ToObject<T>(...) convenience helpers.
-  2. UserDataRegistrationScope.Track overloads/Register<T> helpers for multi-type registration.
-  4. Generalized static-field override scopes for CLI/Debugger hooks.
-  5. Shared PlatformDetectorScope for isolation attributes/tests.
-- Current focus / next steps:
-  1. Finish the ConfigureAwait(false) sweep across the remaining CA2007-suppressed suites (CLI integration, descriptor generators, RemoteDebugger utilities) and re-enable the analyzer repo-wide.
-  2. Monitor the new `check-test-finally.py` guard in CI and extend it (or a Roslyn analyzer) if additional cleanup patterns emerge.
-  3. Pivot to the remote-debugger automation/cleanup initiative once CA2007 debt is cleared.
+- 2025-12-02 22:47 UTC: Added `scripts/lint/check-userdata-scope-usage.py` + CI wrapper to catch new `UserData.RegisterType`/`UserData.UnregisterType` calls in TUnit projects; the only permitted direct usages now live in `UserDataTUnitTests`, `UserDataIsolationTUnitTests`, and the hardwire test string. Everyone else must route through `UserDataRegistrationScope`.
+- 2025-12-02 22:58 UTC: Reorganized the lua-TestMore corpus under descriptive folders (`Basics/`, `ControlFlow/`, etc.), restored their numeric filenames (`000-sanity.t`, `101-boolean.t`, …), and switched `TestMoreTUnitTests` to a single data-driven `[MethodDataSource]` that enumerates suites via `TapSuiteCatalog`. `docs/testing/tap-suite-index.md` now tracks the mapping, and as of the 2025-12-03 Release sweep all 2,731 interpreter cases (including the TAP corpus) are green.
+- Next steps (carry-forward quality items):
+  1. Keep `require "debug"` loading parity inside the TAP harness (`TestMore/LanguageExtensions/310-debug.t`) so the CLI runner mirrors vanilla Lua.
+  2. Implement the `stdin` helpers that `TestMore/LanguageExtensions/320-stdin.t` exercises to prevent future nil-concatenation regressions.
+  3. Match Lua’s OS/strftime semantics in `TestMore/StandardLibrary/309-os.t` (especially `%Oy`) and document the reference.
+  4. Ensure userdata field access for `FileUserDataBase` stays wired up so `TestMore/DataTypes/108-userdata.t` continues to see the default `stdin`/`stdout` handles.
+  5. Keep running `rg -n "UserData.UnregisterType"`/`rg -n "UserData.RegisterType"` (and the new lint) so any new manual cleanup is converted to `UserDataRegistrationScope`.
+  6. Continue monitoring `check-test-finally.py`; revisit `NS_USERDATA_ISOLATION_MAX_PARALLEL` if the TAP suites materially slow CI in their new layout.
 ### High priority — Codebase organization & namespace hygiene
 - Current state: runtime/tooling/test projects largely mirror the historical MoonSharp layout, leaving most interpreter tests under monolithic buckets such as `Units/`, `TestMore/`, or `TUnit/VM/` with little discoverability. Production code follows the same pattern—`NovaSharp.Interpreter` is a single assembly containing interpreter, modules, platforms, IO helpers, and tooling adapters.
 - Problem: Contributors struggle to locate feature-specific code/tests, and the wide namespaces make it hard to reason about ownership or layering (e.g., Lua VM vs. tooling vs. debugger). PLAN.md now tracks the reorganization as a high-priority initiative so we treat it as a first-class modernization step alongside TUnit.
@@ -70,17 +62,17 @@
 - Policy reminder: AGENTS.md forbids nullable reference-type syntax (no `#nullable`, `string?`, `?.` targeting reference members, or `null!`). Keep running `artifacts/NrtScanner` (or a simple `rg`) before opening analyzer-heavy PRs so the ban stays enforced and CA1805 continues to pass without suppressions.
 
 ### 2. Coverage and test depth
-- Refresh artefacts: rerun ./scripts/coverage/coverage.ps1 (Release, gate = enforce) so docs/coverage/latest/* and docs/coverage/coverage-hotspots.md describe the latest test suite.
-- 2025-11-30 09:28 UTC: Reran `./scripts/coverage/coverage.ps1` (Release suites: **2,136** interpreter TUnit + **40** remote-debugger TUnit + **881** NUnit) after wiring up the Hardwire/Module conversions. The run finished with **0** failures, refreshed `docs/coverage/latest/*` + `docs/coverage/coverage-hotspots.md`, and reports NovaSharp.Interpreter at **96.13 % line / 93.83 % branch / 97.56 % method**; `COVERAGE_GATING_MODE` stays in monitor mode until branch coverage clears the ≥95 % bar.
-- Remote-debugger coverage is back to **76.73 % line / 66.25 % branch**, but NovaSharp.VsCodeDebugger still sits at **1.84 % line / 2.08 % branch**, so the DAP smoke tests remain a top priority.
+- Refresh artefacts: rerun `./scripts/coverage/coverage.ps1` (Release, gate = enforce) so `docs/coverage/latest/*` and `docs/coverage/coverage-hotspots.md` describe the latest passing suite. The 2025-12-03 run only failed because the remote-debugger call-stack payload assertion expected `&lt;chunk-root&gt;` with stray text; the test now matches the actual payload, so the next sweep should pass and can be published.
+- 2025-11-30 09:28 UTC: Reran `./scripts/coverage/coverage.ps1` (Release suites: **2,136** interpreter TUnit + **40** remote-debugger TUnit + **881** NUnit) after wiring up the Hardwire/Module conversions. The run finished with **0** failures, refreshed `docs/coverage/latest/*` + `docs/coverage/coverage-hotspots.md`, and reported NovaSharp.Interpreter at **96.13 % line / 93.83 % branch / 97.56 % method**.
+- Remote-debugger coverage is sitting at **76.64 % line / 65.95 % branch**, but NovaSharp.VsCodeDebugger is still only **40.57 % line / 38.54 % branch**, so the DAP smoke tests remain a top priority.
 - Interpreter: add debugger/coroutine regression tests that drive pause-during-refresh, queued actions that drain after a pause, forced resume, and message decoration paths so branch coverage climbs from ~93 % to ≥95 %.
 - Tooling: extend NovaSharp.Cli tests beyond current command-unit coverage (record REPL transcripts and golden outputs) and build Hardwire generator tests that validate descriptor generation/error handling, targeting ≥80 % line coverage for each project.
 - Debuggers: add headless VS Code + Remote Debugger smoke tests (attach/resume/breakpoint/watch evaluation) to push NovaSharp.VsCodeDebugger line coverage past 50 % and NovaSharp.RemoteDebugger branch coverage above 85 %.
 - Replace skipped IO/OS TAP suites with NUnit fixtures so Release runs exercise those semantics without Lua harnesses.
 - Observability: enhance the GitHub coverage job to compare the new Summary.json against the last successful run and fail on ≥3 percentage point regressions; archive history under rtifacts/coverage/history.
-- Remaining interpreter branch debt (updated 2025-11-26 21:45 UTC): Coroutine (~83.3 %), UnityAssetsScriptLoader (~86.8 %), PlatformAutoDetector (~87.5 %), Script (~83.8 %), UnaryOperatorExpression (~85 %), and any lingering Script/repl/helpers not yet converted to guard-tested code paths. Prioritize these guard paths so interpreter branch coverage can cross ≥95 % and we can re-enable gating.
+- Remaining interpreter branch debt (updated 2025-11-26 21:45 UTC): Coroutine (~83.3 %), UnityAssetsScriptLoader (~86.8 %), PlatformAutoDetector (~87.5 %), Script (~83.8 %), UnaryOperatorExpression (~85 %), and any lingering Script/REPL/helpers not yet converted to guard-tested code paths. Prioritize these guard paths so interpreter branch coverage can cross ≥95 % and we can re-enable gating once the current regressions are fixed.
+- Next steps: Now that the remote-debugger payload assertion is fixed, rerun `./scripts/coverage/coverage.ps1` and refresh `docs/coverage/latest/*` + `docs/coverage/coverage-hotspots.md`. Keep `COVERAGE_GATING_MODE` in monitor mode until interpreter branch coverage >=95 % and the TAP harness stays green across multiple runs.
 - Next steps: Close out the remaining hotspots (Coroutine, UnityAssetsScriptLoader, PlatformAutoDetector, Script, UnaryOperatorExpression, and the outstanding Script/REPL helpers) by adding guard-path unit tests so interpreter branch coverage can cross the ≥95 % enforcement bar.
-
 ### Coverage orchestration simplification
 - Problem: coverage helpers currently emit per-suite artefacts (interpreter vs. remote debugger vs. CLI) and require reviewers to mentally merge multiple `Summary.*` outputs. We need a single coverage report that aggregates every Release test run so dashboards, docs, and gating logic all consume the same unified result.
 - Objectives:

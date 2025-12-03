@@ -13,9 +13,9 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             RemoteDebuggerOptions first = RemoteDebuggerOptions.Default;
             RemoteDebuggerOptions second = RemoteDebuggerOptions.Default;
 
-            await Assert.That(first).IsEqualTo(second);
-            await Assert.That(first == second).IsTrue();
-            await Assert.That(first != second).IsFalse();
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
+            await Assert.That(first == second).IsTrue().ConfigureAwait(false);
+            await Assert.That(first != second).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -42,17 +42,17 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             RemoteDebuggerOptions differentRpcPort = left;
             differentRpcPort.RpcPortBase = 4000;
 
-            await Assert.That(left.Equals(right)).IsTrue();
-            await Assert.That(left == right).IsTrue();
+            await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
+            await Assert.That(left == right).IsTrue().ConfigureAwait(false);
 
-            await Assert.That(left.Equals(differentNetwork)).IsFalse();
-            await Assert.That(left.Equals(differentMode)).IsFalse();
-            await Assert.That(left.Equals(differentHttpPort)).IsFalse();
-            await Assert.That(left.Equals(differentRpcPort)).IsFalse();
-            await Assert.That(left != differentNetwork).IsTrue();
-            await Assert.That(left != differentMode).IsTrue();
-            await Assert.That(left != differentHttpPort).IsTrue();
-            await Assert.That(left != differentRpcPort).IsTrue();
+            await Assert.That(left.Equals(differentNetwork)).IsFalse().ConfigureAwait(false);
+            await Assert.That(left.Equals(differentMode)).IsFalse().ConfigureAwait(false);
+            await Assert.That(left.Equals(differentHttpPort)).IsFalse().ConfigureAwait(false);
+            await Assert.That(left.Equals(differentRpcPort)).IsFalse().ConfigureAwait(false);
+            await Assert.That(left != differentNetwork).IsTrue().ConfigureAwait(false);
+            await Assert.That(left != differentMode).IsTrue().ConfigureAwait(false);
+            await Assert.That(left != differentHttpPort).IsTrue().ConfigureAwait(false);
+            await Assert.That(left != differentRpcPort).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,7 +68,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             RemoteDebuggerOptions right = left;
 
-            await Assert.That(left.GetHashCode()).IsEqualTo(right.GetHashCode());
+            await Assert
+                .That(left.GetHashCode())
+                .IsEqualTo(right.GetHashCode())
+                .ConfigureAwait(false);
         }
     }
 }

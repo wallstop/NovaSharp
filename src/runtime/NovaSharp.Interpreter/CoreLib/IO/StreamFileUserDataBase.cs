@@ -27,16 +27,26 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         /// <summary>Logical position tracked for buffered readers.</summary>
         protected long _logicalPosition;
 
+        private bool _isBinaryMode;
+        private bool _pendingCarriageReturnOnRead;
+
         /// <summary>
         /// Initializes the userdata with the supplied stream, reader, and writer handles.
         /// </summary>
-        protected void Initialize(Stream stream, StreamReader reader, StreamWriter writer)
+        protected void Initialize(
+            Stream stream,
+            StreamReader reader,
+            StreamWriter writer,
+            bool isBinaryMode
+        )
         {
             _streamInstance = stream;
             _streamReaderInstance = reader;
             _streamWriterInstance = writer;
             _logicalPosition =
                 _streamInstance != null && _streamInstance.CanSeek ? _streamInstance.Position : 0;
+            _isBinaryMode = isBinaryMode;
+            _pendingCarriageReturnOnRead = false;
         }
 
         /// <summary>Exposes the backing stream to derived types for inspection.</summary>
@@ -184,7 +194,8 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 ResetReaderBuffer(expectedPosition);
             }
 
-            return new string(buffer, 0, length);
+            string chunk = new string(buffer, 0, length);
+            return NormalizeReadChunk(chunk);
         }
 
         /// <inheritdoc />
@@ -198,7 +209,28 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         protected override void Write(string value)
         {
             CheckFileIsNotClosed();
-            _streamWriterInstance.Write(value);
+            string textToWrite = value;
+
+            bool containsLineFeed = false;
+
+            if (value != null)
+            {
+                for (int i = 0; i < value.Length; i++)
+                {
+                    if (value[i] == '\n')
+                    {
+                        containsLineFeed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!_isBinaryMode && value != null && Environment.NewLine != "\n" && containsLineFeed)
+            {
+                textToWrite = value.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
+            }
+
+            _streamWriterInstance.Write(textToWrite);
         }
 
         /// <inheritdoc />
@@ -226,6 +258,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             _streamInstance.Dispose();
 
             _isClosed = true;
+            _pendingCarriageReturnOnRead = false;
 
             return null;
         }
@@ -363,6 +396,113 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             _streamReaderInstance.DiscardBufferedData();
             _streamInstance.Seek(targetPosition, SeekOrigin.Begin);
             _logicalPosition = targetPosition;
+            _pendingCarriageReturnOnRead = false;
+        }
+
+        private string NormalizeReadChunk(string chunk)
+        {
+            if (_isBinaryMode)
+            {
+                return chunk;
+            }
+
+            if (chunk.Length == 0)
+            {
+                if (_pendingCarriageReturnOnRead && UsesWindowsNewLine())
+                {
+                    _pendingCarriageReturnOnRead = false;
+                    return "\r";
+                }
+
+                return chunk;
+            }
+
+            if (!UsesWindowsNewLine())
+            {
+                if (_pendingCarriageReturnOnRead)
+                {
+                    _pendingCarriageReturnOnRead = false;
+                    return "\r" + chunk;
+                }
+
+                return chunk;
+            }
+
+            StringBuilder builder = null;
+            int copyStart = 0;
+
+            if (_pendingCarriageReturnOnRead)
+            {
+                builder = new StringBuilder(chunk.Length + 1);
+
+                if (chunk[0] == '\n')
+                {
+                    builder.Append('\n');
+                    copyStart = 1;
+                }
+                else
+                {
+                    builder.Append('\r');
+                }
+
+                _pendingCarriageReturnOnRead = false;
+            }
+
+            for (int i = copyStart; i < chunk.Length; i++)
+            {
+                char current = chunk[i];
+
+                if (current == '\r')
+                {
+                    if (i + 1 < chunk.Length)
+                    {
+                        if (chunk[i + 1] == '\n')
+                        {
+                            builder ??= new StringBuilder(chunk.Length);
+
+                            if (copyStart < i)
+                            {
+                                builder.Append(chunk, copyStart, i - copyStart);
+                            }
+
+                            builder.Append('\n');
+                            copyStart = i + 2;
+                            i++;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        builder ??= new StringBuilder(chunk.Length);
+
+                        if (copyStart < i)
+                        {
+                            builder.Append(chunk, copyStart, i - copyStart);
+                        }
+
+                        _pendingCarriageReturnOnRead = true;
+                        copyStart = chunk.Length;
+                        break;
+                    }
+                }
+            }
+
+            if (builder == null)
+            {
+                return chunk;
+            }
+
+            if (copyStart < chunk.Length)
+            {
+                builder.Append(chunk, copyStart, chunk.Length - copyStart);
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool UsesWindowsNewLine()
+        {
+            return Environment.NewLine == "\r\n";
         }
     }
 }

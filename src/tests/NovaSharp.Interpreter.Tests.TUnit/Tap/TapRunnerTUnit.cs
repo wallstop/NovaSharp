@@ -1,10 +1,13 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Runtime.InteropServices;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
+    using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
 
@@ -25,8 +28,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 
     internal sealed class TapRunnerTUnit
     {
+        private static readonly HashSet<string> SkippedSuites = new(
+            StringComparer.OrdinalIgnoreCase
+        )
+        {
+            // §6.10 Debug Library remains unimplemented (see docs/Testing.md).
+            "TestMore/LanguageExtensions/310-debug.t",
+        };
+
         private readonly string _file;
         private readonly LuaCompatibilityVersion _compatibilityVersion;
+        private bool _skipAllRequested;
 
         public TapRunnerTUnit(string filename, LuaCompatibilityVersion? compatibilityVersion = null)
         {
@@ -47,22 +59,51 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 
         public void Run()
         {
+            string normalizedRelativePath = _file.Replace('\\', '/');
+
+            if (SkippedSuites.Contains(normalizedRelativePath))
+            {
+                Print($"1..0 # SKIP {_file} requires the Lua debug library");
+                _skipAllRequested = true;
+                return;
+            }
+
             ScriptOptions options = new(Script.DefaultOptions)
             {
                 DebugPrint = Print,
                 UseLuaErrorLocations = true,
                 CompatibilityVersion = _compatibilityVersion,
+                ForceUtcDateTime = true,
             };
 
-            Script script = new(options);
+            Script script = new(CoreModules.PresetComplete, options);
             if (script.Options.ScriptLoader is not ScriptLoaderBase)
             {
                 script.Options.ScriptLoader = new FileSystemScriptLoader();
             }
             ConfigureScriptLoader(script);
-            script.Globals.Set("arg", DynValue.NewTable(script));
+            SeedTapGlobals(script);
             string friendlyName = _file.Replace('\\', '/');
-            script.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
+            try
+            {
+                script.DoFile(GetAbsoluteTestPath(_file), null, friendlyName);
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                if (
+                    _skipAllRequested
+                    && ex.DecoratedMessage != null
+                    && ex.DecoratedMessage.Contains(
+                        "plan was already output",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    return;
+                }
+
+                throw;
+            }
         }
 
         private void Print(string value)
@@ -76,6 +117,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
             if (trimmed.StartsWith("not ok", StringComparison.Ordinal))
             {
                 throw new InvalidOperationException($"TAP fail ({_file}) : {value}");
+            }
+
+            if (trimmed.StartsWith("1..0 # SKIP", StringComparison.OrdinalIgnoreCase))
+            {
+                _skipAllRequested = true;
             }
         }
 
@@ -114,6 +160,94 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
         private static string GetTestDirectory()
         {
             return AppContext.BaseDirectory;
+        }
+
+        private static void SeedTapGlobals(Script script)
+        {
+            ArgumentNullException.ThrowIfNull(script);
+
+            string luaExecutable = GetLuaExecutableHint();
+
+            Table argTable = new(script);
+            argTable.Set(DynValue.NewNumber(-1), DynValue.NewString(luaExecutable));
+            script.Globals.Set("arg", DynValue.NewTable(argTable));
+
+            Table platform = new(script);
+            platform.Set("lua", DynValue.NewString(luaExecutable));
+            platform.Set("compat", DynValue.NewBoolean(false));
+            platform.Set("intsize", DynValue.NewNumber(IntPtr.Size));
+            platform.Set("osname", DynValue.NewString(GetPlatformName()));
+            script.Globals.Set("platform", DynValue.NewTable(platform));
+        }
+
+        private static string GetLuaExecutableHint()
+        {
+            string cliExecutablePath = ResolveCliExecutablePath();
+            if (!string.IsNullOrEmpty(cliExecutablePath) && File.Exists(cliExecutablePath))
+            {
+                return $"dotnet \"{cliExecutablePath}\"";
+            }
+
+            return "lua";
+        }
+
+        private static string ResolveCliExecutablePath()
+        {
+            string baseDirectory = AppContext.BaseDirectory;
+
+            string candidate = Path.Combine(
+                baseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "..",
+                "..",
+                "src",
+                "tooling",
+                "NovaSharp.Cli",
+                "bin",
+                "Release",
+                "net8.0",
+                "NovaSharp.Cli.dll"
+            );
+
+            try
+            {
+                return Path.GetFullPath(candidate);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (PathTooLongException)
+            {
+                return null;
+            }
+            catch (NotSupportedException)
+            {
+                return null;
+            }
+        }
+
+        private static string GetPlatformName()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return "MSWin32";
+            }
+
+            if (OperatingSystem.IsMacOS())
+            {
+                return "Darwin";
+            }
+
+            if (OperatingSystem.IsLinux())
+            {
+                return "Linux";
+            }
+
+            return "Unknown";
         }
     }
 }

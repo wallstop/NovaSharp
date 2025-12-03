@@ -188,6 +188,7 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue vtime = args.AsType(1, "date", DataType.Number, true);
 
             string format = (vformat.IsNil()) ? "%c" : vformat.String;
+            bool forceUtc = executionContext.Script?.Options?.ForceUtcDateTime == true;
 
             if (vtime.IsNotNil())
             {
@@ -200,7 +201,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 format = format.Substring(1);
             }
-            else
+            else if (!forceUtc)
             {
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
 

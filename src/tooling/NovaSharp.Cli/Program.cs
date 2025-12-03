@@ -1,6 +1,7 @@
 namespace NovaSharp.Cli
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Security;
     using NovaSharp.Cli.Commands;
@@ -122,6 +123,11 @@ namespace NovaSharp.Cli
                 return false;
             }
 
+            if (TryRunExecuteChunks(args))
+            {
+                return true;
+            }
+
             if (TryRunScriptArgument(args))
             {
                 return true;
@@ -205,6 +211,63 @@ namespace NovaSharp.Cli
             }
 
             return true;
+        }
+
+        private static bool TryRunExecuteChunks(string[] args)
+        {
+            if (args == null || args.Length == 0)
+            {
+                return false;
+            }
+
+            List<string> inlineChunks = new();
+            int index = 0;
+
+            while (index < args.Length)
+            {
+                string current = args[index];
+                if (!IsExecuteOption(current))
+                {
+                    break;
+                }
+
+                if (index + 1 >= args.Length)
+                {
+                    Console.WriteLine(CliMessages.ProgramWrongSyntax);
+                    ShowCmdLineHelp();
+                    return true;
+                }
+
+                inlineChunks.Add(args[index + 1]);
+                index += 2;
+            }
+
+            if (inlineChunks.Count == 0)
+            {
+                return false;
+            }
+
+            if (index < args.Length)
+            {
+                Console.WriteLine(CliMessages.ProgramWrongSyntax);
+                ShowCmdLineHelp();
+                return true;
+            }
+
+            Script script = new(CoreModules.PresetComplete);
+
+            foreach (string chunk in inlineChunks)
+            {
+                script.DoString(chunk);
+            }
+
+            return true;
+        }
+
+        private static bool IsExecuteOption(string argument)
+        {
+            return string.Equals(argument, "-e", StringComparison.Ordinal)
+                || string.Equals(argument, "--execute", StringComparison.Ordinal);
         }
 
         private static bool TryRunScriptArgument(string[] args)

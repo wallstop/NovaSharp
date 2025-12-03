@@ -151,11 +151,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
 
         [global::TUnit.Core.Test]
-        public void ExecuteCommandThrowsNotSupported()
+        public async Task ExecuteCommandRunsShellCommand()
         {
             DotNetCorePlatformAccessor accessor = new();
 
-            _ = Assert.Throws<NotSupportedException>(() => accessor.ExecuteCommand("echo test"));
+            int success = accessor.ExecuteCommand("echo dotnet-core");
+            await Assert.That(success).IsEqualTo(0).ConfigureAwait(false);
+
+            int failure = accessor.ExecuteCommand("__totally_invalid_command__");
+            await Assert.That(failure).IsNotEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

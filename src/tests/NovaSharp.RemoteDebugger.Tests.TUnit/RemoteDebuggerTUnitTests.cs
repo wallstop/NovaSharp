@@ -36,8 +36,14 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 timeout
             );
 
-            await Assert.That(messages.Any(m => ContainsOrdinal(m, "<welcome"))).IsTrue();
-            await Assert.That(messages.Any(m => ContainsOrdinal(m, "source-code"))).IsTrue();
+            await Assert
+                .That(messages.Any(m => ContainsOrdinal(m, "<welcome")))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(messages.Any(m => ContainsOrdinal(m, "source-code")))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,15 +60,21 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             client.SendCommand("<Command cmd=\"run\" arg=\"\" />");
             DebuggerAction run = server.GetAction(0, sourceRef);
-            await Assert.That(run.Action).IsEqualTo(DebuggerAction.ActionType.Run);
+            await Assert
+                .That(run.Action)
+                .IsEqualTo(DebuggerAction.ActionType.Run)
+                .ConfigureAwait(false);
 
             client.SendCommand(
                 "<Command cmd=\"breakpoint\" arg=\"set\" src=\"0\" line=\"1\" col=\"0\" />"
             );
             DebuggerAction breakpoint = server.GetAction(0, sourceRef);
-            await Assert.That(breakpoint.Action).IsEqualTo(DebuggerAction.ActionType.SetBreakpoint);
-            await Assert.That(breakpoint.SourceId).IsEqualTo(0);
-            await Assert.That(breakpoint.SourceLine).IsEqualTo(1);
+            await Assert
+                .That(breakpoint.Action)
+                .IsEqualTo(DebuggerAction.ActionType.SetBreakpoint)
+                .ConfigureAwait(false);
+            await Assert.That(breakpoint.SourceId).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(breakpoint.SourceLine).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,19 +93,25 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 "<Command cmd=\"breakpoint\" arg=\"clear\" src=\"5\" line=\"6\" col=\"7\" />"
             );
             DebuggerAction clear = server.GetAction(0, sourceRef);
-            await Assert.That(clear.Action).IsEqualTo(DebuggerAction.ActionType.ClearBreakpoint);
-            await Assert.That(clear.SourceId).IsEqualTo(5);
-            await Assert.That(clear.SourceLine).IsEqualTo(6);
-            await Assert.That(clear.SourceCol).IsEqualTo(7);
+            await Assert
+                .That(clear.Action)
+                .IsEqualTo(DebuggerAction.ActionType.ClearBreakpoint)
+                .ConfigureAwait(false);
+            await Assert.That(clear.SourceId).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(clear.SourceLine).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(clear.SourceCol).IsEqualTo(7).ConfigureAwait(false);
 
             client.SendCommand(
                 "<Command cmd=\"breakpoint\" arg=\"\" src=\"9\" line=\"3\" col=\"2\" />"
             );
             DebuggerAction toggle = server.GetAction(0, sourceRef);
-            await Assert.That(toggle.Action).IsEqualTo(DebuggerAction.ActionType.ToggleBreakpoint);
-            await Assert.That(toggle.SourceId).IsEqualTo(9);
-            await Assert.That(toggle.SourceLine).IsEqualTo(3);
-            await Assert.That(toggle.SourceCol).IsEqualTo(2);
+            await Assert
+                .That(toggle.Action)
+                .IsEqualTo(DebuggerAction.ActionType.ToggleBreakpoint)
+                .ConfigureAwait(false);
+            await Assert.That(toggle.SourceId).IsEqualTo(9).ConfigureAwait(false);
+            await Assert.That(toggle.SourceLine).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(toggle.SourceCol).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -111,10 +129,13 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"value\" />");
 
             DebuggerAction refresh = server.GetAction(0, sourceRef);
-            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(refresh.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             List<string> watchCodes = server.GetWatchItems().Select(w => w.ExpressionCode).ToList();
-            await Assert.That(watchCodes).Contains("value");
+            await Assert.That(watchCodes).Contains("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -132,17 +153,20 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"watched\" />");
             DebuggerAction refresh = server.GetAction(0, sourceRef);
-            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(refresh.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             DynamicExpression watch = server.GetWatchItems().Single();
             DynValue firstValue = watch.Evaluate();
-            await Assert.That(watch.IsConstant()).IsFalse();
-            await Assert.That(firstValue.Type).IsEqualTo(DataType.Number);
-            await Assert.That(firstValue.Number).IsEqualTo(10);
+            await Assert.That(watch.IsConstant()).IsFalse().ConfigureAwait(false);
+            await Assert.That(firstValue.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(firstValue.Number).IsEqualTo(10).ConfigureAwait(false);
 
             script.Globals.Set("watched", DynValue.NewNumber(42));
             DynValue updatedValue = watch.Evaluate();
-            await Assert.That(updatedValue.Number).IsEqualTo(42);
+            await Assert.That(updatedValue.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -159,19 +183,22 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             client.SendCommand("<Command cmd=\"addwatch\" arg=\"function(()\" />");
             DebuggerAction refresh = server.GetAction(0, sourceRef);
-            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(refresh.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             List<string> messages = client.ReadUntil(
                 payloads => payloads.Any(m => ContainsOrdinal(m, "Error setting watch")),
                 DefaultTimeout
             );
-            await Assert.That(messages.Last()).Contains("function(()");
+            await Assert.That(messages.Last()).Contains("function(()").ConfigureAwait(false);
 
             DynamicExpression watch = server.GetWatchItems().Single();
             DynValue value = watch.Evaluate();
-            await Assert.That(watch.ExpressionCode).IsEqualTo("function(()");
-            await Assert.That(watch.IsConstant()).IsTrue();
-            await Assert.That(value.Type).IsEqualTo(DataType.String);
+            await Assert.That(watch.ExpressionCode).IsEqualTo("function(()").ConfigureAwait(false);
+            await Assert.That(watch.IsConstant()).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -190,17 +217,17 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 payloads => payloads.Any(m => ContainsOrdinal(m, "<error_rx")),
                 DefaultTimeout
             );
-            await Assert.That(messages.Last()).Contains("timeout");
+            await Assert.That(messages.Last()).Contains("timeout").ConfigureAwait(false);
 
             bool shouldPause = server.SignalRuntimeException(
                 new ScriptRuntimeException("timeout occurred")
             );
-            await Assert.That(shouldPause).IsTrue();
+            await Assert.That(shouldPause).IsTrue().ConfigureAwait(false);
 
             bool otherPause = server.SignalRuntimeException(
                 new ScriptRuntimeException("other failure")
             );
-            await Assert.That(otherPause).IsFalse();
+            await Assert.That(otherPause).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -221,19 +248,28 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 DefaultTimeout
             );
 
-            await Assert.That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy"))).IsTrue();
-            await Assert.That(server.State).IsEqualTo("Busy");
+            await Assert
+                .That(busyMessages.Any(m => ContainsOrdinal(m, "Host busy")))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(server.State).IsEqualTo("Busy").ConfigureAwait(false);
 
             DebuggerAction refresh = server.GetAction(0, sourceRef);
-            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(refresh.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             List<string> readyMessages = client.ReadUntil(
                 payloads => payloads.Any(m => ContainsOrdinal(m, "Host ready")),
                 DefaultTimeout
             );
 
-            await Assert.That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready"))).IsTrue();
-            await Assert.That(server.State).IsEqualTo("Unknown");
+            await Assert
+                .That(readyMessages.Any(m => ContainsOrdinal(m, "Host ready")))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(server.State).IsEqualTo("Unknown").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -258,8 +294,11 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             client.SendCommand("<Command cmd=\"run\" arg=\"\" />");
 
             DebuggerAction action = server.GetAction(0, sourceRef);
-            await Assert.That(action.Action).IsEqualTo(DebuggerAction.ActionType.Run);
-            await Assert.That(server.IsPauseRequested()).IsFalse();
+            await Assert
+                .That(action.Action)
+                .IsEqualTo(DebuggerAction.ActionType.Run)
+                .ConfigureAwait(false);
+            await Assert.That(server.IsPauseRequested()).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -280,17 +319,23 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             DebuggerAction first = server.GetAction(0, sourceRef);
             DebuggerAction second = server.GetAction(0, sourceRef);
 
-            await Assert.That(first.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
-            await Assert.That(second.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(first.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
+            await Assert
+                .That(second.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             string[] watchExpressions = server
                 .GetWatchItems()
                 .Select(w => w.ExpressionCode)
                 .ToArray();
 
-            await Assert.That(watchExpressions.Length).IsEqualTo(2);
-            await Assert.That(watchExpressions).Contains("alpha");
-            await Assert.That(watchExpressions).Contains("beta");
+            await Assert.That(watchExpressions.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(watchExpressions).Contains("alpha").ConfigureAwait(false);
+            await Assert.That(watchExpressions).Contains("beta").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -312,7 +357,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             client.SendCommand("<Command cmd=\"delwatch\" arg=\"foo, bar\" />");
             DebuggerAction refresh = server.GetAction(0, sourceRef);
 
-            await Assert.That(refresh.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(refresh.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -344,15 +392,22 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             {
                 completed = false;
             }
-            await Assert.That(completed).IsTrue();
+            await Assert.That(completed).IsTrue().ConfigureAwait(false);
 
             List<string> messages = client.ReadAll(TimeSpan.FromMilliseconds(150));
-            await Assert.That(messages.Any(m => ContainsOrdinal(m, "Host busy"))).IsFalse();
+            await Assert
+                .That(messages.Any(m => ContainsOrdinal(m, "Host busy")))
+                .IsFalse()
+                .ConfigureAwait(false);
             DebuggerAction result = await actionTask.ConfigureAwait(false);
-            await Assert.That(result.Action).IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+            await Assert
+                .That(result.Action)
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
             await Assert
                 .That(server.GetWatchItems().Select(w => w.ExpressionCode))
-                .Contains("live");
+                .Contains("live")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -395,9 +450,9 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             );
 
             string payload = callStackMessages.First(m => ContainsOrdinal(m, "<callstack"));
-            await Assert.That(payload).Contains("&lt;chunk-root&gt;");
-            await Assert.That(payload).Contains("foo");
-            await Assert.That(payload).Contains("value=\"42\"");
+            await Assert.That(payload).Contains("&lt;chunk-root&gt;").ConfigureAwait(false);
+            await Assert.That(payload).Contains("foo").ConfigureAwait(false);
+            await Assert.That(payload).Contains("value=\"42\"").ConfigureAwait(false);
 
             server.Update(WatchType.CallStack, frames);
             server.Update(WatchType.VStack, frames);
@@ -437,14 +492,15 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             DebuggerAction refreshAction = server.GetAction(0, sourceRef);
             await Assert
                 .That(refreshAction.Action)
-                .IsEqualTo(DebuggerAction.ActionType.HardRefresh);
+                .IsEqualTo(DebuggerAction.ActionType.HardRefresh)
+                .ConfigureAwait(false);
 
             server.Update(WatchType.Watches, watches);
             List<string> refreshed = client.ReadUntil(
                 payloads => payloads.Any(m => ContainsOrdinal(m, "<watches")),
                 DefaultTimeout
             );
-            await Assert.That(refreshed.Last()).Contains("value");
+            await Assert.That(refreshed.Last()).Contains("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -464,7 +520,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 DefaultTimeout,
                 "Pause command was not processed."
             );
-            await Assert.That(server.IsPauseRequested()).IsTrue();
+            await Assert.That(server.IsPauseRequested()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -482,17 +538,20 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             client.SendCommand("<Command cmd=\"stepin\" arg=\"\" />");
             await Assert
                 .That(server.GetAction(0, sourceRef).Action)
-                .IsEqualTo(DebuggerAction.ActionType.StepIn);
+                .IsEqualTo(DebuggerAction.ActionType.StepIn)
+                .ConfigureAwait(false);
 
             client.SendCommand("<Command cmd=\"stepover\" arg=\"\" />");
             await Assert
                 .That(server.GetAction(0, sourceRef).Action)
-                .IsEqualTo(DebuggerAction.ActionType.StepOver);
+                .IsEqualTo(DebuggerAction.ActionType.StepOver)
+                .ConfigureAwait(false);
 
             client.SendCommand("<Command cmd=\"stepout\" arg=\"\" />");
             await Assert
                 .That(server.GetAction(0, sourceRef).Action)
-                .IsEqualTo(DebuggerAction.ActionType.StepOut);
+                .IsEqualTo(DebuggerAction.ActionType.StepOut)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -523,7 +582,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             server.QueueAction(fresh);
 
             DebuggerAction action = server.GetAction(0, sourceRef);
-            await Assert.That(action.Action).IsEqualTo(DebuggerAction.ActionType.StepIn);
+            await Assert
+                .That(action.Action)
+                .IsEqualTo(DebuggerAction.ActionType.StepIn)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -543,14 +605,17 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             );
 
             bool shouldPause = server.SignalRuntimeException(exception);
-            await Assert.That(shouldPause).IsTrue();
+            await Assert.That(shouldPause).IsTrue().ConfigureAwait(false);
 
             List<string> messages = client.ReadUntil(
                 payloads => payloads.Any(m => ContainsOrdinal(m, "decorated:failure")),
                 DefaultTimeout
             );
 
-            await Assert.That(messages.Any(m => ContainsOrdinal(m, "decorated:failure"))).IsTrue();
+            await Assert
+                .That(messages.Any(m => ContainsOrdinal(m, "decorated:failure")))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -576,9 +641,9 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             );
 
             string last = payloads.Last();
-            await Assert.That(last).Contains("srcid=\"0\"");
-            await Assert.That(last).Contains("lf=\"3\"");
-            await Assert.That(last).Contains("lt=\"4\"");
+            await Assert.That(last).Contains("srcid=\"0\"").ConfigureAwait(false);
+            await Assert.That(last).Contains("lf=\"3\"").ConfigureAwait(false);
+            await Assert.That(last).Contains("lt=\"4\"").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -593,7 +658,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
 
             SourceRef sourceRef = new(0, 0, 0, 1, 1, isStepStop: false);
             DebuggerAction action = server.GetAction(0, sourceRef);
-            await Assert.That(action.Action).IsEqualTo(DebuggerAction.ActionType.Run);
+            await Assert
+                .That(action.Action)
+                .IsEqualTo(DebuggerAction.ActionType.Run)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -609,7 +677,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 DefaultTimeout
             );
 
-            await Assert.That(policy.Last()).Contains("allow-access-from");
+            await Assert.That(policy.Last()).Contains("allow-access-from").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -625,7 +693,7 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 DefaultTimeout,
                 "Debugger client never registered with the server."
             );
-            await Assert.That(server.ConnectedClients).IsEqualTo(1);
+            await Assert.That(server.ConnectedClients).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -634,7 +702,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
             Script script = BuildScript("return 0", "caps.lua");
             using RemoteDebuggerHarness harness = new(script, freeRunAfterAttach: false);
             DebugServer server = harness.Server;
-            await Assert.That(server.GetDebuggerCaps()).IsEqualTo(DebuggerCaps.CanDebugSourceCode);
+            await Assert
+                .That(server.GetDebuggerCaps())
+                .IsEqualTo(DebuggerCaps.CanDebugSourceCode)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -655,7 +726,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 msgs => msgs.Any(m => ContainsOrdinal(m, "execution-completed")),
                 DefaultTimeout
             );
-            await Assert.That(payloads.Last()).Contains("execution-completed");
+            await Assert
+                .That(payloads.Last())
+                .Contains("execution-completed")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -678,7 +752,10 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 DefaultTimeout
             );
 
-            await Assert.That(messages.Any(m => ContainsOrdinal(m, "<welcome"))).IsTrue();
+            await Assert
+                .That(messages.Any(m => ContainsOrdinal(m, "<welcome")))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         private static ScriptRuntimeException CreateDecoratedException(

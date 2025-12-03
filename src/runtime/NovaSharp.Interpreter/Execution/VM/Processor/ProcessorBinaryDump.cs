@@ -24,12 +24,23 @@ namespace NovaSharp.Interpreter.Execution.VM
         /// <returns><c>true</c> if the header matches; otherwise, <c>false</c>.</returns>
         internal static bool IsDumpStream(Stream stream)
         {
-            if (stream.Length >= 8)
+            if (!stream.CanSeek)
+            {
+                return false;
+            }
+
+            long originalPosition = stream.Position;
+
+            if (stream.Length - originalPosition >= 8)
             {
                 using BinaryReader br = new(stream, Encoding.UTF8);
                 ulong magic = br.ReadUInt64();
-                stream.Seek(-8, SeekOrigin.Current);
+                stream.Seek(originalPosition, SeekOrigin.Begin);
                 return magic == DumpChunkMagic;
+            }
+            else
+            {
+                stream.Seek(originalPosition, SeekOrigin.Begin);
             }
             return false;
         }

@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
+    using System.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -339,11 +340,15 @@ namespace NovaSharp.Interpreter.CoreLib
 
             try
             {
-                Script s = executionContext.Script;
-                DynValue v = args.AsType(0, "dofile", DataType.String, false);
+                Script script = executionContext.Script;
+                if (args.Count == 0 || args[0].IsNil())
+                {
+                    DynValue stdinChunk = LoadFromStandardInput(script);
+                    return DynValue.NewTailCallReq(stdinChunk);
+                }
 
-                DynValue fn = s.LoadFile(v.String);
-
+                DynValue fileArgument = args.AsType(0, "dofile", DataType.String, false);
+                DynValue fn = script.LoadFile(fileArgument.String);
                 return DynValue.NewTailCallReq(fn); // tail call to dofile
             }
             catch (SyntaxErrorException ex)
@@ -399,6 +404,25 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue fn = s.RequireModule(v.String);
 
             return fn; // tail call to dofile
+        }
+
+        private static DynValue LoadFromStandardInput(Script script)
+        {
+            Stream stdin = script.Options.Stdin;
+
+            if (stdin == null)
+            {
+                stdin = Script.GlobalOptions.Platform.GetStandardStream(
+                    Platforms.StandardFileType.StdIn
+                );
+            }
+
+            if (stdin == null)
+            {
+                throw new ScriptRuntimeException("stdin stream is not available.");
+            }
+
+            return script.LoadStream(stdin, null, "stdin");
         }
 
         /// <summary>

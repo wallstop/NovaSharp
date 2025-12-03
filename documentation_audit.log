@@ -2,8 +2,18 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 2 undocumented public/internal type declarations.
+Found 10 undocumented public/internal type declarations.
 
+- src/runtime/NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
+  - line 21: missing XML docs for `Name`
+  - line 23: missing XML docs for `Type`
+  - line 25: missing XML docs for `Index()`
+  - line 36: missing XML docs for `SetIndex()`
+  - line 53: missing XML docs for `AsString()`
+  - line 58: missing XML docs for `MetaIndex()`
+  - line 63: missing XML docs for `IsTypeCompatible()`
 - src/runtime/NovaSharp.Interpreter/Script.cs
   - line 183: missing XML docs for `BeginDefaultOptionsScope()`
   - line 1212: missing XML docs for `Dispose()`
+- src/tooling/NovaSharp.Cli/ArgumentValidation.cs
+  - line 10: missing XML docs for `ThrowIfNull()`

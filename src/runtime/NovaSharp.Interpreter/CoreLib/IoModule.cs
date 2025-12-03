@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.PredefinedUserData;
+    using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
 
@@ -33,7 +34,12 @@ namespace NovaSharp.Interpreter.CoreLib
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
             ioTable = ModuleArgumentValidation.RequireTable(ioTable, nameof(ioTable));
 
-            UserData.RegisterType<FileUserDataBase>(InteropAccessMode.Default, "file");
+            StandardUserDataDescriptor baseDescriptor = new(
+                typeof(FileUserDataBase),
+                InteropAccessMode.Default,
+                "file"
+            );
+            UserData.RegisterType<FileUserDataBase>(new FileUserDataDescriptor(baseDescriptor));
 
             Table meta = new(ioTable.OwnerScript);
             DynValue index = DynValue.NewCallback(
@@ -105,6 +111,7 @@ namespace NovaSharp.Interpreter.CoreLib
             Table r = s.Registry;
 
             optionsStream = optionsStream ?? Script.GlobalOptions.Platform.GetStandardStream(file);
+            optionsStream ??= Stream.Null;
 
             FileUserDataBase udb = null;
 
@@ -117,7 +124,13 @@ namespace NovaSharp.Interpreter.CoreLib
                 udb = StandardIoFileUserDataBase.CreateOutputStream(optionsStream);
             }
 
-            r.Set("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString(), UserData.Create(udb));
+            DynValue handle = UserData.Create(udb);
+            if (handle == null)
+            {
+                throw new InvalidOperationException("Failed to create standard IO userdata.");
+            }
+
+            r.Set("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString(), handle);
         }
 
         private static FileUserDataBase GetDefaultFile(
@@ -312,11 +325,13 @@ namespace NovaSharp.Interpreter.CoreLib
             if (args[0].Type == DataType.String || args[0].Type == DataType.Number)
             {
                 string fileName = args[0].CastToString();
+                bool isInput = defaultFiles == StandardFileType.StdIn;
                 inp = Open(
                     executionContext,
                     fileName,
                     GetUtf8Encoding(),
-                    defaultFiles == StandardFileType.StdIn ? "r" : "w"
+                    isInput ? "r" : "w",
+                    isBinaryMode: false
                 );
             }
             else
@@ -466,7 +481,7 @@ namespace NovaSharp.Interpreter.CoreLib
                     e = Encoding.GetEncoding(encoding);
                 }
 
-                return UserData.Create(Open(executionContext, filename, e, mode));
+                return UserData.Create(Open(executionContext, filename, e, mode, isBinary));
             }
             catch (Exception ex) when (IsRecoverableIoOpenException(ex))
             {
@@ -591,7 +606,13 @@ namespace NovaSharp.Interpreter.CoreLib
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             string tmpfilename = Script.GlobalOptions.Platform.GetTempFileName();
-            FileUserDataBase file = Open(executionContext, tmpfilename, GetUtf8Encoding(), "w");
+            FileUserDataBase file = Open(
+                executionContext,
+                tmpfilename,
+                GetUtf8Encoding(),
+                "w",
+                isBinaryMode: true
+            );
             return UserData.Create(file);
         }
 
@@ -622,10 +643,17 @@ namespace NovaSharp.Interpreter.CoreLib
             ScriptExecutionContext executionContext,
             string filename,
             Encoding encoding,
-            string mode
+            string mode,
+            bool isBinaryMode
         )
         {
-            return new FileUserData(executionContext.Script, filename, encoding, mode);
+            return new FileUserData(
+                executionContext.Script,
+                filename,
+                encoding,
+                mode,
+                isBinaryMode
+            );
         }
 
         private static bool ContainsInvalidModeCharacters(string mode)
