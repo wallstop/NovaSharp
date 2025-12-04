@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
 
+    [PlatformDetectorIsolation]
     public sealed class ScriptRunTUnitTests
     {
         [global::TUnit.Core.Test]

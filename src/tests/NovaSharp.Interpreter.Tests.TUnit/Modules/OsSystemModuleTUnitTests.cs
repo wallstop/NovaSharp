@@ -386,11 +386,36 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue tuple = script.DoString("return os.clock(), os.clock()");
 
-            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(tuple.Tuple[0].Number).IsGreaterThanOrEqualTo(0d);
-            await Assert.That(tuple.Tuple[1].Number).IsGreaterThanOrEqualTo(tuple.Tuple[0].Number);
+            // Collect a larger sample of clock values to verify monotonicity
+            const int sampleCount = 1000;
+            DynValue result = script.DoString(
+                $@"
+                local values = {{}}
+                for i = 1, {sampleCount} do
+                    values[i] = os.clock()
+                end
+                return table.unpack(values)
+                "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple.Length).IsEqualTo(sampleCount);
+
+            // Verify all values are monotonically non-decreasing
+            int violations = 0;
+            for (int i = 1; i < sampleCount; i++)
+            {
+                if (result.Tuple[i].Number < result.Tuple[i - 1].Number)
+                {
+                    violations++;
+                }
+            }
+
+            await Assert.That(violations).IsEqualTo(0);
+
+            // Verify the sequence actually advanced
+            await Assert.That(result.Tuple[0].Number).IsGreaterThanOrEqualTo(0d);
         }
 
         [global::TUnit.Core.Test]

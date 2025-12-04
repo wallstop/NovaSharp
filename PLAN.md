@@ -2,8 +2,8 @@
 
 ## Repository Snapshot — 2025-12-04 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true>` enforced.
-- **Tests**: **2,953** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
-- **Coverage**: Interpreter at **95.63% line / 92.81% branch / 97.56% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
+- **Tests**: **2,982** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Coverage**: Interpreter at **95.7% line / 92.9% branch / 97.7% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 
@@ -16,17 +16,21 @@
 ## Active Initiatives
 
 ### 1. Coverage and test depth
-- **Current**: 2,953 tests, **95.63% line / 92.81% branch / 97.56% method** coverage.
+- **Current**: 2,982 tests, **95.7% line / 92.9% branch / 97.7% method** coverage.
 - **Target**: Branch coverage >= 95% to enable `COVERAGE_GATING_MODE=enforce`.
 - **Recent progress** (2025-12-04):
-  - Added 41 tests for `ScriptRuntimeException`: LoopInIndex, LoopInNewIndex, LoopInCall, BadArgumentNoNegativeNumbers, AttemptToCallNonFunc with debugText, null-guard branches for ArithmeticOnNonNumber, BitwiseOnNonInteger, ConcatOnNonString, LenOnInvalidType, CompareInvalidType, IndexType, ConvertObjectFailed, UserDataArgumentTypeMismatch, AccessInstanceMemberOnStatics, constructor paths (Exception, ScriptRuntimeException), Rethrow with GlobalOptions.RethrowExceptionNested, CloseMetamethodExpected null/non-null. Coverage improved from 82.2% → 95%+ line, 66.6% → 100% branch for ScriptRuntimeException.
+  - Added 17 tests for `FunctionMemberDescriptorBase`: CreateCallbackDynValue, GetCallbackAsDynValue, GetCallbackFunction, GetCallback, GetValue, SetValue (throws), MemberAccess, VarArgs with UserData array passthrough, ref/out parameters, VoidWithOutParams, SortDiscriminant, ExtensionMethodType.
+  - Added 7 tests for `Slice<T>`: Reversed property, IsReadOnly, IndexOf, Contains.
+  - Added 5 tests for `DotNetCorePlatformAccessor`: GetStandardStream invalid type, ExecuteCommand empty/whitespace, FilterSupportedCoreModules, GetPlatformNamePrefix.
+  - Added 1 test for `CustomConverterRegistry`: ObsoleteTypedClrToScriptConversion null behavior (documents a bug in the obsolete method).
+  - Previous: Added 41 tests for `ScriptRuntimeException`: LoopInIndex, LoopInNewIndex, LoopInCall, BadArgumentNoNegativeNumbers, AttemptToCallNonFunc with debugText, null-guard branches for ArithmeticOnNonNumber, BitwiseOnNonInteger, ConcatOnNonString, LenOnInvalidType, CompareInvalidType, IndexType, ConvertObjectFailed, UserDataArgumentTypeMismatch, AccessInstanceMemberOnStatics, constructor paths (Exception, ScriptRuntimeException), Rethrow with GlobalOptions.RethrowExceptionNested, CloseMetamethodExpected null/non-null. Coverage improved from 82.2% → 95%+ line, 66.6% → 100% branch for ScriptRuntimeException.
   - Previous: Added 9 tests for `StreamFileUserDataBase`, 6 tests for `OverloadedMethodMemberDescriptor`.
 - **Priority targets** (remaining low-branch coverage files):
-  1. **FunctionMemberDescriptorBase** (84.4%): BuildArgumentList edge cases for extension methods, varargs UserData arrays.
-  2. **DotNetCorePlatformAccessor** (86.1%): Platform-specific paths.
-  3. **ExtensionMethodsRegistry** (50%): Extension method discovery paths.
-  4. **TypeDescriptorRegistry** (83.3%): Descriptor cache paths.
-  5. **CustomConverterRegistry** (86.4%): Converter lookup edge cases.
+  1. **FunctionMemberDescriptorBase** (84.4% → ~85%): Some varargs UserData array passthrough edge cases still uncovered.
+  2. **OverloadedMethodMemberDescriptor** (82.9%): Cache overflow, CheckMatch hasObject mismatch, varargs exact UserData match.
+  3. **DotNetCorePlatformAccessor** (86.1%): Windows shell paths (platform-specific), ExitFast.
+  4. **ExtensionMethodsRegistry** (50%): Extension method discovery paths.
+  5. **TypeDescriptorRegistry** (83.3%): Descriptor cache paths.
 - **Next step**: Continue targeting files under 90% branch coverage.
 
 ### 2. Codebase organization & namespace hygiene

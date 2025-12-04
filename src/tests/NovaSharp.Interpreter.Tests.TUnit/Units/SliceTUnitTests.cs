@@ -161,5 +161,67 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
             await Task.CompletedTask.ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task ReversedPropertyReturnsTrue()
+        {
+            List<int> source = new() { 1, 2, 3, 4, 5 };
+            Slice<int> slice = new(source, from: 1, length: 3, reversed: true);
+
+            await Assert.That(slice.Reversed).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IsReadOnlyReturnsTrue()
+        {
+            List<int> source = new() { 1, 2, 3 };
+            Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
+
+            await Assert.That(slice.IsReadOnly).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexOfReturnsCorrectIndexWhenItemExists()
+        {
+            List<int> source = new() { 10, 20, 30, 40, 50 };
+            Slice<int> slice = new(source, from: 1, length: 3, reversed: false);
+
+            int index = slice.IndexOf(30);
+
+            await Assert.That(index).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexOfReturnsMinusOneWhenItemDoesNotExist()
+        {
+            List<int> source = new() { 10, 20, 30, 40, 50 };
+            Slice<int> slice = new(source, from: 1, length: 3, reversed: false);
+
+            int index = slice.IndexOf(99);
+
+            await Assert.That(index).IsEqualTo(-1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ContainsReturnsTrueWhenItemExists()
+        {
+            List<string> source = new() { "a", "b", "c", "d" };
+            Slice<string> slice = new(source, from: 0, length: 3, reversed: false);
+
+            bool contains = slice.Contains("b");
+
+            await Assert.That(contains).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ContainsReturnsFalseWhenItemOutsideSlice()
+        {
+            List<string> source = new() { "a", "b", "c", "d" };
+            Slice<string> slice = new(source, from: 0, length: 2, reversed: false);
+
+            bool contains = slice.Contains("c");
+
+            await Assert.That(contains).IsFalse().ConfigureAwait(false);
+        }
     }
 }

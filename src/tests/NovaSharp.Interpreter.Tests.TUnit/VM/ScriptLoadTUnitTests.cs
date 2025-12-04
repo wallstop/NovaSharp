@@ -315,6 +315,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         }
 
         [global::TUnit.Core.Test]
+        [PlatformDetectorIsolation]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
             using PlatformDetectorOverrideScope platformScope =

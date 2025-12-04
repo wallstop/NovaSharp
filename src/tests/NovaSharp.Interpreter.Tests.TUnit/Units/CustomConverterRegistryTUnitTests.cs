@@ -302,5 +302,35 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, DynValue>) overload."
             );
         }
+
+        [global::TUnit.Core.Test]
+        public async Task ObsoleteTypedClrToScriptConversionNullBehavior()
+        {
+            // The obsolete method SetClrToScriptCustomConversion<T>(Func<T, DynValue>) has a bug:
+            // when passed null, it should remove the converter, but instead it creates a lambda
+            // that throws NullReferenceException when invoked. This test documents the current behavior.
+            CustomConverterRegistry registry = new();
+            InvokeLegacyClrToScriptConversion<double>(registry, value => DynValue.NewNumber(value));
+
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(double)))
+                .IsNotNull()
+                .ConfigureAwait(false);
+
+            // Passing null to the legacy method doesn't actually remove - it creates a broken lambda
+            InvokeLegacyClrToScriptConversion<double>(registry, null);
+
+            // The converter is still present (the bug) - it wraps a null converter
+            Func<Script, object, DynValue> brokenConverter =
+                registry.GetClrToScriptCustomConversion(typeof(double));
+            await Assert.That(brokenConverter).IsNotNull().ConfigureAwait(false);
+
+            // Invoking the broken converter throws NullReferenceException
+            Script script = new();
+            await Assert
+                .That(() => brokenConverter(script, 1.0))
+                .Throws<NullReferenceException>()
+                .ConfigureAwait(false);
+        }
     }
 }

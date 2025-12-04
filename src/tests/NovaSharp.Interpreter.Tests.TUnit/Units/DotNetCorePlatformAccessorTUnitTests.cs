@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using System.Text;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
@@ -179,6 +180,60 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             using Stream stream = accessor.GetStandardStream(type);
 
             await Assert.That(stream).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetStandardStreamThrowsForInvalidType()
+        {
+            DotNetCorePlatformAccessor accessor = new();
+            StandardFileType invalidType = (StandardFileType)999;
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                accessor.GetStandardStream(invalidType)
+            )!;
+
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExecuteCommandWithEmptyStringReturnsZero()
+        {
+            DotNetCorePlatformAccessor accessor = new();
+
+            int result = accessor.ExecuteCommand(string.Empty);
+
+            await Assert.That(result).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExecuteCommandWithWhitespaceOnlyReturnsZero()
+        {
+            DotNetCorePlatformAccessor accessor = new();
+
+            int result = accessor.ExecuteCommand("   ");
+
+            await Assert.That(result).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FilterSupportedCoreModulesReturnsInputUnchanged()
+        {
+            DotNetCorePlatformAccessor accessor = new();
+            CoreModules input = CoreModules.Basic | CoreModules.StringLib | CoreModules.Table;
+
+            CoreModules result = accessor.FilterSupportedCoreModules(input);
+
+            await Assert.That(result).IsEqualTo(input).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetPlatformNamePrefixReturnsCore()
+        {
+            DotNetCorePlatformAccessor accessor = new();
+
+            string prefix = accessor.GetPlatformNamePrefix();
+
+            await Assert.That(prefix).IsEqualTo("core").ConfigureAwait(false);
         }
     }
 }
