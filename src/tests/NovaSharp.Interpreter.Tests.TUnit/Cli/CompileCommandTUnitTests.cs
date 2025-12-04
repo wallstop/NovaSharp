@@ -6,10 +6,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
     public sealed class CompileCommandTUnitTests
@@ -29,7 +29,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await File.WriteAllTextAsync(sourcePath, "return 'compiled'").ConfigureAwait(false);
 
             CompileCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             string consoleOutput = string.Empty;
             await ConsoleTestUtilities
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             string targetPath = sourcePath + "-compiled";
             using TempFileScope targetScope = TempFileScope.FromExisting(targetPath);
             CompileCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             command.Execute(context, sourcePath);
 

@@ -5,9 +5,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
     public sealed class ShellCommandManagerTUnitTests
@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    ShellContext context = new(new Script());
+                    ShellContext context = CreateShellContext();
 
                     CommandManager.Execute(context, "help");
 
@@ -61,7 +61,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    ShellContext context = new(new Script());
+                    ShellContext context = CreateShellContext();
 
                     CommandManager.Execute(context, "   help   run   ");
 
@@ -79,7 +79,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    ShellContext context = new(new Script());
+                    ShellContext context = CreateShellContext();
 
                     CommandManager.Execute(context, "nope");
 
@@ -105,7 +105,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task NullCommandLineThrowsArgumentNullException()
         {
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
             {
@@ -121,7 +121,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(async consoleScope =>
                 {
-                    ShellContext context = new(new Script());
+                    ShellContext context = CreateShellContext();
 
                     CommandManager.Execute(context, "     ");
 

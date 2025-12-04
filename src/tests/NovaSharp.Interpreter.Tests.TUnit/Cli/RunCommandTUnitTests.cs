@@ -6,11 +6,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     public sealed class RunCommandTUnitTests
     {
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task ExecuteWithoutArgumentsShowsSyntax()
         {
             RunCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             await WithConsoleAsync(async console =>
                 {
@@ -44,7 +44,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
             await File.WriteAllTextAsync(scriptPath, "result = 42").ConfigureAwait(false);
 
             RunCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             await WithConsoleAsync(async console =>
                 {

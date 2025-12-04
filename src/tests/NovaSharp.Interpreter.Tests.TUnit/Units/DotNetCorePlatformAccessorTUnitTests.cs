@@ -77,8 +77,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         public async Task OpenFileRespectsModeAndAccess()
         {
             DotNetCorePlatformAccessor accessor = new();
-            string path = Path.GetTempFileName();
-            using TempFileScope tempFileScope = TempFileScope.FromExisting(path);
+            using TempFileScope tempFileScope = TempFileScope.Create(createFile: true);
 
             using Stream stream = accessor.OpenFile(
                 script: null,

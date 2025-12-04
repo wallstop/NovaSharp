@@ -452,7 +452,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static ShellContext CreateShellContext()
         {
-            return new ShellContext(new Script());
+            return new ShellContext(new Script(CoreModules.PresetComplete));
         }
 
         private static void RunInterpreterLoop(ReplInterpreter interpreter)

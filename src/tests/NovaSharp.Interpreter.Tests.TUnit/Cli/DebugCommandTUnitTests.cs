@@ -7,9 +7,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.RemoteDebugger;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     public sealed class DebugCommandTUnitTests
     {
@@ -23,8 +23,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
             await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
 
-            Script script = new();
-            ShellContext context = new(script);
+            Script script = CreateScript();
+            ShellContext context = CreateShellContext(script);
             DebugCommand command = new();
 
             StubDebuggerBridge bridge = new();
@@ -66,8 +66,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .ConfigureAwait(false);
             await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
 
-            Script script = new();
-            ShellContext context = new(script);
+            Script script = CreateScript();
+            ShellContext context = CreateShellContext(script);
             DebugCommand command = new();
 
             StubDebuggerBridge bridge = new();

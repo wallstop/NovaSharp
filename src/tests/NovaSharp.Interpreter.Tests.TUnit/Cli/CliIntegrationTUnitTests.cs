@@ -98,6 +98,36 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        public async Task RunScriptArgumentLoadsDebugModule()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope scriptScope = TempFileScope.Create(
+                namePrefix: "cli-debug-",
+                extension: ".lua"
+            );
+            string scriptPath = scriptScope.FilePath;
+            await File.WriteAllTextAsync(
+                    scriptPath,
+                    "local dbg = require('debug')\n"
+                        + "if dbg and dbg.traceback then print('debug-ok') else error('debug missing') end"
+                )
+                .ConfigureAwait(false);
+
+            await WithConsoleAsync(async console =>
+                {
+                    bool handled = Program.CheckArgs(new[] { scriptPath }, CreateShellContext());
+
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    await Assert
+                        .That(console.Writer.ToString())
+                        .Contains("debug-ok")
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CheckArgsExecuteCommandRunsHelpCommand()
         {
             await WithConsoleAsync(async console =>
@@ -425,7 +455,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static ShellContext CreateShellContext()
         {
-            return new ShellContext(new Script());
+            return new ShellContext(new Script(CoreModules.PresetComplete));
         }
 
         private static Task WithConsoleAsync(

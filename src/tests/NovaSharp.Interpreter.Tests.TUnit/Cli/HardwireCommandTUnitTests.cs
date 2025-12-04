@@ -32,7 +32,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .WithConsoleRedirectionAsync(
                     async consoleScope =>
                     {
-                        command.Execute(new ShellContext(new Script()), string.Empty);
+                        command.Execute(CreateShellContext(), string.Empty);
                         await Assert
                             .That(consoleScope.Writer.ToString())
                             .Contains(CliMessages.HardwireCommandAbortHint)
@@ -57,7 +57,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 .WithConsoleRedirectionAsync(
                     async consoleScope =>
                     {
-                        command.Execute(new ShellContext(new Script()), string.Empty);
+                        command.Execute(CreateShellContext(), string.Empty);
 
                         await Assert
                             .That(consoleScope.Writer.ToString())
@@ -137,7 +137,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     async consoleScope =>
                     {
                         HardwireCommand command = new();
-                        command.Execute(new ShellContext(new Script()), string.Empty);
+                        command.Execute(CreateShellContext(), string.Empty);
 
                         await Assert
                             .That(consoleScope.Writer.ToString())
@@ -272,6 +272,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     .DoesNotContain("visibility is 'internal'")
                     .ConfigureAwait(false);
             }
+        }
+
+        private static ShellContext CreateShellContext()
+        {
+            return new ShellContext(new Script(CoreModules.PresetComplete));
         }
     }
 }

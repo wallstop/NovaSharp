@@ -6,10 +6,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
     public sealed class HelpCommandTUnitTests
@@ -106,12 +106,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                     captureError: false
                 )
                 .ConfigureAwait(false);
-        }
-
-        private static Script CreateScript(LuaCompatibilityVersion version)
-        {
-            ScriptOptions options = new() { CompatibilityVersion = version };
-            return new Script(options);
         }
     }
 }

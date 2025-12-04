@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: false
                 );
 
-            TestPlatformAccessor accessor = new("testprefix");
+            using TestPlatformAccessor accessor = new("testprefix");
             string name = accessor.GetPlatformName();
 
             await Assert.That(name).StartsWith("testprefix.");
@@ -50,7 +51,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: true
                 );
 
-            TestPlatformAccessor accessor = new("unityprefix");
+            using TestPlatformAccessor accessor = new("unityprefix");
             string name = accessor.GetPlatformName();
 
             await Assert.That(name).Contains("unityprefix.unity.unknownhw.unknown");
@@ -72,7 +73,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: false
                 );
 
-            TestPlatformAccessor accessor = new("mono-unity");
+            using TestPlatformAccessor accessor = new("mono-unity");
             string name = accessor.GetPlatformName();
 
             await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
@@ -94,7 +95,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: false
                 );
 
-            TestPlatformAccessor accessor = new("unknown-unity");
+            using TestPlatformAccessor accessor = new("unknown-unity");
             string name = accessor.GetPlatformName();
 
             await Assert.That(PlatformAutoDetector.IsRunningOnUnity).IsTrue();
@@ -116,7 +117,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: false
                 );
 
-            TestPlatformAccessor accessor = new("managed");
+            using TestPlatformAccessor accessor = new("managed");
             string name = accessor.GetPlatformName();
 
             await Assert.That(name).Contains(".dotnet");
@@ -125,7 +126,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task DefaultInputWithPromptCallsObsoleteOverload()
         {
-            TestPlatformAccessor accessor = new("input");
+            using TestPlatformAccessor accessor = new("input");
             accessor.DefaultInputResult = "line";
 
             string result = accessor.DefaultInput("prompt> ");
@@ -137,7 +138,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task DefaultInputReturnsNullForBaseImplementation()
         {
-            BaseDefaultInputAccessor accessor = new("base");
+            using BaseDefaultInputAccessor accessor = new("base");
 
             string result = accessor.DefaultInput("prompt> ");
 
@@ -157,13 +158,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
                     aot: true
                 );
 
-            TestPlatformAccessor accessor = new("aot");
+            using TestPlatformAccessor accessor = new("aot");
             await Assert.That(accessor.IsRunningOnAOT()).IsTrue();
         }
 
-        private sealed class TestPlatformAccessor : PlatformAccessorBase
+        private sealed class TestPlatformAccessor : PlatformAccessorBase, IDisposable
         {
             private readonly string _prefix;
+            private readonly List<TempFileScope> _tempFiles = new List<TempFileScope>();
+            private bool _disposed;
 
             public TestPlatformAccessor(string prefix)
             {
@@ -208,7 +211,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
 
             public override string GetTempFileName()
             {
-                return Path.GetTempFileName();
+                ObjectDisposedException.ThrowIf(_disposed, nameof(TestPlatformAccessor));
+                TempFileScope scope = TempFileScope.Create(createFile: true);
+                _tempFiles.Add(scope);
+                return scope.FilePath;
             }
 
             public override void ExitFast(int exitCode)
@@ -239,11 +245,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
             {
                 return Environment.GetEnvironmentVariable(envvarname);
             }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                for (int index = 0; index < _tempFiles.Count; index++)
+                {
+                    _tempFiles[index].Dispose();
+                }
+
+                _tempFiles.Clear();
+                _disposed = true;
+            }
         }
 
-        private sealed class BaseDefaultInputAccessor : PlatformAccessorBase
+        private sealed class BaseDefaultInputAccessor : PlatformAccessorBase, IDisposable
         {
             private readonly string _prefix;
+            private readonly List<TempFileScope> _tempFiles = new List<TempFileScope>();
+            private bool _disposed;
 
             public BaseDefaultInputAccessor(string prefix)
             {
@@ -274,7 +298,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
 
             public override string GetTempFileName()
             {
-                return Path.GetTempFileName();
+                ObjectDisposedException.ThrowIf(_disposed, nameof(BaseDefaultInputAccessor));
+                TempFileScope scope = TempFileScope.Create(createFile: true);
+                _tempFiles.Add(scope);
+                return scope.FilePath;
             }
 
             public override void ExitFast(int exitCode) { }
@@ -301,6 +328,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Platforms
             public override string GetEnvironmentVariable(string envvarname)
             {
                 return Environment.GetEnvironmentVariable(envvarname);
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                for (int index = 0; index < _tempFiles.Count; index++)
+                {
+                    _tempFiles[index].Dispose();
+                }
+
+                _tempFiles.Clear();
+                _disposed = true;
             }
         }
     }

@@ -5,9 +5,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
     public sealed class ExitCommandTUnitTests
@@ -66,7 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task ExecuteMarksContextForExit()
         {
             ExitCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             command.Execute(context, string.Empty);
 

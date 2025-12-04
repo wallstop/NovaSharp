@@ -58,6 +58,19 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
+        public async Task StdErrIsFileUserDataHandle()
+        {
+            Script script = CreateScript();
+            DynValue stderr = script.DoString("return io.stderr");
+
+            await Assert.That(stderr.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(stderr.UserData.Object)
+                .IsTypeOf<FileUserDataBase>()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task RequireIoExposesSameStdHandles()
         {
             Script script = CreateScript();
@@ -110,6 +123,25 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
+        public async Task StdOutCannotBeIndexedOrAssigned()
+        {
+            Script script = CreateScript();
+
+            DynValue indexResult = script.DoString("return io.stdout[1]");
+            await Assert.That(indexResult.IsNil()).IsTrue().ConfigureAwait(false);
+
+            ScriptRuntimeException assignException = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                script.DoString("io.stdout[1] = 42");
+            });
+
+            await Assert
+                .That(assignException.Message)
+                .Contains("attempt to index")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task StdInArithmeticThrows()
         {
             Script script = CreateScript();
@@ -133,10 +165,41 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
+        public async Task StdOutArithmeticThrows()
+        {
+            Script script = CreateScript();
+
+            await AssertThrowsAsync(script, "return io.stdout + 1", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout - 1", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout * 2", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout / 2", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout % 2", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout ^ 2", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return -io.stdout", "attempt to perform arithmetic")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return #io.stdout", "attempt to get length of")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task StdInConcatenationThrows()
         {
             Script script = CreateScript();
             await AssertThrowsAsync(script, "return io.stdin .. 'tail'", "attempt to concatenate")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task StdOutConcatenationThrows()
+        {
+            Script script = CreateScript();
+            await AssertThrowsAsync(script, "return io.stdout .. 'tail'", "attempt to concatenate")
                 .ConfigureAwait(false);
         }
 
@@ -160,6 +223,29 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await AssertThrowsAsync(script, "return io.stdin > 0", "attempt to compare")
                 .ConfigureAwait(false);
             await AssertThrowsAsync(script, "return io.stdin >= 0", "attempt to compare")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task StdOutComparisonsThrow()
+        {
+            Script script = CreateScript();
+
+            await AssertThrowsAsync(script, "return io.stdout < io.stdin", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout <= io.stdin", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout > io.stdin", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout >= io.stdin", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout < 0", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout <= 0", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout > 0", "attempt to compare")
+                .ConfigureAwait(false);
+            await AssertThrowsAsync(script, "return io.stdout >= 0", "attempt to compare")
                 .ConfigureAwait(false);
         }
 

@@ -6,11 +6,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
     using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using NovaSharp.Tests.TestInfrastructure.Scopes;
+    using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     public sealed class RegisterCommandTUnitTests
     {
@@ -18,7 +18,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task ExecuteWithUnknownTypePrintsError()
         {
             RegisterCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             await WithConsoleAsync(async console =>
                 {
@@ -36,7 +36,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task ExecuteWithValidTypeRegistersUserData()
         {
             RegisterCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
             Type targetType = typeof(SampleUserData);
 
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
@@ -64,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         public async Task ExecuteWithoutArgumentsListsRegisteredTypes()
         {
             RegisterCommand command = new();
-            ShellContext context = new(new Script());
+            ShellContext context = CreateShellContext();
 
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
