@@ -85,10 +85,10 @@ _MoonSharp baseline cloned from the NovaSharp measurements executed on 2025-11-0
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-\[Host\]     : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+[Host] : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 Comparison : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=Comparison  IterationCount=10  LaunchCount=1\
+Job=Comparison IterationCount=10 LaunchCount=1\
 WarmupCount=2
 
 ```
@@ -115,10 +115,10 @@ WarmupCount=2
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-\[Host\]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+[Host] : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=ShortRun  IterationCount=10  LaunchCount=1\
+Job=ShortRun IterationCount=10 LaunchCount=1\
 WarmupCount=2
 
 ```
@@ -137,10 +137,10 @@ WarmupCount=2
 BenchmarkDotNet v0.13.12, Windows 11 (10.0.26200.6899)
 Unknown processor
 .NET SDK 9.0.306
-\[Host\]   : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
+[Host] : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 ShortRun : .NET 8.0.21 (8.0.2125.47513), X64 RyuJIT AVX2
 
-Job=ShortRun  IterationCount=10  LaunchCount=1\
+Job=ShortRun IterationCount=10 LaunchCount=1\
 WarmupCount=2
 
 ```
