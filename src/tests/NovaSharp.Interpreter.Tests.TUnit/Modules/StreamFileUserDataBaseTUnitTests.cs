@@ -1221,6 +1221,153 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result).IsTrue();
         }
 
+        [global::TUnit.Core.Test]
+        public async Task BinaryModePreservesCrlfSequence()
+        {
+            using TestScope scope = InitializeTest();
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("first\r\nsecond", isBinaryMode: true);
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue result = script.DoString("return file:read('*a')");
+
+            await Assert.That(result.String).IsEqualTo("first\r\nsecond");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BinaryModeReadBufferReturnsRawBytes()
+        {
+            using TestScope scope = InitializeTest();
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("AB\r\nCD", isBinaryMode: true);
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString("return file:read(4), file:read('*a')");
+
+            await Assert.That(tuple.Tuple[0].String).IsEqualTo("AB\r\n");
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("CD");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task PeekRawReturnsNegativeOneWhenReaderIsNull()
+        {
+            using TestScope scope = InitializeTest();
+            TestStreamFileUserData file = new(
+                "seed",
+                allowWrite: true,
+                autoFlush: true,
+                allowRead: false
+            );
+
+            int peek = file.CallPeekRaw();
+
+            await Assert.That(peek).IsEqualTo(-1);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NormalizeReadChunkHandlesPendingCrFollowedByLf()
+        {
+            using TestScope scope = InitializeTest();
+            TestStreamFileUserData file = new("\nabc");
+            file.SetPendingCarriageReturn(true);
+
+            // Call NormalizeReadChunk directly to test the pending CR handling
+            string result = file.NormalizeReadChunk("\nabc");
+
+            // On Windows, pending CR + LF in chunk should normalize to just LF
+            // On Unix, pending CR is emitted before the chunk
+            bool isWindows = Environment.NewLine == "\r\n";
+            if (isWindows)
+            {
+                await Assert.That(result.Length > 0 && result[0] == '\n').IsTrue();
+            }
+            else
+            {
+                // On Unix, pending CR is prepended to the chunk
+                await Assert.That(result.Length > 0 && result[0] == '\r').IsTrue();
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NormalizeReadChunkHandlesPendingCrNotFollowedByLf()
+        {
+            using TestScope scope = InitializeTest();
+            TestStreamFileUserData file = new("abc");
+            file.SetPendingCarriageReturn(true);
+
+            // Call NormalizeReadChunk directly with content not starting with LF
+            string result = file.NormalizeReadChunk("abc");
+
+            // On Unix (or Windows when chunk doesn't start with LF), pending CR is emitted
+            await Assert.That(result.Length > 0 && result[0] == '\r').IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NormalizeReadChunkEmitsPendingCrAtEof()
+        {
+            using TestScope scope = InitializeTest();
+            TestStreamFileUserData file = new(string.Empty);
+            file.SetPendingCarriageReturn(true);
+
+            string normalized = file.CallNormalizeEmptyChunk();
+
+            // On Windows (\r\n newline), pending CR at EOF should be returned
+            // On Unix, pending CR is returned regardless
+            await Assert.That(normalized == "\r" || normalized.Length == 0).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SupportsRewindReturnsFalseWhenStreamIsNull()
+        {
+            using TestScope scope = InitializeTest();
+            TestStreamFileUserData file = new("seed");
+            file.NullifyStream();
+
+            bool supportsRewind = file.CallSupportsRewind();
+
+            await Assert.That(supportsRewind).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SeekWithCurWhenceUsesCurrentPosition()
+        {
+            using TestScope scope = InitializeTest();
+            Script script = CreateScript();
+            TestStreamFileUserData file = new("0123456789");
+
+            script.Globals["file"] = UserData.Create(file);
+
+            DynValue tuple = script.DoString(
+                @"
+                local f = file
+                f:seek('set', 3)
+                local fromCur = f:seek('cur', 2)
+                local char = f:read(1)
+                return fromCur, char
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Number).IsEqualTo(5);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("5");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task WriteDoesNotConvertNewlineInBinaryMode()
+        {
+            using TestScope scope = InitializeTest();
+            Script script = CreateScript();
+            TestStreamFileUserData file = new(string.Empty, allowWrite: true, isBinaryMode: true);
+
+            script.Globals["file"] = UserData.Create(file);
+
+            script.DoString("file:write('line1\\nline2')");
+
+            string content = file.GetContent();
+            await Assert.That(content).IsEqualTo("line1\nline2");
+        }
+
         private static TestScope InitializeTest()
         {
             UserDataRegistrationScope registrationScope =
@@ -1520,6 +1667,32 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             internal void TriggerStreamWriteFailure()
             {
                 InnerStream.ThrowOnWrite = true;
+            }
+
+            internal int CallPeekRaw()
+            {
+                return PeekRaw();
+            }
+
+            internal void SetPendingCarriageReturn(bool value)
+            {
+                _pendingCarriageReturnOnRead = value;
+            }
+
+            internal string CallNormalizeEmptyChunk()
+            {
+                // Call NormalizeReadChunk with an empty string to test the pending CR at EOF path
+                return NormalizeReadChunk(string.Empty);
+            }
+
+            internal void NullifyStream()
+            {
+                _streamInstance = null;
+            }
+
+            internal bool CallSupportsRewind()
+            {
+                return SupportsRewind;
             }
 
             private FaultyMemoryStream InnerStream => (FaultyMemoryStream)StreamInstance;

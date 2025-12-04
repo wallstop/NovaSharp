@@ -28,9 +28,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ReplaceOverwritesBitsInProvidedRange()
         {
+            // Replace bits 4-7 of 0 with 0b_1010 (10 decimal) = 0b_1010_0000 (160)
+            // Per Lua spec: only the low `width` bits of u are used
             DynValue result = Bit32Module.Replace(
                 CreateContext(),
-                CreateNumberArgs(0, 0b_1010_0000, 4, 4)
+                CreateNumberArgs(0, 0b_1010, 4, 4)
             );
 
             await Assert.That(result.Number).IsEqualTo((double)0b_1010_0000);
@@ -413,14 +415,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         /// </summary>
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(0x89ABCDEFu, 0, 8, 0xEFu, "extract low byte from high value")]
-        [global::TUnit.Core.Arguments(0x89ABCDEFu, 24, 8, 0x89u, "extract high byte")]
-        [global::TUnit.Core.Arguments(
-            0xFFFFFFFFu,
-            16,
-            16,
-            0xFFFFu,
-            "extract middle word from all ones"
-        )]
+        [global::TUnit.Core.Arguments(0x89ABCDEFu, 24, 7, 0x09u, "extract partial high byte")]
+        [global::TUnit.Core.Arguments(0xFFFFFFFFu, 8, 16, 0xFFFFu, "extract middle word")]
+        [global::TUnit.Core.Arguments(0x80000000u, 31, 1, 0x01u, "extract sign bit")]
         public async Task ExtractWorksWithHighBitValues(
             uint value,
             int field,
@@ -440,6 +437,201 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
                 .Because(
                     $"Extract(0x{value:X8}, {field}, {width}) [{description}] should be 0x{expected:X8}"
                 );
+        }
+
+        /// <summary>
+        /// Tests extract at maximum valid boundaries (pos+width=32).
+        /// Validates Lua 5.2 spec: pos in [0,31], pos+width in [1,32].
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0xFFFFFFFFu, 31, 1, 0x01u, "pos=31, width=1 (pos+width=32)")]
+        [global::TUnit.Core.Arguments(
+            0xFFFFFFFFu,
+            0,
+            32,
+            0xFFFFFFFFu,
+            "pos=0, width=32 (full word)"
+        )]
+        [global::TUnit.Core.Arguments(0xFF000000u, 24, 8, 0xFFu, "pos=24, width=8 (pos+width=32)")]
+        [global::TUnit.Core.Arguments(
+            0x12345678u,
+            16,
+            16,
+            0x1234u,
+            "pos=16, width=16 (upper half)"
+        )]
+        public async Task ExtractWorksAtMaximumBoundary(
+            uint value,
+            int field,
+            int width,
+            uint expected,
+            string description
+        )
+        {
+            DynValue result = Bit32Module.Extract(
+                CreateContext(),
+                CreateNumberArgs(value, field, width)
+            );
+
+            await Assert
+                .That(Convert.ToUInt32(result.Number))
+                .IsEqualTo(expected)
+                .Because(
+                    $"Extract(0x{value:X8}, {field}, {width}) [{description}] should be 0x{expected:X8}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests extract throws for invalid pos or pos+width combinations per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(32, 1, "pos > 31")]
+        [global::TUnit.Core.Arguments(31, 2, "pos + width > 32")]
+        [global::TUnit.Core.Arguments(25, 8, "pos + width = 33")]
+        [global::TUnit.Core.Arguments(0, 33, "width > 32")]
+        public async Task ExtractThrowsForInvalidPosWidth(int pos, int width, string description)
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Extract(CreateContext(), CreateNumberArgs(0xFFFFFFFF, pos, width))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("non-existent bits")
+                .Because($"Extract with {description} should throw 'non-existent bits' error")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests extract throws for width less than or equal to zero per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0, "width = 0")]
+        [global::TUnit.Core.Arguments(-1, "width < 0")]
+        public async Task ExtractThrowsForInvalidWidth(int width, string description)
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Extract(CreateContext(), CreateNumberArgs(0xFFFFFFFF, 0, width))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("width must be positive")
+                .Because($"Extract with {description} should throw 'width must be positive' error")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests extract throws for negative field position per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task ExtractThrowsForNegativePos()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Extract(CreateContext(), CreateNumberArgs(0xFFFFFFFF, -1, 1))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("field cannot be negative")
+                .Because("Extract with negative pos should throw 'field cannot be negative' error")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests replace at maximum valid boundaries (pos+width=32).
+        /// Validates Lua 5.2 spec: pos in [0,31], pos+width in [1,32].
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0x00000000u, 0x01u, 31, 1, 0x80000000u, "set bit 31")]
+        [global::TUnit.Core.Arguments(
+            0x00000000u,
+            0xFFFFFFFFu,
+            0,
+            32,
+            0xFFFFFFFFu,
+            "replace full word"
+        )]
+        [global::TUnit.Core.Arguments(0x00000000u, 0xFFu, 24, 8, 0xFF000000u, "set high byte")]
+        [global::TUnit.Core.Arguments(0xFFFFFFFFu, 0x00u, 24, 8, 0x00FFFFFFu, "clear high byte")]
+        public async Task ReplaceWorksAtMaximumBoundary(
+            uint value,
+            uint insert,
+            int field,
+            int width,
+            uint expected,
+            string description
+        )
+        {
+            DynValue result = Bit32Module.Replace(
+                CreateContext(),
+                CreateNumberArgs(value, insert, field, width)
+            );
+
+            await Assert
+                .That(Convert.ToUInt32(result.Number))
+                .IsEqualTo(expected)
+                .Because(
+                    $"Replace(0x{value:X8}, 0x{insert:X8}, {field}, {width}) [{description}] should be 0x{expected:X8}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests replace throws for invalid pos or pos+width combinations per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(32, 1, "pos > 31")]
+        [global::TUnit.Core.Arguments(31, 2, "pos + width > 32")]
+        [global::TUnit.Core.Arguments(25, 8, "pos + width = 33")]
+        public async Task ReplaceThrowsForInvalidPosWidth(int pos, int width, string description)
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Replace(CreateContext(), CreateNumberArgs(0x00000000, 0xFF, pos, width))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("non-existent bits")
+                .Because($"Replace with {description} should throw 'non-existent bits' error")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests replace throws for width less than or equal to zero per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0, "width = 0")]
+        [global::TUnit.Core.Arguments(-1, "width < 0")]
+        public async Task ReplaceThrowsForInvalidWidth(int width, string description)
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Replace(CreateContext(), CreateNumberArgs(0x00000000, 0xFF, 0, width))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("width must be positive")
+                .Because($"Replace with {description} should throw 'width must be positive' error")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests replace throws for negative field position per Lua 5.2 spec.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task ReplaceThrowsForNegativePos()
+        {
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Bit32Module.Replace(CreateContext(), CreateNumberArgs(0x00000000, 0xFF, -1, 1))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("field cannot be negative")
+                .Because("Replace with negative pos should throw 'field cannot be negative' error")
+                .ConfigureAwait(false);
         }
 
         private static ScriptExecutionContext CreateContext()

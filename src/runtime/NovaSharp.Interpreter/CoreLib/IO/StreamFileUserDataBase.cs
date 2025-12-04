@@ -27,8 +27,11 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         /// <summary>Logical position tracked for buffered readers.</summary>
         protected long _logicalPosition;
 
-        private bool _isBinaryMode;
-        private bool _pendingCarriageReturnOnRead;
+        /// <summary>Whether the file was opened in binary mode.</summary>
+        protected bool _isBinaryMode;
+
+        /// <summary>Whether there's a pending carriage return from the previous read.</summary>
+        protected bool _pendingCarriageReturnOnRead;
 
         /// <summary>
         /// Initializes the userdata with the supplied stream, reader, and writer handles.
@@ -399,7 +402,12 @@ namespace NovaSharp.Interpreter.CoreLib.IO
             _pendingCarriageReturnOnRead = false;
         }
 
-        private string NormalizeReadChunk(string chunk)
+        /// <summary>
+        /// Normalizes CRLF sequences in a read chunk to LF when not in binary mode.
+        /// </summary>
+        /// <param name="chunk">The raw chunk read from the stream.</param>
+        /// <returns>The normalized chunk with CRLF converted to LF on Windows.</returns>
+        internal string NormalizeReadChunk(string chunk)
         {
             if (_isBinaryMode)
             {

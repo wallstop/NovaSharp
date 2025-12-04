@@ -215,7 +215,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             uint mask = NBitMask(width) << pos;
             v = v & (~mask);
-            u = u & (mask);
+            u = (u & NBitMask(width)) << pos;
             v = v | u;
 
             return DynValue.NewNumber(v);
@@ -223,7 +223,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static void ValidatePosWidth(string func, int argPos, int pos, int width)
         {
-            if (pos > 31 || (pos + width) > 31)
+            if (pos > 31 || (pos + width) > 32)
             {
                 throw new ScriptRuntimeException("trying to access non-existent bits");
             }

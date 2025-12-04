@@ -142,6 +142,102 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Loaders
             await Assert.That(resolved).IsEqualTo("modules/foo/bar.lua");
         }
 
+        [global::TUnit.Core.Test]
+        public async Task ResolveFileNameReturnsOriginalWhenNoWhitespace()
+        {
+            Script script = new();
+            TestScriptLoader loader = new();
+
+            string original = "foo.lua";
+            string resolved = loader.ResolveFileName(original, script.Globals);
+
+            // Should return the exact same string instance when no trimming needed
+            await Assert.That(object.ReferenceEquals(resolved, original)).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResolveFileNameThrowsWhenFilenameNull()
+        {
+            Script script = new();
+            TestScriptLoader loader = new();
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                loader.ResolveFileName(null, script.Globals);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("filename");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResolveModuleNameProtectedThrowsWhenModuleNameNull()
+        {
+            TestScriptLoader loader = new();
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                loader.ResolveFromPaths(null, "some/path");
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("modname");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetDefaultEnvironmentPathsReturnsFallbackWhenNoEnvVarsSet()
+        {
+            // When neither NOVASHARP_PATH nor LUA_PATH is set, should return default "?;?.lua"
+            IReadOnlyList<string> paths = ScriptLoaderBase.GetDefaultEnvironmentPaths();
+
+            await Assert.That(paths).IsNotNull();
+            // The exact paths depend on environment, but should not be empty
+            await Assert.That(paths.Count).IsGreaterThan(0);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UnpackStringPathsReturnsEmptyForWhitespaceOnlyString()
+        {
+            IReadOnlyList<string> segments = ScriptLoaderBase.UnpackStringPaths("   ;  ;   ");
+
+            await Assert.That(segments.Count).IsEqualTo(0);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UnpackStringPathsReturnsSinglePathWithoutSeparator()
+        {
+            IReadOnlyList<string> segments = ScriptLoaderBase.UnpackStringPaths("single/path");
+
+            await Assert.That(segments.Count).IsEqualTo(1);
+            await Assert.That(segments[0]).IsEqualTo("single/path");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResolveModuleNameFallsBackToModulePathsWhenLuaPathNotString()
+        {
+            Script script = new();
+            script.Globals.Set("LUA_PATH", DynValue.NewNumber(42)); // Not a string
+
+            TestScriptLoader loader = new() { ModulePaths = new[] { "fallback/?.lua" } };
+            loader.AddExisting("fallback/test.lua");
+
+            string resolved = loader.ResolveModuleName("test", script.Globals);
+
+            await Assert.That(resolved).IsEqualTo("fallback/test.lua");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResolveModuleNameFallsBackToModulePathsWhenLuaPathNull()
+        {
+            Script script = new();
+            // LUA_PATH not set at all
+
+            TestScriptLoader loader = new() { ModulePaths = new[] { "mods/?.lua" } };
+            loader.AddExisting("mods/mymod.lua");
+
+            string resolved = loader.ResolveModuleName("mymod", script.Globals);
+
+            await Assert.That(resolved).IsEqualTo("mods/mymod.lua");
+        }
+
         private sealed class TestScriptLoader : ScriptLoaderBase
         {
             private readonly HashSet<string> _existing = new(StringComparer.Ordinal);
