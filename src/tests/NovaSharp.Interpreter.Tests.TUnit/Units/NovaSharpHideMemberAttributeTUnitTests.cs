@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class NovaSharpHideMemberAttributeTUnitTests
@@ -16,7 +17,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HiddenMembersAreNotExposedToScripts()
         {
-            UserData.RegisterType<HiddenMembersSample>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<HiddenMembersSample>(ensureUnregistered: true);
+            registrationScope.RegisterType<HiddenMembersSample>();
             Script script = new Script(CoreModules.PresetComplete);
             script.Globals["sample"] = UserData.Create(new HiddenMembersSample());
 
@@ -32,7 +35,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HiddenMembersPropagateThroughInheritance()
         {
-            UserData.RegisterType<DerivedHiddenMembersSample>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<DerivedHiddenMembersSample>(
+                    ensureUnregistered: true
+                );
+            registrationScope.RegisterType<DerivedHiddenMembersSample>();
             Script script = new Script(CoreModules.PresetComplete);
             script.Globals["sample"] = UserData.Create(new DerivedHiddenMembersSample());
 

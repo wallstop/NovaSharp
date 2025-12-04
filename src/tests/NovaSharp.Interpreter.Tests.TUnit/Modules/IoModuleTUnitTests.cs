@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::TUnit.Assertions;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.CoreLib;
+    using NovaSharp.Interpreter.CoreLib.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
@@ -16,6 +17,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class IoModuleTUnitTests
@@ -24,7 +26,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task OpenReturnsNilTupleWhenFileDoesNotExist()
         {
             Script script = CreateScript();
-            string path = EscapePath(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt"));
+            using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
+            string path = missingFileScope.EscapedPath;
 
             DynValue result = script.DoString($"return io.open('{path}', 'r')");
 
@@ -72,7 +75,8 @@ end
         public async Task OpenThrowsForInvalidMode()
         {
             Script script = CreateScript();
-            string path = EscapePath(Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt"));
+            using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
+            string path = missingFileScope.EscapedPath;
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -175,6 +179,25 @@ end
             await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.Number);
             await Assert.That(tuple.Tuple[0].Number).IsEqualTo(4d);
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("\n");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IoStdinExposesFileUserDataHandle()
+        {
+            Script script = CreateScript();
+            DynValue stdinHandle = script.DoString("return io.stdin");
+
+            await Assert.That(stdinHandle.Type).IsEqualTo(DataType.UserData);
+            await Assert.That(stdinHandle.UserData.Object).IsTypeOf<FileUserDataBase>();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NumericIndexOnFileHandleReturnsNil()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return io.stdin[1]");
+
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -767,9 +790,8 @@ end
         [global::TUnit.Core.Test]
         public async Task OpenReturnsErrorTupleForUnknownEncoding()
         {
-            string escapedPath = EscapePath(
-                Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt")
-            );
+            using TempFileScope temp = TempFileScope.Create(extension: ".txt");
+            string escapedPath = temp.EscapedPath;
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
@@ -805,9 +827,8 @@ end
         [global::TUnit.Core.Test]
         public async Task OpenRejectsEncodingWhenBinaryModeSpecified()
         {
-            string escapedPath = EscapePath(
-                Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt")
-            );
+            using TempFileScope temp = TempFileScope.Create(extension: ".txt");
+            string escapedPath = temp.EscapedPath;
 
             Script script = CreateScript();
             DynValue tuple = script.DoString(
@@ -852,7 +873,7 @@ end
             string escapedPath = temp.EscapedPath;
             RecordingPlatformAccessor accessor = new(Script.GlobalOptions.Platform);
 
-            using (new PlatformScope(accessor))
+            using (ScriptPlatformScope platformScope = ScriptPlatformScope.Override(accessor))
             {
                 Script script = CreateScript();
                 script.DoString(
@@ -994,14 +1015,6 @@ end
         private static string EscapePath(string path) =>
             path.Replace("\\", "\\\\", StringComparison.Ordinal);
 
-        private static void DeleteFileIfExists(string path)
-        {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
-
         private static async Task<DynValue> ReadNumberFromContent(string content)
         {
             using TempFileScope temp = TempFileScope.CreateWithText(content);
@@ -1022,25 +1035,6 @@ end
         }
 
         private sealed class SampleUserData { }
-
-        private sealed class PlatformScope : IDisposable
-        {
-            private readonly IDisposable _scope;
-            private readonly IPlatformAccessor _previous;
-
-            internal PlatformScope(IPlatformAccessor replacement)
-            {
-                _scope = Script.BeginGlobalOptionsScope();
-                _previous = Script.GlobalOptions.Platform;
-                Script.GlobalOptions.Platform = replacement;
-            }
-
-            public void Dispose()
-            {
-                Script.GlobalOptions.Platform = _previous;
-                _scope.Dispose();
-            }
-        }
 
         private sealed class RecordingPlatformAccessor : IPlatformAccessor
         {
@@ -1156,47 +1150,6 @@ end
 
                     base.Dispose(disposing);
                 }
-            }
-        }
-
-        private sealed class TempFileScope : IDisposable
-        {
-            private TempFileScope(string path)
-            {
-                FilePath = path;
-            }
-
-            internal string FilePath { get; }
-
-            internal string EscapedPath => EscapePath(FilePath);
-
-            public static TempFileScope CreateEmpty() => CreateWithText(string.Empty);
-
-            public static TempFileScope CreateWithText(string content, Encoding encoding = null)
-            {
-                string path = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(),
-                    $"{Guid.NewGuid():N}.txt"
-                );
-                Encoding writerEncoding =
-                    encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-                File.WriteAllText(path, content ?? string.Empty, writerEncoding);
-                return new TempFileScope(path);
-            }
-
-            public static TempFileScope CreateWithBytes(byte[] data)
-            {
-                string path = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(),
-                    $"{Guid.NewGuid():N}.bin"
-                );
-                File.WriteAllBytes(path, data ?? Array.Empty<byte>());
-                return new TempFileScope(path);
-            }
-
-            public void Dispose()
-            {
-                DeleteFileIfExists(FilePath);
             }
         }
     }

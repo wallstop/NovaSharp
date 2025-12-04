@@ -59,11 +59,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCustomConverters()
         {
-            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
-            Script script = new();
-            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<CustomValue>(
-                (_, _) => DynValue.NewString("converted")
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetClrToScriptCustomConversion<CustomValue>(
+                        (_, _) => DynValue.NewString("converted")
+                    )
             );
+            Script script = new();
 
             DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,

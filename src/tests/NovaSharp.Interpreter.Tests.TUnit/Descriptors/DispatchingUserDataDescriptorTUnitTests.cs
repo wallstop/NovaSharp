@@ -368,7 +368,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task IndexFallsBackToExtensionMethodsAfterRegistration()
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            UserData.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
+            registrationScope.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
             Script script = CreateScriptWithHosts(out _, out _, out _, out _);
             DynValue result = script.DoString("return hostAdd:DescribeExt()");
 

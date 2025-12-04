@@ -15,6 +15,7 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `check-console-capture-semaphore.sh` — Runs `scripts/lint/check-console-capture-semaphore.py`, which rejects references to `ConsoleCaptureCoordinator.Semaphore` outside the coordinator helper and forbids direct instantiation of `ConsoleCaptureScope`/`ConsoleRedirectionScope` so tests keep using the `ConsoleTestUtilities` helpers.
 - `check-userdata-scope.sh` — Runs `scripts/lint/check-userdata-scope-usage.py`, failing when tests call `UserData.RegisterType`/`UserData.UnregisterType` directly outside the approved isolation suites; use `UserDataRegistrationScope` instead.
 - `check-test-finally.sh` — Runs `scripts/lint/check-test-finally.py` to ensure tests continue using the shared cleanup scopes instead of reintroducing manual `try`/`finally` blocks.
+- `check-temp-path-usage.sh` — Runs `scripts/lint/check-temp-path-usage.py`, which flags any new references to `Path.GetTempPath()` inside the test tree so contributors keep using `TempFileScope`/`TempDirectoryScope` for cleanup.
 
 ## Usage
 

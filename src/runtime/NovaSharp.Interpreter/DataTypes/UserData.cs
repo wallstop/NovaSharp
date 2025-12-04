@@ -520,7 +520,34 @@ namespace NovaSharp.Interpreter.DataTypes
         /// <returns>An <see cref="IDisposable"/> that restores the previous registry state when disposed.</returns>
         internal static IDisposable BeginIsolationScope()
         {
-            return TypeDescriptorRegistry.EnterIsolationScope();
+            IDisposable typeScope = TypeDescriptorRegistry.EnterIsolationScope();
+            IDisposable extensionScope = ExtensionMethodsRegistry.EnterIsolationScope();
+            return new IsolationCompositeScope(typeScope, extensionScope);
+        }
+
+        private sealed class IsolationCompositeScope : IDisposable
+        {
+            private readonly IDisposable _typeScope;
+            private readonly IDisposable _extensionScope;
+            private bool _disposed;
+
+            public IsolationCompositeScope(IDisposable typeScope, IDisposable extensionScope)
+            {
+                _typeScope = typeScope;
+                _extensionScope = extensionScope;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _extensionScope?.Dispose();
+                _typeScope?.Dispose();
+                _disposed = true;
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class OsSystemModuleTUnitTests
@@ -475,8 +476,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             ArgumentNullException.ThrowIfNull(stub);
 
-            IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.Platform = stub;
+            ScriptPlatformScope globalScope = ScriptPlatformScope.Override(stub);
             Script script = new Script(CoreModules.PresetComplete);
             script.Options.DebugPrint = _ => { };
             return new ScriptContext(script, globalScope);

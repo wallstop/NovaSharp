@@ -58,11 +58,11 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
         /// </summary>
         public static PlatformDetectorOverrideScope ForceDesktopPlatform()
         {
-            IPlatformAccessor previousPlatform = Script.GlobalOptions.Platform;
+            ScriptPlatformScope platformScope = null;
             return Apply(
                 () =>
                 {
-                    Script.GlobalOptions.Platform = new DotNetCorePlatformAccessor();
+                    platformScope = ScriptPlatformScope.Override(new DotNetCorePlatformAccessor());
                     PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
                     PlatformAutoDetector.TestHooks.SetFlags(
                         isRunningOnUnity: false,
@@ -73,7 +73,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
                 },
                 () =>
                 {
-                    Script.GlobalOptions.Platform = previousPlatform;
+                    platformScope?.Dispose();
                 }
             );
         }

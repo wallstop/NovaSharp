@@ -22,6 +22,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             using (UserDataIsolationScope.Begin())
             {
+                // Intentional direct call: this test ensures isolation scopes rewind raw UserData registrations.
                 UserData.RegisterType(isolatedType);
                 _ = new IsolatedType();
                 await Assert
@@ -108,6 +109,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 {
                     for (int iteration = 0; iteration < iterationsPerWorker; iteration++)
                     {
+                        // Intentional direct call: concurrent registration/unregistration exercises the raw API surface.
                         _ = UserData.RegisterType(targetType);
                         TypeDescriptorRegistry.UnregisterType(targetType);
                     }

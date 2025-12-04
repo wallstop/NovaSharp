@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class MetatableTUnitTests
@@ -207,7 +208,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script scriptHost = new();
-            UserData.RegisterType<MyObject>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<MyObject>(ensureUnregistered: true);
+            registrationScope.RegisterType<MyObject>();
             scriptHost.Globals["o"] = new MyObject();
             DynValue result = scriptHost.DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);

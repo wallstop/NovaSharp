@@ -238,9 +238,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string dumpPath = Path.Combine(Path.GetTempPath(), $"dump_{Guid.NewGuid():N}.lua");
-            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.vb");
-            using TempFileScope destFileScope = TempFileScope.FromExisting(destPath);
+            using TempFileScope dumpFileScope = TempFileScope.Create(
+                namePrefix: "dump_",
+                extension: ".lua"
+            );
+            string dumpPath = dumpFileScope.FilePath;
+            using TempFileScope destFileScope = TempFileScope.Create(
+                namePrefix: "hardwire_",
+                extension: ".vb"
+            );
+            string destPath = destFileScope.FilePath;
 
             using HardwireDumpLoaderScope dumpLoaderScope = HardwireDumpLoaderScope.Override(_ =>
             {

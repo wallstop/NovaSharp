@@ -74,9 +74,16 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string dumpPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.lua");
-            string destPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.cs");
-            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
+            using TempFileScope dumpScope = TempFileScope.Create(
+                namePrefix: "hardwire-dump-",
+                extension: ".lua"
+            );
+            string dumpPath = dumpScope.FilePath;
+            using TempFileScope destScope = TempFileScope.Create(
+                namePrefix: "hardwire-out-",
+                extension: ".cs"
+            );
+            string destPath = destScope.FilePath;
 
             await ConsoleTestUtilities
                 .WithConsoleRedirectionAsync(async consoleScope =>
@@ -108,8 +115,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 extension: ".lua"
             );
             string dumpPath = dumpScope.FilePath;
-            string destPath = Path.Combine(Path.GetTempPath(), $"hardwire_{Guid.NewGuid():N}.cs");
-            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
+            using TempFileScope destScope = TempFileScope.Create(
+                namePrefix: "hardwire_",
+                extension: ".cs"
+            );
+            string destPath = destScope.FilePath;
             await File.WriteAllTextAsync(dumpPath, "return {}").ConfigureAwait(false);
             string input =
                 string.Join(
@@ -206,11 +216,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string destPath = Path.Combine(
-                Path.GetTempPath(),
-                $"hardwire_{Guid.NewGuid():N}.{(language == "vb" ? "vb" : "cs")}"
+            using TempFileScope destScope = TempFileScope.Create(
+                namePrefix: "hardwire_",
+                extension: language == "vb" ? ".vb" : ".cs"
             );
-            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
+            string destPath = destScope.FilePath;
             SemaphoreSlimLease dumpLoaderLease = await SemaphoreSlimScope
                 .WaitAsync(DumpLoaderSemaphore)
                 .ConfigureAwait(false);

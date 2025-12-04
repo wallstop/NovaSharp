@@ -88,8 +88,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.Add<Transform>(ensureUnregistered: true);
             registrationScope.Add<Vector3>(ensureUnregistered: true);
 
-            UserData.RegisterType<Transform>();
-            UserData.RegisterType<Vector3>();
+            registrationScope.RegisterType<Transform>();
+            registrationScope.RegisterType<Vector3>();
 
             Script script = new();
             Transform transform = new();

@@ -2,6 +2,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.IO;
+    using System.Text;
 
     /// <summary>
     /// Provides a temporary directory that is automatically deleted when disposed.
@@ -114,6 +115,8 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
 
         public string FilePath { get; }
 
+        public string EscapedPath => FilePath.Replace("\\", "\\\\", StringComparison.Ordinal);
+
         public static TempFileScope Create(
             string directory = null,
             string namePrefix = "NovaSharpTests_",
@@ -129,6 +132,64 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             string filePath = Path.Combine(baseDirectory, fileName);
 
             return new TempFileScope(filePath, createFile, deleteOnDispose);
+        }
+
+        public static TempFileScope CreateEmpty(
+            string directory = null,
+            string namePrefix = "NovaSharpTests_",
+            string extension = ".txt",
+            bool deleteOnDispose = true
+        )
+        {
+            return CreateWithText(
+                string.Empty,
+                encoding: null,
+                directory,
+                namePrefix,
+                extension,
+                deleteOnDispose
+            );
+        }
+
+        public static TempFileScope CreateWithText(
+            string content,
+            Encoding encoding = null,
+            string directory = null,
+            string namePrefix = "NovaSharpTests_",
+            string extension = ".txt",
+            bool deleteOnDispose = true
+        )
+        {
+            TempFileScope scope = Create(
+                directory,
+                namePrefix,
+                extension,
+                createFile: false,
+                deleteOnDispose: deleteOnDispose
+            );
+            Encoding writerEncoding =
+                encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+            File.WriteAllText(scope.FilePath, content ?? string.Empty, writerEncoding);
+            return scope;
+        }
+
+        public static TempFileScope CreateWithBytes(
+            byte[] data,
+            string directory = null,
+            string namePrefix = "NovaSharpTests_",
+            string extension = ".bin",
+            bool deleteOnDispose = true
+        )
+        {
+            TempFileScope scope = Create(
+                directory,
+                namePrefix,
+                extension,
+                createFile: false,
+                deleteOnDispose: deleteOnDispose
+            );
+            File.WriteAllBytes(scope.FilePath, data ?? Array.Empty<byte>());
+            return scope;
         }
 
         public static TempFileScope FromExisting(string filePath, bool deleteOnDispose = true)

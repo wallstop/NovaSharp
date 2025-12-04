@@ -112,7 +112,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CustomFileSystemCanProvideManifest()
         {
-            TestModFileSystem fileSystem = new();
+            using TestModFileSystem fileSystem = new();
             string directory = fileSystem.AddDirectory("mods/sample");
             fileSystem.AddFile(
                 Path.Combine(directory, "mod.json"),
@@ -194,7 +194,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task TryApplyFromScriptPathResolvesDirectoriesDirectly()
         {
-            TestModFileSystem fileSystem = new();
+            using TestModFileSystem fileSystem = new();
             string directory = fileSystem.AddDirectory("mods/dirscript");
             fileSystem.AddFile(
                 Path.Combine(directory, "mod.json"),
@@ -243,12 +243,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             );
         }
 
-        private sealed class TestModFileSystem : IModFileSystem
+        private sealed class TestModFileSystem : IModFileSystem, IDisposable
         {
             private readonly Dictionary<string, string> _files = new(
                 StringComparer.OrdinalIgnoreCase
             );
             private readonly HashSet<string> _directories = new(StringComparer.OrdinalIgnoreCase);
+            private readonly TempDirectoryScope _baseDirectoryScope = TempDirectoryScope.Create(
+                namePrefix: "novasharp_modcompat_fs_"
+            );
 
             internal int OpenReadCallCount { get; private set; }
 
@@ -300,7 +303,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 return string.IsNullOrEmpty(directory) ? null : directory;
             }
 
-            private static string Normalize(string path)
+            public void Dispose()
+            {
+                _baseDirectoryScope.Dispose();
+            }
+
+            private string Normalize(string path)
             {
                 if (string.IsNullOrEmpty(path))
                 {
@@ -315,7 +323,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                     return Path.GetFullPath(replaced);
                 }
 
-                string basePath = Path.Combine(Path.GetTempPath(), replaced);
+                string basePath = Path.Combine(_baseDirectoryScope.DirectoryPath, replaced);
                 return Path.GetFullPath(basePath);
             }
         }

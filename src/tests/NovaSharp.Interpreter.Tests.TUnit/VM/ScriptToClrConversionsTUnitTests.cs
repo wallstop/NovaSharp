@@ -13,6 +13,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.Converters;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ScriptToClrConversionsTUnitTests
@@ -20,13 +21,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectUsesCustomConversionResult()
         {
-            using IDisposable scope = Script.BeginGlobalOptionsScope();
-
-            Script.GlobalOptions.CustomConverters.Clear();
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.String,
-                typeof(object),
-                dv => $"converted:{dv.String}"
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetScriptToClrCustomConversion(
+                        DataType.String,
+                        typeof(object),
+                        dv => $"converted:{dv.String}"
+                    )
             );
 
             object result = ScriptToClrConversions.DynValueToObject(DynValue.NewString("lua"));
@@ -429,13 +430,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeHonorsCustomConverters()
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-
-            Script.GlobalOptions.CustomConverters.Clear();
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.Number,
-                typeof(int),
-                dv => 999
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetScriptToClrCustomConversion(DataType.Number, typeof(int), dv => 999)
             );
 
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
@@ -445,8 +442,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             );
 
             await Assert.That(result).IsEqualTo(999);
-
-            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         [global::TUnit.Core.Test]
@@ -518,11 +513,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsCustomConverterMatch()
         {
-            using IDisposable scope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.Boolean,
-                typeof(string),
-                dv => dv.Boolean ? "yes" : "no"
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetScriptToClrCustomConversion(
+                        DataType.Boolean,
+                        typeof(string),
+                        dv => dv.Boolean ? "yes" : "no"
+                    )
             );
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(

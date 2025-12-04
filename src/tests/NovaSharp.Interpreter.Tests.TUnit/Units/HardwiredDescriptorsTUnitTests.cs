@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
     using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     [UserDataIsolation]
@@ -19,7 +20,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMemberDescriptorSupportsReadAndWrite()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -32,7 +33,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMemberDescriptorRejectsWriteWhenAccessDenied()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
             script.Globals["obj"] = UserData.Create(new TestHost());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -48,7 +49,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMemberDescriptorThrowsWhenInstanceMissing()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 _descriptor.Value.GetValue(script, null)
@@ -63,7 +64,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMethodDescriptorAppliesDefaultArguments()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -84,7 +85,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMethodDescriptorUsesProvidedArguments()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -105,7 +106,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task HardwiredMethodDescriptorRejectsStaticInvocation()
         {
-            Script script = CreateScript();
+            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
             script.Globals["TestHost"] = UserData.CreateStatic<TestHost>();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -115,22 +116,17 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(exception.Message).Contains("call").ConfigureAwait(false);
         }
 
-        private Script CreateScript()
+        private UserDataRegistrationScope CreateScript(out Script script)
         {
-            EnsureDescriptorRegistered();
-            Script script = new(CoreModules.PresetComplete);
-            script.Options.DebugPrint = _ => { };
-            return script;
-        }
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<TestHost>(
+                ensureUnregistered: true
+            );
+            _descriptor = new TestHardwiredDescriptor();
+            scope.RegisterType<TestHost>(_descriptor);
 
-        private void EnsureDescriptorRegistered()
-        {
-            if (_descriptor == null || !UserData.IsTypeRegistered<TestHost>())
-            {
-                UserData.UnregisterType<TestHost>();
-                _descriptor = new TestHardwiredDescriptor();
-                UserData.RegisterType(_descriptor);
-            }
+            script = new(CoreModules.PresetComplete);
+            script.Options.DebugPrint = _ => { };
+            return scope;
         }
 
         private sealed class TestHost

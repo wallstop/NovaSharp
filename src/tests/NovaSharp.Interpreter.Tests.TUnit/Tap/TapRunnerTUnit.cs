@@ -31,10 +31,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
         private static readonly HashSet<string> SkippedSuites = new(
             StringComparer.OrdinalIgnoreCase
         )
-        {
-            // §6.10 Debug Library remains unimplemented (see docs/Testing.md).
-            "TestMore/LanguageExtensions/310-debug.t",
-        };
+        { };
 
         private readonly string _file;
         private readonly LuaCompatibilityVersion _compatibilityVersion;

@@ -46,6 +46,17 @@ namespace NovaSharp.Interpreter.CoreLib
 #endif
 
             package.Table.Set("config", DynValue.NewString(cfg));
+
+            DynValue loaded = package.Table.RawGet("loaded");
+
+            if (loaded == null || loaded.Type != DataType.Table)
+            {
+                loaded = DynValue.NewTable(globalTable.OwnerScript);
+                package.Table.Set("loaded", loaded);
+            }
+
+            Table registry = globalTable.OwnerScript?.Registry;
+            registry?.Set("_LOADED", loaded);
         }
 
         // load (ld [, source [, mode [, env]]])

@@ -8,6 +8,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [UserDataIsolation]
     public sealed class UserDataIndexerTUnitTests
@@ -42,7 +43,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             IndexerTestClass obj = new();
 
-            UserData.RegisterType<IndexerTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<IndexerTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<IndexerTestClass>();
 
             script.Globals.Set("o", UserData.Create(obj));
 

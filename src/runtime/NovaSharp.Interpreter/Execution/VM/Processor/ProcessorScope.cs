@@ -183,6 +183,21 @@ namespace NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Attempts to fetch the call stack frame at the specified depth (0 = current frame).
+        /// </summary>
+        internal bool TryGetStackFrame(int level, out CallStackItem frame)
+        {
+            if (level < 0 || level >= _executionStack.Count)
+            {
+                frame = null;
+                return false;
+            }
+
+            frame = _executionStack.Peek(level);
+            return true;
+        }
+
+        /// <summary>
         /// Resolves a symbol reference by name, searching locals, closures, and finally the global environment.
         /// </summary>
         public SymbolRef FindSymbolByName(string name)

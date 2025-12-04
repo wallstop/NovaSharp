@@ -45,11 +45,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            string path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.lua");
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
+            using TempFileScope missingFileScope = TempFileScope.Create(
+                extension: ".lua",
+                createFile: false
+            );
+            string path = missingFileScope.FilePath;
 
             FileNotFoundException exception = ExpectException<FileNotFoundException>(() =>
                 Script.RunFile(path)

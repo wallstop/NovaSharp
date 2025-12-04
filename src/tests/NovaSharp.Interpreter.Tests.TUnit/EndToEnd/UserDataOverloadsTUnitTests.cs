@@ -184,8 +184,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Dictionary<int, int>
             >(ensureUnregistered: true);
 
-            UserData.RegisterType<Dictionary<int, int>>();
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
+            registrationScope.RegisterType<Dictionary<int, int>>();
+            registrationScope.RegisterExtensionType(typeof(OverloadsExtMethods));
 
             Script lua = new()
             {
@@ -260,7 +260,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsExtMethods()
         {
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
+            using UserDataRegistrationScope extensionScope = UserDataRegistrationScope.Create();
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods));
 
             await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
             await RunTestOverloadAsync("o:method3()", "X3").ConfigureAwait(false);
@@ -269,11 +270,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsTwiceExtMethods1()
         {
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
+            using UserDataRegistrationScope extensionScope = UserDataRegistrationScope.Create();
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods));
 
             await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
 
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods2));
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods2));
 
             await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!").ConfigureAwait(false);
         }
@@ -281,8 +283,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropOverloadsTwiceExtMethods2()
         {
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods2));
+            using UserDataRegistrationScope extensionScope = UserDataRegistrationScope.Create();
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods));
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods2));
 
             await RunTestOverloadAsync("o:method1('xx', true)", "X1").ConfigureAwait(false);
             await RunTestOverloadAsync("o:methodXXX('xx', true)", "X!").ConfigureAwait(false);
@@ -291,7 +294,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public Task InteropOverloadsExtMethods2()
         {
-            UserData.RegisterExtensionType(typeof(OverloadsExtMethods));
+            using UserDataRegistrationScope extensionScope = UserDataRegistrationScope.Create();
+            extensionScope.RegisterExtensionType(typeof(OverloadsExtMethods));
 
             Assert.Throws<ScriptRuntimeException>(() =>
                 RunTestOverloadAsync("s:method3()", "X3").GetAwaiter().GetResult()

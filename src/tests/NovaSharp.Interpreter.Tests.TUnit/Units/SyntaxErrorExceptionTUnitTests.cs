@@ -7,6 +7,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Tree.Lexer;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class SyntaxErrorExceptionTUnitTests
@@ -14,8 +15,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled()
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.RethrowExceptionNested = true;
+            using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(
+                options => options.RethrowExceptionNested = true
+            );
             Script script = new();
 
             SyntaxErrorException captured = Assert.Throws<SyntaxErrorException>(() =>
@@ -36,8 +38,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RethrowDoesNothingWhenGlobalOptionDisabled()
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.RethrowExceptionNested = false;
+            using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(
+                options => options.RethrowExceptionNested = false
+            );
             SyntaxErrorException exception = new();
 
             exception.Rethrow();
@@ -47,8 +50,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RethrowClonesTokenMetadata()
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.RethrowExceptionNested = true;
+            using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(
+                options => options.RethrowExceptionNested = true
+            );
             Token token = CreateToken();
             SyntaxErrorException exception = new(token, "unexpected token");
 

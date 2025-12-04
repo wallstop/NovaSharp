@@ -26,7 +26,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
                 .ConfigureAwait(false);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SmokeHost>(ensureUnregistered: true);
-            UserData.RegisterType<SmokeHost>();
+            registrationScope.RegisterType<SmokeHost>();
         }
 
         [global::TUnit.Core.Test]
@@ -36,7 +36,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Isolation
                 .That(UserData.IsTypeRegistered<SmokeHost>())
                 .IsFalse()
                 .ConfigureAwait(false);
-            UserData.UnregisterType<SmokeHost>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SmokeHost>(ensureUnregistered: true);
         }
     }
 }

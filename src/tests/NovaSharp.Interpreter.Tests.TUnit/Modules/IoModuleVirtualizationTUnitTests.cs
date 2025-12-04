@@ -12,6 +12,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.Modules;
     using NovaSharp.Interpreter.Platforms;
     using NovaSharp.Interpreter.Tests;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class IoModuleVirtualizationTUnitTests
@@ -151,13 +152,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private sealed class VirtualIoContext : IDisposable
         {
-            private readonly IDisposable _globalScope;
+            private readonly ScriptPlatformScope _platformScope;
 
             internal VirtualIoContext()
             {
-                _globalScope = Script.BeginGlobalOptionsScope();
                 Platform = new InMemoryPlatformAccessor();
-                Script.GlobalOptions.Platform = Platform;
+                _platformScope = ScriptPlatformScope.Override(Platform);
                 Script = new Script(CoreModules.PresetComplete);
             }
 
@@ -168,7 +168,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             public void Dispose()
             {
                 Platform.Dispose();
-                _globalScope.Dispose();
+                _platformScope.Dispose();
             }
         }
 

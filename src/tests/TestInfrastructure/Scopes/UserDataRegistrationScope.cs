@@ -11,9 +11,13 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
     internal sealed class UserDataRegistrationScope : IDisposable
     {
         private readonly HashSet<Type> _trackedTypes = new();
+        private readonly IDisposable _isolationScope;
         private bool _disposed;
 
-        private UserDataRegistrationScope() { }
+        private UserDataRegistrationScope()
+        {
+            _isolationScope = UserData.BeginIsolationScope();
+        }
 
         public static UserDataRegistrationScope Track(Type type, bool ensureUnregistered = false)
         {
@@ -71,6 +75,21 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
             Add(typeof(T), ensureUnregistered);
         }
 
+        public void RegisterExtensionType<T>(InteropAccessMode mode = InteropAccessMode.Default)
+        {
+            RegisterExtensionType(typeof(T), mode);
+        }
+
+        public void RegisterExtensionType(
+            Type type,
+            InteropAccessMode mode = InteropAccessMode.Default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(type);
+            ObjectDisposedException.ThrowIf(_disposed, nameof(UserDataRegistrationScope));
+            UserData.RegisterExtensionType(type, mode);
+        }
+
         public IUserDataDescriptor RegisterType<T>(
             InteropAccessMode accessMode = InteropAccessMode.Default,
             string friendlyName = null,
@@ -126,6 +145,7 @@ namespace NovaSharp.Tests.TestInfrastructure.Scopes
                 }
             }
 
+            _isolationScope.Dispose();
             _disposed = true;
         }
 

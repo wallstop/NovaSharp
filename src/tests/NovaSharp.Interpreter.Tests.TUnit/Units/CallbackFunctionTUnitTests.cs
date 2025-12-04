@@ -104,7 +104,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
-            UserData.RegisterType<SampleUserData>();
+            registrationScope.RegisterType<SampleUserData>();
 
             DynValue userData = UserData.Create(new SampleUserData());
             List<DynValue> userDataArgs = new() { userData };

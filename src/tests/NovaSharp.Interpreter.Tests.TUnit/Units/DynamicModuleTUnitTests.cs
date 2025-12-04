@@ -6,13 +6,14 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class DynamicModuleTUnitTests
     {
         [global::TUnit.Core.Test]
         public async Task EvalExecutesExpressionAgainstCurrentGlobals()
         {
-            EnsureDummyRegistered();
+            using UserDataRegistrationScope registrationScope = RegisterDummyType();
             Script script = new(CoreModules.PresetComplete);
             script.Globals["value"] = DynValue.NewNumber(6);
 
@@ -45,7 +46,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task EvalThrowsWhenUserDataIsNotPreparedExpression()
         {
-            EnsureDummyRegistered();
+            using UserDataRegistrationScope registrationScope = RegisterDummyType();
             Script script = new(CoreModules.PresetComplete);
             script.Globals["bad"] = UserData.Create(new Dummy());
 
@@ -83,12 +84,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
-        private static void EnsureDummyRegistered()
+        private static UserDataRegistrationScope RegisterDummyType()
         {
-            if (!UserData.IsTypeRegistered<Dummy>())
-            {
-                UserData.RegisterType<Dummy>();
-            }
+            UserDataRegistrationScope scope = UserDataRegistrationScope.Track<Dummy>(
+                ensureUnregistered: true
+            );
+            scope.RegisterType<Dummy>();
+            return scope;
         }
 
         private sealed class Dummy { }

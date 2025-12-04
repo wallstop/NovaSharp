@@ -391,7 +391,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.RegisterType(typeof(List<>));
             registrationScope.RegisterType<List<RegCollItem>>();
             registrationScope.RegisterType<List<int>>();
-            UserData.RegisterExtensionType(typeof(Enumerable));
+            registrationScope.RegisterExtensionType(typeof(Enumerable));
 
             Script script = new();
             RegCollMethods host = new();

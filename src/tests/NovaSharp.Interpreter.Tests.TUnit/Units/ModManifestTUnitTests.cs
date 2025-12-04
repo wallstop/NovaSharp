@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Modding;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ModManifestTUnitTests
@@ -225,8 +226,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             ModManifest manifest = new("Compat", "1.0", LuaCompatibilityVersion.Lua54);
             ScriptOptions options = new(Script.DefaultOptions);
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+            using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(opts =>
+                opts.CompatibilityVersion = LuaCompatibilityVersion.Lua53
+            );
 
             string warning = null;
             manifest.ApplyCompatibility(

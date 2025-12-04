@@ -154,7 +154,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track<
                 GenericStub<int>
             >(ensureUnregistered: true);
-            UserData.RegisterType<GenericStub<int>>();
+            registrationScope.RegisterType<GenericStub<int>>();
 
             StandardGenericsUserDataDescriptor descriptor = new(
                 typeof(GenericStub<>),

@@ -41,7 +41,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new();
-            UserData.RegisterType(descriptor);
+            descriptorScope.RegisterType<CustomDescriptorHost>(descriptor);
             CustomDescriptorHost instance = new("tracked");
 
             DynValue dynValue = UserData.Create(instance);
@@ -63,7 +63,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisteredTypesHistoryIncludesUnregisteredEntries()
         {
-            UserData.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<HistoricalHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
             UserData.UnregisterType<HistoricalHost>();
 
             IEnumerable<Type> current = UserData.GetRegisteredTypes();
@@ -106,8 +108,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterExtensionTypeExposesMethodsAndIncrementsVersion()
         {
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
             int startingVersion = UserData.GetExtensionMethodsChangeVersion();
-            UserData.RegisterExtensionType(typeof(CustomDescriptorHostExtensions));
+            registrationScope.RegisterExtensionType(typeof(CustomDescriptorHostExtensions));
             int updatedVersion = UserData.GetExtensionMethodsChangeVersion();
 
             IReadOnlyList<IOverloadableMemberDescriptor> methods =
@@ -158,7 +161,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetRegisteredTypesIncludesRegisteredDescriptors()
         {
-            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<RegistryHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
 
             IEnumerable<Type> registered = UserData.GetRegisteredTypes();
 
@@ -200,6 +205,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new("generic-overload");
 
+            // Intentional direct call: this test verifies RegisterType<T>(IUserDataDescriptor)
+            // returns the provided descriptor.
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("generic-overload"));
 
@@ -218,10 +225,10 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             registrationScope.Add<BaseHost>(ensureUnregistered: true);
             registrationScope.Add<IMarker>(ensureUnregistered: true);
 
-            IUserDataDescriptor baseDescriptor = UserData.RegisterType<BaseHost>(
+            IUserDataDescriptor baseDescriptor = registrationScope.RegisterType<BaseHost>(
                 InteropAccessMode.Reflection
             );
-            UserData.RegisterType<IMarker>(interfaceDescriptor);
+            registrationScope.RegisterType<IMarker>(interfaceDescriptor);
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForType<DerivedInterfaceHost>(
                 searchInterfaces: true
@@ -249,7 +256,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             CustomWireableDescriptor initial = new("initial");
             CustomWireableDescriptor competing = new("competing");
 
-            UserData.RegisterType(initial);
+            descriptorScope.RegisterType<CustomDescriptorHost>(initial);
+            // Intentional direct call: this assertion relies on the RegisterType return value
+            // under the default policy.
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(competing);
             DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
 
@@ -296,7 +305,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             using UserDataRegistrationScope descriptorScope = TrackCustomDescriptorHost();
             CustomWireableDescriptor descriptor = new("generic-resolve");
-            UserData.RegisterType(descriptor);
+            descriptorScope.RegisterType<CustomDescriptorHost>(descriptor);
 
             IUserDataDescriptor result = UserData.GetDescriptorForType<CustomDescriptorHost>(
                 searchInterfaces: false
@@ -308,7 +317,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptionOfRegisteredTypesIncludesHistoricalEntries()
         {
-            UserData.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<HistoricalHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<HistoricalHost>(InteropAccessMode.Reflection);
             UserData.UnregisterType<HistoricalHost>();
 
             Table description = UserData.GetDescriptionOfRegisteredTypes(useHistoricalData: true);
@@ -321,7 +332,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetRegisteredTypesHistoricallyIncludesUnregisteredTypes()
         {
-            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<RegistryHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
             UserData.UnregisterType<RegistryHost>();
 
             IEnumerable<Type> history = UserData.GetRegisteredTypes(useHistoricalData: true);
@@ -335,7 +348,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptorForObjectFallsBackToBaseType()
         {
-            UserData.RegisterType<BaseHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<BaseHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<BaseHost>(InteropAccessMode.Reflection);
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(new DerivedHost());
 
@@ -346,7 +361,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task UserDataEqualityUsesObjectEquals()
         {
-            UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
             DynValue left = UserData.Create(new EqualityHost("value"));
             DynValue right = UserData.Create(new EqualityHost("value"));
@@ -370,7 +387,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task StaticUserDataWithMatchingDescriptorsAreEqual()
         {
-            UserData.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
             DynValue left = UserData.CreateStatic<EqualityHost>();
             DynValue right = UserData.CreateStatic<EqualityHost>();
@@ -393,7 +412,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task CreateReturnsStaticUserDataWhenPassingType()
         {
-            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<RegistryHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
 
             DynValue dynValue = UserData.Create(typeof(RegistryHost));
 
@@ -408,7 +429,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetRegisteredTypesIncludesCurrentlyRegisteredTypes()
         {
-            UserData.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<RegistryHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
 
             IEnumerable<Type> registered = UserData.GetRegisteredTypes();
 
@@ -421,7 +444,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task GetDescriptorForTypeSearchInterfacesReturnsInterfaceDescriptor()
         {
-            UserData.RegisterType<IMarker>(InteropAccessMode.Reflection);
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<IMarker>(ensureUnregistered: true);
+            registrationScope.RegisterType<IMarker>(InteropAccessMode.Reflection);
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForType<InterfaceHost>(true);
 
@@ -432,6 +457,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeThrowsWhenTypeIsNull()
         {
+            // Intentional direct call: this test verifies RegisterType(type) rejects null inputs.
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 UserData.RegisterType((Type)null)
             );
@@ -442,6 +468,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeWithCustomDescriptorThrowsWhenDescriptorIsNull()
         {
+            // Intentional direct call: this test validates the custom-descriptor overload guard rails.
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 UserData.RegisterType(typeof(CustomDescriptorHost), (IUserDataDescriptor)null)
             );
@@ -457,6 +484,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             CustomWireableDescriptor descriptor = new();
 
+            // Intentional direct call: this test validates the null-type guard for the custom-descriptor overload.
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 UserData.RegisterType((Type)null, descriptor)
             );
@@ -467,6 +495,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task RegisterTypeOverloadThrowsWhenDescriptorIsNull()
         {
+            // Intentional direct call: this test verifies RegisterType(IUserDataDescriptor) rejects null descriptors.
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 UserData.RegisterType((IUserDataDescriptor)null)
             );

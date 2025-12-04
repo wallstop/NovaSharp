@@ -224,10 +224,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
             Script script = new(CoreModules.PresetComplete);
             ReplInterpreter interpreter = new(script);
-            string missingPath = Path.Combine(
-                Path.GetTempPath(),
-                $"cli-missing-{Guid.NewGuid():N}.lua"
+            using TempFileScope missingFileScope = TempFileScope.Create(
+                namePrefix: "cli-missing-",
+                extension: ".lua"
             );
+            string missingPath = missingFileScope.FilePath;
 
             await WithConsoleAsync(
                     async console =>
@@ -320,11 +321,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 extension: ".lua"
             );
             string dumpPath = dumpScope.FilePath;
-            string destPath = Path.Combine(
-                Path.GetTempPath(),
-                $"hardwire-output-{Guid.NewGuid():N}.cs"
+            using TempFileScope destScope = TempFileScope.Create(
+                namePrefix: "hardwire-output-",
+                extension: ".cs"
             );
-            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
+            string destPath = destScope.FilePath;
 
             SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope
                 .WaitAsync(HardwireDumpSemaphore)
@@ -374,11 +375,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 extension: ".lua"
             );
             string dumpPath = dumpScope.FilePath;
-            string destPath = Path.Combine(
-                Path.GetTempPath(),
-                $"hardwire-repl-output-{Guid.NewGuid():N}.cs"
+            using TempFileScope destScope = TempFileScope.Create(
+                namePrefix: "hardwire-repl-output-",
+                extension: ".cs"
             );
-            using TempFileScope destScope = TempFileScope.FromExisting(destPath);
+            string destPath = destScope.FilePath;
             await File.WriteAllTextAsync(dumpPath, "-- placeholder").ConfigureAwait(false);
 
             SemaphoreSlimLease hardwireLease = await SemaphoreSlimScope

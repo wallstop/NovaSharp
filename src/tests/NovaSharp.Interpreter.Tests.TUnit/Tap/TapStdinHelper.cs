@@ -15,6 +15,23 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
     {
         private const string HelperName = "platform.stdin_helper.run";
 
+        internal static string ResolveInputPathForTests(
+            string relativePath,
+            string workingDirectory,
+            string testDirectory,
+            string baseDirectory,
+            string runtimeDirectory
+        )
+        {
+            return ResolveInputPathCore(
+                relativePath,
+                workingDirectory,
+                testDirectory,
+                baseDirectory,
+                runtimeDirectory
+            );
+        }
+
         public static void Register(
             Script script,
             Table platform,
@@ -191,43 +208,62 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 
             public string ResolveInputPath(string relativePath)
             {
-                if (string.IsNullOrWhiteSpace(relativePath))
-                {
-                    throw new ScriptRuntimeException("stdin helper requires an input file path.");
-                }
-
-                string cleaned = relativePath.Replace('/', Path.DirectorySeparatorChar);
-
-                if (Path.IsPathRooted(cleaned))
-                {
-                    return cleaned;
-                }
-
-                string EvaluateCandidate(string basePath)
-                {
-                    if (string.IsNullOrEmpty(basePath))
-                    {
-                        return null;
-                    }
-
-                    string path = Path.GetFullPath(cleaned, basePath);
-                    return File.Exists(path) ? path : null;
-                }
-
-                string candidate =
-                    EvaluateCandidate(WorkingDirectory)
-                    ?? EvaluateCandidate(TestDirectory)
-                    ?? EvaluateCandidate(BaseDirectory);
-
-                if (!string.IsNullOrEmpty(candidate))
-                {
-                    return candidate;
-                }
-
-                throw new ScriptRuntimeException(
-                    $"stdin helper could not locate '{Path.GetFullPath(cleaned, WorkingDirectory)}'."
+                string runtimeDirectory = Environment.CurrentDirectory ?? string.Empty;
+                return ResolveInputPathCore(
+                    relativePath,
+                    WorkingDirectory,
+                    TestDirectory,
+                    BaseDirectory,
+                    runtimeDirectory
                 );
             }
+        }
+
+        private static string ResolveInputPathCore(
+            string relativePath,
+            string workingDirectory,
+            string testDirectory,
+            string baseDirectory,
+            string runtimeDirectory
+        )
+        {
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                throw new ScriptRuntimeException("stdin helper requires an input file path.");
+            }
+
+            string cleaned = relativePath.Replace('/', Path.DirectorySeparatorChar);
+
+            if (Path.IsPathRooted(cleaned))
+            {
+                return cleaned;
+            }
+
+            string EvaluateCandidate(string basePath)
+            {
+                if (string.IsNullOrEmpty(basePath))
+                {
+                    return null;
+                }
+
+                string path = Path.GetFullPath(cleaned, basePath);
+                return File.Exists(path) ? path : null;
+            }
+
+            string candidate =
+                EvaluateCandidate(workingDirectory)
+                ?? EvaluateCandidate(testDirectory)
+                ?? EvaluateCandidate(baseDirectory)
+                ?? EvaluateCandidate(runtimeDirectory);
+
+            if (!string.IsNullOrEmpty(candidate))
+            {
+                return candidate;
+            }
+
+            throw new ScriptRuntimeException(
+                $"stdin helper could not locate '{Path.GetFullPath(cleaned, workingDirectory ?? string.Empty)}'."
+            );
         }
     }
 }

@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Tap
 {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Core;
     using NovaSharp.Interpreter.Compatibility;
@@ -11,15 +12,22 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Tap
     [UserDataIsolation]
     public sealed class TestMoreTUnitTests
     {
-        private static Task RunTapAsync(
+        private static readonly SemaphoreSlim TapSuiteGate = new(1, 1);
+
+        private static async Task RunTapAsync(
             string relativePath,
             LuaCompatibilityVersion? compatibilityVersion = null
         )
         {
-            using UserDataIsolationScope scope = UserDataIsolationScope.Begin();
-            TapRunnerTUnit.Run(relativePath, compatibilityVersion);
+            SemaphoreSlimLease gateLease = await SemaphoreSlimScope
+                .WaitAsync(TapSuiteGate)
+                .ConfigureAwait(false);
 
-            return Task.CompletedTask;
+            using (gateLease)
+            using (UserDataIsolationScope scope = UserDataIsolationScope.Begin())
+            {
+                TapRunnerTUnit.Run(relativePath, compatibilityVersion);
+            }
         }
 
         [Test]

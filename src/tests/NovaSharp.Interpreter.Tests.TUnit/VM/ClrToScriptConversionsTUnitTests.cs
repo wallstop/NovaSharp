@@ -86,7 +86,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         [global::TUnit.Core.Test]
         public async Task ObjectToDynValueHandlesUserDataTypesEnumsAndDelegates()
         {
-            RegisterSampleUserData();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<SampleUserData>();
             Script script = new();
             SampleUserData instance = new();
 
@@ -162,14 +164,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         private static readonly MethodInfo StaticClrCallbackMethodInfo = (
             (Func<ScriptExecutionContext, CallbackArguments, DynValue>)StaticClrCallback
         ).Method;
-
-        private static void RegisterSampleUserData()
-        {
-            if (!UserData.IsTypeRegistered<SampleUserData>())
-            {
-                UserData.RegisterType<SampleUserData>();
-            }
-        }
 
         private static IEnumerable<string> YieldStrings()
         {

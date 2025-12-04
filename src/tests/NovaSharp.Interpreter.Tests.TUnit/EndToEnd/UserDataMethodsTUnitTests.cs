@@ -538,8 +538,30 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             InteropAccessMode opt
         )
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
             using UserDataRegistrationScope registrationScope = RegisterSomeClass(opt);
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                {
+                    registry.SetScriptToClrCustomConversion(
+                        DataType.Table,
+                        typeof(List<string>),
+                        v => null
+                    );
+                    registry.SetScriptToClrCustomConversion(
+                        DataType.Table,
+                        typeof(IList<int>),
+                        v => new List<int>() { 42, 77, 125, 13 }
+                    );
+                    registry.SetScriptToClrCustomConversion(
+                        DataType.Table,
+                        typeof(int[]),
+                        v => (int[])ScriptToClrIntArray.Clone()
+                    );
+                    registry.SetClrToScriptCustomConversion<StringBuilder>(
+                        (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
+                    );
+                }
+            );
 
             string script =
                 @"    
@@ -555,30 +577,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            Script.GlobalOptions.CustomConverters.Clear();
-
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.Table,
-                typeof(List<string>),
-                v => null
-            );
-
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.Table,
-                typeof(IList<int>),
-                v => new List<int>() { 42, 77, 125, 13 }
-            );
-
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
-                DataType.Table,
-                typeof(int[]),
-                v => (int[])ScriptToClrIntArray.Clone()
-            );
-
-            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<StringBuilder>(
-                (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
-            );
-
             s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -591,8 +589,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     "CIAO,HELLO,ALOHA|42,77,125,13|ALOHA,CIAO,HELLO|39,78,128|CIAO,HELLO,ALOHA|43,78,126,14"
                 )
                 .ConfigureAwait(false);
-
-            Script.GlobalOptions.CustomConverters.Clear();
         }
 
         private static async Task TestConcatMethodStaticComplexAsync(InteropAccessMode opt)
@@ -825,7 +821,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestDelegateMethodAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SomeClass>(ensureUnregistered: true);
 
             string script =
                 @"    
@@ -850,7 +847,8 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static async Task TestListMethodAsync(InteropAccessMode opt)
         {
-            UserData.UnregisterType<SomeClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SomeClass>(ensureUnregistered: true);
 
             string script =
                 @"    
@@ -1124,10 +1122,13 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             Script s = new();
 
-            UserData.UnregisterType<INterface1>();
-            UserData.UnregisterType<INterface2>();
-            UserData.RegisterType<INterface1>();
-            UserData.RegisterType<INterface2>();
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                ensureUnregistered: true,
+                typeof(INterface1),
+                typeof(INterface2)
+            );
+            registrationScope.RegisterType<INterface1>();
+            registrationScope.RegisterType<INterface2>();
 
             SomeOtherClassWithDualInterfaces obj = new();
 
@@ -1169,8 +1170,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropTestSelfDescribingType()
         {
-            UserData.UnregisterType<SelfDescribingClass>();
-
             string script =
                 @"    
 				a = myobj[1];
@@ -1184,8 +1183,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SelfDescribingClass obj = new();
 
-            UserData.UnregisterType<SelfDescribingClass>();
-            UserData.RegisterType<SelfDescribingClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SelfDescribingClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<SelfDescribingClass>();
 
             s.Globals.Set("myobj", UserData.Create(obj));
 
@@ -1198,8 +1198,6 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task InteropTestCustomDescribedType()
         {
-            UserData.UnregisterType<SomeOtherClassCustomDescriptor>();
-
             string script =
                 @"    
 				a = myobj[1];
@@ -1213,7 +1211,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeOtherClassCustomDescriptor obj = new();
 
-            UserData.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SomeOtherClassCustomDescriptor>(
+                    ensureUnregistered: true
+                );
+            registrationScope.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
 
             s.Globals.Set("myobj", UserData.Create(obj));
 

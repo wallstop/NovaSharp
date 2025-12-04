@@ -500,7 +500,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new();
             ArithmOperatorsTestClass target = new(input);
 
-            UserData.RegisterType<ArithmOperatorsTestClass>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
+            registrationScope.RegisterType<ArithmOperatorsTestClass>();
             script.Globals.Set("o", UserData.Create(target));
 
             DynValue result = script.DoString(code);

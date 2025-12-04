@@ -11,6 +11,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
     using NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using NovaSharp.Interpreter.Tests;
     using NovaSharp.Interpreter.Tests.Units;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
     using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
 
     public sealed class LuaBaseTUnitTests
@@ -24,7 +25,9 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaTypeMapsNovaSharpValuesAndThrowsOnUnsupported()
         {
             Script script = new();
-            UserData.RegisterType<SampleUserData>();
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<SampleUserData>();
             DynValue coroutineValue = script.CreateCoroutine(
                 script.LoadString("return function(...) return ... end").Function
             );

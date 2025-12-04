@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Options;
+    using NovaSharp.Tests.TestInfrastructure.Scopes;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class PropertyTableAssignerTUnitTests
@@ -131,9 +132,12 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         [global::TUnit.Core.Test]
         public async Task FuzzyMatchingAllowsUnderscoreKeys()
         {
-            using IDisposable globalScope = Script.BeginGlobalOptionsScope();
-            Script.GlobalOptions.FuzzySymbolMatching =
-                FuzzySymbolMatchingBehavior.Camelify | FuzzySymbolMatchingBehavior.PascalCase;
+            using ScriptGlobalOptionsScope optionsScope = ScriptGlobalOptionsScope.Override(
+                options =>
+                    options.FuzzySymbolMatching =
+                        FuzzySymbolMatchingBehavior.Camelify
+                        | FuzzySymbolMatchingBehavior.PascalCase
+            );
 
             Table data = new(_script);
             data.Set("first_name", DynValue.NewString("Nova"));

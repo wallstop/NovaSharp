@@ -2,8 +2,22 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 10 undocumented public/internal type declarations.
+Found 32 undocumented public/internal type declarations.
 
+- src/runtime/NovaSharp.Interpreter/CoreLib/DebugModule.cs
+  - line 1195: missing XML docs for `Function`
+  - line 1196: missing XML docs for `Mask`
+  - line 1197: missing XML docs for `Count`
+  - line 1208: missing XML docs for `Upvalue`
+  - line 1210: missing XML docs for `ReferenceId`
+  - line 1212: missing XML docs for `ToString()`
+  - line 1220: missing XML docs for `Name`
+  - line 1222: missing XML docs for `Type`
+  - line 1224: missing XML docs for `Index()`
+  - line 1229: missing XML docs for `SetIndex()`
+  - line 1240: missing XML docs for `AsString()`
+  - line 1250: missing XML docs for `MetaIndex()`
+  - line 1255: missing XML docs for `IsTypeCompatible()`
 - src/runtime/NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 21: missing XML docs for `Name`
   - line 23: missing XML docs for `Type`
@@ -12,6 +26,17 @@ Found 10 undocumented public/internal type declarations.
   - line 53: missing XML docs for `AsString()`
   - line 58: missing XML docs for `MetaIndex()`
   - line 63: missing XML docs for `IsTypeCompatible()`
+- src/runtime/NovaSharp.Interpreter/DataTypes/UserData.cs
+  - line 540: missing XML docs for `Dispose()`
+- src/runtime/NovaSharp.Interpreter/Interop/UserDataRegistries/ExtensionMethodsRegistry.cs
+  - line 42: missing XML docs for `SyncRoot`
+  - line 44: missing XML docs for `Registry`
+  - line 46: missing XML docs for `UnresolvedGenerics`
+  - line 48: missing XML docs for `ChangeVersion`
+  - line 61: missing XML docs for `State`
+  - line 63: missing XML docs for `Dispose()`
+  - line 98: missing XML docs for `Clone()`
+  - line 315: missing XML docs for `EnterIsolationScope()`
 - src/runtime/NovaSharp.Interpreter/Script.cs
   - line 183: missing XML docs for `BeginDefaultOptionsScope()`
   - line 1212: missing XML docs for `Dispose()`

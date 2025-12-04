@@ -1,7 +1,7 @@
 namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp.Cli;
@@ -37,20 +37,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             RegisterCommand command = new();
             ShellContext context = new(new Script());
+            Type targetType = typeof(SampleUserData);
 
-            using UserDataRegistrationScope registrationScope =
-                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
+                targetType,
+                ensureUnregistered: true
+            );
 
             await WithConsoleAsync(async console =>
                 {
-                    command.Execute(context, typeof(SampleUserData).AssemblyQualifiedName);
+                    command.Execute(context, targetType.AssemblyQualifiedName);
                     _ = console;
                 })
                 .ConfigureAwait(false);
 
             _ = new SampleUserData();
-            bool isRegistered = UserData.GetRegisteredTypes().Contains(typeof(SampleUserData));
-            await Assert.That(isRegistered).IsTrue().ConfigureAwait(false);
+
+            HashSet<Type> historicalTypes = new(
+                UserData.GetRegisteredTypes(useHistoricalData: true)
+            );
+
+            await Assert.That(historicalTypes.Contains(targetType)).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -64,7 +71,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
 
             await WithConsoleAsync(async console =>
                 {
-                    UserData.RegisterType(typeof(SampleUserData));
+                    registrationScope.RegisterType<SampleUserData>();
+                    await Assert
+                        .That(UserData.IsTypeRegistered<SampleUserData>())
+                        .IsTrue()
+                        .ConfigureAwait(false);
                     command.Execute(context, string.Empty);
 
                     await Assert

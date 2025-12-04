@@ -1,6 +1,7 @@
 namespace NovaSharp.Interpreter.Execution
 {
     using System;
+    using System.Collections.Generic;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Debugging;
     using NovaSharp.Interpreter.Errors;
@@ -362,6 +363,37 @@ namespace NovaSharp.Interpreter.Execution
         public Script OwnerScript
         {
             get { return Script; }
+        }
+
+        /// <summary>
+        /// Captures the current Lua call stack for debugger-facing helpers.
+        /// </summary>
+        /// <param name="startingLocation">
+        /// Source reference representing the instruction that invoked the current CLR callback.
+        /// </param>
+        /// <returns>An immutable snapshot of the active call stack.</returns>
+        internal IReadOnlyList<WatchItem> GetCallStackSnapshot(SourceRef startingLocation)
+        {
+            if (_processor == null || IsDynamicExecution)
+            {
+                return Array.Empty<WatchItem>();
+            }
+
+            return _processor.GetDebuggerCallStack(startingLocation ?? CallingLocation);
+        }
+
+        /// <summary>
+        /// Attempts to resolve the call stack frame at the supplied stack depth (0 = current frame).
+        /// </summary>
+        internal bool TryGetStackFrame(int level, out CallStackItem frame)
+        {
+            if (_processor == null || level < 0)
+            {
+                frame = null;
+                return false;
+            }
+
+            return _processor.TryGetStackFrame(level, out frame);
         }
     }
 }
