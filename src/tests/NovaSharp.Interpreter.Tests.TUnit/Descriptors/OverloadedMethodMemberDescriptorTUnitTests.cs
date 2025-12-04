@@ -478,6 +478,128 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
+        [Test]
+        public async Task VarArgsExactArrayTypePassthrough()
+        {
+            // When a single UserData argument is passed that matches the exact array type,
+            // the varargs scoring should use the scoreBeforeVarArgs path
+            Script script = new();
+            UserData.RegisterType<VarArgsArrayClass>();
+            UserData.RegisterType<int[]>();
+            script.Globals["TestClass"] = typeof(VarArgsArrayClass);
+
+            // Pass an actual int[] as UserData
+            int[] testArray = new[] { 1, 2, 3, 4, 5 };
+            script.Globals["testArray"] = UserData.Create(testArray);
+
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                return obj.WithVarArgsExact(testArray)
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ZeroSizeCacheTriggersOverflowPath()
+        {
+            Script script = new();
+            UserData.RegisterType<CacheTestClass>();
+
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+
+            // Set cache size to 0 to force the overflow path (found == null)
+            OverloadedMethodMemberDescriptor.TestHooks.SetCacheSize(descriptor, 0);
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // This should trigger the cache overflow path since cache size is 0
+            DynValue result = script.Call(callback, DynValue.NewNumber(42));
+
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CacheMismatchWhenCachedUserDataButCallWithNonUserData()
+        {
+            // This tests the CheckMatch branch where argumentUserDataTypes[i] != null
+            // but args[i].Type != DataType.UserData
+            Script script = new();
+            UserData.RegisterType<MixedArgsClass>();
+            UserData.RegisterType<UserDataArg1>();
+            script.Globals["TestClass"] = typeof(MixedArgsClass);
+            script.Globals["Arg1"] = typeof(UserDataArg1);
+
+            // First call with UserData to cache a method with UserData type
+            DynValue result1 = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local arg = Arg1.__new()
+                return obj.MixedArgs(arg)
+                "
+            );
+
+            // Second call with non-UserData type to trigger cache mismatch
+            // The cache entry has UserData type but we're calling with a number
+            DynValue result2 = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                return obj.MixedArgs(123)
+                "
+            );
+
+            await Assert.That(result1.Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(123).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task PrepareForWiringWithNonWireableOverload()
+        {
+            // Test that PrepareForWiring handles non-wireable descriptors gracefully
+            OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
+
+            MethodInfo method = typeof(TestOverloadClass).GetMethod("NoArgs");
+            MethodMemberDescriptor overload = new(method);
+            descriptor.AddOverload(overload);
+
+            Table table = new(owner: null);
+            descriptor.PrepareForWiring(table);
+
+            // The overloads table should exist and have at least one entry
+            DynValue overloadsTable = table.Get("overloads");
+            await Assert.That(overloadsTable.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            await Assert.That(overloadsTable.Table.Length).IsGreaterThan(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SetExtensionMethodsSnapshotUpdatesVersion()
+        {
+            OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
+
+            MethodInfo method = typeof(TestOverloadClass).GetMethod("NoArgs");
+            MethodMemberDescriptor overload = new(method);
+            descriptor.AddOverload(overload);
+
+            // Call SetExtensionMethodsSnapshot to update the internal version
+            List<IOverloadableMemberDescriptor> extMethods = new() { overload };
+            descriptor.SetExtensionMethodsSnapshot(42, extMethods);
+
+            // The descriptor should now use the provided extension methods
+            await Assert.That(descriptor.OverloadCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Design",
             "CA1034:Nested types should not be visible",
@@ -625,6 +747,52 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public int WithVarArgs(params int[] values)
             {
                 return values?.Length ?? 0;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1034:Nested types should not be visible",
+            Justification = "Test helper class must be public for UserData registration."
+        )]
+        public sealed class VarArgsArrayClass
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int WithVarArgsExact(params int[] values)
+            {
+                return values?.Length ?? 0;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1034:Nested types should not be visible",
+            Justification = "Test helper class must be public for UserData registration."
+        )]
+        public sealed class MixedArgsClass
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int MixedArgs(UserDataArg1 arg)
+            {
+                return arg != null ? 1 : 0;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int MixedArgs(int value)
+            {
+                return value;
             }
         }
     }

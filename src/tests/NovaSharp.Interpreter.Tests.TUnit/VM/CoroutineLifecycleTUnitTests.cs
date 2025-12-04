@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
     using global::TUnit.Assertions;
     using NovaSharp;
     using NovaSharp.Interpreter;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -219,6 +220,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task CloseSuspendedCoroutineReturnsTrue()
         {
             Script script = new(CoreModules.PresetComplete);
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua54;
             script.DoString(
                 @"
                 function closable_success()
@@ -245,6 +247,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
         public async Task CloseSuspendedCoroutinePropagatesErrors()
         {
             Script script = new(CoreModules.PresetComplete);
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua54;
             script.DoString(
                 @"
                 function closable_failure()

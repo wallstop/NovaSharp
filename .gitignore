@@ -6,6 +6,8 @@
 *.user
 *.sln.docstates
 
+.devcontainer/**
+
 # Build results
 
 [Dd]ebug/

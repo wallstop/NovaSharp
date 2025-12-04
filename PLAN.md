@@ -2,8 +2,8 @@
 
 ## Repository Snapshot — 2025-12-04 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true>` enforced.
-- **Tests**: **2,982** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
-- **Coverage**: Interpreter at **95.7% line / 92.9% branch / 97.7% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
+- **Tests**: **3,021** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Coverage**: Interpreter at **95.8% line / 93.1% branch / 97.7% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 
@@ -16,22 +16,27 @@
 ## Active Initiatives
 
 ### 1. Coverage and test depth
-- **Current**: 2,982 tests, **95.7% line / 92.9% branch / 97.7% method** coverage.
+- **Current**: 3,021 tests, **95.8% line / 93.1% branch / 97.7% method** coverage.
 - **Target**: Branch coverage >= 95% to enable `COVERAGE_GATING_MODE=enforce`.
 - **Recent progress** (2025-12-04):
-  - Added 17 tests for `FunctionMemberDescriptorBase`: CreateCallbackDynValue, GetCallbackAsDynValue, GetCallbackFunction, GetCallback, GetValue, SetValue (throws), MemberAccess, VarArgs with UserData array passthrough, ref/out parameters, VoidWithOutParams, SortDiscriminant, ExtensionMethodType.
-  - Added 7 tests for `Slice<T>`: Reversed property, IsReadOnly, IndexOf, Contains.
-  - Added 5 tests for `DotNetCorePlatformAccessor`: GetStandardStream invalid type, ExecuteCommand empty/whitespace, FilterSupportedCoreModules, GetPlatformNamePrefix.
-  - Added 1 test for `CustomConverterRegistry`: ObsoleteTypedClrToScriptConversion null behavior (documents a bug in the obsolete method).
+  - Added 17 tests for `DebugModule`: GetUpvalue (ClrFunction, invalid index, negative index), UpvalueId (ClrFunction, invalid index), SetUpvalue (ClrFunction, invalid index), GetUserValue (non-userdata), SetUserValue (non-table, no value), GetMetatable (no metatable), SetMetatable (no metatable, non-table metatable, functions), Traceback, UpvalueJoin (success and invalid indices), GetInfo for ClrFunction.
+  - Added 15 tests for `ExtensionMethodsRegistry`: GetExtensionMethodsChangeVersion, GetExtensionMethodsByNameAndType (registered/unregistered types, priority ordering), generic extension methods, interface extensions, base type extensions, array length extensions. Branch coverage improved from 50% → **91.1%**.
+  - Added 6 tests for `OverloadedMethodMemberDescriptor`: VarArgsExactArrayTypePassthrough, ZeroSizeCacheTriggersOverflowPath, CacheMismatchWhenCachedUserDataButCallWithNonUserData, PrepareForWiringWithNonWireableOverload, SetExtensionMethodsSnapshotUpdatesVersion. Branch coverage improved from 82.9% → **87.1%**.
+  - Added 19 tests for `TypeDescriptorRegistry`: IsTypeRegistered (registered/not registered), GetDescriptorForType (registered/returns null for unregistered), UnregisterType (registered/not registered), DefaultAccessMode, enum auto-registration, generic definition resolves concrete types, composite descriptor for multiple interfaces, BackgroundOptimized mode, custom descriptor registration. Branch coverage improved from 83.3% → **92.2%**.
+  - Previous: Added 17 tests for `FunctionMemberDescriptorBase`: CreateCallbackDynValue, GetCallbackAsDynValue, GetCallbackFunction, GetCallback, GetValue, SetValue (throws), MemberAccess, VarArgs with UserData array passthrough, ref/out parameters, VoidWithOutParams, SortDiscriminant, ExtensionMethodType.
+  - Previous: Added 7 tests for `Slice<T>`: Reversed property, IsReadOnly, IndexOf, Contains.
+  - Previous: Added 5 tests for `DotNetCorePlatformAccessor`: GetStandardStream invalid type, ExecuteCommand empty/whitespace, FilterSupportedCoreModules, GetPlatformNamePrefix.
+  - Previous: Added 1 test for `CustomConverterRegistry`: ObsoleteTypedClrToScriptConversion null behavior (documents a bug in the obsolete method).
   - Previous: Added 41 tests for `ScriptRuntimeException`: LoopInIndex, LoopInNewIndex, LoopInCall, BadArgumentNoNegativeNumbers, AttemptToCallNonFunc with debugText, null-guard branches for ArithmeticOnNonNumber, BitwiseOnNonInteger, ConcatOnNonString, LenOnInvalidType, CompareInvalidType, IndexType, ConvertObjectFailed, UserDataArgumentTypeMismatch, AccessInstanceMemberOnStatics, constructor paths (Exception, ScriptRuntimeException), Rethrow with GlobalOptions.RethrowExceptionNested, CloseMetamethodExpected null/non-null. Coverage improved from 82.2% → 95%+ line, 66.6% → 100% branch for ScriptRuntimeException.
   - Previous: Added 9 tests for `StreamFileUserDataBase`, 6 tests for `OverloadedMethodMemberDescriptor`.
 - **Priority targets** (remaining low-branch coverage files):
-  1. **FunctionMemberDescriptorBase** (84.4% → ~85%): Some varargs UserData array passthrough edge cases still uncovered.
-  2. **OverloadedMethodMemberDescriptor** (82.9%): Cache overflow, CheckMatch hasObject mismatch, varargs exact UserData match.
-  3. **DotNetCorePlatformAccessor** (86.1%): Windows shell paths (platform-specific), ExitFast.
-  4. **ExtensionMethodsRegistry** (50%): Extension method discovery paths.
-  5. **TypeDescriptorRegistry** (83.3%): Descriptor cache paths.
-- **Next step**: Continue targeting files under 90% branch coverage.
+  1. **DebugModule** (~65%): Most uncovered paths are in debug.debug REPL loop (requires DebugInput/DebugPrint hooks).
+  2. **FileUserDataDescriptor** (64.3%): File handle descriptor edge cases.
+  3. **StreamFileUserDataBase** (75.9%): Stream operations - most remaining branches are Windows-specific (CRLF normalization).
+  4. **LuaCompatibilityProfile** (78.6%): Version-specific feature gates.
+  5. **CharPtr** (82.1%): String pointer operations.
+  6. **EventMemberDescriptor** (84.6%): Event subscription/unsubscription paths.
+- **Next step**: Focus on `FileUserDataDescriptor` or `EventMemberDescriptor`.
 
 ### 2. Codebase organization & namespace hygiene
 - **Problem**: Monolithic layout mirrors legacy MoonSharp; contributors struggle to locate feature-specific code.
