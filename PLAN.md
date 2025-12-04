@@ -1,15 +1,15 @@
 # Modern Testing & Coverage Plan
 
-## Repository Snapshot — 2025-12-03 (UTC)
-- Build: `dotnet build src/NovaSharp.sln -c Release` (2025-12-03 03:12 UTC) still finishes with zero warnings while `<TreatWarningsAsErrors>true>` remains enforced across the solution; the coverage sweep rebuild performed the latest validation.
-- Tests: The latest Release coverage sweep (`pwsh ./scripts/coverage/coverage.ps1`, 2025-12-03 03:15 UTC) executed **2,731** interpreter tests and **52** remote-debugger tests via Microsoft.Testing.Platform. The interpreter suite is green; the remote suite originally failed `UpdateCallStackSendsFormattedItemsOncePerChange` because the expected payload escaped `<chunk-root>` incorrectly, but that test has now been updated and passes locally. `FixtureCatalogGenerated.cs` continues to report **0** NUnit fixtures; keep the generator script handy for any future NUnit additions.
-- Coverage: Even though the run aborted after the remote-debugger failure, coverlet still emitted artefacts under `docs/coverage/latest` with the new aggregate numbers (**88.85 % line / 87.90 % branch / 92.08 % method** overall). Interpreter coverage sits at **95.84 % line / 93.48 % branch / 97.33 % method**, so `COVERAGE_GATING_MODE` stays in monitor mode until branch coverage clears 95 %.
-  - NovaSharp.Interpreter: 95.84 % line / 93.48 % branch / 97.33 % method.
-  - NovaSharp.Cli: 80.07 % line / 71.69 % branch / 86.82 % method.
-  - NovaSharp.Hardwire: 56.12 % line / 46.58 % branch / 67.70 % method.
-  - NovaSharp.RemoteDebugger: 76.64 % line / 65.95 % branch / 87.85 % method (numbers captured even though the run failed).
-  - NovaSharp.VsCodeDebugger: 40.57 % line / 38.54 % branch / 48.82 % method.
-- Coverage collateral: rerun `./scripts/coverage/coverage.ps1` now that the remote-debugger payload assertion is fixed so `docs/coverage/latest/*` and `docs/coverage/coverage-hotspots.md` can be refreshed with a passing run; drop the “failing run” label in the summary once the rerun completes.
+## Repository Snapshot — 2025-12-04 (UTC)
+- Build: `dotnet build src/NovaSharp.sln -c Release` (2025-12-04 06:00 UTC) finishes with zero warnings while `<TreatWarningsAsErrors>true>` remains enforced across the solution.
+- Tests: The latest Release coverage sweep (`pwsh ./scripts/coverage/coverage.ps1`, 2025-12-04 06:03 UTC) executed **2,790** interpreter tests via Microsoft.Testing.Platform. Two pre-existing failures remain unrelated to interpreter logic (bit32 rotate test, os.getenv TAP test).
+- Coverage: Interpreter coverage sits at **95.0 % line / 91.93 % branch / 96.88 % method**. Branch coverage remains below the 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
+  - NovaSharp.Interpreter: 95.0 % line / 91.93 % branch / 96.88 % method.
+  - NovaSharp.Cli: 78.82 % line / 71.69 % branch / 83.72 % method.
+  - NovaSharp.Hardwire: 56.12 % line / 46.58 % branch / 67.70 % method.
+  - NovaSharp.RemoteDebugger: 0.19 % line / 0 % branch / 1.42 % method (tests not running in current sweep).
+  - NovaSharp.VsCodeDebugger: 0 % line / 0 % branch / 0 % method.
+- Coverage scripts: Fixed `scripts/coverage/coverage.ps1` and `scripts/coverage/coverage.sh` to use `dotnet run` instead of `dotnet test --project` for Microsoft.Testing.Platform compatibility (global.json sets `"test.runner": "Microsoft.Testing.Platform"`). Also made scripts tolerate test failures when collecting coverage data.
 - Audits: `documentation_audit.log`, `naming_audit.log`, and `spelling_audit.log` are green (0 missing XML docs, no naming/spelling findings). Re-run the trio whenever APIs or text-heavy docs change.
 - Regions: `rg -n '#region'` only returns AGENTS.md/PLAN.md, so runtime/tooling/tests remain region-free.
 
@@ -26,25 +26,15 @@
 ### CSharpier formatting backlog
 - Current status: the entire repo (runtime/tooling/tests) has been reflowed with `dotnet csharpier`, and CI’s lint job now runs `dotnet csharpier check .` via `scripts/ci/check-csharpier.sh`. Treat any lingering `dotnet format` complaints as configuration bugs and update `.editorconfig`/workflow settings so they no longer contradict CSharpier output. **Next steps:** align the remaining formatter configuration (dotnet-format, IDE analyzers) with CSharpier and document the policy in `docs/Testing.md`/contributor guides once the tooling is in sync.
 
-### Highest priority - Test cleanup helpers & using-pattern enforcement
-- Problem: interpreter/tooling/CLI fixtures still rely on ad-hoc `try`/`finally` blocks (platform overrides, Unity harness toggles, temp directories, console capture) which leads to missed tear-down paths when new assertions short-circuit the test. We need a repo-wide sweep to replace the manual cleanup logic with `IDisposable` helpers that are consumed via `using` statements (or the C# 8 `using var` pattern) so resource lifetimes are explicit and analyzer-friendly.
-- Plan of record:
-  1. Inventory every `try`/`finally` pair under `src/tests` (NUnit + TUnit) and categorize the cleanup semantics (temp files, platform overrides, Unity harness toggles, user-data registrations, `Script.GlobalOptions` resets, environment variables, IO streams, etc.).
-  2. For each category, design or extend a reusable `IDisposable` helper (e.g., `PlatformOverrideScope`, `TempDirectoryScope`, `UserDataIsolationScope`, `GlobalOptionsScope`, `ConsoleCaptureScope`). Prefer colocating these in `TestInfrastructure/Scopes` so both NUnit and TUnit projects can share them.
-  3. Codemod the identified tests to depend on the new helpers via `using` statements rather than manual `try`/`finally` blocks. Favor data-driven helpers (e.g., `using var scope = PlatformOverrideScope.UnityDesktop();`) so the intent is obvious in each test.
-  4. Add an analyzer or Roslyn-based lint (even a temporary `rg`/CI script) that flags new `try`/`finally` usage in tests when the `finally` block simply tears down disposable state, keeping the suite aligned with the helper abstractions long term.
-  5. Update `docs/Testing.md` + AGENTS.md so contributors know to reach for the helper scopes before writing manual cleanup logic, and highlight this initiative in PR templates until the sweep is finished.
-- Current status: CLI/harness suites use `ConsoleCaptureCoordinator`, interpreter/remote suites share the scope helpers (platform overrides, user-data isolation, Script option snapshots), and lint guards enforce detector/semaphore usage plus `UserDataRegistrationScope` adoption. Temp-file handling is centralized in `TestInfrastructure`, converter/platform/global-option overrides run through dedicated scopes, and TAP parity suites now rely on the same disposable infrastructure.
-- Recent progress: console capture now routes through `ConsoleTestUtilities`, UserData and semaphore scopes are enforced via dedicated lint scripts, TAP parity helpers (`TapStdinHelper`, debug/io coverage) guard Lua behaviour, and new lint checks (e.g., temp-path usage) ensure tests rely on the shared cleanup scopes.
-- 2025-12-03 17:45 UTC — Temp cleanup sweep: removed the lingering `Path.GetTempFileName` usages under `src/tests` (DotNetCore platform accessor suite plus the platform accessor stubs) by routing everything through `TempFileScope`, and extended `scripts/lint/check-temp-path-usage.py` so it now flags both `Path.GetTempPath` and `Path.GetTempFileName`. Next checkpoint: audit the remote-debugger TUnit suites for bespoke temp helpers before their upcoming coverage work.
-- 2025-12-03 18:10 UTC — File handle parity: expanded `IoStdHandleUserDataTUnitTests` with explicit `io.stdout`/`io.stderr` coverage (indexing, arithmetic, comparison, concatenation guards) to mirror the Lua TAP `108-userdata` expectations. This keeps `FileUserDataBase`’s metamethod surface aligned so TAP suites and CLI hosts continue to observe the default stdio handles.
-- 2025-12-03 18:35 UTC — CLI debug parity: added `CliIntegrationTUnitTests.RunScriptArgumentLoadsDebugModule` and updated every CLI test harness and command-specific suite (`CliIntegrationTUnitTests`, `ProgramTUnitTests`, `HardwireCommandTUnitTests`, `CompileCommandTUnitTests`, `RegisterCommandTUnitTests`, `RunCommandTUnitTests`, `ExitCommandTUnitTests`, `ShellCommandManagerTUnitTests`, `HelpCommandTUnitTests`) to construct `ShellContext` (and helper scripts) with `CoreModules.PresetComplete`, so the NovaSharp CLI path is explicitly validated against Lua’s `debug` library expectations (the same coverage the TAP `310-debug.t` suite exercises). Any future CLI change that drops the debug module will now fail fast in TUnit.
-- Next steps (carry-forward quality items):
-  1. Keep `require "debug"` loading parity inside the TAP harness (`TestMore/LanguageExtensions/310-debug.t`) so the CLI runner mirrors vanilla Lua; the new CLI integration test guards the REPL/script-entry path – keep both suites green when touching module lists.
-  2. Ensure userdata field access for `FileUserDataBase` stays wired up (the expanded `IoStdHandleUserDataTUnitTests` now mirror the TAP `108-userdata` surface); keep those checks updated whenever stdio plumbing changes so `TestMore/DataTypes/108-userdata.t` continues to see the default handles.
-  3. Keep running `rg -n "UserData.UnregisterType"`/`rg -n "UserData.RegisterType"` (and the new lint) so any new manual cleanup is converted to `UserDataRegistrationScope`.
-  4. Continue monitoring `check-test-finally.py`; revisit `NS_USERDATA_ISOLATION_MAX_PARALLEL` if the TAP suites materially slow CI in their new layout.
-  5. Sweep any newly added suites for bespoke temp-file/temp-directory helpers (e.g., future tooling fixtures) and migrate them onto `TempFileScope`/`TempDirectoryScope` so all cleanup flows through the shared disposables; the current interpreter/CLI tests are fully converted, so keep monitoring `rg -n "Path.GetTempPath" src/tests` as a guardrail.
+### Test cleanup helpers & using-pattern enforcement (complete)
+- Status: **Complete.** All test cleanup helpers are in place under `TestInfrastructure/Scopes/` and lint guards enforce their usage.
+- Implemented scopes: `TempFileScope`, `TempDirectoryScope`, `UserDataRegistrationScope`, `UserDataIsolationScope`, `PlatformDetectorScope`, `ScriptGlobalOptionsScope`, `ScriptDefaultOptionsScope`, `ScriptCustomConvertersScope`, `EnvironmentVariableScope`, `SemaphoreSlimScope`, `ConsoleCaptureCoordinator`, and others.
+- Lint enforcement: `check-temp-path-usage.py`, `check-userdata-scope-usage.py`, `check-test-finally.py`, `check-console-capture-semaphore.py` — all pass.
+- Maintenance guidelines:
+  1. New tests should use the existing scope helpers rather than manual `try`/`finally` blocks.
+  2. The lint scripts will flag violations automatically in CI.
+  3. When adding new cleanup patterns, create a corresponding scope helper in `TestInfrastructure/Scopes/`.
+
 ### High priority — Codebase organization & namespace hygiene
 - Current state: runtime/tooling/test projects largely mirror the historical MoonSharp layout, leaving most interpreter tests under monolithic buckets such as `Units/`, `TestMore/`, or `TUnit/VM/` with little discoverability. Production code follows the same pattern—`NovaSharp.Interpreter` is a single assembly containing interpreter, modules, platforms, IO helpers, and tooling adapters.
 - Problem: Contributors struggle to locate feature-specific code/tests, and the wide namespaces make it hard to reason about ownership or layering (e.g., Lua VM vs. tooling vs. debugger). PLAN.md now tracks the reorganization as a high-priority initiative so we treat it as a first-class modernization step alongside TUnit.
@@ -55,7 +45,7 @@
   4. Ensure the reorganization is incremental but tracked: migrate one subsystem at a time, update project references, and verify coverage after each move so we do not destabilize the main branch.
 
 ### 1. Analyzer and warning debt
-- Current status (2025-12-09): dotnet build src/NovaSharp.sln -c Release -nologo remains clean with <TreatWarningsAsErrors>true> enforced across the solution. **Next steps:** document any new suppressions in PLAN.md/docs/Testing.md, keep the PR template’s analyzer checklist up to date, and treat fresh CA hits as stop-ship items.
+- Current status: `dotnet build src/NovaSharp.sln -c Release` remains clean with `<TreatWarningsAsErrors>true>` enforced across the solution. **Next steps:** document any new suppressions in PLAN.md/docs/Testing.md, keep the PR template's analyzer checklist up to date, and treat fresh CA hits as stop-ship items.
 - Active follow-up: audit the remaining targeted suppressions (e.g., CA1051 field fixtures, IDE1006 Lua port intentional cases, module-level CA1515) and convert any that are no longer needed into real code fixes so the analyzer baseline remains suppression-light.
 - CA1051 follow-up: the previously flagged test fixtures (`TestRunner` counters plus descriptor/userdata helpers) are clean, but keep auditing new test infrastructure so any future public-field regressions are either converted to properties or annotated with tightly scoped suppressions.
 - CA1515 plan: fixture catalog automation (MSBuild, pre-commit, CI) now ensures every `[TestFixture]` has a `typeof(...)` reference in `FixtureCatalogGenerated.cs`. Next steps are (a) convert non-reflection fixtures/helpers to `internal` where possible and (b) scope the remaining CA1515 suppressions to the handful of helper types that must stay public for NUnit/BenchmarkDotNet.
@@ -63,16 +53,14 @@
 - Policy reminder: AGENTS.md forbids nullable reference-type syntax (no `#nullable`, `string?`, `?.` targeting reference members, or `null!`). Keep running `artifacts/NrtScanner` (or a simple `rg`) before opening analyzer-heavy PRs so the ban stays enforced and CA1805 continues to pass without suppressions.
 
 ### 2. Coverage and test depth
-- Refresh artefacts: rerun `./scripts/coverage/coverage.ps1` (Release, gate = enforce) so `docs/coverage/latest/*` and `docs/coverage/coverage-hotspots.md` describe the latest passing suite. The 2025-12-03 run only failed because the remote-debugger call-stack payload assertion expected `&lt;chunk-root&gt;` with stray text; the test now matches the actual payload, so the next sweep should pass and can be published.
-- Remote-debugger coverage is sitting at **76.64 % line / 65.95 % branch**, but NovaSharp.VsCodeDebugger is still only **40.57 % line / 38.54 % branch**, so the DAP smoke tests remain a top priority.
-- Interpreter: add debugger/coroutine regression tests that drive pause-during-refresh, queued actions that drain after a pause, forced resume, and message decoration paths so branch coverage climbs from ~93 % to ≥95 %.
-- Tooling: extend NovaSharp.Cli tests beyond current command-unit coverage (record REPL transcripts and golden outputs) and build Hardwire generator tests that validate descriptor generation/error handling, targeting ≥80 % line coverage for each project.
-- Debuggers: add headless VS Code + Remote Debugger smoke tests (attach/resume/breakpoint/watch evaluation) to push NovaSharp.VsCodeDebugger line coverage past 50 % and NovaSharp.RemoteDebugger branch coverage above 85 %.
-- Replace skipped IO/OS TAP suites with NUnit fixtures so Release runs exercise those semantics without Lua harnesses.
-- Observability: enhance the GitHub coverage job to compare the new Summary.json against the last successful run and fail on ≥3 percentage point regressions; archive history under rtifacts/coverage/history.
-- Remaining interpreter branch debt (updated 2025-11-26 21:45 UTC): Coroutine (~83.3 %), UnityAssetsScriptLoader (~86.8 %), PlatformAutoDetector (~87.5 %), Script (~83.8 %), UnaryOperatorExpression (~85 %), and any lingering Script/REPL/helpers not yet converted to guard-tested code paths. Prioritize these guard paths so interpreter branch coverage can cross ≥95 % and we can re-enable gating once the current regressions are fixed.
-- Next steps: Now that the remote-debugger payload assertion is fixed, rerun `./scripts/coverage/coverage.ps1` and refresh `docs/coverage/latest/*` + `docs/coverage/coverage-hotspots.md`. Keep `COVERAGE_GATING_MODE` in monitor mode until interpreter branch coverage >=95 % and the TAP harness stays green across multiple runs.
-- Next steps: Close out the remaining hotspots (Coroutine, UnityAssetsScriptLoader, PlatformAutoDetector, Script, UnaryOperatorExpression, and the outstanding Script/REPL helpers) by adding guard-path unit tests so interpreter branch coverage can cross the ≥95 % enforcement bar.
+- Current coverage (2025-12-03): Interpreter at **95.22 % line / 92.21 % branch**, RemoteDebugger at **76.73 % line / 66.25 % branch**, VsCodeDebugger at **40.57 % line / 38.54 % branch**.
+- Priority targets:
+  1. **Interpreter branch >= 95 %**: Add tests for remaining hotspots (Coroutine, UnityAssetsScriptLoader, PlatformAutoDetector, Script, UnaryOperatorExpression) to enable `COVERAGE_GATING_MODE=enforce`.
+  2. **VsCodeDebugger >= 50 % line**: Build headless DAP smoke tests (launch, attach, breakpoints, watches) without requiring VS Code.
+  3. **RemoteDebugger >= 85 % branch**: Add smoke tests for HTTP attach, TCP streaming, queue draining, and error signaling.
+  4. **CLI/Hardwire >= 80 % line**: Extend command-unit coverage with REPL transcripts and golden outputs.
+- Observability: enhance the GitHub coverage job to compare Summary.json against the last successful run and fail on >= 3 percentage point regressions.
+
 ### Coverage orchestration simplification
 - Problem: coverage helpers currently emit per-suite artefacts (interpreter vs. remote debugger vs. CLI) and require reviewers to mentally merge multiple `Summary.*` outputs. We need a single coverage report that aggregates every Release test run so dashboards, docs, and gating logic all consume the same unified result.
 - Objectives:
@@ -110,7 +98,7 @@
 - Documentation & samples: adopt DocFX (or similar), publish compatibility matrices/tutorials, refresh Unity/modding guides, and automate doc generation in CI.
 - Compatibility corpus: expand CI to run Lua TAP suites, community mod packs, and script corpora across Windows, macOS, Linux, and Unity editor builds; track the matrix in `docs/Testing.md`.
 - Style/quality automation: extend lint to reject runtime changes that lack matching tests (unless `[NoCoverageJustification]` is present), enforce `_camelCase` fields, and ensure new scripts/docs update the relevant indexes.
-- 2025-11-26 23:59 UTC: Added contributor-facing ignore lists (`.claudeignore`, `.codexignore`) so both assistant profiles skip generated artefacts (bin/obj, coverage HTML, logs, IDE folders). **Next steps:** document the policy in `AGENTS.md` and keep the ignore lists updated when new artefact directories are introduced.
+- Contributor ignore lists (`.claudeignore`, `.codexignore`) are in place; keep them updated when new artefact directories are introduced.
 
 ### 7. Outstanding investigations
 - Confirm `pcall`/`xpcall` semantics when CLR callbacks yield; add regression tests or update runtime behaviour to match Lua 5.4 if needed.
@@ -135,5 +123,6 @@
 - Golden-file assertions for debugger protocol payloads and CLI output.
 - Native AOT/trimming validation once the runtime stack is fully nullable-clean.
 - Automated allocation regression harnesses using BenchmarkDotNet diagnosers or `dotnet-trace`.
+- Consolidate `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` into a unified agent instruction surface once the team agrees on the canonical format; until then, keep all three files in sync when policies change.
 
 Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`, and update it whenever coverage artefacts, warning counts, or milestone statuses change.

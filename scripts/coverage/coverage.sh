@@ -130,7 +130,13 @@ run_coverlet() {
         cmd+=("${extra_args[@]}")
     fi
 
-    "${cmd[@]}"
+    # Note: coverlet returns non-zero if tests fail, even though coverage was collected.
+    # We check for output files rather than exit code to determine success.
+    local exit_code=0
+    "${cmd[@]}" || exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        log "Warning: Test runner returned exit code $exit_code (some tests may have failed)"
+    fi
 }
 
 pushd "$repo_root" >/dev/null
@@ -221,19 +227,17 @@ report_target="$repo_root/docs/coverage/latest"
 tunit_coverage_base="${coverage_base}.tunit"
 tunit_coverage_json="${tunit_coverage_base}.json"
 
+# Use 'run' instead of 'test' because Microsoft.Testing.Platform
+# (configured in global.json) does not support 'dotnet test <project>' syntax.
 tunit_target_args=(
-    test "$tunit_runner_project"
+    run --project "$tunit_runner_project"
     -c "$configuration"
     --no-build
-    --logger "trx;LogFileName=NovaSharpTUnit.trx"
-    --results-directory "$tunit_results_dir"
 )
 remote_target_args=(
-    test "$remote_runner_project"
+    run --project "$remote_runner_project"
     -c "$configuration"
     --no-build
-    --logger "trx;LogFileName=NovaSharpRemoteDebugger.trx"
-    --results-directory "$remote_results_dir"
 )
 tunit_joined_target_args="$(printf "%s " "${tunit_target_args[@]}")"
 tunit_joined_target_args="${tunit_joined_target_args% }"

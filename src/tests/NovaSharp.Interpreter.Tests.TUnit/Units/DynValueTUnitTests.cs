@@ -287,6 +287,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue destination = DynValue.NewNumber(1).AsReadOnly();
 
             Assert.Throws<InternalErrorException>(() => destination.AssignNumber(2));
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -295,6 +296,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             DynValue destination = DynValue.NewString("value");
 
             Assert.Throws<InternalErrorException>(() => destination.AssignNumber(2));
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

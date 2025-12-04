@@ -1017,6 +1017,7 @@ end
 
         private static async Task<DynValue> ReadNumberFromContent(string content)
         {
+            await Task.CompletedTask.ConfigureAwait(false);
             using TempFileScope temp = TempFileScope.CreateWithText(content);
             string escapedPath = temp.EscapedPath;
             Script script = CreateScript();

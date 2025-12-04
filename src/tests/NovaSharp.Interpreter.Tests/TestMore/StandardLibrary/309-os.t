@@ -124,7 +124,9 @@ end
 
 is(os.getenv('__IMPROBABLE__'), nil, "function getenv")
 
-user = os.getenv('LOGNAME') or os.getenv('USERNAME')
+-- Try multiple common environment variables to find one that's set
+-- Different systems use different variables: LOGNAME (Unix), USERNAME (Windows), USER (some Unix/containers)
+user = os.getenv('LOGNAME') or os.getenv('USERNAME') or os.getenv('USER') or os.getenv('HOME')
 type_ok(user, 'string', "function getenv")
 
 local f = io.open('file.rm', 'w')

@@ -66,6 +66,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Slice<int> slice = new(source, from: 1, length: 2, reversed: false);
 
             CollectionAssert.AreEqual(ToArrayForwardExpected, slice.ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,6 +76,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Slice<int> slice = new(source, from: 1, length: 2, reversed: true);
 
             CollectionAssert.AreEqual(ToArrayReversedExpected, slice.ToList().ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -84,6 +86,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
 
             CollectionAssert.AreEqual(EnumeratorForwardExpected, slice.ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -93,6 +96,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             Slice<int> slice = new(source, from: 0, length: 3, reversed: true);
 
             CollectionAssert.AreEqual(EnumeratorReversedExpected, slice.ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -128,6 +132,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             slice.CopyTo(target, 1);
 
             CollectionAssert.AreEqual(CopyToTargetExpected, target);
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -154,6 +159,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 NonGenericEnumeratorExpected,
                 enumerable.Cast<int>().ToArray()
             );
+            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 }

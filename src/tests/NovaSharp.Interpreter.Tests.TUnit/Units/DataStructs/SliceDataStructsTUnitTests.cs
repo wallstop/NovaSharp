@@ -45,6 +45,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             Slice<string> slice = new(source, from: 1, length: 2, reversed: false);
 
             CollectionAssert.AreEqual(ExpectedStringSlice, slice.ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,6 +55,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             Slice<int> slice = new(source, from: 1, length: 3, reversed: true);
 
             CollectionAssert.AreEqual(ReversedSlice, slice.ToArray());
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -76,6 +78,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             slice.CopyTo(buffer, 1);
 
             CollectionAssert.AreEqual(CopyBufferExpectation, buffer);
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

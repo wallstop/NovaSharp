@@ -44,10 +44,11 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Cli
                 ensureUnregistered: true
             );
 
-            await WithConsoleAsync(async console =>
+            await WithConsoleAsync(console =>
                 {
                     command.Execute(context, targetType.AssemblyQualifiedName);
                     _ = console;
+                    return Task.CompletedTask;
                 })
                 .ConfigureAwait(false);
 
