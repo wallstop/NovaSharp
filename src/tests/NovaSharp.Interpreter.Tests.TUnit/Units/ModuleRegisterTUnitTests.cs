@@ -89,5 +89,15 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
             await Assert.That(loadedNamespace.Type).IsEqualTo(DataType.Table);
             await Assert.That(loadedNamespace.Table).IsSameReferenceAs(namespaceValue.Table);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task RegisterConstantsThrowsWhenTableIsNull()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                ModuleRegister.RegisterConstants(null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("table");
+        }
     }
 }

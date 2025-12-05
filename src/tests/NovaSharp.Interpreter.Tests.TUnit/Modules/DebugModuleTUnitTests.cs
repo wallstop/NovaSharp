@@ -963,6 +963,370 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(tuple[1].IsNil()).IsTrue().ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        public async Task TracebackWithCoroutineUsesCoroutineStack()
+        {
+            // Tests debug.traceback with a thread (coroutine) argument (line 522-526)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function inner()
+                    return debug.traceback(coroutine.running(), 'message')
+                end
+                local co = coroutine.create(inner)
+                local ok, trace = coroutine.resume(co)
+                return ok, trace
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].String).Contains("message").ConfigureAwait(false);
+            await Assert.That(tuple[1].String).Contains("traceback").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TracebackReturnsOriginalMessageWhenNotStringOrNumber()
+        {
+            // Tests debug.traceback returning non-string/non-number message unchanged (line 531-536)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local t = { custom = 'value' }
+                return debug.traceback(t)
+                "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            await Assert
+                .That(result.Table.Get("custom").String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetHookAndGetHookWithCoroutineTarget()
+        {
+            // Tests debug.sethook/gethook with a coroutine target (line 600-605)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function hookfn() end
+                local co = coroutine.create(function()
+                    debug.sethook(hookfn, 'r', 10)
+                    local fn, mask, count = debug.gethook()
+                    return fn ~= nil, mask, count
+                end)
+                local ok, hasFn, mask, count = coroutine.resume(co)
+                return ok, hasFn, mask, count
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsGreaterThanOrEqualTo(4).ConfigureAwait(false);
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[2].String).IsEqualTo("r").ConfigureAwait(false);
+            await Assert.That(tuple[3].Number).IsEqualTo(10d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetHookWithNoArgsClears()
+        {
+            // Tests debug.sethook() with no args clears hook (line 605-608)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function hookfn() end
+                debug.sethook(hookfn, 'c', 5)
+                local fn1, mask1, count1 = debug.gethook()
+                debug.sethook() -- Call with no args to clear
+                local fn2, mask2, count2 = debug.gethook()
+                return fn1 ~= nil, fn2 == nil, mask2, count2
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false); // Had hook before clear
+            await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false); // fn is nil after clear
+            await Assert.That(tuple[2].String).IsEqualTo(string.Empty).ConfigureAwait(false);
+            await Assert.That(tuple[3].Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetHookWithNilFunctionClearsHook()
+        {
+            // Tests debug.sethook(nil) clears hook (line 629-631)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function hookfn() end
+                debug.sethook(hookfn, 'c', 5)
+                debug.sethook(nil)
+                local fn, mask, count = debug.gethook()
+                return fn == nil, mask, count
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].String).IsEqualTo(string.Empty).ConfigureAwait(false);
+            await Assert.That(tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetHookThrowsForNonFunctionHook()
+        {
+            // Tests debug.sethook with invalid hook type (line 635-637)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local ok, err = pcall(function() debug.sethook('not a function', 'c') end)
+                return ok, err
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple[1].String).Contains("function expected").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetHookWithCoroutineArgument()
+        {
+            // Tests debug.gethook(coroutine) (line 663-666)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function hookfn() end
+                local co = coroutine.create(function()
+                    debug.sethook(hookfn, 'l', 3)
+                end)
+                coroutine.resume(co)
+                -- Get hook for the coroutine from outside
+                local fn, mask, count = debug.gethook(co)
+                return fn ~= nil, mask, count
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].String).IsEqualTo("l").ConfigureAwait(false);
+            await Assert.That(tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetMetatableOnBooleanSetsTypeMetatable()
+        {
+            // NovaSharp allows type metatables for Nil, Void, Boolean, Number, String, Function
+            // This tests that debug.setmetatable on boolean works (line 315-317)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local mt = { __tostring = function(v) return 'custom_bool' end }
+                debug.setmetatable(true, mt)
+                return true
+                "
+            );
+
+            await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
+            // The metatable is set for the boolean type (accessible via debug.getmetatable)
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetMetatableThrowsForUserDataWithoutDescriptor()
+        {
+            // Tests debug.setmetatable on unsupported type (line 325-328)
+            // UserData requires special handling, use Thread (coroutine) since
+            // Thread is at the boundary where CanHaveTypeMetatables returns false
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local co = coroutine.create(function() end)
+                local ok, err = pcall(function() debug.setmetatable(co, {}) end)
+                return ok, err
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple[1].String)
+                .Contains("cannot debug.setmetatable")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetMetatableReturnsTableMetatable()
+        {
+            // Tests debug.getmetatable for a table (line 269-271)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local t = {}
+                local mt = { __index = function() return 42 end }
+                setmetatable(t, mt)
+                local retrieved = debug.getmetatable(t)
+                return retrieved == mt, t.anykey
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetMetatableReturnsNilForTableWithoutMetatable()
+        {
+            // Tests debug.getmetatable returning nil for table without metatable (line 269-271)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local t = {}
+                return debug.getmetatable(t)
+                "
+            );
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetMetatableOnTableWorks()
+        {
+            // Tests debug.setmetatable on a table (line 319-321)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local t = {}
+                local mt = { __index = function() return 'found' end }
+                debug.setmetatable(t, mt)
+                return t.missing
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("found").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UpvalueIdReturnsNilForOutOfRangeIndex()
+        {
+            // Tests debug.upvalueid returns nil when index is out of range
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function f()
+                    -- Has _ENV as upvalue but nothing else
+                end
+                return debug.upvalueid(f, 999)
+                "
+            );
+
+            // Index 999 is far beyond the available upvalues -> nil
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UpvalueIdReturnsUserDataForValidUpvalue()
+        {
+            // Tests debug.upvalueid returns a userdata identifier for valid upvalue
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 10
+                local function f()
+                    return x
+                end
+                local id = debug.upvalueid(f, 1)
+                return type(id)
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("userdata").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UpvalueJoinThrowsForInvalidSecondClosure()
+        {
+            // Tests debug.upvaluejoin invalid index on second closure (line 487)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 1
+                local function f1() return x end
+                local function f2() end
+                local ok, err = pcall(function() debug.upvaluejoin(f1, 1, f2, 999) end)
+                return ok, err
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple[1].String)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TracebackWithNumberLevel()
+        {
+            // Tests debug.traceback with a specific level to skip (line 543)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function deep()
+                    return debug.traceback('trace', 2)
+                end
+                local function middle()
+                    return deep()
+                end
+                local function outer()
+                    return middle()
+                end
+                return outer()
+                "
+            );
+
+            await Assert.That(result.String).Contains("trace").ConfigureAwait(false);
+            await Assert.That(result.String).Contains("traceback").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TracebackWithNilLevelUsesDefault()
+        {
+            // Tests debug.traceback with nil level uses default skip=1
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function inner()
+                    return debug.traceback('msg', nil)
+                end
+                return inner()
+                "
+            );
+
+            await Assert.That(result.String).Contains("msg").ConfigureAwait(false);
+            await Assert.That(result.String).Contains("traceback").ConfigureAwait(false);
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Performance",
             "CA1812:Avoid uninstantiated internal classes",

@@ -430,6 +430,45 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(negativeResult).IsEqualTo(6).ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        public async Task CharHandlesNaNAsZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.char(0/0)");
+
+            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharHandlesPositiveInfinityAsZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.char(1/0)");
+
+            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharHandlesNegativeInfinityAsZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.char(-1/0)");
+
+            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharAcceptsNumericStringArguments()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.char('65', '66')");
+
+            await Assert.That(result.String).IsEqualTo("AB").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

@@ -206,6 +206,103 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        public async Task FrexpWithZeroReturnsZeroMantissaAndExponent()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.frexp(0)");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FrexpWithNegativeZeroReturnsZeroMantissaAndExponent()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.frexp(-0.0)");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FrexpWithNegativeNumberReturnsNegativeMantissa()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.frexp(-8)");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsLessThan(0d).ConfigureAwait(false);
+            // m * 2^e should equal -8
+            double m = result.Tuple[0].Number;
+            double e = result.Tuple[1].Number;
+            await Assert
+                .That(m * Math.Pow(2, e))
+                .IsEqualTo(-8d)
+                .Within(1e-12)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FrexpWithSubnormalNumberHandlesExponentCorrectly()
+        {
+            // Subnormal (denormalized) numbers have exponent bits = 0
+            // The smallest positive subnormal is approximately 4.94e-324
+            Script script = CreateScript();
+            double subnormal = double.Epsilon; // Smallest positive subnormal
+            script.Globals["subnormal"] = subnormal;
+            DynValue result = script.DoString("return math.frexp(subnormal)");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            double m = result.Tuple[0].Number;
+            double e = result.Tuple[1].Number;
+            // Verify m is in range [0.5, 1)
+            await Assert.That(Math.Abs(m)).IsGreaterThanOrEqualTo(0.5).ConfigureAwait(false);
+            await Assert.That(Math.Abs(m)).IsLessThan(1.0).ConfigureAwait(false);
+            // m * 2^e should equal the original subnormal
+            await Assert
+                .That(m * Math.Pow(2, e))
+                .IsEqualTo(subnormal)
+                .Within(1e-330)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FrexpWithPositiveNumberReturnsMantissaInExpectedRange()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.frexp(16)");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            double m = result.Tuple[0].Number;
+            double e = result.Tuple[1].Number;
+            // Per Lua 5.4 spec, m is in [0.5, 1) for normal numbers
+            await Assert.That(m).IsGreaterThanOrEqualTo(0.5).ConfigureAwait(false);
+            await Assert.That(m).IsLessThan(1.0).ConfigureAwait(false);
+            await Assert
+                .That(m * Math.Pow(2, e))
+                .IsEqualTo(16d)
+                .Within(1e-12)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FrexpAndLdexpRoundTrip()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                @"
+                local m, e = math.frexp(123.456)
+                return math.ldexp(m, e)
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(123.456).Within(1e-12).ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

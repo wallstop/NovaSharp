@@ -243,5 +243,57 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
 
             await Assert.That(count).IsEqualTo(bytes.Length).ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task GetBytesThrowsWhenDestinationIndexIsNegative()
+        {
+            char[] source = { 'a', 'b', 'c' };
+            byte[] destination = new byte[10];
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                _encoding.GetBytes(source, 0, source.Length, destination, -1)
+            );
+
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetCharsThrowsWhenDestinationIndexIsNegative()
+        {
+            byte[] source = { 0x41, 0x42, 0x43 };
+            char[] destination = new char[10];
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                _encoding.GetChars(source, 0, source.Length, destination, -1)
+            );
+
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetBytesThrowsWhenDestinationIndexExceedsLength()
+        {
+            char[] source = { 'a' };
+            byte[] destination = new byte[3];
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                _encoding.GetBytes(source, 0, 1, destination, 5)
+            );
+
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetCharsThrowsWhenDestinationIndexExceedsLength()
+        {
+            byte[] source = { 0x41 };
+            char[] destination = new char[3];
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                _encoding.GetChars(source, 0, 1, destination, 5)
+            );
+
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
     }
 }

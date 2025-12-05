@@ -183,5 +183,73 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(result.IsNil()).IsTrue();
         }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberThrowsWhenBaseIsNaN()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.NaN) },
+                isMethodCall: false
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                BasicModule.ToNumber(context, args)
+            );
+
+            await Assert.That(exception.Message).Contains("integer").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberThrowsWhenBaseIsPositiveInfinity()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.PositiveInfinity) },
+                isMethodCall: false
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                BasicModule.ToNumber(context, args)
+            );
+
+            await Assert.That(exception.Message).Contains("integer").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberThrowsWhenBaseIsNegativeInfinity()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.NegativeInfinity) },
+                isMethodCall: false
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                BasicModule.ToNumber(context, args)
+            );
+
+            await Assert.That(exception.Message).Contains("integer").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberThrowsWhenBaseIsNotInteger()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("FF"), DynValue.NewNumber(16.5) },
+                isMethodCall: false
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                BasicModule.ToNumber(context, args)
+            );
+
+            await Assert.That(exception.Message).Contains("integer").ConfigureAwait(false);
+        }
     }
 }

@@ -73,6 +73,28 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         }
 
         [global::TUnit.Core.Test]
+        public async Task NewTupleThrowsWhenValuesNull()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                DynValue.NewTuple((DynValue[])null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("values").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NewTupleNestedWithSingleTuplePassesThrough()
+        {
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue tuple = DynValue.NewTuple(first, second);
+
+            DynValue nested = DynValue.NewTupleNested(tuple);
+
+            await Assert.That(nested).IsSameReferenceAs(tuple).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task NewTupleNestedWithoutTuplesCreatesRegularTuple()
         {
             DynValue first = DynValue.NewNumber(1);
@@ -761,6 +783,27 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .That(DynValue.True.ToDebugPrintString())
                 .IsEqualTo(DynValue.True.ToString())
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToDebugPrintStringUsesFormatTypeStringWhenAsStringReturnsNull()
+        {
+            NullStringDescriptor descriptor = new();
+            DynValue userDataValue = UserData.Create(new object(), descriptor);
+
+            string debugString = userDataValue.ToDebugPrintString();
+
+            await Assert.That(debugString).StartsWith("userdata:").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetHashCodeHandlesBooleanValues()
+        {
+            int trueHash = DynValue.True.GetHashCode();
+            int falseHash = DynValue.False.GetHashCode();
+
+            await Assert.That(trueHash).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(falseHash).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
