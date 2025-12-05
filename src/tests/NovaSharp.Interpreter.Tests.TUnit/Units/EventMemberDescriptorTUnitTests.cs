@@ -9,6 +9,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
+    using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Interop.BasicDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors;
     using NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
@@ -21,6 +22,7 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
         {
             _ = new PrivateEventSource();
             _ = new IncompatibleEventSource();
+            _ = new VisibilityTestEventSource();
         }
 
         [global::TUnit.Core.Test]
@@ -543,6 +545,54 @@ end";
             }
         }
 
+        [global::TUnit.Core.Test]
+        public void TryCreateIfVisibleReturnsDescriptorWhenExplicitlyMarkedVisible()
+        {
+            EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
+                nameof(VisibilityTestEventSource.ExplicitlyVisibleEvent),
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+
+            EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
+                eventInfo,
+                InteropAccessMode.Default
+            );
+
+            Assert.That(descriptor, Is.Not.Null);
+            Assert.That(descriptor.EventInfo, Is.EqualTo(eventInfo));
+        }
+
+        [global::TUnit.Core.Test]
+        public void TryCreateIfVisibleReturnsNullWhenExplicitlyMarkedHidden()
+        {
+            EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
+                nameof(VisibilityTestEventSource.ExplicitlyHiddenEvent)
+            );
+
+            EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
+                eventInfo,
+                InteropAccessMode.Default
+            );
+
+            Assert.That(descriptor, Is.Null);
+        }
+
+        [global::TUnit.Core.Test]
+        public void TryCreateIfVisibleReturnsNullWhenPublicMethodsNotAvailable()
+        {
+            EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
+                nameof(VisibilityTestEventSource.NonPublicAccessorEvent),
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+
+            EventMemberDescriptor descriptor = EventMemberDescriptor.TryCreateIfVisible(
+                eventInfo,
+                InteropAccessMode.Default
+            );
+
+            Assert.That(descriptor, Is.Null);
+        }
+
         private sealed class SampleEventSource
         {
             private event EventHandler<DynValue> _event;
@@ -1061,6 +1111,32 @@ end";
                 _event = null;
                 AddInvokeCount = 0;
                 RemoveInvokeCount = 0;
+            }
+        }
+
+        private sealed class VisibilityTestEventSource
+        {
+            [NovaSharpVisible(true)]
+            internal event Action ExplicitlyVisibleEvent;
+
+            [NovaSharpVisible(false)]
+            public event Action ExplicitlyHiddenEvent;
+
+            internal event Action NonPublicAccessorEvent;
+
+            public void RaiseExplicitlyVisibleEvent()
+            {
+                ExplicitlyVisibleEvent?.Invoke();
+            }
+
+            public void RaiseExplicitlyHiddenEvent()
+            {
+                ExplicitlyHiddenEvent?.Invoke();
+            }
+
+            public void RaiseNonPublicAccessorEvent()
+            {
+                NonPublicAccessorEvent?.Invoke();
             }
         }
     }
