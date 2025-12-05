@@ -7,6 +7,7 @@ solution="src/NovaSharp.sln"
 test_project="src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
 run_tests=1
 restore_tools=1
+restore_packages=1
 test_results_dir=""
 test_results_placeholder=""
 
@@ -20,6 +21,7 @@ Options:
       --test-project <Path>    Test project executed after building (default: interpreter tests).
       --skip-tests             Skip running the interpreter tests.
       --skip-tool-restore      Skip `dotnet tool restore`.
+      --skip-restore           Skip `dotnet restore` and pass --no-restore to build/test.
   -h, --help                   Show this message.
 EOF
 }
@@ -44,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-tool-restore)
             restore_tools=0
+            shift
+            ;;
+        --skip-restore)
+            restore_packages=0
             shift
             ;;
         -h|--help)
@@ -89,12 +95,26 @@ if (( restore_tools )); then
     dotnet tool restore
 fi
 
+if (( restore_packages )); then
+    echo "Restoring solution packages..."
+    dotnet restore "$solution"
+fi
+
 echo "Building $solution (configuration: $configuration)..."
-dotnet build "$solution" -c "$configuration"
+build_restore_flag=()
+if (( ! restore_packages )); then
+    build_restore_flag=(--no-restore)
+fi
+dotnet build "$solution" -c "$configuration" -m "${build_restore_flag[@]}"
 
 if (( run_tests )); then
     echo "Running tests for $test_project..."
+    test_restore_flag=()
+    if (( ! restore_packages )); then
+        test_restore_flag=(--no-restore)
+    fi
     dotnet test "$test_project" -c "$configuration" --no-build \
+        "${test_restore_flag[@]}" \
         --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx" \
         --results-directory "$test_results_dir"
     rm -f "$test_results_placeholder"

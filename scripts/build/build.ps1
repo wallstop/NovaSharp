@@ -4,7 +4,8 @@ param(
     [string]$Solution = "src/NovaSharp.sln",
     [string]$TestProject = "src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj",
     [switch]$SkipTests,
-    [switch]$SkipToolRestore
+    [switch]$SkipToolRestore,
+    [switch]$SkipRestore
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,7 +65,12 @@ try {
     }
 
     Write-Host "Building $Solution (configuration: $Configuration)..."
-    dotnet build $Solution -c $Configuration
+    $restoreArgs = @()
+    if ($SkipRestore) {
+        $restoreArgs += "--no-restore"
+    }
+
+    dotnet build $Solution -c $Configuration /m @restoreArgs
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet build $Solution -c $Configuration failed with exit code $LASTEXITCODE."
     }

@@ -101,50 +101,19 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Install Python tooling deps
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.tooling.txt
-      - name: Enforce NovaSharp branding
-        run: ./scripts/branding/ensure-novasharp-branding.sh
-        shell: bash
-      - name: Verify namespace alignment
-        run: python3 tools/NamespaceAudit/namespace_audit.py
-      - name: Enforce naming conventions
-        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
-      - name: Verify naming audit log
-        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
-      - name: Enforce spelling conventions
-        run: python3 tools/SpellingAudit/spelling_audit.py
-      - name: Verify spelling audit log
-        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
-      - name: Generate documentation audit log
-        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
-      - name: Verify documentation audit log
-        run: |
-          if ! git diff --quiet -- documentation_audit.log; then
-            echo "::error file=documentation_audit.log::documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log' and commit the result."
-            git --no-pager diff -- documentation_audit.log
-            exit 1
-          fi
-      - name: Verify fixture catalog is current
-        shell: pwsh
-        run: ./scripts/ci/check-fixture-catalog.ps1
-
+      # Lint checks already passed in the 'lint' job (this job has needs: lint).
+      # Skip redundant branding/namespace/naming/spelling/documentation/fixture-catalog steps.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
+          cache: true
       - name: Restore dependencies
         run: dotnet restore src/NovaSharp.sln
       - name: Restore tools
         run: dotnet tool restore
       - name: Build + test via helper script
-        run: ./scripts/build/build.sh --skip-tool-restore
+        run: ./scripts/build/build.sh --skip-tool-restore --skip-restore
         shell: bash
       - name: Upload test results
         if: always()
@@ -178,6 +147,7 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
+          cache: true
       - name: Apply repository formatters
         run: ./scripts/ci/apply-formatters.sh
         shell: bash
@@ -215,12 +185,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Enforce NovaSharp branding
-        run: ./scripts/branding/ensure-novasharp-branding.sh
-        shell: bash
-      - name: Verify namespace alignment
-        run: python3 tools/NamespaceAudit/namespace_audit.py
-
+      # Lint checks already passed in the 'lint' job (via dotnet-tests dependency).
+      # Skip redundant branding/namespace checks.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -236,7 +202,7 @@ jobs:
           COVERAGE_GATING_TARGET_BRANCH: "95"
           COVERAGE_GATING_TARGET_METHOD: "95"
           COVERAGE_GATING_MODE: enforce
-        run: ./scripts/coverage/coverage.ps1
+        run: ./scripts/coverage/coverage.ps1 -SkipRestore
       - name: Publish coverage summary
         if: always()
         run: |

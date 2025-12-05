@@ -6,7 +6,8 @@ param(
     [double]$MinimumInterpreterBranchCoverage = 0.0,
     [double]$MinimumInterpreterMethodCoverage = 0.0,
     [ValidateSet("", "monitor", "enforce")]
-    [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE
+    [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE,
+    [switch]$SkipRestore
 )
 
 function Get-CoverageTarget {
@@ -139,7 +140,12 @@ try {
             Remove-Item $buildLogPath -Force
         }
 
-        dotnet build "src/NovaSharp.sln" -c $Configuration 2>&1 |
+        $restoreArgs = @()
+        if ($SkipRestore) {
+            $restoreArgs += "--no-restore"
+        }
+
+        dotnet build "src/NovaSharp.sln" -c $Configuration /m @restoreArgs 2>&1 |
             Tee-Object -FilePath $buildLogPath | Out-Null
 
         $buildExecuted = $true
@@ -154,37 +160,7 @@ try {
             )
         }
 
-        Write-Host "Building interpreter TUnit project (configuration: $Configuration)..."
-        dotnet build $tunitRunnerProject -c $Configuration --no-restore 2>&1 |
-            Tee-Object -FilePath $buildLogPath -Append | Out-Null
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host ""
-            Write-Host "dotnet build $tunitRunnerProject failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
-            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
-            throw (
-                "dotnet build {0} -c {1} failed. See {2} for full output." -f
-                $tunitRunnerProject,
-                $Configuration,
-                $buildLogPath
-            )
-        }
-
-        Write-Host "Building remote debugger test project (configuration: $Configuration)..."
-        dotnet build $remoteDebuggerRunnerProject -c $Configuration --no-restore 2>&1 |
-            Tee-Object -FilePath $buildLogPath -Append | Out-Null
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host ""
-            Write-Host "dotnet build $remoteDebuggerRunnerProject failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
-            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
-            throw (
-                "dotnet build {0} -c {1} failed. See {2} for full output." -f
-                $remoteDebuggerRunnerProject,
-                $Configuration,
-                $buildLogPath
-            )
-        }
+        # Test projects are built as part of the solution; no need to rebuild them individually.
     }
 
     $testResultsDir = Join-Path $coverageRoot "test-results"

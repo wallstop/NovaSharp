@@ -8,6 +8,7 @@ if [[ -z "$repo_root" ]]; then
 fi
 
 skip_build=false
+skip_restore=false
 configuration="Release"
 minimum_interpreter_coverage="70.0"
 minimum_interpreter_branch_coverage="0"
@@ -25,6 +26,7 @@ Usage: ./scripts/coverage/coverage.sh [options]
     --minimum-interpreter-method-coverage <value>
                                              Minimum NovaSharp.Interpreter method coverage percentage (default: 0)
     --coverage-gating-mode <monitor|enforce> Override COVERAGE_GATING_MODE (monitor = warn at ≥95%, enforce = fail)
+    --skip-restore                            Skip dotnet restore and pass --no-restore to builds/tests
 EOF
 }
 
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
         --coverage-gating-mode)
             coverage_gating_mode="$2"
             shift 2
+            ;;
+        --skip-restore)
+            skip_restore=true
+            shift
             ;;
         -h|--help)
             usage
@@ -151,6 +157,11 @@ fi
 log "Restoring local dotnet tools..."
 dotnet tool restore >/dev/null
 
+if [[ "$skip_restore" != true ]]; then
+    log "Restoring solution packages..."
+    dotnet restore "src/NovaSharp.sln" >/dev/null
+fi
+
 coverage_root="$repo_root/artifacts/coverage"
 mkdir -p "$coverage_root"
 build_log_path="$coverage_root/build.log"
@@ -160,28 +171,19 @@ remote_runner_project="src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.
 if [[ "$skip_build" != true ]]; then
     log "Building solution (configuration: $configuration)..."
     : > "$build_log_path"
-    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" 2>&1 | tee "$build_log_path"; then
+    build_restore_flag=()
+    if [[ "$skip_restore" == true ]]; then
+        build_restore_flag=(--no-restore)
+    fi
+
+    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" -m "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
         echo ""
         echo "dotnet build failed, tailing $build_log_path:"
         tail -n 200 "$build_log_path"
         error_exit "dotnet build src/NovaSharp.sln -c $configuration failed."
     fi
 
-    log "Building interpreter TUnit project (configuration: $configuration)..."
-    if ! dotnet build "$tunit_runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
-        echo ""
-        echo "dotnet build $tunit_runner_project failed, tailing $build_log_path:"
-        tail -n 200 "$build_log_path"
-        error_exit "dotnet build $tunit_runner_project -c $configuration failed."
-    fi
-
-    log "Building remote-debugger TUnit project (configuration: $configuration)..."
-    if ! dotnet build "$remote_runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
-        echo ""
-        echo "dotnet build $remote_runner_project failed, tailing $build_log_path:"
-        tail -n 200 "$build_log_path"
-        error_exit "dotnet build $remote_runner_project -c $configuration failed."
-    fi
+    # Test projects are built as part of the solution; no need to rebuild them individually.
 fi
 
 test_results_dir="$coverage_root/test-results"
@@ -306,10 +308,11 @@ summary_json="$report_target/Summary.json"
 python_cmd="$(ensure_python)"
 
 if [[ -f "$summary_json" ]]; then
-    read -r interpreter_line interpreter_branch interpreter_method <<<"$("$python_cmd" - <<'PY'
+    read -r interpreter_line interpreter_branch interpreter_method <<<"$("$python_cmd" - "$summary_json" <<'PY'
 import json, sys
 from pathlib import Path
-data = json.loads(Path("$summary_json").read_text(encoding="utf-8"))
+summary_path = sys.argv[1]
+data = json.loads(Path(summary_path).read_text(encoding="utf-8"))
 assemblies = data.get("coverage", {}).get("assemblies", [])
 for asm in assemblies:
     if asm.get("name") == "NovaSharp.Interpreter":
